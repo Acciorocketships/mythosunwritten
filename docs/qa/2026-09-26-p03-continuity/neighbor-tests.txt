@@ -1,0 +1,61 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_slope_profile.gd
+[0m* test_smootherstep_endpoints
+* test_smootherstep_flat_tangents
+* test_smootherstep_clamps
+* test_edge_height_endpoints
+* test_outer_corner_seam_matches_edge
+* test_inner_corner_seams_flat
+[1m6/6 passed.
+[0m[4m
+
+res://tests/test_slope_profile_stacked.gd
+[0m* test_outer_stacked_is_2storey_diagonal_ramp
+* test_outer_stacked_cardinal_seams_match_plain_edge
+* test_outer_stacked_monotone_into_pit
+* test_inner_stacked_deprecated_endpoints
+[1m4/4 passed.
+[0m[4m
+
+res://tests/test_september16_cliff_grass.gd
+[0m* test_real_grass_worker_roots_whole_patches_on_exposed_turf_ledges
+CLIFF_GRASS rooted=333 escaped=0 buried=0
+* test_ledge_grass_is_identical_on_either_side_of_chunk_ownership
+* test_new_grass_does_not_add_a_second_foliage_family_to_outcrop_ledges
+* test_ledge_detail_change_preserves_paired_grass_coverage
+PAIRED_LEDGE_COVERAGE before=176 current=333
+[1m4/4 passed.
+[0m[4m
+
+res://tests/test_september17_support_refinement.gd
+[0m* test_ordinary_ground_keeps_identical_grass_buffers
+* test_supported_ledge_refinement_only_supplies_unmet_density
+* test_tread_width_is_independent_of_mesh_subdivision
+* test_support_index_matches_full_scan_at_boundaries_and_overlaps
+[1m4/4 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               4
+Tests                18
+Passing Tests        18
+Asserts              78
+Time              141.306s
+
+
+[32m---- All tests passed! ----
+[0m

@@ -1,0 +1,12 @@
+TOWN super=(-1, -1) id=settlement.579b3da1cb014fc1 ms=170414 bad=0 ["sealed=0 unsealed_in_reach=0 ramped=[]"]
+TOWN super=(-1, 0) id=settlement.268015fe3e243631 ms=28396 bad=0 ["sealed=0 unsealed_in_reach=0 ramped=[]"]
+TOWN super=(-1, 1) id=settlement.03ec880f1e59b63c ms=127231 bad=0 ["sealed=27 unsealed_in_reach=0 ramped=[]"]
+TOWN super=(0, -1) id=settlement.29bc5c240c52f84a ms=113703 bad=0 ["sealed=38 unsealed_in_reach=0 ramped=[]"]
+TOWN super=(0, 0) id=settlement.45e145055531090d ms=348493 bad=0 ["sealed=109 unsealed_in_reach=0 ramped=[]"]
+TOWN super=(0, 1) id=settlement.70fcc61b308f8731 ms=11962 bad=0 ["sealed=52 unsealed_in_reach=0 ramped=[]"]
+TOWN super=(1, -1) id=settlement.2dd6fab534d97869 ms=7893 bad=0 ["sealed=52 unsealed_in_reach=0 ramped=[]"]
+TOWN super=(1, 0) id=settlement.086d41361c6ad2f0 ms=9545 bad=0 ["sealed=94 unsealed_in_reach=0 ramped=[]"]
+TOWN super=(1, 1) id=settlement.5ebd9796436e954d ms=7700 bad=0 ["sealed=0 unsealed_in_reach=0 ramped=[]"]
+SUMMARY towns=9 bad_edges=0
+
+[exited with code 0]

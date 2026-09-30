@@ -1,0 +1,58 @@
+[
+  {
+    "before_rock": 42.4113920491127,
+    "excluded": false,
+    "ground": 36.0,
+    "q": "(497.0, 953.0)",
+    "rock": 1.0,
+    "surface": 39.3042728332586
+  },
+  {
+    "before_rock": 39.0882331931761,
+    "excluded": false,
+    "ground": 36.0,
+    "q": "(499.0, 953.0)",
+    "rock": 0.894888413902953,
+    "surface": 38.4903520353225
+  },
+  {
+    "before_rock": 36.6080760594795,
+    "excluded": false,
+    "ground": 36.0,
+    "q": "(501.0, 953.0)",
+    "rock": 0.288997717383699,
+    "surface": 36.4
+  },
+  {
+    "before_rock": 36.0,
+    "excluded": false,
+    "ground": 36.0,
+    "q": "(506.0, 948.0)",
+    "rock": 0.330022573716207,
+    "surface": 36.0
+  },
+  {
+    "before_rock": 34.0999931335449,
+    "excluded": false,
+    "ground": 24.0,
+    "q": "(516.0, 948.0)",
+    "rock": 0.904,
+    "surface": 32.8584064956435
+  },
+  {
+    "before_rock": 10.6666664759318,
+    "excluded": false,
+    "ground": 24.0,
+    "q": "(530.0, 948.0)",
+    "rock": 1.0,
+    "surface": 10.6666664759318
+  },
+  {
+    "before_rock": 41.234693877551,
+    "excluded": false,
+    "ground": 36.0,
+    "q": "(499.0, 967.0)",
+    "rock": 0.169930250536145,
+    "surface": 41.2289848496901
+  }
+]

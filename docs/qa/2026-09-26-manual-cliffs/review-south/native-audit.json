@@ -1,0 +1,36 @@
+{
+  "grass": [
+    {
+      "grass_roots": 56,
+      "misses": [],
+      "unsupported_roots": 0,
+      "view": "p04"
+    },
+    {
+      "grass_roots": 45,
+      "misses": [],
+      "unsupported_roots": 0,
+      "view": "p05"
+    },
+    {
+      "grass_roots": 48,
+      "misses": [],
+      "unsupported_roots": 0,
+      "view": "p09"
+    },
+    {
+      "grass_roots": 63,
+      "misses": [],
+      "unsupported_roots": 0,
+      "view": "p10"
+    },
+    {
+      "grass_roots": 44,
+      "misses": [],
+      "unsupported_roots": 0,
+      "view": "p13"
+    }
+  ],
+  "missing_surface_contacts": [],
+  "surface_contacts": 241
+}

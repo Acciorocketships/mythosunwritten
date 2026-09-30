@@ -104,7 +104,7 @@ func test_level_surfaces_agree_across_every_non_cliff_edge_at_reported_seed():
 	for cz in range(-67, -58):
 		for cx in range(-2, 5):
 			for d in [Vector2i(1, 0), Vector2i(0, 1)]:
-				if Field.is_flat_cell(r, cx, cz) or Field.is_flat_cell(r, cx + d.x, cz + d.y):
+				if Field.is_cliff_edge(r, cx, cz, d):
 					continue
 				var bx := float(cx) * Field.TILE + float(d.x) * Field.HALF
 				var bz := float(cz) * Field.TILE + float(d.y) * Field.HALF
@@ -128,8 +128,7 @@ func test_every_ordinary_edge_is_single_valued_across_varied_fields():
 		for cz in range(-5, 5):
 			for cx in range(-5, 5):
 				for d in [Vector2i(1, 0), Vector2i(0, 1)]:
-					if Field.is_exposed_edge(r, cx, cz, d) \
-						or Field.is_exposed_edge(r, cx + d.x, cz + d.y, -d):
+					if Field.is_cliff_edge(r, cx, cz, d):
 						continue
 					var bx := float(cx) * Field.TILE + float(d.x) * Field.HALF
 					var bz := float(cz) * Field.TILE + float(d.y) * Field.HALF
@@ -226,64 +225,87 @@ func test_cardinal_strip_proves_every_rendered_boundary_crossing() -> void:
 		Vector2(-6.0, 0.0), Vector2(42.0, 0.0), 2.0),
 		"ordinary rendered slopes remain valid for full corridors")
 
-func test_walkability_matches_exposed_edges_across_varied_fields():
+func test_walkability_matches_cliff_edges_across_varied_fields():
+	# Per-edge classification (owner, September 27): an edge is walkable
+	# exactly when it is not a cliff edge, and a cliff edge always shows a
+	# vertical difference at its midpoint.
 	for world_seed in [17, 4242, 918273]:
 		var plan := Plan.new(world_seed, 40.0, 8, "mean", 3)
 		var region := plan.compute_region(-9, 7, 7)
 		for cz in range(-14, -3):
 			for cx in range(2, 13):
 				for d in [Vector2i.RIGHT, Vector2i.DOWN]:
-					var expected := not Field.is_exposed_edge(region, cx, cz, d) \
-						and not Field.is_exposed_edge(region, cx + d.x, cz + d.y, -d)
-					assert_eq(Field.is_walkable_edge(region, Vector2i(cx, cz), d), expected,
+					var cliff := Field.is_cliff_edge(region, cx, cz, d)
+					assert_eq(Field.is_walkable_edge(region, Vector2i(cx, cz), d), not cliff,
 						"flat, slope, cliff, inner, diagonal, and higher-flat edges share one fact")
-					assert_eq(Field.is_walkable_edge(region, Vector2i(cx, cz) + d, -d), expected,
+					assert_eq(Field.is_walkable_edge(region, Vector2i(cx, cz) + d, -d), not cliff,
 						"walkability is translation- and direction-symmetric")
+					var mid := (Vector2(cx, cz) + Vector2(d) * 0.5) * Field.TILE
+					var gap := absf(Field.surface_y_in_cell(region, mid.x, mid.y, cx, cz) \
+						- Field.surface_y_in_cell(region, mid.x, mid.y, cx + d.x, cz + d.y))
+					assert_eq(gap > Field.EXPOSE_EPS, cliff, "only a cliff edge has a vertical face")
 
 func test_inner_corner_stays_flat_not_a_slope():
 	# Owner: a concave inner corner must be a vertical cliff, not a dipping slope. The high corner
-	# cell (0,0) has level cardinal arms and a 1-storey diagonal pocket (1,1) that the arms wall.
+	# cell (0,0) has level cardinal arms and a two-storey diagonal pocket (1,1) that the arms wall.
 	# Its SE quadrant must stay FLAT at the cell height (the cliff face spans the drop), NOT ramp
-	# down into the notch.
+	# down into the notch. (Per edge, September 27: a ONE-storey pocket is an ordinary slope dip.)
 	var plan := Plan.new(0, 32.0, 8, "mean", 3)
 	plan.set_raw_height_override(func(cx, cz):
-		if cx == 1 and cz == 1: return 8.0
+		if cx == 1 and cz == 1: return 4.0
 		if cx == 2 and cz == 1: return 0.0
 		if cx == 1 and cz == 2: return 0.0
 		if cx == 2 and cz == 2: return 0.0
 		return 12.0)
 	var r = plan.compute_region(0, 0, 8)
 	assert_almost_eq(Field.surface_y(r, 11.0, 11.0), 12.0, 0.05, "inner-corner cell stays flat into the notch corner")
+	var shallow := Plan.new(0, 32.0, 8, "mean", 3)
+	shallow.set_raw_height_override(func(cx, cz):
+		if cx == 1 and cz == 1: return 8.0
+		if cx >= 2 and cz >= 1 or cx >= 1 and cz >= 2: return 4.0
+		return 12.0)
+	var sr = shallow.compute_region(0, 0, 8)
+	assert_almost_eq(Field.surface_y_in_cell(sr, 12.0, 12.0, 0, 0), 8.0, 0.05,
+		"a one-storey pocket is the ordinary corner slope")
 
-func test_no_slope_dip_when_a_cardinal_arm_is_higher():
-	# Owner's slope "discontinuity": a cell dipped toward a lower DIAGONAL even though one adjoining
-	# cardinal arm was HIGHER (a cliff walls down to the cell) — which cracked the shared edge with
-	# the flat neighbour. The cell must stay FLAT toward that corner. (0,0)=storey4; diagonal (1,1)=3
-	# (1 lower); +x arm (1,0)=5 (HIGHER, a cliff); +z arm (0,1)=4 (level).
+func test_corner_where_a_cliff_meets_slopes_is_single_valued():
+	# A cell with a higher +x arm (a cliff above), a level +z arm and a lower
+	# diagonal. Around the corner every step is one storey or less, so all
+	# four owners are one slope component: they meet at the lowest height.
+	# (Per edge, September 27; the tile rule held the cell flat instead.)
 	var plan := Plan.new(0, 64.0, 12, "mean", 4)
 	plan.set_raw_height_override(func(cx, cz):
 		if cx == 1 and cz == 1: return 12.0   # lower diagonal
-		if cx == 1 and cz == 0: return 20.0   # HIGHER +x arm (a cliff)
-		if cx == 0 and cz == 2: return 8.0    # gives the level +z arm (0,1) its own ≥2 drop → flat cliff top
+		if cx == 1 and cz == 0: return 20.0   # HIGHER +x arm
+		if cx == 0 and cz == 2: return 8.0    # the level +z arm walls down to it
 		return 16.0)                           # the cell and its level +z arm
 	var r = plan.compute_region(0, 0, 8)
-	assert_almost_eq(Field.surface_y_in_cell(r, 11.5, 11.5, 0, 0), 16.0, 0.05, "no dip toward the diagonal when an arm is higher")
-	# the surface is continuous across the shared +z edge with the level (flat) arm (0,1) — no crack:
-	assert_almost_eq(Field.surface_y_in_cell(r, 11.5, 12.0, 0, 0), Field.surface_y_in_cell(r, 11.5, 12.0, 0, 1), 0.05, "slope continuous across the shared edge")
+	for cell: Vector2i in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1)]:
+		assert_almost_eq(Field.surface_y_in_cell(r, 12.0, 12.0, cell.x, cell.y), 12.0, 0.0001,
+			"owner %s meets the shared corner" % cell)
+	for t in [0.0, 3.0, 6.0, 9.0, 11.5]:
+		assert_almost_eq(Field.surface_y_in_cell(r, t, 12.0, 0, 0), Field.surface_y_in_cell(r, t, 12.0, 0, 1), 0.0001,
+			"slope continuous across the shared +z edge")
+		assert_almost_eq(Field.surface_y_in_cell(r, 12.0, t, 0, 0), Field.surface_y_in_cell(r, 12.0, t, 1, 0), 0.0001,
+			"slope continuous across the shared +x edge")
+		assert_lte(Field.surface_y_in_cell(r, t, t, 0, 0), 16.0001, "never above the cell height")
 
-func test_cell_below_a_cliff_stays_flat_and_the_cliff_walls_down():
-	# Vertical cliffs: a cell one storey below a flat CLIFF TOP does NOT ramp up to meet it (that
-	# lean-to ramp produced mounds/spikes). It stays flat at its OWN height and the cliff walls down
-	# to it. (0,0)=4 (storey1); +x neighbour (1,0)=8 (storey2 cliff top, drops ≥2 to (2,0)=0).
+func test_one_storey_side_below_a_cliff_cell_is_a_slope():
+	# Per edge (owner, September 27): (1,0) walls two storeys down to (2,0),
+	# but its ONE-storey side toward (0,0) is the ordinary slope, not a wall.
+	# The lower cell still stays flat at its own height (no up-ramp).
 	var plan := Plan.new(0, 32.0, 8, "mean", 3)
 	plan.set_raw_height_override(func(cx, cz):
-		if cx == 1 and cz == 0: return 8.0    # the cliff top
-		if cx == 2 and cz == 0: return 0.0    # makes (1,0) a cliff top (≥2 drop)
+		if cx == 1 and cz == 0: return 8.0    # the cliff cell
+		if cx == 2 and cz == 0: return 0.0    # its two-storey cliff side
 		return 4.0)
 	var r = plan.compute_region(0, 0, 8)
-	assert_true(Field._is_cliff_top(r, 1, 0), "the +x neighbour is a cliff top")
+	assert_true(Field._is_cliff_top(r, 1, 0), "the +x neighbour walls on one side")
+	assert_true(Field._is_wall_edge(r, 1, 0, Vector2i(1, 0)), "its two-storey side is a wall")
+	assert_false(Field._is_wall_edge(r, 1, 0, Vector2i(-1, 0)), "its one-storey side is not")
 	assert_almost_eq(Field.surface_y(r, 11.5, 0.0), 4.0, 0.05, "cell stays flat at its height (no up-ramp)")
-	assert_true(Field._is_wall_edge(r, 1, 0, Vector2i(-1, 0)), "the cliff walls down to it (a vertical cliff)")
+	assert_almost_eq(Field.surface_y_in_cell(r, 12.0, 0.0, 1, 0), 4.0, 0.0001, "the slope meets it at the seam")
+	assert_lt(Field.surface_y_in_cell(r, 16.0, 0.0, 1, 0), 8.0, "the cliff cell ramps down on that side")
 
 func test_no_mound_where_a_cell_sits_below_a_diagonal_cliff():
 	# Owner's "weird mound": a storey-1 cell with a higher diagonal cliff-top neighbour used to bulge

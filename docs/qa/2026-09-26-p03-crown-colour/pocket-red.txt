@@ -1,0 +1,70 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://docs/qa/2026-09-26-p03-crown-colour/pocket-regression-before.gd
+[0m* test_reported_mountain_shoulders_are_not_cut_into_narrow_wet_pockets
+[31m    [Failed]:  [0m[1.63856084875616] expected to be < than [1.42]:  The owner's circled shoulder continues as a slope instead of a water-cut recess at (493.3, 958.2)
+      at line 116
+[31m    [Failed]:  [0m[4.45245351107454] expected to be < than [1.42]:  The owner's circled shoulder continues as a slope instead of a water-cut recess at (494.0, 957.5)
+      at line 116
+[31m    [Failed]:  [0m[3.09999084472656] expected to be < than [1.42]:  The owner's circled shoulder continues as a slope instead of a water-cut recess at (494.7, 956.8)
+      at line 116
+[31m    [Failed]:  [0m[5.51407055009791] expected to be < than [1.42]:  The owner's circled shoulder continues as a slope instead of a water-cut recess at (493.0, 945.75)
+      at line 116
+[31m    [Failed]:  [0m[4.94996643066406] expected to be < than [1.42]:  The owner's circled shoulder continues as a slope instead of a water-cut recess at (493.7, 945.05)
+      at line 116
+[31m    [Failed]:  [0m[3.00655412450926] expected to be < than [1.42]:  The owner's circled shoulder continues as a slope instead of a water-cut recess at (494.4, 944.35)
+      at line 116
+[31m    [Failed]:  [0m[4.96672833626021] expected to be < than [1.42]:  The owner's circled shoulder continues as a slope instead of a water-cut recess at (517.5, 969.8)
+      at line 116
+[31m    [Failed]:  [0m[4.30425390815957] expected to be < than [1.42]:  The owner's circled shoulder continues as a slope instead of a water-cut recess at (518.2, 969.1)
+      at line 116
+[31m    [Failed]:  [0m[2.848853800516] expected to be < than [1.42]:  The owner's circled shoulder continues as a slope instead of a water-cut recess at (518.9, 968.4)
+      at line 116
+[1m0/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://docs/qa/2026-09-26-p03-crown-colour/pocket-regression-before.gd
+[0m- test_reported_mountain_shoulders_are_not_cut_into_narrow_wet_pockets
+[31m    [Failed]:  [0m[1.63856084875616] expected to be < than [1.42]:  The owner's circled shoulder continues as a slope instead of a water-cut recess at (493.3, 958.2)
+          at line 116
+[31m    [Failed]:  [0m[4.45245351107454] expected to be < than [1.42]:  The owner's circled shoulder continues as a slope instead of a water-cut recess at (494.0, 957.5)
+          at line 116
+[31m    [Failed]:  [0m[3.09999084472656] expected to be < than [1.42]:  The owner's circled shoulder continues as a slope instead of a water-cut recess at (494.7, 956.8)
+          at line 116
+[31m    [Failed]:  [0m[5.51407055009791] expected to be < than [1.42]:  The owner's circled shoulder continues as a slope instead of a water-cut recess at (493.0, 945.75)
+          at line 116
+[31m    [Failed]:  [0m[4.94996643066406] expected to be < than [1.42]:  The owner's circled shoulder continues as a slope instead of a water-cut recess at (493.7, 945.05)
+          at line 116
+[31m    [Failed]:  [0m[3.00655412450926] expected to be < than [1.42]:  The owner's circled shoulder continues as a slope instead of a water-cut recess at (494.4, 944.35)
+          at line 116
+[31m    [Failed]:  [0m[4.96672833626021] expected to be < than [1.42]:  The owner's circled shoulder continues as a slope instead of a water-cut recess at (517.5, 969.8)
+          at line 116
+[31m    [Failed]:  [0m[4.30425390815957] expected to be < than [1.42]:  The owner's circled shoulder continues as a slope instead of a water-cut recess at (518.2, 969.1)
+          at line 116
+[31m    [Failed]:  [0m[2.848853800516] expected to be < than [1.42]:  The owner's circled shoulder continues as a slope instead of a water-cut recess at (518.9, 968.4)
+          at line 116
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts            3/12
+Time              3.294s
+
+
+[31m---- 1 failing tests ----
+[0m

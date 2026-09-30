@@ -1,0 +1,48 @@
+[synthetic] f1.5_t1.75_c.25.gd
+  wall20 angle 0.00 {"carved":2122,"d2_max":1.63,"d2_over_half":44,"d2_p90":0.21,"d2_p99":0.618,"max_rise":0.68,"rises":2,"rock":2151}
+  wall20 angle 0.52 {"carved":2300,"d2_max":1.24,"d2_over_half":89,"d2_p90":0.369,"d2_p99":0.695,"max_rise":0.1,"rises":0,"rock":2314}
+  wall20 angle 0.79 {"carved":2311,"d2_max":2.16,"d2_over_half":95,"d2_p90":0.364,"d2_p99":0.729,"max_rise":0.02,"rises":0,"rock":2307}
+  wall12 angle .52 {"carved":1537,"d2_max":1.15,"d2_over_half":28,"d2_p90":0.309,"d2_p99":0.586,"max_rise":0.08,"rises":0,"rock":1519}
+  p03 {"d2_over_half":68,"faces":336,"normal_median":11.56,"normal_p90":17.35,"patches":11,"rises":0,"treads":55}
+[synthetic] f2.0_t2.0_c.15.gd
+  wall20 angle 0.00 {"carved":2177,"d2_max":1.3,"d2_over_half":50,"d2_p90":0.213,"d2_p99":0.889,"max_rise":0.96,"rises":2,"rock":2151}
+  wall20 angle 0.52 {"carved":2288,"d2_max":1.53,"d2_over_half":78,"d2_p90":0.362,"d2_p99":0.721,"max_rise":0.1,"rises":1,"rock":2314}
+  wall20 angle 0.79 {"carved":2323,"d2_max":1.37,"d2_over_half":78,"d2_p90":0.328,"d2_p99":0.724,"max_rise":0.04,"rises":0,"rock":2307}
+  wall12 angle .52 {"carved":1561,"d2_max":0.75,"d2_over_half":29,"d2_p90":0.301,"d2_p99":0.564,"max_rise":0.11,"rises":1,"rock":1519}
+  p03 {"d2_over_half":66,"faces":315,"normal_median":12.32,"normal_p90":18.63,"patches":11,"rises":0,"treads":59}
+[synthetic] f2.0_t2.0_c.25.gd
+  wall20 angle 0.00 {"carved":2158,"d2_max":1.45,"d2_over_half":48,"d2_p90":0.219,"d2_p99":0.829,"max_rise":0.96,"rises":2,"rock":2151}
+  wall20 angle 0.52 {"carved":2295,"d2_max":1.64,"d2_over_half":89,"d2_p90":0.371,"d2_p99":0.723,"max_rise":0.16,"rises":1,"rock":2314}
+  wall20 angle 0.79 {"carved":2311,"d2_max":1.38,"d2_over_half":85,"d2_p90":0.338,"d2_p99":0.753,"max_rise":0.05,"rises":0,"rock":2307}
+  wall12 angle .52 {"carved":1542,"d2_max":0.76,"d2_over_half":32,"d2_p90":0.317,"d2_p99":0.592,"max_rise":0.12,"rises":1,"rock":1519}
+  p03 {"d2_over_half":73,"faces":310,"normal_median":12.53,"normal_p90":19.08,"patches":11,"rises":0,"treads":62}
+[synthetic] f2.0_t2.5_c.25.gd
+  wall20 angle 0.00 {"carved":2141,"d2_max":1.68,"d2_over_half":46,"d2_p90":0.209,"d2_p99":0.686,"max_rise":0.33,"rises":5,"rock":2151}
+  wall20 angle 0.52 {"carved":2271,"d2_max":1.39,"d2_over_half":117,"d2_p90":0.368,"d2_p99":0.769,"max_rise":0.47,"rises":7,"rock":2314}
+  wall20 angle 0.79 {"carved":2292,"d2_max":1.76,"d2_over_half":98,"d2_p90":0.324,"d2_p99":0.803,"max_rise":0.3,"rises":7,"rock":2307}
+  wall12 angle .52 {"carved":1546,"d2_max":1.02,"d2_over_half":73,"d2_p90":0.385,"d2_p99":0.817,"max_rise":0.11,"rises":1,"rock":1519}
+  p03 {"d2_over_half":76,"faces":249,"normal_median":13.84,"normal_p90":23.09,"patches":10,"rises":0,"treads":57}
+[synthetic] f1.5_t1.5_r1.5.gd
+  wall20 angle 0.00 {"carved":2102,"d2_max":1.3,"d2_over_half":35,"d2_p90":0.197,"d2_p99":0.592,"max_rise":0.42,"rises":2,"rock":2151}
+  wall20 angle 0.52 {"carved":2234,"d2_max":1.32,"d2_over_half":61,"d2_p90":0.327,"d2_p99":0.634,"max_rise":0.09,"rises":0,"rock":2314}
+  wall20 angle 0.79 {"carved":2217,"d2_max":1.43,"d2_over_half":47,"d2_p90":0.297,"d2_p99":0.673,"max_rise":0.03,"rises":0,"rock":2307}
+  wall12 angle .52 {"carved":1511,"d2_max":0.73,"d2_over_half":14,"d2_p90":0.282,"d2_p99":0.497,"max_rise":0.08,"rises":0,"rock":1519}
+  p03 {"d2_over_half":48,"faces":293,"normal_median":11.59,"normal_p90":17.51,"patches":9,"rises":0,"treads":39}
+[synthetic] f1.5_t1.75_r1.5.gd
+  wall20 angle 0.00 {"carved":2066,"d2_max":1.76,"d2_over_half":44,"d2_p90":0.197,"d2_p99":0.709,"max_rise":0.08,"rises":0,"rock":2151}
+  wall20 angle 0.52 {"carved":2255,"d2_max":2.27,"d2_over_half":78,"d2_p90":0.342,"d2_p99":0.666,"max_rise":0.28,"rises":3,"rock":2314}
+  wall20 angle 0.79 {"carved":2180,"d2_max":1.25,"d2_over_half":59,"d2_p90":0.297,"d2_p99":0.68,"max_rise":0.03,"rises":0,"rock":2307}
+  wall12 angle .52 {"carved":1508,"d2_max":0.82,"d2_over_half":30,"d2_p90":0.314,"d2_p99":0.573,"max_rise":0.1,"rises":1,"rock":1519}
+  p03 {"d2_over_half":56,"faces":278,"normal_median":12.15,"normal_p90":19.06,"patches":9,"rises":0,"treads":45}
+[synthetic] f1.5_t1.75_r2.0.gd
+  wall20 angle 0.00 {"carved":2116,"d2_max":1.24,"d2_over_half":27,"d2_p90":0.164,"d2_p99":0.583,"max_rise":0.12,"rises":1,"rock":2151}
+  wall20 angle 0.52 {"carved":2231,"d2_max":1.31,"d2_over_half":70,"d2_p90":0.302,"d2_p99":0.676,"max_rise":0.2,"rises":1,"rock":2314}
+  wall20 angle 0.79 {"carved":2191,"d2_max":0.84,"d2_over_half":38,"d2_p90":0.249,"d2_p99":0.586,"max_rise":0.12,"rises":1,"rock":2307}
+  wall12 angle .52 {"carved":1493,"d2_max":0.86,"d2_over_half":30,"d2_p90":0.323,"d2_p99":0.564,"max_rise":0.1,"rises":1,"rock":1519}
+  p03 {"d2_over_half":49,"faces":212,"normal_median":11.01,"normal_p90":18.38,"patches":7,"rises":0,"treads":29}
+[synthetic] f2.0_t1.5_r1.5.gd
+  wall20 angle 0.00 {"carved":2108,"d2_max":1.3,"d2_over_half":34,"d2_p90":0.185,"d2_p99":0.569,"max_rise":0.33,"rises":2,"rock":2151}
+  wall20 angle 0.52 {"carved":2236,"d2_max":1.38,"d2_over_half":49,"d2_p90":0.304,"d2_p99":0.592,"max_rise":0.07,"rises":0,"rock":2314}
+  wall20 angle 0.79 {"carved":2244,"d2_max":1.4,"d2_over_half":39,"d2_p90":0.288,"d2_p99":0.575,"max_rise":0.0,"rises":0,"rock":2307}
+  wall12 angle .52 {"carved":1488,"d2_max":0.71,"d2_over_half":11,"d2_p90":0.272,"d2_p99":0.489,"max_rise":0.06,"rises":0,"rock":1519}
+  p03 {"d2_over_half":42,"faces":304,"normal_median":11.11,"normal_p90":16.98,"patches":7,"rises":0,"treads":35}

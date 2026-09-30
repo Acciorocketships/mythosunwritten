@@ -1,0 +1,44 @@
+## before
+== test_terrain_grade_patch: Tests                 6 Passing Tests         6 Asserts            5766 
+== test_september15_grade_topology: Tests                 6 Passing Tests         6 Asserts              20 
+== test_september13_village_grade: Tests                 3 Passing Tests         3 Asserts              55 
+== test_september7_continuous_street_grade: Tests                 3 Passing Tests         3 Asserts            7276 
+== test_graded_cliff_construction: Tests                 4 Passing Tests         4 Asserts              10 
+== test_feature_context: Tests                11 Passing Tests        11 Asserts              45 
+== test_path_plan_nodes: Tests                 5 Passing Tests         4 Failing Tests         1 Asserts           51/52 
+== test_path_features: Tests                 6 Passing Tests         6 Asserts              22 
+== test_path_program: Tests                 9 Passing Tests         9 Asserts             101 
+== test_september13_world_paths: Tests                10 Passing Tests        10 Asserts            1272 
+== test_september10_path_decision_work: Tests                 3 Passing Tests         3 Asserts              64 
+== test_village_plan: Tests                 3 Passing Tests         3 Asserts            3470 
+== test_september27_slope_ledges: Tests                 9 Passing Tests         9 Asserts              26 
+## after
+== test_september27_road_grade: Tests                 5 Passing Tests         5 Asserts              30 
+== test_terrain_grade_patch: Tests                 6 Passing Tests         6 Asserts            5766 
+== test_september15_grade_topology: Tests                 6 Passing Tests         6 Asserts              20 
+== test_september13_village_grade: Tests                 3 Passing Tests         3 Asserts              55 
+== test_september7_continuous_street_grade: Tests                 3 Passing Tests         3 Asserts            7276 
+== test_graded_cliff_construction: Tests                 4 Passing Tests         4 Asserts              10 
+== test_feature_context: Tests                11 Passing Tests        11 Asserts              45 
+== test_path_plan_nodes: Tests                 5 Passing Tests         4 Failing Tests         1 Asserts           51/52 
+== test_path_features: Tests                 6 Passing Tests         6 Asserts              22 
+== test_path_program: Tests                 9 Passing Tests         9 Asserts             101 
+== test_september13_world_paths: Tests                10 Passing Tests        10 Asserts            1272 
+== test_september10_path_decision_work: Tests                 3 Passing Tests         3 Asserts              64 
+== test_village_plan: Tests                 3 Passing Tests         3 Asserts            3470 
+== test_september27_slope_ledges: Tests                 7 Passing Tests         7 Asserts              16 
+## after, envelope suites
+res://tests/test_cliff_sheet_normals.gd
+Passing Tests         2
+res://tests/test_p03_cliff_followup.gd
+Passing Tests        10
+res://tests/test_p03_constrained_cliffs.gd
+Passing Tests        13
+res://tests/test_september23_cliff_directions.gd
+res://tests/test_september23_cliff_directions.gd
+Passing Tests        32
+Failing Tests         2
+res://tests/test_september26_bedrock.gd
+Passing Tests         6
+res://tests/test_september26_manual_cliffs.gd
+Passing Tests         6

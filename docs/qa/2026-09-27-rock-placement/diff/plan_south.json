@@ -1,0 +1,18 @@
+{
+  "before": "/private/tmp/claude-501/-Users-ryko-story/514d96f2-a4b3-4b1a-bf40-37b03f645fd0/scratchpad/rocks/before/00/plan_south.png",
+  "after": "/private/tmp/claude-501/-Users-ryko-story/514d96f2-a4b3-4b1a-bf40-37b03f645fd0/scratchpad/rocks/after3/00/plan_south.png",
+  "size": [
+    1600,
+    900
+  ],
+  "mean_absolute_channel_difference": 4.783017592592593,
+  "pixels_over_8": 258818,
+  "fraction_over_8": 0.17973472222222223,
+  "changed_bounds": [
+    78,
+    0,
+    1599,
+    899
+  ],
+  "note": "Pixel changes establish change, not correctness. Inspect matched images; animated grass and temporal rendering also change pixels."
+}

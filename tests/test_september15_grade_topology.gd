@@ -36,12 +36,16 @@ func test_reported_native_ground_keeps_full_claimed_footprints_supported() -> vo
 					largest_error=maxf(largest_error,absf(TerrainSurfaceField.surface_y(native,point.x,point.y)-grade._claims[cell]))
 		assert_lt(largest_error,.00001,spot+" entire reserved ground must retain its construction datum")
 		var crown_spread := 0.0
+		# Per edge (September 27): a native cliff crown holds its height along
+		# each cliff side; its one-storey sides are ordinary slopes. Since
+		# September 29 a cliff ending in a hillside also keeps its crown at
+		# the edge midpoint (no special fade profile).
 		for cell: Vector2i in native.native_control_heights:
-			if not TerrainSurfaceField._is_cliff_top(native,cell.x,cell.y): continue
-			for offset: Vector2 in [Vector2(-10.5,-10.5),Vector2(-10.5,10.5),Vector2(10.5,-10.5),Vector2(10.5,10.5)]:
-				var point := Vector2(cell)*24+offset
+			for d: Vector2i in [Vector2i(1,0),Vector2i(-1,0),Vector2i(0,1),Vector2i(0,-1)]:
+				if not TerrainSurfaceField.is_wall_edge(native,cell.x,cell.y,d): continue
+				var point := Vector2(cell)*24+Vector2(d)*10.5
 				crown_spread=maxf(crown_spread,absf(TerrainSurfaceField.surface_y_in_cell(native,point.x,point.y,cell.x,cell.y)-native.surface_height(cell.x,cell.y)))
-		assert_lt(crown_spread,.00001,spot+" native cliff crowns and corners remain horizontal")
+		assert_lt(crown_spread,.00001,spot+" native cliff crowns remain horizontal along their cliff sides")
 		var copied := GrassSamplingContext._copy_region(native,{})
 		assert_eq(copied.native_control_heights,native.native_control_heights,"grass and terrain share completed native controls")
 

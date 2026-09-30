@@ -1,0 +1,651 @@
+extends RefCounted
+## Whole-wall slope surface for the `sheet` style (owner, September 25): a
+## rounded envelope of the terrain itself. Every cliff lip gets a rounded
+## shoulder and every foot a concave fillet. Because it is one field over the
+## whole ground, not one slope per foot line, it continues round corners,
+## past the ends of walls and across stacked storeys: there is nowhere for a
+## slope to stop and drop straight down.
+##
+##   F = erode_FOOT(dilate_{SHOULDER+FOOT}(g))
+##
+## Dilation by a paraboloid of radius R rounds every convex edge (radius R);
+## eroding by a smaller one gives the shoulder back its radius SHOULDER and
+## fills each concave foot with a fillet of radius FOOT. Both are exact and
+## separable (Felzenszwalb lower envelopes) on a world-aligned grid, so every
+## chunk that computes a point gets the same value as long as its pad covers
+## the transforms' reach.
+##
+## Ridges and valleys blend a narrow and a wide shoulder, by noise carried
+## down the fall lines (each point takes the noise of the lip point it falls
+## from). Roads, plazas, villages and water cap the surface by a steep cut
+## rising from their edge. Worker-pure plain data.
+const H:=.5
+## Shoulder radius range (narrow valleys .. full ridges) and foot fillet
+## radius. Wider sides retain flat terrace interiors. Tall relief takes
+## the profile below, with its own ridge/valley width blend.
+const SHOULDER:=Vector2(3.0,6.4)
+const FOOT:=4.5
+## Tall drops keep a rounded shoulder and a broad foot. The former narrow
+## profile made ordinary tall faces too steep (owner, September 26).
+## RELIEF: the local relief over which the blend runs.
+const TIGHT:=Vector2(4.5,4.0)
+const RELIEF:=Vector2(4.0,10.0)
+const RELIEF_SPREAD:=25.0
+## Local relief (within a slope's reach) below which the ground keeps its
+## own surface: a 1 m level step is not a cliff; a 4 m storey is.
+const LOCAL_RELIEF:=Vector2(2.0,3.2)
+## Must cover the wider tall-cliff foot: a 14 m window cut it off abruptly.
+const LOCAL_REACH:=24.0
+## Grid pad beyond the rectangle that needs exact values: the reach of the
+## dilation and erosion over the steepest local relief.
+const PAD:=32.0
+## Rise of the cut from an excluded area's edge (a road cut, not a wall).
+const CUT_SLOPE:=1.4
+const CUT_MARGIN:=.5
+const EXCLUDE_STEP:=4
+
+var origin:=Vector2.ZERO
+var w:=0
+var h:=0
+var ground:=PackedFloat64Array()
+var surface:=PackedFloat64Array()
+## Rock exposure per node (0 moss slope .. 1 bare rock); empty unless a
+## study variant exposes rock in the surface itself.
+var rock:=PackedFloat64Array()
+## The uncarved hillside grade keeps grass on rock benches in the same moss
+## family as its surroundings, instead of painting each tread a pale stripe.
+var moss_grade:=PackedFloat64Array()
+## Populated by the original surface-net mesher. Only native grass lips are
+## retired by projected coverage; wall/backing geometry keeps its burial rule.
+var replacement_columns:Dictionary={}
+
+func replaces_lip(key:String,pose:Transform3D)->bool:
+ if replacement_columns.is_empty() or not CliffDressing._cpu_pieces.has(key):return false
+ var source:Dictionary=CliffDressing._cpu_pieces[key]
+ var transform:Transform3D=pose*source.local
+ for vertex:Vector3 in source.vertices:
+  var p:=transform*vertex
+  var q:=Vector2i((Vector2(p.x,p.z)/H).floor())
+  for offset:Vector2i in [Vector2i.ZERO,Vector2i(1,0),Vector2i(0,1),Vector2i(1,1)]:
+   if not replacement_columns.has(q+offset):return false
+ return true
+
+const STYLE=preload("res://scripts/terrain/field/CliffRockStyle.gd")
+
+## `rect`: where exact values are needed. `ground_at(q)->float`,
+## `excluded_at(q)->bool` (may be invalid).
+## Water: low banks use WATER_REACH. Tall banks also carry a rounded shoulder
+## from the dry surface; a fixed run alone cut a vertical step into the crown.
+const WATER_REACH:=5.0
+## Only a broad wet corridor warrants cutting through a rounded hillside.
+## Narrow wet pockets are absorbed by the bank, otherwise their distance
+## ridges punch steep, scalloped recesses into the mountain.
+const WATER_CORE_RADIUS:=8.0
+const WATER_SINK:=.4
+## Rock relief may stand proud, but must not excavate metre-deep benches
+## into an otherwise continuous mountain shoulder.
+const BEDROCK_RECESS:=.25
+static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:int,water_at:Callable=Callable())->RefCounted:
+ var env:=new()
+ var grid:=rect.grow(PAD)
+ env.origin=(grid.position/H).floor()*H
+ env.w=ceili((grid.end.x-env.origin.x)/H)+1
+ env.h=ceili((grid.end.y-env.origin.y)/H)+1
+ var n:int=env.w*env.h
+ var clock:=Time.get_ticks_usec();var profile:=OS.has_environment("SLOPE_ENV_PROFILE")
+ var mark:=func(label:String)->void:
+  if profile:print("[slope_envelope] %s %.0f ms (%dx%d)"%[label,(Time.get_ticks_usec()-clock)/1000.0,env.w,env.h])
+ env.ground.resize(n)
+ var excluded:=PackedByteArray();excluded.resize(n)
+ var any_excluded:=false
+ for k in env.h:
+  for i in env.w:
+   env.ground[k*env.w+i]=ground_at.call(env.origin+Vector2(i,k)*H)
+ mark.call("ground")
+ # Keep-out areas on a coarser lattice: water and feature queries are far
+ # dearer than the ground, and the cut's margin absorbs the block size.
+ if excluded_at.is_valid():
+  for k in range(0,env.h,EXCLUDE_STEP):
+   for i in range(0,env.w,EXCLUDE_STEP):
+    if not excluded_at.call(env.origin+(Vector2(i,k)+Vector2.ONE*(EXCLUDE_STEP-1)*.5)*H):continue
+    any_excluded=true
+    for kk in range(k,mini(k+EXCLUDE_STEP,env.h)):
+     for ii in range(i,mini(i+EXCLUDE_STEP,env.w)):excluded[kk*env.w+ii]=1
+  # Blocks on the mask's edge are resolved per node: the cut follows the
+  # road's own outline, not a 2 m staircase (owner, September 26).
+  if any_excluded:
+   var S:=EXCLUDE_STEP;var coarse:=excluded.duplicate()
+   for k in range(0,env.h,S):
+    for i in range(0,env.w,S):
+     var here:=coarse[k*env.w+i];var edge:=false
+     for o:Vector2i in [Vector2i(-S,0),Vector2i(S,0),Vector2i(0,-S),Vector2i(0,S)]:
+      var ii:=i+o.x;var kk:=k+o.y
+      if ii>=0 and kk>=0 and ii<env.w and kk<env.h and coarse[kk*env.w+ii]!=here:edge=true
+     if not edge:continue
+     for kk in range(k,mini(k+S,env.h)):
+      for ii in range(i,mini(i+S,env.w)):
+       excluded[kk*env.w+ii]=1 if excluded_at.call(env.origin+Vector2(ii,kk)*H) else 0
+ # Water level per lattice block (NAN where dry).
+ var wet_level:=PackedFloat64Array();var any_wet:=false
+ if water_at.is_valid():
+  wet_level.resize(n);wet_level.fill(NAN)
+  for k in range(0,env.h,EXCLUDE_STEP):
+   for i in range(0,env.w,EXCLUDE_STEP):
+    var level:float=water_at.call(env.origin+(Vector2(i,k)+Vector2.ONE*(EXCLUDE_STEP-1)*.5)*H)
+    if is_nan(level):continue
+    any_wet=true
+    for kk in range(k,mini(k+EXCLUDE_STEP,env.h)):
+     for ii in range(i,mini(i+EXCLUDE_STEP,env.w)):wet_level[kk*env.w+ii]=level
+ mark.call("exclusion")
+ # `+underlip`: the slope leaves the wall LIP_DROP under the kept native lip,
+ # nearly vertical there (small shoulders), so the lip is the edge again.
+ var under:=STYLE.lip_mode=="underlip"
+ var g:=_under_lip(env) if under else env.ground
+ # The optional underlip study retains its intentionally narrow profile.
+ var sh:=Vector2(.36,.96) if under else SHOULDER
+ var foot:=3.6 if under else FOOT
+ var tight_sh:=.28 if under else TIGHT.x
+ var tight_foot:=1.5 if under else TIGHT.y
+ var narrow:=_close(g,env.w,env.h,sh.x,foot)
+ var wide_dilated:=_dilate(g,env.w,env.h,sh.y+foot)
+ var wide:=_erode(wide_dilated,env.w,env.h,foot)
+ var tight:=_close(g,env.w,env.h,tight_sh,tight_foot)
+ var tight_wide:=_close(g,env.w,env.h,.68 if under else 6.4,tight_foot)
+ # Local relief: highest reach minus lowest reach nearby; continuous even
+ # across the terrain's own cliffs, so the blend never opens a step.
+ var floor_level:=_erode(env.ground,env.w,env.h,SHOULDER.y+FOOT)
+ var relief:=PackedFloat64Array();relief.resize(n)
+ for idx in n:relief[idx]=wide_dilated[idx]-floor_level[idx]
+ # Carried out over the fan a drop feeds, so the whole corner slope takes
+ # the corner's drop, not the relief left at each point along it.
+ relief=_dilate(relief,env.w,env.h,RELIEF_SPREAD)
+ mark.call("transforms")
+ var t:=_ridges(env,narrow,wide,wide_dilated,seed_value)
+ mark.call("ridges")
+ # Flat-window relief (highest minus lowest ground within LOCAL_REACH).
+ var local:=_window(env.ground,env.w,env.h,LOCAL_REACH,true)
+ var lowest:=_window(env.ground,env.w,env.h,LOCAL_REACH,false)
+ for idx in n:local[idx]-=lowest[idx]
+ env.surface.resize(n)
+ for idx in n:
+  var tall:=smoothstep(RELIEF.x,RELIEF.y,relief[idx])
+  env.surface[idx]=lerpf(lerpf(narrow[idx],wide[idx],t[idx]),lerpf(tight[idx],tight_wide[idx],t[idx]),tall)
+  # Only cliffs take a slope: the terrain's own 1 m level steps are already
+  # smooth ramps, and rounding them again laid strips of slope (another
+  # colour, other grass) over ordinary ground (owner, September 26).
+  env.surface[idx]=lerpf(env.ground[idx],env.surface[idx],smoothstep(LOCAL_RELIEF.x,LOCAL_RELIEF.y,local[idx]))
+ # Keep-out caps: a steep cut rising from roads and graded ground; in water,
+ # the slope continues WATER_REACH from the shore, then sinks under it.
+ var caps:=PackedFloat64Array();caps.resize(n);caps.fill(INF)
+ if any_excluded:
+  var dist:=_distance(excluded,env.w,env.h)
+  for idx in n:caps[idx]=env.ground[idx]+CUT_SLOPE*maxf(0.0,dist[idx]-CUT_MARGIN)
+ if any_wet:
+  var dry:=PackedByteArray();dry.resize(n)
+  var shore:=PackedFloat64Array();shore.resize(n);shore.fill(-INF)
+  for idx in n:
+   dry[idx]=1 if is_nan(wet_level[idx]) else 0
+   if dry[idx]:shore[idx]=env.surface[idx]
+  var inward:=_distance(dry,env.w,env.h)
+  # A parabolic continuation starts tangent to a dry crown and has finite
+  # reach proportional to its relief. It preserves the existing rounded
+  # profile where a five-metre water cut would otherwise sever it.
+  var bank:=_dilate(shore,env.w,env.h,SHOULDER.y)
+  # Opposing banks must leave a submerged receiver between them. Distance
+  # ridges locate the wet corridor; a submerged two-metre-wide receiver
+  # keeps a traversable channel, with a compact rounded foot rising away
+  # from it without clipping a tall bank straight down at its dry crown.
+  var receiver:=PackedFloat64Array();receiver.resize(n);receiver.fill(INF)
+  for k in range(1,env.h-1):
+   for i in range(1,env.w-1):
+    var idx:=k*env.w+i;var d:=inward[idx]
+    # Small shoreline puddles lie entirely within the allowed bank runout;
+    # treating their centre as a channel cut recreated isolated rock slabs.
+    if dry[idx] or not is_finite(d) or d<WATER_CORE_RADIUS:continue
+    if (d>inward[idx-1] and d>=inward[idx+1]) or (d>inward[idx-env.w] and d>=inward[idx+env.w]):
+     receiver[idx]=wet_level[idx]-WATER_SINK
+  receiver=_erode(_window(receiver,env.w,env.h,1.0,false),env.w,env.h,.5)
+  for idx in n:
+   if not is_nan(wet_level[idx]):
+    var water_cap:=wet_level[idx]-WATER_SINK+CUT_SLOPE*(WATER_REACH-inward[idx])
+    var bank_cap:=maxf(water_cap,bank[idx])
+    # Round only the bank/channel join. Rounding against the slope itself
+    # would recess an otherwise tangent crown by the blend's full depth.
+    var join:=maxf(0.0,1.0-absf(bank_cap-receiver[idx])/4.0)
+    caps[idx]=minf(caps[idx],minf(receiver[idx],bank_cap)-join*join)
+ var uncut:=env.surface.duplicate()
+ for idx in n:env.surface[idx]=minf(env.surface[idx],maxf(env.ground[idx],caps[idx]))
+ if STYLE.sheet_study=="bedrock":
+  var cut:=PackedFloat64Array();cut.resize(n)
+  for idx in n:cut[idx]=uncut[idx]-env.surface[idx]
+  _bedrock(env,floor_level,wide_dilated,relief,seed_value,cut)
+  for idx in n:env.surface[idx]=minf(env.surface[idx],maxf(env.ground[idx],caps[idx]))
+ mark.call("done")
+ return env
+
+## Separable square-window max (or min) over `reach` metres, in linear time
+## (van Herk / Gil-Werman: block prefix and suffix extrema).
+static func _window(g:PackedFloat64Array,w:int,h:int,reach:float,highest:bool)->PackedFloat64Array:
+ var r:=ceili(reach/H)
+ var rows:=g.duplicate()
+ var line:=PackedFloat64Array()
+ for k in h:
+  line.resize(w)
+  for i in w:line[i]=g[k*w+i]
+  line=_slide(line,r,highest)
+  for i in w:rows[k*w+i]=line[i]
+ var out:=rows.duplicate()
+ for i in w:
+  line.resize(h)
+  for k in h:line[k]=rows[k*w+i]
+  line=_slide(line,r,highest)
+  for k in h:out[k*w+i]=line[k]
+ return out
+
+static func _slide(f:PackedFloat64Array,r:int,highest:bool)->PackedFloat64Array:
+ var n:=f.size();var size:=2*r+1
+ var pre:=PackedFloat64Array();pre.resize(n)
+ var suf:=PackedFloat64Array();suf.resize(n)
+ for i in n:
+  pre[i]=f[i] if i%size==0 else (maxf(pre[i-1],f[i]) if highest else minf(pre[i-1],f[i]))
+ for i in range(n-1,-1,-1):
+  suf[i]=f[i] if (i%size==size-1 or i==n-1) else (maxf(suf[i+1],f[i]) if highest else minf(suf[i+1],f[i]))
+ var out:=PackedFloat64Array();out.resize(n)
+ for i in n:
+  var a:=suf[maxi(0,i-r)];var b:=pre[mini(n-1,i+r)]
+  out[i]=maxf(a,b) if highest else minf(a,b)
+ return out
+
+## Lip study `+underlip`: ground for the envelope with every cliff top
+## lowered along its front band (the terrain cell's overhang, OVERHANG in
+## front of the visible wall line): LIP_DROP at the wall line, falling
+## steeply to the cell edge. The envelope then starts LIP_DROP under the lip.
+const LIP_DROP:=1.2
+const OVERHANG:=1.5
+static func _under_lip(env)->PackedFloat64Array:
+ var w:int=env.w;var h:int=env.h;var n:=w*h
+ # Nodes at least a storey-ish below something within reach are "low".
+ var high:=PackedFloat64Array();high.resize(n)
+ var r:=ceili(2.5/H)
+ var rows:=PackedFloat64Array();rows.resize(n)
+ for k in h:
+  for i in w:
+   var m:=-INF
+   for d in range(maxi(0,i-r),mini(w,i+r+1)):m=maxf(m,env.ground[k*w+d])
+   rows[k*w+i]=m
+ for k in h:
+  for i in w:
+   var m:=-INF
+   for d in range(maxi(0,k-r),mini(h,k+r+1)):m=maxf(m,rows[d*w+i])
+   high[k*w+i]=m
+ var low:=PackedByteArray();low.resize(n)
+ for idx in n:low[idx]=1 if env.ground[idx]<high[idx]-2.0 else 0
+ var dist:=_distance(low,w,h)
+ var out:PackedFloat64Array=env.ground.duplicate()
+ for idx in n:
+  if low[idx]==0 and dist[idx]<OVERHANG+H:
+   out[idx]-=LIP_DROP+3.0*maxf(0.0,OVERHANG-dist[idx])
+ return out
+
+## Value at a world point on the grid (nearest node; exact at grid points).
+func at(q:Vector2)->float:
+ var i:=clampi(roundi((q.x-origin.x)/H),0,w-1);var k:=clampi(roundi((q.y-origin.y)/H),0,h-1)
+ return surface[k*w+i]
+
+## Rock exposure, bilinear (0 where no study variant exposes rock).
+func rock_at(q:Vector2)->float:
+ if rock.is_empty():return 0.0
+ var p:=(q-origin)/H
+ var i:=clampi(floori(p.x),0,w-2);var k:=clampi(floori(p.y),0,h-2)
+ var fx:=clampf(p.x-i,0.0,1.0);var fz:=clampf(p.y-k,0.0,1.0)
+ return lerpf(lerpf(rock[k*w+i],rock[k*w+i+1],fx),lerpf(rock[(k+1)*w+i],rock[(k+1)*w+i+1],fx),fz)
+
+func moss_grade_at(q:Vector2)->float:
+ if moss_grade.is_empty():return 0.0
+ var p:=(q-origin)/H
+ var i:=clampi(floori(p.x),0,w-2);var k:=clampi(floori(p.y),0,h-2)
+ var fx:=clampf(p.x-i,0.0,1.0);var fz:=clampf(p.y-k,0.0,1.0)
+ return lerpf(lerpf(moss_grade[k*w+i],moss_grade[k*w+i+1],fx),lerpf(moss_grade[(k+1)*w+i],moss_grade[(k+1)*w+i+1],fx),fz)
+
+func ground_node(q:Vector2)->float:
+ var i:=clampi(roundi((q.x-origin.x)/H),0,w-1);var k:=clampi(roundi((q.y-origin.y)/H),0,h-1)
+ return ground[k*w+i]
+
+## Bilinear between nodes, for rock placement off the grid.
+func sample(q:Vector2)->float:
+ var p:=(q-origin)/H
+ var i:=clampi(floori(p.x),0,w-2);var k:=clampi(floori(p.y),0,h-2)
+ var fx:=clampf(p.x-i,0.0,1.0);var fz:=clampf(p.y-k,0.0,1.0)
+ var a:=lerpf(surface[k*w+i],surface[k*w+i+1],fx)
+ var b:=lerpf(surface[(k+1)*w+i],surface[(k+1)*w+i+1],fx)
+ return lerpf(a,b,fz)
+
+func contains(q:Vector2)->bool:
+ return q.x>=origin.x and q.y>=origin.y and q.x<=origin.x+(w-1)*H and q.y<=origin.y+(h-1)*H
+
+## Whether the slope covers a native cliff piece at `origin` whose top is
+## `top`: on every low side (ground over a metre below the top, `far` out)
+## the slope just past the lip (`near` out) stands at least at that top.
+## Covered pieces are hidden; they otherwise poke through the slope.
+func covers_piece(origin:Vector3,top:float,near:=1.6,far:=2.6)->bool:
+ var low:=false
+ var p:=Vector2(origin.x,origin.z)
+ for a in 8:
+  var dir:=Vector2.from_angle(a*PI*.25)
+  if not contains(p+dir*far):return false
+  if ground_node(p+dir*far)>top-1.0:continue
+  low=true
+  if at(p+dir*near)<top-.3:return false
+ return low
+
+## Native cliff pieces (CliffDressing data) the slope does not cover. Wall
+## rows span a storey above their origin; lips sit at the crest.
+func uncovered(pieces:Dictionary)->Dictionary:
+ var out:={}
+ for key:Variant in pieces:
+  if not (pieces[key] is Array):
+   out[key]=pieces[key];continue
+  var lip:=String(key).ends_with("lip")
+  var kept:Array[Transform3D]=[]
+  # `+underlip` keeps every lip; walls count as covered below the lip band.
+  var under:=STYLE.lip_mode=="underlip"
+  for t:Transform3D in pieces[key]:
+   if lip and not under and replaces_lip(String(key),t):continue
+   # Under the lip the slope stands off the wall: a wall panel is hidden
+   # wherever the slope reaches a metre up it (the skirt shows as the band).
+   if (lip and under) or not covers_piece(t.origin,t.origin.y+(.1 if lip else (1.3 if under else 4.0))):kept.append(t)
+  out[key]=kept
+ return out
+
+## A buried backstop can leave its top 2 cm above the sunken sheet once
+## its old lip is withdrawn. Require a full grid neighbourhood above every
+## tested point, so exposed cut walls keep their backing.
+func _buried_skirt_point(p:Vector3)->bool:
+ if replacement_columns.is_empty():return false
+ var q:=Vector2i((Vector2(p.x,p.z)/H).floor())
+ for dz in range(-1,3):
+  for dx in range(-1,3):
+   var key:=q+Vector2i(dx,dz)
+   var point:=Vector2(key)*H
+   if not replacement_columns.has(key) or not contains(point) or at(point)<p.y-.03:return false
+ return true
+
+## Skirt triangles (the native rock backstop, 1.3 m behind the cell edge)
+## the slope does not cover, checked at every corner and the centre.
+func uncovered_faces(arrays:Array)->Array:
+ # `+underlip`: the skirt shows as the rock band under the lip; below it
+ # stands inside the slope.
+ if arrays.is_empty() or STYLE.lip_mode=="underlip":return arrays
+ var vertices:PackedVector3Array=arrays[Mesh.ARRAY_VERTEX]
+ var indices:=PackedInt32Array(arrays[Mesh.ARRAY_INDEX]) if arrays[Mesh.ARRAY_INDEX]!=null else PackedInt32Array()
+ if indices.is_empty():
+  indices.resize(vertices.size())
+  for i in vertices.size():indices[i]=i
+ var kept:=PackedInt32Array()
+ for t in range(0,indices.size(),3):
+  var a:=vertices[indices[t]];var b:=vertices[indices[t+1]];var c:=vertices[indices[t+2]]
+  var top:=maxf(a.y,maxf(b.y,c.y))
+  var covered:=true
+  for p:Vector3 in [a,b,c,(a+b+c)/3.0]:
+   if not _buried_skirt_point(p) and not covers_piece(p,top,1.4,1.9):covered=false;break
+  if not covered:kept.append_array(PackedInt32Array([indices[t],indices[t+1],indices[t+2]]))
+ if kept.size()==indices.size():return arrays
+ var out:=arrays.duplicate()
+ out[Mesh.ARRAY_INDEX]=kept
+ return out if not kept.is_empty() else []
+
+## Ridge blend: 0 = narrow shoulder (valley), 1 = wide (ridge crest). Noise
+## is taken at the lip point each point falls from (the dilation's source:
+## q + R grad D), so ridges run down the fall lines; a light blur removes the
+## jump where two walls' fall lines meet at an inner corner. Fine bumps and
+## divots ride on top, within the same narrow..wide band, so they can never
+## rise over the lip or through the ground.
+static func _ridges(env:RefCounted,narrow:PackedFloat64Array,wide:PackedFloat64Array,dilated:PackedFloat64Array,seed_value:int)->PackedFloat64Array:
+ var w:int=env.w;var h:int=env.h
+ var t:=PackedFloat64Array();t.resize(w*h);t.fill(.5)
+ var reach:=SHOULDER.y+FOOT
+ for k in range(1,h-1):
+  for i in range(1,w-1):
+   var idx:=k*w+i
+   if wide[idx]-narrow[idx]<.005:continue
+   var q:Vector2=env.origin+Vector2(i,k)*H
+   var grad:=Vector2(dilated[idx+1]-dilated[idx-1],dilated[idx+w]-dilated[idx-w])/(2.0*H)
+   var src:=(q+grad*reach).snapped(Vector2.ONE*.25)
+   var p:=Vector3(src.x,0,src.y)
+   var warp:=(Helper._value_noise01(p,seed_value+9131,23.0)-.5)*12.0
+   var r:=.6*(Helper._value_noise01(p+Vector3(warp,0,-warp),seed_value+9133,7.0)*2.0-1.0) \
+    +.4*(Helper._value_noise01(p+Vector3(warp,0,-warp),seed_value+9137,14.0)*2.0-1.0)
+   t[idx]=.5+.5*clampf(signf(r)*pow(absf(r)*1.6,.7),-1.0,1.0)
+ t=_blur(_blur(t,w,h,2),w,h,2)
+ for idx in t.size():t[idx]=smoothstep(.22,.78,t[idx])
+ for k in h:
+  for i in w:
+   var idx:=k*w+i
+   if wide[idx]-narrow[idx]<.005:continue
+   var p:=Vector3(env.origin.x+i*H,0,env.origin.y+k*H)
+   var bump:=(Helper._value_noise01(p,seed_value+9301,4.5)-.5)*.15+(Helper._value_noise01(p,seed_value+9307,2.6)-.5)*.04
+   t[idx]=clampf(t[idx]+bump,0.0,1.0)
+ return t
+
+static func _close(g:PackedFloat64Array,w:int,h:int,shoulder:float,foot:float)->PackedFloat64Array:
+ return _erode(_dilate(g,w,h,shoulder+foot),w,h,foot)
+
+## max over p of g(p) - |q-p|^2/(2R).
+static func _dilate(g:PackedFloat64Array,w:int,h:int,radius:float)->PackedFloat64Array:
+ var neg:=PackedFloat64Array();neg.resize(g.size())
+ for idx in g.size():neg[idx]=-g[idx]
+ var out:=_envelope2(neg,w,h,H*H/(2.0*radius))
+ for idx in out.size():out[idx]=-out[idx]
+ return out
+
+## min over p of g(p) + |q-p|^2/(2R).
+static func _erode(g:PackedFloat64Array,w:int,h:int,radius:float)->PackedFloat64Array:
+ return _envelope2(g,w,h,H*H/(2.0*radius))
+
+## Euclidean distance (world units) to the nearest set node.
+static func _distance(mask:PackedByteArray,w:int,h:int)->PackedFloat64Array:
+ var f:=PackedFloat64Array();f.resize(mask.size())
+ for idx in mask.size():f[idx]=0.0 if mask[idx] else INF
+ var out:=_envelope2(f,w,h,1.0)
+ for idx in out.size():out[idx]=sqrt(out[idx])*H
+ return out
+
+## min over nodes of f(p) + a*|q-p|^2 (grid units): rows then columns.
+static func _envelope2(f:PackedFloat64Array,w:int,h:int,a:float)->PackedFloat64Array:
+ var out:=f.duplicate()
+ var n:=maxi(w,h)
+ var line:=PackedFloat64Array();line.resize(n)
+ var result:=PackedFloat64Array();result.resize(n)
+ var v:=PackedInt32Array();v.resize(n)
+ var z:=PackedFloat64Array();z.resize(n+1)
+ for k in h:
+  for i in w:line[i]=out[k*w+i]
+  _envelope1(line,w,a,result,v,z)
+  for i in w:out[k*w+i]=result[i]
+ for i in w:
+  for k in h:line[k]=out[k*w+i]
+  _envelope1(line,h,a,result,v,z)
+  for k in h:out[k*w+i]=result[k]
+ return out
+
+## Lower envelope of the parabolas f[k] + a*(q-k)^2 (Felzenszwalb and
+## Huttenlocher). Infinite entries take no part.
+static func _envelope1(f:PackedFloat64Array,n:int,a:float,out:PackedFloat64Array,v:PackedInt32Array,z:PackedFloat64Array)->void:
+ var k:=-1
+ for q in n:
+  var fq:=f[q]
+  if fq==INF:continue
+  if k<0:
+   k=0;v[0]=q;z[0]=-INF;z[1]=INF;continue
+  var s:=((fq+a*q*q)-(f[v[k]]+a*v[k]*v[k]))/(2.0*a*(q-v[k]))
+  while s<=z[k]:
+   k-=1
+   if k<0:break
+   s=((fq+a*q*q)-(f[v[k]]+a*v[k]*v[k]))/(2.0*a*(q-v[k]))
+  k+=1
+  v[k]=q;z[k]=-INF if k==0 else s;z[k+1]=INF
+ if k<0:
+  for q in n:out[q]=INF
+  return
+ var j:=0
+ for q in n:
+  while z[j+1]<q:j+=1
+  var d:=q-v[j]
+  out[q]=f[v[j]]+a*d*d
+
+## Box blur of radius r nodes, rows then columns.
+static func _blur(f:PackedFloat64Array,w:int,h:int,r:int)->PackedFloat64Array:
+ var tmp:=f.duplicate()
+ for k in h:
+  var sum:=0.0;var count:=0
+  for i in range(0,mini(r,w)):sum+=f[k*w+i];count+=1
+  for i in w:
+   if i+r<w:sum+=f[k*w+i+r];count+=1
+   if i-r-1>=0:sum-=f[k*w+i-r-1];count-=1
+   tmp[k*w+i]=sum/count
+ var out:=tmp.duplicate()
+ for i in w:
+  var sum:=0.0;var count:=0
+  for k in range(0,mini(r,h)):sum+=tmp[k*w+i];count+=1
+  for k in h:
+   if k+r<h:sum+=tmp[(k+r)*w+i];count+=1
+   if k-r-1>=0:sum-=tmp[(k-r-1)*w+i];count-=1
+   out[k*w+i]=sum/count
+ return out
+
+## STUDY (owner, September 25 rethink): bedrock exposed in the slope surface
+## itself. A patch mask picks parts of steep faces; inside, the moss slope is
+## carved into blocky benches: Voronoi blocks (world lattice) each terrace the
+## slope with their own phase, bench height and riser, so benches break into
+## upright blocks and never line up into courses. Benches are flat, grassed
+## ledges; risers are bare rock. The carve fades to nothing at the patch edge,
+## so moss runs into rock without a lip; blocks jut only in the interior.
+const BLOCK:=5.5
+const PATCH:=14.0
+const STRETCH:=2.2
+static func _bedrock(env,floor_level:PackedFloat64Array,top:PackedFloat64Array,relief:PackedFloat64Array,seed_value:int,cut:PackedFloat64Array)->void:
+ var n:int=env.w*env.h;var w:int=env.w;var hh:int=env.h
+ var F:PackedFloat64Array=env.surface.duplicate()
+ env.moss_grade.resize(n)
+ var crown:=PackedByteArray();crown.resize(n)
+ for k in range(1,hh-1):
+  for i in range(1,w-1):
+   var idx:=k*w+i
+   var gx:=(F[idx+1]-F[idx-1])/(2.0*H);var gz:=(F[idx+w]-F[idx-w])/(2.0*H)
+   env.moss_grade[idx]=1.0-1.0/sqrt(1.0+gx*gx+gz*gz)
+   if absf(F[idx]-env.ground[idx])<.05 and F[idx]-floor_level[idx]>1.0 and gx*gx+gz*gz<.04:crown[idx]=1
+ var crown_distance:=_distance(crown,w,hh)
+ env.moss_grade=_blur(env.moss_grade,w,hh,2)
+ var raw:=PackedFloat64Array();raw.resize(n)
+ var lattice:={}
+ var noise:=func(q:Vector2,scale:float,salt:int)->float:
+  var p:=q/scale;var i:=floori(p.x);var k:=floori(p.y);var f:=p-Vector2(i,k)
+  f=f*f*(Vector2(3,3)-2.0*f)
+  var c:=func(a:int,b:int)->float:
+   var key:=Vector3i(a,b,salt)
+   if not lattice.has(key):lattice[key]=Helper.position_hash01(Vector3(a,b,salt)*.5,seed_value+4431)
+   return lattice[key]
+  return lerpf(lerpf(c.call(i,k),c.call(i+1,k),f.x),lerpf(c.call(i,k+1),c.call(i+1,k+1),f.x),f.y)
+ for k in range(1,hh-1):
+  for i in range(1,w-1):
+   var idx:=k*w+i
+   # Where a road or water cut the slope back, the cut face is bare rock.
+   raw[idx]=smoothstep(.3,1.0,cut[idx])
+   if relief[idx]<2.5:continue
+   var gx:=(F[idx+1]-F[idx-1])/(2.0*H);var gz:=(F[idx+w]-F[idx-w])/(2.0*H)
+   var steep:=sqrt(gx*gx+gz*gz)
+   if steep<.45:continue
+   var span:=maxf(top[idx]-floor_level[idx],1.0)
+   var frac:=(F[idx]-floor_level[idx])/span
+   var q:Vector2=env.origin+Vector2(i,k)*H
+   var patch:float=.65*noise.call(q,PATCH,1)+.35*noise.call(q,PATCH*.45,2)
+   var e:=smoothstep(.54,.7,patch+.3*(smoothstep(.6,1.6,steep)-.5))
+   e*=smoothstep(.45,.9,steep)*smoothstep(.08,.28,frac)*smoothstep(2.5,4.5,relief[idx])
+   raw[idx]=maxf(raw[idx],e)
+ raw=_blur(_blur(raw,w,hh,2),w,hh,2)
+ env.rock=raw
+ var cells:={}
+ var cell_at:=func(c:Vector2i)->Array:
+  if not cells.has(c):
+   var hsh:=func(salt:int)->float:return Helper.position_hash01(Vector3(c.x,c.y,salt)*.5,seed_value+7727)
+   var pt:=(Vector2(c)+Vector2(.15+.7*hsh.call(1),.15+.7*hsh.call(2)))*BLOCK
+   # [feature point, phase, bench step, riser fraction, jut, benched]
+   # Unbenched blocks follow the slope. Tripling their step did the opposite:
+   # it held much of a cliff on one giant flat shelf beside a thin riser.
+   var step:=lerpf(3.5,6.5,hsh.call(4))
+   cells[c]=[pt,hsh.call(3),step,lerpf(.15,.3,hsh.call(5)),lerpf(-.3,1.0,hsh.call(6)),hsh.call(7)>=.33]
+  return cells[c]
+ for k in hh:
+  for i in w:
+   var idx:=k*w+i
+   if i==0 or k==0 or i==w-1 or k==hh-1:continue
+   # Never carve into flat ground the blur spread onto (plateau tops, feet).
+   var gx:=(F[idx+1]-F[idx-1])/(2.0*H);var gz:=(F[idx+w]-F[idx-w])/(2.0*H)
+   var e:=raw[idx]*smoothstep(.3,.65,sqrt(gx*gx+gz*gz))
+   # Keep the whole rounded shoulder intact before the first rock bench.
+   # A one-metre guard still allowed multi-metre cuts just beside the crown,
+   # especially where two cliff edges meet above a water-constrained bank.
+   e*=smoothstep(3.0,7.0,crown_distance[idx])
+   raw[idx]=e
+   if e<.01:continue
+   var frac:=(F[idx]-floor_level[idx])/maxf(top[idx]-floor_level[idx],1.0)
+   var q:Vector2=env.origin+Vector2(i,k)*H
+   var base:=Vector2i(floori(q.x/BLOCK),floori(q.y/BLOCK))
+   var d1:=INF;var d2:=INF;var best:Array=[];var second:Array=[]
+   # Blocks stretch along the contour: long benches, fewer vertical splits.
+   var fall:=Vector2(gx,gz).normalized()
+   for dz in range(-2,3):
+    for dx in range(-2,3):
+     var cell:Array=cell_at.call(base+Vector2i(dx,dz))
+     var delta:Vector2=q-cell[0];var across:=delta.dot(fall)
+     var d:=sqrt(delta.length_squared()+(STRETCH*STRETCH-1.0)*across*across)
+     if d<d1:d2=d1;second=best;d1=d;best=cell
+     elif d<d2:d2=d;second=cell
+   # Chipped bench edges: a little noise on where each riser starts.
+   var chip:float=-.35*noise.call(q,2.3,3)
+   # Benches centred on the slope: blocks stand proud as much as they recess.
+   # Join the two block profiles across their common border. A winner-only
+   # phase switch created multi-metre, one-cell fins and slots.
+   var blend:=.5*(1.0-smoothstep(0.0,1.2,d2-d1))
+   var carved:=lerpf(_bedrock_level(F[idx],best,chip),_bedrock_level(F[idx],second,chip),blend)
+   # A split between neighbouring blocks.
+   var split:=.35*(1.0-smoothstep(.0,.4,d2-d1))
+   # Nothing stands over the lip: near the crest the rock only recesses.
+   carved=minf(carved,F[idx]+2.5*(1.0-smoothstep(.72,.92,frac)))-split
+   # A narrow (about 2 m) transition: most of a patch is fully rock.
+   var s:=smoothstep(.15,.55,e)
+   var jut:=s*s*lerpf(float(best[4]),float(second[4]),blend)*(1.0-smoothstep(.7,.9,frac))
+   # Stay a solid slope column: carving to the ground would drop the column
+   # and open a hole where the native pieces are hidden.
+   # Keep rock attached to the hillside. A large phase offset beside a
+   # terrain step produced isolated-looking slabs and tall thin projections.
+   var shaped:=clampf(lerpf(F[idx],carved,s)+jut,F[idx]-BEDROCK_RECESS,F[idx]+1.25)
+   env.surface[idx]=maxf(env.ground[idx]+minf(F[idx]-env.ground[idx],.4),shaped)
+ _remove_bedrock_fins(env,F)
+
+## Phase changes can leave a single half-metre column metres above or below
+## both neighbours. Remove only those artificial reversals, retaining broad
+## benches, monotone rock risers and the underlying terrain's own relief.
+static func _remove_bedrock_fins(env,base:PackedFloat64Array)->void:
+ var w:int=env.w;var hh:int=env.h
+ for iteration in 4:
+  var source:PackedFloat64Array=env.surface.duplicate()
+  for k in range(1,hh-1):
+   for i in range(1,w-1):
+    var idx:=k*w+i;var y:=source[idx];var correction:=0.0
+    for offset:int in [1,w]:
+     if absf(base[idx]-(base[idx-offset]+base[idx+offset])*.5)>=.2:continue
+     var a:=source[idx-offset];var b:=source[idx+offset]
+     var delta:=clampf(y,minf(a,b)-.45,maxf(a,b)+.45)-y
+     if absf(delta)>absf(correction):correction=delta
+    if absf(correction)<.001:continue
+    var floor_y:float=env.ground[idx]+minf(base[idx]-env.ground[idx],.4)
+    env.surface[idx]=maxf(maxf(floor_y,base[idx]-BEDROCK_RECESS),y+correction*.75)
+
+static func _bedrock_level(height:float,cell:Array,chip:float)->float:
+ if not cell[5]:return height+chip
+ var step:float=cell[2];var phase:float=cell[1]*step;var r:float=cell[3]
+ var v:=(height+chip+phase+.5*(1.0-r)*step)/step
+ var fl:=floorf(v);var f:=v-fl
+ var rise:=clampf((f-(1.0-r))/r,0.0,1.0)
+ return (fl+rise)*step-phase-.5*(1.0-r)*step

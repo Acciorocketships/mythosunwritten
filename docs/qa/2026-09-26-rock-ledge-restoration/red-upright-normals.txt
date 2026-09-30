@@ -1,0 +1,43 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/harness/cliff_ledge_upright_red.gd
+* test_rock_face_normals_follow_the_hillside_instead_of_standing_upright
+    [Failed]:  [16.8103000633435] expected to be < than [14.0]:  Typical rock-face normals follow the supporting slope
+      at line 174
+    [Failed]:  [26.6711089328321] expected to be < than [24.0]:  The broad faces cannot be dominated by upright walls
+      at line 175
+0/1 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/harness/cliff_ledge_upright_red.gd
+- test_rock_face_normals_follow_the_hillside_instead_of_standing_upright
+    [Failed]:  [16.8103000633435] expected to be < than [14.0]:  Typical rock-face normals follow the supporting slope
+          at line 174
+    [Failed]:  [26.6711089328321] expected to be < than [24.0]:  The broad faces cannot be dominated by upright walls
+          at line 175
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts             1/3
+Time              7.366s
+
+
+Ran Tests matching "rock_face_normals_follow"
+---- 1 failing tests ----
+

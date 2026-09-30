@@ -1,0 +1,126 @@
+-- lateral -4 dir (-1.0, 0.0)
+-20 (1517.8, 594.0) ground   0.00 uncut   4.83 surf   5.28 caps   5.41 wet   5.70 t 0.08 relief  7.50 rock 0.42
+-19 (1516.8, 594.0) ground   0.00 uncut   4.27 surf   5.07 caps   4.17 wet   5.70 t 0.08 relief  7.41 rock 0.53
+-18 (1515.8, 594.0) ground   0.00 uncut   3.88 surf   4.78 caps   4.08 wet   5.70 t 0.13 relief  7.41 rock 0.61
+-17 (1514.8, 594.0) ground   0.00 uncut   3.82 surf   5.30 caps   4.08 wet   5.70 t 0.32 relief  7.41 rock 0.73
+-16 (1513.8, 594.0) ground   0.00 uncut   4.11 surf   5.30 caps   4.17 wet   5.70 t 0.62 relief  7.41 rock 0.84
+-15 (1512.8, 594.0) ground   0.00 uncut   4.40 surf   5.23 caps   4.58 wet   5.70 t 0.83 relief  7.41 rock 0.91
+-14 (1511.8, 594.0) ground   0.00 uncut   4.54 surf   5.01 caps   4.70 wet   5.70 t 0.91 relief  7.41 rock 0.93
+-13 (1510.8, 594.0) ground   0.00 uncut   4.56 surf   5.01 caps   4.70 wet   5.70 t 0.92 relief  7.41 rock 0.93
+-12 (1509.8, 594.0) ground   0.00 uncut   4.49 surf   4.88 caps   4.70 wet   5.70 t 0.88 relief  7.41 rock 0.94
+-11 (1508.8, 594.0) ground   0.00 uncut   4.28 surf   4.63 caps   4.70 wet   5.70 t 0.76 relief  7.41 rock 0.94
+-10 (1507.8, 594.0) ground   0.00 uncut   3.91 surf   4.55 caps   4.70 wet   5.70 t 0.56 relief  7.41 rock 0.93
+ -9 (1506.8, 594.0) ground   0.00 uncut   3.48 surf   4.70 caps   4.70 wet   5.70 t 0.32 relief  7.41 rock 0.90
+ -8 (1505.8, 594.0) ground   0.00 uncut   3.14 surf   4.23 caps   4.70 wet   5.70 t 0.13 relief  7.41 rock 0.83
+ -7 (1504.8, 594.0) ground   0.00 uncut   2.94 surf   3.96 caps   4.70 wet   5.70 t 0.02 relief  7.41 rock 0.74
+ -6 (1503.8, 594.0) ground   0.00 uncut   2.91 surf   3.93 caps   4.70 wet   5.70 t 0.00 relief  7.41 rock 0.62
+ -5 (1502.8, 594.0) ground   0.00 uncut   2.91 surf   4.00 caps   4.70 wet   5.70 t 0.00 relief  7.41 rock 0.49
+ -4 (1501.8, 594.0) ground   0.00 uncut   2.91 surf   3.56 caps   4.70 wet   5.70 t 0.00 relief  7.41 rock 0.35
+ -3 (1500.8, 594.0) ground   0.00 uncut   2.91 surf   3.05 caps   4.70 wet   5.70 t 0.00 relief  7.41 rock 0.22
+ -2 (1499.8, 594.0) ground   0.00 uncut   2.91 surf   2.91 caps   4.70 wet   5.70 t 0.00 relief  7.41 rock 0.13
+ -1 (1498.8, 594.0) ground   0.02 uncut   2.95 surf   2.95 caps   4.70 wet   5.70 t 0.00 relief  7.40 rock 0.06
+ +0 (1497.8, 594.0) ground   0.14 uncut   3.04 surf   3.04 caps   4.70 wet   5.70 t 0.00 relief  7.38 rock 0.02
+ +1 (1496.8, 594.0) ground   0.41 uncut   3.18 surf   3.18 caps   4.70 wet   5.70 t 0.00 relief  7.33 rock 0.00
+ +2 (1495.8, 594.0) ground   0.84 uncut   3.36 surf   3.36 caps   4.70 wet   5.70 t 0.00 relief  7.27 rock 0.00
+ +3 (1494.8, 594.0) ground   1.39 uncut   3.54 surf   3.54 caps   4.70 wet   5.70 t 0.00 relief  7.18 rock 0.00
+ +4 (1493.8, 594.0) ground   2.00 uncut   3.68 surf   3.68 caps   4.70 wet   5.70 t 0.00 relief  7.06 rock 0.00
+ +5 (1492.8, 594.0) ground   2.61 uncut   3.84 surf   3.84 caps   4.70 wet   5.70 t 0.00 relief  6.92 rock 0.00
+ +6 (1491.8, 594.0) ground   3.16 uncut   4.04 surf   4.04 caps   4.70 wet   5.70 t 0.00 relief  6.77 rock 0.00
+ +7 (1490.8, 594.0) ground   3.59 uncut   4.20 surf   4.20 caps   4.70 wet   5.70 t 0.10 relief  6.59 rock 0.00
+ +8 (1489.8, 594.0) ground   3.86 uncut   4.60 surf   4.60 caps   4.70 wet   5.70 t 0.54 relief  6.38 rock 0.00
+ +9 (1488.8, 594.0) ground   3.98 uncut   4.90 surf   4.70 caps   4.70 wet   5.70 t 0.91 relief  6.15 rock 0.00
++10 (1487.8, 594.0) ground   4.00 uncut   4.96 surf   4.70 caps   4.70 wet   5.70 t 1.00 relief  5.90 rock 0.00
++11 (1486.8, 594.0) ground   4.00 uncut   4.96 surf   4.70 caps   4.70 wet   5.70 t 1.00 relief  5.62 rock 0.00
++12 (1485.8, 594.0) ground   4.00 uncut   4.97 surf   4.70 caps   4.70 wet   5.70 t 1.00 relief  5.31 rock 0.06
++13 (1484.8, 594.0) ground   4.00 uncut   4.97 surf   4.45 caps   4.41 wet   5.70 t 1.00 relief  4.99 rock 0.26
++14 (1483.8, 594.0) ground   4.00 uncut   5.00 surf   4.61 caps   4.08 wet   5.70 t 1.00 relief  4.64 rock 0.54
++15 (1482.8, 594.0) ground   4.00 uncut   5.13 surf   4.62 caps   4.08 wet   5.70 t 0.89 relief  4.26 rock 0.69
++16 (1481.8, 594.0) ground   4.00 uncut   5.23 surf   4.61 caps   4.08 wet   5.70 t 0.69 relief  3.87 rock 0.58
++17 (1480.8, 594.0) ground   4.00 uncut   5.48 surf   5.11 caps   4.75 wet   5.70 t 0.58 relief  4.04 rock 0.26
++18 (1479.8, 594.0) ground   4.00 uncut   6.00 surf   6.00 caps   6.03 wet   5.70 t 0.57 relief  4.18 rock 0.05
++19 (1478.8, 594.0) ground   4.00 uncut   6.68 surf   6.68 caps   6.75 wet   5.70 t 0.60 relief  4.29 rock 0.00
++20 (1477.8, 594.0) ground   4.00 uncut   7.31 surf   7.31 caps   8.10 wet   5.70 t 0.63 relief  4.37 rock 0.00
+-- lateral 0 dir (-1.0, 0.0)
+-20 (1517.8, 590.0) ground   0.00 uncut   7.21 surf   7.21 caps   8.80 wet   5.70 t 0.00 relief  7.91 rock 0.00
+-19 (1516.8, 590.0) ground   0.00 uncut   7.21 surf   7.21 caps   8.80 wet   5.70 t 0.00 relief  7.91 rock 0.00
+-18 (1515.8, 590.0) ground   0.00 uncut   7.21 surf   7.21 caps   8.80 wet   5.70 t 0.00 relief  7.91 rock 0.00
+-17 (1514.8, 590.0) ground   0.00 uncut   7.29 surf   7.29 caps   8.80 wet   5.70 t 0.25 relief  7.91 rock 0.00
+-16 (1513.8, 590.0) ground   0.00 uncut   7.40 surf   7.40 caps   8.80 wet   5.70 t 0.62 relief  7.91 rock 0.00
+-15 (1512.8, 590.0) ground   0.00 uncut   7.47 surf   7.47 caps   8.80 wet   5.70 t 0.87 relief  7.91 rock 0.00
+-14 (1511.8, 590.0) ground   0.00 uncut   7.51 surf   7.51 caps   8.80 wet   5.70 t 0.98 relief  7.91 rock 0.00
+-13 (1510.8, 590.0) ground   0.00 uncut   7.51 surf   7.51 caps   8.80 wet   5.70 t 0.99 relief  7.91 rock 0.00
+-12 (1509.8, 590.0) ground   0.00 uncut   7.49 surf   7.49 caps   8.80 wet   5.70 t 0.93 relief  7.91 rock 0.00
+-11 (1508.8, 590.0) ground   0.00 uncut   7.46 surf   7.46 caps   8.80 wet   5.70 t 0.82 relief  7.91 rock 0.00
+-10 (1507.8, 590.0) ground   0.00 uncut   7.40 surf   7.40 caps   8.80 wet   5.70 t 0.62 relief  7.91 rock 0.00
+ -9 (1506.8, 590.0) ground   0.00 uncut   7.32 surf   7.32 caps   8.80 wet   5.70 t 0.37 relief  7.91 rock 0.00
+ -8 (1505.8, 590.0) ground   0.00 uncut   7.26 surf   7.26 caps   8.80 wet   5.70 t 0.17 relief  7.91 rock 0.00
+ -7 (1504.8, 590.0) ground   0.00 uncut   7.23 surf   7.23 caps   8.80 wet   5.70 t 0.08 relief  7.91 rock 0.00
+ -6 (1503.8, 590.0) ground   0.00 uncut   7.22 surf   7.22 caps   8.80 wet   5.70 t 0.03 relief  7.91 rock 0.00
+ -5 (1502.8, 590.0) ground   0.00 uncut   7.22 surf   7.22 caps   8.80 wet   5.70 t 0.02 relief  7.91 rock 0.00
+ -4 (1501.8, 590.0) ground   0.00 uncut   7.22 surf   7.22 caps   8.80 wet   5.70 t 0.01 relief  7.91 rock 0.00
+ -3 (1500.8, 590.0) ground   0.00 uncut   7.21 surf   7.21 caps   8.80 wet   5.70 t 0.01 relief  7.91 rock 0.00
+ -2 (1499.8, 590.0) ground   0.00 uncut   7.21 surf   7.21 caps   8.80 wet   5.70 t 0.00 relief  7.91 rock 0.00
+ -1 (1498.8, 590.0) ground   0.02 uncut   7.21 surf   7.21 caps   8.80 wet   5.70 t 0.01 relief  7.90 rock 0.00
+ +0 (1497.8, 590.0) ground   0.14 uncut   7.22 surf   7.22 caps   8.80 wet   5.70 t 0.03 relief  7.87 rock 0.00
+ +1 (1496.8, 590.0) ground   0.41 uncut   7.21 surf   7.21 caps   8.80 wet   5.70 t 0.03 relief  7.83 rock 0.00
+ +2 (1495.8, 590.0) ground   0.84 uncut   7.21 surf   7.21 caps   8.80 wet   5.70 t 0.02 relief  7.76 rock 0.00
+ +3 (1494.8, 590.0) ground   1.39 uncut   7.20 surf   7.20 caps   8.80 wet   5.70 t 0.01 relief  7.67 rock 0.00
+ +4 (1493.8, 590.0) ground   2.00 uncut   7.19 surf   7.19 caps   8.80 wet   5.70 t 0.01 relief  7.56 rock 0.00
+ +5 (1492.8, 590.0) ground   2.61 uncut   7.17 surf   7.17 caps   8.80 wet   5.70 t 0.00 relief  7.42 rock 0.00
+ +6 (1491.8, 590.0) ground   3.16 uncut   7.16 surf   7.16 caps   8.80 wet   5.70 t 0.00 relief  7.26 rock 0.00
+ +7 (1490.8, 590.0) ground   3.59 uncut   7.18 surf   7.18 caps   8.80 wet   5.70 t 0.10 relief  7.08 rock 0.00
+ +8 (1489.8, 590.0) ground   3.86 uncut   7.32 surf   7.32 caps   8.80 wet   5.70 t 0.51 relief  6.88 rock 0.00
+ +9 (1488.8, 590.0) ground   3.98 uncut   7.46 surf   7.46 caps   8.80 wet   5.70 t 0.88 relief  6.64 rock 0.00
++10 (1487.8, 590.0) ground   4.00 uncut   7.50 surf   7.50 caps   8.80 wet   5.70 t 0.97 relief  6.39 rock 0.00
++11 (1486.8, 590.0) ground   4.00 uncut   7.51 surf   7.51 caps   8.80 wet   5.70 t 1.00 relief  6.11 rock 0.00
++12 (1485.8, 590.0) ground   4.00 uncut   7.51 surf   7.51 caps   8.80 wet   5.70 t 1.00 relief  5.81 rock 0.00
++13 (1484.8, 590.0) ground   4.00 uncut   7.52 surf   7.52 caps   8.80 wet   5.70 t 1.00 relief  5.49 rock 0.00
++14 (1483.8, 590.0) ground   4.00 uncut   7.52 surf   7.52 caps   8.80 wet   5.70 t 1.00 relief  5.14 rock 0.00
++15 (1482.8, 590.0) ground   4.00 uncut   7.50 surf   7.50 caps   8.80 wet   5.70 t 0.97 relief  4.76 rock 0.00
++16 (1481.8, 590.0) ground   4.00 uncut   7.36 surf   7.36 caps   8.80 wet   5.70 t 0.71 relief  4.37 rock 0.00
++17 (1480.8, 590.0) ground   4.00 uncut   7.13 surf   7.13 caps   8.80 wet   5.70 t 0.28 relief  3.95 rock 0.00
++18 (1479.8, 590.0) ground   4.00 uncut   7.07 surf   7.07 caps   8.80 wet   5.70 t 0.02 relief  3.91 rock 0.00
++19 (1478.8, 590.0) ground   4.00 uncut   7.21 surf   7.21 caps   8.80 wet   5.70 t 0.00 relief  3.91 rock 0.00
++20 (1477.8, 590.0) ground   4.00 uncut   7.41 surf   7.41 caps   8.80 wet   5.70 t 0.00 relief  3.91 rock 0.00
+-- lateral 4 dir (-1.0, 0.0)
+-20 (1517.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.46 relief  7.94 rock 0.00
+-19 (1516.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.47 relief  7.94 rock 0.00
+-18 (1515.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.48 relief  7.94 rock 0.00
+-17 (1514.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.49 relief  7.94 rock 0.00
+-16 (1513.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.50 relief  7.94 rock 0.00
+-15 (1512.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.52 relief  7.94 rock 0.00
+-14 (1511.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.52 relief  7.94 rock 0.00
+-13 (1510.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.52 relief  7.94 rock 0.00
+-12 (1509.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.52 relief  7.94 rock 0.00
+-11 (1508.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.51 relief  7.94 rock 0.00
+-10 (1507.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.50 relief  7.94 rock 0.00
+ -9 (1506.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.49 relief  7.94 rock 0.00
+ -8 (1505.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.49 relief  7.94 rock 0.00
+ -7 (1504.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.48 relief  7.94 rock 0.00
+ -6 (1503.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.48 relief  7.94 rock 0.00
+ -5 (1502.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.47 relief  7.94 rock 0.00
+ -4 (1501.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.47 relief  7.94 rock 0.00
+ -3 (1500.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.47 relief  7.94 rock 0.00
+ -2 (1499.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.47 relief  7.94 rock 0.00
+ -1 (1498.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.47 relief  7.94 rock 0.00
+ +0 (1497.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.46 relief  7.91 rock 0.00
+ +1 (1496.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.46 relief  7.87 rock 0.00
+ +2 (1495.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.46 relief  7.80 rock 0.00
+ +3 (1494.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.46 relief  7.71 rock 0.00
+ +4 (1493.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.46 relief  7.60 rock 0.00
+ +5 (1492.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.46 relief  7.46 rock 0.00
+ +6 (1491.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.47 relief  7.30 rock 0.00
+ +7 (1490.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.48 relief  7.12 rock 0.00
+ +8 (1489.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.50 relief  6.91 rock 0.00
+ +9 (1488.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.52 relief  6.68 rock 0.00
++10 (1487.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.53 relief  6.43 rock 0.00
++11 (1486.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.54 relief  6.15 rock 0.00
++12 (1485.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.54 relief  5.84 rock 0.00
++13 (1484.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.54 relief  5.52 rock 0.00
++14 (1483.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.53 relief  5.18 rock 0.00
++15 (1482.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.52 relief  4.80 rock 0.00
++16 (1481.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.51 relief  4.41 rock 0.00
++17 (1480.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.49 relief  3.99 rock 0.00
++18 (1479.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.48 relief  3.94 rock 0.00
++19 (1478.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.47 relief  3.94 rock 0.00
++20 (1477.8, 586.0) ground   8.00 uncut   8.00 surf   8.00 caps    inf wet    nan t 0.46 relief  3.94 rock 0.00

@@ -1,0 +1,4 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+COLOUR_CONTROL [{"angle":0.0,"delta":0.0,"grass":"(0.3137, 0.5922, 0.2196, 1.0)","slope":"(0.3137, 0.5922, 0.2196, 1.0)"},{"angle":20.0,"delta":0.0,"grass":"(0.3137, 0.5922, 0.2196, 1.0)","slope":"(0.3137, 0.5922, 0.2196, 1.0)"},{"angle":35.0,"delta":0.0737838670611382,"grass":"(0.3137, 0.5922, 0.2196, 1.0)","slope":"(0.2706, 0.5412, 0.1882, 1.0)"},{"angle":45.0,"delta":0.104272432625294,"grass":"(0.3137, 0.5922, 0.2196, 1.0)","slope":"(0.2549, 0.5176, 0.1765, 1.0)"}]

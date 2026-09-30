@@ -1,0 +1,48 @@
+[synthetic] CliffSlopeEnvelope.gd
+  wall20 angle 0.00 {"carved":2187,"d2_max":1.47,"d2_over_half":132,"d2_p90":0.398,"d2_p99":0.816,"max_rise":0.65,"rises":41,"rock":2151}
+  wall20 angle 0.52 {"carved":2344,"d2_max":1.63,"d2_over_half":204,"d2_p90":0.484,"d2_p99":0.887,"max_rise":1.02,"rises":36,"rock":2314}
+  wall20 angle 0.79 {"carved":2314,"d2_max":1.68,"d2_over_half":197,"d2_p90":0.469,"d2_p99":0.994,"max_rise":0.67,"rises":18,"rock":2307}
+  wall12 angle .52 {"carved":1587,"d2_max":1.71,"d2_over_half":132,"d2_p90":0.453,"d2_p99":0.957,"max_rise":0.53,"rises":27,"rock":1519}
+  step 4 {"along_spread":1.17,"max_rock":0.1}
+  step 8 {"along_spread":3.168,"max_rock":0.99}
+  p03 {"d2_over_half":348,"faces":368,"normal_median":11.05,"normal_p90":20.07,"patches":11,"rises":21,"treads":63}
+[synthetic] env_r0.0_t1.25_c.25.gd
+  wall20 angle 0.00 {"carved":2178,"d2_max":0.96,"d2_over_half":24,"d2_p90":0.207,"d2_p99":0.505,"max_rise":0.1,"rises":0,"rock":2151}
+  wall20 angle 0.52 {"carved":2356,"d2_max":1.68,"d2_over_half":156,"d2_p90":0.422,"d2_p99":0.825,"max_rise":0.15,"rises":1,"rock":2314}
+  wall20 angle 0.79 {"carved":2334,"d2_max":1.36,"d2_over_half":142,"d2_p90":0.416,"d2_p99":0.794,"max_rise":0.06,"rises":0,"rock":2307}
+  wall12 angle .52 {"carved":1571,"d2_max":0.96,"d2_over_half":37,"d2_p90":0.313,"d2_p99":0.572,"max_rise":0.07,"rises":0,"rock":1519}
+  step 4 {"along_spread":0.0,"max_rock":0.0}
+  step 8 {"along_spread":2.905,"max_rock":0.86}
+  p03 {"d2_over_half":63,"faces":321,"normal_median":11.37,"normal_p90":17.46,"patches":13,"rises":0,"treads":59}
+[synthetic] env_r1.0_t1.25_c.25.gd
+  wall20 angle 0.00 {"carved":2153,"d2_max":1.23,"d2_over_half":22,"d2_p90":0.207,"d2_p99":0.5,"max_rise":0.06,"rises":0,"rock":2151}
+  wall20 angle 0.52 {"carved":2287,"d2_max":1.44,"d2_over_half":103,"d2_p90":0.377,"d2_p99":0.739,"max_rise":0.15,"rises":1,"rock":2314}
+  wall20 angle 0.79 {"carved":2333,"d2_max":1.36,"d2_over_half":144,"d2_p90":0.415,"d2_p99":0.831,"max_rise":0.06,"rises":0,"rock":2307}
+  wall12 angle .52 {"carved":1570,"d2_max":0.96,"d2_over_half":37,"d2_p90":0.316,"d2_p99":0.572,"max_rise":0.07,"rises":0,"rock":1519}
+  step 4 {"along_spread":0.0,"max_rock":0.0}
+  step 8 {"along_spread":2.905,"max_rock":0.86}
+  p03 {"d2_over_half":67,"faces":324,"normal_median":11.17,"normal_p90":17.23,"patches":12,"rises":0,"treads":53}
+[synthetic] env_r1.5_t1.25_c.25.gd
+  wall20 angle 0.00 {"carved":2129,"d2_max":1.62,"d2_over_half":24,"d2_p90":0.203,"d2_p99":0.506,"max_rise":0.56,"rises":2,"rock":2151}
+  wall20 angle 0.52 {"carved":2264,"d2_max":1.13,"d2_over_half":71,"d2_p90":0.35,"d2_p99":0.695,"max_rise":0.14,"rises":1,"rock":2314}
+  wall20 angle 0.79 {"carved":2278,"d2_max":2.33,"d2_over_half":82,"d2_p90":0.358,"d2_p99":0.73,"max_rise":0.05,"rises":0,"rock":2307}
+  wall12 angle .52 {"carved":1552,"d2_max":1.08,"d2_over_half":26,"d2_p90":0.298,"d2_p99":0.557,"max_rise":0.07,"rises":0,"rock":1519}
+  step 4 {"along_spread":0.0,"max_rock":0.0}
+  step 8 {"along_spread":2.905,"max_rock":0.86}
+  p03 {"d2_over_half":50,"faces":325,"normal_median":10.92,"normal_p90":16.91,"patches":10,"rises":0,"treads":38}
+[synthetic] env_r1.5_t1.5_c.4.gd
+  wall20 angle 0.00 {"carved":2130,"d2_max":1.3,"d2_over_half":45,"d2_p90":0.218,"d2_p99":0.716,"max_rise":0.75,"rises":2,"rock":2151}
+  wall20 angle 0.52 {"carved":2275,"d2_max":1.58,"d2_over_half":98,"d2_p90":0.384,"d2_p99":0.726,"max_rise":0.11,"rises":1,"rock":2314}
+  wall20 angle 0.79 {"carved":2265,"d2_max":1.44,"d2_over_half":77,"d2_p90":0.351,"d2_p99":0.751,"max_rise":0.11,"rises":1,"rock":2307}
+  wall12 angle .52 {"carved":1524,"d2_max":0.81,"d2_over_half":36,"d2_p90":0.326,"d2_p99":0.605,"max_rise":0.11,"rises":1,"rock":1519}
+  step 4 {"along_spread":0.0,"max_rock":0.0}
+  step 8 {"along_spread":2.905,"max_rock":0.86}
+  p03 {"d2_over_half":61,"faces":272,"normal_median":12.22,"normal_p90":19.02,"patches":9,"rises":0,"treads":54}
+[synthetic] env_r2.0_t1.5_c.5.gd
+  wall20 angle 0.00 {"carved":2113,"d2_max":1.61,"d2_over_half":36,"d2_p90":0.187,"d2_p99":0.577,"max_rise":0.2,"rises":1,"rock":2151}
+  wall20 angle 0.52 {"carved":2245,"d2_max":1.51,"d2_over_half":104,"d2_p90":0.356,"d2_p99":0.78,"max_rise":0.29,"rises":4,"rock":2314}
+  wall20 angle 0.79 {"carved":2261,"d2_max":1.11,"d2_over_half":57,"d2_p90":0.286,"d2_p99":0.714,"max_rise":0.1,"rises":1,"rock":2307}
+  wall12 angle .52 {"carved":1523,"d2_max":0.97,"d2_over_half":44,"d2_p90":0.313,"d2_p99":0.651,"max_rise":0.08,"rises":0,"rock":1519}
+  step 4 {"along_spread":0.0,"max_rock":0.0}
+  step 8 {"along_spread":2.905,"max_rock":0.86}
+  p03 {"d2_over_half":58,"faces":238,"normal_median":12.15,"normal_p90":19.75,"patches":9,"rises":0,"treads":43}

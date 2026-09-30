@@ -1,0 +1,53 @@
+node cells near: [(51, 22)]
+mask (44, 22) = 3
+mask (45, 22) = 3
+mask (46, 22) = 3
+mask (47, 22) = 3
+mask (48, 22) = 3
+mask (49, 22) = 3
+mask (50, 22) = 3
+mask (51, 19) = 12
+mask (51, 20) = 12
+mask (51, 21) = 12
+mask (51, 22) = 10
+x 1185 lattice true shapes ["settlement.086d41361c6ad2f0.world-road.(1188.0, 528.0).incoming-domain(s0 p119)", "settlement.086d41361c6ad2f0.world-road.(1188.0, 528.0).street.bend.1.1(s1 p120)", "settlement.086d41361c6ad2f0.world-road.(1188.0, 528.0).street.bend.1.10(s1 p120)", "settlement.086d41361c6ad2f0.world-road.(1188.0, 528.0).street.bend.1.11(s1 p120)", "settlement.086d41361c6ad2f0.world-road.(1188.0, 528.0).street.bend.1.12(s1 p120)", "settlement.086d41361c6ad2f0.world-road.(1188.0, 528.0).street.bend.1.13(s1 p120)", "settlement.086d41361c6ad2f0.world-road.(1188.0, 528.0).street.bend.1.14(s1 p120)", "settlement.086d41361c6ad2f0.world-road.(1188.0, 528.0).street.bend.1.15(s1 p120)", "settlement.086d41361c6ad2f0.world-road.(1188.0, 528.0).street.bend.1.16(s1 p120)", "settlement.086d41361c6ad2f0.world-road.(1188.0, 528.0).street.bend.1.17(s1 p120)", "settlement.086d41361c6ad2f0.world-road.(1188.0, 528.0).street.bend.1.2(s1 p120)", "settlement.086d41361c6ad2f0.world-road.(1188.0, 528.0).street.bend.1.3(s1 p120)", "settlement.086d41361c6ad2f0.world-road.(1188.0, 528.0).street.bend.1.4(s1 p120)", "settlement.086d41361c6ad2f0.world-road.(1188.0, 528.0).street.bend.1.5(s1 p120)", "settlement.086d41361c6ad2f0.world-road.(1188.0, 528.0).street.bend.1.6(s1 p120)", "settlement.086d41361c6ad2f0.world-road.(1188.0, 528.0).street.bend.1.7(s1 p120)", "settlement.086d41361c6ad2f0.world-road.(1188.0, 528.0).street.bend.1.8(s1 p120)", "settlement.086d41361c6ad2f0.world-road.(1188.0, 528.0).street.bend.1.9(s1 p120)"]
+x 1182 lattice true shapes ["settlement.086d41361c6ad2f0.world-road.(1188.0, 528.0).incoming-domain(s0 p119)", "settlement.086d41361c6ad2f0.world-road.(1188.0, 528.0).street.straight.1(s1 p120)"]
+x 1179 lattice true shapes ["settlement.086d41361c6ad2f0.world-road.(1188.0, 528.0).incoming-domain(s0 p119)", "settlement.086d41361c6ad2f0.world-road.(1188.0, 528.0).street.straight.1(s1 p120)"]
+x 1176 lattice true shapes ["settlement.086d41361c6ad2f0.world-road.(1188.0, 528.0).incoming-domain(s0 p119)", "settlement.086d41361c6ad2f0.world-road.(1188.0, 528.0).street.straight.1(s1 p120)"]
+x 1173 lattice true shapes []
+x 1170 lattice true shapes []
+x 1167 lattice true shapes []
+x 1164 lattice true shapes []
+x 1161 lattice true shapes []
+x 1158 lattice true shapes []
+x 1155 lattice true shapes []
+x 1152 lattice true shapes []
+x 1149 lattice true shapes []
+x 1146 lattice true shapes []
+x 1143 lattice true shapes []
+x 1140 lattice true shapes []
+x 1137 lattice true shapes []
+edge (49, 22) (-1, 0) natural storeys 7->8 walkable(natural,hw)=true walkable(graded,hw)=false natural_y 28.00/32.00 graded_y 24.00/32.00
+edge (48, 22) (-1, 0) natural storeys 8->8 walkable(natural,hw)=true walkable(graded,hw)=true natural_y 32.00/32.00 graded_y 32.00/32.00
+edge (50, 22) (-1, 0) natural storeys 7->7 walkable(natural,hw)=true walkable(graded,hw)=true natural_y 28.00/28.00 graded_y 24.00/24.00
+grades 0 native controls 19
+x 1180 natural 28.00 graded 24.00
+x 1178 natural 28.00 graded 24.00
+x 1176 natural 28.00 graded 24.00
+x 1174 natural 28.00 graded 24.00
+x 1172 natural 28.00 graded 24.00
+x 1170 natural 28.00 graded 24.00
+x 1168 natural 28.00 graded 24.00
+x 1166 natural 28.00 graded 24.00
+x 1164 natural 28.00 graded 24.00
+x 1162 natural 28.14 graded 32.00
+x 1160 natural 28.84 graded 32.00
+x 1158 natural 30.00 graded 32.00
+x 1156 natural 31.16 graded 32.00
+x 1154 natural 31.85 graded 32.00
+x 1152 natural 32.00 graded 32.00
+x 1150 natural 32.00 graded 32.00
+x 1148 natural 32.00 graded 32.00
+x 1146 natural 32.00 graded 32.00
+x 1144 natural 32.00 graded 32.00
+x 1142 natural 32.00 graded 32.00

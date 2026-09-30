@@ -1,0 +1,66 @@
+extends SceneTree
+## Headless diagnostic (September 27 slope/ledge review): builds the native
+## dry envelope (no feature/water cuts) at an owner-reported site and prints
+## fall-line profiles through the bedrock treads, with the bench components.
+##   Godot --headless --path . -s res://tests/harness/cliff_slope_ledge_probe.gd -- --at X,Z [--half 24] [--script PATH]
+const SEED:=2697992464
+const FIELD=preload("res://scripts/terrain/field/CliffSlopeField.gd")
+const STYLE=preload("res://scripts/terrain/field/CliffRockStyle.gd")
+func _initialize()->void:_run.call_deferred()
+
+static func instrumented(path:String)->GDScript:
+ var source:=FileAccess.get_file_as_string(path)
+ source=source.replace(" var t:=_ridges(env,narrow,wide,wide_dilated,seed_value)"," var t:=_ridges(env,narrow,wide,wide_dilated,seed_value)\n env.set_meta(\"t\",t);env.set_meta(\"relief\",relief);env.set_meta(\"top\",wide_dilated);env.set_meta(\"floor\",floor_level)")
+ source=source.replace(" for idx in n:local[idx]-=lowest[idx]\n"," for idx in n:local[idx]-=lowest[idx]\n env.set_meta(\"local\",local)\n")
+ source=source.replace(" var F:PackedFloat64Array=env.surface.duplicate()\n"," var F:PackedFloat64Array=env.surface.duplicate()\n env.set_meta(\"F\",F);env.set_meta(\"dbg\",{})\n")
+ source=source.replace("   env.surface[idx]=maxf(env.ground[idx]+minf(F[idx]-env.ground[idx],.4),shaped)\n","   env.surface[idx]=maxf(env.ground[idx]+minf(F[idx]-env.ground[idx],.4),shaped)\n   env.get_meta(\"dbg\")[idx]=[F[idx],carved,jut,s,blend,split,chip,e,_bedrock_outward_level(F[idx],best,chip),_bedrock_outward_level(F[idx],second,chip),top[idx]]\n")
+ source=source.replace(" _remove_bedrock_fins(env,F)\n"," env.set_meta(\"prefin\",env.surface.duplicate())\n _remove_bedrock_fins(env,F)\n")
+ var script:=GDScript.new();script.source_code=source;assert(script.reload()==OK)
+ return script
+
+static func build_env(at:Vector2,half:float,script_path:="res://scripts/terrain/field/CliffSlopeEnvelope.gd"):
+ STYLE.apply("sheet_bedrock")
+ var water:=TerrainWorldTuning.make_water(SEED)
+ var region:=TerrainWorldTuning.make_heightfield(SEED,water).compute_region(floori(at.x/24.0),floori(at.y/24.0),6)
+ var area:=Rect2(at-Vector2.ONE*half,Vector2.ONE*half*2.0)
+ var field=FIELD.new([],SEED,region,area)
+ var script:=instrumented(script_path)
+ var env=script.build(area.grow(12.0),field._ground_sampler(),Callable(),SEED,Callable())
+ return env
+
+func _run()->void:
+ var args:=OS.get_cmdline_user_args()
+ var at:=Vector2(1129.6,971.9);var half:=16.0;var path:="res://scripts/terrain/field/CliffSlopeEnvelope.gd"
+ for i in args.size():
+  if args[i]=="--at":var p:=args[i+1].split(",");at=Vector2(float(p[0]),float(p[1]))
+  if args[i]=="--half":half=float(args[i+1])
+  if args[i]=="--script":path=args[i+1]
+ var env=build_env(at,half,path)
+ var F:PackedFloat64Array=env.get_meta("F");var dbg:Dictionary=env.get_meta("dbg")
+ var node:=func(q:Vector2)->int:return clampi(roundi((q.y-env.origin.y)/.5),0,env.h-1)*env.w+clampi(roundi((q.x-env.origin.x)/.5),0,env.w-1)
+ # Outward rise: along the backing's fall line, the surface rising while F falls.
+ var worst:=[]
+ for x in range(roundi((at.x-half)*2),roundi((at.x+half)*2)):
+  for z in range(roundi((at.y-half)*2),roundi((at.y+half)*2)):
+   var q:=Vector2(x,z)*.5;var i:int=node.call(q)
+   if env.rock_at(q)<.3:continue
+   var gx:=(F[i+1]-F[i-1]);var gz:=(F[i+env.w]-F[i-env.w])
+   var g:=Vector2(gx,gz)
+   if g.length()<.2:continue
+   var fall:=-g.normalized()
+   var rise:float=env.sample(q+fall*1.0)-env.sample(q)
+   if rise>.1:worst.append([rise,q])
+ worst.sort_custom(func(a,b):return a[0]>b[0])
+ print("[probe] rock nodes with outward rise>0.1 over 1 m: ",worst.size())
+ for k in mini(8,worst.size()):
+  var q:Vector2=worst[k][1]
+  var i:int=node.call(q)
+  var g:=Vector2(F[i+1]-F[i-1],F[i+env.w]-F[i-env.w]);var fall:=-g.normalized()
+  print("  rise %.2f at %s fall %s"%[worst[k][0],q,fall])
+  for s in range(-6,9):
+   var p:=q+fall*s*.5;var j:int=node.call(p)
+   var d:Array=dbg.get(j,[])
+   var extra:=""
+   if not d.is_empty():extra="carved %.2f jut %.2f s %.2f blend %.2f split %.2f chip %.2f e %.2f A %.2f B %.2f top %.2f"%[d[1],d[2],d[3],d[4],d[5],d[6],d[7],d[8],d[9],d[10]]
+   print("    %+.1f  surf %.2f F %.2f ground %.2f prefin %.2f rock %.2f  %s"%[s*.5,env.sample(p),F[j],env.ground[j],(env.get_meta("prefin") as PackedFloat64Array)[j],env.rock_at(p),extra])
+ quit()

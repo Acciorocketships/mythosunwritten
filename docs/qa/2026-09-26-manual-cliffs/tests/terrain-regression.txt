@@ -1,0 +1,176 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_terrain_chunk_mesher.gd
+* test_structural_terrain_uses_the_world_slope_kernel_at_its_own_scale
+* test_flat_structural_terrain_uses_visible_top_face_winding
+* test_lattice_turf_clips_only_visuals_behind_authored_lips
+* test_lattice_inner_corner_uses_the_world_rock_backing_classification
+* test_compute_chunk_payload_is_safe_to_cross_the_worker_boundary
+* test_path_boundary_partitions_are_welded_and_preserve_the_ground_triangle
+* test_path_paint_changes_only_walkable_sheet_uvs
+* test_graded_terrain_has_one_visible_sheet_and_matching_collision
+* test_build_returns_meshinstance_with_geometry
+* test_chunk_has_collision
+* test_no_floating_water_planes
+* test_terrain_mesher_does_not_own_dressing
+* test_adjacent_chunks_share_boundary_height
+* test_chunk_emits_cliff_wall
+* test_cliff_skirt_is_vertical_at_the_boundary_no_cap
+* test_skirt_stops_short_of_a_perpendicular_wall_no_fin
+* test_skirt_follows_a_dipping_neighbour_slope
+* test_level_step_is_continuous_without_a_vertical_wall
+* test_skirt_covers_the_slope_facing_side_of_a_cliff_top
+* test_higher_cardinal_does_not_split_an_ordinary_shared_slope
+* test_collision_wall_is_flush_with_the_boundary_no_pocket
+* test_sheet_skirt_and_pieces_share_one_material
+* test_skirt_material_has_no_specular_sheen
+* test_cliff_top_visual_plane_stops_at_the_lip_back
+* test_cliff_top_collision_still_reaches_the_boundary
+* test_ground_apron_extends_under_higher_neighbour
+* test_skirt_extends_under_higher_neighbour
+* test_clip_uses_the_dipped_half_of_a_north_edge_not_its_mirror
+* test_clip_tapers_to_zero_at_a_neighbour_that_does_not_clip
+* test_apron_is_clamped_by_the_higher_cells_own_clip
+* test_buried_apron_end_is_not_clamped_no_ground_gap
+* test_apron_seals_the_base_slit_next_to_a_same_storey_slope
+* test_apron_normals_are_vertical
+* test_flat_cell_edge_welds_onto_a_sub_lip_dip
+* test_skirt_uses_the_kaykit_wall_material
+* test_apron_top_faces_use_the_sheet_winding
+* test_aprons_have_collision
+* test_taper_edge_drapes_onto_the_dipping_neighbour
+* test_capped_corner_holds_the_clip_no_draped_flap
+* test_arm_lip_run_holds_at_a_classic_inner_corner_no_flap
+* test_run_end_at_a_higher_flat_neighbour_holds_the_clip
+* test_surface_is_gap_free_for_any_heightfield
+* test_cliff_face_is_rock_not_climbing_grass
+* test_steep_upramp_slope_is_grass_not_rock
+* test_no_drape_dip_where_a_run_ends_at_a_level_neighbour_under_a_taller_diagonal
+* test_aprons_stay_at_ground_level_no_floating_shelf
+* test_inner_corner_pulls_the_diagonal_sheet_corner_under_the_piece
+* test_inner_corner_sheet_corner_sits_below_the_rounded_lip_front
+MEAS classic inner-corner sheet max y=10.700 (top=12, required <=11.2)
+* test_inner_corner_exposed_tuck_uses_rock_backing_not_grass
+MEAS exact inner-corner backing sample y=10.934 uv=(0.062926, 0.628128) rock=(0.062926, 0.628128)
+* test_collision_sheet_faces_cover_full_grid
+* test_ground_has_no_slivers_beside_inner_corner_pieces
+51/51 passed.
+
+
+res://tests/test_cliff_dressing.gd
+* test_every_lip_is_backed_by_flat_terrain
+    [Risky]:  test_every_lip_is_backed_by_flat_terrain did not assert
+* test_wall_spans_exactly_to_neighbour
+* test_cliff_top_walls_every_drop_off_its_edge
+* test_one_storey_drop_to_a_funnel_cell_is_walled
+* test_low_ground_reaches_the_cliff_wall_base
+* test_outer_corner_piece_present
+* test_straight_cliff_has_no_midedge_corner
+* test_lip_and_wall_share_the_kaykit_place_offset
+* test_inner_corner_lip_is_rotated_180_from_its_wall
+* test_real_convex_turn_still_gets_corner
+* test_inner_corner_notch_gets_inner_piece
+* test_open_one_storey_diagonal_is_not_an_inner_corner
+* test_inner_corner_piece_present
+* test_inner_corner_wall_texture_tiles_without_a_light_dark_stack_seam
+* test_corner_piece_sits_in_the_dropped_end_slot
+* test_pieces_tile_the_edge_with_no_gap_and_no_boundary_overshoot
+* test_wall_rows_follow_a_dipping_neighbour_slope
+* test_cliff_wraps_around_to_the_slope_facing_side
+* test_junction_into_a_continuing_higher_wall_is_owned_by_its_corner
+* test_flush_step_run_ends_in_an_outer_corner_into_the_taller_wall
+* test_flush_junction_wall_rows_tile_the_plane_with_straight_modules
+* test_run_into_a_continuing_perpendicular_wall_is_straight
+* test_corner_caps_sit_exactly_flush_with_straight_lips
+* test_terraced_step_junction_is_owned_by_the_higher_outer_corner
+* test_ghost_joined_flush_runs_stay_plain_straight_edges
+* test_lip_run_into_a_higher_cliff_continues_straight_into_its_wall
+* test_ghost_inner_corner_joins_walls_over_a_terraced_pocket
+* test_slope_pocket_gets_a_ghost_inner_corner
+* test_unequal_arm_pocket_gets_an_inner_corner_at_the_lower_arms_top
+* test_no_inner_corner_where_a_taller_diagonal_owns_the_slot
+* test_run_end_at_a_level_neighbour_under_a_taller_diagonal_stays_plain
+* test_outer_corner_does_not_dive_below_its_arms
+* test_edges_keep_full_width_and_corner_present
+* test_another_inner_corner_does_not_make_a_sloping_arm_a_wall
+* test_registered_inner_corner_holds_the_arm_clips_no_drape_notch
+* test_continuing_taller_wall_junction_gets_seam_walls_but_no_lip
+* test_carved_pocket_with_unequal_arms_and_continuing_wall_gets_seam_walls
+    [Failed]:  [0] expected to equal [2]:  carved pocket under a continuing taller wall: seam walls, no lip
+      at line 949
+* test_land_pocket_with_level_diagonal_keeps_full_corner
+* test_dry_pocket_with_unequal_arms_keeps_land_behaviour
+* test_carved_pocket_level_diagonal_gets_a_pocket_cap
+    [Failed]:  level-with-lower-arm flat diagonal owns the carved pocket corner
+      at line 1013
+    [Failed]:  [""] expected to equal ["pocket_cap"]:  the diagonal's corner_map registers the corner (sheet tuck + piece emission)
+      at line 1018
+    [Failed]:  [0] expected to equal [1]:  the convex cap wraps the pocket point, one slot into the taller arm
+      at line 1041
+    [Failed]:  [0] expected to equal [1]:  the classic inner piece stays in the diagonal's slot, right next to the cap (owner)
+      at line 1042
+    [Failed]:  [0] expected to be > than [0]:  the concave wall seam below keeps its inner rows
+      at line 1044
+* test_carved_flush_step_cap_sits_at_the_very_end
+    [Failed]:  [""] expected to equal ["ext_outer"]:  the carved flush step is a run-end junction with the cap beyond the boundary
+      at line 1067
+    [Failed]:  the run keeps its straight end module up to the boundary
+      at line 1078
+    [Failed]:  the turned cap sits one slot into the taller cell — at the very end
+      at line 1087
+* test_carved_junction_where_taller_wall_continues_keeps_the_edge_straight
+* test_carved_run_end_into_taller_wall_gets_the_turned_cap
+* test_unequal_x_junction_emits_no_ghost_pieces
+40/44 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_cliff_dressing.gd
+- test_every_lip_is_backed_by_flat_terrain
+    [Risky]:  Did not assert
+- test_carved_pocket_with_unequal_arms_and_continuing_wall_gets_seam_walls
+    [Failed]:  [0] expected to equal [2]:  carved pocket under a continuing taller wall: seam walls, no lip
+          at line 949
+- test_carved_pocket_level_diagonal_gets_a_pocket_cap
+    [Failed]:  level-with-lower-arm flat diagonal owns the carved pocket corner
+          at line 1013
+    [Failed]:  [""] expected to equal ["pocket_cap"]:  the diagonal's corner_map registers the corner (sheet tuck + piece emission)
+          at line 1018
+    [Failed]:  [0] expected to equal [1]:  the convex cap wraps the pocket point, one slot into the taller arm
+          at line 1041
+    [Failed]:  [0] expected to equal [1]:  the classic inner piece stays in the diagonal's slot, right next to the cap (owner)
+          at line 1042
+    [Failed]:  [0] expected to be > than [0]:  the concave wall seam below keeps its inner rows
+          at line 1044
+- test_carved_flush_step_cap_sits_at_the_very_end
+    [Failed]:  [""] expected to equal ["ext_outer"]:  the carved flush step is a run-end junction with the cap beyond the boundary
+          at line 1067
+    [Failed]:  the run keeps its straight end module up to the boundary
+          at line 1078
+    [Failed]:  the turned cap sits one slot into the taller cell — at the very end
+          at line 1087
+
+Totals
+------
+Scripts               2
+Tests                95
+Passing Tests        91
+Failing Tests         3
+Risky/Pending         1
+Asserts           5984/5993
+Time              396.713s
+
+
+---- 3 failing tests ----
+

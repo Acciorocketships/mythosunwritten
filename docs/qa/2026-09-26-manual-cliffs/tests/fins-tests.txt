@@ -1,0 +1,56 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september26_manual_cliffs.gd
+* test_sheet_lawn_receives_biome_tint_once
+    [Pending]:  MultiMesh colour readback needs a native rendering device
+* test_rock_exclusion_claims_the_grass_below_it
+* test_photo11_heightfield_has_no_inverted_surface_triangles
+* test_replaced_native_pieces_are_removed_even_when_their_tops_project
+* test_moderate_cliff_profile_is_gentler_with_a_rounded_shoulder
+* test_grass_uses_the_rendered_triangle_and_its_shading_normal
+* test_wide_grass_clump_is_rejected_at_an_unsupported_bench
+* test_independent_neighbour_heightfields_match_at_the_chunk_edge
+* test_rock_sampler_uses_the_same_triangle_as_rendering
+* test_grass_footprint_can_continue_on_ordinary_ground
+* test_photo13_one_node_stone_fin_is_trimmed
+10/11 passed.
+
+
+res://tests/test_september26_bedrock.gd
+* test_bedrock_solid_has_no_open_edges
+* test_level_steps_take_no_slope
+* test_cliffs_keep_their_slope
+* test_slope_runs_into_water_then_sinks
+* test_steep_slope_claims_its_grass_points
+* test_underlip_keeps_the_lip_and_starts_below_it
+6/6 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_september26_manual_cliffs.gd
+- test_sheet_lawn_receives_biome_tint_once
+    [Pending]:  MultiMesh colour readback needs a native rendering device
+
+Totals
+------
+Scripts               2
+Tests                17
+Passing Tests        16
+Risky/Pending         1
+Asserts              40
+Time              10.153s
+
+
+---- 1 pending/risky tests. ----
+

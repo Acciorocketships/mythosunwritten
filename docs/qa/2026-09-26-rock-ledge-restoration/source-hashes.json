@@ -1,0 +1,7 @@
+{
+  "scripts/terrain/field/CliffSlopeEnvelope.gd": "5f00919d93aaf0fea7c78f4dd45e1d56612b804b015b0069d236cbf353eafc21",
+  "scripts/terrain/field/CliffSlopeField.gd": "0693ac4be3709d8702966f0724b1bb57ee28aabb31a20795b9037b1bf28f1174",
+  "terrain/materials/cliff_crag.gdshader": "50f766d208d041c551bca6b82a5f8ee9b1228ada45d8f0c83a2faa1b4d1914fb",
+  "terrain/materials/slope_green.gdshaderinc": "80d1e084f521e3117a88023ca185020d6444b566f48d4d69b4e7338ea4560762",
+  "tests/fixtures/september26-cliffs/p03-constrained-inputs.var.gz": "7ec157d189589afe2acfbd7fa4b076fd91fb102a4e9d8242a72e8c4fb20d7d90"
+}

@@ -1,0 +1,18 @@
+[synthetic] nosweep.gd
+  wall20 angle 0.00 {"carved":2122,"d2_max":1.63,"d2_over_half":44,"d2_p90":0.212,"d2_p99":0.635,"max_rise":0.88,"rises":10,"rock":2151}
+  wall20 angle 0.52 {"carved":2300,"d2_max":1.08,"d2_over_half":98,"d2_p90":0.379,"d2_p99":0.695,"max_rise":0.45,"rises":16,"rock":2314}
+  wall20 angle 0.79 {"carved":2311,"d2_max":2.22,"d2_over_half":97,"d2_p90":0.367,"d2_p99":0.745,"max_rise":0.11,"rises":2,"rock":2307}
+  wall12 angle .52 {"carved":1537,"d2_max":1.15,"d2_over_half":32,"d2_p90":0.314,"d2_p99":0.586,"max_rise":0.27,"rises":11,"rock":1519}
+  p03 {"d2_over_half":72,"faces":346,"normal_median":11.97,"normal_p90":17.37,"patches":9,"rises":26,"treads":45}
+[synthetic] sweep.gd
+  wall20 angle 0.00 {"carved":2122,"d2_max":1.63,"d2_over_half":44,"d2_p90":0.21,"d2_p99":0.618,"max_rise":0.68,"rises":2,"rock":2151}
+  wall20 angle 0.52 {"carved":2300,"d2_max":1.24,"d2_over_half":89,"d2_p90":0.369,"d2_p99":0.695,"max_rise":0.1,"rises":0,"rock":2314}
+  wall20 angle 0.79 {"carved":2311,"d2_max":2.16,"d2_over_half":95,"d2_p90":0.364,"d2_p99":0.729,"max_rise":0.02,"rises":0,"rock":2307}
+  wall12 angle .52 {"carved":1537,"d2_max":1.15,"d2_over_half":28,"d2_p90":0.309,"d2_p99":0.586,"max_rise":0.08,"rises":0,"rock":1519}
+  p03 {"d2_over_half":68,"faces":336,"normal_median":11.56,"normal_p90":17.35,"patches":11,"rises":0,"treads":55}
+[synthetic] sweepmax.gd
+  wall20 angle 0.00 {"carved":2122,"d2_max":1.63,"d2_over_half":43,"d2_p90":0.213,"d2_p99":0.623,"max_rise":0.77,"rises":5,"rock":2151}
+  wall20 angle 0.52 {"carved":2300,"d2_max":1.18,"d2_over_half":92,"d2_p90":0.372,"d2_p99":0.698,"max_rise":0.2,"rises":2,"rock":2314}
+  wall20 angle 0.79 {"carved":2311,"d2_max":2.22,"d2_over_half":95,"d2_p90":0.364,"d2_p99":0.729,"max_rise":0.09,"rises":0,"rock":2307}
+  wall12 angle .52 {"carved":1537,"d2_max":1.15,"d2_over_half":30,"d2_p90":0.313,"d2_p99":0.586,"max_rise":0.14,"rises":2,"rock":1519}
+  p03 {"d2_over_half":70,"faces":339,"normal_median":11.61,"normal_p90":17.35,"patches":11,"rises":4,"treads":57}

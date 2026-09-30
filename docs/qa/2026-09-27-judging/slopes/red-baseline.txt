@@ -1,0 +1,41 @@
+# test_september27_edge_slopes on the baseline copy (db59f0c8 + storey shim)
+- test_one_storey_side_of_a_cliff_cell_is_the_standard_slope
+    [Failed]:  the one-storey side is walkable
+    [Failed]:  [16.00000000000000000000] expected to equal [12.0] +/- [0.0001]:  cell (3,3) at (60,60) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [12.141975308642] +/- [0.0001]:  cell (3,3) at (62,60) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [12.8395061728395] +/- [0.0001]:  cell (3,3) at (64,60) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [14.0] +/- [0.0001]:  cell (3,3) at (66,60) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [15.1604938271605] +/- [0.0001]:  cell (3,3) at (68,60) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [15.858024691358] +/- [0.0001]:  cell (3,3) at (70,60) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [12.0] +/- [0.0001]:  cell (3,3) at (60,62) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [12.141975308642] +/- [0.0001]:  cell (3,3) at (62,62) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [12.8395061728395] +/- [0.0001]:  cell (3,3) at (64,62) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [14.0] +/- [0.0001]:  cell (3,3) at (66,62) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [15.1604938271605] +/- [0.0001]:  cell (3,3) at (68,62) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [15.858024691358] +/- [0.0001]:  cell (3,3) at (70,62) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [12.0] +/- [0.0001]:  cell (3,3) at (60,64) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [12.141975308642] +/- [0.0001]:  cell (3,3) at (62,64) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [12.8395061728395] +/- [0.0001]:  cell (3,3) at (64,64) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [14.0] +/- [0.0001]:  cell (3,3) at (66,64) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [15.1604938271605] +/- [0.0001]:  cell (3,3) at (68,64) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [15.858024691358] +/- [0.0001]:  cell (3,3) at (70,64) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [12.0] +/- [0.0001]:  cell (3,3) at (60,66) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [12.141975308642] +/- [0.0001]:  cell (3,3) at (62,66) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [12.8395061728395] +/- [0.0001]:  cell (3,3) at (64,66) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [14.0] +/- [0.0001]:  cell (3,3) at (66,66) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [15.1604938271605] +/- [0.0001]:  cell (3,3) at (68,66) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [15.858024691358] +/- [0.0001]:  cell (3,3) at (70,66) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [12.0] +/- [0.0001]:  cell (3,3) at (60,68) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [12.141975308642] +/- [0.0001]:  cell (3,3) at (62,68) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [12.8395061728395] +/- [0.0001]:  cell (3,3) at (64,68) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [14.0] +/- [0.0001]:  cell (3,3) at (66,68) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [15.1604938271605] +/- [0.0001]:  cell (3,3) at (68,68) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [15.858024691358] +/- [0.0001]:  cell (3,3) at (70,68) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [12.0] +/- [0.0001]:  cell (3,3) at (60,70) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [12.141975308642] +/- [0.0001]:  cell (3,3) at (62,70) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [12.8395061728395] +/- [0.0001]:  cell (3,3) at (64,70) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [14.0] +/- [0.0001]:  cell (3,3) at (66,70) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [15.1604938271605] +/- [0.0001]:  cell (3,3) at (68,70) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [15.858024691358] +/- [0.0001]:  cell (3,3) at (70,70) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [12.0] +/- [0.0001]:  cell (3,3) at (60,72) is the standard slope
+    [Failed]:  [16.00000000000000000000] expected to equal [12.141975308642] +/- [0.0001]:  cell (3,3) at (62,72) is the standard slope

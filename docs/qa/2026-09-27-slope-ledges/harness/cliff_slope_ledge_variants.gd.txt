@@ -1,0 +1,108 @@
+extends SceneTree
+## Variant study (September 27): native dry envelopes at the owner's ledge
+## sites, built from source variants of CliffSlopeEnvelope.gd, compared by
+## fall-line rise, node spikes and contour roughness on exposed rock.
+##   Godot --headless --path . -s res://tests/harness/cliff_slope_ledge_variants.gd -- [--variants a,b] [--sites A,B]
+const SEED:=2697992464
+const FIELD=preload("res://scripts/terrain/field/CliffSlopeField.gd")
+const STYLE=preload("res://scripts/terrain/field/CliffRockStyle.gd")
+const PATH:="res://scripts/terrain/field/CliffSlopeEnvelope.gd"
+const SITES:={"A":Vector2(1126,973),"B":Vector2(421.4,860.1),"A2":Vector2(371.9,869.3),"P03":Vector2(522,972)}
+static var HALF:=22.0
+func _initialize()->void:_run.call_deferred()
+
+static func variant_source(name:String)->String:
+ if name.begins_with("file:"):return FileAccess.get_file_as_string(name.trim_prefix("file:"))
+ var s:=FileAccess.get_file_as_string(PATH)
+ var extra:=FileAccess.get_file_as_string("res://tests/harness/cliff_slope_ledge_variants.txt")
+ # Variant file: blocks "== name" then pairs "<<<" old ">>>" new "###".
+ var blocks:=extra.split("\n== ")
+ for block:String in blocks:
+  var head:=block.get_slice("\n",0).trim_prefix("== ").strip_edges()
+  if head!=name:continue
+  for pair:String in block.substr(head.length()).split("\n###"):
+   if not pair.contains("<<<\n"):continue
+   var old:=pair.get_slice("<<<\n",1).get_slice("\n>>>\n",0)
+   var new:=pair.get_slice("\n>>>\n",1)
+   if not s.contains(old):push_error("variant %s: missing %s"%[name,old.left(60)])
+   s=s.replace(old,new)
+ return s
+
+static func metrics(env,base,at:Vector2)->Dictionary:
+ var rise:=0;var max_rise:=0.0;var spikes:=0;var max_spike:=0.0;var rough:=[];var nodes:=0
+ for x in range(roundi((at.x-HALF)*2),roundi((at.x+HALF)*2)):
+  for z in range(roundi((at.y-HALF)*2),roundi((at.y+HALF)*2)):
+   var q:=Vector2(x,z)*.5
+   var y:float=env.at(q);var b:float=base.at(q)
+   var g:=Vector2(base.at(q+Vector2(.5,0))-base.at(q-Vector2(.5,0)),base.at(q+Vector2(0,.5))-base.at(q-Vector2(0,.5)))
+   if g.length()<.2:continue
+   if absf(y-b)<.05 and env.rock_at(q)<.1:continue
+   nodes+=1
+   var fall:=-g.normalized();var t:=Vector2(-fall.y,fall.x)
+   var r:float=env.sample(q+fall)-env.sample(q)
+   if absf(env.sample(q+fall)-base.sample(q+fall))<.05 and absf(y-b)<.05:r=0.0
+   if r>.1:
+    rise+=1
+    if OS.get_cmdline_user_args().has("--profiles") and r>.3:
+     var line:=""
+     for k in range(-4,7):line+=" %.2f/%.2f"%[env.sample(q+fall*k*.5),base.sample(q+fall*k*.5)]
+     print("  rise %.2f at %s rock %.2f:%s"%[r,q,env.rock_at(q),line])
+   max_rise=maxf(max_rise,r)
+   var m:float=(env.at(q+Vector2(.5,0))+env.at(q-Vector2(.5,0))+env.at(q+Vector2(0,.5))+env.at(q-Vector2(0,.5)))*.25
+   var mb:float=(base.at(q+Vector2(.5,0))+base.at(q-Vector2(.5,0))+base.at(q+Vector2(0,.5))+base.at(q-Vector2(0,.5)))*.25
+   var sp:=absf(y-m)-absf(b-mb)
+   if sp>.3 and sp>max_spike and OS.get_cmdline_user_args().has("--spikes"):max_spike=sp
+   if sp>.3:
+    spikes+=1
+    if OS.get_cmdline_user_args().has("--spikes") and sp>max_spike-.001 and sp>float(OS.get_environment("SPIKE_MIN") if OS.has_environment("SPIKE_MIN") else "1.0"):
+     print("  spike %.2f at %s rock %.2f fall %s"%[sp,q,env.rock_at(q),fall])
+     for dz in range(-3,4):
+      var row:=""
+      for dx in range(-3,4):row+=" %6.2f"%(env.at(q+Vector2(dx,dz)*.5)-base.at(q))
+      row+="   |"
+      for dx in range(-3,4):row+=" %6.2f"%(base.at(q+Vector2(dx,dz)*.5)-base.at(q))
+      print("   ",row)
+   max_spike=maxf(max_spike,sp)
+   rough.append(absf(env.sample(q+t*.5)-2.0*env.sample(q)+env.sample(q-t*.5)))
+ rough.sort()
+ return {"nodes":nodes,"rise":rise,"max_rise":snappedf(max_rise,.01),"spikes":spikes,"max_spike":snappedf(max_spike,.01),
+  "rough_p95":snappedf(rough[int(rough.size()*.95)] if rough.size()>0 else 0.0,.001),"rough_p99":snappedf(rough[int(rough.size()*.99)] if rough.size()>0 else 0.0,.001),"rough_max":snappedf(rough[-1] if rough.size()>0 else 0.0,.01)}
+
+func _run()->void:
+ var args:=OS.get_cmdline_user_args()
+ var variants:=PackedStringArray(["current"]);var sites:=PackedStringArray(SITES.keys())
+ for i in args.size():
+  if args[i]=="--variants":variants=args[i+1].split(",")
+  if args[i]=="--sites":sites=args[i+1].split(",")
+ var water:=TerrainWorldTuning.make_water(SEED);var plan:=TerrainWorldTuning.make_heightfield(SEED,water)
+ for site:String in sites:
+  var at:Vector2=SITES[site]
+  var sampler:Callable;var excluded:=Callable();var wet:=Callable()
+  HALF=22.0
+  if site=="P03":
+   # Frozen native inputs (ground, water, exclusion): immune to concurrent
+   # terrain/water changes, so variants stay comparable across runs.
+   HALF=44.0
+   var d:Dictionary=bytes_to_var(FileAccess.get_file_as_bytes("res://tests/fixtures/september26-cliffs/p03-constrained-inputs.var.gz").decompress_dynamic(4000000,FileAccess.COMPRESSION_GZIP))
+   var index:=func(q:Vector2)->int:
+    var p:=Vector2i(((q-d.origin)/.5).round()).clamp(Vector2i.ZERO,Vector2i(d.w-1,d.h-1));return p.y*d.w+p.x
+   sampler=func(q:Vector2)->float:return d.ground[index.call(q)]
+   excluded=func(q:Vector2)->bool:return d.excluded[index.call(q)]!=0
+   wet=func(q:Vector2)->float:return d.wet[index.call(q)]
+  else:
+   var region:=plan.compute_region(floori(at.x/24.0),floori(at.y/24.0),6)
+   sampler=FIELD.new([],SEED,region,Rect2(at,Vector2.ONE))._ground_sampler()
+  var area:=Rect2(476,924,92,96) if site=="P03" else Rect2(at-Vector2.ONE*HALF,Vector2.ONE*HALF*2.0).grow(12.0)
+  for v:String in variants:
+   var script:=GDScript.new();script.source_code=variant_source(v) if v!="current" else FileAccess.get_file_as_string(PATH)
+   assert(script.reload()==OK)
+   STYLE.apply("sheet")
+   var base=script.build(area,sampler,excluded,SEED,wet)
+   STYLE.apply("sheet_bedrock")
+   var clock:=Time.get_ticks_msec()
+   var env=script.build(area,sampler,excluded,SEED,wet)
+   var rocky:=0
+   for y:float in env.rock:if y>.3:rocky+=1
+   print("[variants] rock nodes>0.3: ",rocky)
+   print("[variants] site=%s variant=%s ms=%d %s"%[site,v,Time.get_ticks_msec()-clock,JSON.stringify(metrics(env,base,at))])
+ quit()

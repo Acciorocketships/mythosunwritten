@@ -1,0 +1,18 @@
+{
+  "before": "docs/qa/2026-09-26-manual-cliffs/river-close/00/p07.png",
+  "after": "docs/qa/2026-09-26-cliff-style-restoration/river/91/p07.png",
+  "size": [
+    1600,
+    900
+  ],
+  "mean_absolute_channel_difference": 2.9980481481481482,
+  "pixels_over_8": 184790,
+  "fraction_over_8": 0.1283263888888889,
+  "changed_bounds": [
+    0,
+    174,
+    1599,
+    899
+  ],
+  "note": "Pixel changes establish change, not correctness. Inspect matched images; animated grass and temporal rendering also change pixels."
+}

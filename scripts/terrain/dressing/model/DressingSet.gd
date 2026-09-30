@@ -11,6 +11,13 @@ enum WaterMode { LAND, SHORE, SHALLOW, EMERGENT, FLOATING }
 ## biome. Habitat layers then shape where that population is allowed to live.
 @export var fill_per_cell: Dictionary = {}
 @export var habitat_layers: Array[DressingHabitatLayer] = []
+## Clustered population (colony_radius > 0): fill_per_cell is then spent as
+## colonies of about colony_members members, instead of independent anchors:
+## a main member at one jittered centre per proposal cell and the others
+## nestled round it (DressingCompiler.nestle_distance), never beyond
+## colony_radius of the centre.
+@export var colony_radius: float = 0.0
+@export var colony_members: float = 0.0
 @export var community_channel: StringName
 @export var community_scale: float = 0.0
 @export_range(0.0, 1.0) var community_strength: float = 0.0
@@ -31,6 +38,10 @@ enum WaterMode { LAND, SHORE, SHALLOW, EMERGENT, FLOATING }
 ## Extra distance beyond path/feature footprints. Zero still rejects anchors
 ## inside a reservation; this is authored per population, never inferred from tags.
 @export var feature_clearance: float = 0.0
+## Embedded rock: sink every point of the visible base outline this fraction
+## of the scaled visual height below the ground, and raise a ground skirt
+## (RockSkirt) that meets it. Zero rests the asset on its anchor.
+@export var embed_fraction: float = 0.0
 
 @export var spacing_group: StringName
 @export var spacing_radius: float = 0.0

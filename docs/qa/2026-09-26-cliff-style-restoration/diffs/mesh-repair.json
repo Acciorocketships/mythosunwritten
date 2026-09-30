@@ -1,0 +1,18 @@
+{
+  "before": "docs/qa/2026-09-26-cliff-style-restoration/mesh-original-one.png",
+  "after": "docs/qa/2026-09-26-cliff-style-restoration/mesh-repair-one.png",
+  "size": [
+    1200,
+    800
+  ],
+  "mean_absolute_channel_difference": 4.30031875,
+  "pixels_over_8": 45366,
+  "fraction_over_8": 0.04725625,
+  "changed_bounds": [
+    349,
+    170,
+    728,
+    758
+  ],
+  "note": "Pixel changes establish change, not correctness. Inspect matched images; animated grass and temporal rendering also change pixels."
+}

@@ -867,6 +867,12 @@ static func mesh(rock:Dictionary)->ArrayMesh:
 ## Moss grade height per unit of (1 - normal.y) on the whole-wall slope: a
 ## 20 degree slope stays mostly lawn, 35 degrees is moss.
 const SHEET_MOSS_RISE:=28.0
+## 1 - normal.y of the steepest ordinary slope: one storey plus three levels
+## (7 m) over the 12 m half cell, whose smootherstep peaks at 1.875x the mean
+## gradient (47.6 degrees). Below it the sheet is exactly the terrain's lawn.
+const SHEET_LAWN_STEEPNESS:=0.326
+## Fully mossy from 60 degrees (cliff faces and cliff-end ramps).
+const SHEET_MOSS_STEEPNESS:=0.5
 static func mesh_arrays(rock:Dictionary,region:HeightfieldRegion=null,seed_value:int=0)->Array:
  var result:Array=[];var green:PackedVector3Array=rock.green
  var turf:Dictionary={}
@@ -902,16 +908,19 @@ static func mesh_arrays(rock:Dictionary,region:HeightfieldRegion=null,seed_value
     # RGB carries the lawn's biome tint for the moss grade (white without a seed).
     var tint:=Color(1,1,1)
     if seed_value!=0:
-     # Bilinear on a 3 m lattice, like the terrain's corner tints: a snapped
-     # cell tint steps visibly across the fine rock mesh.
+     # Bilinear on the terrain sheet's own tint lattice (TerrainChunkMesher
+     # samples the biome tint at every 24 m cell centre): where the slope
+     # meets the terrain both surfaces carry the identical colour. A snapped
+     # cell tint stepped visibly across the fine rock mesh.
      var world:=(rock.transform as Transform3D)*p
-     var gx:=floorf(world.x/3.0);var gz:=floorf(world.z/3.0)
+     var step:=TerrainChunkMesher.TILE
+     var gx:=floorf(world.x/step);var gz:=floorf(world.z/step)
      var corners:Array[Color]=[]
      for corner:Vector2 in [Vector2(0,0),Vector2(1,0),Vector2(0,1),Vector2(1,1)]:
       var key:=Vector2(gx+corner.x,gz+corner.y)
-      if not tints.has(key):tints[key]=BiomeRegistry.ground_tint_at(Vector3(key.x*3.0,0,key.y*3.0),seed_value)
+      if not tints.has(key):tints[key]=BiomeRegistry.ground_tint_at(Vector3(key.x*step,0,key.y*step),seed_value)
       corners.append(tints[key])
-     var fx:=world.x/3.0-gx;var fz:=world.z/3.0-gz
+     var fx:=world.x/step-gx;var fz:=world.z/step-gz
      tint=corners[0].lerp(corners[1],fx).lerp(corners[2].lerp(corners[3],fx),fz)
     colors.append(Color(tint.r,tint.g,tint.b,independent))
    arrays[Mesh.ARRAY_NORMAL]=normals;arrays[Mesh.ARRAY_COLOR]=colors
@@ -923,10 +932,20 @@ static func mesh_arrays(rock:Dictionary,region:HeightfieldRegion=null,seed_value
     top=-INF
     for p:Vector3 in rock.faces:top=maxf(top,(pose*p).y)
    for i in points.size():
-    # The whole-wall slope is a hillside: lawn where it is gentle (shoulders,
-    # benches, the foot), moss as it steepens. x stands for the height the
-    # moss grade reads, from the slope's steepness.
-    if sheet:rise[i]=Vector2(SHEET_MOSS_RISE*(1.0-normals[i].y),top);continue
+    # The whole-wall slope is a hillside: lawn where it is gentle, moss as it
+    # steepens past the steepest ordinary slope. Colour is a function of
+    # steepness alone (owner, September 29: standard, predictable slopes):
+    # a covered ordinary slope is lawn like the terrain beside it, and a
+    # cliff's end ramp is mossy like the face beside it. x stands for the
+    # height the moss grade reads (the shader maps x/28 through .05..24).
+    if sheet:
+     var steep:=1.0-normals[i].y
+     var grade:=0.0
+     if steep>SHEET_LAWN_STEEPNESS:
+      grade=lerpf(.05,.24,clampf((steep-SHEET_LAWN_STEEPNESS)/(SHEET_MOSS_STEEPNESS-SHEET_LAWN_STEEPNESS),0.0,1.0))
+     var root:Array=rock.native_roots[points[i]]
+     if root.size()>2:grade=maxf(grade,root[2])
+     rise[i]=Vector2(SHEET_MOSS_RISE*grade,top);continue
     if region==null:rise[i]=Vector2(points[i].y,top-pose.origin.y);continue
     var world:=pose*points[i];var n:=pose.basis*normals[i]
     var out:=Vector2(n.x,n.z)

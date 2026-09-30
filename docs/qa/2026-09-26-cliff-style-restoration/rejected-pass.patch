@@ -1,0 +1,653 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index 1f02b1cc..adc3db15 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -1,3 +1,17 @@
++> September 26 manual cliff judging (13 owner images): `sheet_bedrock`
++> now meshes its 0.5 m heightfield directly (shared render/collision/grass
++> triangles), removing surface-net folds and voids. Replacement-quad coverage
++> withdraws old lips/walls and their collision, including plateau bands.
++> Shoulders/feet are wider; photo 4's actual-character uphill/downhill replay
++> passes without changing the 55-degree walk limit. Isolated bedrock fins are
++> bounded; bedrock uses Meadow's summer stone tint. Meadow top grass projects
++> by the rock normal. Sheet tint is applied once; grass uses matching slope
++> colour/normals and supported footprints. Review with `--mouse-shot` for
++> these F3 images. 43 focused tests / 521 assertions and 51 terrain tests pass;
++> 493 roots and 634 native contacts have no misses. Three older carved-corner
++> tests also fail on original sources. All matched images/diffs and limits:
++> `docs/qa/2026-09-26-manual-cliffs/result.md`.
++
+ > September 26 bedrock in game (owner chose it): `world.tscn` uses
+ > `sheet_bedrock`. The slope fades to the terrain where the 14 m local relief is
+ > under 2-3.2 m (level steps take no slope). Gentle slope uses the exact lawn
+diff --git a/scripts/terrain/field/CliffRockDressing.gd b/scripts/terrain/field/CliffRockDressing.gd
+index 7b969e5d..200dda34 100644
+--- a/scripts/terrain/field/CliffRockDressing.gd
++++ b/scripts/terrain/field/CliffRockDressing.gd
+@@ -484,7 +484,10 @@ static func build(data:Dictionary,_seed:int)->Node3D:
+   if p.has("faces"):
+    var mesh:=CRAGS.mesh(p) if p.get("native_crag",false) else RELIEF.mesh(p)
+    var mm:=MultiMesh.new();mm.transform_format=MultiMesh.TRANSFORM_3D;mm.mesh=mesh;mm.use_colors=true;mm.instance_count=1
+-   mm.set_instance_transform(0,p.transform);mm.set_instance_color(0,BiomeRegistry.ground_tint_at(p.anchor,_seed))
++   mm.set_instance_transform(0,p.transform)
++   # A sheet carries spatial biome colour in its vertex array, just like
++   # the terrain. Instance tint would multiply that field a second time.
++   mm.set_instance_color(0,Color.WHITE if p.get("slope_sheet",false) else BiomeRegistry.ground_tint_at(p.anchor,_seed))
+    var node:=MultiMeshInstance3D.new();node.multimesh=mm;node.set_meta("cliff_asset",p.asset)
+    node.set_meta("relief_green",p.green);node.set_meta("relief_faces",p.faces)
+    if p.has("replay_recipe"):node.set_meta("relief_recipe",p.replay_recipe)
+@@ -509,4 +512,3 @@ static func build(data:Dictionary,_seed:int)->Node3D:
+  if not (data.get("slope_rocks",{}) as Dictionary).is_empty():root.add_child(SLOPE_ROCKS.build(data.slope_rocks,_seed))
+  return root
+ 
+-
+diff --git a/scripts/terrain/field/CliffSlopeEnvelope.gd b/scripts/terrain/field/CliffSlopeEnvelope.gd
+index 6d85e491..186baa16 100644
+--- a/scripts/terrain/field/CliffSlopeEnvelope.gd
++++ b/scripts/terrain/field/CliffSlopeEnvelope.gd
+@@ -23,13 +23,13 @@ const H:=.5
+ ## Shoulder radius range (narrow valleys .. full ridges) and foot fillet
+ ## radius. Modestly wider sides retain flat terrace interiors. Tall relief
+ ## takes the compact profile below, with its own ridge/valley width blend.
+-const SHOULDER:=Vector2(1.8,4.8)
+-const FOOT:=3.6
++const SHOULDER:=Vector2(2.6,6.0)
++const FOOT:=4.5
+ ## Tall drops (outer corners fall to a diagonal cell up to two storeys lower
+ ## than either edge's) blend to this tight shoulder and foot, so a corner
+ ## reaches out about as far as the edges beside it (owner, September 25).
+ ## RELIEF: the local relief over which the blend runs.
+-const TIGHT:=Vector2(.7,1.5)
++const TIGHT:=Vector2(2.2,3.6)
+ const RELIEF:=Vector2(4.0,10.0)
+ const RELIEF_SPREAD:=25.0
+ ## Local relief (within a slope's reach) below which the ground keeps its
+@@ -52,6 +52,23 @@ var surface:=PackedFloat64Array()
+ ## Rock exposure per node (0 moss slope .. 1 bare rock); empty unless a
+ ## study variant exposes rock in the surface itself.
+ var rock:=PackedFloat64Array()
++## Bedrock quads emitted by the replacement, including neighbouring ownership.
++## Plain CPU keys; populated by CliffSlopeField before native-piece filtering.
++var surface_columns:Dictionary={}
++
++func replaces_at(q:Vector2)->bool:
++ var key:=Vector2i((q/H).floor())
++ return surface_columns.has(key) or surface_columns.has(key+Vector2i(1,0)) or surface_columns.has(key+Vector2i(1,1)) or surface_columns.has(key+Vector2i(0,1))
++
++func replaces_piece(key:String,pose:Transform3D)->bool:
++ if surface_columns.is_empty() or not CliffDressing._cpu_pieces.has(key):return false
++ var source:Dictionary=CliffDressing._cpu_pieces[key]
++ var transform:Transform3D=pose*source.local
++ for vertex:Vector3 in source.vertices:
++  var p:=transform*vertex
++  if not replaces_at(Vector2(p.x,p.z)):return false
++ return true
++
+ const STYLE=preload("res://scripts/terrain/field/CliffRockStyle.gd")
+ 
+ ## `rect`: where exact values are needed. `ground_at(q)->float`,
+@@ -116,12 +133,14 @@ static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:
+  # nearly vertical there (small shoulders), so the lip is the edge again.
+  var under:=STYLE.lip_mode=="underlip"
+  var g:=_under_lip(env) if under else env.ground
+- var sh:=SHOULDER*(.2 if under else 1.0)
+- var narrow:=_close(g,env.w,env.h,sh.x,FOOT)
+- var wide_dilated:=_dilate(g,env.w,env.h,sh.y+FOOT)
+- var wide:=_erode(wide_dilated,env.w,env.h,FOOT)
+- var tight:=_close(g,env.w,env.h,TIGHT.x*(.4 if under else 1.0),TIGHT.y)
+- var tight_wide:=_close(g,env.w,env.h,3.4*(.2 if under else 1.0),TIGHT.y)
++ var sh:=Vector2(1.8,4.8)*.2 if under else SHOULDER
++ var foot:=3.6 if under else FOOT
++ var tight_radius:=Vector2(.7,1.5) if under else TIGHT
++ var narrow:=_close(g,env.w,env.h,sh.x,foot)
++ var wide_dilated:=_dilate(g,env.w,env.h,sh.y+foot)
++ var wide:=_erode(wide_dilated,env.w,env.h,foot)
++ var tight:=_close(g,env.w,env.h,tight_radius.x*(.4 if under else 1.0),tight_radius.y)
++ var tight_wide:=_close(g,env.w,env.h,(3.4*.2 if under else 6.0),tight_radius.y)
+  # Local relief: highest reach minus lowest reach nearby; continuous even
+  # across the terrain's own cliffs, so the blend never opens a step.
+  var floor_level:=_erode(env.ground,env.w,env.h,SHOULDER.y+FOOT)
+@@ -164,6 +183,7 @@ static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:
+   var cut:=PackedFloat64Array();cut.resize(n)
+   for idx in n:cut[idx]=uncut[idx]-env.surface[idx]
+   _bedrock(env,floor_level,wide_dilated,relief,seed_value,cut)
++  _trim_fins(env)
+   for idx in n:env.surface[idx]=minf(env.surface[idx],caps[idx])
+  mark.call("done")
+  return env
+@@ -249,11 +269,15 @@ func ground_node(q:Vector2)->float:
+  var i:=clampi(roundi((q.x-origin.x)/H),0,w-1);var k:=clampi(roundi((q.y-origin.y)/H),0,h-1)
+  return ground[k*w+i]
+ 
+-## Bilinear between nodes, for rock placement off the grid.
++## Off-grid rock placement follows the rendered diagonal for bedrock. Other
++## study solids retain their original bilinear sampler.
+ func sample(q:Vector2)->float:
+  var p:=(q-origin)/H
+  var i:=clampi(floori(p.x),0,w-2);var k:=clampi(floori(p.y),0,h-2)
+  var fx:=clampf(p.x-i,0.0,1.0);var fz:=clampf(p.y-k,0.0,1.0)
++ if STYLE.sheet_study=="bedrock":
++  var a:=surface[k*w+i];var b:=surface[k*w+i+1];var c:=surface[(k+1)*w+i];var d:=surface[(k+1)*w+i+1]
++  return a+(b-a)*fx+(d-b)*fz if fx>=fz else a+(d-c)*fx+(c-a)*fz
+  var a:=lerpf(surface[k*w+i],surface[k*w+i+1],fx)
+  var b:=lerpf(surface[(k+1)*w+i],surface[(k+1)*w+i+1],fx)
+  return lerpf(a,b,fz)
+@@ -288,6 +312,7 @@ func uncovered(pieces:Dictionary)->Dictionary:
+   # `+underlip` keeps every lip; walls count as covered below the lip band.
+   var under:=STYLE.lip_mode=="underlip"
+   for t:Transform3D in pieces[key]:
++   if not under and replaces_piece(String(key),t):continue
+    # Under the lip the slope stands off the wall: a wall panel is hidden
+    # wherever the slope reaches a metre up it (the skirt shows as the band).
+    if (lip and under) or not covers_piece(t.origin,t.origin.y+(.1 if lip else (1.3 if under else 4.0))):kept.append(t)
+@@ -311,7 +336,7 @@ func uncovered_faces(arrays:Array)->Array:
+   var top:=maxf(a.y,maxf(b.y,c.y))
+   var covered:=true
+   for p:Vector3 in [a,b,c,(a+b+c)/3.0]:
+-   if not covers_piece(p,top,1.4,1.9):covered=false;break
++   if not replaces_at(Vector2(p.x,p.z)) and not covers_piece(p,top,1.4,1.9):covered=false;break
+   if not covered:kept.append_array(PackedInt32Array([indices[t],indices[t+1],indices[t+2]]))
+  if kept.size()==indices.size():return arrays
+  var out:=arrays.duplicate()
+@@ -528,3 +553,20 @@ static func _bedrock(env,floor_level:PackedFloat64Array,top:PackedFloat64Array,r
+    # Stay a solid slope column: carving to the ground would drop the column
+    # and open a hole where the native pieces are hidden.
+    env.surface[idx]=maxf(env.ground[idx]+minf(F[idx]-env.ground[idx],.4),lerpf(F[idx],carved,s)+jut)
++
++
++## Voronoi ownership can change across one grid node, leaving a multi-metre
++## blade only half a metre thick (photo 13). Clip only these opposed-neighbour
++## peaks. Broad upright faces, benches and deep splits keep their profiles.
++## The result stays a heightfield; rendering, collision and attachments share it.
++static func _trim_fins(env:RefCounted)->void:
++ var w:int=env.w;var h:int=env.h
++ for pass_index in 2:
++  var source:PackedFloat64Array=env.surface.duplicate()
++  for z in range(1,h-1):
++   for x in range(1,w-1):
++    var idx:=z*w+x;var value:=source[idx]
++    for d:int in [1,w,w+1,w-1]:
++     value=minf(value,maxf(source[idx-d],source[idx+d])+.6)
++    # Keep the terrain backing. Cuts already below ground stay below ground.
++    env.surface[idx]=maxf(minf(env.ground[idx],source[idx]),value)
+diff --git a/scripts/terrain/field/CliffSlopeField.gd b/scripts/terrain/field/CliffSlopeField.gd
+index 95b3d172..6f157325 100644
+--- a/scripts/terrain/field/CliffSlopeField.gd
++++ b/scripts/terrain/field/CliffSlopeField.gd
+@@ -1012,7 +1012,10 @@ func _columns(owned:Rect2)->Dictionary:
+   for i in range(MARGIN,w-MARGIN):
+    var m:=-INF
+    for d in range(k-MARGIN,k+MARGIN+1):m=maxf(m,rows[d*w+i])
+-   if m>grounds[k*w+i]-.5:cols[Vector2i(lo.x-MARGIN+i,lo.y-MARGIN+k)]=true
++   # The direct bedrock surface also replaces the upper plateau band
++   # beside a deep carved notch. Requiring a nearby raised point to reach
++   # the plateau height left its old scalloped lip exposed (photo 12).
++   if (is_finite(m) if STYLE.sheet_study=="bedrock" else m>grounds[k*w+i]-.5):cols[Vector2i(lo.x-MARGIN+i,lo.y-MARGIN+k)]=true
+  _column_cache[owned]=cols
+  return cols
+ 
+@@ -1027,10 +1030,15 @@ func grass_support(area:Rect2)->Dictionary:
+  var w:=hi.x-lo.x+1;var h:=hi.y-lo.y+1
+  var heights:=PackedFloat32Array();heights.resize(w*h)
+  var flags:=PackedByteArray();flags.resize(w*h)
++ var normals:=PackedVector3Array();normals.resize(w*h)
+  for k in h:
+   for i in w:
+    var key:=lo+Vector2i(i,k)
+    heights[k*w+i]=env.at(Vector2(key)*GRID)-SINK
++   var q:=Vector2(key)*GRID
++   var gx:=(env.at(q+Vector2(GRID,0))-env.at(q-Vector2(GRID,0)))/(2.0*GRID)
++   var gz:=(env.at(q+Vector2(0,GRID))-env.at(q-Vector2(0,GRID)))/(2.0*GRID)
++   normals[k*w+i]=Vector3(-gx,1,-gz).normalized()
+    # Where the slope has sunk under the terrain (its foot), the terrain's own
+    # grass grows; grass planted on the buried slope would be invisible.
+    if cols.has(key) and heights[k*w+i]>=env.ground_node(Vector2(key)*GRID)-.05:flags[k*w+i]=1
+@@ -1038,12 +1046,53 @@ func grass_support(area:Rect2)->Dictionary:
+   var c:Vector3=r.centre;var reach:=maxf(float(r.ry),maxf(float(r.ru),float(r.ro)))/.75
+   for k in range(maxi(0,floori((c.z-reach)/GRID)-lo.y),mini(h,ceili((c.z+reach)/GRID)-lo.y+1)):
+    for i in range(maxi(0,floori((c.x-reach)/GRID)-lo.x),mini(w,ceili((c.x+reach)/GRID)-lo.x+1)):
+-    if Vector2(lo.x+i,lo.y+k).distance_to(Vector2(c.x,c.z)/GRID)*GRID<reach:flags[k*w+i]=0
++    # Claimed but blocked, rather than absent: grass must not fall back to
++    # the buried terrain beneath this rock and protrude through its faces.
++    if flags[k*w+i] and heights[k*w+i]<=c.y+float(r.ry)+.1 and Vector2(lo.x+i,lo.y+k).distance_to(Vector2(c.x,c.z)/GRID)*GRID<reach:flags[k*w+i]=2
+  return {"grid":true,"origin":Vector2(lo)*GRID,"step":GRID,"w":w,"h":h,"heights":heights,"flags":flags,
+-  "bounds":Rect2(Vector2(lo)*GRID,Vector2(w-1,h-1)*GRID),"id":"slope/%s"%area.position,"obstacles":[]}
++  "bounds":Rect2(Vector2(lo)*GRID,Vector2(w-1,h-1)*GRID),"id":"slope/%s"%area.position,"obstacles":[],
++  "triangulated":STYLE.sheet_study=="bedrock","normals":normals}
++
++## Bedrock is a single-valued heightfield. Mesh that field directly: surface
++## nets move vertices sideways and fold thin benches, introducing back-facing
++## triangles and openings at sharp height changes. The same world-grid
++## triangles now own the visible surface, collision and grass support.
++func _heightfield_solid(owned:Rect2)->Array[Dictionary]:
++ var env:=envelope()
++ # Native pieces can straddle the owned edge; their replacement may belong
++ # to the neighbouring chunk, computed from the same world-aligned grid.
++ env.surface_columns=_columns(owned.grow(4.0))
++ var cols:=_columns(owned)
++ var lo:=Vector2i(ceili(owned.position.x/GRID),ceili(owned.position.y/GRID))
++ var hi:=Vector2i(ceili(owned.end.x/GRID),ceili(owned.end.y/GRID))
++ var faces:=PackedVector3Array()
++ var roots:Dictionary={}
++ var bounds:=AABB()
++ for z in range(lo.y,hi.y):
++  for x in range(lo.x,hi.x):
++   var keys:=[Vector2i(x,z),Vector2i(x+1,z),Vector2i(x+1,z+1),Vector2i(x,z+1)]
++   # Include the transition quad to the buried terrain, not an artificial
++   # vertical side at the active-column boundary.
++   if not (cols.has(keys[0]) or cols.has(keys[1]) or cols.has(keys[2]) or cols.has(keys[3])):continue
++   var p:=PackedVector3Array()
++   for key:Vector2i in keys:
++    var q:=Vector2(key)*GRID
++    var point:=Vector3(q.x,env.at(q)-SINK,q.y)
++    p.append(point)
++    if roots.has(point):continue
++    var gx:=(env.at(q+Vector2(GRID,0))-env.at(q-Vector2(GRID,0)))/(2.0*GRID)
++    var gz:=(env.at(q+Vector2(0,GRID))-env.at(q-Vector2(0,GRID)))/(2.0*GRID)
++    bounds=AABB(point,Vector3.ZERO) if roots.is_empty() else bounds.expand(point)
++    roots[point]=[Vector3(-gx,1,-gz).normalized(),env.rock_at(q)]
++   faces.append_array(PackedVector3Array([p[0],p[1],p[2],p[0],p[2],p[3]]))
++ if faces.is_empty():return []
++ return [{"faces":faces,"green":PackedVector3Array(),"native_roots":roots,"transform":Transform3D.IDENTITY,
++  "bounds":bounds,"anchor":bounds.get_center(),"top":bounds.end.y,"base":bounds.position.y,
++  "id":"slope_solid/%s"%owned.position,"asset":&"cliff.native_crag","kind":"rock","native_crag":true,"slope_sheet":true}]
+ 
+ ## Surface-nets mesh of the solid for the owned rectangle.
+ func solid(owned:Rect2)->Array[Dictionary]:
++ if STYLE.sheet_study=="bedrock":return _heightfield_solid(owned)
+  var env:=envelope()
+  var rock_cells:Dictionary={}
+  for r:Dictionary in rock_list:
+diff --git a/scripts/terrain/field/TerrainChunkMesher.gd b/scripts/terrain/field/TerrainChunkMesher.gd
+index d4db874f..8f44fddc 100644
+--- a/scripts/terrain/field/TerrainChunkMesher.gd
++++ b/scripts/terrain/field/TerrainChunkMesher.gd
+@@ -525,6 +525,7 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
+ 	if terraces.has("sheet_cover"):
+ 		cliffs = terraces.sheet_cover.uncovered(cliffs)
+ 		wall_arrays = terraces.sheet_cover.uncovered_faces(wall_arrays)
++		wall_collision_arrays = terraces.sheet_cover.uncovered_faces(wall_collision_arrays)
+ 		terraces.erase("sheet_cover")
+ 	if phase_callback.is_valid(): phase_callback.call(chunk, &"cliff_vegetation")
+ 	var vegetation := CLIFF_VEGETATION.compute(cliffs,terraces,region,_water_seed,features,water)
+@@ -631,11 +632,12 @@ func commit_chunk(data: Dictionary) -> Node3D:
+ 		sf.name = "CliffFaces"
+ 		sf.mesh = skirt_mesh
+ 		root.add_child(sf)
+-		var collision_mesh := _mesh_from_arrays(data["wall_collision_arrays"], null)
+-		var cs2 := CollisionShape3D.new()
+-		cs2.name = "CollisionShape3D_walls"
+-		cs2.shape = collision_mesh.create_trimesh_shape()
+-		body.add_child(cs2)
++		if not (data["wall_collision_arrays"] as Array).is_empty():
++			var collision_mesh := _mesh_from_arrays(data["wall_collision_arrays"], null)
++			var cs2 := CollisionShape3D.new()
++			cs2.name = "CollisionShape3D_walls"
++			cs2.shape = collision_mesh.create_trimesh_shape()
++			body.add_child(cs2)
+ 	root.add_child(body)
+ 	return root
+ 
+diff --git a/scripts/terrain/grass/GrassField.gd b/scripts/terrain/grass/GrassField.gd
+index ed0c4721..a6154565 100644
+--- a/scripts/terrain/grass/GrassField.gd
++++ b/scripts/terrain/grass/GrassField.gd
+@@ -176,6 +176,10 @@ static func compute(program: GrassProgram, world_seed: int, tile: Vector2i,
+ 				continue
+ 			var edge_scale := minf(float(surface.physical_edge_scale),
+ 				_coverage_edge_scale(coverage))
++			if support.get("heightfield",false):
++				edge_scale *= GrassSupportSurfaces.footprint_scale(support_index,anchor,support,footprint_radius*edge_scale,
++					func(q:Vector2)->float:return _surface_y(region,surface_cache,q.x,q.y))
++				if edge_scale < CLIFF_MIN_VISIBLE_SCALE:continue
+ 			var actual_extra := _density_extra(edge_scale,
+ 				float(surface.area_extra))
+ 			var actual_weight := 1.0 if layer == 0 \
+@@ -196,7 +200,8 @@ static func compute(program: GrassProgram, world_seed: int, tile: Vector2i,
+ 				"key": Helper._mix64(identity ^ SALT_DROPOUT),
+ 				"slot": layer * SLOT_COUNT + slot_index,
+ 				"transform": final_transform,
+-				"color": field_sample.tint,
++				"color": (field_sample.tint as Color).clamp() if support.get("heightfield",false) else field_sample.tint,
++				"shade_normal": support.get("shade_normal",Vector3.UP),
+ 				"sway": _roll(identity, SALT_SWAY) * TAU,
+ 				"bounds": placement * (asset.descriptor_aabb as AABB),
+ 				"height": (asset.descriptor_aabb as AABB).size.y * final_scale,
+@@ -214,7 +219,7 @@ static func compute(program: GrassProgram, world_seed: int, tile: Vector2i,
+ 		for index in batch_candidates.size():
+ 			var candidate: Dictionary = batch_candidates[index]
+ 			_write_instance(buffer, index, candidate.transform, candidate.color,
+-				candidate.sway, float(index) / float(batch_candidates.size()))
++				candidate.sway, float(index) / float(batch_candidates.size()),candidate.shade_normal)
+ 			var candidate_bounds: AABB = candidate.bounds
+ 			bounds = candidate_bounds if not has_bounds else bounds.merge(candidate_bounds)
+ 			has_bounds = true
+@@ -537,7 +542,7 @@ static func _candidate_less(a: Dictionary, b: Dictionary) -> bool:
+ 	return a.key < b.key or (a.key == b.key and a.slot < b.slot)
+ 
+ static func _write_instance(buffer: PackedFloat32Array, index: int,
+-		transform: Transform3D, color: Color, sway: float, rank: float) -> void:
++		transform: Transform3D, color: Color, sway: float, rank: float, shade_normal:=Vector3.UP) -> void:
+ 	var offset := index * GrassPayload.FLOATS_PER_INSTANCE
+ 	var basis := transform.basis
+ 	buffer[offset + 0] = basis.x.x
+@@ -558,5 +563,5 @@ static func _write_instance(buffer: PackedFloat32Array, index: int,
+ 	buffer[offset + 15] = color.a
+ 	buffer[offset + 16] = sway
+ 	buffer[offset + 17] = rank
+-	buffer[offset + 18] = 0.0
+-	buffer[offset + 19] = 0.0
++	buffer[offset + 18] = shade_normal.x
++	buffer[offset + 19] = shade_normal.z
+diff --git a/scripts/terrain/grass/GrassStreamer.gd b/scripts/terrain/grass/GrassStreamer.gd
+index f5596ce2..ff5124f4 100644
+--- a/scripts/terrain/grass/GrassStreamer.gd
++++ b/scripts/terrain/grass/GrassStreamer.gd
+@@ -202,6 +202,7 @@ func _prepare_asset(asset_id: StringName) -> void:
+ 	var metadata: Dictionary = _program.assets[asset_id]
+ 	var material := ShaderMaterial.new()
+ 	material.shader = _shader
++	preload("res://scripts/terrain/field/CliffRockCrags.gd").apply_moss(material)
+ 	var source := piece.mesh.surface_get_material(0) as StandardMaterial3D
+ 	assert(source != null)
+ 	var has_texture := source.albedo_texture != null
+diff --git a/scripts/terrain/grass/GrassSupportSurfaces.gd b/scripts/terrain/grass/GrassSupportSurfaces.gd
+index d2794c5b..f919217d 100644
+--- a/scripts/terrain/grass/GrassSupportSurfaces.gd
++++ b/scripts/terrain/grass/GrassSupportSurfaces.gd
+@@ -42,17 +42,57 @@ static func at_grid(grid:Dictionary,point:Vector2)->Dictionary:
+ 	if i<0 or k<0 or i>=w-1 or k>=h-1:return {}
+ 	var flags:PackedByteArray=grid.flags
+ 	if not (flags[k*w+i] and flags[k*w+i+1] and flags[(k+1)*w+i] and flags[(k+1)*w+i+1]):return {}
++	var blocked := flags[k*w+i] == 2 or flags[k*w+i+1] == 2 or flags[(k+1)*w+i] == 2 or flags[(k+1)*w+i+1] == 2
+ 	var heights:PackedFloat32Array=grid.heights
+ 	var a:=heights[k*w+i];var b:=heights[k*w+i+1];var c:=heights[(k+1)*w+i];var d:=heights[(k+1)*w+i+1]
+ 	var fx:=p.x-i;var fz:=p.y-k
+ 	var y:=lerpf(lerpf(a,b,fx),lerpf(c,d,fx),fz)
+ 	var gx:=(lerpf(b-a,d-c,fz))/step;var gz:=(lerpf(c-a,d-b,fx))/step
++	if grid.get("triangulated",false):
++		# Exact same 00--11 diagonal as the rendered bedrock and collision.
++		# Bilinear support floats over a folded bench's planar triangles.
++		if fx >= fz:
++			y = a + (b-a)*fx + (d-b)*fz
++			gx = (b-a)/step
++			gz = (d-b)/step
++		else:
++			y = a + (d-c)*fx + (c-a)*fz
++			gx = (d-c)/step
++			gz = (c-a)/step
+ 	var normal:=Vector3(-gx,1.0,-gz).normalized()
++	var shade_normal:=normal
++	if grid.has("normals"):
++		var ns:PackedVector3Array=grid.normals
++		shade_normal=(ns[k*w+i]*(1.0-fx)+ns[k*w+i+1]*(fx-fz)+ns[(k+1)*w+i+1]*fz) if fx>=fz else (ns[k*w+i]*(1.0-fz)+ns[(k+1)*w+i+1]*fx+ns[(k+1)*w+i]*(fz-fx))
++		shade_normal=shade_normal.normalized()
+ 	# Too steep for grass still claims the point (edge distance 0 grows
+ 	# nothing): falling back to the terrain below let blades rooted under the
+ 	# slope poke their tips through it.
+-	return {"y":y,"normal":normal,"edge_distance":4.0*smoothstep(GRID_MIN_UP,GRID_FULL_UP,normal.y),
+-		"support_id":grid.id,"over_ground":true}
++	return {"y":y,"normal":normal,"edge_distance":0.0 if blocked else 4.0*smoothstep(GRID_MIN_UP,GRID_FULL_UP,normal.y),
++		"support_id":grid.id,"over_ground":true,"heightfield":true,"shade_normal":shade_normal}
++
++## A clump has width: its root plane must remain supported across that width.
++## At a carved bench edge, a valid centre alone leaves whole ribbons in air.
++static func footprint_scale(cells:Dictionary,point:Vector2,support:Dictionary,radius:float,ground_at:=Callable())->float:
++	if not support.get("heightfield",false):return 1.0
++	var normal:Vector3=support.normal
++	for scale:float in [1.0,.75,.5,.25]:
++		var clear:=true
++		for ring:float in [.5,1.0]:
++			for i in 8:
++				var offset:=Vector2.from_angle(i*PI*.25)*radius*scale*ring
++				var receiver:=at_index(cells,point+offset)
++				if receiver.is_empty() and ground_at.is_valid():
++					receiver={"y":float(ground_at.call(point+offset)),"edge_distance":1.0}
++				if receiver.is_empty() or float(receiver.edge_distance)<=0.0:
++					clear=false;break
++				var plane_y:float=support.y-Vector2(normal.x,normal.z).dot(offset)/normal.y
++				var gap:float=plane_y-float(receiver.y)
++				if gap>.08 or gap<-.25:
++					clear=false;break
++			if not clear:break
++		if clear:return scale
++	return 0.0
+ 
+ # Detached native top triangles extend the ordinary grass sampler. Only flat
+ # authored turf tops are eligible; bounding boxes never stand in for a cap.
+diff --git a/terrain/grass/grass.gdshader b/terrain/grass/grass.gdshader
+index d3079219..ab0c571e 100644
+--- a/terrain/grass/grass.gdshader
++++ b/terrain/grass/grass.gdshader
+@@ -1,6 +1,16 @@
+ shader_type spatial;
+ render_mode cull_disabled;
+ #include "res://terrain/materials/ground_style.gdshaderinc"
++#include "res://terrain/materials/rock_style.gdshaderinc"
++uniform vec2 grass_uv;
++uniform sampler2D moss_detail : source_color, filter_linear_mipmap, repeat_enable, hint_default_white;
++uniform vec3 moss_detail_mean = vec3(1.0);
++uniform float moss_detail_strength = 0.0;
++uniform float moss_detail_scale = .55;
++uniform vec3 moss_shade = vec3(.40,.58,.50);
++uniform float moss_blend_height = 4.0;
++uniform float moss_secondary = .9;
++varying vec3 grass_support_normal;
+ varying vec2 ground_style_position;
+ #define TACTICAL_GRASS_ROOT
+ varying vec3 tactical_grass_root;
+@@ -28,6 +38,8 @@ uniform vec2 ground_palette_uv = vec2(0.125, 0.125);
+ uniform float local_base_y = 0.0;
+ uniform float local_height = 1.0;
+ 
++#include "res://terrain/materials/slope_green.gdshaderinc"
++
+ const float FULL_RADIUS = 60.0;
+ const float GRASS_RADIUS = 84.0;
+ // Distant partial-scale leaves alias into bright moving specks. Keep each
+@@ -71,6 +83,7 @@ vec2 world_to_local_tangent(vec2 direction, vec3 tangent_x, vec3 tangent_z) {
+ 
+ void vertex() {
+ 	vec2 world_xz = MODEL_MATRIX[3].xz;
++	grass_support_normal = vec3(INSTANCE_CUSTOM.z,sqrt(max(0.0,1.0-dot(INSTANCE_CUSTOM.zw,INSTANCE_CUSTOM.zw))),INSTANCE_CUSTOM.w);
+ 	float lod_distance = distance(world_xz, grass_lod_origin);
+ 	float density = density_at(lod_distance);
+ 	float rank = INSTANCE_CUSTOM.y;
+@@ -218,7 +231,12 @@ void fragment() {
+ 	height_tint = mix(height_tint, vec3(1.0), root_match);
+ 	vec3 ground_base = textureLod(ground_palette_texture,
+ 		ground_palette_uv, 0.0).rgb;
+-	ALBEDO = ground_style(ground_style_position, ground_base * COLOR.rgb) * height_tint * blade_value;
++	vec3 support_n=normalize(grass_support_normal);
++	vec3 substrate = ground_style(ground_style_position, ground_base * COLOR.rgb);
++	if (support_n.y < .99999) {
++		substrate = slope_green(tactical_grass_root,support_n,COLOR.rgb,28.0*(1.0-support_n.y));
++	}
++	ALBEDO = substrate * height_tint * blade_value;
+ 	ROUGHNESS = 1.0;
+ 	SPECULAR = 0.0;
+ }
+diff --git a/terrain/materials/cliff_crag.gdshader b/terrain/materials/cliff_crag.gdshader
+index ab03e92c..508b07be 100644
+--- a/terrain/materials/cliff_crag.gdshader
++++ b/terrain/materials/cliff_crag.gdshader
+@@ -36,7 +36,9 @@ uniform sampler2D prop_albedo : source_color, filter_linear_mipmap, hint_default
+ // the exposure; bare rock takes Meadow's authored stone, flat benches grass.
+ uniform bool exposure_rock = false;
+ uniform sampler2D rock_albedo : source_color, filter_linear_mipmap, repeat_enable, hint_default_white;
+-uniform vec3 rock_tint = vec3(.5,.46,.42);
++// Same native summer stone overlay as MeadowRockMaterial. A grey overlay
++// made the bedrock exposed behind foot rocks look like an untextured backside.
++uniform vec3 rock_tint = vec3(.5520116,.41788515,.34191445);
+ uniform float rock_scale = .22;
+ varying vec3 stone_position;
+ varying vec2 stone_rise;
+diff --git a/terrain/materials/meadow_rock.gdshader b/terrain/materials/meadow_rock.gdshader
+index accf0259..79bc672a 100644
+--- a/terrain/materials/meadow_rock.gdshader
++++ b/terrain/materials/meadow_rock.gdshader
+@@ -39,7 +39,7 @@ void fragment(){
+  vec3 wn=normalize(world_tangent*tangent_n.x+world_binormal*tangent_n.y+world_normal*tangent_n.z);
+  float cover=clamp(pow(max(wn.y,0.0)+top_offset,top_contrast),0.0,1.0);
+  vec3 rock=clamp(overlay(texture(base_albedo,UV).rgb,base_tint),vec3(0),vec3(1));
+- ALBEDO=mix(rock,slope_green(world_position,normalize(support_normal),COLOR.rgb,28.0*(1.0-support_normal.y)),cover);
++ ALBEDO=mix(rock,slope_green(world_position,normalize(world_normal),COLOR.rgb,28.0*(1.0-support_normal.y)),cover);
+  NORMAL_MAP=mix(bn,vec3(.5,.5,1.0),cover);
+  ROUGHNESS=mix(clamp(1.0-texture(base_sma,UV).r,.65,1.0),.95,cover);
+  METALLIC=0.0;SPECULAR=.2;
+diff --git a/tests/harness/cliff_site_review.gd b/tests/harness/cliff_site_review.gd
+index 17fd36f0..92737221 100644
+--- a/tests/harness/cliff_site_review.gd
++++ b/tests/harness/cliff_site_review.gd
+@@ -5,8 +5,8 @@ extends Node3D
+ ## Touch `<output>/reload` to hot-reload the cliff rock scripts, recompute the
+ ## rock formations and cliff vegetation of every loaded chunk from the same
+ ## worker regions/features/water, and capture again into the next iteration
+-## folder. Touch `<output>/quit` to exit. Terrain, water and grass are not
+-## regenerated; only the rock layer changes between iterations.
++## folder. Touch `<output>/quit` to exit. Without --full only the rock layer changes. With --full, terrain,
++## collision and grass are regenerated for the framed chunks.
+ ##
+ ##   Godot --path . res://tests/harness/cliff_site_review.tscn -- \
+ ##     --seed 2697992464 --at 300,20,995 --output DIR \
+@@ -28,6 +28,9 @@ const RELOAD := [
+ 	"res://scripts/terrain/field/CliffSlopeRocks.gd",
+ 	"res://scripts/terrain/field/CliffSlopeEnvelope.gd",
+ 	"res://scripts/terrain/field/CliffSlopeField.gd",
++	"res://scripts/terrain/grass/GrassSupportSurfaces.gd",
++	"res://scripts/terrain/grass/GrassField.gd",
++	"res://scripts/terrain/field/TerrainChunkMesher.gd",
+ ]
+ const CRAG_SHADER := "res://terrain/materials/cliff_crag.gdshader"
+ const STYLE = preload("res://scripts/terrain/field/CliffRockStyle.gd")
+@@ -38,6 +41,7 @@ var _radius := 1
+ var _grass := false
+ var _output_dir := "/tmp/mythos-cliff-site-review"
+ var _views: Array[Dictionary] = []
++var _walks: Array[Dictionary] = []
+ ## Art-direction variants rendered per iteration (CliffRockStyle.apply names).
+ var _styles: PackedStringArray = []
+ var _plain := false
+@@ -82,13 +86,25 @@ func _read_args() -> void:
+ 			"--styles": _styles = next.split(",", false)
+ 			"--plain": _plain = true
+ 			"--full": _full = true
+-			"--shot":
++			"--shot", "--mouse-shot":
+ 				# id:player:crosshair from the owner's F3 overlay; the tactical
+ 				# camera (26 m back, 16 m up, looking 1 m above the player).
+ 				var shot := next.split(":", false)
+ 				var player := _v3(shot[1])
+ 				_views.append({"id": shot[0], "position": ReviewCam.solve_cam(player, _v3(shot[2]), 26.0, 16.0, 1.0),
+ 					"target": player + Vector3.UP, "fov": 50.0, "player": player})
++				if args[index] == "--mouse-shot":
++					var pivot := player + Vector3.UP * CameraMouseView.PIVOT_HEIGHT
++					var delta := _v3(shot[2]) - pivot
++					var pitch := atan2(-delta.y, Vector2(delta.x,delta.z).length())
++					var boom := CameraMouseView.BOOM_LENGTH
++					_views[-1].position = ReviewCam.solve_cam(player,_v3(shot[2]),
++						boom*cos(pitch),CameraMouseView.PIVOT_HEIGHT+boom*sin(pitch),CameraMouseView.PIVOT_HEIGHT)
++					_views[-1].target = pivot
++					_views[-1].fov = 75.0
++			"--walk":
++				var parts := next.split(":",false)
++				_walks.append({"id":parts[0],"start":_v3(parts[1]),"direction":_v3(parts[2]),"distance":float(parts[3])})
+ 			"--view":
+ 				var parts := next.split(":", false)
+ 				_views.append({"id": parts[0], "position": _v3(parts[1]), "target": _v3(parts[2]),
+@@ -107,16 +123,30 @@ func _run() -> void:
+ 	_collect_inputs()
+ 	var iteration := 0
+ 	await _capture_iteration(iteration)
++	await _run_walks(iteration)
+ 	while true:
++		# Test-only probes can inspect the settled native world between reviews.
++		if FileAccess.file_exists(_output_dir + "/probe"):
++			var path:=FileAccess.get_file_as_string(_output_dir+"/probe").strip_edges()
++			DirAccess.remove_absolute(_output_dir+"/probe")
++			assert(path.begins_with("res://tests/"))
++			var script:=GDScript.new();script.source_code=FileAccess.get_file_as_string(path)
++			assert(script.reload()==OK)
++			await script.new().run(self)
+ 		if FileAccess.file_exists(_output_dir + "/quit"):
+ 			DirAccess.remove_absolute(_output_dir + "/quit")
+ 			break
++		if FileAccess.file_exists(_output_dir + "/recapture"):
++			DirAccess.remove_absolute(_output_dir + "/recapture")
++			iteration += 1
++			await _capture_all(iteration)
+ 		if FileAccess.file_exists(_output_dir + "/reload"):
+ 			DirAccess.remove_absolute(_output_dir + "/reload")
+ 			iteration += 1
+ 			var started := Time.get_ticks_msec()
+ 			_reload_scripts()
+ 			await _capture_iteration(iteration)
++			await _run_walks(iteration)
+ 			print("[cliff_site_review] iteration=%d ms=%d" % [iteration, Time.get_ticks_msec() - started])
+ 		await get_tree().create_timer(0.3).timeout
+ 	get_tree().quit(0)
+@@ -224,6 +254,10 @@ func _reload_scripts() -> void:
+ 	# Shared crag shader: every material holding this Shader recompiles.
+ 	var shader := load(CRAG_SHADER) as Shader
+ 	shader.code = FileAccess.get_file_as_string(CRAG_SHADER)
++	var meadow := load("res://terrain/materials/meadow_rock.gdshader") as Shader
++	meadow.code = FileAccess.get_file_as_string("res://terrain/materials/meadow_rock.gdshader")
++	var grass_shader := load("res://terrain/grass/grass.gdshader") as Shader
++	grass_shader.code = FileAccess.get_file_as_string("res://terrain/grass/grass.gdshader")
+ 	load("res://scripts/terrain/field/CliffRockDressing.gd").prepare()
+ 	load("res://scripts/terrain/field/CliffVegetation.gd").prepare()
+ 
+@@ -349,3 +383,53 @@ func _paint(mode: String) -> void:
+ 			material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
+ 			instance.material_override = material
+ 			index += 1
++
++
++class WalkController extends CharacterController:
++	var direction:=Vector2.ZERO
++	func get_move_vector(_body:CharacterBody3D,_dt:float)->Vector2:return direction
++
++func _run_walks(iteration:int)->void:
++	if _walks.is_empty():return
++	var original:CharacterController=_character.controller
++	var controller:=WalkController.new()
++	_character.controller=controller
++	_character.set_physics_process(false)
++	_streamer.CHUNK_RADIUS=0
++	var rows:=[]
++	for walk:Dictionary in _walks:
++		await _grass_at(walk.start)
++		# Camera teleports can demand an arrival halo beyond the review's loaded
++		# set. Walk only through verified loaded chunks, with streaming paused;
++		# retain the production character, controller and collision unchanged.
++		for distance in range(0,ceili(float(walk.distance))+2):
++			var point:Vector3=walk.start+walk.direction.normalized()*distance
++			assert(_streamer._built.has(FieldTerrainStreamer.chunk_of(point)))
++		_streamer.set_process(false)
++		_streamer._freeze_player(false)
++		await get_tree().physics_frame
++		_character.global_position=walk.start+Vector3.UP*.06
++		_character.velocity=Vector3.ZERO
++		controller.direction=Vector2.ZERO
++		for tick in 30:
++			await get_tree().physics_frame
++			_character._physics_process(1.0/60.0)
++		var start:=_character.global_position
++		var direction:Vector3=(walk.direction as Vector3).normalized()
++		controller.direction=Vector2(direction.x,direction.z)
++		var trace:=[];var contacts:={}
++		for tick in 360:
++			await get_tree().physics_frame
++			_character._physics_process(1.0/60.0)
++			if tick%15==0:trace.append([_character.position.x,_character.position.y,_character.position.z])
++			for index in _character.get_slide_collision_count():
++				var hit:=_character.get_slide_collision(index)
++				contacts[str(hit.get_normal().snapped(Vector3.ONE*.05))]=true
++			if (_character.position-start).dot(direction)>=float(walk.distance):break
++		var finish:=_character.global_position
++		rows.append({"id":walk.id,"start":[start.x,start.y,start.z],"end":[finish.x,finish.y,finish.z],"travel":(finish-start).dot(direction),"rise":finish.y-start.y,"on_floor":_character.is_on_floor(),"passed":(finish-start).dot(direction)>=float(walk.distance),"trace":trace,"contacts":contacts.keys()})
++		controller.direction=Vector2.ZERO
++		_streamer.set_process(true)
++	_character.controller=original
++	FileAccess.open("%s/%02d/walks.json"%[_output_dir,iteration],FileAccess.WRITE).store_string(JSON.stringify(rows,"  "))
++	print("[cliff_site_review] walks ",JSON.stringify(rows))

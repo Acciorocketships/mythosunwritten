@@ -1,0 +1,600 @@
+[
+  {
+    "gap": -1.94797134399414,
+    "node": "angry_04",
+    "origin": [
+      337.762756347656,
+      55.2553367614746,
+      943.067626953125
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_04",
+    "scale": 1.46932065486908,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -1.86626434326172,
+    "node": "angry_04",
+    "origin": [
+      313.15234375,
+      47.4370651245117,
+      942.203247070312
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_04",
+    "scale": 1.18497157096863,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -1.45127105712891,
+    "node": "angry_04",
+    "origin": [
+      308.891052246094,
+      39.9034461975098,
+      956.905395507812
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_04",
+    "scale": 0.925770699977875,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -1.94881820678711,
+    "node": "angry_04",
+    "origin": [
+      341.782379150391,
+      46.1279754638672,
+      964.140502929688
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_04",
+    "scale": 1.23735988140106,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -1.09023666381836,
+    "node": "angry_04",
+    "origin": [
+      295.032348632812,
+      55.5702705383301,
+      880.967651367188
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_04",
+    "scale": 0.692263662815094,
+    "site": "plateau",
+    "system": "slope"
+  },
+  {
+    "gap": -1.15365982055664,
+    "node": "angry_04",
+    "origin": [
+      291.810272216797,
+      49.5542869567871,
+      902.843566894531
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_04",
+    "scale": 0.732528328895569,
+    "site": "plateau",
+    "system": "slope"
+  },
+  {
+    "gap": -1.22493362426758,
+    "node": "angry_04",
+    "origin": [
+      325.826965332031,
+      55.774543762207,
+      930.728271484375
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_04",
+    "scale": 0.77776712179184,
+    "site": "plateau",
+    "system": "slope"
+  },
+  {
+    "gap": -1.22493362426758,
+    "node": "angry_04",
+    "origin": [
+      325.826965332031,
+      55.774543762207,
+      930.728271484375
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_04",
+    "scale": 0.77776712179184,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -2.81168746948242,
+    "node": "angry_03",
+    "origin": [
+      338.095703125,
+      55.4015617370605,
+      937.436462402344
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_03",
+    "scale": 1.42888367176056,
+    "site": "plateau",
+    "system": "slope"
+  },
+  {
+    "gap": -2.81168746948242,
+    "node": "angry_03",
+    "origin": [
+      338.095703125,
+      55.4015617370605,
+      937.436462402344
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_03",
+    "scale": 1.42888367176056,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -2.06455612182617,
+    "node": "angry_03",
+    "origin": [
+      313.374298095703,
+      47.460823059082,
+      933.057922363281
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_03",
+    "scale": 1.1527863740921,
+    "site": "plateau",
+    "system": "slope"
+  },
+  {
+    "gap": -2.06455612182617,
+    "node": "angry_03",
+    "origin": [
+      313.374298095703,
+      47.460823059082,
+      933.057922363281
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_03",
+    "scale": 1.1527863740921,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -1.39054107666016,
+    "node": "angry_03",
+    "origin": [
+      349.720550537109,
+      51.9652137756348,
+      961.140502929688
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_03",
+    "scale": 0.760459005832672,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -1.69157028198242,
+    "node": "angry_03",
+    "origin": [
+      353.862030029297,
+      52.0946578979492,
+      961.054565429688
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_03",
+    "scale": 0.925146639347076,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -0.685298919677734,
+    "node": "angry_03",
+    "origin": [
+      294.962554931641,
+      54.3891792297363,
+      883.464416503906
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_03",
+    "scale": 0.334894597530365,
+    "site": "plateau",
+    "system": "slope"
+  },
+  {
+    "gap": -1.55144119262695,
+    "node": "angry_02",
+    "origin": [
+      305.126190185547,
+      40.495677947998,
+      957.571533203125
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_02",
+    "scale": 0.962662637233734,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -1.36460876464844,
+    "node": "angry_02",
+    "origin": [
+      324.715728759766,
+      44.5975112915039,
+      961.178161621094
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_02",
+    "scale": 0.786486148834229,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -1.08434295654297,
+    "node": "angry_02",
+    "origin": [
+      356.962860107422,
+      52.5032005310059,
+      961.121459960938
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_02",
+    "scale": 0.617406368255615,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -2.03071975708008,
+    "node": "angry_05",
+    "origin": [
+      287.817535400391,
+      36.0123405456543,
+      941.478210449219
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_05",
+    "scale": 1.52537298202515,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -2.19599151611328,
+    "node": "angry_05",
+    "origin": [
+      338.262176513672,
+      56.1780815124512,
+      931.957092285156
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_05",
+    "scale": 1.68138420581818,
+    "site": "plateau",
+    "system": "slope"
+  },
+  {
+    "gap": -2.19599151611328,
+    "node": "angry_05",
+    "origin": [
+      338.262176513672,
+      56.1780815124512,
+      931.957092285156
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_05",
+    "scale": 1.68138420581818,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -3.0487060546875,
+    "node": "angry_05",
+    "origin": [
+      313.096832275391,
+      47.8746948242188,
+      937.814819335938
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_05",
+    "scale": 2.25692796707153,
+    "site": "plateau",
+    "system": "slope"
+  },
+  {
+    "gap": -3.0487060546875,
+    "node": "angry_05",
+    "origin": [
+      313.096832275391,
+      47.8746948242188,
+      937.814819335938
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_05",
+    "scale": 2.25692796707153,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -1.65332412719727,
+    "node": "angry_05",
+    "origin": [
+      321.606079101562,
+      43.2907600402832,
+      961.178283691406
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_05",
+    "scale": 1.24180018901825,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -1.59870910644531,
+    "node": "angry_05",
+    "origin": [
+      292.539825439453,
+      46.9233818054199,
+      907.460205078125
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_05",
+    "scale": 1.20078241825104,
+    "site": "plateau",
+    "system": "slope"
+  },
+  {
+    "gap": -1.79554748535156,
+    "node": "angry_05",
+    "origin": [
+      318.302124023438,
+      53.9698448181152,
+      929.697875976562
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_05",
+    "scale": 1.37478923797607,
+    "site": "plateau",
+    "system": "slope"
+  },
+  {
+    "gap": -1.79554748535156,
+    "node": "angry_05",
+    "origin": [
+      318.302124023438,
+      53.9698448181152,
+      929.697875976562
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_05",
+    "scale": 1.37478923797607,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -1.7382926940918,
+    "node": "angry_01",
+    "origin": [
+      286.744171142578,
+      35.12451171875,
+      936.888427734375
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_01",
+    "scale": 1.10613059997559,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -1.30311965942383,
+    "node": "angry_01",
+    "origin": [
+      345.996246337891,
+      49.6268730163574,
+      964.140502929688
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_4/CliffRockFormations/CliffSlopeRocks/angry_01",
+    "scale": 0.96892511844635,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -2.35319519042969,
+    "node": "angry_03",
+    "origin": [
+      337.485290527344,
+      43.4567527770996,
+      962.348022460938
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_5/CliffRockFormations/CliffSlopeRocks/angry_03",
+    "scale": 1.28688716888428,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -1.64845275878906,
+    "node": "angry_04",
+    "origin": [
+      283.859466552734,
+      34.4859962463379,
+      949.384643554688
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_5/CliffRockFormations/CliffSlopeRocks/angry_04",
+    "scale": 1.05155730247498,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -1.46225166320801,
+    "node": "angry_04",
+    "origin": [
+      320.296661376953,
+      29.6830673217773,
+      988.140502929688
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_5/CliffRockFormations/CliffSlopeRocks/angry_04",
+    "scale": 0.92845755815506,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -1.37380981445312,
+    "node": "angry_01",
+    "origin": [
+      283.859466552734,
+      28.3782005310059,
+      954.247192382812
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_5/CliffRockFormations/CliffSlopeRocks/angry_01",
+    "scale": 1.10613059997559,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -0.450508117675781,
+    "node": "angry_01",
+    "origin": [
+      316.182067871094,
+      27.8834609985352,
+      984.479675292969
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_5/CliffRockFormations/CliffSlopeRocks/angry_01",
+    "scale": 0.334994554519653,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -0.578842163085938,
+    "node": "angry_01",
+    "origin": [
+      317.322387695312,
+      39.6883316040039,
+      966.099365234375
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_5/CliffRockFormations/CliffSlopeRocks/angry_01",
+    "scale": 0.438571840524673,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -1.09432029724121,
+    "node": "angry_01",
+    "origin": [
+      310.176971435547,
+      27.4650421142578,
+      984.786193847656
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_5/CliffRockFormations/CliffSlopeRocks/angry_01",
+    "scale": 0.88108628988266,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -1.33969116210938,
+    "node": "angry_01",
+    "origin": [
+      332.715454101562,
+      30.9626045227051,
+      984.920349121094
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_5/CliffRockFormations/CliffSlopeRocks/angry_01",
+    "scale": 0.876702785491943,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -0.936546325683594,
+    "node": "angry_01",
+    "origin": [
+      336.976470947266,
+      43.4625396728516,
+      970.69091796875
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_5/CliffRockFormations/CliffSlopeRocks/angry_01",
+    "scale": 0.643986284732819,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -1.88547897338867,
+    "node": "angry_05",
+    "origin": [
+      287.750457763672,
+      28.2915115356445,
+      958.675354003906
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_5/CliffRockFormations/CliffSlopeRocks/angry_05",
+    "scale": 1.41606867313385,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -1.32564544677734,
+    "node": "angry_05",
+    "origin": [
+      314.682067871094,
+      29.1218414306641,
+      982.174133300781
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_5/CliffRockFormations/CliffSlopeRocks/angry_05",
+    "scale": 1.01498091220856,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -0.713176727294922,
+    "node": "angry_05",
+    "origin": [
+      317.281982421875,
+      40.1785278320312,
+      968.070678710938
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_5/CliffRockFormations/CliffSlopeRocks/angry_05",
+    "scale": 0.546047568321228,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -2.99946975708008,
+    "node": "angry_05",
+    "origin": [
+      304.615417480469,
+      28.0241680145264,
+      985.121643066406
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_5/CliffRockFormations/CliffSlopeRocks/angry_05",
+    "scale": 2.25288033485413,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -2.76634216308594,
+    "node": "angry_05",
+    "origin": [
+      324.54150390625,
+      31.4725246429443,
+      984.140502929688
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_5/CliffRockFormations/CliffSlopeRocks/angry_05",
+    "scale": 2.11805558204651,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -1.30366516113281,
+    "node": "angry_02",
+    "origin": [
+      337.596496582031,
+      44.6122283935547,
+      966.813415527344
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_5/CliffRockFormations/CliffSlopeRocks/angry_02",
+    "scale": 0.751353323459625,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -0.98194694519043,
+    "node": "angry_02",
+    "origin": [
+      336.050994873047,
+      32.4657096862793,
+      985.32275390625
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_5/CliffRockFormations/CliffSlopeRocks/angry_02",
+    "scale": 0.540944516658783,
+    "site": "embed",
+    "system": "slope"
+  },
+  {
+    "gap": -1.52785491943359,
+    "node": "angry_02",
+    "origin": [
+      349.352172851562,
+      40.9139251708984,
+      982.668029785156
+    ],
+    "path": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_5/CliffRockFormations/CliffSlopeRocks/angry_02",
+    "scale": 0.948021709918976,
+    "site": "embed",
+    "system": "slope"
+  }
+]

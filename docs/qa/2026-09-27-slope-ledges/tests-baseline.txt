@@ -1,0 +1,80 @@
+== test_september27_slope_ledges
+[baseline hook] res://scripts/terrain/field/CliffSlopeEnvelope.gd <- /private/tmp/claude-501/-Users-ryko-story/514d96f2-a4b3-4b1a-bf40-37b03f645fd0/scratchpad/slopes/backup/CliffSlopeEnvelope.gd
+[31m    [Failed]:  [0m[0.43025709992917] expected to be < than [0.1]:  No tread rises outward over a metre (worst 0.43 m at (492.0, 1001.5))
+[31m    [Failed]:  [0m[0.64814959430827] expected to be < than [0.3]:  A straight 20 m wall at 0.00 rad has no outward-rising tread
+[31m    [Failed]:  [0m[0.99283159346983] expected to be < than [0.3]:  A straight 20 m wall at 0.52 rad has no outward-rising tread
+[31m    [Failed]:  [0m[348] expected to be < than [120]:  Native rock bands have few half-metre sawtooth kinks (348)
+[31m    [Failed]:  [0m[204] expected to be < than [120]:  A diagonal wall's benches do not alias into facets (204 at 0.52 rad)
+[31m    [Failed]:  [0m[197] expected to be < than [120]:  A diagonal wall's benches do not alias into facets (197 at 0.79 rad)
+[31m    [Failed]:  [0m[1.16972479321782] expected to be < than [0.01]:  The one-storey slope has no ridge or valley along it
+[31m    [Failed]:  [0m[0.09728479055542] expected to equal [0.0]:  A one-storey slope exposes no bedrock
+[31m    [Failed]:  [0m[8.0] expected to be < than [0.75]:  The road climbs a continuous slope, never a wall (steepest 8.00 m per half metre)
+[31m    [Failed]:  [0m[24.0] expected to be > than [28.0]:  The slope covers the crossing instead of a trench to the foot
+[31m    [Failed]:  [0m[24.00000000000000000000] expected to equal [31.8244911742847] +/- [0.05]:  No trench: the road lies on the untouched slope at (0.0, 1.0)
+[31m    [Failed]:  [0m[24.00000000000000000000] expected to equal [30.3867675423698] +/- [0.05]:  No trench: the road lies on the untouched slope at (1.0, 4.0)
+[31m    [Failed]:  [0m[24.00000000000000000000] expected to equal [26.4617525089168] +/- [0.05]:  No trench: the road lies on the untouched slope at (-1.5, 8.0)
+[31m    [Failed]:  [0m[25.39999999999999857891] expected to equal [30.9930389856327] +/- [0.05]:  No trench: the road lies on the untouched slope at (3.0, 3.0)
+[0m- test_rock_treads_never_rise_as_they_run_out_from_the_hill
+- test_rock_bands_run_cleanly_along_the_contour
+- test_a_single_storey_drop_is_one_uniform_slope
+- test_a_country_road_climbs_the_slope_instead_of_a_box_trench
+Passing Tests         3
+Failing Tests         4
+Asserts            8/22
+== test_p03_constrained_cliffs
+[baseline hook] res://scripts/terrain/field/CliffSlopeEnvelope.gd <- /private/tmp/claude-501/-Users-ryko-story/514d96f2-a4b3-4b1a-bf40-37b03f645fd0/scratchpad/slopes/backup/CliffSlopeEnvelope.gd
+Passing Tests        13
+Asserts              79
+== test_p03_cliff_followup
+[baseline hook] res://scripts/terrain/field/CliffSlopeEnvelope.gd <- /private/tmp/claude-501/-Users-ryko-story/514d96f2-a4b3-4b1a-bf40-37b03f645fd0/scratchpad/slopes/backup/CliffSlopeEnvelope.gd
+[31m    [Failed]:  [0m[3.98011444827720461959] expected to equal [0.0] +/- [0.000001]:  A film shallower than the required sink cannot cut the crest
+[0m- test_shallow_plateau_water_does_not_cut_away_the_rounded_shoulder
+Passing Tests         9
+Failing Tests         1
+Asserts           195/196
+== test_september26_bedrock
+[baseline hook] res://scripts/terrain/field/CliffSlopeEnvelope.gd <- /private/tmp/claude-501/-Users-ryko-story/514d96f2-a4b3-4b1a-bf40-37b03f645fd0/scratchpad/slopes/backup/CliffSlopeEnvelope.gd
+Passing Tests         6
+Asserts              22
+== test_september26_manual_cliffs
+[baseline hook] res://scripts/terrain/field/CliffSlopeEnvelope.gd <- /private/tmp/claude-501/-Users-ryko-story/514d96f2-a4b3-4b1a-bf40-37b03f645fd0/scratchpad/slopes/backup/CliffSlopeEnvelope.gd
+Passing Tests         6
+Asserts             314
+== test_cliff_sheet_normals
+[baseline hook] res://scripts/terrain/field/CliffSlopeEnvelope.gd <- /private/tmp/claude-501/-Users-ryko-story/514d96f2-a4b3-4b1a-bf40-37b03f645fd0/scratchpad/slopes/backup/CliffSlopeEnvelope.gd
+Passing Tests         2
+Asserts               4
+== test_september23_cliff_directions
+[baseline hook] res://scripts/terrain/field/CliffSlopeEnvelope.gd <- /private/tmp/claude-501/-Users-ryko-story/514d96f2-a4b3-4b1a-bf40-37b03f645fd0/scratchpad/slopes/backup/CliffSlopeEnvelope.gd
+[31m    [Failed]:  [0m[4.11074884477778201841] expected to equal [4.0] +/- [0.01]:  The terrace middle stays flat at (20.0, 14.0)
+[31m    [Failed]:  [0m[4.09280117703430157405] expected to equal [4.0] +/- [0.01]:  The terrace middle stays flat at (30.0, 14.0)
+[31m    [Failed]:  [0m[1.02699962268319] expected to be > than [1.2]:  At 4 m from the wall the slope rises and falls
+[31m    [Failed]:  [0m[3] expected to be > than [6]:  An 80 m wall holds many clusters
+[31m    [Failed]:  [0m[41.9475002288818] expected to be < than [21.0]:  No long bare stretch between -24 and 18
+[31m    [Failed]:  [0m[0] expected to be > than [0]:  The corner carries rocks too
+[31m    [Failed]:  [0m[8] expected to be > than [10]:  The wall still carries rocks
+[31m    [Failed]:  [0m[20.25] expected to be < than [12.9]:  Corner reach 20.2 m against edges 7.8 / 7.8 m
+[31m    [Failed]:  [0m[2] expected to be > than [8]:  Visible cliff clusters remain
+[0m- test_terraces_stay_flat
+- test_sheet_ridges_rise_and_fall_along_the_wall
+- test_rocks_come_in_small_spaced_clusters
+- test_basal_rocks_are_embedded_with_their_tops_showing
+- test_outer_corners_reach_about_as_far_as_their_edges
+- test_midface_rocks_follow_slope_and_bury_both_ends
+Passing Tests        28
+Failing Tests         6
+Asserts           12914/12923
+== test_meadow_rocks
+[baseline hook] res://scripts/terrain/field/CliffSlopeEnvelope.gd <- /private/tmp/claude-501/-Users-ryko-story/514d96f2-a4b3-4b1a-bf40-37b03f645fd0/scratchpad/slopes/backup/CliffSlopeEnvelope.gd
+Passing Tests         3
+Asserts             146
+== test_september27_rock_placement
+[baseline hook] res://scripts/terrain/field/CliffSlopeEnvelope.gd <- /private/tmp/claude-501/-Users-ryko-story/514d96f2-a4b3-4b1a-bf40-37b03f645fd0/scratchpad/slopes/backup/CliffSlopeEnvelope.gd
+== test_september27_mountain_water
+[baseline hook] res://scripts/terrain/field/CliffSlopeEnvelope.gd <- /private/tmp/claude-501/-Users-ryko-story/514d96f2-a4b3-4b1a-bf40-37b03f645fd0/scratchpad/slopes/backup/CliffSlopeEnvelope.gd
+Passing Tests         3
+Asserts              56
+== test_slope_face_inclusions
+[baseline hook] res://scripts/terrain/field/CliffSlopeEnvelope.gd <- /private/tmp/claude-501/-Users-ryko-story/514d96f2-a4b3-4b1a-bf40-37b03f645fd0/scratchpad/slopes/backup/CliffSlopeEnvelope.gd
+Passing Tests         2
+Asserts              61

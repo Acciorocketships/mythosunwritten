@@ -1,0 +1,57 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_p03_constrained_cliffs.gd
+[0m* test_water_beside_a_tall_cliff_preserves_its_rounded_shoulder
+* test_opposing_banks_keep_a_submerged_channel_between_them
+* test_small_wet_patch_cannot_slice_a_tall_bank_into_a_slab
+* test_marked_native_crowns_keep_their_rounded_profile_after_rock_carving
+[31m    [Failed]:  [0m[1.99727146010874] expected to be < than [0.5]:  The actual marked crown stays rounded at (510.0, 946.0)
+      at line 52
+[31m    [Failed]:  [0m[0.68477146010874] expected to be < than [0.5]:  The actual marked crown stays rounded at (510.0, 945.5)
+      at line 52
+[31m    [Failed]:  [0m[1.16149003256098] expected to be < than [0.5]:  The actual marked crown stays rounded at (516.0, 946.5)
+      at line 52
+[31m    [Failed]:  [0m[0.78005379535992] expected to be < than [0.5]:  The actual marked crown stays rounded at (516.0, 946.0)
+      at line 52
+[31m    [Failed]:  [0m[1.86465246703443] expected to be < than [0.5]:  The actual marked crown stays rounded at (516.0, 945.5)
+      at line 52
+[1m3/4 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_p03_constrained_cliffs.gd
+[0m- test_marked_native_crowns_keep_their_rounded_profile_after_rock_carving
+[31m    [Failed]:  [0m[1.99727146010874] expected to be < than [0.5]:  The actual marked crown stays rounded at (510.0, 946.0)
+          at line 52
+[31m    [Failed]:  [0m[0.68477146010874] expected to be < than [0.5]:  The actual marked crown stays rounded at (510.0, 945.5)
+          at line 52
+[31m    [Failed]:  [0m[1.16149003256098] expected to be < than [0.5]:  The actual marked crown stays rounded at (516.0, 946.5)
+          at line 52
+[31m    [Failed]:  [0m[0.78005379535992] expected to be < than [0.5]:  The actual marked crown stays rounded at (516.0, 946.0)
+          at line 52
+[31m    [Failed]:  [0m[1.86465246703443] expected to be < than [0.5]:  The actual marked crown stays rounded at (516.0, 945.5)
+          at line 52
+
+Totals
+------
+Scripts               1
+Tests                 4
+Passing Tests         3
+Failing Tests         1
+Asserts           26/31
+Time              6.236s
+
+
+[31m---- 1 failing tests ----
+[0m

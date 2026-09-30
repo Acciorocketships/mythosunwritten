@@ -1,0 +1,11 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+[profile] original height=4.0 median=29.0546040990771 p90=39.8055710922652 foot=7.5 crest=[4.0, 4.0, 4.0, 3.971, 3.897, 3.767, 3.583]
+[profile] original height=12.0 median=52.9893267663969 p90=62.9996992019519 foot=10.0 crest=[12.0, 12.0, 12.0, 11.961, 11.842, 11.675, 11.415]
+[profile] original height=24.0 median=60.4221613187386 p90=70.3405793906104 foot=14.0 crest=[24.0, 24.0, 24.0, 23.961, 23.842, 23.675, 23.415]
+[profile] moderate height=4.0 median=28.1202121309943 p90=37.3250586952237 foot=8.5 crest=[4.0, 4.0, 4.0, 3.98, 3.923, 3.824, 3.688]
+[profile] moderate height=12.0 median=40.7321067181086 p90=54.9904336628707 foot=14.5 crest=[12.0, 12.0, 12.0, 11.982, 11.92, 11.826, 11.689]
+[profile] moderate height=24.0 median=49.8227725997381 p90=63.6716947422812 foot=21.0 crest=[24.0, 24.0, 24.0, 23.982, 23.92, 23.826, 23.689]
+[profile] gentle height=4.0 median=28.1202121309943 p90=37.3250586952237 foot=8.5 crest=[4.0, 4.0, 4.0, 3.98, 3.923, 3.824, 3.688]
+[profile] gentle height=12.0 median=40.5558938783472 p90=54.1970856668201 foot=15.0 crest=[12.0, 12.0, 12.0, 11.982, 11.922, 11.825, 11.692]
+[profile] gentle height=24.0 median=49.5537679791586 p90=62.9591787031405 foot=21.5 crest=[24.0, 24.0, 24.0, 23.982, 23.922, 23.825, 23.692]

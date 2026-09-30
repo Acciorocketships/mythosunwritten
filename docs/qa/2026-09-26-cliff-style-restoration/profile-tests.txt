@@ -1,0 +1,43 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_slope_profile.gd
+[0m* test_smootherstep_endpoints
+* test_smootherstep_flat_tangents
+* test_smootherstep_clamps
+* test_edge_height_endpoints
+* test_outer_corner_seam_matches_edge
+* test_inner_corner_seams_flat
+[1m6/6 passed.
+[0m[4m
+
+res://tests/test_slope_profile_stacked.gd
+[0m* test_outer_stacked_is_2storey_diagonal_ramp
+* test_outer_stacked_cardinal_seams_match_plain_edge
+* test_outer_stacked_monotone_into_pit
+* test_inner_stacked_deprecated_endpoints
+[1m4/4 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               2
+Tests                10
+Passing Tests        10
+Asserts              42
+Time              0.42s
+
+
+[32m---- All tests passed! ----
+[0m

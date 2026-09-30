@@ -1,0 +1,40 @@
+[probe] rock nodes with outward rise>0.1 over 1 m: 4
+  rise 0.44 at (413.0, 858.5) fall (-0.011492, 0.999934)
+    -3.0  surf 70.31 F 70.31 ground 60.00 prefin 70.31 rock 0.01  
+    -2.5  surf 69.87 F 69.87 ground 60.00 prefin 69.87 rock 0.03  carved 70.57 jut -0.00 s 0.00 blend 0.26 split 0.00 chip -0.15 e 0.03 A 71.25 B 71.35 top 71.07
+    -2.0  surf 69.38 F 69.38 ground 60.00 prefin 69.38 rock 0.07  carved 70.35 jut 0.00 s 0.00 blend 0.00 split 0.00 chip -0.16 e 0.08 A 70.42 B 71.10 top 70.85
+    -1.5  surf 68.85 F 68.84 ground 60.00 prefin 68.85 rock 0.17  carved 69.51 jut 0.00 s 0.01 blend 0.00 split 0.00 chip -0.18 e 0.17 A 69.51 B 70.19 top 70.61
+    -1.0  surf 68.35 F 68.26 ground 60.00 prefin 68.35 rock 0.30  carved 68.53 jut 0.00 s 0.33 blend 0.00 split 0.00 chip -0.20 e 0.30 A 68.53 B 68.74 top 70.35
+    -0.5  surf 67.52 F 67.63 ground 60.00 prefin 67.52 rock 0.46  carved 67.51 jut 0.00 s 0.89 blend 0.00 split 0.00 chip -0.21 e 0.47 A 67.51 B 67.72 top 70.06
+    +0.0  surf 66.88 F 66.96 ground 60.00 prefin 66.88 rock 0.61  carved 66.83 jut 0.05 s 1.00 blend 0.49 split 0.30 chip -0.18 e 0.61 A 66.95 B 67.30 top 69.75
+    +0.5  surf 67.18 F 66.23 ground 60.00 prefin 67.18 rock 0.72  carved 66.95 jut 0.23 s 1.00 blend 0.00 split 0.00 chip -0.13 e 0.71 A 66.95 B 67.30 top 69.42
+    +1.0  surf 67.32 F 65.50 ground 60.00 prefin 67.32 rock 0.74  carved 66.95 jut 0.37 s 1.00 blend 0.00 split 0.00 chip -0.08 e 0.74 A 66.95 B 67.30 top 69.06
+    +1.5  surf 66.62 F 64.79 ground 60.00 prefin 66.63 rock 0.65  carved 66.12 jut 0.51 s 1.00 blend 0.00 split 0.00 chip -0.04 e 0.65 A 66.12 B 65.73 top 68.69
+    +2.0  surf 65.34 F 64.11 ground 60.00 prefin 65.33 rock 0.49  carved 64.78 jut 0.59 s 0.94 blend 0.48 split 0.23 chip -0.04 e 0.49 A 65.02 B 65.01 top 68.28
+    +2.5  surf 63.73 F 63.45 ground 60.00 prefin 63.74 rock 0.30  carved 64.05 jut 0.09 s 0.33 blend 0.19 split 0.00 chip -0.05 e 0.30 A 64.07 B 63.95 top 67.86
+    +3.0  surf 62.85 F 62.85 ground 60.00 prefin 62.85 rock 0.15  carved 63.21 jut 0.00 s 0.00 blend 0.00 split 0.00 chip -0.06 e 0.15 A 63.21 B 62.96 top 67.41
+    +3.5  surf 62.31 F 62.31 ground 60.00 prefin 62.31 rock 0.05  carved 62.43 jut 0.00 s 0.00 blend 0.00 split 0.00 chip -0.06 e 0.05 A 62.43 B 62.52 top 66.94
+    +4.0  surf 61.80 F 61.80 ground 60.00 prefin 61.80 rock 0.01  
+  rise 0.30 at (414.5, 858.5) fall (0.035791, 0.999359)
+    -3.0  surf 70.30 F 70.30 ground 60.00 prefin 70.30 rock 0.00  
+    -2.5  surf 69.85 F 69.85 ground 60.00 prefin 69.85 rock 0.00  
+    -2.0  surf 69.36 F 69.36 ground 60.00 prefin 69.36 rock 0.01  
+    -1.5  surf 68.82 F 68.82 ground 60.00 prefin 68.82 rock 0.04  carved 69.37 jut 0.00 s 0.00 blend 0.00 split 0.00 chip -0.24 e 0.03 A 69.37 B 69.58 top 70.61
+    -1.0  surf 68.24 F 68.24 ground 60.00 prefin 68.24 rock 0.09  carved 68.47 jut 0.00 s 0.00 blend 0.30 split 0.00 chip -0.26 e 0.09 A 68.41 B 68.62 top 70.35
+    -0.5  surf 67.61 F 67.61 ground 60.00 prefin 67.61 rock 0.19  carved 67.59 jut 0.00 s 0.02 blend 0.07 split 0.00 chip -0.26 e 0.18 A 67.60 B 67.38 top 70.06
+    +0.0  surf 66.95 F 66.94 ground 60.00 prefin 66.95 rock 0.31  carved 66.95 jut 0.01 s 0.35 blend 0.00 split 0.00 chip -0.22 e 0.31 A 66.95 B 67.30 top 69.75
+    +0.5  surf 66.94 F 66.22 ground 60.00 prefin 66.95 rock 0.44  carved 66.95 jut 0.13 s 0.83 blend 0.00 split 0.00 chip -0.16 e 0.44 A 66.95 B 67.30 top 69.42
+    +1.0  surf 67.26 F 65.49 ground 60.00 prefin 67.27 rock 0.54  carved 66.95 jut 0.32 s 1.00 blend 0.00 split 0.00 chip -0.09 e 0.55 A 66.95 B 67.30 top 69.06
+    +1.5  surf 66.55 F 64.79 ground 60.00 prefin 66.56 rock 0.56  carved 66.11 jut 0.45 s 1.00 blend 0.00 split 0.00 chip -0.05 e 0.56 A 66.11 B 65.73 top 68.69
+    +2.0  surf 65.43 F 64.10 ground 60.00 prefin 65.45 rock 0.48  carved 65.01 jut 0.50 s 0.93 blend 0.00 split 0.00 chip -0.04 e 0.49 A 65.01 B 65.00 top 68.28
+    +2.5  surf 63.85 F 63.44 ground 60.00 prefin 63.85 rock 0.35  carved 63.94 jut 0.17 s 0.49 blend 0.00 split 0.00 chip -0.05 e 0.35 A 63.94 B 64.06 top 67.86
+    +3.0  surf 62.84 F 62.83 ground 60.00 prefin 62.84 rock 0.20  carved 62.97 jut 0.00 s 0.04 blend 0.10 split 0.00 chip -0.05 e 0.20 A 62.95 B 63.19 top 67.41
+    +3.5  surf 62.29 F 62.29 ground 60.00 prefin 62.29 rock 0.08  carved 62.25 jut 0.00 s 0.00 blend 0.47 split 0.22 chip -0.05 e 0.08 A 62.52 B 62.42 top 66.94
+    +4.0  surf 61.77 F 61.77 ground 60.00 prefin 61.77 rock 0.02  carved 62.22 jut 0.00 s 0.00 blend 0.44 split 0.10 chip -0.05 e 0.02 A 62.72 B 61.81 top 66.45
+  rise 0.29 at (414.0, 858.5) fall (0.017791, 0.999842)
+    -3.0  surf 70.30 F 70.30 ground 60.00 prefin 70.30 rock 0.00  
+    -2.5  surf 69.86 F 69.86 ground 60.00 prefin 69.86 rock 0.01  
+    -2.0  surf 69.37 F 69.37 ground 60.00 prefin 69.37 rock 0.02  carved 70.30 jut 0.00 s 0.00 blend 0.00 split 0.00 chip -0.22 e 0.02 A 70.30 B 70.97 top 70.85
+    -1.5  surf 68.83 F 68.83 ground 60.00 prefin 68.83 rock 0.06  carved 69.39 jut 0.00 s 0.00 blend 0.00 split 0.00 chip -0.24 e 0.06 A 69.39 B 70.08 top 70.61
+    -1.0  surf 68.25 F 68.25 ground 60.00 prefin 68.25 rock 0.14  carved 68.43 jut 0.00 s 0.00 blend 0.00 split 0.00 chip -0.26 e 0.14 A 68.43 B 68.64 top 70.35
+    -0.5  surf 67.57 F 67.63 ground 60.00 prefin 67.57 rock 0.26  carved 67.30 jut 0.00 s 0.18 blend 0.47 split 0.22 chip -0.26 e 0.26 A 67.62 B 67.41 top 70.06

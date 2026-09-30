@@ -1,0 +1,14 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+[profile] before height=4 median=39.07 p90=42.27 samples=209
+[profile] before height=8 median=51.61 p90=57.82 samples=270
+[profile] before height=12 median=61.13 p90=66.40 samples=288
+[profile] before height=20 median=68.46 p90=73.80 samples=367
+[profile] gentler height=4 median=36.12 p90=39.75 samples=231
+[profile] gentler height=8 median=48.02 p90=53.56 samples=308
+[profile] gentler height=12 median=56.84 p90=62.91 samples=354
+[profile] gentler height=20 median=63.02 p90=71.06 samples=459
+[profile] rounder height=4 median=36.12 p90=39.75 samples=231
+[profile] rounder height=8 median=46.74 p90=51.35 samples=322
+[profile] rounder height=12 median=53.89 p90=59.26 samples=385
+[profile] rounder height=20 median=60.08 p90=68.15 samples=498

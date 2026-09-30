@@ -1,0 +1,42 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_p03_constrained_cliffs.gd
+[0m* test_water_beside_a_tall_cliff_preserves_its_rounded_shoulder
+[31m    [Failed]:  [0m[6.0] expected to be > than [11.85]:  Water beside the lip must not cut a vertical step into its shoulder
+      at line 8
+[31m    [Failed]:  [0m[54.4623222080256] expected to be < than [50.0]:  Test the water-constrained slope, not the dry profile
+      at line 15
+[1m0/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_p03_constrained_cliffs.gd
+[0m- test_water_beside_a_tall_cliff_preserves_its_rounded_shoulder
+[31m    [Failed]:  [0m[6.0] expected to be > than [11.85]:  Water beside the lip must not cut a vertical step into its shoulder
+          at line 8
+[31m    [Failed]:  [0m[54.4623222080256] expected to be < than [50.0]:  Test the water-constrained slope, not the dry profile
+          at line 15
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts             1/3
+Time              0.797s
+
+
+[31m---- 1 failing tests ----
+[0m

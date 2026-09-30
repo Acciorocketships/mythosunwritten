@@ -1,0 +1,90 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september26_manual_cliffs.gd
+* test_sheet_lawn_receives_biome_tint_once
+    [Pending]:  MultiMesh colour readback needs a native rendering device
+* test_rock_exclusion_claims_the_grass_below_it
+* test_photo11_heightfield_has_no_inverted_surface_triangles
+* test_replaced_native_pieces_are_removed_even_when_their_tops_project
+* test_moderate_cliff_profile_is_gentler_with_a_rounded_shoulder
+* test_grass_uses_the_rendered_triangle_and_its_shading_normal
+* test_wide_grass_clump_is_rejected_at_an_unsupported_bench
+6/7 passed.
+
+
+res://tests/test_grass_field.gd
+* test_compiler_keeps_the_baked_asset_in_resource_free_metadata
+* test_baked_collection_5_is_one_1244_triangle_runtime_mesh
+* test_compiler_rejects_invalid_authored_settings
+ERROR: Grass coverage must contain exactly the canonical biome IDs
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _fail (res://scripts/terrain/grass/GrassProgram.gd:169)
+       [1] _coverage_array (res://scripts/terrain/grass/GrassProgram.gd:132)
+       [2] compile (res://scripts/terrain/grass/GrassProgram.gd:36)
+       [3] test_compiler_rejects_invalid_authored_settings (res://tests/test_grass_field.gd:109)
+       [4] _run_test (res://addons/gut/gut.gd:612)
+       [5] _test_the_scripts (res://addons/gut/gut.gd:815)
+[ExpectedError]Expected push_error error containing 'exactly the canonical biome IDs'.  
+ERROR: Grass scale range must be finite, ordered, and positive
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _fail (res://scripts/terrain/grass/GrassProgram.gd:169)
+       [1] compile (res://scripts/terrain/grass/GrassProgram.gd:31)
+       [2] test_compiler_rejects_invalid_authored_settings (res://tests/test_grass_field.gd:114)
+       [3] _run_test (res://addons/gut/gut.gd:612)
+       [4] _test_the_scripts (res://addons/gut/gut.gd:815)
+[ExpectedError]Expected push_error error containing 'finite, ordered, and positive'.  
+ERROR: Grass asset variants must be non-empty and unique
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _fail (res://scripts/terrain/grass/GrassProgram.gd:169)
+       [1] compile (res://scripts/terrain/grass/GrassProgram.gd:42)
+       [2] test_compiler_rejects_invalid_authored_settings (res://tests/test_grass_field.gd:119)
+       [3] _run_test (res://addons/gut/gut.gd:612)
+       [4] _test_the_scripts (res://addons/gut/gut.gd:815)
+[ExpectedError]Expected push_error error containing 'must be non-empty and unique'.  
+* test_projected_smooth_fields_are_bit_identical_on_tile_seams
+* test_carpet_curve_preserves_empty_ground_and_saturates_viable_habitat
+* test_field_is_deterministic_grounded_and_capped_at_one_batch
+* test_dropout_rank_is_an_exact_nested_prefix
+* test_path_reservation_removes_the_carpet_without_special_case_stamps
+* test_path_corridor_rejects_the_complete_patch_footprint
+* test_slope_surface_returns_normal_and_area_compensation
+* test_slopes_receive_more_patches_than_the_same_flat_habitat
+* test_exposed_cliff_lip_reduces_the_uniform_patch_scale
+* test_cliff_footprint_reaches_the_wall_without_a_clearance_band
+* test_cliff_lip_supplements_are_dense_but_bounded
+* test_packed_instance_matches_godot_multimesh_layout
+* test_worker_field_has_no_render_or_resource_loading_calls
+16/16 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_september26_manual_cliffs.gd
+- test_sheet_lawn_receives_biome_tint_once
+    [Pending]:  MultiMesh colour readback needs a native rendering device
+
+Totals
+------
+Scripts               2
+Tests                23
+Passing Tests        22
+Risky/Pending         1
+Asserts             297
+Time              12.986s
+
+
+---- 1 pending/risky tests. ----
+

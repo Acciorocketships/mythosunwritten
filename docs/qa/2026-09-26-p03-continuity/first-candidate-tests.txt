@@ -1,0 +1,54 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_p03_constrained_cliffs.gd
+[0m* test_water_beside_a_tall_cliff_preserves_its_rounded_shoulder
+[1m1/1 passed.
+[0m[4m
+
+res://tests/test_september26_bedrock.gd
+[0m* test_bedrock_solid_has_no_open_edges
+* test_level_steps_take_no_slope
+* test_cliffs_keep_their_slope
+* test_slope_runs_into_water_then_sinks
+* test_steep_slope_claims_its_grass_points
+* test_underlip_keeps_the_lip_and_starts_below_it
+[1m6/6 passed.
+[0m[4m
+
+res://tests/test_p03_cliff_followup.gd
+[0m* test_roots_use_rendered_triangle_height_instead_of_the_envelope
+* test_wide_clump_cannot_overhang_a_supported_centre
+* test_rock_blocked_support_claims_the_point_without_terrain_fallback
+* test_tall_cliffs_are_gentler_without_a_new_sharp_crest_or_cut_off_foot
+* test_a_fully_cut_back_cliff_still_has_a_wall
+* test_water_runout_never_excavates_the_existing_terrain
+* test_rock_bench_colour_carries_the_surrounding_slope_grade
+* test_shallow_plateau_water_does_not_cut_away_the_rounded_shoulder
+* test_bedrock_cannot_recreate_a_lip_on_the_first_metre_of_a_rounded_crown
+* test_neighbouring_surface_nets_share_the_same_boundary_normals
+[1m10/10 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               3
+Tests                17
+Passing Tests        17
+Asserts             564
+Time              10.842s
+
+
+[32m---- All tests passed! ----
+[0m

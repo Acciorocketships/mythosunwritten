@@ -1,0 +1,24 @@
+{
+  "grass": [
+    {
+      "grass_roots": 40,
+      "misses": [],
+      "unsupported_roots": 0,
+      "view": "p02"
+    },
+    {
+      "grass_roots": 28,
+      "misses": [],
+      "unsupported_roots": 0,
+      "view": "p06"
+    },
+    {
+      "grass_roots": 23,
+      "misses": [],
+      "unsupported_roots": 0,
+      "view": "p07"
+    }
+  ],
+  "missing_surface_contacts": [],
+  "surface_contacts": 159
+}

@@ -23,9 +23,15 @@ static func spatial_index(surfaces:Array)->Dictionary:
 
 static func at_index(cells:Dictionary,point:Vector2)->Dictionary:
 	var result:=at_point(cells.get(Vector2i(floori(point.x/INDEX_CELL_SIZE),floori(point.y/INDEX_CELL_SIZE)),[]),point)
+	var blocked:=false
 	for grid:Dictionary in cells.get(&"grids",[]):
 		var sample:=at_grid(grid,point)
+		blocked=blocked or bool(sample.get("blocked",false))
 		if not sample.is_empty() and (result.is_empty() or float(sample.y)>float(result.y)):result=sample
+	# Nestled rocks overlap (September 27 judging): a point under any rock
+	# grows no grass, even where a neighbour's skirt is the higher surface.
+	if blocked and not result.is_empty():
+		result=result.duplicate();result.edge_distance=0.0
 	return result
 
 ## Heightfield support (the `sheet` style's whole-wall slope): grass grows on
@@ -41,6 +47,8 @@ static func at_grid(grid:Dictionary,point:Vector2)->Dictionary:
 	var w:int=grid.w;var h:int=grid.h
 	if i<0 or k<0 or i>=w-1 or k>=h-1:return {}
 	var flags:PackedByteArray=grid.flags
+	if grid.has("mesh_faces") and not (grid.mesh_faces as PackedVector3Array).is_empty():
+		return _at_mesh(grid,point,i,k)
 	if not (flags[k*w+i] and flags[k*w+i+1] and flags[(k+1)*w+i] and flags[(k+1)*w+i+1]):return {}
 	var heights:PackedFloat32Array=grid.heights
 	var a:=heights[k*w+i];var b:=heights[k*w+i+1];var c:=heights[(k+1)*w+i];var d:=heights[(k+1)*w+i+1]
@@ -52,7 +60,88 @@ static func at_grid(grid:Dictionary,point:Vector2)->Dictionary:
 	# nothing): falling back to the terrain below let blades rooted under the
 	# slope poke their tips through it.
 	return {"y":y,"normal":normal,"edge_distance":4.0*smoothstep(GRID_MIN_UP,GRID_FULL_UP,normal.y),
-		"support_id":grid.id,"over_ground":true}
+		"support_id":grid.id,"over_ground":true,"lift":_lift(grid,i,k,fx,fz)}
+
+## A slope's surface-net triangles differ from bilinear envelope heights at
+## carved benches. Reuse the rendered faces and bucket their XZ footprints.
+static func index_mesh(faces:PackedVector3Array,origin:Vector2,step:float)->Dictionary:
+	var cells:={}
+	for t in range(0,faces.size(),3):
+		var a:=Vector2(faces[t].x,faces[t].z);var b:=Vector2(faces[t+1].x,faces[t+1].z);var c:=Vector2(faces[t+2].x,faces[t+2].z)
+		if absf((b-a).cross(c-a))<.000001:continue
+		var lo:=Vector2i(((a.min(b).min(c)-origin)/step).floor())
+		var hi:=Vector2i(((a.max(b).max(c)-origin)/step).floor())
+		for z in range(lo.y,hi.y+1):
+			for x in range(lo.x,hi.x+1):
+				var key:=Vector2i(x,z)
+				if not cells.has(key):cells[key]=[]
+				cells[key].append(t)
+	return cells
+
+static func _at_mesh(grid:Dictionary,point:Vector2,i:int,k:int)->Dictionary:
+	if grid.has("mesh_bounds") and not (grid.mesh_bounds as Rect2).has_point(point):return {}
+	var faces:PackedVector3Array=grid.mesh_faces
+	var height:=-INF;var normal:=Vector3.UP
+	for t:int in grid.mesh_cells.get(Vector2i(i,k),[]):
+		var a:=faces[t];var b:=faces[t+1];var c:=faces[t+2]
+		var aa:=Vector2(a.x,a.z);var bb:=Vector2(b.x,b.z);var cc:=Vector2(c.x,c.z)
+		var area:float=(bb-aa).cross(cc-aa)
+		var u:float=(bb-point).cross(cc-point)/area
+		var v:float=(cc-point).cross(aa-point)/area
+		if u<-.000001 or v<-.000001 or u+v>1.000001:continue
+		var y:=a.y*u+b.y*v+c.y*(1.0-u-v)
+		if y>height:
+			height=y;normal=(c-a).cross(b-a).normalized()
+			if normal.y<0.0:normal=-normal
+	var w:int=grid.w;var flags:PackedByteArray=grid.flags
+	var ids:=[k*w+i,k*w+i+1,(k+1)*w+i,(k+1)*w+i+1]
+	var blocked:=false;var claimed:=false
+	for idx:int in ids:
+		blocked=blocked or flags[idx]==2
+		claimed=claimed or flags[idx]!=0
+	if not is_finite(height):
+		if not claimed:return {}
+		# Missing replacement cannot grow grass via the buried native ground.
+		height=grid.heights[k*w+i];blocked=true
+	var p:Vector2=(point-(grid.origin as Vector2))/float(grid.step)
+	return {"y":height,"normal":normal,"edge_distance":0.0 if blocked else 4.0*smoothstep(GRID_MIN_UP,GRID_FULL_UP,normal.y),
+		"support_id":grid.id,"over_ground":true,"mesh_support":true,"blocked":blocked,"lift":_lift(grid,i,k,p.x-i,p.y-k)}
+
+## Height the slope stands over the terrain ground (INF when unknown).
+static func _lift(grid:Dictionary,i:int,k:int,fx:float,fz:float)->float:
+	if not grid.has("lifts"):return INF
+	var lifts:PackedFloat32Array=grid.lifts;var w:int=grid.w
+	return lerpf(lerpf(lifts[k*w+i],lifts[k*w+i+1],fx),lerpf(lifts[(k+1)*w+i],lifts[(k+1)*w+i+1],fx),fz)
+
+## How far a clump's root plane may stand over or sink into the slope under
+## it. Terrain grass takes the terrain's normal at its root and floats over
+## the kernel's convex bends by up to 0.2-0.4 m; a stricter test on the slope
+## sheet (6 cm) shrank every clump on a rounded crest to a quarter size, so
+## dense terrain grass ended in a line where the sheet took over (September
+## 29 seams). Benches and folds still fail and shrink the clump.
+const FOOTPRINT_FLOAT := .2
+const FOOTPRINT_SINK := .25
+
+## A broad clump needs support beneath its whole root plane, not just its centre.
+static func footprint_scale(cells:Dictionary,point:Vector2,support:Dictionary,radius:float,ground_at:=Callable())->float:
+	if not support.get("mesh_support",false):return 1.0
+	var normal:Vector3=support.normal
+	for scale:float in [1.0,.75,.5,.25]:
+		var clear:=true
+		for ring:float in [.5,1.0]:
+			for i in 8:
+				var offset:=Vector2.from_angle(i*PI*.25)*radius*scale*ring
+				var receiver:=at_index(cells,point+offset)
+				if receiver.is_empty() and ground_at.is_valid():receiver={"y":float(ground_at.call(point+offset)),"edge_distance":1.0}
+				if receiver.is_empty() or float(receiver.edge_distance)<=0.0:
+					clear=false;break
+				var plane_y:float=support.y-Vector2(normal.x,normal.z).dot(offset)/normal.y
+				var gap:float=plane_y-float(receiver.y)
+				if gap>FOOTPRINT_FLOAT or gap<-FOOTPRINT_SINK:
+					clear=false;break
+			if not clear:break
+		if clear:return scale
+	return 0.0
 
 # Detached native top triangles extend the ordinary grass sampler. Only flat
 # authored turf tops are eligible; bounding boxes never stand in for a cap.

@@ -1,0 +1,52 @@
+{
+  "neutral_front": {
+    "changed_pixels_over_3": 159765,
+    "total_pixels": 1440000,
+    "fraction_changed": 0.11094791666666666
+  },
+  "neutral_side": {
+    "changed_pixels_over_3": 157945,
+    "total_pixels": 1440000,
+    "fraction_changed": 0.10968402777777778
+  },
+  "front": {
+    "changed_pixels_over_3": 428905,
+    "total_pixels": 1440000,
+    "fraction_changed": 0.29785069444444445
+  },
+  "side": {
+    "changed_pixels_over_3": 379891,
+    "total_pixels": 1440000,
+    "fraction_changed": 0.26381319444444445
+  },
+  "above": {
+    "changed_pixels_over_3": 237425,
+    "total_pixels": 1440000,
+    "fraction_changed": 0.1648784722222222
+  },
+  "leaning_neutral_front": {
+    "changed_pixels_over_3": 112410,
+    "total_pixels": 1440000,
+    "fraction_changed": 0.0780625
+  },
+  "leaning_neutral_side": {
+    "changed_pixels_over_3": 112584,
+    "total_pixels": 1440000,
+    "fraction_changed": 0.07818333333333333
+  },
+  "leaning_front": {
+    "changed_pixels_over_3": 401309,
+    "total_pixels": 1440000,
+    "fraction_changed": 0.27868680555555553
+  },
+  "leaning_side": {
+    "changed_pixels_over_3": 355618,
+    "total_pixels": 1440000,
+    "fraction_changed": 0.24695694444444444
+  },
+  "leaning_above": {
+    "changed_pixels_over_3": 252188,
+    "total_pixels": 1440000,
+    "fraction_changed": 0.17513055555555557
+  }
+}

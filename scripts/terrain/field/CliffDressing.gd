@@ -242,7 +242,9 @@ static func _ghost_mode(region, cx: int, cz: int, cdir: Vector2i) -> int:
 		# point — a ghost piece under an untucked sheet is buried in flat grass.
 		if carved and _diagonal_owns_pocket_corner(region, cx, cz, cdir):
 			return 0
-		if TerrainSurfaceField.is_exposed_edge(region, cx + cdir.x, cz + cdir.y, Vector2i(-ct.x, -ct.y)):
+		# Per edge (September 27): the diagonal walls across whenever its side is
+		# a cliff edge, flat-topped or descending into a slope side.
+		if TerrainSurfaceField.is_wall_edge(region, cx + cdir.x, cz + cdir.y, Vector2i(-ct.x, -ct.y)):
 			# The taller arm's wall CONTINUES past the corner across the lower
 			# arm's side — land AND water: a full inner piece here notches the
 			# continuing walkable edge (owner, seed 2697992464 cell (4,-46):
@@ -253,7 +255,7 @@ static func _ghost_mode(region, cx: int, cz: int, cdir: Vector2i) -> int:
 			#  - land runs' ext_straight MERGE rows already round the seam
 			#    (round 8) → nothing. CARVED banks have no merge rows — the
 			#    seam would stay a bare smooth notch (round 14) → seam walls.
-			if TerrainSurfaceField.is_exposed_edge(region, cx + cdir.x, cz + cdir.y, Vector2i(-cl.x, -cl.y)):
+			if TerrainSurfaceField.is_wall_edge(region, cx + cdir.x, cz + cdir.y, Vector2i(-cl.x, -cl.y)):
 				return 2
 			return 2 if carved else 0
 		# True concave junction (the taller wall does NOT continue): the full
@@ -475,6 +477,7 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 	# edge (the owner's "cliff next to a slope": the face must wrap around to the slope-facing
 	# side). A pure slope/flat cell has nothing else to dress.
 	if not TerrainSurfaceField.is_flat_cell(region, cx, cz):
+		_sloped_cliff_cell(region, cx, cz, out)
 		return
 	var h: float = region.surface_height(cx, cz)
 	var e := _exposure(region, cx, cz)
@@ -650,6 +653,38 @@ static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 				out["wall"].append(Transform3D(basis, base + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
 		# (run-end junctions into higher flat neighbours — outer/inner extension caps — are
 		# emitted from corner_map above, so the mesher's clip can hold across them too)
+
+# Per-edge classification (September 27): a cell may wall down on one side
+# while its one-storey sides are slopes. Its cliff edges keep straight wall and
+# lip pieces on the slots where its own boundary still stands at the cell
+# height; where a slope side carries the corner down there is no flat top to
+# hold a lip, and the bare rock skirt (covered by the sheet slope) backs it.
+# No corner pieces: a corner between two cliff sides drops its end slots.
+static func _sloped_cliff_cell(region, cx: int, cz: int, out: Dictionary) -> void:
+	var h: float = region.surface_height(cx, cz)
+	var cellpos := Vector3(float(cx) * TILE, h, float(cz) * TILE)
+	for dir: Vector2i in CARDINALS:
+		if not TerrainSurfaceField.is_wall_edge(region, cx, cz, dir):
+			continue
+		var own := TerrainSurfaceField.own_edge_profile(region, cx, cz, dir, PROFILE_SAMPLES)
+		var prof := TerrainSurfaceField.edge_profile(region, cx, cz, dir, PROFILE_SAMPLES)
+		var basis := Basis(Vector3.UP, _angle(dir))
+		var edge := Vector3(float(dir.x) * PLACE, 0.0, float(dir.y) * PLACE)
+		var perp := Vector3(float(dir.y), 0.0, float(dir.x))
+		var pdir := Vector2i(dir.y, dir.x)
+		for off: float in OFFSETS:
+			if absf(off) > END - 0.01 and TerrainSurfaceField.is_wall_edge(
+					region, cx, cz, pdir if off > 0.0 else -pdir):
+				continue
+			if _slot_min(own, off) < h - 0.01:
+				continue
+			var dip: float = h - _slot_min(prof, off)
+			if dip < TerrainSurfaceField.EXPOSE_EPS:
+				continue
+			var base: Vector3 = cellpos + edge + perp * off
+			out["lip"].append(Transform3D(basis, base + Vector3(0.0, LIP_LIFT, 0.0)))
+			for k in _rows(dip):
+				out["wall"].append(Transform3D(basis, base + Vector3(0.0, -STOREY * float(k + 1), 0.0)))
 
 static func build(region, lo_cx: int, lo_cz: int, cells: int, world_seed := 0) -> Node3D:
 	_ensure_loaded()

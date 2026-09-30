@@ -1,0 +1,42 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_p03_cliff_followup.gd
+[0m* test_roots_use_rendered_triangle_height_instead_of_the_envelope
+* test_wide_clump_cannot_overhang_a_supported_centre
+* test_rock_blocked_support_claims_the_point_without_terrain_fallback
+* test_tall_cliffs_are_gentler_without_a_new_sharp_crest_or_cut_off_foot
+* test_a_fully_cut_back_cliff_still_has_a_wall
+[31m    [Failed]:  [0mEven a cut with no raised slope needs a solid cliff face
+      at line 67
+[1m4/5 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_p03_cliff_followup.gd
+[0m- test_a_fully_cut_back_cliff_still_has_a_wall
+[31m    [Failed]:  [0mEven a cut with no raised slope needs a solid cliff face
+          at line 67
+
+Totals
+------
+Scripts               1
+Tests                 5
+Passing Tests         4
+Failing Tests         1
+Asserts           145/146
+Time              1.441s
+
+
+[31m---- 1 failing tests ----
+[0m

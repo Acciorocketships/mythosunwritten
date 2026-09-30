@@ -1,0 +1,162 @@
+extends GutTest
+
+const STYLE = preload("res://scripts/terrain/field/CliffRockStyle.gd")
+const CRAGS = preload("res://scripts/terrain/field/CliffRockCrags.gd")
+const ROCKS = preload("res://scripts/terrain/field/CliffRockDressing.gd")
+const FIELD = preload("res://scripts/terrain/field/CliffSlopeField.gd")
+const ENVELOPE = preload("res://scripts/terrain/field/CliffSlopeEnvelope.gd")
+const SEED := 2697992464
+
+func after_each() -> void:
+	STYLE.apply("sheet_bedrock")
+
+func test_sheet_lawn_receives_biome_tint_once() -> void:
+	if DisplayServer.get_name() == "headless":
+		pending("MultiMesh colour readback needs a native rendering device")
+		return
+	# Photo 10: a gentle sheet and the plateau must supply the same lawn
+	# colour to ground_style. Godot multiplies vertex and instance COLOR.
+	STYLE.apply("sheet_bedrock")
+	var p := Vector3(285, 44, 882)
+	var faces := PackedVector3Array([p, p + Vector3.RIGHT, p + Vector3.BACK])
+	var roots := {}
+	for v: Vector3 in faces:
+		roots[v] = [Vector3.UP, 0.0]
+	var rock := {"faces": faces, "green": PackedVector3Array(),
+		"native_roots": roots, "slope_sheet": true, "native_crag": true,
+		"transform": Transform3D.IDENTITY, "anchor": p, "top": p.y,
+		"asset": &"cliff.native_crag"}
+	rock["render_arrays"] = CRAGS.mesh_arrays(rock, null, SEED)
+	var root := ROCKS.build({"placements": [rock]}, SEED)
+	var mm := (root.get_child(0) as MultiMeshInstance3D).multimesh
+	var colors: PackedColorArray = mm.mesh.surface_get_arrays(0)[Mesh.ARRAY_COLOR]
+	var actual := colors[0] * mm.get_instance_color(0)
+	# Terrain ArrayMesh vertex colour is stored as UNORM8. Compare the
+	# substrate actually supplied by the native terrain renderer.
+	var expected := BiomeRegistry.ground_tint_at(p, SEED).clamp()
+	assert_almost_eq(actual.r, expected.r, .005, "Red substrate channel matches terrain")
+	assert_almost_eq(actual.g, expected.g, .005, "Green substrate channel matches terrain")
+	assert_almost_eq(actual.b, expected.b, .005, "Blue substrate channel matches terrain")
+	root.free()
+
+func test_rock_exclusion_claims_the_grass_below_it() -> void:
+	# Photos 5/9: withdrawing a slope support inside a rock must not let
+	# ordinary terrain grass fall back beneath it and poke through its face.
+	var field = FIELD.new([], SEED)
+	var env = ENVELOPE.new()
+	env.origin = Vector2(-8,-8)
+	env.w = 33
+	env.h = 33
+	env.ground.resize(33*33)
+	env.surface.resize(33*33)
+	env.surface.fill(2.0)
+	field._env = env
+	field.rock_list.append({"centre":Vector3(0,2,0),"ru":1.0,"ry":1.0,"ro":1.0})
+	var grid: Dictionary = field.grass_support(Rect2(-4,-4,8,8))
+	var blocked := GrassSupportSurfaces.at_grid(grid, Vector2(.1,.1))
+	assert_false(blocked.is_empty(), "Rock owns the point: no buried-terrain fallback")
+	if not blocked.is_empty():
+		assert_eq(float(blocked.edge_distance),0.0,"No grass grows through the rock")
+	var clear := GrassSupportSurfaces.at_grid(grid,Vector2(3,3))
+	assert_gt(float(clear.get("edge_distance",0.0)),0.0,"Uncovered slope retains grass")
+
+func test_photo11_heightfield_has_no_inverted_surface_triangles() -> void:
+	STYLE.apply("sheet_bedrock")
+	var saved: Dictionary = FileAccess.open("res://tests/fixtures/september26-cliffs/photo11-envelope.var",FileAccess.READ).get_var()
+	var env = ENVELOPE.new()
+	for key: String in saved: env.set(key,saved[key])
+	var area := Rect2(296,768,8,8)
+	var field = FIELD.new([],SEED,null,area)
+	field._env = env
+	var faces: PackedVector3Array = field.solid(area)[0].faces
+	var inverted := 0
+	for i in range(0,faces.size(),3):
+		var normal := (faces[i+2]-faces[i]).cross(faces[i+1]-faces[i])
+		if normal.y < -.00001: inverted += 1
+	assert_eq(inverted,0,"A single-valued bedrock heightfield has no downward-facing top triangles")
+
+func test_replaced_native_pieces_are_removed_even_when_their_tops_project() -> void:
+	STYLE.apply("sheet_bedrock")
+	CliffDressing.prepare(EnvironmentRenderCache.new(EnvironmentCatalog.load_default()))
+	var env = ENVELOPE.new()
+	env.origin = Vector2(-12,-12)
+	env.w=49; env.h=49
+	env.ground.resize(49*49); env.surface.resize(49*49); env.surface.fill(2.0)
+	var field = FIELD.new([],SEED,null,Rect2(-8,-8,16,16))
+	field._env=env
+	field.solid(Rect2(-8,-8,16,16))
+	var pose := Transform3D(Basis.IDENTITY,Vector3(0,4,0))
+	var kept: Dictionary = env.uncovered({"lip":[pose],"wall":[pose]})
+	assert_eq((kept.lip as Array).size(),0,"Replacement withdraws the projecting old lip")
+	assert_eq((kept.wall as Array).size(),0,"Replacement withdraws the projecting old wall")
+	var outside := Transform3D(Basis.IDENTITY,Vector3(100,4,100))
+	assert_eq((env.uncovered({"lip":[outside]}).lip as Array).size(),1,"No replacement means preserve the native surface")
+
+func test_moderate_cliff_profile_is_gentler_with_a_rounded_shoulder() -> void:
+	STYLE.apply("sheet") # Measure the lawn envelope independently of stone carving.
+	var env = ENVELOPE.build(Rect2(-8,-6,16,30),func(q:Vector2)->float:return 12.0 if q.y<0 else 0.0,Callable(),SEED)
+	var angles:=PackedFloat64Array()
+	for x in range(-5,6):
+		for z in range(0,80):
+			var q:=Vector2(x,z*.25)
+			var y:float=env.sample(q)
+			if y<2.4 or y>9.6:continue
+			var gx:float=(env.sample(q+Vector2(.25,0))-env.sample(q-Vector2(.25,0)))/.5
+			var gz:float=(env.sample(q+Vector2(0,.25))-env.sample(q-Vector2(0,.25)))/.5
+			angles.append(rad_to_deg(atan(Vector2(gx,gz).length())))
+	angles.sort()
+	assert_lt(angles[angles.size()/2],55.0,"Typical three-storey grassy slope is within the walking angle")
+
+func test_grass_uses_the_rendered_triangle_and_its_shading_normal() -> void:
+	var ns:=PackedVector3Array([Vector3.UP,Vector3(0,1,.4).normalized(),Vector3(.4,1,0).normalized(),Vector3(.4,1,.4).normalized()])
+	var grid:={"grid":true,"triangulated":true,"origin":Vector2.ZERO,"step":1.0,"w":2,"h":2,"heights":PackedFloat32Array([0,0,0,1]),"flags":PackedByteArray([1,1,1,1]),"normals":ns,"id":"fold"}
+	var support:=GrassSupportSurfaces.at_grid(grid,Vector2(.7,.3))
+	assert_almost_eq(float(support.y),.3,.00001,"Root is on the actual triangle, not bilinear height .21")
+	assert_almost_eq(support.shade_normal,(ns[0]*.3+ns[1]*.4+ns[3]*.3).normalized(),Vector3.ONE*.00001,"Grass carries the sheet's interpolated shading normal")
+
+func test_wide_grass_clump_is_rejected_at_an_unsupported_bench() -> void:
+	var grid:={"grid":true,"triangulated":true,"origin":Vector2.ZERO,"step":.5,"w":3,"h":3,"heights":PackedFloat32Array([0,0,-2,0,0,-2,0,0,-2]),"flags":PackedByteArray([1,1,1,1,1,1,1,1,1]),"id":"bench"}
+	var cells:=GrassSupportSurfaces.spatial_index([grid])
+	var root:=Vector2(.49,.5)
+	var support:=GrassSupportSurfaces.at_index(cells,root)
+	assert_gt(float(support.edge_distance),0.0,"The centre itself is an eligible flat root")
+	assert_eq(GrassSupportSurfaces.footprint_scale(cells,root,support,.8),0.0,"Every usable clump width overhangs the edge")
+
+func test_independent_neighbour_heightfields_match_at_the_chunk_edge() -> void:
+	STYLE.apply("sheet_bedrock")
+	var ground:=func(q:Vector2)->float:
+		return 40.0 if q.x>12.0 and q.y<8.0 else (12.0 if q.y<0 else 0.0)
+	var a=ENVELOPE.build(Rect2(-48,-32,48,64),ground,Callable(),SEED)
+	var b=ENVELOPE.build(Rect2(0,-32,48,64),ground,Callable(),SEED)
+	var worst:=0.0
+	for z in range(-48,49):
+		var q:=Vector2(0,z*.5)
+		worst=maxf(worst,absf(a.at(q)-b.at(q)))
+	assert_lt(worst,.000001,"Independent owners produce identical shared surface heights")
+
+func test_rock_sampler_uses_the_same_triangle_as_rendering() -> void:
+	STYLE.apply("sheet_bedrock")
+	var env=ENVELOPE.new();env.origin=Vector2.ZERO;env.w=2;env.h=2
+	env.surface=PackedFloat64Array([0,0,0,1])
+	assert_almost_eq(env.sample(Vector2(.35,.15)),.3,.00001,"Rock fitting follows the rendered triangle instead of floating on bilinear height")
+
+func test_grass_footprint_can_continue_on_ordinary_ground() -> void:
+	var grid:={"grid":true,"triangulated":true,"origin":Vector2.ZERO,"step":.5,"w":3,"h":3,"heights":PackedFloat32Array([0,0,0,0,0,0,0,0,0]),"flags":PackedByteArray([1,1,1,1,1,1,1,1,1]),"id":"flat"}
+	var cells:=GrassSupportSurfaces.spatial_index([grid]);var q:=Vector2(.9,.5)
+	var support:=GrassSupportSurfaces.at_index(cells,q)
+	assert_eq(GrassSupportSurfaces.footprint_scale(cells,q,support,.4,func(_p:Vector2)->float:return 0.0),1.0,"Ownership boundary is not a physical edge")
+
+func test_photo13_one_node_stone_fin_is_trimmed() -> void:
+	var saved:Dictionary=FileAccess.open("res://tests/fixtures/september26-cliffs/photo13-fins.var",FileAccess.READ).get_var()
+	var env=ENVELOPE.new()
+	for key:String in saved:env.set(key,saved[key])
+	var q:=Vector2(291.5,1002)
+	var prominence:=func()->float:
+		var value:=0.0
+		for d:Vector2 in [Vector2(.5,0),Vector2(0,.5),Vector2(.5,.5),Vector2(.5,-.5)]:
+			value=maxf(value,env.at(q)-maxf(env.at(q+d),env.at(q-d)))
+		return value
+	assert_gt(float(prominence.call()),4.5,"Frozen source reproduces the narrow 4.55 m blade")
+	ENVELOPE._trim_fins(env)
+	assert_lte(float(prominence.call()),.600001,"Half-metre-wide stone cannot retain the tall isolated blade")
+	assert_gte(env.at(q),env.ground_node(q),"The backing stays solid")

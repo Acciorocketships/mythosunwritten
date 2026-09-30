@@ -1,0 +1,6 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+original retained=899 missing=[(300.2, 772.2), (300.2, 773.2), (300.2, 774.2), (300.2, 775.2), (301.2, 772.2), (301.2, 773.2), (301.2, 774.2), (301.2, 775.2), (302.2, 772.2), (302.2, 773.2), (302.2, 774.2), (302.2, 775.2), (303.2, 772.2), (303.2, 773.2), (303.2, 774.2), (303.2, 775.2)]
+original triangles=1634 inconsistent=15 open=162 points=899
+repair retained=604 missing=[]
+repair triangles=1534 inconsistent=0 open=130 points=833

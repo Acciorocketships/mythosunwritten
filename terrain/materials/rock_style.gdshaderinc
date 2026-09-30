@@ -1,9 +1,21 @@
-// One restrained warm-gray stone for native cliffs, boulders and field rocks.
-// Preserve subtle authored palette variation, independently of turf biome hue.
-uniform vec4 stone_color : source_color = vec4(0.40, 0.39, 0.42, 1.0);
+// One stone colour for every rock, overlaid on the Meadow rocks' neutral
+// grey albedos (their means are 0.50-0.52 sRGB in every channel): native
+// cliffs, field rocks, the bedrock sheet and the Meadow asset rocks all take
+// it (owner, September 27 judging: make the cliffs a bit warmer, to match
+// the rocks). A low-saturation warm grey-tan, between the old cool bedrock
+// tint (.5,.46,.42) and the pack's saturated S_Props rock tint
+// (.552,.418,.342), which read salmon once the cliffs took it.
+const vec3 MEADOW_STONE_TINT = vec3(.52,.475,.40);
+// The Meadow stone for a (linear) grey albedo texel.
+vec3 meadow_stone(vec3 texel){
+ return clamp(mix(2.0*texel*MEADOW_STONE_TINT,1.0-2.0*(1.0-texel)*(1.0-MEADOW_STONE_TINT),step(vec3(.5),MEADOW_STONE_TINT)),vec3(0),vec3(1));
+}
+// Other stone takes the Meadow stone of the Meadow albedos' mean grey (0.5
+// sRGB), preserving subtle authored palette variation, independently of
+// turf biome hue.
 vec3 stone_albedo(vec3 texel) {
  float value = dot(texel, vec3(0.2126,0.7152,0.0722));
- return stone_color.rgb * clamp(0.90 + value * 0.40, 0.92, 1.10);
+ return meadow_stone(vec3(0.214)) * clamp(0.90 + value * 0.40, 0.92, 1.10);
 }
 
 // A continuous world-space mineral field shared by native walls and added

@@ -1,0 +1,77 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_cliff_dressing.gd
+* test_carved_pocket_with_unequal_arms_and_continuing_wall_gets_seam_walls
+    [Failed]:  [0] expected to equal [2]:  carved pocket under a continuing taller wall: seam walls, no lip
+      at line 949
+* test_carved_pocket_level_diagonal_gets_a_pocket_cap
+    [Failed]:  level-with-lower-arm flat diagonal owns the carved pocket corner
+      at line 1013
+    [Failed]:  [""] expected to equal ["pocket_cap"]:  the diagonal's corner_map registers the corner (sheet tuck + piece emission)
+      at line 1018
+    [Failed]:  [0] expected to equal [1]:  the convex cap wraps the pocket point, one slot into the taller arm
+      at line 1041
+    [Failed]:  [0] expected to equal [1]:  the classic inner piece stays in the diagonal's slot, right next to the cap (owner)
+      at line 1042
+    [Failed]:  [0] expected to be > than [0]:  the concave wall seam below keeps its inner rows
+      at line 1044
+* test_carved_flush_step_cap_sits_at_the_very_end
+    [Failed]:  [""] expected to equal ["ext_outer"]:  the carved flush step is a run-end junction with the cap beyond the boundary
+      at line 1067
+    [Failed]:  the run keeps its straight end module up to the boundary
+      at line 1078
+    [Failed]:  the turned cap sits one slot into the taller cell — at the very end
+      at line 1087
+* test_carved_junction_where_taller_wall_continues_keeps_the_edge_straight
+* test_carved_run_end_into_taller_wall_gets_the_turned_cap
+2/5 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_cliff_dressing.gd
+- test_carved_pocket_with_unequal_arms_and_continuing_wall_gets_seam_walls
+    [Failed]:  [0] expected to equal [2]:  carved pocket under a continuing taller wall: seam walls, no lip
+          at line 949
+- test_carved_pocket_level_diagonal_gets_a_pocket_cap
+    [Failed]:  level-with-lower-arm flat diagonal owns the carved pocket corner
+          at line 1013
+    [Failed]:  [""] expected to equal ["pocket_cap"]:  the diagonal's corner_map registers the corner (sheet tuck + piece emission)
+          at line 1018
+    [Failed]:  [0] expected to equal [1]:  the convex cap wraps the pocket point, one slot into the taller arm
+          at line 1041
+    [Failed]:  [0] expected to equal [1]:  the classic inner piece stays in the diagonal's slot, right next to the cap (owner)
+          at line 1042
+    [Failed]:  [0] expected to be > than [0]:  the concave wall seam below keeps its inner rows
+          at line 1044
+- test_carved_flush_step_cap_sits_at_the_very_end
+    [Failed]:  [""] expected to equal ["ext_outer"]:  the carved flush step is a run-end junction with the cap beyond the boundary
+          at line 1067
+    [Failed]:  the run keeps its straight end module up to the boundary
+          at line 1078
+    [Failed]:  the turned cap sits one slot into the taller cell — at the very end
+          at line 1087
+
+Totals
+------
+Scripts               1
+Tests                 5
+Passing Tests         2
+Failing Tests         3
+Asserts           12/21
+Time              0.379s
+
+
+Ran Tests matching "carved"
+---- 3 failing tests ----
+

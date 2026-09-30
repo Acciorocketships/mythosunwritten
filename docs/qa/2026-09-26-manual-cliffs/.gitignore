@@ -1,0 +1,2 @@
+# Bulky diagnostic arrays stay local, as do the repository-wide QA renders.
+*.var

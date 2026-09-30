@@ -546,26 +546,27 @@ func test_level_step_is_continuous_without_a_vertical_wall():
 	var wall: Array = data["wall_arrays"]
 	assert_true(wall.is_empty(), "pure level slopes meet as one sheet; no vertical lip wall exists")
 
-func test_skirt_covers_the_slope_facing_side_of_a_cliff_top():
-	# Owner screenshot (2827641023 cell (4,12)): a SAME-storey slope neighbour descends along a
-	# cliff top's side boundary, exposing a vertical face that had no skirt at all (see-through).
+func test_slope_facing_side_of_a_cliff_cell_is_welded_not_skirted():
+	# Owner screenshot (2827641023 cell (4,12)): a SAME-storey slope neighbour descended along a
+	# flat cliff top's side boundary, exposing a see-through vertical face. Per edge (September
+	# 27) that side is an ordinary slope: both owners share one boundary and nothing is skirted.
 	var p := Plan.new(0, 64.0, 12, "mean", 4)
 	p.set_raw_height_override(func(cx, cz):
 		if cx == 2 and cz == 1: return 4.0
 		if cx == 1 and cz == 0: return 8.0
 		if cx == 0 and cz == 0: return 8.0
 		return 12.0)
+	var region := _region_for(p, Vector2i(0, 0))
+	for z in range(12, 37, 2):
+		assert_almost_eq(TerrainSurfaceField.surface_y_in_cell(region, 12.0, float(z), 1, 1),
+			TerrainSurfaceField.surface_y_in_cell(region, 12.0, float(z), 0, 1), 0.0001,
+			"C and its west neighbour share the boundary at z=%d" % z)
 	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
 	var faces := node.find_child("CliffFaces", true, false) as MeshInstance3D
-	assert_not_null(faces)
-	var verts: PackedVector3Array = faces.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-	var plane_x := 12.0 + Mesher.SKIRT_RECESS   # C=(1,1)'s west skirt plane (recessed INTO C)
-	var found := false
+	var verts: PackedVector3Array = faces.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX] if faces != null else PackedVector3Array()
 	for v in verts:
-		if absf(v.x - plane_x) < 0.01 and v.z > 12.0 and v.z < 36.0 and v.y < 8.5:
-			found = true
-			break
-	assert_true(found, "the slope-facing side of the cliff top gets a skirt down the exposed face")
+		assert_false(absf(v.x - 12.0) < 1.4 and v.z > 12.5 and v.z < 35.5,
+			"no skirt stands on the welded slope side: %s" % v)
 	node.free()
 
 
@@ -590,7 +591,7 @@ func test_higher_cardinal_does_not_split_an_ordinary_shared_slope() -> void:
 func _terrace_plan():
 	var p := Plan.new(0, 64.0, 12, "mean", 4)
 	p.set_raw_height_override(func(cx, cz):
-		if cx == 0 and cz == 1: return 12.0   # W: higher cliff top west of C
+		if cx == 0 and cz == 1: return 16.0   # W: cliff top two storeys above C
 		if cz >= 2: return 0.0                # low ground south of everything
 		return 8.0)                            # C=(1,1) and the flat backdrop
 	return p
@@ -716,14 +717,13 @@ func test_skirt_extends_under_higher_neighbour():
 	# south skirt and W's east skirt are perpendicular and each used to stop at its own cell
 	# edge — leaving an open 1.3×1.3 chimney at the junction over C's corner. N's skirt must
 	# continue west INTO the higher NW cell so the two skirts cross behind the corner piece.
+	# (Per edge, September 27: each step is two storeys, so every side walls.)
 	var p := Plan.new(0, 64.0, 12, "mean", 4)
 	p.set_raw_height_override(func(cx, cz):
-		if cx == 0 and cz == 0: return 16.0
+		if cx == 0 and cz == 0: return 20.0
 		if cx == 1 and cz == 0: return 12.0
 		if cx == 0 and cz == 1: return 12.0
-		if cx == 2 and cz == 0: return 0.0
-		if cx == 0 and cz == 2: return 0.0
-		return 8.0)
+		return 4.0)
 	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
 	var faces := node.find_child("CliffFaces", true, false) as MeshInstance3D
 	var verts: PackedVector3Array = faces.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
@@ -740,35 +740,32 @@ func test_skirt_extends_under_higher_neighbour():
 func test_clip_uses_the_dipped_half_of_a_north_edge_not_its_mirror():
 	# Owner (round 3, seed 78498630): on north/west edges the clip's slot mask was looked up
 	# with the RAW axis coordinate, but the mask is ordered along pdir=(dir.y,dir.x) — mirrored
-	# for negative pdir. The flush half of the edge got clipped (a hole into the void) while the
-	# dipped half kept its brim. C=(1,1) is a cliff top whose NORTH neighbour is a slope dipping
-	# on the WEST half only: the clip must pull the west half and leave the east half welded.
+	# for negative pdir. C=(1,1) was a flat cliff top whose NORTH neighbour dipped on its WEST
+	# half only. Per edge (September 27) C's one-storey sides are slopes, so C itself descends
+	# into that corner and both owners share the boundary: nothing is clipped and no hole opens.
 	var p := Plan.new(0, 64.0, 12, "mean", 4)
 	p.set_raw_height_override(func(cx, cz):
 		if cx == 0: return 8.0                # west column: storey 2 → the slope dips west
 		if cx == 1 and cz == 2: return 0.0    # C's cliff-maker (south drop 3)
 		return 12.0)
+	var region := _region_for(p, Vector2i(0, 0))
+	for x in range(12, 37, 2):
+		assert_almost_eq(TerrainSurfaceField.surface_y_in_cell(region, float(x), 12.0, 1, 1),
+			TerrainSurfaceField.surface_y_in_cell(region, float(x), 12.0, 1, 0), 0.0001,
+			"C's north boundary is welded at x=%d" % x)
 	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
 	var mi := node.find_child("Surface", true, false) as MeshInstance3D
 	var verts: PackedVector3Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-	var clipped_west := false
-	var clipped_east := false
 	for v in verts:
-		if v.y > 11.9 and absf(v.z - 14.4) < 0.05:   # pulled to C's north clip line
-			if v.x > 13.5 and v.x < 20.0: clipped_west = true
-			if v.x > 27.0 and v.x < 35.0: clipped_east = true
-	assert_true(clipped_west, "the DIPPED (west) half of the north edge is clipped")
-	assert_false(clipped_east, "the FLUSH (east) half of the north edge stays welded (no hole)")
+		assert_false(v.y > 11.9 and absf(v.z - 14.4) < 0.05 and v.x > 13.5 and v.x < 35.0,
+			"C's north edge is not pulled back to a lip line: %s" % v)
 	node.free()
 
 func test_clip_tapers_to_zero_at_a_neighbour_that_does_not_clip():
 	# Owner (round 3, seed 186412979): A clips its lipped south edge; its east neighbour B is
 	# a PLAIN cell with an unclipped south edge. A's pulled corner vertex tore away from B's
-	# sheet, opening a triangular hole at the seam. The clip weight must taper to zero at any
-	# corner shared with an unclipped slot, so both sheets keep their shared vertex. Nothing
-	# registers a piece on the shared point: B is not flat (no classic inner corner) and the
-	# diagonal (2,2) is LEVEL, not a taller walling flat (round 10's abut would rightly HOLD
-	# the clip there — see test_no_drape_dip_where_a_run_ends_at_a_level_neighbour...).
+	# sheet, opening a triangular hole at the seam. Per edge (September 27) A's one-storey south
+	# side is a slope, so the lip run (and its clip) is gone; the seam must stay welded.
 	var p := Plan.new(0, 64.0, 12, "mean", 4)
 	p.set_raw_height_override(func(cx, cz):
 		if cx == 0 and cz == 1: return 4.0    # A's cliff-maker (west drop 2)
@@ -778,14 +775,15 @@ func test_clip_tapers_to_zero_at_a_neighbour_that_does_not_clip():
 	var mi := node.find_child("Surface", true, false) as MeshInstance3D
 	var verts: PackedVector3Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
 	var torn := false
-	var clipped_mid := false
 	for v in verts:
 		if v.y > 11.9 and absf(v.x - 36.0) < 0.01 and v.z > 33.5 and v.z < 33.8:
 			torn = true   # A's SE corner vert pulled away from the seam with B
-		if v.y > 11.9 and v.x > 20.0 and v.x < 28.0 and absf(v.z - 33.6) < 0.05:
-			clipped_mid = true
 	assert_false(torn, "A's corner vertex stays on the seam (B does not clip its colinear edge)")
-	assert_true(clipped_mid, "mid-edge is still fully clipped")
+	var region := _region_for(p, Vector2i(0, 0))
+	for z in range(12, 37, 2):
+		assert_almost_eq(TerrainSurfaceField.surface_y_in_cell(region, 36.0, float(z), 1, 1),
+			TerrainSurfaceField.surface_y_in_cell(region, 36.0, float(z), 2, 1), 0.0001,
+			"A and B share their seam at z=%d" % z)
 	node.free()
 
 func test_apron_is_clamped_by_the_higher_cells_own_clip():
@@ -816,9 +814,9 @@ func test_buried_apron_end_is_not_clamped_no_ground_gap():
 	# apron end below the across-cell's surface is buried and must NOT be clamped.
 	var p := Plan.new(0, 64.0, 12, "mean", 4)
 	p.set_raw_height_override(func(cx, cz):
-		if cx == 1 and cz == 0: return 12.0   # B: tall cell, walls west over the shelf
-		if cx == 1 and cz == 1: return 8.0    # D: plateau south of B (flush west walls)
-		if cx == 2 and cz == 2: return 0.0    # D's cliff-maker (SE diagonal, 2 storeys down)
+		# (Per edge, September 27: two storeys per step so every side walls.)
+		if cx == 1 and cz == 0: return 20.0   # B: tall cell, walls west over the shelf
+		if cx == 1 and cz == 1: return 12.0   # D: plateau south of B (flush west walls)
 		return 4.0)                            # the shelf west of both, and backdrop
 	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
 	var am := node.find_child("Aprons", true, false) as MeshInstance3D
@@ -852,25 +850,21 @@ func test_buried_apron_end_is_not_clamped_no_ground_gap():
 
 func test_apron_seals_the_base_slit_next_to_a_same_storey_slope():
 	# Owner (round 3): "gap between slope and cliff at the same level" — the recess band between
-	# a flat cell's wall face and its boundary needs a floor at the SLOPE neighbour's descending
-	# surface too, not only under strictly-higher neighbours.
+	# a flat cell's wall face and its boundary needed a floor at the SLOPE neighbour's descending
+	# surface. Per edge (September 27) that same-storey side is an ordinary slope: N and W share
+	# one boundary and N has no recessed face (so no slit) on it.
 	var p := Plan.new(0, 64.0, 12, "mean", 4)
 	p.set_raw_height_override(func(cx, cz):
 		if cx == 2 and cz == 1: return 4.0    # N's cliff drop (east)
-		if cx == 1 and cz == 0: return 8.0    # N's north: storey 2 → N walls north
+		if cx == 1 and cz == 0: return 8.0    # N's north: storey 2
 		if cx == 0 and cz == 0: return 8.0    # W's north: storey 2 → W slopes down north
 		return 12.0)
-	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
-	var aprons := node.find_child("Aprons", true, false) as MeshInstance3D
-	var found := false
-	if aprons != null and aprons.mesh != null:
-		for v in (aprons.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX] as PackedVector3Array):
-			# mid-edge of N's west band (z filter excludes the unrelated north-band strip)
-			if v.x > 11.9 and v.x < 14.5 and v.z > 18.0 and v.z < 24.0 and v.y < 11.5:
-				found = true
-				break
-	assert_true(found, "N=(1,1)'s west recess band gets a floor at the slope's descending surface")
-	node.free()
+	var region := _region_for(p, Vector2i(0, 0))
+	for z in range(12, 37, 2):
+		assert_almost_eq(TerrainSurfaceField.surface_y_in_cell(region, 12.0, float(z), 1, 1),
+			TerrainSurfaceField.surface_y_in_cell(region, 12.0, float(z), 0, 1), 0.0001,
+			"N and W share their boundary at z=%d" % z)
+	assert_false(TerrainSurfaceField.is_wall_edge(region, 1, 1, Vector2i(-1, 0)), "no wall faces W")
 
 func test_apron_normals_are_vertical():
 	# Owner (round 3, seed 3674690878): "skirt a different colour than ground" — the apron was
@@ -1066,10 +1060,11 @@ func test_run_end_at_a_higher_flat_neighbour_holds_the_clip():
 	# caps must hold the clip exactly like classic corner pieces.
 	var p := Plan.new(0, 64.0, 12, "mean", 4)
 	p.set_raw_height_override(func(cx, cz):
-		if cx == 0 and cz == 0: return 0.0    # H=(1,1)'s cliff-maker (NW diagonal)
+		# (Per edge, September 27: H stands two storeys over L so it walls L.)
+		if cx == 0 and cz == 0: return 0.0    # the NW diagonal
 		if cx == 2 and cz == 0: return 0.0    # L=(2,1)'s cliff-maker and exposed north edge
 		if cx == 2 and cz == 1: return 8.0    # L: lower cliff top, its run ends against H
-		return 12.0)                           # H=(1,1) higher flat; (1,0)=12 keeps H's north flush
+		return 16.0)                           # H=(1,1) higher flat; (1,0)=16 keeps H's north flush
 	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
 	var mi := node.find_child("Surface", true, false) as MeshInstance3D
 	var verts: PackedVector3Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]

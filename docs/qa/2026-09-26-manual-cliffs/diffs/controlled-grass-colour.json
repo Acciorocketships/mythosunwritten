@@ -1,0 +1,18 @@
+{
+  "before": "docs/qa/2026-09-26-manual-cliffs/colour-control-before/grass-45.png",
+  "after": "docs/qa/2026-09-26-manual-cliffs/colour-control/grass-45.png",
+  "size": [
+    400,
+    400
+  ],
+  "mean_absolute_channel_difference": 14.0,
+  "pixels_over_8": 160000,
+  "fraction_over_8": 1.0,
+  "changed_bounds": [
+    0,
+    0,
+    399,
+    399
+  ],
+  "note": "Pixel changes establish change, not correctness. Inspect matched images; animated grass and temporal rendering also change pixels."
+}

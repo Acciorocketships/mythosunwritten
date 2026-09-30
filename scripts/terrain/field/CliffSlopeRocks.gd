@@ -1,7 +1,7 @@
 extends RefCounted
 ## Original Meadow rocks with the restored grass top-layer material.
 ## Placement lives in CliffSlopeField; meshes are prepared on the main thread.
-## Trial only: loaded from the source packs, visual only (no collision yet).
+## Loaded from the source packs; ground rocks collide with the catalog hulls.
 const ANGRY := "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Summer/"
 const PIECES := {
 "angry_01": [ANGRY + "P_Rock_01_Summer.glb", Vector3(5.785935,2.9450228,5.4705315)],
@@ -52,7 +52,8 @@ static func prepare() -> void:
 
 
 ## One MultiMesh per piece. Each entry carries its world transform, the slope
-## point and normal under it, and the formation's ground height.
+## point and normal under it, the skirt's mound rise there, and that
+## surface's rock exposure and moss grade.
 static func build(entries: Dictionary, seed_value: int) -> Node3D:
 	prepare()
 	var root := Node3D.new()
@@ -72,18 +73,48 @@ static func build(entries: Dictionary, seed_value: int) -> Node3D:
 		for i in rocks.size():
 			var t: Transform3D = rocks[i].transform
 			mm.set_instance_transform(i, t * (piece[1] as Transform3D))
-			mm.set_instance_color(i, BiomeRegistry.ground_tint_at(t.origin, seed_value))
-			# The slope plane under the rock and the formation's ground height:
-			# the rock's base grows the same moss and lawn as the slope around it.
+			# The surface the rock is set into (meadow_rock.gdshader): its lawn
+			# tint and rock exposure, its plane and moss grade. The rock's
+			# base takes that surface's own colour, bare stone or lawn. The
+			# tint is clamped as the sheet's and terrain's 8-bit vertex tints are.
+			var tint := BiomeRegistry.ground_tint_at(t.origin, seed_value).clamp()
+			mm.set_instance_color(i, Color(tint.r, tint.g, tint.b, float(rocks[i].get("exposure", 0.0))))
+			# The contact plane: the surface under the rock, lifted to its
+			# skirt's mound top, where the rock actually meets the ground.
 			var normal: Vector3 = rocks[i].normal
-			mm.set_instance_custom_data(i, Color(normal.x, normal.z, normal.dot(rocks[i].point), rocks[i].ground))
+			var contact: float = normal.dot(rocks[i].point) + float(rocks[i].get("contact_rise", 0.0)) * normal.y
+			mm.set_instance_custom_data(i, Color(normal.x, normal.z, contact, float(rocks[i].get("grade", 1.0 - normal.y))))
 		var node := MultiMeshInstance3D.new()
 		node.name = name
 		node.multimesh = mm
 		node.material_override = piece[2]
 		node.add_to_group("tactical_solid_earth", true)
 		root.add_child(node)
+	_add_collision(root, entries)
 	return root
+
+
+## Ground rocks collide like the same Meadow rocks placed as ambient dressing
+## (owner, September 27: their ground skirt collides, so must the rock). The
+## catalog hull sits on the rock's base; these pieces pivot at their centre.
+static func _add_collision(root: Node3D, entries: Dictionary) -> void:
+	var body := StaticBody3D.new()
+	body.name = "CliffSlopeRockCollision"
+	for name: String in entries:
+		if not name.begins_with("angry_"):
+			continue
+		var visual := load("res://terrain/environment/visuals/meadow/rock_%s.res" % name.right(2)) as EnvironmentVisual
+		var lift := Transform3D(Basis(), Vector3(0, -0.5 * (PIECES[name][1] as Vector3).y, 0))
+		for rock: Dictionary in entries[name]:
+			for piece: EnvironmentCollisionPiece in visual.collisions:
+				var shape := CollisionShape3D.new()
+				shape.shape = piece.shape
+				shape.transform = (rock.transform as Transform3D) * lift * piece.local_transform
+				body.add_child(shape)
+	if body.get_child_count() > 0:
+		root.add_child(body)
+	else:
+		body.free()
 
 ## Only the hidden end bands tuck into the backing. The visible middle keeps
 ## the original Meadow vertices; there is no whole-body bend or width taper.

@@ -1,0 +1,38 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september26_manual_cliffs.gd
+* test_sheet_lawn_receives_biome_tint_once
+* test_rock_exclusion_claims_the_grass_below_it
+* test_photo11_heightfield_has_no_inverted_surface_triangles
+* test_replaced_native_pieces_are_removed_even_when_their_tops_project
+* test_moderate_cliff_profile_is_gentler_with_a_rounded_shoulder
+* test_grass_uses_the_rendered_triangle_and_its_shading_normal
+* test_wide_grass_clump_is_rejected_at_an_unsupported_bench
+* test_independent_neighbour_heightfields_match_at_the_chunk_edge
+8/8 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               1
+Tests                 8
+Passing Tests         8
+Asserts              16
+Time              4.387s
+
+
+---- All tests passed! ----
+

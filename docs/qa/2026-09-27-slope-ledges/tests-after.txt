@@ -1,0 +1,38 @@
+== test_september27_slope_ledges
+Passing Tests         9
+Asserts              26
+== test_p03_constrained_cliffs
+Passing Tests        13
+Asserts              79
+== test_p03_cliff_followup
+Passing Tests        10
+Asserts             196
+== test_september26_bedrock
+Passing Tests         6
+Asserts              22
+== test_september26_manual_cliffs
+Passing Tests         6
+Asserts             314
+== test_cliff_sheet_normals
+Passing Tests         2
+Asserts               4
+== test_september23_cliff_directions
+[31m    [Failed]:  [0m[1.00791462476751] expected to be > than [1.2]:  At 4 m from the wall the slope rises and falls
+[31m    [Failed]:  [0m[20.25] expected to be < than [10.5]:  Corner reach 20.2 m against edges 6.2 / 6.2 m
+[0m- test_sheet_ridges_rise_and_fall_along_the_wall
+- test_outer_corners_reach_about_as_far_as_their_edges
+Passing Tests        32
+Failing Tests         2
+Asserts           12918/12920
+== test_meadow_rocks
+Passing Tests         3
+Asserts             146
+== test_september27_rock_placement
+Passing Tests         8
+Asserts           11046
+== test_september27_mountain_water
+Passing Tests         3
+Asserts              56
+== test_slope_face_inclusions
+Passing Tests         2
+Asserts              61

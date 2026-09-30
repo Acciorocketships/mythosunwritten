@@ -1,0 +1,46 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september26_manual_cliffs.gd
+* test_sheet_lawn_receives_biome_tint_once
+    [Pending]:  MultiMesh colour readback needs a native rendering device
+* test_rock_exclusion_claims_the_grass_below_it
+* test_photo11_heightfield_has_no_inverted_surface_triangles
+* test_replaced_native_pieces_are_removed_even_when_their_tops_project
+* test_moderate_cliff_profile_is_gentler_with_a_rounded_shoulder
+    [Failed]:  [60.2892013431405] expected to be < than [55.0]:  Typical three-storey grassy slope is within the walking angle
+      at line 108
+3/5 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_september26_manual_cliffs.gd
+- test_sheet_lawn_receives_biome_tint_once
+    [Pending]:  MultiMesh colour readback needs a native rendering device
+- test_moderate_cliff_profile_is_gentler_with_a_rounded_shoulder
+    [Failed]:  [60.2892013431405] expected to be < than [55.0]:  Typical three-storey grassy slope is within the walking angle
+          at line 108
+
+Totals
+------
+Scripts               1
+Tests                 5
+Passing Tests         3
+Failing Tests         1
+Risky/Pending         1
+Asserts             7/8
+Time              1.834s
+
+
+---- 1 failing tests ----
+

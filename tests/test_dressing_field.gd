@@ -176,9 +176,13 @@ func test_field_is_deterministic_grounded_and_half_open() -> void:
 			assert_lt(transform.origin.x, CORE.end.x)
 			assert_gte(transform.origin.z, CORE.position.y)
 			assert_lt(transform.origin.z, CORE.end.y)
-			assert_almost_eq(transform.origin.y,
-				TerrainSurfaceField.surface_y(region, transform.origin.x, transform.origin.z),
-				0.001, "grounding uses the final jittered anchor")
+			var ground := TerrainSurfaceField.surface_y(region, transform.origin.x, transform.origin.z)
+			if String(asset_id).begins_with("meadow.rock"):
+				# Embedded rocks sink below the ground at their anchor (September 27).
+				assert_lt(transform.origin.y, ground, "an embedded rock sinks into the ground")
+			else:
+				assert_almost_eq(transform.origin.y, ground,
+					0.001, "grounding uses the final jittered anchor")
 			assert_gt(DressingEcology.land_occupancy01(
 				Vector2(transform.origin.x, transform.origin.z), 4242), 0.0,
 				"no land dressing can occupy a clearing or path centre")

@@ -1,0 +1,16 @@
+[synthetic] before_with_film.gd
+  wall20 angle 0.00 {"carved":2187,"d2_max":1.47,"d2_over_half":132,"d2_p90":0.398,"d2_p99":0.816,"max_rise":0.65,"rises":41,"rock":2151}
+  wall20 angle 0.52 {"carved":2344,"d2_max":1.63,"d2_over_half":204,"d2_p90":0.484,"d2_p99":0.887,"max_rise":1.02,"rises":36,"rock":2314}
+  wall20 angle 0.79 {"carved":2314,"d2_max":1.68,"d2_over_half":197,"d2_p90":0.469,"d2_p99":0.994,"max_rise":0.67,"rises":18,"rock":2307}
+  wall12 angle .52 {"carved":1587,"d2_max":1.71,"d2_over_half":132,"d2_p90":0.453,"d2_p99":0.957,"max_rise":0.53,"rises":27,"rock":1519}
+  step 4 {"along_spread":1.17,"max_rock":0.1}
+  step 8 {"along_spread":3.168,"max_rock":0.99}
+  p03 {"d2_over_half":348,"faces":368,"normal_median":11.05,"normal_p90":20.07,"patches":11,"rises":21,"treads":63}
+[synthetic] CliffSlopeEnvelope.gd
+  wall20 angle 0.00 {"carved":2122,"d2_max":1.63,"d2_over_half":44,"d2_p90":0.21,"d2_p99":0.618,"max_rise":0.68,"rises":2,"rock":2151}
+  wall20 angle 0.52 {"carved":2300,"d2_max":1.24,"d2_over_half":89,"d2_p90":0.369,"d2_p99":0.695,"max_rise":0.1,"rises":0,"rock":2314}
+  wall20 angle 0.79 {"carved":2311,"d2_max":2.16,"d2_over_half":95,"d2_p90":0.364,"d2_p99":0.729,"max_rise":0.02,"rises":0,"rock":2307}
+  wall12 angle .52 {"carved":1537,"d2_max":1.15,"d2_over_half":28,"d2_p90":0.309,"d2_p99":0.586,"max_rise":0.08,"rises":0,"rock":1519}
+  step 4 {"along_spread":0.0,"max_rock":0.0}
+  step 8 {"along_spread":3.168,"max_rock":0.87}
+  p03 {"d2_over_half":67,"faces":349,"normal_median":10.85,"normal_p90":16.3,"patches":11,"rises":0,"treads":52}

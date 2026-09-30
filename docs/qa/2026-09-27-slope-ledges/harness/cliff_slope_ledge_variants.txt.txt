@@ -1,0 +1,34 @@
+== nojut
+<<<
+   var jut:=s*s*lerpf(float(best[4]),float(second[4]),blend)*(1.0-smoothstep(.7,.9,frac))
+>>>
+   var jut:=0.0
+###
+== nochip
+<<<
+   var chip:float=-.35*noise.call(q,2.3,3)
+>>>
+   var chip:=0.0
+###
+== nosplit
+<<<
+   var split:=.35*(1.0-smoothstep(.0,.4,d2-d1))
+>>>
+   var split:=0.0
+###
+== nojutchipsplit
+<<<
+   var jut:=s*s*lerpf(float(best[4]),float(second[4]),blend)*(1.0-smoothstep(.7,.9,frac))
+>>>
+   var jut:=0.0
+###
+<<<
+   var chip:float=-.35*noise.call(q,2.3,3)
+>>>
+   var chip:=0.0
+###
+<<<
+   var split:=.35*(1.0-smoothstep(.0,.4,d2-d1))
+>>>
+   var split:=0.0
+###

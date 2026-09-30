@@ -459,10 +459,10 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 			var h_hi: float = region.surface_height(cx, cz)
 			var tint := _cell_tint(cx, cz)
 			for dir in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
-				# Only a genuinely flat edge can own a vertical wall. Ordinary
-				# storey and level slopes now share one boundary patch with their
-				# neighbour, so covering those seams would create a visible lip.
-				if TerrainSurfaceField.own_edge_flat(region, cx, cz, dir):
+				# Only the high side of a cliff edge owns a vertical wall. Every
+				# other seam shares one boundary patch with its neighbour, so
+				# covering it would create a visible lip.
+				if TerrainSurfaceField.is_wall_edge(region, cx, cz, dir):
 					if _emit_wall(skirt, skirtc, region, cx, cz, dir, h_hi, tint):
 						any_wall = true
 
@@ -471,8 +471,9 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 	# the slopes read as smooth curves rather than angular facets.
 	var normals_started := Time.get_ticks_usec() if profile_enabled else 0
 	st.index()
-	st.generate_normals()
 	var surface_arrays: Array = st.commit_to_arrays()
+	surface_arrays[Mesh.ARRAY_NORMAL] = field_normals(
+		surface_arrays[Mesh.ARRAY_VERTEX], region, baked_cache)
 	var normals_finished := Time.get_ticks_usec() if profile_enabled else 0
 	# Aprons continue this exact sheet, including its edge lighting and tint.
 	var edge_appearance := {}
@@ -665,6 +666,62 @@ func _tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, uv: Vector2) -> v
 	for v in [a, b, c]:
 		st.set_uv(uv)
 		st.add_vertex(v)
+
+## Lighting normals of the walkable sheet: the exact gradient of the field
+## surface each vertex lies on. Facet-averaged normals depended on the 2 m
+## tessellation and on which faces a chunk owns, so they shaded differently
+## either side of every chunk border and disagreed with the slope sheet's own
+## gradient normals wherever the two surfaces meet (owner, September 28:
+## seams between flat ground and slopes). The field is C1 away from cliff
+## edges, so the two owners of a slope seam name the same normal; a vertex
+## on a cliff edge belongs to the cell whose pinned surface it lies on.
+const NORMAL_STEP := 0.25
+static func field_normals(vertices: PackedVector3Array, region,
+		baked_cache: Dictionary = {}) -> PackedVector3Array:
+	var normals := PackedVector3Array()
+	normals.resize(vertices.size())
+	var tile := TerrainSurfaceField.tile_size(region)
+	for i in vertices.size():
+		var v := vertices[i]
+		var owner := _vertex_owner(region, baked_cache, v, tile)
+		var baked: PackedFloat32Array = baked_cache[owner]
+		var gx := (TerrainSurfaceField.sample_baked(baked, owner.x, owner.y, v.x + NORMAL_STEP, v.z, region)
+			- TerrainSurfaceField.sample_baked(baked, owner.x, owner.y, v.x - NORMAL_STEP, v.z, region)) / (2.0 * NORMAL_STEP)
+		var gz := (TerrainSurfaceField.sample_baked(baked, owner.x, owner.y, v.x, v.z + NORMAL_STEP, region)
+			- TerrainSurfaceField.sample_baked(baked, owner.x, owner.y, v.x, v.z - NORMAL_STEP, region)) / (2.0 * NORMAL_STEP)
+		normals[i] = Vector3(-gx, 1.0, -gz).normalized()
+	return normals
+
+
+## The cell whose pinned surface holds a sheet vertex. Interior vertices have
+## one candidate; a vertex on a cell boundary takes the candidate whose
+## surface passes closest to it (the two sides of a cliff edge differ).
+static func _vertex_owner(region, baked_cache: Dictionary, v: Vector3, tile: float) -> Vector2i:
+	var xs: Array[int] = _owner_candidates(v.x, tile)
+	var zs: Array[int] = _owner_candidates(v.z, tile)
+	var best := Vector2i(xs[0], zs[0])
+	var best_error := INF
+	for cz in zs:
+		for cx in xs:
+			var key := Vector2i(cx, cz)
+			if not baked_cache.has(key):
+				baked_cache[key] = TerrainSurfaceField.bake_cell(region, cx, cz)
+			if xs.size() == 1 and zs.size() == 1:
+				return key
+			var error := absf(TerrainSurfaceField.sample_baked(baked_cache[key], cx, cz, v.x, v.z, region) - v.y)
+			if error < best_error:
+				best_error = error
+				best = key
+	return best
+
+
+static func _owner_candidates(value: float, tile: float) -> Array[int]:
+	var centre := roundi(value / tile)
+	var offset := value - float(centre) * tile
+	if absf(absf(offset) - tile * 0.5) < 0.001:
+		return [centre, centre + (1 if offset > 0.0 else -1)]
+	return [centre]
+
 
 func _tri_tinted(st: SurfaceTool, vs: Array[Vector3], uv: Vector2, cs: Array[Color]) -> void:
 	var earth := uv == _path_uv or uv == _path_spot_uv
@@ -1461,31 +1518,16 @@ func _clip_perp(region, cache: Dictionary, ncx: int, ncz: int, d: Vector2i, v: V
 	return Vector3(float(ncx) * TILE + lx, v.y, float(ncz) * TILE + lz)
 
 # Does this grid quad lie on a CLIFF FACE (→ rock) rather than a walkable slope (→ grass)?
-# By cell config: the quad's corner cells span ≥2 storeys (a cliff), or a 1-storey step where
-# every corner cell is a cliff top (a wall between two flat tiles). A slope — even a steep
-# up-ramp one whose vertices span several metres — has cells ≤1 storey apart and not all cliff
-# tops, so it stays grass.
+# Per edge: only corner cells two or more storeys apart meet across a cliff. A one-storey
+# step is always an ordinary slope, even beside a cliff side of the same cell.
 func _is_cliff_quad(region, x0: float, x1: float, z0: float, z1: float) -> bool:
-	var cells := [
-		[int(roundf(x0 / TILE)), int(roundf(z0 / TILE))],
-		[int(roundf(x1 / TILE)), int(roundf(z0 / TILE))],
-		[int(roundf(x1 / TILE)), int(roundf(z1 / TILE))],
-		[int(roundf(x0 / TILE)), int(roundf(z1 / TILE))],
-	]
 	var hi := -9999
 	var lo := 9999
-	for c in cells:
-		var s := int(region.storey_at(c[0], c[1]))
+	for c in [[x0, z0], [x1, z0], [x1, z1], [x0, z1]]:
+		var s := int(region.storey_at(int(roundf(c[0] / TILE)), int(roundf(c[1] / TILE))))
 		hi = maxi(hi, s)
 		lo = mini(lo, s)
-	if hi - lo >= 2:
-		return true
-	if hi - lo == 1:
-		for c in cells:
-			if not (TerrainSurfaceField._is_cliff_top(region, c[0], c[1]) or TerrainSurfaceField.has_inner_corner(region, c[0], c[1])):
-				return false
-		return true
-	return false
+	return hi - lo >= 2
 
 # The cliff face: a VERTICAL rock skirt just behind the cell boundary (SKIRT_RECESS, hidden
 # behind the KayKit wall pieces), spanning from the flat cliff top down to the NEIGHBOUR'S
@@ -1499,9 +1541,18 @@ const SKIRT_UNDERHANG := 1.0
 func _emit_wall(st: SurfaceTool, stcol: SurfaceTool, region, cx: int, cz: int, dir: Vector2i, y_hi: float, tint := Color(1, 1, 1)) -> bool:
 	var prof := TerrainSurfaceField.edge_profile(region, cx, cz, dir, SAMPLES_PER_CELL)
 	var pdir := Vector2i(dir.y, dir.x)             # along-edge step (perpendicular to the drop)
+	# The wall top follows this cell's own (natural) boundary: flat at the
+	# cell height along a cliff side, descending where a perpendicular slope
+	# side carries the corner down. Grading applies at each skirt vertex.
+	var top := PackedFloat32Array()
+	for i in SAMPLES_PER_CELL + 1:
+		var t := (float(i) / float(SAMPLES_PER_CELL)) * 2.0 - 1.0
+		top.append(minf(y_hi, TerrainSurfaceField._natural_surface_y_in_cell(region,
+			float(cx) * TILE + float(dir.x) * TILE * 0.5 + float(pdir.x) * TILE * 0.5 * t,
+			float(cz) * TILE + float(dir.y) * TILE * 0.5 + float(pdir.y) * TILE * 0.5 * t, cx, cz)))
 	# Globally-flat cliff tops have KayKit wall modules in front, so their mesh
-	# backing remains recessed. A locally-flat edge on an otherwise sloped cell
-	# has no dressing: recessing that face lets an oblique ray fall below it in
+	# backing remains recessed. An edge of an otherwise sloped cell has no
+	# dressing: recessing that face lets an oblique ray fall below it in
 	# the 1.3m trip from the true boundary (the residual gray wedge at the
 	# reported cliff/slope site). Put those undressed backing faces directly on
 	# the boundary, identical to collision, so the terrain remains volumetric.
@@ -1536,43 +1587,54 @@ func _emit_wall(st: SurfaceTool, stcol: SurfaceTool, region, cx: int, cz: int, d
 		hi += APRON
 		hi_c += APRON
 	var emitted := false
+	var last := SAMPLES_PER_CELL
 	for i in SAMPLES_PER_CELL:
-		var f0 := minf(prof[i], y_hi)
-		var f1 := minf(prof[i + 1], y_hi)
-		if f0 > y_hi - 0.01 and f1 > y_hi - 0.01:
+		var f0 := minf(prof[i], top[i])
+		var f1 := minf(prof[i + 1], top[i + 1])
+		if f0 > top[i] - 0.01 and f1 > top[i + 1] - 0.01:
 			continue   # flush span — no exposed face here
 		var a0 := clampf(-TILE * 0.5 + STEP * float(i), lo, hi)
 		var a1 := clampf(-TILE * 0.5 + STEP * float(i + 1), lo, hi)
-		if _skirt_quad(st, ex, ez, pdir, a0, a1, y_hi, f0, f1, tint, region):
+		# Where a cliff's end has fallen below LOW_WALL the face is a turf
+		# step, not rock: a rock sliver there read as a dark tick at its end.
+		var uv := _grass_uv if maxf(top[i] - f0, top[i + 1] - f1) < LOW_WALL else _skirt_uv
+		if _skirt_quad(st, ex, ez, pdir, a0, a1, top[i], top[i + 1], f0, f1, tint, region, uv):
 			emitted = true
 		var c0 := clampf(-TILE * 0.5 + STEP * float(i), lo_c, hi_c)
 		var c1 := clampf(-TILE * 0.5 + STEP * float(i + 1), lo_c, hi_c)
-		_skirt_quad(stcol, cex, cez, pdir, c0, c1, y_hi, f0, f1, Color.WHITE, region)
+		_skirt_quad(stcol, cex, cez, pdir, c0, c1, top[i], top[i + 1], f0, f1, Color.WHITE, region)
 	# extension segments beyond the cell edge (under the higher neighbour), flat continuation
 	# of the end samples
-	if lo < -TILE * 0.5 and _skirt_quad(st, ex, ez, pdir, lo, -TILE * 0.5, y_hi, minf(prof[0], y_hi), minf(prof[0], y_hi), tint, region):
+	var f_lo := minf(prof[0], top[0])
+	var f_hi := minf(prof[last], top[last])
+	if lo < -TILE * 0.5 and _skirt_quad(st, ex, ez, pdir, lo, -TILE * 0.5, top[0], top[0], f_lo, f_lo, tint, region):
 		emitted = true
-	if hi > TILE * 0.5 and _skirt_quad(st, ex, ez, pdir, TILE * 0.5, hi, y_hi, minf(prof[SAMPLES_PER_CELL], y_hi), minf(prof[SAMPLES_PER_CELL], y_hi), tint, region):
+	if hi > TILE * 0.5 and _skirt_quad(st, ex, ez, pdir, TILE * 0.5, hi, top[last], top[last], f_hi, f_hi, tint, region):
 		emitted = true
 	if lo_c < -TILE * 0.5:
-		_skirt_quad(stcol, cex, cez, pdir, lo_c, -TILE * 0.5, y_hi, minf(prof[0], y_hi), minf(prof[0], y_hi), Color.WHITE, region)
+		_skirt_quad(stcol, cex, cez, pdir, lo_c, -TILE * 0.5, top[0], top[0], f_lo, f_lo, Color.WHITE, region)
 	if hi_c > TILE * 0.5:
-		_skirt_quad(stcol, cex, cez, pdir, TILE * 0.5, hi_c, y_hi, minf(prof[SAMPLES_PER_CELL], y_hi), minf(prof[SAMPLES_PER_CELL], y_hi), Color.WHITE, region)
+		_skirt_quad(stcol, cex, cez, pdir, TILE * 0.5, hi_c, top[last], top[last], f_hi, f_hi, Color.WHITE, region)
 	return emitted
 
-func _skirt_quad(st: SurfaceTool, ex: float, ez: float, pdir: Vector2i, a0: float, a1: float, y_hi: float, f0: float, f1: float, tint := Color(1, 1, 1), region = null) -> bool:
+## Below this a wall face is drawn as turf: a rock sliver there read as a
+## dark tick where a cliff runs out.
+const LOW_WALL := 1.5
+func _skirt_quad(st: SurfaceTool, ex: float, ez: float, pdir: Vector2i, a0: float, a1: float, top0: float, top1: float, f0: float, f1: float, tint := Color(1, 1, 1), region = null, uv := Vector2(-1, -1)) -> bool:
 	if a1 - a0 < 0.001:
 		return false
-	var t0 := Vector3(ex + float(pdir.x) * a0, y_hi, ez + float(pdir.y) * a0)
-	var t1 := Vector3(ex + float(pdir.x) * a1, y_hi, ez + float(pdir.y) * a1)
+	var t0 := Vector3(ex + float(pdir.x) * a0, top0, ez + float(pdir.y) * a0)
+	var t1 := Vector3(ex + float(pdir.x) * a1, top1, ez + float(pdir.y) * a1)
 	if region != null:
-		t0.y = TerrainSurfaceField._apply_grade(region, t0.x, t0.z, y_hi)
-		t1.y = TerrainSurfaceField._apply_grade(region, t1.x, t1.z, y_hi)
+		t0.y = TerrainSurfaceField._apply_grade(region, t0.x, t0.z, top0)
+		t1.y = TerrainSurfaceField._apply_grade(region, t1.x, t1.z, top1)
 	if f0 >= t0.y - 0.01 and f1 >= t1.y - 0.01: return false
 	var b0 := Vector3(t0.x, f0 - SKIRT_UNDERHANG, t0.z)
 	var b1 := Vector3(t1.x, f1 - SKIRT_UNDERHANG, t1.z)
+	if uv.x < 0.0:
+		uv = _skirt_uv
 	for v in [t0, t1, b1, t0, b1, b0, t0, b1, t1, t0, b0, b1]:
-		st.set_uv(_skirt_uv); st.set_color(tint); st.add_vertex(v)
+		st.set_uv(uv); st.set_color(tint); st.add_vertex(v)
 	return true
 
 # Does the cliff face turn the corner at the `sgn` end of this edge — i.e. will the

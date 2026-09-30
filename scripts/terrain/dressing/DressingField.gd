@@ -2,6 +2,9 @@ class_name DressingField
 extends RefCounted
 
 const PROPOSAL_CELL := 24.0
+## A colony member's centre distance from its main rock, from the deepest
+## nestle the shared rule allows (0) to bases just touching (1).
+const COLONY_NESTLE := Vector2(0.15, 0.6)
 
 # Named-purpose salts keep unrelated visual decisions stable when one concern
 # changes. Values are fixed engine data, never derived from resource order.
@@ -30,6 +33,14 @@ static func compute(program: DressingProgram, world_seed: int, core: Rect2,
 					or other.spacing_group != candidate.spacing_group:
 				continue
 			var conflict_radius := maxf(candidate.spacing_radius, other.spacing_radius)
+			# Two embedded rocks follow the nestle rule alone, so colonies
+			# can touch and overlap; anything else keeps its structural spacing.
+			var nestle := DressingCompiler.nestle_distance(float(candidate.base_radius),
+				float(other.base_radius))
+			if candidate.embed_fraction > 0.0 and other.embed_fraction > 0.0:
+				conflict_radius = nestle
+			elif candidate.embed_fraction > 0.0 or other.embed_fraction > 0.0:
+				conflict_radius = maxf(conflict_radius, nestle)
 			if conflict_radius <= 0.0 \
 					or candidate.anchor.distance_squared_to(other.anchor) >= conflict_radius * conflict_radius:
 				continue
@@ -41,52 +52,114 @@ static func compute(program: DressingProgram, world_seed: int, core: Rect2,
 	winners.sort_custom(_key_less)
 	var payload := EnvironmentInstancePayload.new()
 	for candidate: Dictionary in winners:
-		payload.add(candidate.asset_id, candidate.transform, candidate.color)
+		var color: Color = candidate.color
+		if candidate.embed_fraction > 0.0:
+			payload.ground_skirts.append(_skirt(candidate, region, world_seed))
+			# An embedded rock's grass top is the lawn it is set into: the
+			# terrain's own tint (as its skirt takes it), clamped like the
+			# terrain's 8-bit vertex tints, with no rock exposure (September
+			# 27 judging: rock tops read paler than the ground around them).
+			var tint: Color = RockSkirt.terrain_surface(region, world_seed).tint.call(candidate.anchor)
+			color = Color(clampf(tint.r, 0.0, 1.0), clampf(tint.g, 0.0, 1.0), clampf(tint.b, 0.0, 1.0), 0.0)
+		payload.add(candidate.asset_id, candidate.transform, color)
 	return payload
+
+## The ground rises to meet an embedded rock: a skirt from the rendered
+## terrain up to a low mound under the rock's world-space base outline.
+static func _skirt(candidate: Dictionary, region: HeightfieldRegion, world_seed: int) -> Dictionary:
+	var t: Transform3D = candidate.transform
+	var outline := PackedVector2Array()
+	for local: Vector2 in candidate.support_points:
+		var w := t * Vector3(local.x, 0.0, local.y)
+		outline.append(Vector2(w.x, w.z))
+	var surface := RockSkirt.terrain_surface(region, world_seed)
+	var exposed: float = t.origin.y + float(candidate.visual_height) * t.basis.y.length() \
+		- float(surface.height.call(candidate.anchor))
+	return RockSkirt.build("%s/%s/%d" % [candidate.set_id, candidate.cell, candidate.slot],
+		candidate.anchor, RockSkirt.contact_radii(outline, candidate.anchor),
+		exposed, surface)
 
 static func _eligible_for_set(set_data: Dictionary, world_seed: int, core: Rect2,
 		region: HeightfieldRegion, water: WaterFieldContext,
 		features: FeatureContext = null, terrain_reservations: Array[Rect2] = []) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var query: Rect2 = core.grow(float(set_data.group_radius))
-	var min_cell := Vector2i(int(floor(query.position.x / PROPOSAL_CELL)),
-		int(floor(query.position.y / PROPOSAL_CELL)))
-	var max_cell := Vector2i(int(ceil(query.end.x / PROPOSAL_CELL)) - 1,
-		int(ceil(query.end.y / PROPOSAL_CELL)) - 1)
+	var colony_radius: float = set_data.colony_radius
+	var cells: Rect2 = query.grow(colony_radius)
+	var min_cell := Vector2i(int(floor(cells.position.x / PROPOSAL_CELL)),
+		int(floor(cells.position.y / PROPOSAL_CELL)))
+	var max_cell := Vector2i(int(ceil(cells.end.x / PROPOSAL_CELL)) - 1,
+		int(ceil(cells.end.y / PROPOSAL_CELL)) - 1)
 	for cz in range(min_cell.y, max_cell.y + 1):
 		for cx in range(min_cell.x, max_cell.x + 1):
 			var proposal_cell := Vector2i(cx, cz)
+			# A colony set is a clustered (Neyman-Scott) process: each proposal
+			# cell may hold one colony, decided once at its jittered centre, and
+			# its members gather within colony_radius. Between colonies the
+			# ground stays genuinely empty instead of evenly sprinkled.
+			var colony := {}
+			if colony_radius > 0.0:
+				var parent: int = _identity(world_seed, set_data, proposal_cell, -1)
+				var centre := Vector2((float(cx) + _roll(parent, SALT_JITTER_X)) * PROPOSAL_CELL,
+					(float(cz) + _roll(parent, SALT_JITTER_Z)) * PROPOSAL_CELL)
+				var centre_weights: Dictionary = Helper.biome_weights5(
+					Vector3(centre.x, 0.0, centre.y), world_seed)
+				var colonies: float = _intensity(set_data, centre, world_seed, centre_weights) \
+					/ float(set_data.colony_members)
+				if _roll(parent, SALT_ELIGIBILITY) >= clampf(colonies, 0.0, 1.0):
+					continue
+				# The colony gathers round its main rock at the centre (slot 0):
+				# every member's stone community is the colony's own.
+				var main := _draft(set_data, _identity(world_seed, set_data, proposal_cell, 0),
+					centre_weights, centre, world_seed)
+				colony = {"centre": centre, "weights": centre_weights,
+					"radius": float(main.get("radius", 0.0)),
+					"turn": _roll(parent, SALT_JITTER_X) * TAU}
 			for slot_index in set_data.slot_count:
 				var identity: int = _identity(world_seed, set_data, proposal_cell, slot_index)
-				var anchor: Vector2 = Vector2(
-					(float(cx) + _roll(identity, SALT_JITTER_X)) * PROPOSAL_CELL,
-					(float(cz) + _roll(identity, SALT_JITTER_Z)) * PROPOSAL_CELL)
-				if not _contains_half_open(query, anchor):
+				var anchor: Vector2
+				var weights: Dictionary
+				var keep: float
+				var draft: Dictionary
+				if colony.is_empty():
+					anchor = Vector2(
+						(float(cx) + _roll(identity, SALT_JITTER_X)) * PROPOSAL_CELL,
+						(float(cz) + _roll(identity, SALT_JITTER_Z)) * PROPOSAL_CELL)
+					if not _contains_half_open(query, anchor):
+						continue
+					weights = Helper.biome_weights5(Vector3(anchor.x, 0.0, anchor.y), world_seed)
+					keep = _intensity(set_data, anchor, world_seed, weights) / set_data.slot_count
+					if _roll(identity, SALT_ELIGIBILITY) >= clampf(keep, 0.0, 1.0):
+						continue
+					draft = _draft(set_data, identity, weights, anchor, world_seed)
+				else:
+					# Owner, September 27 judging: rocks too spaced out; slightly
+					# overlapping clusters. The main rock stands at the centre and
+					# every other member nestles into it, spread round it, between
+					# the shared nestle distance and bases just touching (never
+					# beyond colony_radius, which bounds the colony's reach).
+					weights = colony.weights
+					draft = _draft(set_data, identity, weights, colony.centre, world_seed)
+					if draft.is_empty():
+						continue
+					if slot_index == 0:
+						anchor = colony.centre
+					else:
+						keep = (float(set_data.colony_members) - 1.0) / (set_data.slot_count - 1)
+						if _roll(identity, SALT_ELIGIBILITY) >= clampf(keep, 0.0, 1.0):
+							continue
+						var r0: float = colony.radius
+						var reach := minf(colony_radius, lerpf(DressingCompiler.nestle_distance(r0, draft.radius),
+							r0 + float(draft.radius), lerpf(COLONY_NESTLE.x, COLONY_NESTLE.y, _roll(identity, SALT_JITTER_Z))))
+						anchor = colony.centre + Vector2.from_angle(float(colony.turn)
+							+ TAU * (float(slot_index - 1) + 0.3 * _roll(identity, SALT_JITTER_X)) / (set_data.slot_count - 1)) * reach
+					if not _contains_half_open(query, anchor):
+						continue
+				if draft.is_empty():
 					continue
-				var weights: Dictionary = Helper.biome_weights5(Vector3(anchor.x, 0.0, anchor.y), world_seed)
-				var intensity: float = _biome_dot(set_data.fill_per_cell, weights)
-				if set_data.water_mode == DressingSet.WaterMode.LAND:
-					intensity *= DressingEcology.land_occupancy01(anchor, world_seed)
-				for layer: Dictionary in set_data.habitat_layers:
-					var coverage: float = _biome_dot(layer.coverage, weights)
-					var habitat := DressingEcology.habitat01(anchor, world_seed,
-						layer.channel_hash, layer.scale)
-					intensity *= DressingEcology.suitability(habitat, coverage,
-						layer.preference, layer.softness)
-				if _roll(identity, SALT_ELIGIBILITY) >= clampf(intensity / set_data.slot_count, 0.0, 1.0):
-					continue
-				var choice_roll := _roll(identity, SALT_CHOICE)
-				if set_data.community_hash != 0:
-					var community_roll := DressingEcology.community_roll(anchor, world_seed,
-						set_data.community_hash, set_data.community_scale)
-					choice_roll = lerpf(choice_roll, community_roll, set_data.community_strength)
-				var choice: Dictionary = _choose(set_data.choices, weights, choice_roll)
-				if choice.is_empty():
-					continue
+				var choice: Dictionary = draft.choice
 				var yaw: float = _roll(identity, SALT_YAW) * TAU
-				var scale: float = choice.scale_multiplier * lerpf(
-					set_data.scale_range.x, set_data.scale_range.y,
-					_roll(identity, SALT_SCALE))
+				var scale: float = draft.scale
 				var brightness: float = lerpf(set_data.brightness_range.x, set_data.brightness_range.y,
 					_roll(identity, SALT_BRIGHTNESS))
 				var tint: Color = BiomeRegistry.blended_environment_tint(weights, choice.tint_group)
@@ -102,6 +175,10 @@ static func _eligible_for_set(set_data: Dictionary, world_seed: int, core: Rect2
 					"key_hash": Helper._mix64(identity ^ SALT_ARBITRATION),
 					"spacing_group": set_data.spacing_group,
 					"spacing_radius": choice.spacing_radius,
+					"embed_fraction": set_data.embed_fraction,
+					"base_radius": choice.ground_radius * scale,
+					"support_points": choice.support_points,
+					"visual_height": choice.visual_height,
 					"anchor": anchor,
 					"asset_id": choice.asset_id,
 					"transform": Transform3D(basis,
@@ -110,6 +187,37 @@ static func _eligible_for_set(set_data: Dictionary, world_seed: int, core: Rect2
 						tint.b * brightness, tint.a),
 				})
 	return out
+
+## Expected population per proposal cell at a point: authored biome fill,
+## shaped by the shared land occupancy and the set's habitat layers.
+## One member's asset and size: its choice (biome weights, and the stone
+## community at `community_at`) and scale, with its base radius.
+static func _draft(set_data: Dictionary, identity: int, weights: Dictionary,
+		community_at: Vector2, world_seed: int) -> Dictionary:
+	var choice_roll := _roll(identity, SALT_CHOICE)
+	if set_data.community_hash != 0:
+		var community_roll := DressingEcology.community_roll(community_at, world_seed,
+			set_data.community_hash, set_data.community_scale)
+		choice_roll = lerpf(choice_roll, community_roll, set_data.community_strength)
+	var choice: Dictionary = _choose(set_data.choices, weights, choice_roll)
+	if choice.is_empty():
+		return {}
+	var scale: float = choice.scale_multiplier * lerpf(
+		set_data.scale_range.x, set_data.scale_range.y, _roll(identity, SALT_SCALE))
+	return {"choice": choice, "scale": scale, "radius": float(choice.ground_radius) * scale}
+
+static func _intensity(set_data: Dictionary, point: Vector2, world_seed: int,
+		weights: Dictionary) -> float:
+	var intensity: float = _biome_dot(set_data.fill_per_cell, weights)
+	if set_data.water_mode == DressingSet.WaterMode.LAND:
+		intensity *= DressingEcology.land_occupancy01(point, world_seed)
+	for layer: Dictionary in set_data.habitat_layers:
+		var coverage: float = _biome_dot(layer.coverage, weights)
+		var habitat := DressingEcology.habitat01(point, world_seed,
+			layer.channel_hash, layer.scale)
+		intensity *= DressingEcology.suitability(habitat, coverage,
+			layer.preference, layer.softness)
+	return intensity
 
 static func _qualify(set_data: Dictionary, anchor: Vector2,
 		region: HeightfieldRegion, water: WaterFieldContext,
@@ -194,6 +302,11 @@ static func _qualify(set_data: Dictionary, anchor: Vector2,
 			rise=maxf(rise,TerrainSurfaceField.surface_y(region,point.x,point.y)-heights[0])
 		var relief: Vector2 = set_data.relief_range
 		if rise < relief.x or rise > relief.y: return {}
+	var embed: float = set_data.get("embed_fraction", 0.0)
+	if embed > 0.0:
+		# Every point of the visible base outline lies below the ground by a
+		# fixed share of the rock's height; the skirt then rises to meet it.
+		return {"y": min_height - embed * float(choice.visual_height) * basis.y.length()}
 	return {"y": heights[0]}
 
 static func _water_ok(set_data: Dictionary, water: WaterFieldContext, point: Vector2) -> bool:

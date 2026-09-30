@@ -1,0 +1,15 @@
+[variants] site=A variant=current ms=2935 {"max_rise":0.65,"max_spike":0.56,"nodes":487,"rise":31,"rough_max":1.24,"rough_p95":0.392,"rough_p99":0.739,"spikes":16}
+[variants] site=A variant=nojut ms=2590 {"max_rise":0.65,"max_spike":0.5,"nodes":487,"rise":27,"rough_max":0.67,"rough_p95":0.349,"rough_p99":0.642,"spikes":12}
+[variants] site=A variant=nochip ms=2575 {"max_rise":0.66,"max_spike":0.5,"nodes":487,"rise":48,"rough_max":1.19,"rough_p95":0.404,"rough_p99":0.771,"spikes":24}
+[variants] site=A variant=nosplit ms=2675 {"max_rise":0.66,"max_spike":0.48,"nodes":487,"rise":31,"rough_max":1.09,"rough_p95":0.329,"rough_p99":0.768,"spikes":14}
+[variants] site=A variant=nojutchipsplit ms=2761 {"max_rise":0.65,"max_spike":0.38,"nodes":487,"rise":39,"rough_max":0.71,"rough_p95":0.278,"rough_p99":0.674,"spikes":6}
+[variants] site=B variant=current ms=2941 {"max_rise":0.44,"max_spike":0.74,"nodes":1629,"rise":16,"rough_max":1.22,"rough_p95":0.518,"rough_p99":0.777,"spikes":123}
+[variants] site=B variant=nojut ms=3000 {"max_rise":0.12,"max_spike":0.7,"nodes":1629,"rise":1,"rough_max":1.35,"rough_p95":0.473,"rough_p99":0.703,"spikes":111}
+[variants] site=B variant=nochip ms=3068 {"max_rise":0.55,"max_spike":0.76,"nodes":1629,"rise":31,"rough_max":1.42,"rough_p95":0.542,"rough_p99":0.767,"spikes":136}
+[variants] site=B variant=nosplit ms=3155 {"max_rise":0.3,"max_spike":0.74,"nodes":1629,"rise":17,"rough_max":1.22,"rough_p95":0.478,"rough_p99":0.756,"spikes":114}
+[variants] site=B variant=nojutchipsplit ms=2892 {"max_rise":0.27,"max_spike":0.63,"nodes":1629,"rise":8,"rough_max":1.09,"rough_p95":0.417,"rough_p99":0.663,"spikes":97}
+[variants] site=A2 variant=current ms=2644 {"max_rise":0.0,"max_spike":0.0,"nodes":0,"rise":0,"rough_max":0.0,"rough_p95":0.0,"rough_p99":0.0,"spikes":0}
+[variants] site=A2 variant=nojut ms=2478 {"max_rise":0.0,"max_spike":0.0,"nodes":0,"rise":0,"rough_max":0.0,"rough_p95":0.0,"rough_p99":0.0,"spikes":0}
+[variants] site=A2 variant=nochip ms=2679 {"max_rise":0.0,"max_spike":0.0,"nodes":0,"rise":0,"rough_max":0.0,"rough_p95":0.0,"rough_p99":0.0,"spikes":0}
+[variants] site=A2 variant=nosplit ms=2554 {"max_rise":0.0,"max_spike":0.0,"nodes":0,"rise":0,"rough_max":0.0,"rough_p95":0.0,"rough_p99":0.0,"spikes":0}
+[variants] site=A2 variant=nojutchipsplit ms=2498 {"max_rise":0.0,"max_spike":0.0,"nodes":0,"rise":0,"rough_max":0.0,"rough_p95":0.0,"rough_p99":0.0,"spikes":0}

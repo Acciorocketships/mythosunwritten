@@ -1,0 +1,18 @@
+{
+  "before": "docs/qa/2026-09-26-manual-cliffs/south-close/00/p05.png",
+  "after": "docs/qa/2026-09-26-manual-cliffs/review-south/00/p05.png",
+  "size": [
+    1600,
+    900
+  ],
+  "mean_absolute_channel_difference": 14.23682337962963,
+  "pixels_over_8": 902774,
+  "fraction_over_8": 0.6269263888888889,
+  "changed_bounds": [
+    0,
+    0,
+    1599,
+    899
+  ],
+  "note": "Pixel changes establish change, not correctness. Inspect matched images; animated grass and temporal rendering also change pixels."
+}

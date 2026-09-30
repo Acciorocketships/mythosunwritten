@@ -1,0 +1,79 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_p03_constrained_cliffs.gd
+[0m* test_water_beside_a_tall_cliff_preserves_its_rounded_shoulder
+* test_opposing_banks_keep_a_submerged_channel_between_them
+* test_small_wet_patch_cannot_slice_a_tall_bank_into_a_slab
+* test_marked_native_crowns_keep_their_rounded_profile_after_rock_carving
+* test_unbenched_rock_follows_the_slope_instead_of_making_a_giant_shelf
+* test_native_rock_joins_do_not_make_one_cell_fins_or_slots
+* test_marked_rock_faces_stay_close_to_their_continuous_hillside
+* test_buried_foot_rocks_do_not_warp_the_shared_bedrock_sheet
+* test_reported_mountain_shoulders_are_not_cut_into_narrow_wet_pockets
+* test_upper_circled_rock_bench_cannot_excavate_a_deep_notch
+[1m10/10 passed.
+[0m[4m
+
+res://tests/test_p03_cliff_followup.gd
+[0m* test_roots_use_rendered_triangle_height_instead_of_the_envelope
+* test_wide_clump_cannot_overhang_a_supported_centre
+* test_rock_blocked_support_claims_the_point_without_terrain_fallback
+* test_tall_cliffs_are_gentler_without_a_new_sharp_crest_or_cut_off_foot
+* test_a_fully_cut_back_cliff_still_has_a_wall
+* test_water_runout_never_excavates_the_existing_terrain
+* test_rock_bench_colour_carries_the_surrounding_slope_grade
+* test_shallow_plateau_water_does_not_cut_away_the_rounded_shoulder
+* test_bedrock_cannot_recreate_a_lip_on_the_first_metre_of_a_rounded_crown
+* test_neighbouring_surface_nets_share_the_same_boundary_normals
+[1m10/10 passed.
+[0m[4m
+
+res://tests/test_cliff_sheet_normals.gd
+[0m* test_rounded_shoulder_normals_follow_the_continuous_surface
+* test_native_plateau_normals_do_not_tilt_toward_absent_mesh_columns
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_september26_manual_cliffs.gd
+[0m* test_photo11_triangle_winding_is_consistent_without_changing_the_mesher
+* test_photo11_omitted_plateau_columns_are_filled
+* test_rock_shape_and_stone_exposure_away_from_the_hole_are_unchanged
+* test_native_lips_are_removed_but_uncovered_backing_walls_stay
+* test_lip_removal_requires_full_footprint_coverage
+* test_only_buried_skirt_faces_are_withdrawn_after_lip_removal
+[1m6/6 passed.
+[0m[4m
+
+res://tests/test_september26_bedrock.gd
+[0m* test_bedrock_solid_has_no_open_edges
+* test_level_steps_take_no_slope
+* test_cliffs_keep_their_slope
+* test_slope_runs_into_water_then_sinks
+* test_steep_slope_claims_its_grass_points
+* test_underlip_keeps_the_lip_and_starts_below_it
+[1m6/6 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               5
+Tests                34
+Passing Tests        34
+Asserts             613
+Time              39.165s
+
+
+[32m---- All tests passed! ----
+[0m

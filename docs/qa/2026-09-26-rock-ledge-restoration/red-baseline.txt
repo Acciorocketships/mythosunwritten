@@ -1,0 +1,43 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/harness/cliff_ledge_baseline_red.gd
+* test_native_exposures_have_real_wide_treads_not_only_a_stone_texture
+    [Failed]:  [0] expected to be > than [100]:  At least 25 square metres of one-metre-deep ledges on the native cliff fixture
+      at line 137
+    [Failed]:  [0] expected to be > than [8]:  Ledges return across distinct cliff patches, not just one small detail
+      at line 138
+0/1 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/harness/cliff_ledge_baseline_red.gd
+- test_native_exposures_have_real_wide_treads_not_only_a_stone_texture
+    [Failed]:  [0] expected to be > than [100]:  At least 25 square metres of one-metre-deep ledges on the native cliff fixture
+          at line 137
+    [Failed]:  [0] expected to be > than [8]:  Ledges return across distinct cliff patches, not just one small detail
+          at line 138
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts             0/2
+Time              5.567s
+
+
+Ran Tests matching "native_exposures_have_real_wide_treads"
+---- 1 failing tests ----
+

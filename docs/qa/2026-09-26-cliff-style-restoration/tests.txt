@@ -1,0 +1,46 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september26_manual_cliffs.gd
+[0m* test_photo11_triangle_winding_is_consistent_without_changing_the_mesher
+* test_photo11_omitted_plateau_columns_are_filled
+* test_rock_shape_and_normals_away_from_the_hole_are_unchanged
+* test_native_lips_are_removed_but_uncovered_backing_walls_stay
+* test_lip_removal_requires_full_footprint_coverage
+* test_original_slope_profile_is_restored
+* test_only_buried_skirt_faces_are_withdrawn_after_lip_removal
+[1m7/7 passed.
+[0m[4m
+
+res://tests/test_september26_bedrock.gd
+[0m* test_bedrock_solid_has_no_open_edges
+* test_level_steps_take_no_slope
+* test_cliffs_keep_their_slope
+* test_slope_runs_into_water_then_sinks
+* test_steep_slope_claims_its_grass_points
+* test_underlip_keeps_the_lip_and_starts_below_it
+[1m6/6 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               2
+Tests                13
+Passing Tests        13
+Asserts             339
+Time              8.68s
+
+
+[32m---- All tests passed! ----
+[0m
