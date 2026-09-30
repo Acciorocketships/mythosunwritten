@@ -44,9 +44,11 @@ static func spacing(region = null) -> float:
 	return SPACING
 
 
-## Index of the lattice point whose dual cell contains coordinate v.
+## Index of the lattice point whose dual cell contains coordinate v. The
+## midline v = 12 (i + 1/2) belongs to point i + 1 for every i (floor, not
+## round-half-away), matching tile_y's rule that the u > 0.5 corner owns it.
 static func point_of(v: float, region = null) -> int:
-	return int(roundf(v / spacing(region)))
+	return floori(v / spacing(region) + 0.5)
 
 
 # --- edges ------------------------------------------------------------------
@@ -107,18 +109,25 @@ static func tile_y(region, tile: Vector2i, u: float, v: float, side := Vector2i.
 		eval_params(tile_params(region, tile), u, v, side))
 
 
-static func eval_params(p: PackedFloat32Array, u: float, v: float, side := Vector2i.ZERO) -> float:
-	var h0 := p[0]
-	var h1 := p[1]
-	var h2 := p[2]
-	var h3 := p[3]
+## `o` is the offset of the 8-value tile block inside `p` (sample_baked passes
+## its per-point bake directly; no slice per call). This is the mesher's hot
+## path: no Array literals.
+static func eval_params(p: PackedFloat32Array, u: float, v: float, side := Vector2i.ZERO, o := 0) -> float:
+	var h0 := p[o]
+	var h1 := p[o + 1]
+	var h2 := p[o + 2]
+	var h3 := p[o + 3]
 	var lo := minf(minf(h0, h1), minf(h2, h3))
 	var hi := maxf(maxf(h0, h1), maxf(h2, h3))
 	if hi - lo <= 0.0:
 		return lo
+	var cb := p[o + 4]
+	var cr := p[o + 5]
+	var ct := p[o + 6]
+	var cl := p[o + 7]
 	# Fast path: every crossing a slope and no saddle -> the bilinear smootherstep
 	# patch (bilinear is linear in the corner values, so the layers collapse).
-	if p[4] + p[5] + p[6] + p[7] == 0.0 and not _has_saddle_layer(h0, h1, h2, h3):
+	if cb + cr + ct + cl == 0.0 and not _has_saddle_layer(h0, h1, h2, h3):
 		var su := SlopeProfile.smootherstep(u)
 		var sv := SlopeProfile.smootherstep(v)
 		return lerpf(lerpf(h0, h1, su), lerpf(h3, h2, su), sv)
@@ -126,35 +135,51 @@ static func eval_params(p: PackedFloat32Array, u: float, v: float, side := Vecto
 	var prev := lo
 	while true:
 		var t := INF
-		for h: float in [h0, h1, h2, h3]:
-			if h > prev and h < t:
-				t = h
+		if h0 > prev and h0 < t:
+			t = h0
+		if h1 > prev and h1 < t:
+			t = h1
+		if h2 > prev and h2 < t:
+			t = h2
+		if h3 > prev and h3 < t:
+			t = h3
 		if t == INF:
 			break
-		result += (t - prev) * _layer(h0 >= t, h1 >= t, h2 >= t, h3 >= t,
-			p[4], p[5], p[6], p[7], u, v, side)
+		result += (t - prev) * _layer(h0 >= t, h1 >= t, h2 >= t, h3 >= t, cb, cr, ct, cl, u, v, side)
 		prev = t
 	return result
 
 
 # Only the middle distinct value(s) can form a saddle layer; one check covers all.
 static func _has_saddle_layer(h0: float, h1: float, h2: float, h3: float) -> bool:
-	for t: float in [h0, h1, h2, h3]:
-		var b0 := h0 >= t
-		var b1 := h1 >= t
-		if b0 != b1 and b0 == (h2 >= t) and b1 == (h3 >= t):
-			return true
-	return false
+	return _saddle_at(h0, h1, h2, h3, h0) or _saddle_at(h0, h1, h2, h3, h1) \
+		or _saddle_at(h0, h1, h2, h3, h2) or _saddle_at(h0, h1, h2, h3, h3)
+
+
+static func _saddle_at(h0: float, h1: float, h2: float, h3: float, t: float) -> bool:
+	var b0 := h0 >= t
+	var b1 := h1 >= t
+	return b0 != b1 and b0 == (h2 >= t) and b1 == (h3 >= t)
 
 
 static func _layer(ba: bool, bb: bool, bc: bool, bd: bool,
 		cb: float, cr: float, ct: float, cl: float,
 		u: float, v: float, side: Vector2i) -> float:
-	# A non-crossing edge contributes no wall: it counts as a slope end.
-	var kb := cb if ba != bb else 0.0
-	var kt := ct if bd != bc else 0.0
-	var kl := cl if ba != bd else 0.0
-	var kr := cr if bb != bc else 0.0
+	# A layer's value on an edge it does not cross is constant, so a non-crossing
+	# edge is a slope end (k = 0) ONLY in a mixed layer, where it lets the wall
+	# fade to the slope profile. When every crossing of the layer is a cliff
+	# (k = 1) there is nothing to fade to: the non-crossing edges are cliff ends
+	# too, which keeps a pure-cliff layer a clean step (exact quadrants).
+	var xb := ba != bb
+	var xt := bd != bc
+	var xl := ba != bd
+	var xr := bb != bc
+	var any_slope := (xb and cb < 1.0) or (xt and ct < 1.0) or (xl and cl < 1.0) or (xr and cr < 1.0)
+	var idle := 0.0 if any_slope else 1.0
+	var kb := cb if xb else idle
+	var kt := ct if xt else idle
+	var kl := cl if xl else idle
+	var kr := cr if xr else idle
 	var pu := _profile(u, kb, kt, v, side.x)
 	var pv := _profile(v, kl, kr, u, side.y)
 	var a := 1.0 if ba else 0.0
@@ -204,6 +229,8 @@ static func surface_y(region, x: float, z: float) -> float:
 ## Height at (x, z) as seen from lattice point `owner`: the position is clamped
 ## into the owner's dual cell and a wall on its border resolves to the owner's
 ## side. Inside the owner's dual cell away from walls this is surface_y.
+## Grading is applied at the UNCLAMPED (x, z) on purpose: the grade patch is a
+## world-space field, only the tile shape is resolved on the owner's side.
 static func surface_y_on_side(region, x: float, z: float, owner: Vector2i) -> float:
 	var s := spacing(region)
 	var cx := float(owner.x) * s
@@ -246,6 +273,7 @@ static func bake_point(region, p: Vector2i) -> PackedFloat32Array:
 	return out
 
 
+## Grading uses the unclamped (x, z), like surface_y_on_side (world-space field).
 static func sample_baked(baked: PackedFloat32Array, p: Vector2i, x: float, z: float, region = null) -> float:
 	if baked[0] > 0.5:
 		return _apply_grade(region, x, z, baked[1])
@@ -259,9 +287,8 @@ static func sample_baked(baked: PackedFloat32Array, p: Vector2i, x: float, z: fl
 	var ti := p.x - 1 + qx
 	var tj := p.y - 1 + qz
 	var side := Vector2i(-1 if qx == 1 else 1, -1 if qz == 1 else 1)
-	var params := baked.slice(2 + (qz * 2 + qx) * 8, 10 + (qz * 2 + qx) * 8)
-	return _apply_grade(region, x, z,
-		eval_params(params, (lx - float(ti) * s) / s, (lz - float(tj) * s) / s, side))
+	return _apply_grade(region, x, z, eval_params(baked, (lx - float(ti) * s) / s,
+		(lz - float(tj) * s) / s, side, 2 + (qz * 2 + qx) * 8))
 
 
 # --- walls -----------------------------------------------------------------------
@@ -270,7 +297,9 @@ static func sample_baked(baked: PackedFloat32Array, p: Vector2i, x: float, z: fl
 ## dual-cell border where the two owners' surfaces differ. Each entry names the
 ## segment ends `a`/`b`, the owners `high`/`low`, the owners' heights at the
 ## ends as `top` (high side) / `bottom` (low side), and `normal`, the unit
-## horizontal direction from the high owner toward the low owner.
+## horizontal direction from the high owner toward the low owner. `high` is
+## decided from the SUMMED samples along the half-segment (both ends and the
+## middle), so under E1 it can disagree with the higher lattice endpoint.
 static func wall_segments(region, rect: Rect2) -> Array[Dictionary]:
 	var s := spacing(region)
 	var out: Array[Dictionary] = []
@@ -317,6 +346,8 @@ static func wall_segments(region, rect: Rect2) -> Array[Dictionary]:
 ## flat, slope-only and pure-cliff tiles; a mixed layer contributes its full
 ## [0, 1] range. Property 4 (a tile stays within its corners) makes this safe.
 static func height_bounds(region, footprint: Rect2) -> Vector2:
+	assert(not region.has_method("graded_height") or region.has_method("graded_height_bounds"),
+		"a region that grades heights must also bound them (graded_height_bounds)")
 	var natural := _natural_height_bounds(region, footprint)
 	if region.has_method("graded_height_bounds"):
 		return region.graded_height_bounds(footprint, natural)

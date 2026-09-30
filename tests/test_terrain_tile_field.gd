@@ -56,13 +56,23 @@ func test_one_storey_step_spans_the_whole_tile_with_the_smootherstep_profile() -
 func test_pure_cliff_tiles_take_the_nearest_corner_height() -> void:
 	# Outer, straight and inner corners with every crossing a cliff: the
 	# marching-squares outline has its crossings at the edge midpoints, so each
-	# 6 m quadrant is flat at its own corner's height.
-	for h: Array in [[8.0, 0.0, 0.0, 0.0], [8.0, 0.0, 0.0, 8.0], [8.0, 8.0, 0.0, 8.0],
-			[16.0, 8.0, 0.0, 8.0]]:
-		var region = Region.tile(h[0], h[1], h[2], h[3])
-		for q in [[0.2, 0.3, 0], [0.8, 0.1, 1], [0.7, 0.9, 2], [0.1, 0.6, 3]]:
-			assert_almost_eq(Tile.tile_y(region, Vector2i.ZERO, q[0], q[1]), float(h[q[2]]), EPS,
-				"%s quadrant %s" % [h, q[2]])
+	# 6 m quadrant is flat at its own corner's height. Exact under both cliff-end
+	# rules (a layer that crosses only cliffs has no slope end), including at far
+	# quadrant points right beside the tile centre.
+	var points := [[0.2, 0.3, 0], [0.8, 0.1, 1], [0.7, 0.9, 2], [0.1, 0.6, 3],
+		[0.48, 0.48, 0], [0.52, 0.48, 1], [0.52, 0.52, 2], [0.48, 0.52, 3],
+		[0.52, 0.02, 1], [0.98, 0.52, 2], [0.48, 0.98, 3], [0.02, 0.48, 0],
+		[0.50002, 0.51, 2], [0.49998, 0.51, 3], [0.50002, 0.49, 1], [0.49998, 0.49, 0],
+		[0.51, 0.50002, 2], [0.51, 0.49998, 1], [0.49, 0.50002, 3], [0.49, 0.49998, 0]]
+	for mode in [Tile.CliffEnd.E1, Tile.CliffEnd.E2]:
+		Tile.cliff_end = mode
+		for h: Array in [[8.0, 0.0, 0.0, 0.0], [8.0, 0.0, 0.0, 8.0], [8.0, 8.0, 0.0, 8.0],
+				[16.0, 8.0, 0.0, 8.0], [0.0, 8.0, 8.0, 8.0], [0.0, 0.0, 8.0, 0.0]]:
+			var region = Region.tile(h[0], h[1], h[2], h[3])
+			var gap: float = maxf(maxf(h[0], h[1]), maxf(h[2], h[3])) - minf(minf(h[0], h[1]), minf(h[2], h[3]))
+			for q: Array in points:
+				assert_almost_eq(Tile.tile_y(region, Vector2i.ZERO, q[0], q[1]), float(h[q[2]]), 1e-6 * gap,
+					"mode %s %s quadrant %s at %s,%s" % [mode, h, q[2], q[0], q[1]])
 
 
 func test_three_storey_cliff_is_one_vertical_wall_at_the_tile_midline() -> void:
@@ -218,20 +228,52 @@ func test_baked_sampler_matches_surface_y_on_side() -> void:
 
 func test_height_bounds_contain_dense_samples() -> void:
 	var rng := RandomNumberGenerator.new()
-	rng.seed = 5
-	var heights := {}
-	for j in range(-1, 5):
-		for i in range(-1, 5):
-			heights[Vector2i(i, j)] = float(rng.randi_range(0, 3)) * 4.0 + float(rng.randi_range(0, 3))
-	var region = Region.new(heights)
-	for rect in [Rect2(1.0, 2.0, 7.0, 5.0), Rect2(-3.0, 4.5, 30.0, 17.0), Rect2(13.0, 13.0, 2.0, 2.0)]:
-		var bounds := Tile.height_bounds(region, rect)
-		for iz in 25:
-			for ix in 25:
-				var x: float = rect.position.x + rect.size.x * float(ix) / 24.0
-				var z: float = rect.position.y + rect.size.y * float(iz) / 24.0
-				var y := Tile.surface_y(region, x, z)
-				assert_between(y, bounds.x - EPS, bounds.y + EPS, "%s at %s,%s" % [rect, x, z])
+	for mode in [Tile.CliffEnd.E1, Tile.CliffEnd.E2]:
+		Tile.cliff_end = mode
+		rng.seed = 5
+		var heights := {}
+		for j in range(-1, 5):
+			for i in range(-1, 5):
+				heights[Vector2i(i, j)] = float(rng.randi_range(0, 3)) * 4.0 + float(rng.randi_range(0, 3))
+		var region = Region.new(heights)
+		for rect in [Rect2(1.0, 2.0, 7.0, 5.0), Rect2(-3.0, 4.5, 30.0, 17.0), Rect2(13.0, 13.0, 2.0, 2.0)]:
+			var bounds := Tile.height_bounds(region, rect)
+			for iz in 25:
+				for ix in 25:
+					var x: float = rect.position.x + rect.size.x * float(ix) / 24.0
+					var z: float = rect.position.y + rect.size.y * float(iz) / 24.0
+					var y := Tile.surface_y(region, x, z)
+					assert_between(y, bounds.x - EPS, bounds.y + EPS, "mode %s %s at %s,%s" % [mode, rect, x, z])
+
+
+func test_height_bounds_are_sound_on_pure_cliff_fields() -> void:
+	# Heights in multiples of 8 m: every crossing is a cliff. Small rects inside
+	# each quadrant, beside the tile centre, must bound the samples taken there.
+	var rng := RandomNumberGenerator.new()
+	for mode in [Tile.CliffEnd.E1, Tile.CliffEnd.E2]:
+		Tile.cliff_end = mode
+		rng.seed = 9
+		var heights := {}
+		for j in range(-1, 5):
+			for i in range(-1, 5):
+				heights[Vector2i(i, j)] = float(rng.randi_range(0, 3)) * 8.0
+		var region = Region.new(heights)
+		for tj in 3:
+			for ti in 3:
+				for q in 4:
+					var x0 := 12.0 * ti + (6.5 if (q & 1) == 1 else 0.5) + 0.0
+					var z0 := 12.0 * tj + (6.5 if (q >> 1) == 1 else 0.5)
+					# Quadrant-local rect hugging the centre corner.
+					var rx := x0 + (0.0 if (q & 1) == 1 else 4.0)
+					var rz := z0 + (0.0 if (q >> 1) == 1 else 4.0)
+					var rect := Rect2(rx, rz, 1.0, 1.0)
+					var bounds := Tile.height_bounds(region, rect)
+					for iz in 5:
+						for ix in 5:
+							var x := rx + float(ix) / 4.0
+							var z := rz + float(iz) / 4.0
+							assert_between(Tile.surface_y(region, x, z), bounds.x - EPS, bounds.y + EPS,
+								"mode %s tile %s,%s quadrant %s at %s,%s" % [mode, ti, tj, q, x, z])
 
 
 func test_height_bounds_are_exact_on_a_flat_or_single_slope_footprint() -> void:
@@ -241,3 +283,66 @@ func test_height_bounds_are_exact_on_a_flat_or_single_slope_footprint() -> void:
 	var bounds := Tile.height_bounds(slope, Rect2(0.0, 1.0, 6.0, 4.0))
 	assert_almost_eq(bounds.x, 2.0, EPS)
 	assert_almost_eq(bounds.y, 4.0, EPS)
+
+
+func test_surface_y_takes_the_high_index_side_on_a_midline_wall() -> void:
+	# The u > 0.5 corner owns the midline, for positive and negative coordinates.
+	assert_eq(Tile.point_of(6.0), 1)
+	assert_eq(Tile.point_of(-6.0), 0)
+	assert_eq(Tile.point_of(5.999), 0)
+	assert_eq(Tile.point_of(-6.001), -1)
+	var east = Region.tile(12.0, 0.0, 0.0, 12.0)
+	assert_almost_eq(Tile.surface_y(east, 6.0, 3.0), 0.0, EPS, "x = 6: point 1 (low) owns the wall")
+	var west = Region.new({Vector2i(-1, 0): 0.0, Vector2i(-1, 1): 0.0,
+		Vector2i(0, 0): 12.0, Vector2i(0, 1): 12.0}, 0.0)
+	assert_almost_eq(Tile.surface_y(west, -6.0, 3.0), 12.0, EPS, "x = -6: point 0 (high) owns the wall")
+
+
+func test_wall_segments_e2_cliff_end_emits_one_half_segment() -> void:
+	# Bottom edge a-b is a cliff, the top edge a slope: the wall covers the lower
+	# half of the x = 6 midline only.
+	var region = Region.tile(8.0, 0.0, 4.0, 8.0)
+	var lower: Array = Tile.wall_segments(region, Rect2(5.0, 1.0, 2.0, 4.0))
+	assert_eq(lower.size(), 1)
+	assert_eq(lower[0].a, Vector2(6.0, 0.0))
+	assert_eq(lower[0].b, Vector2(6.0, 6.0))
+	assert_eq(lower[0].high, Vector2i(0, 0))
+	assert_eq(lower[0].low, Vector2i(1, 0))
+	assert_almost_eq(lower[0].top.x, 8.0, EPS)
+	assert_almost_eq(lower[0].bottom.x, 0.0, EPS)
+	var upper: Array = Tile.wall_segments(region, Rect2(5.0, 7.0, 2.0, 4.0))
+	assert_eq(upper.size(), 0, "no wall above the tile centre")
+
+
+func test_wall_segments_cliff_saddle_has_four_half_segments_at_the_centre() -> void:
+	var region = Region.tile(8.0, 0.0, 8.0, 0.0)
+	var walls: Array = Tile.wall_segments(region, Rect2(4.0, 4.0, 4.0, 4.0))
+	assert_eq(walls.size(), 4)
+	var highs := {}
+	for wall: Dictionary in walls:
+		assert_almost_eq(wall.top.x, 8.0, EPS)
+		assert_almost_eq(wall.bottom.x, 0.0, EPS)
+		assert_true(wall.a == Vector2(6.0, 6.0) or wall.b == Vector2(6.0, 6.0), "every half meets the centre")
+		highs[wall.high] = true
+		assert_almost_eq(Vector2(wall.high).distance_to(Vector2(wall.low)), 1.0, EPS)
+		assert_eq(wall.normal, (Vector2(wall.low) - Vector2(wall.high)))
+	assert_eq(highs.size(), 2, "only the two high corners own walls")
+	assert_true(highs.has(Vector2i(0, 0)) and highs.has(Vector2i(1, 1)))
+
+
+func test_wall_segments_name_the_high_owner_when_p_is_the_low_side() -> void:
+	var region = Region.tile(0.0, 8.0, 8.0, 0.0)
+	var walls: Array = Tile.wall_segments(region, Rect2(5.0, 1.0, 2.0, 10.0))
+	assert_eq(walls.size(), 2)
+	for wall: Dictionary in walls:
+		assert_eq(wall.high.x, 1)
+		assert_eq(wall.low.x, 0)
+		assert_eq(wall.normal, Vector2(-1.0, 0.0))
+		assert_almost_eq(wall.top.x, 8.0, EPS)
+		assert_almost_eq(wall.bottom.x, 0.0, EPS)
+
+
+func test_wall_segments_find_walls_on_a_rect_edge_at_the_midline() -> void:
+	var region = Region.tile(12.0, 0.0, 0.0, 12.0)
+	assert_eq(Tile.wall_segments(region, Rect2(6.0, 1.0, 5.0, 10.0)).size(), 2, "rect starts on x = 6")
+	assert_eq(Tile.wall_segments(region, Rect2(1.0, 1.0, 5.0, 10.0)).size(), 2, "rect ends on x = 6")
