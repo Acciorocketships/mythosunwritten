@@ -161,7 +161,7 @@ static func _trace_owned_region(trace: RiverTrace, plan: HeightfieldPlan,
 	var required := Rect2i(first_cell,last_cell-first_cell+Vector2i.ONE)
 	if available != null and available.plan == plan and available.terrain_grades.is_empty() \
 			and available.native_control_heights.is_empty() \
-			and available.certified_cells.encloses(required):
+			and available.certified_points.encloses(required):
 		return available
 	var started := Time.get_ticks_usec() if profile_source_cost else 0
 	var region: HeightfieldRegion = plan.compute_rect_region(required)

@@ -55,7 +55,7 @@ static func _broken_road_edges(natural: HeightfieldRegion, graded: HeightfieldRe
 		for arm: Array in [[1, Vector2i.RIGHT], [4, Vector2i(0, 1)]]:
 			if (int(masks[cell]) & int(arm[0])) == 0: continue
 			var d: Vector2i = arm[1]
-			if not natural.has_surface_cell(cell.x + d.x, cell.y + d.y): continue
+			if not natural.has_surface_point(cell.x + d.x, cell.y + d.y): continue
 			if TerrainSurfaceField.is_walkable_edge(natural, cell, d, PathProgram.PATH_HALF_WIDTH) \
 					and not TerrainSurfaceField.is_walkable_edge(graded, cell, d, PathProgram.PATH_HALF_WIDTH):
 				broken.append("%s->%s %.0f/%.0f" % [cell, cell + d,

@@ -784,8 +784,8 @@ func _region_for(rc: Vector2i) -> Dictionary:
 		Vector2(float(rc.x), float(rc.y)) * SUPER, Vector2(SUPER, SUPER)).grow(BANK_FEATHER + W_MAX)
 	var rivers: Array = []
 	var buckets: Dictionary = {}
-	# carve_at_cell chooses exactly one half-open super-cell owner before
-	# querying this index. Keep complete river records for discovery, but
+	# carve_at chooses exactly one half-open super-cell owner (of the point's
+	# 24 m cell) before querying this index. Keep complete river records for discovery, but
 	# index only the terrain cells this owner can ever be asked to carve.
 	var first_cell := rc * int(SUPER / TILE)
 	var last_cell := first_cell + Vector2i.ONE * (int(SUPER / TILE) - 1)
@@ -824,7 +824,7 @@ func _region_for(rc: Vector2i) -> Dictionary:
 						if not buckets.has(key):
 							buckets[key] = []
 						buckets[key].append([t, i])
-	# Flat pond index (source pools + terminal ponds) so carve_at_cell can
+	# Flat pond index (source pools + terminal ponds) so carve_at can
 	# distance-gate without re-walking every river per cell.
 	var ponds: Array = []
 	for t in rivers:
@@ -976,19 +976,28 @@ func bank_strengths(trace: RiverTrace) -> PackedFloat64Array:
 	return weights
 
 
-## Metres to subtract from the raw noise height at tile cell (cx, cz).
-## Max over every pond bowl and channel segment that reaches the cell — pure
-## function of (world_seed, cell); the caches never change the value.
-## HOT PATH: called for every cell of every region window. Most cells have no
+## Metres to subtract from the raw noise height at world position (x, z).
+## Max over every pond bowl and channel segment that reaches the point — pure
+## function of (world_seed, position); the caches never change the value.
+## The segment index is bucketed by 24 m cell: a point reads the bucket of the
+## cell whose half-open Voronoi square [24c - 12, 24c + 12) contains it (the
+## same floor rule the bucket build uses), so 12 m lattice points that sit on
+## a cell border resolve to exactly one owner. The region is the one that owns
+## that CELL (its buckets only cover its own cells), not the one containing
+## the point, which differs within 12 m of a super-cell edge.
+## HOT PATH: called for every point of every region window. Most points have no
 ## water in reach, so the expensive part — noise_h, a full landform sample —
 ## is evaluated lazily, only once a pond footprint or channel bucket actually
-## covers the cell. Ponds beyond bound_radius contribute exactly 0
+## covers the point. Ponds beyond bound_radius contribute exactly 0
 ## (footprint_t >= 1), so the distance gate never changes the result.
-func carve_at_cell(cx: int, cz: int) -> float:
-	var p: Vector2 = Vector2(float(cx) * TILE, float(cz) * TILE)
+func carve_at(x: float, z: float) -> float:
+	var p: Vector2 = Vector2(x, z)
 	if p.length() < SPAWN_WATER_RADIUS:
 		return 0.0
-	var rc: Vector2i = Vector2i(int(floor(p.x / SUPER)), int(floor(p.y / SUPER)))
+	var cx: int = floori(x / TILE + 0.5)
+	var cz: int = floori(z / TILE + 0.5)
+	var cells_per_super: int = int(SUPER / TILE)
+	var rc: Vector2i = Vector2i(floori(float(cx) / cells_per_super), floori(float(cz) / cells_per_super))
 	var region: Dictionary = _region_for(rc)
 	var ground: float = -INF   # evaluated on first real hit
 	var best: float = 0.0

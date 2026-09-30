@@ -5,8 +5,7 @@
 extends SceneTree
 
 func _spot(name: String, plan: WaterPlan, at: Vector2, look: Vector2) -> Dictionary:
-	var y: float = plan.noise_h(at) - plan.carve_at_cell(
-		roundi(at.x / WaterPlan.TILE), roundi(at.y / WaterPlan.TILE))
+	var y: float = plan.noise_h(at) - plan.carve_at(at.x, at.y)
 	return {"name": name, "pos": [at.x, maxf(y, 0.0) + 7.0, at.y], "look": [look.x, look.y]}
 
 func _init() -> void:

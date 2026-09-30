@@ -88,7 +88,7 @@ func test_rivers_and_ground_share_the_new_production_height_input() -> void:
 		for z in range(-8, 9):
 			for x in range(-8, 9):
 				var cell := Vector2i(x * 7, z * 9)
-				var p := Vector2(cell) * HeightfieldPlan.TILE
+				var p := Vector2(cell) * HeightfieldPlan.POINT
 				assert_almost_eq(water.noise_h(p), natural.raw_height(cell.x, cell.y), 0.00001,
 					"river carving must measure the same new landforms as terrain")
 

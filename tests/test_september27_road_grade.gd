@@ -23,7 +23,7 @@ static func _broken_edges(natural: HeightfieldRegion, graded: HeightfieldRegion,
 		masks: Dictionary) -> Array:
 	var broken := []
 	for edge: Array in _road_edges(masks):
-		if not natural.has_surface_cell(edge[0].x + edge[1].x, edge[0].y + edge[1].y):
+		if not natural.has_surface_point(edge[0].x + edge[1].x, edge[0].y + edge[1].y):
 			continue
 		if TerrainSurfaceField.is_walkable_edge(natural, edge[0], edge[1],
 				PathProgram.PATH_HALF_WIDTH) and not TerrainSurfaceField.is_walkable_edge(

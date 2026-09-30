@@ -170,7 +170,7 @@ static func _region_covers_surface_rect(region_value: HeightfieldRegion,
 			/ TerrainSurfaceField.TILE) + 1,
 		floori((world_rect.end.y + TerrainSurfaceField.HALF) \
 			/ TerrainSurfaceField.TILE) + 1)
-	return region_value.has_surface_cell(minimum.x, minimum.y) \
-		and region_value.has_surface_cell(maximum.x, minimum.y) \
-		and region_value.has_surface_cell(minimum.x, maximum.y) \
-		and region_value.has_surface_cell(maximum.x, maximum.y)
+	return region_value.has_surface_point(minimum.x, minimum.y) \
+		and region_value.has_surface_point(maximum.x, minimum.y) \
+		and region_value.has_surface_point(minimum.x, maximum.y) \
+		and region_value.has_surface_point(maximum.x, maximum.y)

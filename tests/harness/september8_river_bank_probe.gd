@@ -11,7 +11,7 @@ func _initialize() -> void:
 	for z in range(-13, -6):
 		for x in range(-25, -17):
 			out.cells.append({"cell": [x,z], "natural": water.noise_h(Vector2(x,z)*24),
-				"carve": water.carve_at_cell(x,z), "height": region.surface_height(x,z),
+				"carve": water.carve_at(x*24.0,z*24.0), "height": region.surface_height(x,z),
 				"cliff": TerrainSurfaceField._is_cliff_top(region,x,z)})
 	for x in [-552.0, -528.0, -518.4, -504.0, -480.0]:
 		var samples := []

@@ -16,8 +16,10 @@ func test_complete_region_arrays_match_original_including_margins() -> void:
 
 class Carve:
 	extends RefCounted
-	func carve_at_cell(x:int,z:int)->float:
-		return 8.25 if posmod(x*3-z,11)<2 else 0.0
+	func carve_at(x:float,z:float)->float:
+		var i:=roundi(x/HeightfieldPlan.POINT)
+		var j:=roundi(z/HeightfieldPlan.POINT)
+		return 8.25 if posmod(i*3-j,11)<2 else 0.0
 
 func test_carve_provenance_and_real_seed_keep_complete_original_arrays() -> void:
 	var plan := TerrainWorldTuning.make_heightfield(2697992464)

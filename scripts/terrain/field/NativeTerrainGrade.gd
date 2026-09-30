@@ -21,7 +21,7 @@ static func controls(grade: TerrainGradePatch, source: HeightfieldRegion) -> Dic
 	var result := HeightfieldRegion.new(natural._storeys,natural._levels,natural._carved)
 	for z in range(lo.y,hi.y+1):
 		for x in range(lo.x,hi.x+1):
-			if not natural.has_surface_cell(x,z): continue
+			if not natural.has_surface_point(x,z): continue
 			var height := natural.surface_height(x,z)
 			var graded := grade.surface_y(Vector2(x,z)*TILE,height)
 			if absf(height-graded) > .00001:
@@ -55,7 +55,7 @@ static func controls(grade: TerrainGradePatch, source: HeightfieldRegion) -> Dic
 			for z in range(request[2].y,request[3].y+1):
 				for x in range(request[2].x,request[3].x+1):
 					var key:=Vector2i(x,z)
-					if not result.has_surface_cell(x,z) or owners.has(key): continue
+					if not result.has_surface_point(x,z) or owners.has(key): continue
 					if result.surface_height(x,z)>=request[4]: continue
 					result.native_control_heights[key]=request[4]
 					construction[key]=true
@@ -94,11 +94,11 @@ static func _relax_free(grade: TerrainGradePatch, natural: HeightfieldRegion,
 	for z in range(lo.y,hi.y+1):
 		for x in range(lo.x,hi.x+1):
 			var cell := Vector2i(x,z)
-			if not natural.has_surface_cell(x,z) or fixed.has(cell) or not is_free(grade,fixed,cell): continue
+			if not natural.has_surface_point(x,z) or fixed.has(cell) or not is_free(grade,fixed,cell): continue
 			free[cell] = true
 			for d: Vector2i in [Vector2i(1,0),Vector2i(-1,0),Vector2i(0,1),Vector2i(0,-1)]:
 				var other := cell+d
-				if not natural.has_surface_cell(other.x,other.y) or fixed.has(other) \
+				if not natural.has_surface_point(other.x,other.y) or fixed.has(other) \
 						or not is_free(grade,fixed,other): continue
 				if TerrainSurfaceField.is_cliff_edge(natural,x,z,d): continue
 				edges.append([other,cell])
@@ -150,7 +150,7 @@ static func _grade_roads(grade: TerrainGradePatch, natural: HeightfieldRegion,
 		for arm: Array in [[1,Vector2i(1,0)],[4,Vector2i(0,1)]]:
 			if (int(grade.road_masks[cell]) & int(arm[0])) == 0: continue
 			var other: Vector2i = cell+arm[1]
-			if not (natural.has_surface_cell(cell.x,cell.y) and natural.has_surface_cell(other.x,other.y)): continue
+			if not (natural.has_surface_point(cell.x,cell.y) and natural.has_surface_point(other.x,other.y)): continue
 			if TerrainSurfaceField.is_cliff_edge(natural,cell.x,cell.y,arm[1]): continue
 			edges.append([cell,other])
 			edges.append([other,cell])

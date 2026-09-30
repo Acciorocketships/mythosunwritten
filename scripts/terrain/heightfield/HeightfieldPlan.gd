@@ -2,15 +2,21 @@ class_name HeightfieldPlan
 extends RefCounted
 
 ## Deterministic, churn-free numerical terrain plan. A continuous height field
-## H(cell) is quantized into integer cliff storeys and trickle-down clamped so
-## adjacent cells never differ by more than one storey. The result is a pure
-## function of (world_seed, cell), so a tile's planned height is final before it
-## is ever instantiated — the anti-churn guarantee.
+## H(point) is sampled on a lattice of POINTS 12 m apart (point (i, j) sits at
+## world (12 i, 12 j)), quantized into integer cliff storeys and trickle-down
+## clamped so cardinal neighbour points never differ by more than max_step
+## storeys. The result is a pure function of (world_seed, point), so a planned
+## height is final before anything is instantiated — the anti-churn guarantee.
+## Every (i, j) in this API is a point index; 24 m CELLs (2 x 2 tiles) are the
+## coarse settlement/route lattice and are NOT addressed here.
 ##
 ## Phases 1-2: storey (cliff) + level (terrace) tiers. See
 ## docs/superpowers/specs/2026-06-17-heightfield-terrain-design.md.
 
-const TILE: float = 24.0
+# Sampling pitch: one height sample per lattice point, 12 m apart.
+const POINT: float = 12.0
+# Coarse route/settlement/biome cell: 2 x 2 tiles of POINT pitch.
+const CELL: float = 24.0
 const STOREY_HEIGHT: float = 4.0
 const LEVEL_HEIGHT: float = 1.0
 # 4.0 / 1.0. Level saturates at LEVELS_PER_STOREY - 1 (=3), so a full storey is
@@ -31,10 +37,10 @@ var max_step: int = 1         # max storey difference between cardinal neighbour
 var _raw_override: Callable = Callable()
 
 # Optional water carve (untyped to avoid a WaterPlan<->HeightfieldPlan
-# class-resolution cycle; duck-typed: needs carve_at_cell(cx, cz) -> float).
+# class-resolution cycle; duck-typed: needs carve_at(x, z) -> float).
 var _water_plan = null
 
-# Per-cell sample memo: Vector2i(cx,cz) -> [height_after_carve, carve, original_height].
+# Per-point sample memo: Vector2i(i,j) -> [height_after_carve, carve, original_height].
 # Purely a performance cache — raw_height is a pure function of (seed, cell) —
 # persisted across compute_region calls so the ~77%-overlapping windows of
 # neighbouring chunks are sampled once. The raw carve amount is cached too so
@@ -54,10 +60,10 @@ func _sample(cx: int, cz: int) -> Array:
 		if _raw_override.is_valid():
 			h = _raw_override.call(cx, cz)
 		else:
-			h = _height01(Vector3(float(cx) * TILE, 0.0, float(cz) * TILE)) * height_amplitude
+			h = _height01(Vector3(float(cx) * POINT, 0.0, float(cz) * POINT)) * height_amplitude
 		var carve: float = 0.0
 		if _water_plan != null:
-			carve = _water_plan.carve_at_cell(cx, cz)
+			carve = _water_plan.carve_at(float(cx) * POINT, float(cz) * POINT)
 		s = [h - carve, carve, h]
 		if _samples.size() >= _SAMPLE_CACHE_MAX:
 			_samples.erase(_sample_keys[_sample_cursor])
@@ -97,7 +103,8 @@ func _init(
 	max_step = p_max_step
 
 
-## Replace the noise source with a synthetic field for tests. fn(cx, cz) -> float.
+## Replace the noise source with a synthetic field for tests. fn(i, j) -> float,
+## keyed by lattice point index (world position 12 i, 12 j).
 ## Forwarded to the relief stamp when one is attached: the stamp reads natural
 ## ground too (its fill formula and its storey-ceiling clamp both do), so the
 ## two must never disagree about what the ground is.
@@ -114,7 +121,7 @@ func set_water_plan(p_water_plan) -> void:
 	_clear_samples()
 
 
-## Continuous height (metres) at a tile cell, after the water carve. Memoized.
+## Continuous height (metres) at lattice point (i, j), after the water carve. Memoized.
 func raw_height(cx: int, cz: int) -> float:
 	return _sample(cx, cz)[0]
 
@@ -528,5 +535,5 @@ func compute_rect_region(interior: Rect2i) -> HeightfieldRegion:
 		for x in range(inset,end_x):
 			level_map[Vector2i(lo.x+x,lo.y+z)]=levels[z*width+x]
 	var result := HeightfieldRegion.new(storey_map,level_map,carved,self)
-	result.certified_cells = interior
+	result.certified_points = interior
 	return result

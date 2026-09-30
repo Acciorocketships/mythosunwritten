@@ -46,7 +46,7 @@ func test_channel_core_crosses_terrain_diagonals_with_finite_width() -> void:
 		water._region_cache[Vector2i(1, 1)] = {"rivers": [t], "ponds": [], "buckets": buckets}
 		for cell: Vector2i in buckets:
 			var p := Vector2(cell) * WaterPlan.TILE
-			var height := water.noise_h(p) - water.carve_at_cell(cell.x, cell.y)
+			var height := water.noise_h(p) - water.carve_at(p.x, p.y)
 			assert_lte(roundf(height / 4.0) * 4.0, 4.0,
 				"both off-diagonal bridge cells excavate below the river surface")
 
