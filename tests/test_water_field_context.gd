@@ -9,8 +9,8 @@ const CHUNK := Vector2i(-4, -18)
 func test_context_matches_water_field_and_has_canonical_dry_nan() -> void:
 	var water := preload("res://tests/fixtures/ReportedWaterPlan.gd").new(SEED)
 	var plan := water.make_heightfield()
-	var centre := CHUNK * 8 + Vector2i(4, 4)
-	var region := plan.compute_region(centre.x, centre.y, 8)
+	var centre := CHUNK * 16 + Vector2i(8, 8)
+	var region := plan.compute_region(centre.x, centre.y, 16)
 	var core := Rect2(Vector2(CHUNK) * 192.0, Vector2.ONE * 192.0)
 	var dressing_index := load("res://terrain/dressing/index.tres") as DressingCatalogIndex
 	var dressing_program := DressingCompiler.compile(dressing_index, EnvironmentCatalog.load_default())

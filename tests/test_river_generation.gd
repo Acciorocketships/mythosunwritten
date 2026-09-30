@@ -79,7 +79,7 @@ func test_production_channel_has_no_dry_diagonal_interruptions() -> void:
 		var p: Vector2 = (trace.points[i] + trace.points[i + 1]) * 0.5
 		var chunk := Vector2i((p / 192.0).floor())
 		if not contexts.has(chunk):
-			var region := plan.compute_region(chunk.x * 8 + 4, chunk.y * 8 + 4, 8)
+			var region := plan.compute_region(chunk.x * 16 + 8, chunk.y * 16 + 8, 16)
 			contexts[chunk] = WaterField.ctx(water, chunk, region)
 		var ctx: Dictionary = contexts[chunk]
 		for offset in [Vector2.ZERO, Vector2(2, 0), Vector2(-2, 0), Vector2(0, 2), Vector2(0, -2)]:

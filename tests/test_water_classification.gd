@@ -56,7 +56,7 @@ static func _region(seed_v: int, chunk: Vector2i):
 	var key := [seed_v, chunk]
 	if not _regions.has(key):
 		_water(seed_v)
-		_regions[key] = _plans[seed_v].compute_region(chunk.x * 8 + 4, chunk.y * 8 + 4, 8)
+		_regions[key] = _plans[seed_v].compute_region(chunk.x * 16 + 8, chunk.y * 16 + 8, 16)
 	return _regions[key]
 
 

@@ -133,8 +133,8 @@ func test_super_cell_ownership_is_identical_on_both_sides() -> void:
 func test_exact_intervals_use_zero_limit_context_curves_and_reverse() -> void:
 	var water := preload("res://tests/fixtures/ReportedWaterPlan.gd").new(EXACT_SEED)
 	var plan := water.make_heightfield()
-	var centre := EXACT_CHUNK * 8 + Vector2i(4, 4)
-	var region := plan.compute_region(centre.x, centre.y, 8)
+	var centre := EXACT_CHUNK * 16 + Vector2i(8, 8)
+	var region := plan.compute_region(centre.x, centre.y, 16)
 	var core := Rect2(Vector2(EXACT_CHUNK) * 192.0, Vector2.ONE * 192.0)
 	var context := WaterFieldContext.build(water, core, region, 0.0)
 	assert_false(context._shore_curves_ready)
