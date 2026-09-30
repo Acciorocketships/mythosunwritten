@@ -15,7 +15,7 @@ func _run()->void:
 	var points:Array[Vector2] = []
 	# These ends are outside the town's replaced public street fabric. The
 	# town-side handoff is checked separately; this traverses the country road.
-	for index in range(6,35): points.append(Vector2(route.connections[index].a)*TerrainSurfaceField.TILE)
+	for index in range(6,35): points.append(Vector2(route.connections[index].a)*HeightfieldPlan.CELL)
 	var rows:Array = []
 	for reverse:bool in [false,true]:
 		var ordered := points.duplicate()

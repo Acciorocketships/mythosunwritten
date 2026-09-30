@@ -372,7 +372,50 @@ static func _natural_height_bounds(region, footprint: Rect2) -> Vector2:
 	return Vector2(minimum, maximum)
 
 
-static func _tile_bounds(p: PackedFloat32Array, u0: float, u1: float, v0: float, v1: float) -> Vector2:
+## Like height_bounds, but for the surface as owned by lattice point `owner`:
+## `footprint` must lie inside the owner's dual cell, and a wall on the cell's
+## border contributes only the owner's side (no second, neighbouring top).
+## Exact on flat, slope-only and pure-cliff tiles; a mixed layer contributes the
+## tile's full corner range (conservative, like height_bounds).
+static func height_bounds_on_side(region, footprint: Rect2, owner: Vector2i) -> Vector2:
+	assert(not region.has_method("graded_height") or region.has_method("graded_height_bounds"),
+		"a region that grades heights must also bound them (graded_height_bounds)")
+	assert(footprint.size.x >= 0.0 and footprint.size.y >= 0.0)
+	var s := spacing(region)
+	var cell := Rect2(Vector2(owner) * s - Vector2.ONE * s * 0.5, Vector2.ONE * s)
+	assert(cell.encloses(footprint), "the footprint must lie inside the owner's dual cell")
+	var minimum := INF
+	var maximum := -INF
+	for qz in 2:
+		for qx in 2:
+			# Quadrant (qx, qz) of the dual cell is the owner's corner of tile (owner - 1 + q).
+			var quad := Rect2(Vector2(float(owner.x) * s - (0.0 if qx == 1 else s * 0.5),
+				float(owner.y) * s - (0.0 if qz == 1 else s * 0.5)), Vector2.ONE * s * 0.5)
+			if quad.position.x > footprint.end.x or quad.end.x < footprint.position.x \
+					or quad.position.y > footprint.end.y or quad.end.y < footprint.position.y:
+				continue
+			var lo_x := maxf(footprint.position.x, quad.position.x)
+			var hi_x := minf(footprint.end.x, quad.end.x)
+			var lo_z := maxf(footprint.position.y, quad.position.y)
+			var hi_z := minf(footprint.end.y, quad.end.y)
+			var tile := Vector2i(owner.x - 1 + qx, owner.y - 1 + qz)
+			var side := Vector2i(-1 if qx == 1 else 1, -1 if qz == 1 else 1)
+			var b := _tile_bounds(tile_params(region, tile),
+				lo_x / s - float(tile.x), hi_x / s - float(tile.x),
+				lo_z / s - float(tile.y), hi_z / s - float(tile.y), side)
+			minimum = minf(minimum, b.x)
+			maximum = maxf(maximum, b.y)
+	assert(minimum != INF)
+	var natural := Vector2(minimum, maximum)
+	if region.has_method("graded_height_bounds"):
+		return region.graded_height_bounds(footprint, natural)
+	return natural
+
+
+## `side` (non-zero) names the owner whose quadrant a pure-cliff tile reports;
+## ZERO takes every quadrant the rectangle touches.
+static func _tile_bounds(p: PackedFloat32Array, u0: float, u1: float, v0: float, v1: float,
+		side := Vector2i.ZERO) -> Vector2:
 	var h := [p[0], p[1], p[2], p[3]]
 	var lo: float = h.min()
 	var hi: float = h.max()
@@ -394,6 +437,10 @@ static func _tile_bounds(p: PackedFloat32Array, u0: float, u1: float, v0: float,
 			var y := eval_params(p, uv.x, uv.y)
 			out = Vector2(minf(out.x, y), maxf(out.y, y))
 		return out
+	if cliff_only and side != Vector2i.ZERO:
+		# One owner's quadrant: flat at that corner's height.
+		var corner: int = [[0, 3], [1, 2]][1 if side.x > 0 else 0][1 if side.y > 0 else 0]
+		return Vector2(h[corner], h[corner])
 	if cliff_only:
 		# Each quadrant is flat at its own corner's height.
 		var out := Vector2(INF, -INF)

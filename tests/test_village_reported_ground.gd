@@ -20,7 +20,7 @@ func before_all() -> void:
 	# world geography, which changed in the atmosphere rebuild; choosing the
 	# current origin district would silently test a different building layout.
 	var cell := Vector2i(11, 12)
-	var centre := Vector2(cell) * TerrainSurfaceField.TILE
+	var centre := Vector2(cell) * HeightfieldPlan.CELL
 	var frame := VillageFrame.from_mask({"id": &"reported-september4-town",
 		"cell": cell}, 4, fields.region_at(centre), fields.water_at(centre))
 	var villages := VillagePlan.new(2697992464, program.villages, fields)

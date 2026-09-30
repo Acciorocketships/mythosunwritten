@@ -30,7 +30,7 @@ func _init() -> void:
 		print("ACCEPT_GATE_START ",sc)
 		var node := paths.node_for(sc)
 		var mask := paths.accepted_mask_for_node(sc)
-		var context := paths.context_for(WorldFieldBlockCache.key_of(Vector2(node.cell)*TerrainSurfaceField.TILE))
+		var context := paths.context_for(WorldFieldBlockCache.key_of(Vector2(node.cell)*HeightfieldPlan.CELL))
 		var row := {"gate":str(sc),"node":node,"accepted":mask,"projected":context.connection_masks.get(node.cell,0),"stats":paths.stats()}
 		rows.append(row)
 		FileAccess.open(root_path.path_join("routes.json"),FileAccess.WRITE).store_string(JSON.stringify(rows,"  "))

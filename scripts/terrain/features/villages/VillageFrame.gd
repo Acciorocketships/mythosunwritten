@@ -42,7 +42,7 @@ static func from_mask(node: Dictionary, mask: int,
 	var frame := VillageFrame.new()
 	frame.settlement_id = node.id
 	frame.cell = node.cell
-	frame.centre = Vector2(frame.cell) * TerrainSurfaceField.TILE
+	frame.centre = Vector2(frame.cell) * HeightfieldPlan.CELL
 	frame.region = p_region
 	frame.water = p_water
 	for direction: Vector2i in _DIRECTIONS:

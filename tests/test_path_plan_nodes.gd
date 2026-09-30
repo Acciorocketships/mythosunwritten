@@ -73,13 +73,13 @@ func test_hillside_route_uses_only_rendered_walkable_slopes() -> void:
 	assert_false(route.is_empty(), "a gradual multi-storey hill remains routable")
 	assert_eq(route.connections.size(), 32)
 	var low := plan._ground(Vector2.ZERO)
-	var high := plan._ground(Vector2(32, 0) * TerrainSurfaceField.TILE)
+	var high := plan._ground(Vector2(32, 0) * HeightfieldPlan.CELL)
 	assert_gt(high, low + HeightfieldPlan.STOREY_HEIGHT)
 	for connection: Dictionary in route.connections:
 		var a: Vector2i = connection.a
 		var b: Vector2i = connection.b
 		var midpoint := (Vector2(a) + Vector2(b)) \
-			* TerrainSurfaceField.TILE * 0.5
+			* HeightfieldPlan.CELL * 0.5
 		assert_true(TerrainSurfaceField.is_walkable_edge(
 			fields.region_at(midpoint), a, b - a),
 			"a path can climb rendered slopes but never crosses an exposed cliff face")

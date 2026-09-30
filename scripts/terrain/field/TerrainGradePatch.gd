@@ -7,10 +7,10 @@ extends RefCounted
 ## ramp, or collision is stored here.
 ## The natural field remains the planning input; this patch is composed before
 ## the final terrain is sampled by rendering, collision, and ground dressing.
-const TRANSITION_WIDTH := TerrainSurfaceField.HALF
+const TRANSITION_WIDTH := (HeightfieldPlan.CELL * 0.5)
 const COLLAR_BLEND := TRANSITION_WIDTH / 8.0
 # A native pad owns its tile plus the neighbouring interpolation controls.
-const NATIVE_CONTROL_MARGIN := TerrainSurfaceField.TILE * 2.0
+const NATIVE_CONTROL_MARGIN := HeightfieldPlan.CELL * 2.0
 
 class Controls extends RefCounted:
 	var values: Dictionary

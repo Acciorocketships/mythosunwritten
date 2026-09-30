@@ -15,7 +15,7 @@ enum Role {
 	WALK_GUARD,
 }
 
-const BUCKET_SIZE := TerrainSurfaceField.TILE
+const BUCKET_SIZE := HeightfieldPlan.CELL
 
 var _buckets: Dictionary = {}
 var _volumes: Array[VillageOccupancyVolume] = []

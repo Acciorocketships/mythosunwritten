@@ -115,10 +115,10 @@ func test_town_scale_is_derived_from_terrain_and_live_player_dimensions() -> voi
 	## The explicit adapter scale is shared by render, collision, terrain sampling,
 	## and occupancy. The resulting 8 m macro cell divides terrain's 24 m field.
 	var macro := VillageWorldScale.WORLD_MACRO_CELL_M
-	assert_almost_eq(fmod(TerrainSurfaceField.TILE, macro), 0.0, 1e-9)
-	assert_eq(roundi(TerrainSurfaceField.TILE / macro), 3,
+	assert_almost_eq(fmod(HeightfieldPlan.CELL, macro), 0.0, 1e-9)
+	assert_eq(roundi(HeightfieldPlan.CELL / macro), 3,
 		"one terrain field cell is exactly three world town macro cells")
-	assert_almost_eq(fmod(TerrainSurfaceField.TILE, VillageWorldScale.WORLD_FINE_CELL_M),
+	assert_almost_eq(fmod(HeightfieldPlan.CELL, VillageWorldScale.WORLD_FINE_CELL_M),
 		0.0, 1e-9, "fine lanes stay on the terrain grid too")
 	assert_gt(macro, TraversalEnvelope.CAPSULE_HEIGHT,
 		"a complete world storey is taller than the shipped player capsule")

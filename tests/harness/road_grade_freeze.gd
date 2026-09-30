@@ -23,7 +23,7 @@ func _init() -> void:
 	var frame := world.frame_for(only)
 	var record := world.village_plan().record_for(frame)
 	var grade := record.urban_fabric.terrain_grade
-	var tile := TerrainSurfaceField.TILE
+	var tile := HeightfieldPlan.CELL
 	var area := grade.bounds.grow(TerrainGradePatch.NATIVE_CONTROL_MARGIN + 3.0 * tile)
 	var lo := Vector2i(floori(area.position.x / tile), floori(area.position.y / tile))
 	var hi := Vector2i(ceili(area.end.x / tile), ceili(area.end.y / tile))

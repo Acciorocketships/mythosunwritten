@@ -9,8 +9,8 @@ func _init() -> void:
 	var rows := []
 	for cell: Vector2i in [Vector2i(-20,-13),Vector2i(-9,-41),Vector2i(10,-16),Vector2i(21,-49)]:
 		for direction: Vector2i in paths._DIRS:
-			var a := Vector2(cell)*TerrainSurfaceField.TILE
-			var b := Vector2(cell+direction)*TerrainSurfaceField.TILE
+			var a := Vector2(cell)*HeightfieldPlan.CELL
+			var b := Vector2(cell+direction)*HeightfieldPlan.CELL
 			var row := {"cell":str(cell),"direction":str(direction),"height_a":paths._ground(a),"height_b":paths._ground(b),"walkable":TerrainSurfaceField.is_walkable_edge(fields.region_at((a+b)*.5),cell,direction),"planning_intervals":str(paths._planning_intervals_cells(cell,cell+direction)),"planning_distance":paths._planning_distance(cell)}
 			var region := fields.region_at((a+b)*.5)
 			var gaps := []

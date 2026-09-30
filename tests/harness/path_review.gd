@@ -70,7 +70,7 @@ func _build_paths() -> void:
 	var nodes := {Vector2i(6, 4): true}
 	var corridors: Array[Rect2] = []
 	for cell: Vector2i in masks:
-		var centre := Vector2(cell) * TerrainSurfaceField.TILE
+		var centre := Vector2(cell) * HeightfieldPlan.CELL
 		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT,
 				Vector2i.DOWN, Vector2i.UP]:
 			var bit: int = {Vector2i.RIGHT: 1, Vector2i.LEFT: 2,

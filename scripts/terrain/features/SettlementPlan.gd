@@ -8,7 +8,7 @@ extends RefCounted
 
 const SEED_VERSION := 1
 const SUPER_CELLS := 32
-const SUPER_WORLD := SUPER_CELLS * TerrainSurfaceField.TILE
+const SUPER_WORLD := SUPER_CELLS * HeightfieldPlan.CELL
 const SITE_PROBABILITY := 1.0
 const SITE_CANDIDATES := 16
 const PRIMARY_SITE_CANDIDATES := 5
@@ -59,7 +59,7 @@ func _compute_site(super_cell: Vector2i) -> Dictionary:
 		if seen.has(cell):
 			continue
 		seen[cell] = true
-		var point := Vector2(cell) * TerrainSurfaceField.TILE
+		var point := Vector2(cell) * HeightfieldPlan.CELL
 		if _water.planning_signed_distance(point) < WATER_CLEARANCE:
 			continue
 		var world := Vector3(point.x, 0.0, point.y)

@@ -115,7 +115,7 @@ func frame_for(super_cell: Vector2i) -> VillageFrame:
 	if node.is_empty():
 		# A road's support constraints do not decide whether the town exists.
 		node = site
-	var point := Vector2(node.cell) * TerrainSurfaceField.TILE
+	var point := Vector2(node.cell) * HeightfieldPlan.CELL
 	var block := WorldFieldBlockCache.key_of(point)
 	var roads := _paths.accepted_road_masks_for_node(super_cell)
 	var frame := VillageFrame.build(node, _paths.context_for(block),
@@ -147,7 +147,7 @@ func _records_affecting(core: Rect2) -> Array[VillageRecord]:
 			var site := _settlements.site_for(super_cell)
 			if site.is_empty():
 				continue
-			var site_centre := Vector2(site.cell) * TerrainSurfaceField.TILE
+			var site_centre := Vector2(site.cell) * HeightfieldPlan.CELL
 			var layout_bound := Rect2(site_centre - Vector2.ONE \
 				* _village_program.layout_record_radius,
 				Vector2.ONE * _village_program.layout_record_radius * 2.0)

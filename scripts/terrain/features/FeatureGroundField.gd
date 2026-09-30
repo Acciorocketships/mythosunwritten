@@ -7,7 +7,7 @@ extends RefCounted
 const NATURAL := 0
 const WORN_PATH := 1
 const PATH_PRIORITY := 100
-const BUCKET_SIZE := TerrainSurfaceField.TILE
+const BUCKET_SIZE := HeightfieldPlan.CELL
 
 var _surface_shapes: Array[FeatureGroundShape] = []
 var _clearance_shapes: Array[FeatureGroundShape] = []
@@ -38,8 +38,8 @@ func _init(surface_shapes: Array[FeatureGroundShape],
 			shape.bounds().grow(_clearance_limit))
 
 func surface_at(world_xz: Vector2) -> int:
-	var cell := Vector2i(int(roundf(world_xz.x / TerrainSurfaceField.TILE)),
-		int(roundf(world_xz.y / TerrainSurfaceField.TILE)))
+	var cell := Vector2i(int(roundf(world_xz.x / HeightfieldPlan.CELL)),
+		int(roundf(world_xz.y / HeightfieldPlan.CELL)))
 	return surface_at_cell(world_xz, cell)
 
 ## Fast form for lattice consumers that already know the nearest terrain cell.
@@ -75,8 +75,8 @@ func surface_sampler_in(area: Rect2) -> Callable:
 				seen[id]=true
 				if shape.bounds().intersects(area,true): selected.append(shape)
 	return func(point: Vector2) -> int:
-		var cell := Vector2i(roundi(point.x/TerrainSurfaceField.TILE),
-			roundi(point.y/TerrainSurfaceField.TILE))
+		var cell := Vector2i(roundi(point.x/HeightfieldPlan.CELL),
+			roundi(point.y/HeightfieldPlan.CELL))
 		var best_surface := WORN_PATH if _path_at_cell(point,cell) else NATURAL
 		var best_priority := _path_priority if best_surface == WORN_PATH else -2147483648
 		for shape: FeatureGroundShape in selected:
@@ -91,7 +91,7 @@ func surface_sampler_in(area: Rect2) -> Callable:
 ## point in the closed rectangle can be a path; true still needs exact queries.
 func may_have_path_in(area: Rect2) -> bool:
 	area = _conservative_query_bounds(area)
-	var tile := TerrainSurfaceField.TILE
+	var tile := HeightfieldPlan.CELL
 	var cell_lo := Vector2i(floori(area.position.x / tile - 0.5),
 		floori(area.position.y / tile - 0.5))
 	var cell_hi := Vector2i(ceili(area.end.x / tile + 0.5),
@@ -166,7 +166,7 @@ func extended(surface_shapes: Array[FeatureGroundShape],
 		_connection_masks, _node_cells, _surface_priorities)
 
 func _path_at_cell(world_xz: Vector2, cell: Vector2i) -> bool:
-	var local := world_xz - Vector2(cell) * TerrainSurfaceField.TILE
+	var local := world_xz - Vector2(cell) * HeightfieldPlan.CELL
 	# A settlement node is a built junction: its square and every arm meet at
 	# right angles, so the town's street and handoff ramp butt against straight
 	# edges. The rounded fillet belongs to open-country bends only.
@@ -192,17 +192,17 @@ func _path_at_cell(world_xz: Vector2, cell: Vector2i) -> bool:
 	var arm_start := PathProgram.CORNER_RADIUS \
 		if _is_simple_turn(mask) and not is_node else 0.0
 	if absf(local.y) <= PathProgram.PATH_WIDTH * 0.5:
-		if local.x >= arm_start and local.x <= TerrainSurfaceField.HALF \
+		if local.x >= arm_start and local.x <= (HeightfieldPlan.CELL * 0.5) \
 				and (mask & 1) != 0:
 			return true
-		if local.x <= -arm_start and local.x >= -TerrainSurfaceField.HALF \
+		if local.x <= -arm_start and local.x >= -(HeightfieldPlan.CELL * 0.5) \
 				and (mask & 2) != 0:
 			return true
 	if absf(local.x) <= PathProgram.PATH_WIDTH * 0.5:
-		if local.y >= arm_start and local.y <= TerrainSurfaceField.HALF \
+		if local.y >= arm_start and local.y <= (HeightfieldPlan.CELL * 0.5) \
 				and (mask & 4) != 0:
 			return true
-		if local.y <= -arm_start and local.y >= -TerrainSurfaceField.HALF \
+		if local.y <= -arm_start and local.y >= -(HeightfieldPlan.CELL * 0.5) \
 				and (mask & 8) != 0:
 			return true
 	return false
@@ -250,19 +250,19 @@ func construction_clearance_bounds() -> Array[Rect2]:
 	for shape: FeatureGroundShape in _clearance_shapes: out.append(shape.bounds())
 	var half := PathProgram.PATH_HALF_WIDTH
 	for cell: Vector2i in _node_cells:
-		out.append(Rect2(Vector2(cell)*TerrainSurfaceField.TILE-Vector2.ONE*half,
+		out.append(Rect2(Vector2(cell)*HeightfieldPlan.CELL-Vector2.ONE*half,
 			Vector2.ONE*half*2.0))
 	for cell: Vector2i in _connection_masks:
-		var centre := Vector2(cell)*TerrainSurfaceField.TILE
+		var centre := Vector2(cell)*HeightfieldPlan.CELL
 		var mask := int(_connection_masks[cell])
 		var directions: Array[Vector2] = []
 		for item: Array in [[1,Vector2.RIGHT],[2,Vector2.LEFT],[4,Vector2.DOWN],[8,Vector2.UP]]:
 			if (mask & int(item[0]))==0: continue
 			var direction: Vector2 = item[1]
 			directions.append(direction)
-			var end := centre+direction*TerrainSurfaceField.HALF
+			var end := centre+direction*(HeightfieldPlan.CELL * 0.5)
 			out.append(FeatureGroundShape.oriented_rect((centre+end)*0.5,
-				Vector2(TerrainSurfaceField.HALF*0.5,half),direction.angle()).bounds())
+				Vector2((HeightfieldPlan.CELL * 0.5)*0.5,half),direction.angle()).bounds())
 		if _node_cells.has(cell): continue
 		for i in directions.size():
 			for j in range(i+1,directions.size()):

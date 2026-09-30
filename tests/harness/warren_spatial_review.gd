@@ -627,7 +627,7 @@ func _build_production_terrain(world_frame: Transform3D) -> void:
 	var mesher := TerrainChunkMesher.new()
 	mesher.set_seed(_world_seed)
 	mesher.prepare_resources()
-	var centre := Vector2(_production_site_cell) * TerrainSurfaceField.TILE
+	var centre := Vector2(_production_site_cell) * HeightfieldPlan.CELL
 	var reach := 96.0
 	var chunk_lo := Vector2i(floori((centre.x - reach) \
 		/ TerrainChunkMesher.CHUNK_WORLD), floori((centre.y - reach) \
@@ -746,8 +746,8 @@ static func _empty_water(region: HeightfieldRegion,
 	context._ctx = {"ponds": [], "rivers": [], "buckets": {},
 		"region": region}
 	context._region = region
-	var centre := Vector2(cell) * TerrainSurfaceField.TILE
-	var radius := float(PRODUCTION_REGION_RADIUS) * TerrainSurfaceField.TILE
+	var centre := Vector2(cell) * HeightfieldPlan.CELL
+	var radius := float(PRODUCTION_REGION_RADIUS) * HeightfieldPlan.CELL
 	context._coverage = Rect2(centre - Vector2.ONE * radius,
 		Vector2.ONE * radius * 2.0)
 	context._shore_limit = 0.0

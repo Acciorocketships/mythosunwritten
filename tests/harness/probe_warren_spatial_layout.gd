@@ -91,8 +91,8 @@ static func _empty_water(region: HeightfieldRegion,
 	context._ctx = {"ponds": [], "rivers": [], "buckets": {},
 		"region": region}
 	context._region = region
-	var centre := Vector2(cell) * TerrainSurfaceField.TILE
-	var radius := float(REGION_RADIUS) * TerrainSurfaceField.TILE
+	var centre := Vector2(cell) * HeightfieldPlan.CELL
+	var radius := float(REGION_RADIUS) * HeightfieldPlan.CELL
 	context._coverage = Rect2(centre - Vector2.ONE * radius,
 		Vector2.ONE * radius * 2.0)
 	context._shore_limit = 0.0

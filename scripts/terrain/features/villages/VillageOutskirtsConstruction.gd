@@ -466,11 +466,11 @@ static func _world_road_handoffs(domain: FeatureGroundShape,
 		corners.append(domain._a+(sign_value*domain._half_extents).rotated(domain._angle))
 	var seen: Dictionary = {}
 	for cell: Vector2i in ground._connection_masks:
-		var centre := Vector2(cell)*TerrainSurfaceField.TILE
+		var centre := Vector2(cell)*HeightfieldPlan.CELL
 		var mask := int(ground._connection_masks[cell])
 		for arm: Array in [[1,Vector2.RIGHT],[2,Vector2.LEFT],[4,Vector2.DOWN],[8,Vector2.UP]]:
 			if (mask & int(arm[0])) == 0: continue
-			var end := centre+(arm[1] as Vector2)*TerrainSurfaceField.HALF
+			var end := centre+(arm[1] as Vector2)*(HeightfieldPlan.CELL * 0.5)
 			var centre_outside := domain.signed_distance(centre)>0.001
 			var end_outside := domain.signed_distance(end)>0.001
 			if centre_outside == end_outside: continue
