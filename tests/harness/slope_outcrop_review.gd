@@ -13,9 +13,7 @@ func _run()->void:
  world.environment.background_mode=Environment.BG_COLOR;world.environment.background_color=Color(.65,.76,.8)
  world.environment.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR;world.environment.ambient_light_color=Color.WHITE;world.environment.ambient_light_energy=.6
  scene.add_child(world)
- var pose:=Transform3D(Basis(),Vector3(0,0,0))
- var form:={"replay_recipe":{"kind":"wall","width":60.,"height":8.,"left_end":true,"right_end":true,"abut":Vector2i.ZERO},"transform":pose}
- var field=FIELD.new([form],2697992464)
+ var field=FIELD.new([FIELD.straight_wall(Vector2(-30,0),Vector2(30,0),Vector2(0,1),8.)],2697992464)
  var material:=StandardMaterial3D.new();material.albedo_color=Color(.3,.44,.22);material.roughness=1.0
  for placement:Dictionary in field.solid(Rect2(-33,-5,66,22)):
   var arrays:Array=[];arrays.resize(Mesh.ARRAY_MAX);arrays[Mesh.ARRAY_VERTEX]=placement.faces

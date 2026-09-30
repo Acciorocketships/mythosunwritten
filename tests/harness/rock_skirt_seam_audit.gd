@@ -22,14 +22,10 @@ func _run() -> void:
 	var region := fields.region(chunk)
 	var water := fields.water(chunk)
 	ROCK_DRESSING.prepare()
-	var lo := chunk * 8
-	var owned := Rect2(Vector2(lo) * 24.0 - Vector2(12, 12), Vector2.ONE * 192.0)
 	# Rebuild the same slope field CliffRockDressing.compute builds.
-	var cliffs := CliffDressing.compute(region, lo.x - 1, lo.y - 1, 10)
-	var neighbors: Array = ROCK_DRESSING.formations(cliffs.wall, SEED, region, null, water)
-	neighbors.append_array(preload("res://scripts/terrain/field/CliffCornerCrags.gd").formations(cliffs.outer_wall, SEED, region, null, false, water))
-	neighbors.append_array(preload("res://scripts/terrain/field/CliffCornerCrags.gd").formations(cliffs.inner_wall, SEED, region, null, true, water))
-	var slope = SLOPE_FIELD.new(neighbors, SEED, region, owned, null, water)
+	var owned: Rect2 = ROCK_DRESSING.owned_rect(chunk)
+	var walls := TerrainTileField.wall_segments(region, owned.grow(ROCK_DRESSING.WALL_HALO))
+	var slope = SLOPE_FIELD.new(walls, SEED, region, owned, null, water)
 	var solid: Dictionary = slope.solid(owned)[0]
 	var plain_roots: Dictionary = solid.native_roots.duplicate()
 	var plain_top: float = solid.top

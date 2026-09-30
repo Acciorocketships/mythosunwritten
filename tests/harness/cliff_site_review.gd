@@ -3,7 +3,7 @@ extends Node3D
 ## Iterative cliff-rock review at one streamed production site.
 ## Streams the real world around `--at`, captures every `--view`, then waits.
 ## Touch `<output>/reload` to hot-reload the cliff rock scripts, recompute the
-## rock formations and cliff vegetation of every loaded chunk from the same
+## slope sheet and slope rocks of every loaded chunk from the same
 ## worker regions/features/water, and capture again into the next iteration
 ## folder. Touch `<output>/quit` to exit. Without --full only the rock layer changes. With --full, terrain,
 ## collision and grass are regenerated for the framed chunks.
@@ -14,17 +14,8 @@ extends Node3D
 const WAIT_HARD_TIMEOUT_SECONDS := 1500.0
 const IDLE_SETTLE_SECONDS := 3.0
 const RELOAD := [
-	"res://scripts/terrain/field/CliffRockEndCaps.gd",
-	"res://scripts/terrain/field/CliffLedgeJoin.gd",
 	"res://scripts/terrain/field/CliffRockCrags.gd",
-	"res://scripts/terrain/field/CliffCornerCrags.gd",
-	"res://scripts/terrain/field/CliffRockRelief.gd",
-	"res://scripts/terrain/field/CliffInnerSurface.gd",
-	"res://scripts/terrain/field/CliffStepSurface.gd",
-	"res://scripts/terrain/field/CliffInnerConnections.gd",
 	"res://scripts/terrain/field/CliffRockDressing.gd",
-	"res://scripts/terrain/field/CliffVegetation.gd",
-	"res://scripts/terrain/field/CliffKitDressing.gd",
 	"res://scripts/terrain/dressing/RockSkirt.gd",
 	"res://scripts/terrain/field/CliffSlopeRocks.gd",
 	"res://scripts/terrain/field/CliffSlopeEnvelope.gd",
@@ -187,7 +178,7 @@ func _capture_iteration(iteration: int) -> void:
 		_rebuild_rocks()
 		print("[cliff_site_review] style=%s rebuilt ms=%d" % [style, Time.get_ticks_msec() - started])
 		await _capture_all(iteration, style)
-	STYLE.apply("current")
+	STYLE.apply(STYLE.PRODUCTION)
 
 
 func _framed_chunks() -> Array:
@@ -280,31 +271,22 @@ func _reload_scripts() -> void:
 	var grass_shader := load("res://terrain/grass/grass.gdshader") as Shader
 	grass_shader.code = FileAccess.get_file_as_string("res://terrain/grass/grass.gdshader")
 	load("res://scripts/terrain/field/CliffRockDressing.gd").prepare()
-	load("res://scripts/terrain/field/CliffVegetation.gd").prepare()
 
 
 func _rebuild_rocks() -> void:
 	var rocks: GDScript = load("res://scripts/terrain/field/CliffRockDressing.gd")
-	var vegetation: GDScript = load("res://scripts/terrain/field/CliffVegetation.gd")
-	var cells := TerrainChunkMesher.CELLS_PER_CHUNK
 	var seed_value: int = _streamer._mesher._water_seed
 	for chunk: Vector2i in _inputs:
 		var root: Node3D = _streamer._built.get(chunk)
 		if root == null:
 			continue
 		var input: Dictionary = _inputs[chunk]
-		var lo := chunk * cells
-		for name: String in ["CliffRockFormations", "CliffVegetation", "CliffKit"]:
-			var old := root.get_node_or_null(name)
-			if old != null:
-				root.remove_child(old)
-				old.free()
-		if STYLE.crags:
-			var cliffs := CliffDressing.compute(input.region, lo.x, lo.y, cells)
-			var data: Dictionary = rocks.compute(input.region, lo.x, lo.y, cells, seed_value, input.features, input.water)
-			var plants: Array = vegetation.compute(cliffs, data, input.region, seed_value, input.features, input.water)
-			root.add_child(rocks.build(data, _streamer._mesher._water_seed))
-			root.add_child(vegetation.build(plants))
+		var old := root.get_node_or_null("CliffRockFormations")
+		if old != null:
+			root.remove_child(old)
+			old.free()
+		var data: Dictionary = rocks.compute(input.region, chunk, seed_value, input.features, input.water)
+		root.add_child(rocks.build(data, seed_value))
 
 
 

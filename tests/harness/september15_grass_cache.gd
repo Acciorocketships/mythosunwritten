@@ -21,7 +21,7 @@ func _run():
   assert(same_collision and same_walls)
   var entry:={"spot":site[0],"collision_identical":same_collision,"wall_collision_identical":same_walls,"before_ms":before_ms,"after_ms":after_ms,
    "original_surface_vertices":before.surface_arrays[Mesh.ARRAY_VERTEX].size(),"candidate_surface_vertices":after.surface_arrays[Mesh.ARRAY_VERTEX].size()}
-  for key:String in ["surface_arrays","apron_arrays","wall_arrays","graded_cliff_arrays"]:
+  for key:String in ["surface_arrays","wall_arrays"]:
    assert(before[key]==after[key],key+" must remain exactly equal with caching")
   entry["all_terrain_visual_arrays_identical"]=true
   report.append(entry)
