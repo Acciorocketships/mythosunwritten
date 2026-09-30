@@ -126,7 +126,17 @@ const FILL_SUB_STEP := FILL_STEP * 0.5
 const _FILL_MARGIN_WORLD := 42.0   # covers the 5-pass, 30m local surface relaxation plus interpolation slack at chunk seams
 const FILL_MARGIN := int(_FILL_MARGIN_WORLD / FILL_STEP)   # margin in FILL_STEP cells
 const FILL_N := int(CHUNK / FILL_STEP)   # chunk lattice cells per side at FILL_STEP
-const FILL_M := FILL_N + 2 * FILL_MARGIN      # window lattice cells per side
+## Every coarse fill node sits at 12 i +- 3: midway between a lattice point
+## (12 i) and a dual-cell border (12 i + 6, where walls stand), on both axes.
+## A node exactly on a wall read one arbitrary side of the discontinuity
+## (surface_y's higher-index owner): the cliff top when that side was high,
+## the foot otherwise, so shores stopped short of walls in two directions
+## only. Off the lines, every node reads the one surface its dual cell owns.
+## The 3 m rescue lattice (FILL_SUB_STEP, same origin) still has nodes on wall
+## lines; it only repairs topology.
+const FILL_OFFSET := FILL_STEP * 0.5
+## One extra cell keeps the full FILL_MARGIN on both sides of the offset window.
+const FILL_M := FILL_N + 2 * FILL_MARGIN + 1  # window lattice cells per side
 const FILL_SUB_M := FILL_M * 2
 const FILL_SURFACE_PASSES := 5
 
@@ -212,7 +222,7 @@ static func ctx(water: WaterPlan, chunk: Vector2i, region = null) -> Dictionary:
 	var out: Dictionary = {"water": water, "ponds": bodies.ponds, "rivers": bodies.rivers,
 		"buckets": buckets, "sample_radius":sample_radius, "region": region}
 	if region != null:
-		var base := Vector2(chunk.x, chunk.y) * CHUNK - Vector2.ONE * (FILL_MARGIN * FILL_STEP)
+		var base := Vector2(chunk.x, chunk.y) * CHUNK - Vector2.ONE * (FILL_MARGIN * FILL_STEP + FILL_OFFSET)
 		out["fill_base"] = base
 		out["fill"] = _build_fill(out, region, base)
 	return out
@@ -273,7 +283,9 @@ static func _source_fill(c: Dictionary, region) -> Dictionary:
 		has_bounds = true
 	if not has_bounds: return {}
 	bounds = bounds.grow(maxf(TILE * 3.0, WaterPlan.W_MAX + WaterPlan.BANK_FEATHER))
-	var base := (bounds.position / FILL_STEP).floor() * FILL_STEP
+	# The source solve shares the chunk windows' node phase (6 n + FILL_OFFSET).
+	var base := ((bounds.position - Vector2.ONE * FILL_OFFSET) / FILL_STEP).floor() * FILL_STEP \
+		+ Vector2.ONE * FILL_OFFSET
 	var m1 := ceili((bounds.end.x - base.x) / FILL_STEP) + 1
 	var rows := ceili((bounds.end.y - base.y) / FILL_STEP) + 1
 	# The solve rediscovers every contributor in this exact domain. Different
@@ -362,7 +374,7 @@ static func _source_fill(c: Dictionary, region) -> Dictionary:
 	var refined := _build_sub_lattice_rescue(owned, base, levels, dry_banks, m1)
 	if profile_source_cost:
 		print("WATER_SOURCE_COST ", JSON.stringify({"side": m1, "rows": rows, "base": str(base),
-			"request_chunk": str(Vector2i((c.fill_base + Vector2.ONE * FILL_MARGIN * FILL_STEP) / CHUNK)) if c.has("fill_base") else "direct_source_query",
+			"request_chunk": str(Vector2i(((c.fill_base + Vector2.ONE * (FILL_MARGIN * FILL_STEP + FILL_OFFSET)) / CHUNK).round())) if c.has("fill_base") else "direct_source_query",
 			"started_msec": cost_started / 1000, "finished_msec": Time.get_ticks_msec(),
 			"rivers": contributors.rivers.size(), "ponds": contributors.ponds.size(),
 			"region_ms": (region_finished-cost_started)/1000.0,
@@ -480,14 +492,18 @@ static func _reconcile_connected_surface(levels: PackedFloat32Array,
 	return initial_offers
 
 
-## Carry an existing upper flow to the actual native cliff crest. Point
-## ownership can assign that boundary to either tile: a low-side sample made
-## the upper water interpolate through its crown; a high-side sample could be
-## rejected by the receiving river's lower head. Both are the same spill.
-## Admit it only between supplied upper and lower water, across an entirely
-## submerged approach, at a real immediate drop. An unsupplied bank, dry ridge
-## or empty receiving basin cannot create water. Original inputs make this a
-## single bounded support operation, independent of traversal order.
+## Carry an existing upper flow to the actual native cliff crest. Fill nodes
+## sit off the wall lines (FILL_OFFSET), so a cliff lies BETWEEN two adjacent
+## nodes: bilinear interpolation between the upper pool and the receiving
+## water below would dip under the crown and dry the upper water short of the
+## lip. The first node past the wall is lifted to the crown's own spill height
+## (crown + DESCENT_CLAMP, never above the upper water), so the upper surface
+## stays wet to the lip and the fall begins beyond it. Admit it only between
+## supplied upper and lower water, across an entirely submerged approach, at a
+## real immediate drop on the dual-cell border between the two nodes. An
+## unsupplied bank, dry ridge or empty receiving basin cannot create water.
+## Original inputs make this a single bounded support operation, independent
+## of traversal order.
 static func _support_wet_cliff_crests(region, base: Vector2,
 		levels: PackedFloat32Array, ground: PackedFloat32Array,
 		columns: int, step: float) -> void:
@@ -499,18 +515,18 @@ static func _support_wet_cliff_crests(region, base: Vector2,
 		var x := index % columns
 		var z := int(index / columns)
 		for direction: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
-			var nx := x + direction.x * 2
-			var nz := z + direction.y * 2
+			var nx := x + direction.x
+			var nz := z + direction.y
 			if nx < 0 or nz < 0 or nx >= columns or nz >= rows: continue
 			var receiving := nz * columns + nx
 			if not is_finite(original[receiving]) or not is_finite(ground[receiving]) \
 					or original[receiving] <= ground[receiving] + EPS: continue
 			if ground[index] - ground[receiving] < FALL_DROP_MIN: continue
-			var crest := (z + direction.y) * columns + x + direction.x
 			var cap := minf(original[index],ground[index]+DESCENT_CLAMP)
-			if original[crest] >= cap: continue
+			if original[receiving] >= cap: continue
+			# The wall stands on the dual-cell border midway between the nodes.
 			var a := base + Vector2(x,z) * step
-			var p := a + Vector2(direction) * step
+			var p := a + Vector2(direction) * step * 0.5
 			var inside := p - Vector2(direction) * 0.01
 			var outside := p + Vector2(direction) * 0.01
 			var crown := TerrainTileField.surface_y(region,inside.x,inside.y)
@@ -528,7 +544,7 @@ static func _support_wet_cliff_crests(region, base: Vector2,
 			var approach := TerrainTileField.height_bounds_on_side(region,footprint,owner) \
 				if owner_bounds.encloses(footprint) else TerrainTileField.height_bounds(region,footprint)
 			if approach.y >= original[index] - EPS: continue
-			levels[crest] = maxf(levels[crest],minf(original[index],crown+DESCENT_CLAMP))
+			levels[receiving] = maxf(levels[receiving],minf(original[index],crown+DESCENT_CLAMP))
 
 
 ## Lattice point whose dual cell holds the crest's approach side: the same

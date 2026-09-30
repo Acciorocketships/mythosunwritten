@@ -204,11 +204,14 @@ static func _presence_segments(ctx: Dictionary, grown: Rect2) -> Array:
 static func _refine_crossing(ctx: Dictionary, origin: Vector2, a: Vector2i, b: Vector2i) -> Vector2:
 	var pa: Vector2 = origin + Vector2(a) * STEP
 	var pb: Vector2 = origin + Vector2(b) * STEP
-	var fa: float = _wet_f(ctx, pa)
-	var fb: float = _wet_f(ctx, pb)
 	var lo := 0.0
 	var hi := 1.0
-	if fa < 0.0:   # ensure lo starts on the wet end
+	# Ensure lo starts on the wet end, with the SAME test the presence grid
+	# used (_is_wet: depth > _WET_EPS). A node whose depth lies in
+	# [0, _WET_EPS] is dry for the grid; testing `depth < 0` here instead made
+	# the two cells sharing its edge bisect from opposite ends and emit two
+	# different crossings, breaking the shoreline chain.
+	if not _is_wet(ctx, pa):
 		var tmp: Vector2 = pa
 		pa = pb
 		pb = tmp
@@ -425,7 +428,11 @@ static func _resample(pts: PackedVector2Array, closed: bool, spacing: float) -> 
 
 
 ## Open polyline evenly divided into round(length / spacing) equal arcs, with
-## both original endpoints kept exactly.
+## both original endpoints kept exactly. At least ceil(length / 2) arcs keep
+## every arc within 2 m (a 2.0-2.25 m piece becomes two ~1.1 m arcs). A piece
+## shorter than 1 m stays one short arc: its ends are two exact chunk-line
+## crossings (or a crossing and the curve's end) that both must survive, so
+## nothing can merge it away.
 static func _resample_even(pts: PackedVector2Array, spacing: float) -> PackedVector2Array:
 	var n: int = pts.size()
 	var cum := PackedFloat32Array()
@@ -435,7 +442,7 @@ static func _resample_even(pts: PackedVector2Array, spacing: float) -> PackedVec
 	var length: float = cum[n - 1]
 	if length < 0.000001:
 		return PackedVector2Array([pts[0]])
-	var cnt: int = maxi(1, roundi(length / spacing))
+	var cnt: int = maxi(maxi(1, roundi(length / spacing)), ceili(length / 2.0))
 	var eff: float = length / float(cnt)
 	var out := PackedVector2Array([pts[0]])
 	var seg := 0

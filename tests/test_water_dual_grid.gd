@@ -82,32 +82,57 @@ func test_wet_crest_owner_is_the_point_that_owns_the_approach_side() -> void:
 	# TerrainTileField.surface_y resolves it (round-half-away would flip x = -6).
 	assert_eq(WaterField._crest_owner(Vector2(-6.0, 6.0)), Vector2i(0, 1))
 	assert_eq(WaterField._crest_owner(Vector2(5.99, -6.01)), Vector2i(0, -1))
-	# A real cliff crest on a wall line: storey 3 for i <= 0, storey 0 beyond,
-	# so the wall stands on x = 6. The upper pool at x = 0 spills over it into
-	# the supplied lower water at x = 12; the crest sample (x = 6, on the wall)
-	# is carried at the crown's own height.
-	var storeys := {}
-	var levels := {}
-	for j in range(-6, 7):
-		for i in range(-6, 7):
-			storeys[Vector2i(i, j)] = 3 if i <= 0 else 0
-			levels[Vector2i(i, j)] = 0
-	var region := HeightfieldRegion.new(storeys, levels)
-	var base := Vector2(-12.0, -12.0)
-	var columns := 5
-	var water := PackedFloat32Array(); water.resize(columns * 5); water.fill(-INF)
-	var ground := PackedFloat32Array(); ground.resize(columns * 5)
-	for z in 5:
-		for x in columns:
-			var p := base + Vector2(x, z) * 6.0
-			ground[z * columns + x] = Tile.surface_y(region, p.x, p.y)
-	for z in 5:
-		water[z * columns + 2] = 12.5
-		water[z * columns + 4] = 0.5
-	WaterField._support_wet_cliff_crests(region, base, water, ground, columns, 6.0)
-	for z in range(1, 4):
-		assert_almost_eq(water[z * columns + 3], 12.0 + WaterField.DESCENT_CLAMP, 0.0001,
-			"crest row %d carries the upper water to the crown" % z)
+
+
+## Fill nodes sit off every discontinuity: at 12 i +- 3, midway between a
+## lattice point and a dual-cell border, in chunk windows and source solves.
+func test_fill_nodes_sit_off_walls_and_points() -> void:
+	for chunk: Vector2i in [Vector2i(0, 0), Vector2i(-3, 5), Vector2i(7, -11)]:
+		var base: Vector2 = Vector2(chunk) * WaterField.CHUNK \
+			- Vector2.ONE * (WaterField.FILL_MARGIN * WaterField.FILL_STEP + WaterField.FILL_OFFSET)
+		var water := WaterPlan.new(1, 22.0, 8)
+		var c: Dictionary = WaterField.ctx(water, chunk, HeightfieldRegion.new({}, {}))
+		assert_eq(c.fill_base, base, "chunk %s window origin" % chunk)
+		for axis in 2:
+			assert_almost_eq(fposmod(base[axis], 12.0), 3.0, 0.0001, "node phase 12 i + 3")
+		# The window keeps its full margin on both sides of the chunk.
+		var rect := Rect2(base, Vector2.ONE * WaterField.FILL_M * WaterField.FILL_STEP)
+		assert_true(rect.encloses(Rect2(Vector2(chunk) * WaterField.CHUNK, Vector2.ONE * WaterField.CHUNK)
+			.grow(WaterField.FILL_MARGIN * WaterField.FILL_STEP)), "window keeps FILL_MARGIN")
+
+
+## A supplied upper pool spilling over a cliff into supplied water below stays
+## wet up to the lip (the wall on the dual border between two fill nodes) in
+## every orientation: high side at -x, +x, -z and +z. The lattice is the offset
+## fill lattice (nodes at 12 i +- 3), 5 x 5 nodes around a wall on x or z = 6
+## (or -6), cliff top storey 3 (12 m) over storey 0.
+func test_wet_crest_spill_reaches_the_lip_in_every_orientation() -> void:
+	for high: Vector2i in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+		var storeys := {}
+		var levels_map := {}
+		for j in range(-6, 7):
+			for i in range(-6, 7):
+				var along := i * high.x + j * high.y
+				storeys[Vector2i(i, j)] = 3 if along >= 0 else 0
+				levels_map[Vector2i(i, j)] = 0
+		var region := HeightfieldRegion.new(storeys, levels_map)
+		var base := Vector2(-15.0, -15.0)
+		var n := 6
+		var ground := WaterField._sample_ground_lattice(region, base, n, 6.0)
+		var water := PackedFloat32Array(); water.resize(n * n)
+		for k in n * n:
+			water[k] = 12.5 if ground[k] >= 12.0 else 0.5
+		WaterField._support_wet_cliff_crests(region, base, water, ground, n, 6.0)
+		var ctx := {"fill_base": base, "fill_size": n, "fill": {"levels": water}, "region": region}
+		for k in 25:
+			# Points on the high side from 3 m inside up to 1 cm before the wall.
+			var d := 3.0 - k * 0.12
+			var p := -Vector2(high) * 6.0 + Vector2(high) * maxf(d, 0.01)
+			var depth: float = WaterField._fill_bilinear_coarse(ctx, p) - TerrainTileField.surface_y(region, p.x, p.y)
+			assert_gt(depth, WaterField.EPS, "high side %s stays wet to the lip at %s" % [high, p])
+		var before := water.duplicate()
+		WaterField._support_wet_cliff_crests(region, base, water, ground, n, 6.0)
+		assert_eq(water, before, "crest support is idempotent (%s)" % high)
 
 
 func test_water_code_has_no_native_cliff_piece_dependency() -> void:
@@ -302,6 +327,59 @@ func test_triggers_stay_inside_their_chunk() -> void:
 	var rect := Rect2(Vector2(chunk) * WaterField.CHUNK, Vector2.ONE * WaterField.CHUNK)
 	for t: Dictionary in skin.get("triggers", []):
 		assert_true(rect.encloses(t.rect), "trigger %s lies inside chunk %s" % [t.rect, rect])
+
+
+## A shoreline crossing is one point, whichever of the two cells sharing a
+## presence-grid edge refines it. A node whose depth lies in [0, _WET_EPS] is
+## dry for the grid; the refinement used to call it the wet end (depth >= 0)
+## and bisect from it, so the two cells emitted different crossings and the
+## shoreline chain broke into fragments (19 pieces at the reported lake once
+## the fill lattice left the wall lines). Here a level step rises to exactly
+## the flat water level 3.0 at x = 12.
+func test_contour_crossing_is_independent_of_edge_direction() -> void:
+	var storeys := {}
+	var levels_map := {}
+	for j in range(-4, 5):
+		for i in range(-4, 5):
+			storeys[Vector2i(i, j)] = 0
+			levels_map[Vector2i(i, j)] = 3 if i >= 1 else 0
+	var region := HeightfieldRegion.new(storeys, levels_map)
+	var n := 21
+	var water := PackedFloat32Array(); water.resize(n * n); water.fill(3.0)
+	var ctx := {"fill_base": Vector2(-60.0, -60.0), "fill_size": n, "fill": {"levels": water},
+		"region": region, "ponds": [], "rivers": [], "buckets": {}}
+	assert_almost_eq(WaterField.level_at(ctx, Vector2(12, 0)) - TerrainTileField.surface_y(region, 12, 0), 0.0, 0.0001,
+		"precondition: the node at x = 12 sits exactly at the water level")
+	var forward := WaterContour._refine_crossing(ctx, Vector2.ZERO, Vector2i(3, 0), Vector2i(4, 0))
+	var backward := WaterContour._refine_crossing(ctx, Vector2.ZERO, Vector2i(4, 0), Vector2i(3, 0))
+	assert_eq(forward, backward, "one crossing per edge")
+	assert_lt(forward.x, 12.0, "the crossing lies before the dry node")
+
+
+## Chunk-line cuts keep the contour's [1, 2] m spacing wherever a piece can:
+## every arc stays within 2 m, and an arc shorter than 1 m is only ever a
+## whole piece shorter than 1 m (two exact crossings, or a crossing and the
+## curve's end, closer than that: both must survive for the weld).
+func test_chunk_line_cuts_keep_contour_spacing() -> void:
+	# Pieces of 12.0 / 2.1 / 0.5 / 7.4 m between cuts at x = 192 and z = 0.
+	var cases := [
+		PackedVector2Array([Vector2(180.0, 5.0), Vector2(206.0, 5.0)]),
+		PackedVector2Array([Vector2(189.9, 5.0), Vector2(194.1, 5.0)]),
+		PackedVector2Array([Vector2(191.5, 3.0), Vector2(199.0, 3.0)]),
+		PackedVector2Array([Vector2(185.0, 1.0), Vector2(191.9, -0.5), Vector2(197.0, -6.0)]),
+	]
+	for pts: PackedVector2Array in cases:
+		var out := WaterContour._resample(pts, false, WaterContour.SPACING)
+		var cuts: Array = []
+		for p: Vector2 in out:
+			if fposmod(p.x, WaterField.CHUNK) == 0.0 or fposmod(p.y, WaterField.CHUNK) == 0.0:
+				cuts.append(p)
+		for k in range(1, out.size()):
+			var arc := out[k - 1].distance_to(out[k])
+			assert_lte(arc, 2.0 + 0.0001, "arc %d of %s within 2 m" % [k, pts])
+			if arc < 1.0 - 0.0001:
+				var whole_piece := (out[k - 1] in cuts or k - 1 == 0) and (out[k] in cuts or k == out.size() - 1)
+				assert_true(whole_piece, "a short arc %.3f m is a whole piece between exact ends" % arc)
 
 
 ## Whether lattice point `point` is excavated at least to the bed of the
