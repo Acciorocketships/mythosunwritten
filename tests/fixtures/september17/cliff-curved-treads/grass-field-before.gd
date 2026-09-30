@@ -1,6 +1,6 @@
 extends RefCounted
 
-const TILE_WORLD := TerrainChunkMesher.TILE
+const TILE_WORLD := 24.0   # frozen: the retired TerrainChunkMesher.TILE (24 m)
 ## Collection 5 is a complete broad 311-blade patch rather than one small
 ## tuft. An 18×18 primary lattice closes saturated beds while the bake's broad
 ## root spread keeps neighbouring patches from reading as repeated clumps.
