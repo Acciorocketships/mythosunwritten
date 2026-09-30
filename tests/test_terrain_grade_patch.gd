@@ -76,17 +76,40 @@ func test_baked_and_direct_ground_agree_and_bounds_enclose_collar() -> void:
 	var patch := TerrainGradePatch.new(&"offset", {Vector2i.ZERO: 5.08},
 		Vector2(1.5, 1.5), 3.0)
 	var region := natural.with_terrain_grades([patch])
-	var bounds := TerrainSurfaceField.height_bounds(region, Rect2(-12, -12, 24, 24))
+	var bounds := TerrainTileField.height_bounds(region, Rect2(-12, -12, 24, 24))
 	for z in range(-24, 25):
 		for x in range(-24, 25):
 			var px := x * 0.5
 			var pz := z * 0.5
-			var cx := roundi(px / 24.0)
-			var cz := roundi(pz / 24.0)
-			var height := TerrainSurfaceField.surface_y(region, px, pz)
-			assert_almost_eq(TerrainSurfaceField.sample_baked(
-				TerrainSurfaceField.bake_cell(region, cx, cz), cx, cz, px, pz, region),
+			var owner := Vector2i(TerrainTileField.point_of(px, region),
+				TerrainTileField.point_of(pz, region))
+			var height := TerrainTileField.surface_y(region, px, pz)
+			assert_almost_eq(TerrainTileField.sample_baked(
+				TerrainTileField.bake_point(region, owner), owner, px, pz, region),
 				height, 0.00001)
 			assert_true(height >= bounds.x - 0.00001 and height <= bounds.y + 0.00001)
-	assert_eq(TerrainSurfaceField.surface_y(natural, 1.5, 1.5), 4.0,
+	assert_eq(TerrainTileField.surface_y(natural, 1.5, 1.5), 4.0,
 		"grading never mutates the shared natural planning region")
+
+
+## The target controls go through TerrainTileField on a half-pitch lattice whose
+## claim-edge and claim-corner points are the minimum of the claims meeting
+## there. The lower claim therefore stays flat over its whole footprint and the
+## transition to a higher claim lies wholly inside the higher claim (the lower
+## pad controls the transition, as ordinary terrain always did).
+func test_the_lower_claim_stays_flat_and_owns_no_transition() -> void:
+	var patch := TerrainGradePatch.new(&"bands",
+		{Vector2i.ZERO: 4.0, Vector2i(1, 0): 7.0, Vector2i(0, 1): 4.0, Vector2i(1, 1): 7.0},
+		Vector2.ZERO, 3.0)
+	for z in range(-15, 31):
+		for x in range(-15, 16):
+			assert_eq(patch.surface_y(Vector2(x * 0.1, z * 0.1), 0.0), 4.0,
+				"the lower claim is flat at (%.1f, %.1f)" % [x * 0.1, z * 0.1])
+	var previous := 4.0
+	for i in range(1, 16):
+		var height := patch.surface_y(Vector2(1.5 + i * 0.1, 1.5), 0.0)
+		assert_gte(height, previous, "the higher claim rises monotonically from its edge")
+		previous = height
+	assert_eq(patch.surface_y(Vector2(3.0, 1.5), 0.0), 7.0)
+	assert_eq(patch.height_bounds(Rect2(-1.5, -1.5, 3.0, 6.0), Vector2(0, 9)), Vector2(4, 4),
+		"the lower claim's bounds are exact")
