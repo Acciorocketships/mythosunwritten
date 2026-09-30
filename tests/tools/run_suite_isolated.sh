@@ -1,9 +1,10 @@
 #!/bin/zsh
 # Run every tests/test_*.gd file in its own Godot process (GUT, headless) and
 # write one summary line per file. Isolated runs avoid the full-suite
-# truncation seen around the heightfield tests. New processes start only while
-# the system reports at least MIN_FREE_PCT percent free memory, so parallel
-# runs cannot push a 16 GB machine into swap.
+# truncation seen around the heightfield tests. At most PAR processes run at
+# once (tracked by PID; `jobs` cannot be counted inside $(...)), and a new one
+# starts only while the system reports at least MIN_FREE_PCT percent free
+# memory, so parallel runs cannot push a 16 GB machine into swap.
 # usage: tests/tools/run_suite_isolated.sh <outfile> [parallelism] [glob] [repo]
 set -u
 repo=${4:-${0:A:h:h:h}}
@@ -27,12 +28,18 @@ run_one() {
 	local e=$(print -r -- "$r" | grep -c 'SCRIPT ERROR')
 	print -r -- "$f tests=${t:-?} pass=${p:-?} fail=${fl:-0} script_errors=$e" >> "$out"
 }
-typeset -a files
+typeset -a files pids live
 files=(${~glob})
 for f in $files; do
-	while (( $(jobs -r | wc -l) >= par )) || (( $(free_pct) < min_free )); do sleep 2; done
+	while true; do
+		live=()
+		for pid in $pids; do kill -0 $pid 2>/dev/null && live+=($pid); done
+		pids=($live)
+		(( ${#pids} < par )) && (( $(free_pct) >= min_free )) && break
+		sleep 2
+	done
 	run_one "$f" &
-	sleep 1
+	pids+=($!)
 done
 wait
 sort -o "$out" "$out"
