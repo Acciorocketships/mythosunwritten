@@ -617,8 +617,16 @@ func _solid_top(env:ENVELOPE,q:Vector2)->float:
  if raised>=1.0 or _region==null:return e-SINK
  # Painted ground (roads, plazas, towns) keeps its own surface: there the
  # solid only backs the terrain, under its chords.
- if env.excluded_node(q):return minf(e,_mesh_height(q))-SINK-.12
- return e+(_mesh_height(q)-g)*(1.0-raised)+COVER*(1.0-raised)-SINK*raised
+ var mesh:=_mesh_height(q)
+ if env.excluded_node(q):return minf(e,mesh)-SINK-.12
+ # Where a chord sags under the ground it does not follow it: a ramp that
+ # drops metres within one 2 m quad (just past a cliff's end, where the wall
+ # hands over to the ramp fanning out beyond the tile centre) slants the
+ # quad on the high side down to the ramp's middle, a notch in the lip up to
+ # 1.5 m deep (dual-grid tile gallery, September 30). There the solid takes
+ # the ground's own shape, handing back to the chords as their sag fades.
+ raised=maxf(raised,smoothstep(RAISED,EMERGE,g-mesh))
+ return e+(mesh-g)*(1.0-raised)+COVER*(1.0-raised)-SINK*raised
 
 var _mesh_cells:Dictionary={}
 ## Height of the rendered terrain sheet (TerrainChunkMesher's 2 m quads, each

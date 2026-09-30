@@ -174,7 +174,10 @@ static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:
  var channel:=PackedByteArray();channel.resize(n)
  var narrow:=_close_walls(g,walls,env.w,env.h,sh.x,foot,channel)
  var wide_dilated:=_dilate(g,env.w,env.h,sh.y+foot)
- var wide:=_close_walls(g,walls,env.w,env.h,sh.y,foot,channel)
+ # The wide rounding also says how far along its walls each face reaches
+ # (see the fillet below).
+ var along:=PackedFloat64Array();along.resize(n)
+ var wide:=_close_walls(g,walls,env.w,env.h,sh.y,foot,channel,along)
  var tight:=_close_walls(g,walls,env.w,env.h,tight_sh,tight_foot,channel)
  var tight_wide:=_close_walls(g,walls,env.w,env.h,6.4,tight_foot,channel)
  # Local relief: highest reach minus lowest reach nearby; continuous even
@@ -206,14 +209,21 @@ static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:
   env.surface[idx]=lerpf(lerpf(narrow[idx],wide[idx],ridge),lerpf(tight[idx],tight_wide[idx],ridge),tall)
  # Fillet the concave creases where wall faces meet (see JUMP).
  # Only where walls are being rounded: the ground's own concave bends
- # (a cliff's end corner, a slope's foot) keep their surface.
+ # (a slope's foot, a valley between two banks) keep their surface. Where a
+ # wall ends (dual-grid tiles, September 30: under E2 the wall runs to the
+ # tile centre and a ramp fans out beyond it) the fillet between its rounded
+ # end and the ground beyond continues ALONG the wall, over ground the
+ # rounding does not raise: gated by the lift at each node it stopped in a
+ # steep cut across the fall line. So the gate also counts the rounding's
+ # lift carried along its own wall over a FOOT fillet's reach (never across
+ # the wall: up over its top or over to an opposing bank).
  # In a fitted channel never above the water: filleting the valley between
  # opposing banks dammed the channel they were fitted to leave open.
  var filleted:=_erode(_dilate(env.surface,env.w,env.h,FOOT),env.w,env.h,FOOT)
  for idx in n:
   var fill:=filleted[idx]
   if channel[idx] and _deep(wet_level,env.ground,idx):fill=minf(fill,wet_level[idx]-.3)
-  env.surface[idx]=lerpf(env.surface[idx],maxf(env.surface[idx],fill),smoothstep(0.0,.5,env.surface[idx]-g[idx]))
+  env.surface[idx]=lerpf(env.surface[idx],maxf(env.surface[idx],fill),smoothstep(0.0,.5,maxf(env.surface[idx]-g[idx],along[idx])))
  var uncut:=env.surface.duplicate()
  # Only a road's cut face is bare rock: the underwater bank keeps its moss.
  var shaped:=env.surface.duplicate()
@@ -378,8 +388,15 @@ static func _walls(env,g:PackedFloat64Array,ground_at:Callable,wet:=PackedFloat6
 ## wall toward the low side (its shoulder widening below LOW) and eroded by
 ## the foot across the wall; convex corners isotropically. Exactly the
 ## former closing across a tall wall under a level top, and the ground
-## itself wherever no crest reaches.
-static func _close_walls(g:PackedFloat64Array,walls:Array,w:int,h:int,shoulder:float,foot:float,channel:=PackedByteArray())->PackedFloat64Array:
+## itself wherever no crest reaches. A shoulder widened below LOW never
+## stands higher over the ground than its crest's drop: over a low side that
+## keeps falling (the wall shortening across an E1 cliff-end tile) the
+## widened shoulder of a wall centimetres high stood two metres over the
+## slope. Over level ground below the wall, and for walls of LOW or more,
+## this is the former stamp.
+## `along`, when given (sized like g), receives each wall's lift carried
+## along the wall (dilated by the foot radius in the wall's own direction).
+static func _close_walls(g:PackedFloat64Array,walls:Array,w:int,h:int,shoulder:float,foot:float,channel:=PackedByteArray(),along=null)->PackedFloat64Array:
  var out:=g.duplicate()
  for axis in 2:
   var crest:PackedFloat64Array=walls[axis][0];var drop:PackedFloat64Array=walls[axis][1]
@@ -415,16 +432,26 @@ static func _close_walls(g:PackedFloat64Array,walls:Array,w:int,h:int,shoulder:f
      if axis==1 and (q%w==0 and toward[idx]<0 or q%w==w-1 and toward[idx]>0):break
      q+=toward[idx]
     continue
-   var reach:=ceili((sqrt(2.0*radius*(drop[idx]+1.0))+lead)/H)+1
+   var plain:=shoulder+foot
+   var reach:=ceili((maxf(sqrt(2.0*plain*(drop[idx]+1.0)),sqrt(2.0*radius*drop[idx]))+lead)/H)+1
    for j in reach+1:
     if q<0 or q>=g.size():break
     var d:=maxf(0.0,j*H-lead)
-    spread[q]=maxf(spread[q],crest[idx]-d*d/(2.0*radius))
+    # The widened shoulder keeps the face's plan width, never its height:
+    # it stands at most the crest's drop over the ground (see above).
+    var widened:=minf(crest[idx],g[q]+drop[idx])-d*d/(2.0*radius)
+    spread[q]=maxf(spread[q],maxf(crest[idx]-d*d/(2.0*plain),widened))
     # Stay in this row/column.
     if axis==1 and (q%w==0 and toward[idx]<0 or q%w==w-1 and toward[idx]>0):break
     q+=toward[idx]
   var closed:=_envelope_axis(spread,w,h,H*H/(2.0*foot),axis==0)
   for idx in out.size():out[idx]=maxf(out[idx],maxf(closed[idx],fitted[idx]) if any_fitted else closed[idx])
+  if along!=null:
+   # Walls of axis 0 run along x (rows), of axis 1 along z (columns).
+   var lift:=PackedFloat64Array();lift.resize(g.size())
+   for idx in g.size():lift[idx]=-maxf(closed[idx]-g[idx],0.0)
+   lift=_envelope_axis(lift,w,h,H*H/(2.0*foot),axis==1)
+   for idx in g.size():along[idx]=maxf(along[idx],-lift[idx])
  var corners:PackedFloat64Array=walls[2]
  var round:=_dilate(corners,w,h,shoulder+foot)
  for idx in round.size():round[idx]=maxf(round[idx],g[idx])

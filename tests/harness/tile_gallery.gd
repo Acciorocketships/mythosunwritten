@@ -422,11 +422,17 @@ func _shoot(view: Dictionary) -> void:
 	_lines.visible = false
 	var is_overview: bool = view.id == "overview" or view.id == "plan"
 	if _overlay != null and not is_overview:
+		# The overlay's kernel follows the global cliff-end rule: the E1
+		# island's views compare against E1 (e1_vs_e2 shows both, under E2).
+		var saved: int = TerrainTileField.cliff_end
+		if String(view.id).begins_with("mixed_e1"):
+			TerrainTileField.cliff_end = TerrainTileField.CliffEnd.E1
 		_overlay.set_enabled(true)
 		for unused in 3:
 			await get_tree().process_frame
 		await _save("%s/%s_f9.png" % [_output, view.id])
 		_overlay.set_enabled(false)
+		TerrainTileField.cliff_end = saved
 
 
 func _save(path: String) -> void:
