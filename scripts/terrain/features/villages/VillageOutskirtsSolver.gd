@@ -1870,7 +1870,7 @@ static func _market_stalls(terrain: VillageTerrainView,
 		var centre := back - outward * half_depth
 		var footprint := Rect2(centre - half_extents, half_extents * 2.0)
 		var base_y := terrain.surface_y(origin)
-		var height_range := TerrainSurfaceField.height_bounds(
+		var height_range := TerrainTileField.height_bounds(
 			terrain.region_covering(footprint), footprint)
 		if terrain.may_be_wet(origin) \
 				or height_range.y > base_y \

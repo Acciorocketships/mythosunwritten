@@ -156,7 +156,7 @@ func configure_entrance(spec: VillageAssetSpec, terrain: VillageTerrainView,
 			else float(count) * stair_run
 		var contact := entrance + entrance_outward * contact_distance
 		var region := terrain.region_at(contact)
-		var ground_y := TerrainSurfaceField.surface_y(region,
+		var ground_y := TerrainTileField.surface_y(region,
 			contact.x, contact.y)
 		var rise := floor_y - ground_y
 		if count == 0:

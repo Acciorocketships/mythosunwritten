@@ -52,12 +52,19 @@ func test_structural_terrain_uses_the_world_slope_kernel_at_its_own_scale() -> v
 		if is_zero_approx(vertex.x) and is_zero_approx(vertex.z):
 			high_centre = maxf(high_centre, vertex.y)
 		if is_equal_approx(vertex.x, 0.75) and is_zero_approx(vertex.z):
-			# Both owners emit the seam. They must name the same lower value.
+			# Both owners emit the seam. They must name the same value.
 			shared_edge_min = minf(shared_edge_min, vertex.y)
 			shared_edge_max = maxf(shared_edge_max, vertex.y)
 	assert_almost_eq(high_centre, 3.0, 0.0001)
-	assert_almost_eq(shared_edge_min, 1.5, 0.0001)
-	assert_almost_eq(shared_edge_max, 1.5, 0.0001)
+	# Village cells are lattice POINTS of the dual-grid kernel at 1.5 m: a
+	# one-band step is one 1.5 m slope tile from centre to centre, so the
+	# dual-cell border between the owners sits at the smootherstep midpoint
+	# (the retired cell kernel put the lower value there). Both owners emit it,
+	# and it is exactly what the streamed-world kernel samples at this scale.
+	assert_almost_eq(shared_edge_min, 2.25, 0.0001)
+	assert_almost_eq(shared_edge_max, 2.25, 0.0001)
+	assert_almost_eq(shared_edge_min, TerrainTileField.surface_y(region, 0.75, 0.0), 0.0001,
+		"the village sheet is the world kernel at its own lattice scale")
 	assert_false(TerrainSurfaceField.is_exposed_edge(region, 0, 0,
 		Vector2i.RIGHT), "a one-band transition is a slope, not a lipped cliff")
 	var indices := payload.indices as PackedInt32Array

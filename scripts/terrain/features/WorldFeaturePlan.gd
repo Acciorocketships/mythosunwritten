@@ -78,7 +78,7 @@ func context_for(block: Vector2i, cancelled := Callable()) -> FeatureContext:
 	_seat_ground_assets(context.placements(), _program.paths.assets,
 		func(point: Vector2) -> float:
 			var region := context.graded_region(_fields.region_at(point))
-			return TerrainSurfaceField.surface_y(region, point.x, point.y))
+			return TerrainTileField.surface_y(region, point.x, point.y))
 	context.placements().append_from(village_payload)
 	# Keep completed nearby work warm across long journeys. Capacity retires
 	# one least-recently-used context, never the whole 96-block working set.

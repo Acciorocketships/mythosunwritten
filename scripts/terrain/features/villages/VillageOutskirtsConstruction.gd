@@ -331,7 +331,7 @@ static func _append_street(plan: VillageOutskirtsPlan, points: Array[Vector2],
 		seen[key]=true
 		var corridor := FeatureGroundShape.oriented_rect((a+b)*0.5,
 			Vector2(a.distance_to(b)*0.5,HALF_PATH),(b-a).angle()).bounds()
-		var heights := TerrainSurfaceField.height_bounds(terrain.region_covering(corridor),corridor)
+		var heights := TerrainTileField.height_bounds(terrain.region_covering(corridor),corridor)
 		plan.volumes.append(VillageOccupancyVolume.new(VillageOccupancy.Role.HEADROOM,
 			(a+b)*0.5,Vector2(a.distance_to(b)*0.5,HALF_PATH),
 			(b-a).angle(),heights.x,heights.y+TraversalEnvelope.MIN_HEADROOM,

@@ -45,7 +45,7 @@ func region_at(point: Vector2) -> HeightfieldRegion:
 func surface_y(point: Vector2) -> float:
 	assert(point.is_finite())
 	var region := region_at(point)
-	return TerrainSurfaceField.surface_y(region, point.x, point.y)
+	return TerrainTileField.surface_y(region, point.x, point.y)
 
 
 func region_covering(world_rect: Rect2) -> HeightfieldRegion:

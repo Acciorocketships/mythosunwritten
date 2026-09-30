@@ -363,7 +363,7 @@ static func _terrain_qualified_frontage(terrain: VillageTerrainView,
 		if not footprint.has_area():
 			continue
 		var region := terrain.region_covering(footprint)
-		var height_range := TerrainSurfaceField.height_bounds(region, footprint)
+		var height_range := TerrainTileField.height_bounds(region, footprint)
 		var base_y := world_transform.origin.y
 		if height_range.y > base_y + OPTIONAL_FRONTAGE_GROUND_TOLERANCE \
 				or height_range.x < base_y - OPTIONAL_FRONTAGE_MAX_DROP:

@@ -2,9 +2,13 @@ class_name LatticeTerrainSurfaceRegion
 extends RefCounted
 
 ## Immutable-by-convention adapter from an arbitrary procedural column field to
-## TerrainSurfaceField's standard read contract. The world heightfield and a
-## village's retained earth can therefore use one cliff/slope classifier and
-## one smootherstep surface kernel at their respective authored lattice scales.
+## the dual-grid terrain kernel's read contract (TerrainTileField). The world
+## heightfield and a village's retained earth use one cliff/slope classifier
+## and one smootherstep tile kernel at their respective lattice scales. Each
+## column is a lattice POINT at its centre (x * cell_size); its dual cell is the
+## column itself, so a cliff (two or more bands) stands exactly on the column
+## face at x * cell_size + cell_size / 2, like the voxel walls, and a one-band
+## step is one slope tile from column centre to column centre.
 ## Values are top-surface bands (not solid-cell indices).
 
 var _top_by_cell: Dictionary

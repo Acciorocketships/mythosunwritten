@@ -10,8 +10,13 @@ func test_finished_turf_cannot_follow_an_unexposed_structural_block() -> void:
 	assert_eq(region.storey_at(2,-8), 2, "unowned columns are exterior, not hidden masonry tops")
 	for z in range(21):
 		for x in range(21):
-			var height := TerrainSurfaceField.surface_y(region,
-				3.0 + float(x)/20.0*0.75, -13.5 + float(z)/20.0*0.75)
+			# The lawn as its own columns render it (the mesher samples each
+			# column on its own side): the last row lies ON the wall line to the
+			# exterior column (2,-8), which belongs to the lawn's side here.
+			var px := 3.0 + float(x)/20.0*0.75
+			var owner := Vector2i(clampi(TerrainTileField.point_of(px, region), 2, 3), -9)
+			var height := TerrainTileField.surface_y_on_side(region,
+				px, -13.5 + float(z)/20.0*0.75, owner)
 			assert_almost_eq(height, 6.0, 0.0001,
 				"the finished lawn remains above its level substrate throughout the corner")
 

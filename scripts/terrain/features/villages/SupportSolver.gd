@@ -103,7 +103,7 @@ static func ground_bounds(anchor: Vector2, angle: float,
 				+ (stencil.offset as Vector2).rotated(angle)
 			var shape: FeatureGroundShape = FeatureGroundShape.oriented_rect(centre,
 				stencil.half_extents, angle)
-			var bounds: Vector2 = TerrainSurfaceField.height_bounds(region,
+			var bounds: Vector2 = TerrainTileField.height_bounds(region,
 				shape.bounds())
 			minimum = minf(minimum, bounds.x)
 			maximum = maxf(maximum, bounds.y)
