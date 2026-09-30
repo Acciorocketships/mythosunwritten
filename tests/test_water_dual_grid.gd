@@ -144,10 +144,9 @@ func test_wall_face_is_the_measured_dual_border() -> void:
 
 
 ## A pond's bank storey is the minimum of the pre-carve field over EVERY 12 m
-## terrain point of its footprint and ring. Found by scanning (seed 2697992464,
-## amplitude 22, super-cell (6, 3)): sampling only the 24 m points put this
-## pond's level at storey 4 (16 m) above an odd point at 15.6 m, so its water
-## overtopped a bank the 12 m terrain actually renders.
+## terrain point of its footprint and a one-point ring: the corners of every
+## tile its shore can cross, so the water stays below every rendered bank.
+## Guard on a live plan (seed 2697992464, amplitude 22, super-cell (6, 3)).
 func test_pond_level_respects_every_twelve_metre_point() -> void:
 	var plan := WaterPlan.new(2697992464, 22.0, 8)
 	var t := plan.river_for(Vector2i(6, 3), 0)
@@ -278,6 +277,23 @@ func test_rim_end_cap_closes_a_level_shelf_ladder() -> void:
 	for k in 5:
 		assert_eq(int(count.get(Vector2i(k, k + 1), 0)), 1,
 			"ladder edge row%d-row%d is closed by the cap" % [k, k + 1])
+
+
+## A chunk's swim triggers cover only its own 24 m tiles: its frozen sampler
+## answers nothing beyond the chunk, so a box built from a rim vertex that
+## pokes a few centimetres past the border (the reported lake leaves chunk
+## (0,-6) at (67.4,-1152) along a level shelf) classified field-wet water
+## there as dry.
+func test_triggers_stay_inside_their_chunk() -> void:
+	var water := preload("res://tests/fixtures/ReportedWaterPlan.gd").new(2697992464)
+	var plan := water.make_heightfield()
+	var chunk := Vector2i(0, -6)
+	var region := plan.compute_region(chunk.x * 16 + 8, chunk.y * 16 + 8, 16)
+	var skin: Dictionary = WaterSkin.build(water, chunk, region)
+	assert_false(skin.is_empty(), "the reported site builds water")
+	var rect := Rect2(Vector2(chunk) * WaterField.CHUNK, Vector2.ONE * WaterField.CHUNK)
+	for t: Dictionary in skin.get("triggers", []):
+		assert_true(rect.encloses(t.rect), "trigger %s lies inside chunk %s" % [t.rect, rect])
 
 
 ## Whether lattice point `point` is excavated at least to the bed of the

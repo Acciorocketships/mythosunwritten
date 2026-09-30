@@ -2169,7 +2169,13 @@ static func _weld_vert(st: Dictionary, p: Vector2, y: float, nrm: Vector3) -> in
 ## instead (see WaterSampler.gd).
 static func _triggers(st: Dictionary) -> Array:
 	var cells: Dictionary = {}   # Vector2i cell -> {top: float, bottom: float, max_grade: float}
+	var rect: Rect2 = st.rect
 	for v: Vector3 in st.verts:
+		# A chunk owns only its own half-open tiles: its sampler answers
+		# nothing beyond them (the neighbour's box covers that water), and a
+		# rim or border vertex a hair past the edge must not open a box there.
+		if not rect.has_point(Vector2(v.x, v.z)):
+			continue
 		var cell := Vector2i(int(floor(v.x / TILE)), int(floor(v.z / TILE)))
 		var g: float = TerrainTileField.surface_y(st.region, v.x, v.z)
 		var grade: float = absf(WaterField.grade_at(st.ctx, Vector2(v.x, v.z)))

@@ -9,7 +9,8 @@ func test_buried_water_rims_do_not_create_inverted_swimming_volumes() -> void:
 	plan.set_raw_height_override(func(_x:int,_z:int)->float:return 12.0)
 	var region:=plan.compute_region(4,4,26)
 	var context:=WaterField.ctx(water,Vector2i.ZERO,region)
-	var state:={"region":region,"ctx":context,"verts":PackedVector3Array([Vector3(12,0,12)])}
+	var state:={"region":region,"ctx":context,"verts":PackedVector3Array([Vector3(12,0,12)]),
+		"rect":Rect2(Vector2.ZERO,Vector2.ONE*WaterField.CHUNK)}
 	assert_eq(WaterSkin._triggers(state).size(),0,"A buried cap has no positive water volume above its ground")
 	state.verts=PackedVector3Array([Vector3(12,15,12)])
 	var wet:=WaterSkin._triggers(state)
