@@ -753,3 +753,27 @@ func test_vertex_owner_candidates_tie_on_the_dual_border():
 	assert_eq(Mesher._owner_candidates(90.0, 12.0), [8, 7] as Array[int], "x = 90 lies between points 7 and 8")
 	assert_eq(Mesher._owner_candidates(-6.0, 12.0), [-1, 0] as Array[int])
 	assert_eq(Mesher._owner_candidates(88.0, 12.0), [7] as Array[int])
+
+## A graded street across a natural cliff leaves no cliff collision above it
+## (September 13; re-pinned on points). Town grades reach the terrain as
+## per-point controls (HeightfieldRegion.native_control_heights, what
+## with_terrain_grades writes): here the street's points are supplied directly,
+## so the invariant does not depend on the grade solver (NativeTerrainGrade).
+func test_graded_street_leaves_no_cliff_collision_above_it():
+	# A 12 m plateau (points x <= 0) walls down to 0 m on x = 6; the street
+	# levels points z in [-1, 1], x in [-2, 3] at 4 m across that wall.
+	var region := _points(func(i: int, _j: int) -> float: return 12.0 if i <= 0 else 0.0)
+	for j in range(-1, 2):
+		for i in range(-2, 4):
+			region.native_control_heights[Vector2i(i, j)] = 4.0
+	var vertices: PackedVector3Array = _mesher().compute_chunk(Vector2i.ZERO, region) \
+		.wall_collision_arrays[Mesh.ARRAY_VERTEX]
+	var intrusions := 0
+	var outside := 0
+	for v: Vector3 in vertices:
+		if v.x == 6.0 and absf(v.z) < 12.0 and v.y > 4.01:
+			intrusions += 1
+		if v.x == 6.0 and v.z > 24.0 and v.y > 4.01:
+			outside += 1
+	assert_eq(intrusions, 0, "the old cliff cannot remain as an invisible barrier above the graded street")
+	assert_gt(outside, 0, "the natural cliff beyond the street remains")

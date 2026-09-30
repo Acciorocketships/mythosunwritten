@@ -42,9 +42,15 @@ static func compute(region:HeightfieldRegion,chunk:Vector2i,seed_value:int,
  # owned rectangle, so the reservation reaches past it.
  var reservations:Array[Rect2]=slope.reservations(owned.grow(16.0))
  # Every wall's own foot: the crest band and the first metres in front of it.
+ # The list serves this chunk's ambient dressing (its core, the chunk square),
+ # so a foot reaching that core is reserved whichever chunk owns the wall: a
+ # neighbour-owned wall on the chunk border stands its foot inside this core.
+ # Feet that cannot reach the core are dropped.
+ var dressing_core:=Rect2(Vector2(chunk)*TerrainChunkMesher.CHUNK_WORLD,Vector2.ONE*TerrainChunkMesher.CHUNK_WORLD).grow(RESERVE_CORE_MARGIN)
  for wall:Dictionary in walls:
   var a:Vector2=wall.a;var b:Vector2=wall.b;var n:Vector2=wall.normal
-  reservations.append(Rect2(a-n*RESERVE_BACK,Vector2.ZERO).expand(b-n*RESERVE_BACK).expand(a+n*RESERVE_OUT).expand(b+n*RESERVE_OUT))
+  var foot:=Rect2(a-n*RESERVE_BACK,Vector2.ZERO).expand(b-n*RESERVE_BACK).expand(a+n*RESERVE_OUT).expand(b+n*RESERVE_OUT)
+  if foot.intersects(dressing_core,true):reservations.append(foot)
  # Ambient rocks never land on a slope rock (owner, September 27: stacked).
  for rock:Dictionary in slope.rock_list:
   var r:=SLOPE_FIELD._base_radius(rock)
@@ -76,6 +82,8 @@ static func compute(region:HeightfieldRegion,chunk:Vector2i,seed_value:int,
 ## back over its crest.
 const RESERVE_OUT:=4.0
 const RESERVE_BACK:=.3
+## An ambient base in the chunk core reaches at most this far past it.
+const RESERVE_CORE_MARGIN:=16.0
 
 static func build(data:Dictionary,seed_value:int)->Node3D:
  assert(OS.get_thread_caller_id()==OS.get_main_thread_id())

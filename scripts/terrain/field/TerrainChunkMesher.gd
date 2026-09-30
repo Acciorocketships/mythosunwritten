@@ -596,31 +596,34 @@ static func field_normals(vertices: PackedVector3Array, region,
 ## border, which would flatten half the difference at every 12 m seam.
 static func _field_slope(region, baked_cache: Dictionary, owner: Vector2i, v: Vector3,
 		axis: Vector2i, spacing: float) -> float:
-	var ys: Array[float] = []
-	for sign_value: int in [1, -1]:
-		var x := v.x + float(axis.x * sign_value) * NORMAL_STEP
-		var z := v.z + float(axis.y * sign_value) * NORMAL_STEP
-		var along := (x - float(owner.x) * spacing) if axis.x != 0 else (z - float(owner.y) * spacing)
-		var y := NAN
-		if absf(along) <= spacing * 0.5:
-			y = TerrainTileField.sample_baked(baked_cache[owner], owner, x, z, region)
-		else:
-			var neighbour := owner + axis * sign_value
-			if not baked_cache.has(neighbour):
-				baked_cache[neighbour] = TerrainTileField.bake_point(region, neighbour)
-			var mine := TerrainTileField.sample_baked(baked_cache[owner], owner, v.x, v.z, region)
-			var theirs := TerrainTileField.sample_baked(baked_cache[neighbour], neighbour, v.x, v.z, region)
-			if absf(mine - theirs) < 0.0001:
-				y = TerrainTileField.sample_baked(baked_cache[neighbour], neighbour, x, z, region)
-		ys.append(y)
-	var centre := TerrainTileField.sample_baked(baked_cache[owner], owner, v.x, v.z, region)
-	if not is_nan(ys[0]) and not is_nan(ys[1]):
-		return (ys[0] - ys[1]) / (2.0 * NORMAL_STEP)
-	if not is_nan(ys[0]):
-		return (ys[0] - centre) / NORMAL_STEP
-	if not is_nan(ys[1]):
-		return (centre - ys[1]) / NORMAL_STEP
-	return 0.0
+	var baked: PackedFloat32Array = baked_cache[owner]
+	var plus := _slope_sample(region, baked_cache, baked, owner, v, axis, 1, spacing)
+	var minus := _slope_sample(region, baked_cache, baked, owner, v, axis, -1, spacing)
+	if not is_nan(plus) and not is_nan(minus):
+		return (plus - minus) / (2.0 * NORMAL_STEP)
+	if is_nan(plus) and is_nan(minus):
+		return 0.0
+	var centre := TerrainTileField.sample_baked(baked, owner, v.x, v.z, region)
+	return (plus - centre) / NORMAL_STEP if not is_nan(plus) else (centre - minus) / NORMAL_STEP
+
+
+## The owner surface NORMAL_STEP from v along `axis` * `sign_value`, or NAN
+## where that sample crosses a wall on the owner's dual-cell border.
+static func _slope_sample(region, baked_cache: Dictionary, baked: PackedFloat32Array,
+		owner: Vector2i, v: Vector3, axis: Vector2i, sign_value: int, spacing: float) -> float:
+	var x := v.x + float(axis.x * sign_value) * NORMAL_STEP
+	var z := v.z + float(axis.y * sign_value) * NORMAL_STEP
+	var along := (x - float(owner.x) * spacing) if axis.x != 0 else (z - float(owner.y) * spacing)
+	if absf(along) <= spacing * 0.5:
+		return TerrainTileField.sample_baked(baked, owner, x, z, region)
+	var neighbour := owner + axis * sign_value
+	if not baked_cache.has(neighbour):
+		baked_cache[neighbour] = TerrainTileField.bake_point(region, neighbour)
+	var theirs: PackedFloat32Array = baked_cache[neighbour]
+	if absf(TerrainTileField.sample_baked(baked, owner, v.x, v.z, region)
+			- TerrainTileField.sample_baked(theirs, neighbour, v.x, v.z, region)) >= 0.0001:
+		return NAN
+	return TerrainTileField.sample_baked(theirs, neighbour, x, z, region)
 
 
 ## The lattice point whose pinned surface holds a sheet vertex. Interior
