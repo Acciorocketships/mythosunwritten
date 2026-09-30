@@ -90,11 +90,13 @@ func test_pond_level_at_or_below_ring_minimum() -> void:
 		return
 	var pond: PondStamp = t.pond
 	var min_h: float = INF
-	var r_cells: int = int(ceil((pond.bound_radius() + WaterPlan.TILE) / WaterPlan.TILE))
-	var cc: Vector2i = Vector2i(roundi(pond.center.x / WaterPlan.TILE), roundi(pond.center.y / WaterPlan.TILE))
+	# Every 12 m terrain lattice point over the footprint and its 24 m ring.
+	var pitch := HeightfieldPlan.POINT
+	var r_cells: int = int(ceil((pond.bound_radius() + WaterPlan.TILE) / pitch))
+	var cc: Vector2i = Vector2i(roundi(pond.center.x / pitch), roundi(pond.center.y / pitch))
 	for dz in range(-r_cells, r_cells + 1):
 		for dx in range(-r_cells, r_cells + 1):
-			var p: Vector2 = Vector2(float(cc.x + dx) * WaterPlan.TILE, float(cc.y + dz) * WaterPlan.TILE)
+			var p: Vector2 = Vector2(float(cc.x + dx) * pitch, float(cc.y + dz) * pitch)
 			if pond.footprint_t(p) <= 1.0 + WaterPlan.TILE / pond.radius:
 				min_h = minf(min_h, plan.noise_h(p))
 	# maxf mirrors _pond_level's floor of storey 1 (beds must stay above y=0);
@@ -125,9 +127,10 @@ func test_channel_water_is_contained_by_both_banks() -> void:
 					continue   # backwater — pond level, pond containment rules
 				var dir: Vector2 = (t.points[i] - t.points[i - 1]).normalized()
 				var n: Vector2 = Vector2(-dir.y, dir.x)
-				var d0: float = t.widths[i] + WaterPlan.FEATHER + WaterPlan.TILE * 0.5
+				# Bank probes one 12 m terrain point apart past the feather.
+				var d0: float = t.widths[i] + WaterPlan.FEATHER + HeightfieldPlan.POINT * 0.5
 				var bank: float = INF
-				for off in [n * d0, -n * d0, n * (d0 + WaterPlan.TILE), -n * (d0 + WaterPlan.TILE)]:
+				for off in [n * d0, -n * d0, n * (d0 + HeightfieldPlan.POINT), -n * (d0 + HeightfieldPlan.POINT)]:
 					bank = minf(bank, roundf(plan.noise_h(t.points[i] + off) / 4.0) * 4.0)
 				if bank <= 0.0:
 					continue   # storey-0 world floor — containment impossible
@@ -170,12 +173,14 @@ func test_source_pool_never_overtops_its_ring() -> void:
 			continue
 		var pool: PondStamp = t.source_pool
 		var bound: float = pool.bound_radius() + WaterPlan.TILE
-		var r_cells: int = int(ceil(bound / WaterPlan.TILE))
-		var cc: Vector2i = Vector2i(roundi(pool.center.x / WaterPlan.TILE), roundi(pool.center.y / WaterPlan.TILE))
+		# Every 12 m terrain lattice point: an odd point can be the lowest rim.
+		var pitch := HeightfieldPlan.POINT
+		var r_cells: int = int(ceil(bound / pitch))
+		var cc: Vector2i = Vector2i(roundi(pool.center.x / pitch), roundi(pool.center.y / pitch))
 		var min_h: float = INF
 		for dz in range(-r_cells, r_cells + 1):
 			for dx in range(-r_cells, r_cells + 1):
-				var p: Vector2 = Vector2(float(cc.x + dx) * WaterPlan.TILE, float(cc.y + dz) * WaterPlan.TILE)
+				var p: Vector2 = Vector2(float(cc.x + dx) * pitch, float(cc.y + dz) * pitch)
 				if p.distance_to(pool.center) <= bound:
 					min_h = minf(min_h, plan.noise_h(p))
 		if float(pool.level) * 4.0 <= 4.0 + 0.0001:
@@ -478,7 +483,7 @@ func _carve_reference(w: WaterPlan, cx: int, cz: int) -> float:
 				var weights := w.bank_strengths(t)
 				var strength := lerpf(weights[si], weights[si+1], along)
 				var original_weight := SlopeProfile.smootherstep(clampf(
-					(width+WaterPlan.FEATHER-d)/WaterPlan.FEATHER,0,1))
+					(width+WaterPlan.CARVE_FEATHER-d)/WaterPlan.CARVE_FEATHER,0,1))
 				var original_carve := maxf(0.0,ground-carve_bed)*original_weight
 				best = maxf(best,lerpf(original_carve,maxf(0.0,ground-target),strength))
 	return best
@@ -563,7 +568,7 @@ func _carve_bruteforce(w: WaterPlan, p: Vector2) -> float:
 			var weights := w.bank_strengths(t)
 			var strength := lerpf(weights[si], weights[si + 1], along)
 			var original_weight := SlopeProfile.smootherstep(clampf(
-				(width + WaterPlan.FEATHER - d) / WaterPlan.FEATHER, 0, 1))
+				(width + WaterPlan.CARVE_FEATHER - d) / WaterPlan.CARVE_FEATHER, 0, 1))
 			var original_carve := maxf(0.0, ground - carve_bed) * original_weight
 			var carve := lerpf(original_carve, maxf(0.0, ground - target), strength)
 			var crest := ceilf((bed + WaterField.SURFACE_RIDE + .75) / WaterPlan.STOREY) * WaterPlan.STOREY

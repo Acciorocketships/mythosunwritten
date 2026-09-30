@@ -16,7 +16,7 @@ static func build(water: WaterPlan, query_rect: Rect2, region: HeightfieldRegion
 	assert(water != null and region != null)
 	assert(query_rect.size.x > 0.0 and query_rect.size.y > 0.0)
 	assert(is_finite(shore_distance_limit) and shore_distance_limit >= 0.0)
-	var span := WaterField.TILE * 8.0
+	var span := WaterField.CHUNK
 	var centre := query_rect.get_center()
 	var chunk := Vector2i(int(floor(centre.x / span)), int(floor(centre.y / span)))
 	var raw := WaterField.ctx(water, chunk, region)
@@ -59,7 +59,7 @@ func level_at(point: Vector2) -> float:
 	# that value here instead of evaluating the same level again on every wet
 	# terrain, dressing and path query. Keep the authoritative wet threshold.
 	var level := WaterField.level_at(_ctx, point)
-	if not (level > -INF and level > TerrainSurfaceField.surface_y(
+	if not (level > -INF and level > TerrainTileField.surface_y(
 			_region, point.x, point.y) + WaterField.EPS):
 		return NAN
 	return level
@@ -69,7 +69,7 @@ func signed_depth_at(point: Vector2) -> float:
 	var level := WaterField.level_at(_ctx, point)
 	if level == -INF:
 		return -WaterField.SHORE_DRY_DEPTH
-	return level - TerrainSurfaceField.surface_y(_region, point.x, point.y)
+	return level - TerrainTileField.surface_y(_region, point.x, point.y)
 
 ## Sorted, disjoint exact-field wet intervals along a->b, expressed as t in
 ## [0,1]. The shared shoreline curves supply every possible transition; the

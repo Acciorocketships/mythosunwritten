@@ -97,7 +97,7 @@ static func build(ctx: Dictionary, region, origin: Vector2, step: float, nx: int
 			for i in s._fill_n:
 				var p: Vector2 = s._fill_origin + Vector2(i, j) * WaterField.FILL_STEP
 				s._fill_ground[j * s._fill_n + i] = \
-					TerrainSurfaceField.surface_y(region, p.x, p.y)
+					TerrainTileField.surface_y(region, p.x, p.y)
 	else:
 		# Legacy/synthetic no-fill context: retain the older mesh-grid snapshot
 		# as a safe fallback. Production chunk contexts always take the exact,
@@ -110,7 +110,7 @@ static func build(ctx: Dictionary, region, origin: Vector2, step: float, nx: int
 				var lvl: float = WaterField.level_at(ctx, p)
 				if lvl == -INF:
 					continue
-				var g: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
+				var g: float = TerrainTileField.surface_y(region, p.x, p.y)
 				if lvl <= g + WET_EPS:
 					continue
 				s._h[j * nx + i] = lvl

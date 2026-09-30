@@ -12,7 +12,12 @@
 class_name WaterField
 extends Object
 
+# 24 m FEATURE scale: river-sample buckets, the steep-scan window and the
+# channel claim radius. It is NOT the terrain lattice: ground heights live on
+# TerrainTileField's 12 m points and are always read through that kernel.
 const TILE := 24.0
+## One streamed terrain chunk (192 m): the fill projection window is sized to it.
+const CHUNK := 192.0
 const FALL_DROP_MIN := 4.0    # the only "this is a fall face" threshold in the system — now purely a TERRAIN classification (steep_spans), not a level-cut trigger
 const SURFACE_RIDE := 2.2     # river surface height above the traced bed
 const CLAIM_FEATHER := 8.0    # metres past the channel half-width a reach claims (channel membership + steep-span geometry only)
@@ -120,7 +125,7 @@ const FILL_STEP := 6.0
 const FILL_SUB_STEP := FILL_STEP * 0.5
 const _FILL_MARGIN_WORLD := 42.0   # covers the 5-pass, 30m local surface relaxation plus interpolation slack at chunk seams
 const FILL_MARGIN := int(_FILL_MARGIN_WORLD / FILL_STEP)   # margin in FILL_STEP cells
-const FILL_N := int(TILE * 8.0 / FILL_STEP)   # chunk lattice cells per side at FILL_STEP
+const FILL_N := int(CHUNK / FILL_STEP)   # chunk lattice cells per side at FILL_STEP
 const FILL_M := FILL_N + 2 * FILL_MARGIN      # window lattice cells per side
 const FILL_SUB_M := FILL_M * 2
 const FILL_SURFACE_PASSES := 5
@@ -149,15 +154,13 @@ static func _trace_owned_region(trace: RiverTrace, plan: HeightfieldPlan,
 	if _trace_regions.has(key):
 		return _trace_regions[key]
 	# The profile samples only linear segments of the centreline. Certify the
-	# controls that those samples can read, including the two-cell native
-	# corner classifier stencil, rather than requiring the unused square
-	# around the river's maximum span. Both paths certify every sampled height.
+	# lattice points those samples can read (each sample reads the four corners
+	# of its 12 m tile) rather than requiring the unused square around the
+	# river's maximum span. Both paths certify every sampled height.
 	var first := trace.points[0]
 	var sample_bounds := Rect2(first,Vector2.ZERO)
 	for point: Vector2 in trace.points: sample_bounds = sample_bounds.expand(point)
-	var first_cell := Vector2i((sample_bounds.position/TILE).floor())-Vector2i.ONE*2
-	var last_cell := Vector2i((sample_bounds.end/TILE).ceil())+Vector2i.ONE*2
-	var required := Rect2i(first_cell,last_cell-first_cell+Vector2i.ONE)
+	var required := _point_domain(sample_bounds)
 	if available != null and available.plan == plan and available.terrain_grades.is_empty() \
 			and available.native_control_heights.is_empty() \
 			and available.certified_points.encloses(required):
@@ -165,11 +168,20 @@ static func _trace_owned_region(trace: RiverTrace, plan: HeightfieldPlan,
 	var started := Time.get_ticks_usec() if profile_source_cost else 0
 	var region: HeightfieldRegion = plan.compute_rect_region(required)
 	if profile_source_cost:
-		print("WATER_TRACE_REGION ",JSON.stringify({"cells":required.size.x*required.size.y,
+		print("WATER_TRACE_REGION ",JSON.stringify({"points":required.size.x*required.size.y,
 			"size":str(required.size),"elapsed_ms":(Time.get_ticks_usec()-started)/1000.0}))
 	_trace_regions.clear()
 	_trace_regions[key] = region
 	return region
+
+
+## Terrain lattice points (12 m, TerrainTileField) a surface query anywhere in
+## `bounds` can read: the four corners of every tile the rectangle touches,
+## plus a `ring` of points of slack for callers that step a little outside.
+static func _point_domain(bounds: Rect2, ring := 2) -> Rect2i:
+	var first := Vector2i((bounds.position / TerrainTileField.SPACING).floor()) - Vector2i.ONE * ring
+	var last := Vector2i((bounds.end / TerrainTileField.SPACING).floor()) + Vector2i.ONE * (ring + 1)
+	return Rect2i(first, last - first + Vector2i.ONE)
 
 
 ## Everything the samplers need for one chunk, fetched once (bodies_near is
@@ -183,6 +195,7 @@ static func _trace_owned_region(trace: RiverTrace, plan: HeightfieldPlan,
 ## of test_water_field's pre-existing tests) keep exercising exactly that
 ## fallback path, which is intentional — see level_at.
 static func ctx(water: WaterPlan, chunk: Vector2i, region = null) -> Dictionary:
+	# bodies_near works on WaterPlan's 24 m cells: 8 of them per chunk.
 	var centre := Vector2i(chunk.x * 8 + 4, chunk.y * 8 + 4)
 	var bodies: Dictionary = water.bodies_near(centre, 8)
 	var buckets: Dictionary = {}
@@ -199,7 +212,7 @@ static func ctx(water: WaterPlan, chunk: Vector2i, region = null) -> Dictionary:
 	var out: Dictionary = {"water": water, "ponds": bodies.ponds, "rivers": bodies.rivers,
 		"buckets": buckets, "sample_radius":sample_radius, "region": region}
 	if region != null:
-		var base := Vector2(chunk.x, chunk.y) * (TILE * 8.0) - Vector2.ONE * (FILL_MARGIN * FILL_STEP)
+		var base := Vector2(chunk.x, chunk.y) * CHUNK - Vector2.ONE * (FILL_MARGIN * FILL_STEP)
 		out["fill_base"] = base
 		out["fill"] = _build_fill(out, region, base)
 	return out
@@ -275,9 +288,7 @@ static func _source_fill(c: Dictionary, region) -> Dictionary:
 		return cached
 	var cost_started := Time.get_ticks_usec() if profile_source_cost else 0
 	if profile_source_cost: print("WATER_SOURCE_STAGE begin ",base," size=",Vector2i(m1,rows))
-	var control_first := Vector2i((base/TILE).floor())-Vector2i.ONE*2
-	var control_last := Vector2i(((base+Vector2(m1-1,rows-1)*FILL_STEP)/TILE).ceil())+Vector2i.ONE*2
-	var control_domain := Rect2i(control_first,control_last-control_first+Vector2i.ONE)
+	var control_domain := _point_domain(Rect2(base, Vector2(m1 - 1, rows - 1) * FILL_STEP))
 	var owned: HeightfieldRegion = region.plan.compute_rect_region(control_domain)
 	var region_finished := Time.get_ticks_usec() if profile_source_cost else 0
 	if profile_source_cost: print("WATER_SOURCE_STAGE region ",Time.get_ticks_msec())
@@ -351,7 +362,7 @@ static func _source_fill(c: Dictionary, region) -> Dictionary:
 	var refined := _build_sub_lattice_rescue(owned, base, levels, dry_banks, m1)
 	if profile_source_cost:
 		print("WATER_SOURCE_COST ", JSON.stringify({"side": m1, "rows": rows, "base": str(base),
-			"request_chunk": str(Vector2i((c.fill_base + Vector2.ONE * FILL_MARGIN * FILL_STEP) / (TILE * 8.0))) if c.has("fill_base") else "direct_source_query",
+			"request_chunk": str(Vector2i((c.fill_base + Vector2.ONE * FILL_MARGIN * FILL_STEP) / CHUNK)) if c.has("fill_base") else "direct_source_query",
 			"started_msec": cost_started / 1000, "finished_msec": Time.get_ticks_msec(),
 			"rivers": contributors.rivers.size(), "ponds": contributors.ponds.size(),
 			"region_ms": (region_finished-cost_started)/1000.0,
@@ -502,21 +513,29 @@ static func _support_wet_cliff_crests(region, base: Vector2,
 			var p := a + Vector2(direction) * step
 			var inside := p - Vector2(direction) * 0.01
 			var outside := p + Vector2(direction) * 0.01
-			var crown := TerrainSurfaceField.surface_y(region,inside.x,inside.y)
-			var foot := TerrainSurfaceField.surface_y(region,outside.x,outside.y)
+			var crown := TerrainTileField.surface_y(region,inside.x,inside.y)
+			var foot := TerrainTileField.surface_y(region,outside.x,outside.y)
 			if crown - foot < FALL_DROP_MIN or crown > original[index] - EPS: continue
-			# Use the native patch's conservative extrema, not a sparse ground
-			# probe which could step over a real intervening ridge.
+			# Use the tiles' conservative extrema, not a sparse ground probe
+			# which could step over a real intervening ridge.
 			var footprint := Rect2(a,inside-a).abs()
-			var span := TerrainSurfaceField.tile_size(region)
-			var owner := Vector2i((inside / span).round())
+			var span := TerrainTileField.spacing(region)
+			var owner := _crest_owner(inside, region)
 			var owner_bounds := Rect2(Vector2(owner)*span-Vector2.ONE*span*0.5,Vector2.ONE*span)
-			# At a cliff corner, another taller tile can touch this line with
-			# zero area. Use the approached crown's actual one-sided surface.
-			var approach := TerrainSurfaceField.height_bounds_in_cell(region,footprint,owner) \
-				if owner_bounds.encloses(footprint) else TerrainSurfaceField.height_bounds(region,footprint)
+			# A wall on the dual border belongs to both owners. Bound only the
+			# approached crown's own side, so a taller neighbour touching this
+			# line with zero area cannot veto the spill.
+			var approach := TerrainTileField.height_bounds_on_side(region,footprint,owner) \
+				if owner_bounds.encloses(footprint) else TerrainTileField.height_bounds(region,footprint)
 			if approach.y >= original[index] - EPS: continue
 			levels[crest] = maxf(levels[crest],minf(original[index],crown+DESCENT_CLAMP))
+
+
+## Lattice point whose dual cell holds the crest's approach side: the same
+## owner TerrainTileField.surface_y resolves `inside` to (a dual-cell midline
+## belongs to the higher-index point).
+static func _crest_owner(inside: Vector2, region = null) -> Vector2i:
+	return Vector2i(TerrainTileField.point_of(inside.x, region), TerrainTileField.point_of(inside.y, region))
 
 
 static func _build_fill(c: Dictionary, region, base: Vector2) -> Dictionary:
@@ -528,7 +547,7 @@ static func _build_fill(c: Dictionary, region, base: Vector2) -> Dictionary:
 	# report): seeding and relaxation both re-query the SAME lattice
 	# points' ground repeatedly (a point seeded by two overlapping discs,
 	# or examined as the shared neighbour of two different settled cells
-	# during relaxation) — TerrainSurfaceField.surface_y measured ~4us/call
+	# during relaxation) — TerrainTileField.surface_y measured ~4us/call
 	# in isolation, and the fill made thousands of calls per ctx() before
 	# this cache, dominating the 3m lattice's ~60ms cost (see FILL_STEP's
 	# PERF comment). INF is the "uncomputed" sentinel — ground never
@@ -649,39 +668,41 @@ static func _ground_at(region, base: Vector2, m1: int, gnd: PackedFloat32Array,
 	if g == INF:
 		var p: Vector2 = base + Vector2(i, j) * step
 		if bakes != null and region.terrain_grades.is_empty():
-			var cell := Vector2i(roundi(p.x / TILE), roundi(p.y / TILE))
-			if not bakes.has(cell): bakes[cell] = TerrainSurfaceField.bake_cell(region, cell.x, cell.y)
-			g = TerrainSurfaceField.sample_baked(bakes[cell], cell.x, cell.y, p.x, p.y)
+			var owner := Vector2i(TerrainTileField.point_of(p.x, region), TerrainTileField.point_of(p.y, region))
+			if not bakes.has(owner): bakes[owner] = TerrainTileField.bake_point(region, owner)
+			g = TerrainTileField.sample_baked(bakes[owner], owner, p.x, p.y, region)
 		else:
-			g = TerrainSurfaceField.surface_y(region, p.x, p.y)
+			g = TerrainTileField.surface_y(region, p.x, p.y)
 		gnd[idx] = g
 	return gnd[idx]
 
 
-## Source-owned natural ground has no construction grades. Reuse the ordinary
-## terrain kernel's baked cell controls across this dense water lattice. Cell
-## ownership still uses roundf, including negative half-cell boundaries.
+## Source-owned natural ground has no construction grades. Reuse the terrain
+## kernel's per-point bakes across this dense water lattice. Every sample is
+## owned by TerrainTileField.point_of, so a sample exactly on a dual-cell wall
+## resolves to the same side surface_y does.
 static func _sample_ground_lattice(region: HeightfieldRegion, base: Vector2,
 		side: int, step: float, rows: int = 0) -> PackedFloat32Array:
 	if rows == 0: rows = side
 	assert(region.terrain_grades.is_empty())
 	var out := PackedFloat32Array(); out.resize(side * rows)
-	var first_x := roundi(base.x / TILE)
-	var last_x := roundi((base.x + (side - 1) * step) / TILE)
+	var first_x := TerrainTileField.point_of(base.x, region)
+	var last_x := TerrainTileField.point_of(base.x + (side - 1) * step, region)
 	var previous_z := 2147483647
-	var cells: Array[PackedFloat32Array] = []
+	var points: Array[PackedFloat32Array] = []
 	for j in rows:
 		var z := base.y + j * step
-		var cz := roundi(z / TILE)
-		if cz != previous_z:
-			cells.clear()
-			for cx in range(first_x, last_x + 1):
-				cells.append(TerrainSurfaceField.bake_cell(region, cx, cz))
-			previous_z = cz
+		var pz := TerrainTileField.point_of(z, region)
+		if pz != previous_z:
+			points.clear()
+			for px in range(first_x, last_x + 1):
+				points.append(TerrainTileField.bake_point(region, Vector2i(px, pz)))
+			previous_z = pz
 		for i in side:
 			var x := base.x + i * step
-			var cx := roundi(x / TILE)
-			out[j * side + i] = TerrainSurfaceField.sample_baked(cells[cx - first_x], cx, cz, x, z)
+			var px := TerrainTileField.point_of(x, region)
+			# No grades (asserted above): sample the bake without the grade hook.
+			out[j * side + i] = TerrainTileField.sample_baked(points[px - first_x], Vector2i(px, pz), x, z)
 	return out
 
 
@@ -1351,7 +1372,7 @@ static func _cap_hydrostatic_fill(region, base: Vector2, side: int,
 ## levels[i] = min(levels[i-1], beds[i] + SURFACE_RIDE) is the CHASE target,
 ## same as before, but how the level GETS from levels[i-1] to that target
 ## across one 12m segment is now terrain-aware instead of an instant jump —
-## see _descend_segment. Where the rendered ground (TerrainSurfaceField,
+## see _descend_segment. Where the rendered ground (TerrainTileField,
 ## sampled every _DESCENT_STEP along the segment) stays well clear of a
 ## smooth (gentle-slope) interpolation between the two anchors, the level
 ## just rides that smooth trend (ordinary continuous-reach behaviour,
@@ -1558,7 +1579,7 @@ static func profile(trace: RiverTrace, region = null) -> Dictionary:
 ##     to end_target — the ordinary "continuous reach" trend, identical in
 ##     spirit to the old lvl = min(lvl, raw_i) instant chase but spread
 ##     across the whole segment instead of applied at the endpoint alone.
-##   - ground_hug(t): TerrainSurfaceField.surface_y(region, ...) + FILM — the
+##   - ground_hug(t): TerrainTileField.surface_y(region, ...) + FILM — the
 ##     lowest the level may physically sit at that point (can't run through
 ##     rock).
 ## The exposed level is whichever is HIGHER, but blended smoothly near their
@@ -1607,7 +1628,7 @@ static func _descend_segment(region, a: Vector2, b: Vector2, start_lvl: float, e
 	for k in range(1, steps + 1):
 		var t: float = float(k) / float(steps)
 		var p: Vector2 = a.lerp(b, t)
-		var ground: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
+		var ground: float = TerrainTileField.surface_y(region, p.x, p.y)
 		var smooth_t: float = lerpf(start_lvl, end_target, SlopeProfile.smootherstep(t))
 		var hug_t: float = ground + FILM
 		var w: float = SlopeProfile.smootherstep(clampf((hug_t - smooth_t) / _EASE_BAND, 0.0, 1.0))
@@ -1694,8 +1715,8 @@ static func _find_descent_spans(raw: PackedFloat32Array, arclen: PackedFloat32Ar
 ## competition re-quantizes the ramp right back into steps.
 static func _shape_descent_span(region, trace: RiverTrace, lo: int, hi: int,
 		anchor_start: float, anchor_end: float, arclen: PackedFloat32Array) -> Dictionary:
-	var ground_lo: float = TerrainSurfaceField.surface_y(region, trace.points[lo].x, trace.points[lo].y)
-	var ground_hi: float = TerrainSurfaceField.surface_y(region, trace.points[hi].x, trace.points[hi].y)
+	var ground_lo: float = TerrainTileField.surface_y(region, trace.points[lo].x, trace.points[lo].y)
+	var ground_hi: float = TerrainTileField.surface_y(region, trace.points[hi].x, trace.points[hi].y)
 	anchor_start = maxf(anchor_start, ground_lo + DESCENT_CLAMP)
 	anchor_end = maxf(anchor_end, ground_hi + DESCENT_CLAMP)
 	var span_len: float = arclen[hi] - arclen[lo]
@@ -1761,7 +1782,7 @@ static func _dense_span_curve(region, trace: RiverTrace, lo: int, hi: int,
 	var ground := PackedFloat32Array()
 	ground.resize(steps + 1)
 	for k in range(steps + 1):
-		ground[k] = TerrainSurfaceField.surface_y(region, pos[k].x, pos[k].y)
+		ground[k] = TerrainTileField.surface_y(region, pos[k].x, pos[k].y)
 	var knots: Array = _find_descent_knots(ground, steps, anchor_start, anchor_end)
 	var dense: PackedFloat32Array = _eval_descent_knots(knots, steps)
 	dense[0] = anchor_start
@@ -2163,10 +2184,10 @@ static func _fill_bilinear_coarse(c: Dictionary, p: Vector2,
 			if c.has("dry_ground"):
 				var memo: PackedFloat64Array = c.dry_ground
 				var index: int = cnr[1] * m1 + cnr[0]
-				if memo[index] == INF: memo[index] = TerrainSurfaceField.surface_y(c.region, q.x, q.y)
+				if memo[index] == INF: memo[index] = TerrainTileField.surface_y(c.region, q.x, q.y)
 				ground = memo[index]
 			else:
-				ground = TerrainSurfaceField.surface_y(c.region, q.x, q.y)
+				ground = TerrainTileField.surface_y(c.region, q.x, q.y)
 			dry_heights[k] = ground
 			lvl = minf(wet_ref, ground + EPS - SHORE_DRY_DEPTH)
 		acc += lvl * cnr[2]
@@ -2206,7 +2227,7 @@ static func _fill_bilinear_sub(c: Dictionary, p: Vector2, i0: int, j0: int,
 		var q: Vector2 = base + Vector2(cnr[0], cnr[1]) * FILL_SUB_STEP
 		var ground: float = sub_ground[idx]
 		if ground == INF:
-			ground = TerrainSurfaceField.surface_y(c.region, q.x, q.y)
+			ground = TerrainTileField.surface_y(c.region, q.x, q.y)
 		var lvl: float = sub_levels[idx]
 		if lvl == -INF:
 			lvl = _fill_bilinear_coarse(c, q)
@@ -2255,7 +2276,7 @@ static func _shore_support_level(c: Dictionary, p: Vector2, interpolated: float,
 		var q := a.lerp(b, t)
 		var limiting_head := lerpf(minf(head, dry_heights[edge.x] + EPS - SHORE_DRY_DEPTH),
 			minf(head, dry_heights[edge.y] + EPS - SHORE_DRY_DEPTH), t)
-		var edge_ground := TerrainSurfaceField.surface_y(c.region, q.x, q.y)
+		var edge_ground := TerrainTileField.surface_y(c.region, q.x, q.y)
 		var edge_support := _fine_edge_support(c, q, edge_ground + EPS - SHORE_DRY_DEPTH)
 		var excess := maxf(limiting_head - edge_support, 0.0)
 		var support := clampf(p.distance_to(q) / step, 0.0, 1.0)
@@ -2336,7 +2357,7 @@ static func _sample_level(tr: RiverTrace, si: int, p: Vector2, region = null) ->
 ## would otherwise have reached.
 static func wet(c: Dictionary, region, p: Vector2) -> bool:
 	var lvl: float = level_at(c, p)
-	return lvl > -INF and lvl > TerrainSurfaceField.surface_y(region, p.x, p.y) + EPS
+	return lvl > -INF and lvl > TerrainTileField.surface_y(region, p.x, p.y) + EPS
 
 
 ## Nearest-claimant helper shared by flow/grade: returns
@@ -2486,7 +2507,7 @@ static func _steep_scan(grounds: PackedFloat32Array, step: float) -> Array:
 ## triggering run just inside the rect's own edge still needs a FULL 24m of
 ## ground data ahead of it to correctly measure the drop, or the scan would
 ## silently truncate a real cliff's window at the clip boundary), and only
-## pays the expensive TerrainSurfaceField.surface_y call for that
+## pays the expensive TerrainTileField.surface_y call for that
 ## CONTIGUOUS sub-range (no gaps — a gap would corrupt _steep_scan's
 ## sliding-window index semantics). Behaviour inside the (doubly-grown)
 ## window is IDENTICAL to the unclipped walk — this only skips computing
@@ -2528,7 +2549,7 @@ static func _channel_ground_walk(tr: RiverTrace, region, step: float, clip_rect 
 			# nothing steep_spans could ever report for this trace/chunk.
 			return {"grounds": grounds, "pos": pos, "seg_of": seg_of}
 	for i in range(lo_idx, hi_idx + 1):
-		grounds.append(TerrainSurfaceField.surface_y(region, all_pos[i].x, all_pos[i].y))
+		grounds.append(TerrainTileField.surface_y(region, all_pos[i].x, all_pos[i].y))
 		pos.append(all_pos[i])
 		seg_of.append(all_seg_of[i])
 	return {"grounds": grounds, "pos": pos, "seg_of": seg_of}

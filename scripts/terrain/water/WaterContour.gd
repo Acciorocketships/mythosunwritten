@@ -41,7 +41,7 @@ const _WELD_EPS := 0.01       # position-key rounding for chaining segment endpo
 ## `_ground`-style helper convention rather than repeating the ctx.region
 ## destructure at every call site).
 static func _ground(ctx: Dictionary, p: Vector2) -> float:
-	return TerrainSurfaceField.surface_y(ctx.region, p.x, p.y)
+	return TerrainTileField.surface_y(ctx.region, p.x, p.y)
 
 
 static func _wet_f(ctx: Dictionary, p: Vector2) -> float:
