@@ -27,21 +27,48 @@ func test_photographed_bank_keeps_connected_water_above_its_lower_reach()->void:
 func test_rescued_bank_beside_a_dying_wall_has_no_step()->void:
 	_assert_connected_rising_line(Vector2(1191.75,183.625))
 
-func _assert_connected_rising_line(start:Vector2)->void:
+## PARKED (dual-grid water, 2026-10-01): the same scan also hits x
+## 1225..1231, z -56.375. A 3 m rescue node on the wall corner (1230,-54) reads
+## the wall top (14 m, its point_of side) and judges the coarse water there
+## (13.7) dry, so the rescued cell meets the untouched coarse cell at x = 1230
+## 0.032 m low (threshold 0.01). Pending, not failing: it still measures the
+## line and reports the current values. Tried and rejected: a 3 m rescue
+## lattice shifted by 1.5 m (no longer nests: 0.119 m here, new pit at
+## (1112.5,-89.375), the bank at x 1247..1254 z -8.375 tilts) and a 2 m nested
+## lattice (pit 0.026 m at (1192.25,183.625), the same bank climbs 0.35 m;
+## fill solve +42..55%). Patches: the session scratchpad's
+## wb/rescue_shift_3m.patch and wb/rescue_2m.patch. Follow-up: per-side ground
+## for rescue nodes on a dual border, through builder and evaluator.
+func test_rescued_cell_meets_the_coarse_surface_beside_a_wall_corner()->void:
+	var m:=_measure_rising_line(Vector2(1225,-56.375))
+	var passes:bool=m.dry==0 and m.pit<=.001 and m.jump<=.01
+	pending("parked: rescue corner on a dual border judged dry against the wall top; now dry=%d pit=%.4f jump=%.4f (threshold .01) would_pass=%s; tried 3 m half-shift and 2 m nested lattice, both regress other sites (wb/rescue_shift_3m.patch, wb/rescue_2m.patch); follow-up: per-side ground for border rescue nodes" % [m.dry,m.pit,m.jump,str(passes)])
+
+## The 6 m line from `start` along +x at 1 cm: dry samples, the deepest pit
+## below the start (lower reach) level, and the largest 1 cm step.
+func _measure_rising_line(start:Vector2)->Dictionary:
 	var field:=fields().water_at(start+Vector2(3,0))
 	var lower:=field.level_at(start)
 	var worst:=INF
 	var previous:=lower
 	var jump:=0.0
+	var dry:=0
 	for i in 601:
 		var p:=start+Vector2(i*.01,0)
 		var level:=field.level_at(p)
-		assert_true(is_finite(level),"the whole photographed bank is wet")
+		if not is_finite(level):
+			dry+=1
+			continue
 		worst=minf(worst,level)
 		jump=maxf(jump,absf(level-previous))
 		previous=level
-	assert_gte(worst,lower-.001,"the connected upper water cannot form a pit below the lower reach beside a high dry bank")
-	assert_lte(jump,.01,"coarse/fine ownership cannot insert a step into the same water body")
+	return {"dry":dry,"pit":lower-worst,"jump":jump}
+
+func _assert_connected_rising_line(start:Vector2)->void:
+	var m:=_measure_rising_line(start)
+	assert_eq(m.dry,0,"the whole photographed bank is wet")
+	assert_lte(m.pit,.001,"the connected upper water cannot form a pit below the lower reach beside a high dry bank")
+	assert_lte(m.jump,.01,"coarse/fine ownership cannot insert a step into the same water body")
 
 ## Same re-pinned corner as above: the window spans the rising reach and its
 ## dry bank (x 1183..1191, z 16..21).
