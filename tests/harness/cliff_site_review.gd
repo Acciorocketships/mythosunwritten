@@ -83,6 +83,9 @@ func _read_args() -> void:
 			"--plain": _plain = true
 			"--categories": _categories = true
 			"--full": _full = true
+			# Low-pass the natural height field (metres); read before the world
+			# is instanced, so every plan sees it.
+			"--lowpass": HeightfieldPlan.LOWPASS_M = float(next)
 			"--override":
 				# res://path=/abs/source: start from another revision of a
 				# reloadable script (a matched before/after in one process).

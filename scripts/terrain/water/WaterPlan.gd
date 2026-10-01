@@ -241,7 +241,7 @@ func smooth_h(p: Vector2) -> float:
 func noise_h(p: Vector2) -> float:
 	var cached = _detail_samples.get(p)
 	if cached != null: return float(cached) * amplitude
-	var value := HeightfieldPlan.height01(Vector3(p.x, 0.0, p.y), world_seed, true)
+	var value := HeightfieldPlan.natural01(Vector3(p.x, 0.0, p.y), world_seed)
 	if _detail_keys.size() == FIELD_SAMPLE_LIMIT:
 		_detail_samples.erase(_detail_keys[_detail_cursor])
 		_detail_keys[_detail_cursor] = p

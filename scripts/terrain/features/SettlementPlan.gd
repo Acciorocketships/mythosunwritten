@@ -74,8 +74,8 @@ func _compute_site(super_cell: Vector2i) -> Dictionary:
 		for offset: Vector2 in [Vector2.ZERO, Vector2(-6.0, -6.0),
 				Vector2(6.0, -6.0), Vector2(-6.0, 6.0), Vector2(6.0, 6.0)]:
 			var sample := point + offset
-			heights.append(HeightfieldPlan.height01(
-				Vector3(sample.x, 0.0, sample.y), _world_seed, true))
+			heights.append(HeightfieldPlan.natural01(
+				Vector3(sample.x, 0.0, sample.y), _world_seed))
 		var lo := heights[0]
 		var hi := heights[0]
 		for height: float in heights:

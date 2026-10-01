@@ -34,7 +34,18 @@ var max_storeys: int          # caps column height -> bounds clamp margin
 var aggregation: String       # "min" (floor) | "mean" (nearest) | "max" (ceil)
 var max_step: int = 1         # max storey difference between cardinal neighbours (1=classic, 3=cliffs)
 
+## Low-pass tuning knob (spec 2026-09-30 dual-grid tiles, section 9 risk 1).
+## Metres; 0 = off (byte-identical to the unfiltered field). When > 0 the
+## NATURAL height (rendered field with detail, before the water carve) is a
+## separable tent filter of height01 over offsets {-r, 0, +r} per axis with
+## weights (1, 2, 1) / 4, r = LOWPASS_M. The carve is never filtered, so river
+## channels stay sharp. Process-wide: set it BEFORE any plan is built; every
+## memo (per-plan _samples, WaterPlan.noise_h) assumes it never changes.
+static var LOWPASS_M: float = 0.0
+const _TENT: Array = [1.0, 2.0, 1.0]
+
 var _raw_override: Callable = Callable()
+var _lowpass_seen: float = -1.0
 
 # Optional water carve (untyped to avoid a WaterPlan<->HeightfieldPlan
 # class-resolution cycle; duck-typed: needs carve_at(x, z) -> float).
@@ -53,6 +64,10 @@ var _sample_cursor: int = 0
 
 
 func _sample(cx: int, cz: int) -> Array:
+	if _lowpass_seen < 0.0:
+		_lowpass_seen = LOWPASS_M
+	assert(_lowpass_seen == LOWPASS_M,
+		"HeightfieldPlan.LOWPASS_M changed after this plan sampled; set it before building plans")
 	var key := Vector2i(cx, cz)
 	var s = _samples.get(key)
 	if s == null:
@@ -60,7 +75,7 @@ func _sample(cx: int, cz: int) -> Array:
 		if _raw_override.is_valid():
 			h = _raw_override.call(cx, cz)
 		else:
-			h = _height01(Vector3(float(cx) * POINT, 0.0, float(cz) * POINT)) * height_amplitude
+			h = natural01(Vector3(float(cx) * POINT, 0.0, float(cz) * POINT), world_seed) * height_amplitude
 		var carve: float = 0.0
 		if _water_plan != null:
 			carve = _water_plan.carve_at(float(cx) * POINT, float(cz) * POINT)
@@ -156,6 +171,23 @@ static func height01(pos: Vector3, p_world_seed: int, include_detail: bool = tru
 
 func _height01(pos: Vector3) -> float:
 	return height01(pos, world_seed, true)
+
+
+## The rendered natural field in [0, 1]: height01(include_detail=true), low-passed
+## by LOWPASS_M when set. Everything that compares against rendered ground
+## (plan samples, pre-carve levels, settlement relief) reads this; river routing
+## deliberately keeps the unfiltered smooth field.
+static func natural01(pos: Vector3, p_world_seed: int) -> float:
+	var r := LOWPASS_M
+	if r <= 0.0:
+		return height01(pos, p_world_seed, true)
+	var sum := 0.0
+	for ix in 3:
+		for iz in 3:
+			sum += _TENT[ix] * _TENT[iz] * height01(
+				Vector3(pos.x + float(ix - 1) * r, pos.y, pos.z + float(iz - 1) * r),
+				p_world_seed, true)
+	return sum / 16.0
 
 
 ## Apply the aggregation rounding mode to a quotient: min=floor (hug valleys),
