@@ -4,11 +4,14 @@ extends GutTest
 func _terraced_region() -> HeightfieldRegion:
 	var storeys: Dictionary = {}
 	var levels: Dictionary = {}
-	for z in range(-12, 13):
-		for x in range(-12, 13):
-			var cell := Vector2i(x, z)
-			storeys[cell] = 0 if x <= -1 else (1 if x == 0 else 2)
-			levels[cell] = 0
+	# Keys are 12 m terrain points. This reproduces the 24 m cell fixture's
+	# ground exactly: flat 0 up to x = -12, a one-storey ramp to x = 0, the
+	# middle terrace flat on x 0..12, a ramp to x = 24 and the upper terrace.
+	for z in range(-24, 25):
+		for x in range(-24, 25):
+			var point := Vector2i(x, z)
+			storeys[point] = 0 if x <= -1 else (1 if x <= 1 else 2)
+			levels[point] = 0
 	return HeightfieldRegion.new(storeys, levels)
 
 
