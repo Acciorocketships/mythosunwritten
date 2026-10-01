@@ -16,7 +16,7 @@ QA artifacts (gitignored `*.png`/`*.jpg`); this note is the versioned record.
 | `before-lowland/00`, `after-lowland/00` | Lowland sites `low_e`, `plan_b`, `s28p1`, `wide_c`, `wide_d` (+ `_categories`). |
 | `compare-massif/`, `compare-lowland/` | Labelled side-by-side composites (`tests/harness/dual_grid_side_by_side.py`): "current (24 m cells)" / "dual grid (12 m tiles)" / "dual grid + 12 m low-pass". |
 | `before-town/00`, `after-town/00`, `compare-town/` | Town-site captures `town_a`, `town_b`, `town_c`, `plan_t` (+ `_categories`): baseline vs branch ground under generated towns, and the labelled side-by-side composites. |
-| `before-kit/`, `after-kit/` | `kit_town_review` renders of flat-ground kit towns (city seeds 2 and 3, standard size): `overview`, `top` and four `orbit0-3` views each, baseline vs branch. No `compare-kit/` composite was made. |
+| `before-kit/`, `after-kit/` | `kit_town_review` renders of flat-ground kit towns (city seeds 2 and 3, standard size): `overview`, `top` and four `orbit0-3` views each, baseline vs branch; `compare-kit/` holds the labelled side-by-sides. Layouts, gardens and turf are visually unchanged. |
 
 Cameras are identical between columns. Geography differs: points sample the field at 12 m, so
 every seed's ground is resampled (spec risk 4); rivers, roads and towns move with it.

@@ -6,7 +6,7 @@ extends RefCounted
 ## with the terrain kernel.
 const TILE_WORLD := 24.0
 ## Collection 5 is a complete broad 311-blade patch rather than one small
-## tuft. An 18×18 primary lattice closes saturated beds while the bake's broad
+## tuft. A 17×17 primary lattice closes saturated beds while the bake's broad
 ## root spread keeps neighbouring patches from reading as repeated clumps.
 ## Seventeen slots per side are 27.8% fewer candidates than the former 20×20
 ## field while the 3.11 m patch still overlaps its 1.41 m pitch by over 2×.
