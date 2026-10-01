@@ -1,27 +1,35 @@
 extends GutTest
 
-func _historical_free_shore() -> Dictionary:
-	# Keep the original free-shore input as an interpolation regression.
-	# September 15 supplies its formerly dry cliff crest, so the production
-	# outlet is now fully wet and no longer has this inland shoreline.
-	# Only field inputs are frozen: every query below uses production code.
-	var data:Dictionary=FileAccess.open("res://tests/fixtures/september15/water-drops/shore_before.bin",FileAccess.READ).get_var()
-	# The fill was frozen over the tile-era flat ledge (29,-72). Per edge
-	# (September 27) that ledge's two-storey lip dies at its south-west
-	# corner, where (29,-71) one storey lower closes a slope ring, and the
-	# lip would fade along its whole side, no longer the ground the frozen
-	# fill was solved for. Raising that one cell to the ledge's storey keeps
-	# the frozen fill's ground exactly: the tested rows lie on the ledge's
-	# north quadrant, which is then flat at 16 m as before.
-	data.storeys[Vector2i(29,-71)]=4
-	return {"region":HeightfieldRegion.new(data.storeys,data.levels,data.carved),
-		"fill":data.fill,"fill_base":data.fill_base}
+## The three photo-16 free-shore interpolation tests below were re-pinned
+## (dual-grid terrain, 2026-09-30). Their frozen input
+## (tests/fixtures/september15/water-drops/shore_before.bin) was a fill solved
+## by the retired pre-September-15 WaterField over retired 24 m cell ground;
+## its generator (september15_water_drop_legacy_probe.gd) runs that retired
+## field, so it cannot be re-frozen on 12 m points, and reading its cell-keyed
+## storeys as points put the frozen fill over the wrong ground. They now run on
+## a LIVE free shoreline of the same photographed geography, found by
+## tests/harness/september10_free_shore_scan.gd over chunks (2..4,-11..-9): a
+## 6 x 6 m window, origin on a whole metre, whose ground is flat (every 1 m
+## sample within 1 mm) and which holds both wet and dry samples, measured with
+## the routine below. The window at (888,-1812) in chunk (4,-10) has 78
+## flat-ground crossings. Limits are unchanged.
+const FREE_SHORE_CORNER := Vector2(888,-1812)
+
+func _free_shore() -> Dictionary:
+	var fields:=preload("res://tests/fixtures/September10WaterFields.gd").get_fields()
+	return fields.water(Vector2i((FREE_SHORE_CORNER/192.0).floor())).raw_context()
 
 func test_photographed_connected_water_does_not_form_a_cliff_over_flat_ground()->void:
 	var fields:=preload("res://tests/fixtures/September10WaterFields.gd").get_fields()
 	for pair in [[Vector2(831,-1809),Vector2(831,-1806)],
 			[Vector2(879,-1809),Vector2(879,-1806)],
-			[Vector2(825,-1770),Vector2(825,-1767)]]:
+			# Re-pinned (dual-grid terrain, 2026-09-30): (825,-1767) is now the
+			# dry shore of the 12 m resampled river. The nearest pair 3 m apart
+			# with flat ground between them and wet at every 1 m sample within
+			# 3 m of both ends (connected water, not a shoreline taper) that
+			# still carries a real descent (> 0.3 m) is (825,-1774)/(825,-1771)
+			# (tests/harness/september10_photo16_rescan.gd).
+			[Vector2(825,-1774),Vector2(825,-1771)]]:
 		var a:Vector2=pair[0];var b:Vector2=pair[1]
 		var field:=fields.water(Vector2i((a/192.0).floor()))
 		assert_true(field.is_wet(a),"retain the lower connected reach at "+str(a))
@@ -79,10 +87,12 @@ func test_an_existing_gentle_descent_is_not_a_conflicting_head_break()->void:
 	assert_eq(levels,original,"a continuous authored descent retains its height and cadence")
 
 func test_photo16_water_enters_the_ledge_at_ground_height()->void:
-	var ctx:=_historical_free_shore()
+	var ctx:=_free_shore()
 	var crossings:=0;var was_wet:=false;var worst:=0.0
-	for i in 201:
-		var p:=Vector2(684+i*.01,-1737)
+	# The window's water lies to the west: walk its middle row from the dry
+	# east edge into the water.
+	for i in 601:
+		var p:=FREE_SHORE_CORNER+Vector2(6-i*.01,3)
 		var wet:=WaterField.wet(ctx,ctx.region,p)
 		if wet and not was_wet:
 			worst=maxf(worst,WaterField.level_at(ctx,p)-TerrainSurfaceField.surface_y(ctx.region,p.x,p.y))
@@ -92,23 +102,31 @@ func test_photo16_water_enters_the_ledge_at_ground_height()->void:
 	assert_lte(worst,.06,"a dry-to-wet crossing cannot begin above the ground as a floating sheet")
 
 func test_photo16_fine_support_boundary_has_no_vertical_water_step()->void:
-	var ctx:=_historical_free_shore()
-	for z in [-1739.1,-1739.5,-1737.0]:
-		var a:=Vector2(686.99,z);var b:=Vector2(687,z)
+	var ctx:=_free_shore()
+	# x = 891 is a coarse (6 n + 3) and fine (3 n) fill lattice line inside the
+	# window: every wet crossing of it over flat ground is checked.
+	var checked:=0
+	for row in 61:
+		var z:=FREE_SHORE_CORNER.y+row*.1
+		var a:=Vector2(890.99,z);var b:=Vector2(891,z)
 		var ga:=TerrainSurfaceField.surface_y(ctx.region,a.x,a.y)
 		var gb:=TerrainSurfaceField.surface_y(ctx.region,b.x,b.y)
 		assert_almost_eq(ga,gb,.001,"the interpolation boundary crosses one flat ledge")
-		assert_lte(absf(WaterField.level_at(ctx,a)-WaterField.level_at(ctx,b)),.03,
+		var la:=WaterField.level_at(ctx,a);var lb:=WaterField.level_at(ctx,b)
+		if la<=ga+WaterField.EPS or lb<=gb+WaterField.EPS:continue
+		checked+=1
+		assert_lte(absf(la-lb),.03,
 			"fine rescue cannot insert a vertical step into the same upper water")
+	assert_gt(checked,3,"exercise wet water across the lattice line")
 
 func test_photo16_entire_ledge_has_continuous_wet_entries_and_refinement_seams()->void:
-	var ctx:=_historical_free_shore()
+	var ctx:=_free_shore()
 	var crossing_count:=0;var worst_entry:=0.0;var worst_step:=0.0
 	for axis in 2:
 		for row in 61:
 			var previous:Dictionary={}
 			for column in 601:
-				var p:=Vector2(684,-1740)+(Vector2(column*.01,row*.1) if axis==0 else Vector2(row*.1,column*.01))
+				var p:=FREE_SHORE_CORNER+(Vector2(column*.01,row*.1) if axis==0 else Vector2(row*.1,column*.01))
 				var ground:=TerrainSurfaceField.surface_y(ctx.region,p.x,p.y)
 				var level:=WaterField.level_at(ctx,p)
 				var wet:=is_finite(level) and level>ground+WaterField.EPS

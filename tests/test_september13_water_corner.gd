@@ -6,14 +6,22 @@ func fields()->WorldFieldBlockCache:
 		_fields=WorldFieldBlockCache.new(TerrainWorldTuning.make_heightfield(2697992464,water),water,26,0,64)
 	return _fields
 
+## Re-pinned (dual-grid terrain, 2026-09-30): the 12 m tiles moved the
+## photographed bank at x 1103..1109, z 35.625 (that line is no longer wet).
+## tests/harness/september13_water_corner_scan.gd scans chunks (4..6,-1..1) of
+## the production seed for the same shape: a 6 m +x line wet at every 0.25 m
+## sample, its far end >= 0.3 m above its near (lower-reach) end, beside a high
+## dry bank (a dry sample 3 m to the side of the far half standing above the
+## far-end water). The nearest strong hit is x 1185..1191, z 18.625: rise
+## 0.78 m, dry bank ground 15.77 m at (1190,21.625) over 15.0 m water.
 func test_photographed_bank_keeps_connected_water_above_its_lower_reach()->void:
-	var field:=fields().water_at(Vector2(1106,35.625))
-	var lower:=field.level_at(Vector2(1103,35.625))
+	var field:=fields().water_at(Vector2(1188,18.625))
+	var lower:=field.level_at(Vector2(1185,18.625))
 	var worst:=INF
 	var previous:=lower
 	var jump:=0.0
 	for i in 601:
-		var p:=Vector2(1103+i*.01,35.625)
+		var p:=Vector2(1185+i*.01,18.625)
 		var level:=field.level_at(p)
 		assert_true(is_finite(level),"the whole photographed bank is wet")
 		worst=minf(worst,level)
@@ -22,13 +30,15 @@ func test_photographed_bank_keeps_connected_water_above_its_lower_reach()->void:
 	assert_gte(worst,lower-.001,"the connected upper water cannot form a pit below the lower reach beside a high dry bank")
 	assert_lte(jump,.01,"coarse/fine ownership cannot insert a step into the same water body")
 
+## Same re-pinned corner as above: the window spans the rising reach and its
+## dry bank (x 1183..1191, z 16..21).
 func test_photographed_swimming_surface_matches_the_visible_corner()->void:
-	var field:=fields().water_at(Vector2(1106,35.625))
-	var sampler:=WaterSampler.build(field.raw_context(),field._region,Vector2(1101,30),1,10,7)
+	var field:=fields().water_at(Vector2(1188,18.625))
+	var sampler:=WaterSampler.build(field.raw_context(),field._region,Vector2(1183,16),1,10,7)
 	var worst:=0.0
 	for z in 11:
 		for x in 81:
-			var p:=Vector2(1101+x*.1,30+z*.5)
+			var p:=Vector2(1183+x*.1,16+z*.5)
 			if not field.is_wet(p):continue
 			worst=maxf(worst,absf(sampler.level_at(p)-field.level_at(p)))
 	assert_lte(worst,.001,"the frozen swimming surface must agree with visible water at the reported bank")
