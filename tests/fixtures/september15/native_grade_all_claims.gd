@@ -3,7 +3,7 @@ extends RefCounted
 ## Resolve sealed construction constraints into the ordinary world lattice.
 ## The native cliff classifier and native pieces consume the resulting controls;
 ## no rendered tile or collision triangle is subsequently bent by a fine collar.
-const TILE := TerrainSurfaceField.TILE
+const TILE := TerrainTileField.SPACING
 
 static func controls(grade: TerrainGradePatch, source: HeightfieldRegion) -> Dictionary:
 	var plan = source.plan
@@ -21,7 +21,7 @@ static func controls(grade: TerrainGradePatch, source: HeightfieldRegion) -> Dic
 	var result := HeightfieldRegion.new(natural._storeys,natural._levels,natural._carved)
 	for z in range(lo.y,hi.y+1):
 		for x in range(lo.x,hi.x+1):
-			if not natural.has_surface_cell(x,z): continue
+			if not natural.has_surface_point(x,z): continue
 			var height := natural.surface_height(x,z)
 			var graded := grade.surface_y(Vector2(x,z)*TILE,height)
 			if absf(height-graded) > .00001:
@@ -53,13 +53,13 @@ static func controls(grade: TerrainGradePatch, source: HeightfieldRegion) -> Dic
 			var unsupported := false
 			for offset: Vector2 in [Vector2.ZERO,Vector2(-1,-1),Vector2(-1,1),Vector2(1,-1),Vector2(1,1)]:
 				var point: Vector2=request[0]+offset*request[1]*.999
-				if TerrainSurfaceField.surface_y(result,point.x,point.y)<request[4]-.00001:
+				if TerrainTileField.surface_y(result,point.x,point.y)<request[4]-.00001:
 					unsupported=true
 			if not unsupported: continue
 			for z in range(request[2].y,request[3].y+1):
 				for x in range(request[2].x,request[3].x+1):
 					var key:=Vector2i(x,z)
-					if not result.has_surface_cell(x,z) or owners.has(key): continue
+					if not result.has_surface_point(x,z) or owners.has(key): continue
 					if result.surface_height(x,z)>=request[4]: continue
 					result.native_control_heights[key]=request[4]
 					changed=true

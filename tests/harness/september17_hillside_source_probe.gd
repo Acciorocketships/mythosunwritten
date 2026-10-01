@@ -29,8 +29,8 @@ func _initialize()->void:
   var centerline:=[]
   for i in river.points.size():
    var p:Vector2=river.points[i]
-   centerline.append({"x":p.x,"z":p.y,"ground":TerrainSurfaceField.surface_y(owned,p.x,p.y),"bed":river.beds[i],"head":profile.levels[i]})
-  river_reports.append({"source":str(river.source_cell),"source_pool":river.source_pool!=null,"nearest":str(river.points[nearest]),"bed":river.beds[nearest],"width":river.widths[nearest],"level":profile.levels[nearest],"ground":TerrainSurfaceField.surface_y(region,river.points[nearest].x,river.points[nearest].y),"centerline":centerline})
+   centerline.append({"x":p.x,"z":p.y,"ground":TerrainTileField.surface_y(owned,p.x,p.y),"bed":river.beds[i],"head":profile.levels[i]})
+  river_reports.append({"source":str(river.source_cell),"source_pool":river.source_pool!=null,"nearest":str(river.points[nearest]),"bed":river.beds[nearest],"width":river.widths[nearest],"level":profile.levels[nearest],"ground":TerrainTileField.surface_y(region,river.points[nearest].x,river.points[nearest].y),"centerline":centerline})
   queue.free()
  var samples:=[]
  for j in rows:

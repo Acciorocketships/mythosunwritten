@@ -200,7 +200,7 @@ func test_canonical_context_is_memoized_and_resource_free_on_flat_dry_fields() -
 					feasible_count += 1
 					var middle: Dictionary = route.connections[route.connections.size() / 2]
 					var point := Vector2(middle.a + middle.b) \
-						* TerrainSurfaceField.TILE * 0.5
+						* HeightfieldPlan.CELL * 0.5
 					visible_cells += plan.context_for(
 						WorldFieldBlockCache.key_of(point)).connection_masks.size()
 	assert_gt(node_count, 0, "pinned flat field has provisional nodes")

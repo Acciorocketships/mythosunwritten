@@ -23,7 +23,7 @@ func _init() -> void:
 				for i in points.size():
 					var p:=points[i]
 					var field:=fields.water_at(p)
-					var ground:=TerrainSurfaceField.surface_y(fields.region_at(p),p.x,p.y)
+					var ground:=TerrainTileField.surface_y(fields.region_at(p),p.x,p.y)
 					var wet:=field.is_wet(p)
 					passed=passed and not wet
 					samples.append({"point":str(p),"ground":ground,"level":field.level_at(p) if is_finite(field.level_at(p)) else null,"wet":wet})

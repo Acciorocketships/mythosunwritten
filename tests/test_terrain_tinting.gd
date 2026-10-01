@@ -1,6 +1,6 @@
 extends GutTest
 # Every terrain surface must pull albedo from THE shared material and modulate
-# it by the SAME biome ground tint — lips/aprons/skirt may never drift from the
+# it by the SAME biome ground tint — skirt, slope and village lips may never drift from the
 # sheet (owner: "they really should be pulling from the exact same colour/
 # material so that we cant see the seams between them, and so if we want to
 # change the grass colour in the future we don't run into issues").
@@ -105,20 +105,61 @@ func test_seed_zero_keeps_dressing_untinted_white() -> void:
 	assert_eq(tints[0], Color(1, 1, 1), "seed 0 (tests) = identity tint")
 
 
-func test_built_dressing_multimeshes_carry_instance_colours() -> void:
-	# Pin the cliff topology independently of seed geography; the real biome
-	# field still supplies every committed instance's tint.
+func test_inner_corner_wall_texture_tiles_without_a_light_dark_stack_seam() -> void:
+	# The village retaining rims stack the KayKit inner wall piece: its two
+	# boundary rings are retiled to the straight wall's seam row.
+	Dress._ensure_loaded()
+	var mesh: Mesh = Dress._pieces["inner_wall"][0]
+	var arrays := mesh.surface_get_arrays(0)
+	var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var uvs: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV]
+	var lo := INF
+	var hi := -INF
+	for vertex: Vector3 in vertices:
+		lo = minf(lo, vertex.y)
+		hi = maxf(hi, vertex.y)
+	var bottom: Dictionary = {}
+	var top: Dictionary = {}
+	var interior_v: Dictionary = {}
+	for i in vertices.size():
+		var key := Vector2(snappedf(vertices[i].x, 0.0001),
+			snappedf(vertices[i].z, 0.0001))
+		if absf(vertices[i].y - lo) < 0.001:
+			bottom[key] = uvs[i]
+		elif absf(vertices[i].y - hi) < 0.001:
+			top[key] = uvs[i]
+		else:
+			interior_v[snappedf(uvs[i].y, 0.0001)] = true
+	assert_eq(bottom.size(), top.size(),
+		"stacked inner modules expose matching boundary rings")
+	for key: Vector2 in bottom:
+		assert_true(top.has(key), "top and bottom rings share the same sculpted profile")
+		if top.has(key):
+			assert_true((bottom[key] as Vector2).is_equal_approx(top[key] as Vector2),
+				"stacked rings sample the same atlas texel, removing the hard stripe")
+	assert_gt(interior_v.size(), 4,
+		"only the seam rings are retiled; the inner wall keeps its interior texture")
+
+
+func test_terrain_sheet_tint_is_the_bilinear_24m_lattice() -> void:
+	# The sheet's per-vertex tint is the biome tint bilinear on the 24 m
+	# corner lattice (one source with the slope sheet and village turf).
+	var mesher := Mesher.new()
+	mesher.prepare_resources()
+	mesher.set_seed(OWNER_SEED)
 	var plan := Plan.new(OWNER_SEED, 22.0, 8, "mean", 3)
-	plan.set_raw_height_override(func(cx: int, _cz: int) -> float:
-		return 12.0 if cx <= -4 else 0.0)
-	var region = plan.compute_region(-4, -36, 12)
-	var dressing := Dress.build(region, -8, -40, 8, OWNER_SEED)
-	var any := false
-	for child in dressing.get_children():
-		var mm: MultiMesh = (child as MultiMeshInstance3D).multimesh
-		if mm.instance_count == 0:
+	plan.set_raw_height_override(func(_cx: int, _cz: int) -> float: return 0.0)
+	var data := mesher.compute_chunk(Vector2i(0, -4), plan.compute_region(8, -56, 16))
+	var arrays: Array = data.surface_arrays
+	var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var colors: PackedColorArray = arrays[Mesh.ARRAY_COLOR]
+	var checked := 0
+	for i in vertices.size():
+		var v := vertices[i]
+		if fposmod(v.x, 24.0) != 0.0 or fposmod(v.z, 24.0) != 0.0:
 			continue
-		assert_true(mm.use_colors, "%s must use per-instance colours" % child.name)
-		any = true
-	assert_true(any, "the pinned cliff must place dressing pieces")
-	dressing.free()
+		var want := BiomeRegistry.ground_tint_at(Vector3(v.x, 0.0, v.z), OWNER_SEED)
+		assert_almost_eq(colors[i].r, want.r, 0.002, "lattice corner tint (r) at %s" % v)
+		assert_almost_eq(colors[i].g, want.g, 0.002, "lattice corner tint (g) at %s" % v)
+		checked += 1
+	assert_gt(checked, 60, "the chunk's lattice corners were checked")

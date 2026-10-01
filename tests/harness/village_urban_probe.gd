@@ -91,9 +91,9 @@ static func _route_stair_report(fabric: VillageUrbanFabricPlan,
 		assert(link != null)
 		var start := _point_on_link(link, run.start_distance)
 		var end := _point_on_link(link, run.end_distance)
-		var start_ground := TerrainSurfaceField.surface_y(frame.region,
+		var start_ground := TerrainTileField.surface_y(frame.region,
 			start.x, start.z)
-		var end_ground := TerrainSurfaceField.surface_y(frame.region,
+		var end_ground := TerrainTileField.surface_y(frame.region,
 			end.x, end.z)
 		out.append({
 			"key": String(run.stable_key),

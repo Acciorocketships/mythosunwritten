@@ -9,8 +9,10 @@ const SEED:=2697992464
 func after_each()->void:
  STYLE.apply("sheet")
 
+## A straight wall along x centred on the pose origin, plateau at lower z.
 func _wall(pose:Transform3D,width:float,height:float)->Dictionary:
- return {"replay_recipe":{"kind":"wall","width":width,"height":height,"left_end":true,"right_end":true,"abut":Vector2i.ZERO},"transform":pose}
+ var o:=pose.origin
+ return FIELD.straight_wall(Vector2(o.x-width*.5,o.z),Vector2(o.x+width*.5,o.z),Vector2(0,1),o.y+height,o.y)
 
 ## Plateau `top` high for z < 0, `low` beyond.
 func _step(top:float,low:=0.0)->Callable:
@@ -81,12 +83,3 @@ func test_steep_slope_claims_its_grass_points()->void:
  assert_false(sample.is_empty(),"The steep slope still claims the point")
  assert_eq(float(sample.edge_distance),0.0,"and grows no grass there")
 
-func test_underlip_keeps_the_lip_and_starts_below_it()->void:
- STYLE.apply("sheet_bedrock+underlip")
- var env=ENVELOPE.build(Rect2(-20,-20,40,40),_step(8.0),Callable(),SEED)
- # The cell overhangs the visible wall line by OVERHANG.
- var wall_line:=-ENVELOPE.OVERHANG
- assert_lt(env.at(Vector2(0,wall_line+.5)),8.0-ENVELOPE.LIP_DROP+.5,"The slope leaves the wall under the lip")
- assert_almost_eq(env.at(Vector2(0,wall_line-1.0)),8.0,.01,"The plateau behind the lip keeps its own ground")
- var pieces:={"grass_lip":[Transform3D(Basis(),Vector3(0,8,wall_line))]}
- assert_eq((env.uncovered(pieces).grass_lip as Array).size(),1,"Native lips stay")

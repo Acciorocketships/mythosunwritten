@@ -10921,8 +10921,8 @@ static func _dry_water_context(region: HeightfieldRegion,
 	context._ctx = {"ponds": [], "rivers": [], "buckets": {},
 		"region": region}
 	context._region = region
-	var centre := Vector2(cell) * TerrainSurfaceField.TILE
-	var radius := float(PRODUCTION_REGION_RADIUS) * TerrainSurfaceField.TILE
+	var centre := Vector2(cell) * HeightfieldPlan.CELL
+	var radius := float(PRODUCTION_REGION_RADIUS) * HeightfieldPlan.CELL
 	context._coverage = Rect2(centre - Vector2.ONE * radius,
 		Vector2.ONE * radius * 2.0)
 	context._shore_limit = 0.0

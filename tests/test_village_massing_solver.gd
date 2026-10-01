@@ -90,7 +90,7 @@ func test_reported_seed_exposes_a_viable_compact_terrain_led_core() -> void:
 	var settlements := SettlementPlan.new(seed_value, water_plan)
 	var site := settlements.site_for(Vector2i(0, -1))
 	assert_false(site.is_empty())
-	var centre := Vector2(site.cell) * TerrainSurfaceField.TILE
+	var centre := Vector2(site.cell) * HeightfieldPlan.CELL
 	var tier := VillageProgram.production_tier(0.5)
 	var plan := VillageMassingSolver.solve(VillageTerrainView.from_fields(fields),
 		centre, Vector2.RIGHT,

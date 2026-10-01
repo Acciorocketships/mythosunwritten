@@ -48,11 +48,11 @@ func _init() -> void:
 	_print_phase("ground_tint", started)
 	started = Time.get_ticks_usec()
 	for anchor: Vector2 in anchors:
-		TerrainSurfaceField.surface_y(region, anchor.x, anchor.y)
-		TerrainSurfaceField.surface_y(region, anchor.x + 1.0, anchor.y)
-		TerrainSurfaceField.surface_y(region, anchor.x - 1.0, anchor.y)
-		TerrainSurfaceField.surface_y(region, anchor.x, anchor.y + 1.0)
-		TerrainSurfaceField.surface_y(region, anchor.x, anchor.y - 1.0)
+		TerrainTileField.surface_y(region, anchor.x, anchor.y)
+		TerrainTileField.surface_y(region, anchor.x + 1.0, anchor.y)
+		TerrainTileField.surface_y(region, anchor.x - 1.0, anchor.y)
+		TerrainTileField.surface_y(region, anchor.x, anchor.y + 1.0)
+		TerrainTileField.surface_y(region, anchor.x, anchor.y - 1.0)
 	_print_phase("terrain_five_samples", started)
 	started = Time.get_ticks_usec()
 	for anchor: Vector2 in anchors:

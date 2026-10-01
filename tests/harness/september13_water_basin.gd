@@ -19,8 +19,8 @@ func _init()->void:
 			seen[next]=true
 			var p:=Vector2(next)*WaterField.FILL_STEP
 			var coarse:=Vector2i(roundi(p.x/24),roundi(p.y/24))
-			if not bakes.has(coarse):bakes[coarse]=TerrainSurfaceField.bake_cell(fields.region_at(p),coarse.x,coarse.y)
-			var ground:=TerrainSurfaceField.sample_baked(bakes[coarse],coarse.x,coarse.y,p.x,p.y)
+			if not bakes.has(coarse):bakes[coarse]=TerrainTileField.bake_point(fields.region_at(p),Vector2i(coarse.x, coarse.y))
+			var ground:=TerrainTileField.sample_baked(bakes[coarse],Vector2i(coarse.x, coarse.y),p.x,p.y)
 			if ground<7.95:
 				queue.append(next);extent=extent.expand(p)
 			else:boundary[next]=ground

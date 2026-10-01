@@ -33,7 +33,7 @@ func _run()->void:
 		for reverse in [false,true]:
 			var start:Vector2=route[1] if reverse else route[0]
 			var end:Vector2=route[0] if reverse else route[1]
-			player.global_position=Vector3(start.x,TerrainSurfaceField.surface_y(region,start.x,start.y)+.2,start.y)
+			player.global_position=Vector3(start.x,TerrainTileField.surface_y(region,start.x,start.y)+.2,start.y)
 			player.velocity=Vector3.ZERO
 			controller.direction=Vector2.ZERO
 			for tick in 30:

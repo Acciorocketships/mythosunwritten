@@ -113,10 +113,10 @@ func run()->void:
 		for ix in 128:
 			var x:float=-24.0+float(ix)*0.25
 			var z:float=4.0+float(iz)*0.25
-			var a:=Vector3(x,TerrainSurfaceField.surface_y(region,x,z),z)
-			var b:=Vector3(x+0.25,TerrainSurfaceField.surface_y(region,x+0.25,z),z)
-			var c:=Vector3(x,TerrainSurfaceField.surface_y(region,x,z+0.25),z+0.25)
-			var d:=Vector3(x+0.25,TerrainSurfaceField.surface_y(region,x+0.25,z+0.25),z+0.25)
+			var a:=Vector3(x,TerrainTileField.surface_y(region,x,z),z)
+			var b:=Vector3(x+0.25,TerrainTileField.surface_y(region,x+0.25,z),z)
+			var c:=Vector3(x,TerrainTileField.surface_y(region,x,z+0.25),z+0.25)
+			var d:=Vector3(x+0.25,TerrainTileField.surface_y(region,x+0.25,z+0.25),z+0.25)
 			for vertex:Vector3 in [a,b,c,b,d,c]: surface.add_vertex(vertex)
 	surface.generate_normals()
 	var slope:=MeshInstance3D.new()

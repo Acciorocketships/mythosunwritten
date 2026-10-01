@@ -191,7 +191,7 @@ static func _stall_for_candidate(terrain: VillageTerrainView,
 	var contact := spec.world_ground_contact(flat_transform)
 	var contact_shape := FeatureGroundShape.oriented_rect(contact.centre,
 		contact.half_extents, contact.angle)
-	var bounds := TerrainSurfaceField.height_bounds(
+	var bounds := TerrainTileField.height_bounds(
 		terrain.region_covering(contact_shape.bounds()), contact_shape.bounds())
 	if bounds.y - bounds.x > spec.max_ground_relief + 0.001:
 		return null

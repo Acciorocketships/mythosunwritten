@@ -2,15 +2,21 @@ class_name HeightfieldPlan
 extends RefCounted
 
 ## Deterministic, churn-free numerical terrain plan. A continuous height field
-## H(cell) is quantized into integer cliff storeys and trickle-down clamped so
-## adjacent cells never differ by more than one storey. The result is a pure
-## function of (world_seed, cell), so a tile's planned height is final before it
-## is ever instantiated — the anti-churn guarantee.
+## H(point) is sampled on a lattice of POINTS 12 m apart (point (i, j) sits at
+## world (12 i, 12 j)), quantized into integer cliff storeys and trickle-down
+## clamped so cardinal neighbour points never differ by more than max_step
+## storeys. The result is a pure function of (world_seed, point), so a planned
+## height is final before anything is instantiated — the anti-churn guarantee.
+## Every (i, j) in this API is a point index; 24 m CELLs (2 x 2 tiles) are the
+## coarse settlement/route lattice and are NOT addressed here.
 ##
 ## Phases 1-2: storey (cliff) + level (terrace) tiers. See
 ## docs/superpowers/specs/2026-06-17-heightfield-terrain-design.md.
 
-const TILE: float = 24.0
+# Sampling pitch: one height sample per lattice point, 12 m apart.
+const POINT: float = 12.0
+# Coarse route/settlement/biome cell: 2 x 2 tiles of POINT pitch.
+const CELL: float = 24.0
 const STOREY_HEIGHT: float = 4.0
 const LEVEL_HEIGHT: float = 1.0
 # 4.0 / 1.0. Level saturates at LEVELS_PER_STOREY - 1 (=3), so a full storey is
@@ -28,13 +34,24 @@ var max_storeys: int          # caps column height -> bounds clamp margin
 var aggregation: String       # "min" (floor) | "mean" (nearest) | "max" (ceil)
 var max_step: int = 1         # max storey difference between cardinal neighbours (1=classic, 3=cliffs)
 
+## Low-pass tuning knob (spec 2026-09-30 dual-grid tiles, section 9 risk 1).
+## Metres; 0 = off (byte-identical to the unfiltered field). When > 0 the
+## NATURAL height (rendered field with detail, before the water carve) is a
+## separable tent filter of height01 over offsets {-r, 0, +r} per axis with
+## weights (1, 2, 1) / 4, r = LOWPASS_M. The carve is never filtered, so river
+## channels stay sharp. Process-wide: set it BEFORE any plan is built; every
+## memo (per-plan _samples, WaterPlan.noise_h) assumes it never changes.
+static var LOWPASS_M: float = 0.0
+const _TENT: Array = [1.0, 2.0, 1.0]
+
 var _raw_override: Callable = Callable()
+var _lowpass_seen: float = -1.0
 
 # Optional water carve (untyped to avoid a WaterPlan<->HeightfieldPlan
-# class-resolution cycle; duck-typed: needs carve_at_cell(cx, cz) -> float).
+# class-resolution cycle; duck-typed: needs carve_at(x, z) -> float).
 var _water_plan = null
 
-# Per-cell sample memo: Vector2i(cx,cz) -> [height_after_carve, carve, original_height].
+# Per-point sample memo: Vector2i(i,j) -> [height_after_carve, carve, original_height].
 # Purely a performance cache — raw_height is a pure function of (seed, cell) —
 # persisted across compute_region calls so the ~77%-overlapping windows of
 # neighbouring chunks are sampled once. The raw carve amount is cached too so
@@ -47,6 +64,10 @@ var _sample_cursor: int = 0
 
 
 func _sample(cx: int, cz: int) -> Array:
+	if _lowpass_seen < 0.0:
+		_lowpass_seen = LOWPASS_M
+	assert(_lowpass_seen == LOWPASS_M,
+		"HeightfieldPlan.LOWPASS_M changed after this plan sampled; set it before building plans")
 	var key := Vector2i(cx, cz)
 	var s = _samples.get(key)
 	if s == null:
@@ -54,10 +75,10 @@ func _sample(cx: int, cz: int) -> Array:
 		if _raw_override.is_valid():
 			h = _raw_override.call(cx, cz)
 		else:
-			h = _height01(Vector3(float(cx) * TILE, 0.0, float(cz) * TILE)) * height_amplitude
+			h = natural01(Vector3(float(cx) * POINT, 0.0, float(cz) * POINT), world_seed) * height_amplitude
 		var carve: float = 0.0
 		if _water_plan != null:
-			carve = _water_plan.carve_at_cell(cx, cz)
+			carve = _water_plan.carve_at(float(cx) * POINT, float(cz) * POINT)
 		s = [h - carve, carve, h]
 		if _samples.size() >= _SAMPLE_CACHE_MAX:
 			_samples.erase(_sample_keys[_sample_cursor])
@@ -97,7 +118,8 @@ func _init(
 	max_step = p_max_step
 
 
-## Replace the noise source with a synthetic field for tests. fn(cx, cz) -> float.
+## Replace the noise source with a synthetic field for tests. fn(i, j) -> float,
+## keyed by lattice point index (world position 12 i, 12 j).
 ## Forwarded to the relief stamp when one is attached: the stamp reads natural
 ## ground too (its fill formula and its storey-ceiling clamp both do), so the
 ## two must never disagree about what the ground is.
@@ -114,7 +136,7 @@ func set_water_plan(p_water_plan) -> void:
 	_clear_samples()
 
 
-## Continuous height (metres) at a tile cell, after the water carve. Memoized.
+## Continuous height (metres) at lattice point (i, j), after the water carve. Memoized.
 func raw_height(cx: int, cz: int) -> float:
 	return _sample(cx, cz)[0]
 
@@ -149,6 +171,23 @@ static func height01(pos: Vector3, p_world_seed: int, include_detail: bool = tru
 
 func _height01(pos: Vector3) -> float:
 	return height01(pos, world_seed, true)
+
+
+## The rendered natural field in [0, 1]: height01(include_detail=true), low-passed
+## by LOWPASS_M when set. Everything that compares against rendered ground
+## (plan samples, pre-carve levels, settlement relief) reads this; river routing
+## deliberately keeps the unfiltered smooth field.
+static func natural01(pos: Vector3, p_world_seed: int) -> float:
+	var r := LOWPASS_M
+	if r <= 0.0:
+		return height01(pos, p_world_seed, true)
+	var sum := 0.0
+	for ix in 3:
+		for iz in 3:
+			sum += _TENT[ix] * _TENT[iz] * height01(
+				Vector3(pos.x + float(ix - 1) * r, pos.y, pos.z + float(iz - 1) * r),
+				p_world_seed, true)
+	return sum / 16.0
 
 
 ## Apply the aggregation rounding mode to a quotient: min=floor (hug valleys),
@@ -246,10 +285,11 @@ func storey_at(cx: int, cz: int) -> int:
 
 
 ## Whether the 1m sub-storey LEVEL terraces contribute to the rendered surface. ON (owner,
-## 2026-07-16): level steps render through the SAME half-cell smootherstep ramp as the 4m storey
-## slopes (TerrainSurfaceField._edge_weight), at one quarter of the storey height. No
-## KayKit dressing is involved: walls/lips/skirts key off storey_at/is_flat_cell, and level_at
-## pins to 0 near storey boundaries, so levels only ever read as short procedural slopes.
+## 2026-07-16): a level step between two points is a LEVEL edge of the tile kernel and renders
+## through the SAME smootherstep slope profile as a one-storey edge (TerrainTileField), at one
+## quarter of the storey height. Walls key off storey_at alone (a cliff edge differs by two or
+## more storeys), and level_at pins to 0 near storey boundaries, so levels only ever read as
+## short procedural slopes.
 const RENDER_LEVELS: bool = true
 
 ## Rendered surface height (metres): storey tier (4m steps), plus the level tier (1m) only when
@@ -528,5 +568,5 @@ func compute_rect_region(interior: Rect2i) -> HeightfieldRegion:
 		for x in range(inset,end_x):
 			level_map[Vector2i(lo.x+x,lo.y+z)]=levels[z*width+x]
 	var result := HeightfieldRegion.new(storey_map,level_map,carved,self)
-	result.certified_cells = interior
+	result.certified_points = interior
 	return result

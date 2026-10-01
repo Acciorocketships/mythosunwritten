@@ -54,7 +54,7 @@ func _probe_a(ctx: Dictionary) -> void:
 	print("H1: per-sample bed/level/surface_y —")
 	for i in tr.points.size():
 		var p: Vector2 = tr.points[i]
-		var sy: float = TerrainSurfaceField.surface_y(_region, p.x, p.y)
+		var sy: float = TerrainTileField.surface_y(_region, p.x, p.y)
 		var step_drop: float = (prof.levels[i - 1] - prof.levels[i]) if i > 0 else 0.0
 		print("H1:  i=%d p=(%.1f,%.1f) bed=%.2f level=%.2f surface_y=%.2f step_drop=%.2f" % [
 			i, p.x, p.y, tr.beds[i], prof.levels[i], sy, step_drop])
@@ -65,8 +65,8 @@ func _probe_a(ctx: Dictionary) -> void:
 	for i in range(0, tr.points.size() - 2):
 		var p0: Vector2 = tr.points[i]
 		var p2: Vector2 = tr.points[i + 2]
-		var s0: float = TerrainSurfaceField.surface_y(_region, p0.x, p0.y)
-		var s2: float = TerrainSurfaceField.surface_y(_region, p2.x, p2.y)
+		var s0: float = TerrainTileField.surface_y(_region, p0.x, p0.y)
+		var s2: float = TerrainTileField.surface_y(_region, p2.x, p2.y)
 		var bed_drop: float = tr.beds[i] - tr.beds[i + 2]
 		var surf_drop: float = s0 - s2
 		print("H1:  i=%d bed_drop=%.2f surface_drop=%.2f" % [i, bed_drop, surf_drop])
@@ -80,8 +80,8 @@ func _probe_a(ctx: Dictionary) -> void:
 	for i in range(0, tr.points.size() - 2):
 		var p0: Vector2 = tr.points[i]
 		var p2: Vector2 = tr.points[i + 2]
-		var s0: float = TerrainSurfaceField.surface_y(_region, p0.x, p0.y)
-		var s2: float = TerrainSurfaceField.surface_y(_region, p2.x, p2.y)
+		var s0: float = TerrainTileField.surface_y(_region, p0.x, p0.y)
+		var s2: float = TerrainTileField.surface_y(_region, p2.x, p2.y)
 		surf_max = maxf(surf_max, s0 - s2)
 	print("H1: MAX surface_y window-drop over ALL windows on this trace=%.2f" % surf_max)
 	print("H1: PREDICTION CHECK: bed window-drop > 4.0 AND surface never drops > 4.0 in any window => %s" % [
@@ -109,8 +109,8 @@ func _probe_b_i2(ctx: Dictionary) -> void:
 	var info: Dictionary = _claim_info(ctx, target)
 	print("H2: claim AT PLAYER: kind=%s id=%s si=%d level=%.2f margin=%.2f ground=%.2f wet=%s" % [
 		info.kind, info.id, info.si, info.lvl, info.m,
-		TerrainSurfaceField.surface_y(_region, target.x, target.y),
-		str(info.lvl > TerrainSurfaceField.surface_y(_region, target.x, target.y) + 0.05)])
+		TerrainTileField.surface_y(_region, target.x, target.y),
+		str(info.lvl > TerrainTileField.surface_y(_region, target.x, target.y) + 0.05)])
 	var tr: RiverTrace = null
 	for t: RiverTrace in ctx.rivers:
 		if str(t.source_cell) == info.id:
@@ -144,7 +144,7 @@ func _probe_b_i3(ctx: Dictionary) -> void:
 	var target := Vector2(9.3, -1120.6)
 	print("H3: I3 rectangle (0..24, -1132..-1108), player=%s" % target)
 	var lvl: float = WaterField.level_at(ctx, target)
-	var g: float = TerrainSurfaceField.surface_y(_region, target.x, target.y)
+	var g: float = TerrainTileField.surface_y(_region, target.x, target.y)
 	print("H3: AT PLAYER: level_at=%s ground=%.2f" % [
 		"-INF" if lvl == -INF else "%.2f" % lvl, g])
 	# Neighbouring wet level for context (nearest claimed sample within 8m).
@@ -168,7 +168,7 @@ func _probe_b_i3(ctx: Dictionary) -> void:
 		for xi in range(0, 22, 2):
 			var p := Vector2(float(xi), float(zi))
 			var l2: float = WaterField.level_at(ctx, p)
-			var g2: float = TerrainSurfaceField.surface_y(_region, p.x, p.y)
+			var g2: float = TerrainTileField.surface_y(_region, p.x, p.y)
 			if l2 == -INF:
 				row += "x"
 			elif l2 > g2 + 0.05:
@@ -187,7 +187,7 @@ func _probe_b_i4(ctx: Dictionary) -> void:
 	var lvl: float = WaterField.level_at(ctx, target)
 	print("H4: AT PLAYER: level_at=%s ground=%.2f" % [
 		"-INF" if lvl == -INF else "%.2f" % lvl,
-		TerrainSurfaceField.surface_y(_region, target.x, target.y)])
+		TerrainTileField.surface_y(_region, target.x, target.y)])
 	print("H4: fine claimant dump (32..40 x, -1110..-1104 z), 1m grid —")
 	var claimants_seen: Dictionary = {}
 	var gap_found := false
@@ -195,7 +195,7 @@ func _probe_b_i4(ctx: Dictionary) -> void:
 		for xi in range(32, 41):
 			var p := Vector2(float(xi), float(zi))
 			var info: Dictionary = _claim_info(ctx, p)
-			var g: float = TerrainSurfaceField.surface_y(_region, p.x, p.y)
+			var g: float = TerrainTileField.surface_y(_region, p.x, p.y)
 			print("H4:  (%d,%d) ground=%.2f claim=%s id=%s si=%d level=%s" % [
 				xi, zi, g, info.kind, info.id, info.si,
 				"-INF" if info.lvl == -INF else "%.2f" % info.lvl])
@@ -245,7 +245,7 @@ func _probe_c(_water: WaterPlan) -> void:
 ## with no live PhysicsServer/RayCast3D — character.gd's real mechanism
 ## reads its own existing floor raycast (the same RayCast3D
 ## _get_ground_dist()/on_ground already use), which needs a real running
-## scene tree with collision bodies built. TerrainSurfaceField.surface_y is
+## scene tree with collision bodies built. TerrainTileField.surface_y is
 ## the field-level ground truth the raycast is standing in for (the mesher/
 ## field code's own "ground" everywhere else in this codebase) — the
 ## closest still-meaningful proxy for this diagnostic dump, not a claim
@@ -300,7 +300,7 @@ func _probe_d(water: WaterPlan) -> void:
 		var gp: Vector3 = case.pos
 		var probe_y: float = gp.y + 0.3   # character.gd's own probe_y
 		var probe_pos: Vector3 = gp + Vector3(0.0, 0.3, 0.0)
-		var ground_under_feet: float = TerrainSurfaceField.surface_y(_region, gp.x, gp.z)   # raycast proxy, see docstring
+		var ground_under_feet: float = TerrainTileField.surface_y(_region, gp.x, gp.z)   # raycast proxy, see docstring
 		var best: float = -INF
 		var any_wading := false
 		var hit_count := 0

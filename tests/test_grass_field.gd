@@ -23,7 +23,12 @@ func _program() -> GrassProgram:
 	return GrassProgram.compile(settings, catalog, cache)
 
 func _settings_copy() -> GrassSettings:
-	return (load("res://terrain/grass/settings.tres") as GrassSettings).duplicate(true)
+	var copy := (load("res://terrain/grass/settings.tres") as GrassSettings).duplicate(true)
+	# Resource.duplicate shares Dictionary/Array members with the cached resource;
+	# mutating them would poison every later _program() in the run.
+	copy.coverage_by_biome = copy.coverage_by_biome.duplicate(true)
+	copy.variant_asset_ids = copy.variant_asset_ids.duplicate()
+	return copy
 
 func _dry_context(region: HeightfieldRegion, coverage: Rect2,
 		shore_limit: float) -> WaterFieldContext:
@@ -172,7 +177,7 @@ func test_field_is_deterministic_grounded_and_capped_at_one_batch() -> void:
 			every_instance_is_grounded = every_instance_is_grounded \
 				and x >= CORE.position.x and x < CORE.end.x \
 				and z >= CORE.position.y and z < CORE.end.y \
-				and absf(y - TerrainSurfaceField.surface_y(
+				and absf(y - TerrainTileField.surface_y(
 					inputs.region, x, z)) <= 0.001
 		assert_true(ranks_are_exact, "dropout ranks follow packed sort order")
 		assert_true(every_instance_is_grounded,
@@ -236,7 +241,7 @@ func test_slope_surface_returns_normal_and_area_compensation() -> void:
 	var region := HeightfieldRegion.new(storeys, {})
 	var water := _dry_context(region, CORE.grow(4.0),
 		program.shore_distance_limit)
-	var sample := GrassField._qualified_surface(program, Vector2(6.0, 0.0),
+	var sample := GrassField._qualified_surface(program, Vector2(3.0, 0.0),
 		region, water, null, 1.0, {})
 	assert_false(sample.is_empty())
 	var normal: Vector3 = sample.normal
@@ -267,10 +272,11 @@ func test_exposed_cliff_lip_reduces_the_uniform_patch_scale() -> void:
 	var footprint_radius := 1.4
 	var centre_scale := GrassField._cliff_scale(
 		region, Vector2.ZERO, footprint_radius)
+	# The one high point's dual cell spans x in [-6, 6]: the wall is on x = 6.
 	var lip_scale := GrassField._cliff_scale(
-		region, Vector2(11.0, 0.0), footprint_radius)
+		region, Vector2(5.0, 0.0), footprint_radius)
 	var lower_side_scale := GrassField._cliff_scale(
-		region, Vector2(13.0, 0.0), footprint_radius)
+		region, Vector2(7.0, 0.0), footprint_radius)
 	assert_almost_eq(centre_scale, 1.0, 0.0001)
 	assert_almost_eq(lip_scale, GrassField.CLIFF_EDGE_MIN_SCALE, 0.0001)
 	assert_almost_eq(lower_side_scale, 1.0, 0.0001,
@@ -297,13 +303,13 @@ func test_cliff_footprint_reaches_the_wall_without_a_clearance_band() -> void:
 	var water := _dry_context(region, CORE.grow(4.0),
 		program.shore_distance_limit)
 	var near_wall := GrassField._qualified_surface(program,
-		Vector2(13.0, 0.0), region, water, null, 1.4)
+		Vector2(7.0, 0.0), region, water, null, 1.4)
 	var almost_touching_lower := GrassField._qualified_surface(program,
-		Vector2(12.2, 0.0), region, water, null, 1.4)
+		Vector2(6.2, 0.0), region, water, null, 1.4)
 	var almost_touching_upper := GrassField._qualified_surface(program,
-		Vector2(11.8, 0.0), region, water, null, 1.4)
+		Vector2(5.8, 0.0), region, water, null, 1.4)
 	var sub_blade_remnant := GrassField._qualified_surface(program,
-		Vector2(11.9, 0.0), region, water, null, 1.4)
+		Vector2(5.9, 0.0), region, water, null, 1.4)
 	assert_false(near_wall.is_empty(),
 		"lower grass no longer reserves a complete patch-width band")
 	assert_false(almost_touching_lower.is_empty(),
@@ -335,6 +341,113 @@ func test_cliff_lip_supplements_are_dense_but_bounded() -> void:
 	var cliff_payload := GrassField.compute(program, 4242, TILE, cliff, cliff_water)
 	assert_gt(cliff_payload.instance_count, flat_payload.instance_count,
 		"the narrow cliff-top strip gains patches as each patch becomes smaller")
+
+func test_grass_tile_identity_is_24_m_whatever_the_terrain_lattice() -> void:
+	assert_eq(GrassField.TILE_WORLD, 24.0,
+		"grass tiles stay 24 m; the terrain kernel's 12 m points do not resize them")
+	assert_almost_eq(GrassField.SLOT_PITCH, 24.0 / float(GrassField.SLOT_SIDE), 0.000001)
+	assert_eq(GrassField.tile_of(Vector2(23.9, -0.1)), Vector2i(0, -1))
+	assert_eq(GrassField.FIELD_SIDE, 9)
+
+func test_walls_lie_on_the_12_m_dual_borders_not_the_24_m_cell_borders() -> void:
+	# Point (0,0) is a plateau 12 m wide: walls at x, z = +-6. A high point's
+	# neighbour 11 m away stands on the lowland 5 m from the wall.
+	var region := HeightfieldRegion.new({Vector2i.ZERO: 3}, {})
+	var radius := 1.4
+	assert_almost_eq(GrassField._cliff_scale(region, Vector2(11.0, 0.0), radius), 1.0, 0.0001,
+		"11 m is five metres from the x = 6 wall: ordinary carpet")
+	assert_almost_eq(GrassField._cliff_scale(region, Vector2(0.0, 5.0), radius),
+		GrassField.CLIFF_EDGE_MIN_SCALE, 0.0001,
+		"the plateau's z = 6 border tapers the same way")
+	assert_almost_eq(GrassField._cliff_scale(region, Vector2(0.0, -5.0), radius),
+		GrassField.CLIFF_EDGE_MIN_SCALE, 0.0001, "and its z = -6 border")
+
+func test_a_low_side_wall_only_affects_the_taper_minimum() -> void:
+	var region := HeightfieldRegion.new({Vector2i.ZERO: 3}, {})
+	# Two metres from the wall on the low side, inside the taper distance.
+	var scale := GrassField._cliff_scale(region, Vector2(8.0, 0.0), 1.4)
+	assert_almost_eq(scale, 1.0, 0.0001, "the foot never shrinks")
+
+func test_a_nearer_low_side_wall_does_not_cancel_the_high_side_taper() -> void:
+	# Stepped terrace corner: point (0,0) (storey 2) is the LOW owner of its
+	# x = 6 wall (east neighbour storey 4) and the HIGH owner of its z = 6 wall
+	# (north neighbour default storey 0). (-1,0) and (0,-1) match it so no
+	# other wall is near. The anchor is 1 m from the low wall and 2 m from the
+	# high lip: the lip still tapers by its own distance.
+	var region := HeightfieldRegion.new({Vector2i.ZERO: 2, Vector2i(1, 0): 4,
+		Vector2i(-1, 0): 2, Vector2i(0, -1): 2, Vector2i(1, -1): 4}, {})
+	var radius := 0.5
+	var scale := GrassField._cliff_scale(region, Vector2(5.0, 4.0), radius)
+	var expected := lerpf(GrassField.CLIFF_EDGE_MIN_SCALE, 1.0,
+		smoothstep(0.0, GrassField.CLIFF_TAPER_DISTANCE, 2.0 - radius))
+	assert_almost_eq(scale, expected, 0.0001,
+		"the high lip 2 m away tapers even though the foot wall is nearer")
+
+func test_gradient_is_one_sided_when_its_stencil_crosses_a_wall() -> void:
+	var region := HeightfieldRegion.new({Vector2i.ZERO: 3}, {})
+	var surface_cache: Dictionary = {}
+	var edge_cache: Dictionary = {}
+	for x: float in [5.5, 6.5]:
+		var gradient := GrassField._surface_gradient(region,
+			Vector2(x, 0.0), surface_cache, edge_cache)
+		assert_almost_eq(gradient.length(), 0.0, 0.0001,
+			"both sides of the wall are flat ground; no false 12 m / 2 m grade at x = %s" % x)
+	# Across a slope (no wall) the centred derivative stays.
+	var ramp := HeightfieldRegion.new({Vector2i.ZERO: 1}, {})
+	var slope := GrassField._surface_gradient(ramp, Vector2(3.0, 0.0), {}, {})
+	assert_gt(absf(slope.x), 0.1, "an ordinary one-storey slope keeps its gradient")
+
+func test_surface_y_is_the_owning_points_bake() -> void:
+	var region := HeightfieldRegion.new({Vector2i.ZERO: 3, Vector2i(1, 0): 3}, {})
+	var cache: Dictionary = {}
+	for xz: Vector2 in [Vector2(5.9, 0.0), Vector2(6.1, 1.0), Vector2(17.9, 3.0), Vector2(18.1, -2.0)]:
+		assert_almost_eq(GrassField._surface_y(region, cache, xz.x, xz.y),
+			TerrainTileField.surface_y(region, xz.x, xz.y), 0.0001,
+			"grass samples the kernel's own surface at %s" % xz)
+
+func test_a_wall_near_the_tile_marks_a_cliff_lip_and_a_far_one_does_not() -> void:
+	var near := HeightfieldRegion.new({Vector2i.ZERO: 3}, {})
+	var far := HeightfieldRegion.new({Vector2i(10, 10): 3}, {})
+	var flat := HeightfieldRegion.new({}, {})
+	assert_true(GrassField._tile_has_cliff_lip(near, Vector2.ZERO, {}))
+	assert_false(GrassField._tile_has_cliff_lip(far, Vector2.ZERO, {}))
+	assert_false(GrassField._tile_has_cliff_lip(flat, Vector2.ZERO, {}))
+	# Point (-1, 0) is 12 m west of the tile; its wall at x = -6 is 6 m away, inside the margin.
+	var beside := HeightfieldRegion.new({Vector2i(-1, 0): 3}, {})
+	assert_true(GrassField._tile_has_cliff_lip(beside, Vector2.ZERO, {}))
+
+func test_upper_lip_patches_stay_on_the_plateau_and_ground_follows_the_kernel() -> void:
+	var program := _program()
+	var region := HeightfieldRegion.new({Vector2i.ZERO: 3}, {})
+	var water := _dry_context(region, CORE.grow(4.0), program.shore_distance_limit)
+	var payload := GrassField.compute(program, 4242, TILE, region, water)
+	assert_gt(payload.instance_count, 0)
+	var asset_id: StringName = payload.asset_ids()[0]
+	var asset: Dictionary = program.assets[asset_id]
+	var piece_scale := (asset.piece_transform as Transform3D).basis.get_scale().x
+	var batch: Dictionary = payload.batches[asset_id]
+	var plateau := 0
+	var foot := 0
+	for index in int(batch.count):
+		var offset := index * GrassPayload.FLOATS_PER_INSTANCE
+		var x: float = batch.buffer[offset + 3]
+		var y: float = batch.buffer[offset + 7]
+		var z: float = batch.buffer[offset + 11]
+		assert_almost_eq(y, TerrainTileField.surface_y(region, x, z), 0.001,
+			"every patch stands on its owner's surface")
+		if x < 6.0 and z < 6.0:
+			plateau += 1
+			var basis := Basis(
+				Vector3(batch.buffer[offset], batch.buffer[offset + 4], batch.buffer[offset + 8]),
+				Vector3(batch.buffer[offset + 1], batch.buffer[offset + 5], batch.buffer[offset + 9]),
+				Vector3(batch.buffer[offset + 2], batch.buffer[offset + 6], batch.buffer[offset + 10]))
+			var radius := float(asset.footprint_radius) * basis.get_scale().x / piece_scale
+			assert_lte(radius + GrassField.CLIFF_FOOTPRINT_MARGIN, minf(6.0 - x, 6.0 - z) + 0.001,
+				"a plateau patch's footprint never crosses the wall at (%s, %s)" % [x, z])
+		else:
+			foot += 1
+	assert_gt(plateau, 0, "the 6 m plateau corner carries grass")
+	assert_gt(foot, 0, "the lowland beyond the wall carries grass")
 
 func test_packed_instance_matches_godot_multimesh_layout() -> void:
 	var transform := Transform3D(Basis(Vector3.UP, 0.73).scaled(Vector3.ONE * 1.17),

@@ -142,7 +142,11 @@ func test_background_builds_populate_radius():
 		assert_true(first_payload.features is EnvironmentInstancePayload,
 			"the terrain request carries its feature block in the same worker job")
 		assert_true(first_payload.storeys is PackedInt32Array)
-		assert_eq(first_payload.storeys.size(), TerrainChunkMesher.CELLS_PER_CHUNK ** 2)
+		assert_eq(first_payload.storeys.size(), TerrainChunkMesher.POINTS_PER_CHUNK ** 2,
+			"one storey per lattice point the chunk owns (16 k .. 16 k + 15)")
+		assert_true(first_payload.points is PackedFloat32Array)
+		assert_eq(first_payload.points.size(), TerrainChunkMesher.POINTS_PER_CHUNK ** 2 * 2,
+			"(height, graded) per owned lattice point")
 		assert_false(_contains_scene_or_server_resource(first_payload.terrain),
 			"terrain worker payload has no scene/render/physics resources")
 		assert_false(_contains_scene_or_server_resource(first_payload.water),
@@ -258,21 +262,31 @@ func test_empty_feature_result_becomes_ready_without_scene_resources() -> void:
 
 func test_loaded_storeys_use_committed_snapshots_across_signed_chunk_edges() -> void:
 	var s := Streamer.new()
-	var side := TerrainChunkMesher.CELLS_PER_CHUNK
+	var side := TerrainChunkMesher.POINTS_PER_CHUNK
 	for chunk: Vector2i in [Vector2i(-1, -1), Vector2i.ZERO, Vector2i(1, 1)]:
 		var values := PackedInt32Array()
 		values.resize(side * side)
+		var points := PackedFloat32Array()
+		points.resize(side * side * 2)
 		for z in side:
 			for x in side:
 				values[z * side + x] = (chunk.x + 2) * 1000 + (chunk.y + 2) * 100 \
 					+ z * side + x
+				points[(z * side + x) * 2] = float(values[z * side + x]) * 0.5
+				points[(z * side + x) * 2 + 1] = float((x + z) % 2)
 		s._storey_snapshots[chunk] = values
-	assert_eq(s.loaded_storey_at(Vector2i(-8, -8)), 1100)
-	assert_eq(s.loaded_storey_at(Vector2i(-1, -1)), 1163)
+		s._point_snapshots[chunk] = points
+	# Chunk k owns lattice points 16 k .. 16 k + 15 (12 m apart).
+	assert_eq(s.loaded_storey_at(Vector2i(-16, -16)), 1100)
+	assert_eq(s.loaded_storey_at(Vector2i(-1, -1)), 1355)
 	assert_eq(s.loaded_storey_at(Vector2i.ZERO), 2200)
-	assert_eq(s.loaded_storey_at(Vector2i(7, 7)), 2263)
-	assert_eq(s.loaded_storey_at(Vector2i(8, 8)), 3300)
-	assert_null(s.loaded_storey_at(Vector2i(16, 0)))
+	assert_eq(s.loaded_storey_at(Vector2i(15, 15)), 2455)
+	assert_eq(s.loaded_storey_at(Vector2i(16, 16)), 3300)
+	assert_null(s.loaded_storey_at(Vector2i(32, 0)))
+	assert_eq(s.loaded_point_at(Vector2i(-1, -1)), Vector2(677.5, 0.0))
+	assert_eq(s.loaded_point_at(Vector2i(15, 14)), Vector2(1219.5, 1.0))
+	assert_eq(s.loaded_point_at(Vector2i(16, 16)), Vector2(1650.0, 0.0))
+	assert_null(s.loaded_point_at(Vector2i(0, -17)))
 	s.free()
 
 func test_coord_overlay_never_reads_worker_owned_plan() -> void:
@@ -280,3 +294,32 @@ func test_coord_overlay_never_reads_worker_owned_plan() -> void:
 		"res://scripts/terrain/tools/CoordOverlay.gd")
 	assert_false(source.contains("_plan"))
 	assert_true(source.contains("loaded_storey_at"))
+
+func test_coord_overlay_reads_the_tile_under_the_crosshair() -> void:
+	var s := Streamer.new()
+	var side := TerrainChunkMesher.POINTS_PER_CHUNK
+	var storeys := PackedInt32Array()
+	storeys.resize(side * side)
+	var points := PackedFloat32Array()
+	points.resize(side * side * 2)
+	# Chunk (-1, 0): point (-2, 3) storey 2 level 0, (-1, 3) storey 2 level 1,
+	# (-2, 4) storey 3 level 0, (-1, 4) storey 5 level 2; everything else flat 0.
+	for entry: Array in [[Vector2i(-2, 3), 2, 0], [Vector2i(-1, 3), 2, 1],
+			[Vector2i(-2, 4), 3, 0], [Vector2i(-1, 4), 5, 2]]:
+		var local: Vector2i = entry[0] - Vector2i(-1, 0) * side
+		storeys[local.y * side + local.x] = entry[1]
+		points[(local.y * side + local.x) * 2] = float(entry[1] * 4 + entry[2])
+	s._storey_snapshots[Vector2i(-1, 0)] = storeys
+	s._point_snapshots[Vector2i(-1, 0)] = points
+	var overlay := preload("res://scripts/terrain/tools/CoordOverlay.gd")
+	# World (-20.5, 40.0) lies in tile floor(v / 12) = (-2, 3).
+	var lines: Array[String] = overlay.tile_lines(s, Vector2(-20.5, 40.0))
+	assert_eq(lines[0], "tile (-2, 3)  corners storey/level (+z down):")
+	assert_eq(lines[1], "   a s2/l0  b s2/l1")
+	assert_eq(lines[2], "   d s3/l0  c s5/l2")
+	assert_eq(lines[3], "  edges: -z a-b level   +x b-c cliff   +z d-c cliff   -x a-d slope")
+	# A tile whose +x corners are in an unloaded chunk reports them missing.
+	var edge: Array[String] = overlay.tile_lines(s, Vector2(-1.0, 40.0))
+	assert_eq(edge[1], "   a s2/l1  b --/-")
+	assert_eq(edge[3], "  edges: (corners not loaded)")
+	s.free()

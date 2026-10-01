@@ -13,4 +13,4 @@ func test_rectangular_region_matches_independent_certified_square_controls() -> 
 				var oracle:=plan.compute_region(x,z,0)
 				if actual.surface_height(x,z)!=oracle.surface_height(x,z): errors+=1
 		assert_eq(errors,0,"Every certified cell equals a separately padded square query")
-		assert_eq(actual.certified_cells,area)
+		assert_eq(actual.certified_points,area)

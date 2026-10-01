@@ -17,7 +17,8 @@ func after_all() -> void:
 func _flat_region(height := 8.0) -> HeightfieldRegion:
 	var plan := HeightfieldPlan.new(0, 64.0, 12, "mean", 4)
 	plan.set_raw_height_override(func(_cx, _cz): return height)
-	return plan.compute_region(4, 4, 12)
+	# Points -16..32 (-192..384 m): the chunk core and its whole query halo.
+	return plan.compute_region(8, 8, 24)
 
 func _dry(region: HeightfieldRegion, program: DressingProgram) -> WaterFieldContext:
 	var context := WaterFieldContext.new()
@@ -110,7 +111,7 @@ func test_ambient_rocks_are_embedded_and_met_by_a_ground_skirt() -> void:
 		var height: float = EnvironmentCatalog.load_default().descriptor(rock.asset).measured_aabb.end.y
 		for local: Vector2 in program.ground_stencil_by_asset[rock.asset]:
 			var w := t * Vector3(local.x, 0.0, local.y)
-			assert_lte(w.y - TerrainSurfaceField.surface_y(region, w.x, w.z),
+			assert_lte(w.y - TerrainTileField.surface_y(region, w.x, w.z),
 				-0.22 * height * t.basis.y.length() + 0.0001,
 				"the whole visible base outline is sunk below the ground")
 	for skirt: Dictionary in payload.ground_skirts:
@@ -146,8 +147,7 @@ func test_slope_rocks_are_colonial_and_never_stacked() -> void:
 	var walls: Array = []
 	# (Kept within the envelope's node budget.)
 	for i in 4:
-		walls.append({"replay_recipe": {"kind": "wall", "width": 150.0, "height": 8.0, "left_end": true,
-			"right_end": true, "abut": Vector2i.ZERO}, "transform": Transform3D(Basis(), Vector3(0, 0, 40.0 * i))})
+		walls.append(FIELD.straight_wall(Vector2(-75, 40.0 * i), Vector2(75, 40.0 * i), Vector2(0, 1), 8.0))
 	var field = FIELD.new(walls, SEED)
 	var bunches := {}
 	for rock: Dictionary in field.rock_list:
@@ -196,8 +196,7 @@ func test_basal_rock_support_plane_is_the_surface_it_stands_on() -> void:
 	STYLE.apply("sheet_bedrock")
 	var walls: Array = []
 	for i in 4:
-		walls.append({"replay_recipe": {"kind": "wall", "width": 150.0, "height": 8.0, "left_end": true,
-			"right_end": true, "abut": Vector2i.ZERO}, "transform": Transform3D(Basis(), Vector3(0, 0, 40.0 * i))})
+		walls.append(FIELD.straight_wall(Vector2(-75, 40.0 * i), Vector2(75, 40.0 * i), Vector2(0, 1), 8.0))
 	var field = FIELD.new(walls, SEED)
 	var env = field.envelope()
 	assert_gt(field.rock_list.size(), 0)
@@ -213,8 +212,7 @@ func test_basal_rock_support_plane_is_the_surface_it_stands_on() -> void:
 
 func test_basal_slope_rocks_get_a_ground_skirt() -> void:
 	STYLE.apply("sheet_bedrock")
-	var wall := {"replay_recipe": {"kind": "wall", "width": 200.0, "height": 8.0, "left_end": true,
-		"right_end": true, "abut": Vector2i.ZERO}, "transform": Transform3D(Basis(), Vector3(0, 0, 0))}
+	var wall := FIELD.straight_wall(Vector2(-100, 0), Vector2(100, 0), Vector2(0, 1), 8.0)
 	var field = FIELD.new([wall], SEED)
 	assert_gt(field.rock_list.size(), 0)
 	for rock: Dictionary in field.rock_list:
@@ -245,7 +243,7 @@ func test_basal_slope_rocks_get_a_ground_skirt() -> void:
 func test_ambient_skirts_are_owned_once_across_chunk_windows() -> void:
 	var program := _colony_program()
 	var plan := HeightfieldPlan.new(991177, 32.0, 8, "mean")
-	var region := plan.compute_region(8, 4, 20)
+	var region := plan.compute_region(16, 8, 40)
 	var union := Rect2(Vector2.ZERO, Vector2(384.0, 192.0))
 	var water := _dry(region, program)
 	water._coverage = union.grow(program.query_margin + 2.0)

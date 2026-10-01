@@ -45,10 +45,13 @@ func test_partial_or_graded_region_does_not_supply_profile_heights() -> void:
 
 func test_certified_sample_stencil_does_not_require_the_unused_trace_square() -> void:
 	var plan := _plan()
-	var region := plan.compute_region(0,0,4)
+	# Radius in 12 m terrain points: the centreline spans x -48..48 (points
+	# -4..4) and WaterField._point_domain adds each tile's far corner plus a
+	# two-point ring (-6..7), so 7 is the smallest square that certifies it.
+	var region := plan.compute_region(0,0,7)
 	plan.builds = 0
 	var actual := WaterField.profile(_trace(),region)
-	assert_eq(plan.builds,0,"The centreline and its two-cell classifier stencil are already certified")
+	assert_eq(plan.builds,0,"The centreline and its two-point classifier stencil are already certified")
 	var oracle_plan := _plan()
 	var oracle := WaterField.profile(_trace(),oracle_plan.compute_region(100,100,1))
 	assert_eq(actual.levels,oracle.levels)

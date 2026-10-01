@@ -1,9 +1,14 @@
 extends GutTest
 
-func test_narrow_clefts_can_carry_real_overhead_rock() -> void:
+## A 12 m cleft: the one low point column x = 4 (the arch centres 8 i + 4)
+## between plateaus whose flat points two steps away bear the abutments.
+func _cleft_region() -> HeightfieldRegion:
 	var plan := HeightfieldPlan.new(17,64,12,"mean",4)
-	plan.set_raw_height_override(func(cx: int,_cz: int) -> float: return 0.0 if cx==2 else 12.0)
-	var region := plan.compute_region(4,4,12)
+	plan.set_raw_height_override(func(cx: int,_cz: int) -> float: return 0.0 if cx==4 else 12.0)
+	return plan.compute_region(8,8,24)
+
+func test_narrow_clefts_can_carry_real_overhead_rock() -> void:
+	var region := _cleft_region()
 	var mesher := TerrainChunkMesher.new()
 	mesher.prepare_resources()
 	var count := 0
@@ -14,9 +19,7 @@ func test_narrow_clefts_can_carry_real_overhead_rock() -> void:
 	assert_gt(count,0,"A heightmap cannot supply the missing overhead rock volume")
 
 func test_arch_tops_undersides_and_complete_bearings_are_physical() -> void:
-	var plan := HeightfieldPlan.new(17,64,12,"mean",4)
-	plan.set_raw_height_override(func(cx: int,_cz: int) -> float: return 0.0 if cx==2 else 12.0)
-	var region := plan.compute_region(4,4,12)
+	var region := _cleft_region()
 	var mesher := TerrainChunkMesher.new()
 	mesher.prepare_resources()
 	mesher.set_seed(1)
@@ -39,7 +42,7 @@ func test_arch_tops_undersides_and_complete_bearings_are_physical() -> void:
 		assert_true(physics.intersect_ray(PhysicsRayQueryParameters3D.create(from,from+Vector3(0,0,20))).is_empty(),"The low passage remains open beneath the arch")
 		for sign_value: float in [-1,1]:
 			var end := p+Vector3(record.axis.x,0,record.axis.y)*sign_value*18
-			assert_almost_eq(TerrainSurfaceField.surface_y(region,end.x,end.z),record.top,.15)
+			assert_almost_eq(TerrainTileField.surface_y(region,end.x,end.z),record.top,.15)
 		count+=1
 	assert_gt(count,0)
 	assert_eq(data.structure_clearance.size(),count,"Vegetation receives the complete overhead footprint")

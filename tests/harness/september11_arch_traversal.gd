@@ -58,7 +58,7 @@ func _run() -> void:
 	for offset:float in [-2,0,2]:
 		for sign_value:float in [-1,1]:
 			var point:=center+along*offset-side*sign_value*10
-			var ground:=TerrainSurfaceField.surface_y(region,point.x,point.y)
+			var ground:=TerrainTileField.surface_y(region,point.x,point.y)
 			var level:=field.level_at(point)
 			actor.position=Vector3(point.x,maxf(ground+.05,level-.5),point.y)
 			actor.velocity=Vector3.ZERO

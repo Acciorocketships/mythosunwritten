@@ -7,7 +7,7 @@ extends RefCounted
 ## the outskirts are a terraced continuation of the settlement, not detached
 ## camp dressing.
 const INNER_RADIUS := 36.0
-const OUTSKIRTS_BAND_WIDTH := HeightfieldPlan.TILE
+const OUTSKIRTS_BAND_WIDTH := HeightfieldPlan.CELL
 const OUTER_RADIUS := INNER_RADIUS + OUTSKIRTS_BAND_WIDTH
 # The farthest admitted parcel must be able to connect to the canonical town
 # entry. Legacy branch discovery still uses this geometric annulus bound.

@@ -29,9 +29,11 @@ func _run()->void:
  for style:String in styles:
   STYLE.apply(style)
   var started:=Time.get_ticks_msec()
-  var upper:={"replay_recipe":{"kind":"wall","width":60.0,"height":7.0,"left_end":true,"right_end":false,"abut":Vector2i.ZERO},"transform":Transform3D(Basis(),Vector3(0,5,-8))}
-  var corner:={"replay_recipe":{"kind":"corner","height":7.0},"transform":Transform3D(Basis(),Vector3(-28.5,5,-8+1.5))}
-  var lower:={"replay_recipe":{"kind":"wall","width":60.0,"height":5.0,"left_end":true,"right_end":false,"abut":Vector2i.ZERO},"transform":Transform3D(Basis(),Vector3(0,0,4))}
+  # An upper wall (5 -> 12 m) turning a corner at x = -28.5 and a lower wall
+  # (0 -> 5 m), both facing +z (wall-segment foot lines).
+  var upper:=FIELD.straight_wall(Vector2(-28.5,-8),Vector2(30,-8),Vector2(0,1),12.0,5.0)
+  var corner:=FIELD.straight_wall(Vector2(-28.5,-20),Vector2(-28.5,-8),Vector2(-1,0),12.0,5.0)
+  var lower:=FIELD.straight_wall(Vector2(-28.5,4),Vector2(30,4),Vector2(0,1),5.0)
   var field=FIELD.new([upper,corner,lower],SEED)
   field.ground_at=func(q:Vector2)->float:
    if q.x<-28.5:return 0.0

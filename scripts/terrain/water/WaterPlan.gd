@@ -12,6 +12,9 @@ class_name WaterPlan
 extends RefCounted
 
 const SUPER := 768.0              # source super-grid pitch (32 tiles)
+# 24 m route/bucket cell (HeightfieldPlan.CELL): the carve index, source and
+# path-planning windows. The terrain lattice itself is 12 m points
+# (HeightfieldPlan.POINT); ground-safety surveys below sample at that pitch.
 const TILE := 24.0
 const STOREY := 4.0
 
@@ -48,9 +51,12 @@ const TRACE_REACH := 2400.0
 const GRAD_EPS := 6.0             # finite-difference step for the gradient
 const SENSE_RADIUS := 96.0        # conservative junction lookup halo
 const _NEIGHBOUR_INDEX_CELL := SENSE_RADIUS
-# Full-depth core exceeds half a terrain-cell diagonal (16.97m). Both
-# bridge cells at a diagonal crossing therefore excavate fully, keeping a
-# finite cardinal connection instead of two wet tiles touching at a corner.
+# Full-depth core exceeds half a dual-cell diagonal (6 * sqrt(2) = 8.49 m on
+# the 12 m terrain lattice): every point whose dual cell the centreline
+# crosses, including both bridge points at a diagonal crossing, excavates
+# fully, keeping a cardinal connection instead of two wet tiles touching at a
+# corner (test_water_dual_grid). The width itself is a look, not a lattice
+# bound; the guarantee holds with room to spare.
 const W_MIN := 20.0
 const W_MAX := 26.0               # ... at max length
 const ALLUVIAL_HALF_WIDTH := 120.0
@@ -82,12 +88,16 @@ const CONTAIN_DROP := 4.5
 # Beds never sink below this: quantize_storey clamps terrain to storey >= 0,
 # so a deeper bed would put the water surface underneath the rendered floor.
 const BED_MIN := -1.0
-# Carve lateral falloff beyond the width. Kept under half a tile so the
-# partial-carve band can't dither cells across the storey-rounding threshold
-# (alternating poke/submerge plates along the channel edges).
+# Hydraulic containment survey and route spacing margin beyond the width (a
+# feature scale, independent of the terrain lattice).
 const FEATHER := 8.0
-# The hydraulic containment survey and route spacing retain FEATHER. Terrain
-# banks occupy a wider, finite collar so normal ground slopes can reach water.
+# Carve lateral falloff beyond the width where the narrow (steep-reach)
+# profile applies. Kept under half a 12 m terrain tile, at the same third of
+# the lattice pitch the old 8 m band had on 24 m cells, so few points per
+# transect land in the partial band and dither across the storey-rounding
+# threshold (alternating poke/submerge plates along the channel edges).
+const CARVE_FEATHER := 4.0
+# Terrain banks occupy a wider, finite collar so normal ground slopes can reach water.
 const BANK_FEATHER := 96.0
 # Spring-pool radius. SMALL on purpose: the pool level clamps to the minimum
 # ground under footprint∪ring, so a wide pool on a peaked summit reads that
@@ -231,7 +241,7 @@ func smooth_h(p: Vector2) -> float:
 func noise_h(p: Vector2) -> float:
 	var cached = _detail_samples.get(p)
 	if cached != null: return float(cached) * amplitude
-	var value := HeightfieldPlan.height01(Vector3(p.x, 0.0, p.y), world_seed, true)
+	var value := HeightfieldPlan.natural01(Vector3(p.x, 0.0, p.y), world_seed)
 	if _detail_keys.size() == FIELD_SAMPLE_LIMIT:
 		_detail_samples.erase(_detail_keys[_detail_cursor])
 		_detail_keys[_detail_cursor] = p
@@ -454,20 +464,25 @@ func _make_pond(p: Vector2, arc: float, incoming_bed := INF) -> PondStamp:
 
 
 ## Bank storey for a pond at p: storey-quantized minimum of the PRE-CARVE
-## rendered field over the footprint ∪ one-tile ring. Endpoints already sit in
-## local lows, so this is a safety clamp guaranteeing water below its banks.
+## field at every 12 m terrain lattice point within the footprint's maximum
+## wobble radius plus a 24 m ring. A shore point's tile has corners up to
+## 12 * sqrt(2) = 16.97 m away, and a tile never rises above its corners, so
+## the 24 m ring holds every corner of every tile the shore can cross (with
+## slack): the water stays below its banks. Endpoints already sit in local
+## lows, so this is a safety clamp.
 ## FLOOR, never round: rounding UP put the level (and so the surface) half a
 ## storey above the lowest rim ground — the whole pool overtopped its banks
 ## and spilled a waterfall on every side (summit tarns especially).
 ## Floor of 1 keeps beds above y=0.
 func _pond_level(center: Vector2, radius: float) -> int:
+	var pitch := HeightfieldPlan.POINT
 	var bound: float = radius * (1.0 + PondStamp.WOBBLE) + TILE
-	var r_cells: int = int(ceil(bound / TILE))
-	var cc: Vector2i = Vector2i(roundi(center.x / TILE), roundi(center.y / TILE))
+	var r_points: int = int(ceil(bound / pitch))
+	var cc: Vector2i = Vector2i(roundi(center.x / pitch), roundi(center.y / pitch))
 	var min_h: float = INF
-	for dz in range(-r_cells, r_cells + 1):
-		for dx in range(-r_cells, r_cells + 1):
-			var p: Vector2 = Vector2(float(cc.x + dx) * TILE, float(cc.y + dz) * TILE)
+	for dz in range(-r_points, r_points + 1):
+		for dx in range(-r_points, r_points + 1):
+			var p: Vector2 = Vector2(float(cc.x + dx) * pitch, float(cc.y + dz) * pitch)
 			if p.distance_to(center) <= bound:
 				min_h = minf(min_h, noise_h(p))
 	return clampi(int(floor(min_h / STOREY)), 1, max_storeys)
@@ -654,13 +669,19 @@ func _contour_step(t: RiverTrace, visited: Dictionary, p: Vector2,
 ## full storey below the lowest flanking bank (CONTAIN_DROP — the channel
 ## must survive storey quantization bounded by ground on both sides),
 ## monotone via prev, floored at BED_MIN. Banks are the natural pre-carve
-## field just past the carve feather on each side of the flow, sampled at two
-## rings so a cell-centre never slips between the probes.
+## field just past the feather on each side of the flow, sampled at two rings
+## one 12 m terrain point apart, so a lattice point never slips between the
+## probes. The survey keeps FEATHER (8 m), not CARVE_FEATHER (4 m): it reads
+## the natural PRE-carve field, so where the partial carve ends does not move
+## the bank it measures; starting past the wider band keeps both rings clear of
+## any partially carved point under either feather, and keeps live river beds
+## (a hydraulic plan independent of the terrain lattice) unchanged.
 func _contained_bed(prev_bed: float, p: Vector2, dir: Vector2, half_w: float) -> float:
 	var n: Vector2 = Vector2(-dir.y, dir.x)
-	var d0: float = half_w + FEATHER + TILE * 0.5
+	var pitch := HeightfieldPlan.POINT
+	var d0: float = half_w + FEATHER + pitch * 0.5
 	var bank: float = INF
-	for off in [n * d0, -n * d0, n * (d0 + TILE), -n * (d0 + TILE)]:
+	for off in [n * d0, -n * d0, n * (d0 + pitch), -n * (d0 + pitch)]:
 		bank = minf(bank, roundf(noise_h(p + off) / STOREY) * STOREY)
 	return maxf(minf(minf(prev_bed, smooth_h(p) - CHANNEL_DEPTH), bank - CONTAIN_DROP), BED_MIN)
 
@@ -784,8 +805,8 @@ func _region_for(rc: Vector2i) -> Dictionary:
 		Vector2(float(rc.x), float(rc.y)) * SUPER, Vector2(SUPER, SUPER)).grow(BANK_FEATHER + W_MAX)
 	var rivers: Array = []
 	var buckets: Dictionary = {}
-	# carve_at_cell chooses exactly one half-open super-cell owner before
-	# querying this index. Keep complete river records for discovery, but
+	# carve_at chooses exactly one half-open super-cell owner (of the point's
+	# 24 m cell) before querying this index. Keep complete river records for discovery, but
 	# index only the terrain cells this owner can ever be asked to carve.
 	var first_cell := rc * int(SUPER / TILE)
 	var last_cell := first_cell + Vector2i.ONE * (int(SUPER / TILE) - 1)
@@ -824,7 +845,7 @@ func _region_for(rc: Vector2i) -> Dictionary:
 						if not buckets.has(key):
 							buckets[key] = []
 						buckets[key].append([t, i])
-	# Flat pond index (source pools + terminal ponds) so carve_at_cell can
+	# Flat pond index (source pools + terminal ponds) so carve_at can
 	# distance-gate without re-walking every river per cell.
 	var ponds: Array = []
 	for t in rivers:
@@ -976,19 +997,28 @@ func bank_strengths(trace: RiverTrace) -> PackedFloat64Array:
 	return weights
 
 
-## Metres to subtract from the raw noise height at tile cell (cx, cz).
-## Max over every pond bowl and channel segment that reaches the cell — pure
-## function of (world_seed, cell); the caches never change the value.
-## HOT PATH: called for every cell of every region window. Most cells have no
+## Metres to subtract from the raw noise height at world position (x, z).
+## Max over every pond bowl and channel segment that reaches the point — pure
+## function of (world_seed, position); the caches never change the value.
+## The segment index is bucketed by 24 m cell: a point reads the bucket of the
+## cell whose half-open Voronoi square [24c - 12, 24c + 12) contains it (the
+## same floor rule the bucket build uses), so 12 m lattice points that sit on
+## a cell border resolve to exactly one owner. The region is the one that owns
+## that CELL (its buckets only cover its own cells), not the one containing
+## the point, which differs within 12 m of a super-cell edge.
+## HOT PATH: called for every point of every region window. Most points have no
 ## water in reach, so the expensive part — noise_h, a full landform sample —
 ## is evaluated lazily, only once a pond footprint or channel bucket actually
-## covers the cell. Ponds beyond bound_radius contribute exactly 0
+## covers the point. Ponds beyond bound_radius contribute exactly 0
 ## (footprint_t >= 1), so the distance gate never changes the result.
-func carve_at_cell(cx: int, cz: int) -> float:
-	var p: Vector2 = Vector2(float(cx) * TILE, float(cz) * TILE)
+func carve_at(x: float, z: float) -> float:
+	var p: Vector2 = Vector2(x, z)
 	if p.length() < SPAWN_WATER_RADIUS:
 		return 0.0
-	var rc: Vector2i = Vector2i(int(floor(p.x / SUPER)), int(floor(p.y / SUPER)))
+	var cx: int = floori(x / TILE + 0.5)
+	var cz: int = floori(z / TILE + 0.5)
+	var cells_per_super: int = int(SUPER / TILE)
+	var rc: Vector2i = Vector2i(floori(float(cx) / cells_per_super), floori(float(cz) / cells_per_super))
 	var region: Dictionary = _region_for(rc)
 	var ground: float = -INF   # evaluated on first real hit
 	var best: float = 0.0
@@ -1045,7 +1075,7 @@ func carve_at_cell(cx: int, cz: int) -> float:
 					target = lerpf(shore, ground, (d - half_width) / BANK_FEATHER)
 				var weights := bank_strengths(t)
 				var strength := lerpf(weights[si], weights[si+1], along)
-				var original_weight := SlopeProfile.smootherstep(clampf((half_width+FEATHER-d)/FEATHER,0,1))
+				var original_weight := SlopeProfile.smootherstep(clampf((half_width+CARVE_FEATHER-d)/CARVE_FEATHER,0,1))
 				var original_carve := maxf(0.0,ground-carve_bed)*original_weight
 				var carve := lerpf(original_carve,maxf(0.0,ground-target),strength)
 				# The retained bar is a low depositional crest. It can lower

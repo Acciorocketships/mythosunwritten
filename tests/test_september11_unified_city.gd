@@ -39,7 +39,7 @@ func test_world_roads_connect_only_real_crossings_to_source_gates() -> void:
 		var topology := router.topology(bounds, contacts, ground, &"connected")
 		assert_eq(topology.paths.size(), 1)
 		var points: Array[Vector2] = topology.paths[0].points
-		assert_eq(points[0], Vector2(mask.keys()[0]) * TerrainSurfaceField.TILE)
+		assert_eq(points[0], Vector2(mask.keys()[0]) * HeightfieldPlan.CELL)
 		assert_eq(points[-1], points[0].normalized() * 10.0)
 		for point: Vector2 in points:
 			assert_almost_eq(point.cross(points[0]), 0.0, 0.001,

@@ -176,6 +176,7 @@ func _init() -> void:
 		feature_program.field_cache_cap)
 	var features := WorldFeaturePlan.new(SEED, water, fields, feature_program,
 		settlements)
+	mesher.water_blocks = fields  # as FieldTerrainStreamer wires it
 	var render_cache := EnvironmentRenderCache.new(catalog)
 	var active_set: Dictionary = {}
 	for asset_id: StringName in dressing_program.referenced_asset_ids:

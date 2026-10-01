@@ -33,7 +33,7 @@ func _initialize() -> void:
 		for i in range(1, candidate.points.size()): maximum_rise = maxf(maximum_rise, profile.levels[i] - profile.levels[i - 1])
 		print("TERMINAL_STUDY mode=", mode, " receiver=", receiver.source_cell, " station=", nearest, " extra_stations=", candidate.points.size() - incoming.points.size(), " head_gap=", profile.levels[-1] - receiving_head, " center_gap=", candidate.points[-1].distance_to(receiving_point), " maximum_rise=", maximum_rise)
 		for i in range(maxi(0, incoming.points.size() - 3), candidate.points.size()):
-			print("TERMINAL_SAMPLE mode=", mode, " point=", candidate.points[i], " head=", profile.levels[i], " ground=", TerrainSurfaceField.surface_y(region, candidate.points[i].x, candidate.points[i].y))
+			print("TERMINAL_SAMPLE mode=", mode, " point=", candidate.points[i], " head=", profile.levels[i], " ground=", TerrainTileField.surface_y(region, candidate.points[i].x, candidate.points[i].y))
 	quit()
 
 func _copy(source: RiverTrace) -> RiverTrace:

@@ -32,10 +32,11 @@ func test_reported_mountain_is_not_excavated_by_a_flank_lake() -> void:
 	assert_false(water.has_source(Vector2i(0, 1)), "the looping summit spring feeds no river")
 	var plan := TerrainWorldTuning.make_heightfield(SEED, water)
 	var carved := 0
-	# x 408..528, z 816..936; the next column east lies in the bank feather of
-	# the real river (0,0) and is legitimately graded by up to 3.8 m.
-	for cz in range(34, 40):
-		for cx in range(17, 23):
+	# x 408..528, z 816..936 (12 m terrain points 34..44 x 68..78); the next
+	# 24 m column east lies in the bank feather of the real river (0,0) and is
+	# legitimately graded by up to 3.8 m.
+	for cz in range(68, 79):
+		for cx in range(34, 45):
 			if plan.raw_height(cx, cz) < plan.uncarved_height(cx, cz) - 0.01: carved += 1
 	assert_eq(carved, 0, "no water body excavates the reported mountainside")
 

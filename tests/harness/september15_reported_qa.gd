@@ -106,7 +106,7 @@ func _capture_views(world:Node3D) -> void:
 				_character.global_position=feet
 				var chunk := FieldTerrainStreamer.chunk_of(feet)
 				if phase==1 and _comparison_regions.has(chunk):
-					_character.global_position.y=maxf(feet.y,TerrainSurfaceField.surface_y(_comparison_regions[chunk],feet.x,feet.z))
+					_character.global_position.y=maxf(feet.y,TerrainTileField.surface_y(_comparison_regions[chunk],feet.x,feet.z))
 				pose["before_feet" if phase==0 else "after_feet"] = str(_character.global_position)
 				for index in _comparison_grass.size(): _comparison_grass[index].visible=index==phase
 				for index in 2:
@@ -123,7 +123,9 @@ func _capture_views(world:Node3D) -> void:
 func _prepare_grass_comparison(world:Node3D) -> void:
 	assert(not _frozen)
 	await _prepare_review_grass()
-	var original = TerrainChunkMesher.new() if "--native-topology" in OS.get_cmdline_user_args() else preload("res://tests/fixtures/september15/before_mesher.gd").new()
+	# The frozen September 15 "before" mesher was retired with the 24 m cell-keyed
+	# kernel (September 30 dual-grid tiles); both sides now use the live mesher.
+	var original = TerrainChunkMesher.new()
 	original.set_seed(WORLD_SEED)
 	original.prepare_resources()
 	var current:=TerrainChunkMesher.new()

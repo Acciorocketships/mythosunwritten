@@ -26,14 +26,10 @@ func _run() -> void:
 	var region := context.graded_region(fields.region(chunk))
 	var water := fields.water(chunk)
 	ROCK_DRESSING.prepare()
-	var lo := chunk * 8
-	var owned := Rect2(Vector2(lo) * 24.0 - Vector2(12, 12), Vector2.ONE * 192.0)
-	var cliffs := CliffDressing.compute(region, lo.x - 1, lo.y - 1, 10)
-	var corners = preload("res://scripts/terrain/field/CliffCornerCrags.gd")
-	var neighbors: Array = ROCK_DRESSING.formations(cliffs.wall, SEED, region, context, water)
-	neighbors.append_array(corners.formations(cliffs.outer_wall, SEED, region, context, false, water))
-	neighbors.append_array(corners.formations(cliffs.inner_wall, SEED, region, context, true, water))
-	var slope = SLOPE_FIELD.new(neighbors, SEED, region, owned, context, water)
+	# The same slope field CliffRockDressing.compute builds.
+	var owned: Rect2 = ROCK_DRESSING.owned_rect(chunk)
+	var walls := TerrainTileField.wall_segments(region, owned.grow(ROCK_DRESSING.WALL_HALO))
+	var slope = SLOPE_FIELD.new(walls, SEED, region, owned, context, water)
 	var best: Dictionary = {}
 	for rock: Dictionary in slope.skirts():
 		if best.is_empty() or SLOPE_FIELD._base_centre(rock).distance_to(at) < SLOPE_FIELD._base_centre(best).distance_to(at):
@@ -46,5 +42,5 @@ func _run() -> void:
 	for i in vertices.size():
 		var q := Vector2(vertices[i].x, vertices[i].z)
 		print("[dump] ring=%d side=%d sheet=%d y=%.3f env=%.3f terrain=%.3f surfy=%.3f n=%s" % [i / RockSkirt.SIDES, i % RockSkirt.SIDES,
-			sk.on_sheet[i], vertices[i].y, env.sample(q), terrain.call(q), TerrainSurfaceField.surface_y(region, q.x, q.y), (sk.normals[i] as Vector3).snapped(Vector3.ONE * .01)])
+			sk.on_sheet[i], vertices[i].y, env.sample(q), terrain.call(q), TerrainTileField.surface_y(region, q.x, q.y), (sk.normals[i] as Vector3).snapped(Vector3.ONE * .01)])
 	quit()

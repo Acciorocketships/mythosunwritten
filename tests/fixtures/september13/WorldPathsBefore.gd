@@ -224,7 +224,7 @@ func _compute_node(super_cell: Vector2i) -> Dictionary:
 	return {"id": site.id, "cell": site.cell}
 
 func _node_support_samples(cell: Vector2i) -> Array[Vector2]:
-	var centre := Vector2(cell) * TerrainSurfaceField.TILE
+	var centre := Vector2(cell) * TerrainTileField.SPACING
 	var half := PathProgram.NODE_SUPPORT_SIZE * 0.5
 	return [centre, centre + Vector2(-half, -half), centre + Vector2(half, -half),
 		centre + Vector2(-half, half), centre + Vector2(half, half)]
@@ -272,8 +272,8 @@ func _bridge_raw(site: Dictionary) -> Dictionary:
 func _profile_bridge(site: Dictionary) -> Dictionary:
 	var a_cell: Vector2i = site.a
 	var b_cell: Vector2i = site.b
-	var a := Vector2(a_cell) * TerrainSurfaceField.TILE
-	var b := Vector2(b_cell) * TerrainSurfaceField.TILE
+	var a := Vector2(a_cell) * TerrainTileField.SPACING
+	var b := Vector2(b_cell) * TerrainTileField.SPACING
 	var forward := (b - a).normalized()
 	var lateral := Vector2(-forward.y, forward.x)
 	var metrics: Dictionary = _program.bridge
@@ -427,7 +427,7 @@ func _route_record(start_cell: Vector2i, goal_cell: Vector2i, pair_key: String) 
 		for x in range(min_cell.x, max_cell.x + 1):
 			var index := (z - min_cell.y) * width + x - min_cell.x
 			var cell := Vector2i(x, z)
-			var p := Vector2(cell) * TerrainSurfaceField.TILE
+			var p := Vector2(cell) * TerrainTileField.SPACING
 			cells[index] = cell
 			heights[index] = int(round(_ground(p)))
 			rocky[index] = Helper.biome_rocky01(Vector3(p.x, 0.0, p.y), _world_seed)
@@ -442,12 +442,12 @@ func _route_record(start_cell: Vector2i, goal_cell: Vector2i, pair_key: String) 
 		var cell_edges: Array[Dictionary] = []
 		for direction: Vector2i in directions:
 			var next := cell + direction
-			var segment_a := Vector2(cell) * TerrainSurfaceField.TILE
-			var segment_b := Vector2(next) * TerrainSurfaceField.TILE
+			var segment_a := Vector2(cell) * TerrainTileField.SPACING
+			var segment_b := Vector2(next) * TerrainTileField.SPACING
 			var intervals := _planning_intervals_cells(cell, next)
 			if intervals.is_empty():
 				var region := _fields.region_at((segment_a + segment_b) * 0.5)
-				if not TerrainSurfaceField.is_walkable_edge(region, cell, direction):
+				if not TerrainTileField.is_walkable_edge(region, cell, direction):
 					continue
 				var to := _local_index(next, min_cell, width)
 				cell_edges.append({"to": to, "dir": _dir_index(direction),
@@ -503,8 +503,8 @@ func _validate_route_exact(edges: Array[Dictionary]) -> bool:
 		if not String(edge.bridge_key).is_empty():
 			continue
 		for connection: Dictionary in edge.connections:
-			var a := Vector2(connection.a) * TerrainSurfaceField.TILE
-			var b := Vector2(connection.b) * TerrainSurfaceField.TILE
+			var a := Vector2(connection.a) * TerrainTileField.SPACING
+			var b := Vector2(connection.b) * TerrainTileField.SPACING
 			var side := Vector2(-(b - a).normalized().y, (b - a).normalized().x) \
 				* PathProgram.PATH_WIDTH * 0.5
 			for offset: Vector2 in [Vector2.ZERO, side, -side]:
@@ -631,7 +631,7 @@ func _project_context(core: Rect2, routes: Array[Dictionary]) -> FeatureContext:
 					bridge_cells[connection.b] = true
 	var corridors: Array[Rect2] = []
 	for cell: Vector2i in masks:
-		var centre := Vector2(cell) * TerrainSurfaceField.TILE
+		var centre := Vector2(cell) * TerrainTileField.SPACING
 		var mask: int = masks[cell]
 		for direction: Vector2i in _DIRS:
 			if (mask & int(_BITS[direction])) != 0:
@@ -695,8 +695,8 @@ func _place_arches(core: Rect2, routes: Array[Dictionary], masks: Dictionary,
 			var other := cell + direction
 			if bridge_cells.has(cell) or bridge_cells.has(other):
 				continue
-			var start := Vector2(cell) * TerrainSurfaceField.TILE
-			var end := Vector2(other) * TerrainSurfaceField.TILE
+			var start := Vector2(cell) * TerrainTileField.SPACING
+			var end := Vector2(other) * TerrainTileField.SPACING
 			var start_biome := _biome_at(start)
 			if start_biome == _biome_at(end):
 				continue
@@ -708,12 +708,12 @@ func _place_arches(core: Rect2, routes: Array[Dictionary], masks: Dictionary,
 					lo = mid
 				else:
 					hi = mid
-			var offset := Vector2(direction) * TerrainSurfaceField.TILE \
+			var offset := Vector2(direction) * TerrainTileField.SPACING \
 				* (lo + hi) * 0.5
 			var point := start + offset
 			var near_village := false
 			for node: Vector2i in node_list:
-				if point.distance_to(Vector2(node) * TerrainSurfaceField.TILE) \
+				if point.distance_to(Vector2(node) * TerrainTileField.SPACING) \
 						< PathProgram.BIOME_GATE_VILLAGE_CLEARANCE:
 					near_village = true
 					break
@@ -797,7 +797,7 @@ func _try_prop(core: Rect2, asset_id: StringName, cell: Vector2i,
 		reservations: Array[Rect2], occupied: Array[Rect2],
 		payload: EnvironmentInstancePayload, offset := Vector2.ZERO) -> bool:
 	var metrics: Dictionary = _program.assets[asset_id]
-	var anchor := Vector2(cell) * TerrainSurfaceField.TILE + offset
+	var anchor := Vector2(cell) * TerrainTileField.SPACING + offset
 	var yaw := atan2(float(route_direction.x), float(route_direction.y))
 	var basis := Basis(Vector3.UP, yaw)
 	var transform := Transform3D(basis, Vector3(anchor.x, _ground(anchor), anchor.y))
@@ -871,7 +871,7 @@ func _exact_wet_intervals(a: Vector2, b: Vector2) -> Array[Vector2]:
 	return out
 
 func _ground(point: Vector2) -> float:
-	return TerrainSurfaceField.surface_y(_fields.region_at(point), point.x, point.y)
+	return TerrainTileField.surface_y(_fields.region_at(point), point.x, point.y)
 
 func _planning_distance(cell: Vector2i) -> float:
 	if _planning_points.has(cell):
@@ -879,15 +879,15 @@ func _planning_distance(cell: Vector2i) -> float:
 		return float(_planning_points[cell])
 	_evict_lru(_planning_points, _planning_point_stamps,
 		_program.PLANNING_POINT_CACHE_CAP)
-	var point := Vector2(cell) * TerrainSurfaceField.TILE
+	var point := Vector2(cell) * TerrainTileField.SPACING
 	var value := _water_plan.planning_signed_distance(point)
 	_planning_points[cell] = value
 	_touch(_planning_point_stamps, cell)
 	return value
 
 func _planning_intervals_cells(a_cell: Vector2i, b_cell: Vector2i) -> Array[Vector2]:
-	var a := Vector2(a_cell) * TerrainSurfaceField.TILE
-	var b := Vector2(b_cell) * TerrainSurfaceField.TILE
+	var a := Vector2(a_cell) * TerrainTileField.SPACING
+	var b := Vector2(b_cell) * TerrainTileField.SPACING
 	var length := a.distance_to(b)
 	# WaterPlan's source-distance field is conservatively 2-Lipschitz. Cached
 	# graph-point distances therefore prove the common dry edge without asking
@@ -922,14 +922,14 @@ func _possible_pair_rect(sc: Vector2i, direction: Vector2i) -> Rect2:
 	var b0 := other * PathProgram.SUPER_CELLS + Vector2i(8, 8)
 	var b1 := other * PathProgram.SUPER_CELLS + Vector2i(23, 23)
 	var lo := Vector2(Vector2i(mini(a0.x, b0.x), mini(a0.y, b0.y))) \
-		* TerrainSurfaceField.TILE
+		* TerrainTileField.SPACING
 	var hi := Vector2(Vector2i(maxi(a1.x, b1.x), maxi(a1.y, b1.y))) \
-		* TerrainSurfaceField.TILE
+		* TerrainTileField.SPACING
 	return Rect2(lo, hi - lo).grow(_program.max_horizontal_footprint_radius)
 
 static func _connection_rect(centre: Vector2, direction: Vector2i) -> Rect2:
 	var half_width := PathProgram.PATH_WIDTH * 0.5
-	var half_length := TerrainSurfaceField.HALF
+	var half_length := (TerrainTileField.SPACING * 0.5)
 	if direction.x != 0:
 		return Rect2(centre + Vector2(minf(0.0, direction.x * half_length), -half_width),
 			Vector2(half_length, PathProgram.PATH_WIDTH))

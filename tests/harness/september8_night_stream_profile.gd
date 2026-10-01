@@ -29,9 +29,9 @@ func _run()->void:
 		var payload := mesher.compute_chunk(chunk,region,wet,context)
 		var mesh_ms := (Time.get_ticks_usec()-start)/1000.0
 		var sum_profile := 0.0
-		for key in ["surface","normals","aprons_and_walls"]:sum_profile+=float(payload.profile[key])/1000
+		for key in ["surface","normals","walls"]:sum_profile+=float(payload.profile[key])/1000
 		var hashes: Dictionary={}
-		for key in ["surface_arrays","collision_faces","apron_arrays","wall_arrays","wall_collision_arrays","cliffs","graded_cliff_arrays"]:
+		for key in ["surface_arrays","collision_faces","wall_arrays","wall_collision_arrays"]:
 			hashes[key]=var_to_bytes(payload[key]).hex_encode().sha256_text()
 		var row := {"chunk":str(chunk),"context_ms":context_ms,"mesh_ms":mesh_ms,"unprofiled_ms":mesh_ms-sum_profile,"profile_usec":payload.profile,"counts":payload.profile_counts,"hashes":hashes}
 		results.append(row)

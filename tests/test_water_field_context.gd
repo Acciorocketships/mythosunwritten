@@ -9,8 +9,8 @@ const CHUNK := Vector2i(-4, -18)
 func test_context_matches_water_field_and_has_canonical_dry_nan() -> void:
 	var water := preload("res://tests/fixtures/ReportedWaterPlan.gd").new(SEED)
 	var plan := water.make_heightfield()
-	var centre := CHUNK * 8 + Vector2i(4, 4)
-	var region := plan.compute_region(centre.x, centre.y, 8)
+	var centre := CHUNK * 16 + Vector2i(8, 8)
+	var region := plan.compute_region(centre.x, centre.y, 16)
 	var core := Rect2(Vector2(CHUNK) * 192.0, Vector2.ONE * 192.0)
 	var dressing_index := load("res://terrain/dressing/index.tres") as DressingCatalogIndex
 	var dressing_program := DressingCompiler.compile(dressing_index, EnvironmentCatalog.load_default())
@@ -74,6 +74,6 @@ func test_context_matches_water_field_and_has_canonical_dry_nan() -> void:
 				assert_between(-context.shore_distance_at(point), 0.0, 4.0)
 				assert_between(context.signed_depth_at(point), 0.05, 3.2)
 				assert_almost_eq(transform.origin.y,
-					TerrainSurfaceField.surface_y(region, point.x, point.y), 0.001)
+					TerrainTileField.surface_y(region, point.x, point.y), 0.001)
 	assert_gt(lilies, 0, "floating lily pads qualify from the shared water surface")
 	assert_gt(reeds, 0, "reeds qualify in the canonical wet inward-shore band")

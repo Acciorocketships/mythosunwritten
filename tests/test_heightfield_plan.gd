@@ -2,13 +2,50 @@ extends GutTest
 
 # ------------------------------------------------------------
 # HeightfieldPlan — numerical terrain plan (storey + level tiers)
+# Every (i, j) is a lattice POINT index; point (i, j) is at world (12 i, 12 j).
 # ------------------------------------------------------------
+
+func test_point_and_cell_pitch_constants() -> void:
+	assert_eq(HeightfieldPlan.POINT, 12.0, "height samples sit on a 12 m lattice")
+	assert_eq(HeightfieldPlan.CELL, 24.0, "the coarse route/settlement cell is 2 x 2 tiles")
+
+func test_raw_height_samples_the_field_at_twelve_metre_points() -> void:
+	var plan: HeightfieldPlan = HeightfieldPlan.new(4242, 32.0)
+	for p: Vector2i in [Vector2i(3, -5), Vector2i(1, 1), Vector2i(-7, 4)]:
+		var world := Vector3(12.0 * p.x, 0.0, 12.0 * p.y)
+		assert_almost_eq(plan.raw_height(p.x, p.y), HeightfieldPlan.height01(world, 4242, true) * 32.0,
+			0.0001, "point %s is sampled at 12 m pitch" % p)
+
+class _RecordingCarve extends RefCounted:
+	var seen: Array[Vector2] = []
+	func carve_at(x: float, z: float) -> float:
+		seen.append(Vector2(x, z))
+		return 0.0
+
+func test_carve_is_queried_at_the_point_world_position() -> void:
+	var plan: HeightfieldPlan = HeightfieldPlan.new(1)
+	var carve := _RecordingCarve.new()
+	plan.set_water_plan(carve)
+	plan.raw_height(3, -5)
+	plan.raw_height(1, 2)
+	assert_eq(carve.seen, [Vector2(36.0, -60.0), Vector2(12.0, 24.0)] as Array[Vector2],
+		"carve_at(12 i, 12 j): odd points are carved too")
+
+func test_a_raised_point_is_a_twelve_metre_feature() -> void:
+	# One point at 4 m on a flat field: storey 1 at that point only. Its four
+	# neighbours sit 12 m away, so the feature is one lattice step wide.
+	var plan: HeightfieldPlan = HeightfieldPlan.new(1, 100.0, 8, "mean", 1)
+	plan.set_raw_height_override(func(i: int, j: int) -> float:
+		return 4.0 if (i == 0 and j == 0) else 0.0)
+	assert_eq(plan.storey_at(0, 0), 1, "the raised point is one storey")
+	assert_eq(plan.storey_at(1, 0), 0, "the next point, 12 m away, is ground")
+	assert_eq(plan.storey_at(0, -1), 0, "likewise on the other axis")
 
 func test_raw_height_is_deterministic_per_seed() -> void:
 	var a: HeightfieldPlan = HeightfieldPlan.new(4242)
 	var b: HeightfieldPlan = HeightfieldPlan.new(4242)
 	assert_almost_eq(a.raw_height(3, -5), b.raw_height(3, -5), 0.0001,
-		"same seed + cell => same height")
+		"same seed + point => same height")
 
 func test_raw_height_scales_with_amplitude() -> void:
 	# macro_density01 is in [0,1]; raw_height multiplies by amplitude, so it can
@@ -389,7 +426,7 @@ func test_detail_level_uses_min_aggregation_rounding() -> void:
 
 func test_height01_static_matches_instance_raw_height() -> void:
 	var plan: HeightfieldPlan = HeightfieldPlan.new(4242, 32.0)
-	var pos: Vector3 = Vector3(3.0 * 24.0, 0.0, -5.0 * 24.0)
+	var pos: Vector3 = Vector3(3.0 * 12.0, 0.0, -5.0 * 12.0)
 	assert_almost_eq(plan.raw_height(3, -5),
 		HeightfieldPlan.height01(pos, 4242, true) * 32.0, 0.0001,
 		"static height01(include_detail=true) is the rendered field")
@@ -421,25 +458,26 @@ func test_water_plan_carve_lowers_raw_height() -> void:
 	var dry: HeightfieldPlan = HeightfieldPlan.new(991177, 22.0, 8)
 	var wet: HeightfieldPlan = HeightfieldPlan.new(991177, 22.0, 8)
 	wet.set_water_plan(WaterPlan.new(991177, 22.0, 8))
-	# Find a carved cell (same scan band as the WaterPlan tests).
+	# Find a carved point (same 24 m scan band as the WaterPlan tests, in 12 m
+	# point indices so odd points are scanned as well).
 	var water: WaterPlan = WaterPlan.new(991177, 22.0, 8)
 	var hit: Vector2i = Vector2i.MAX
-	for cz in range(20, 120):
-		for cx in range(20, 120):
-			if water.carve_at_cell(cx, cz) > 0.5:
-				hit = Vector2i(cx, cz)
+	for j in range(40, 240):
+		for i in range(40, 240):
+			if water.carve_at(12.0 * i, 12.0 * j) > 0.5:
+				hit = Vector2i(i, j)
 				break
 		if hit != Vector2i.MAX:
 			break
-	assert_true(hit != Vector2i.MAX, "seed has a carved cell in the scan band")
+	assert_true(hit != Vector2i.MAX, "seed has a carved point in the scan band")
 	assert_true(wet.raw_height(hit.x, hit.y) < dry.raw_height(hit.x, hit.y) - 0.4,
 		"carve lowers the raw field where water lives")
 	assert_almost_eq(wet.raw_height(0, 0), dry.raw_height(0, 0), 0.0001,
-		"spawn cell untouched")
+		"spawn point untouched")
 
 
 # ------------------------------------------------------------
-# Per-cell sample memo (performance-only; must not change results)
+# Per-point sample memo (performance-only; must not change results)
 # ------------------------------------------------------------
 
 # The sample memo persists across compute_region calls; a warm plan must give

@@ -583,7 +583,7 @@ static func _candidate_origins(obligation: Dictionary,
 			# floor of a building which already occupies the town below. Sampling all
 			# higher legal bases created unsupported rock needles and made verticality
 			# synonymous with stilts. True high terrain perches are a separate
-			# production opportunity and require a surveyed TerrainSurfaceField.
+			# production opportunity and require a surveyed TerrainTileField.
 			var lowest_addressable_base := posmod(surface.y, 2)
 			if surface.y - lowest_addressable_base <= 6:
 				base_ys.append(lowest_addressable_base)

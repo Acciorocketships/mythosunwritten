@@ -30,8 +30,10 @@ static func _pond(data: Array) -> PondStamp:
 ## Otherwise a new world generator moves the banks away from the pinned river.
 func make_heightfield() -> HeightfieldPlan:
 	var plan := HeightfieldPlan.new(world_seed, amplitude, max_storeys, "mean", 3)
-	plan.set_raw_height_override(func(cx: int, cz: int) -> float:
-		return noise_h(Vector2(cx * TILE, cz * TILE)))
+	# The override is keyed by 12 m terrain points (HeightfieldPlan.POINT): the
+	# frozen continuous field is sampled at every dual-grid lattice point.
+	plan.set_raw_height_override(func(i: int, j: int) -> float:
+		return noise_h(Vector2(i, j) * HeightfieldPlan.POINT))
 	plan.set_water_plan(self)
 	return plan
 

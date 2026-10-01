@@ -6,8 +6,7 @@ func before_all()->void:ROCKS.prepare()
 func after_each()->void:STYLE.apply("chosen")
 func test_large_shallow_faces_use_distinct_assets_per_cluster()->void:
  STYLE.apply("sheet")
- var form:={"replay_recipe":{"kind":"wall","width":80.,"height":12.,"left_end":true,"right_end":true,"abut":Vector2i.ZERO},"transform":Transform3D.IDENTITY}
- var field=FIELD.new([form],2697992464)
+ var field=FIELD.new([FIELD.straight_wall(Vector2(-40,0),Vector2(40,0),Vector2(0,1),12.)],2697992464)
  var groups:={};var faces:=0
  for rock:Dictionary in field.rock_list:
   if rock.kind!="face":
@@ -27,9 +26,9 @@ func test_large_shallow_faces_use_distinct_assets_per_cluster()->void:
 func test_cap_burial_survives_different_wall_heights_and_corners()->void:
  STYLE.apply("sheet")
  for height:float in [4.,8.,16.]:
-  var form:={"replay_recipe":{"kind":"wall","width":80.,"height":height,"left_end":true,"right_end":true,"abut":Vector2i.ZERO},"transform":Transform3D.IDENTITY}
-  var corner:={"replay_recipe":{"kind":"corner","height":height},"transform":Transform3D(Basis(),Vector3(-38.5,0,1.5))}
-  var field=FIELD.new([form,corner],2697992464)
+  # A straight wall and an outer corner at its east end (plateau at x<40, z<0).
+  var field=FIELD.new([FIELD.straight_wall(Vector2(-40,0),Vector2(40,0),Vector2(0,1),height),
+   FIELD.straight_wall(Vector2(40,-12),Vector2(40,0),Vector2(1,0),height)],2697992464)
   for rock:Dictionary in field.rock_list:
    if rock.kind=="face":_check_face(field,rock,false)
 func _check_face(field,rock:Dictionary,visibility:bool)->void:

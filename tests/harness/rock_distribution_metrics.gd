@@ -45,9 +45,7 @@ func _run() -> void:
 		if features != null:
 			region = features.graded_region(region)
 		var water := fields.water(chunk)
-		var lo := chunk * TerrainChunkMesher.CELLS_PER_CHUNK
-		var cliff: Dictionary = ROCK_DRESSING.compute(region, lo.x, lo.y,
-			TerrainChunkMesher.CELLS_PER_CHUNK, SEED, features, water)
+		var cliff: Dictionary = ROCK_DRESSING.compute(region, chunk, SEED, features, water)
 		var core := Rect2(Vector2(chunk) * 192.0, Vector2.ONE * 192.0)
 		var payload := DressingField.compute(program, SEED, core, region, water,
 			features, cliff.ground_reservations)
@@ -90,7 +88,7 @@ static func ambient_rocks(program: DressingProgram, payload: EnvironmentInstance
 			var gap := -INF
 			for local: Vector2 in stencil:
 				var w := t * Vector3(local.x, 0.0, local.y)
-				gap = maxf(gap, w.y - TerrainSurfaceField.surface_y(region, w.x, w.z))
+				gap = maxf(gap, w.y - TerrainTileField.surface_y(region, w.x, w.z))
 			out.append({"asset": asset_id, "p": Vector2(t.origin.x, t.origin.z), "y": t.origin.y,
 				"r": float(program.ground_radius_by_asset.get(asset_id, 0.0)) * t.basis.x.length(),
 				"gap": gap})

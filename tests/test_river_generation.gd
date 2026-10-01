@@ -46,7 +46,7 @@ func test_channel_core_crosses_terrain_diagonals_with_finite_width() -> void:
 		water._region_cache[Vector2i(1, 1)] = {"rivers": [t], "ponds": [], "buckets": buckets}
 		for cell: Vector2i in buckets:
 			var p := Vector2(cell) * WaterPlan.TILE
-			var height := water.noise_h(p) - water.carve_at_cell(cell.x, cell.y)
+			var height := water.noise_h(p) - water.carve_at(p.x, p.y)
 			assert_lte(roundf(height / 4.0) * 4.0, 4.0,
 				"both off-diagonal bridge cells excavate below the river surface")
 
@@ -79,7 +79,7 @@ func test_production_channel_has_no_dry_diagonal_interruptions() -> void:
 		var p: Vector2 = (trace.points[i] + trace.points[i + 1]) * 0.5
 		var chunk := Vector2i((p / 192.0).floor())
 		if not contexts.has(chunk):
-			var region := plan.compute_region(chunk.x * 8 + 4, chunk.y * 8 + 4, 8)
+			var region := plan.compute_region(chunk.x * 16 + 8, chunk.y * 16 + 8, 16)
 			contexts[chunk] = WaterField.ctx(water, chunk, region)
 		var ctx: Dictionary = contexts[chunk]
 		for offset in [Vector2.ZERO, Vector2(2, 0), Vector2(-2, 0), Vector2(0, 2), Vector2(0, -2)]:

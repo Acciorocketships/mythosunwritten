@@ -1,3 +1,45 @@
+> September 30 dual-grid terrain tiles (branch `dual-grid-terrain`; spec
+> `docs/superpowers/specs/2026-09-30-dual-grid-terrain-tiles-design.md`, plan
+> `docs/superpowers/plans/2026-09-30-dual-grid-terrain-tiles.md`). Terrain heights
+> now live on lattice POINTS 12 m apart (`HeightfieldPlan.POINT`; the 24 m `CELL`
+> is only the route/settlement/tint/grass-tile lattice), and each 12 m tile is a
+> function of its four corners (`TerrainTileField`, the one kernel): per-layer
+> slope (smootherstep bilinear) or cliff (step at the tile midline), so every wall
+> is vertical on a dual-cell border x|z = 12 i + 6, owned by `point_of`, and
+> `wall_segments` is the exact outline the mesher skirts, cliff sheet foot lines,
+> grass and water read. Rulings: E2 is the default cliff end (wall to the tile
+> centre, then a ramp; E1 selectable via `TerrainTileField.cliff_end`);
+> non-crossing tile edges count as slope ends inside a mixed layer; saddles take
+> max(bump); the water fill lattice sits off wall lines (nodes 12 i ± 3); a 24 m
+> route edge is walkable iff both its 12 m point edges are. World native KayKit
+> pieces, the lip clip, aprons, the cell-keyed `TerrainSurfaceField` (and its
+> facade), crags/terraces and their frozen study fixtures are gone; the cliff is
+> the rock skirt under the `sheet_bedrock` sheet. `NativeTerrainGrade` writes
+> per-point controls: a pad owns every corner of the tiles it touches, the lower
+> datum wins a shared corner. New: `HeightfieldPlan.LOWPASS_M` (default 0, off),
+> F9 kernel port (`terrain_tile_kernel.gdshaderinc`), F3 tile readout,
+> `tests/harness/tile_gallery.tscn`, `tests/harness/dual_grid_side_by_side.py`,
+> `mesher.water_blocks` (shared field cache). Measured: isolated suite failing
+> tests 207 (baseline, 423 files) -> 117 (344 files; 123 -> 73 files with a failure or
+> script error); every remaining failure also
+> fails at baseline except the parked water pending test. 49-chunk profile
+> (seed 3046246887): worker 1340 -> 1203 s, mesh payload 674 -> 668 s although the
+> branch builds the full sheet for every chunk (baseline profiler built none);
+> like-for-like 9 chunks in `sheet_bedrock`: 191 -> 174 s; peak 6878 -> 7610 MiB.
+> Open: steep massifs read as a dome (12 m edges see half the rise of 24 m cells,
+> so fewer walls; low-pass 12 m barely helps; owner decision); E2 ramp-top chord
+> notch (up to 1.76 m) in the 2 m terrain mesh under the sheet (shows only on
+> painted roads); a parked 0.032 m water step at (1225, -56.375) with a pending
+> test; mixed-datum pads within one tile; the outskirts gate trusts the patch
+> target. Earlier entries describing cell-keyed terrain, `TerrainSurfaceField`,
+> native cliff pieces, lips, aprons and per-cell controls are superseded. Review:
+> `docs/qa/2026-09-30-dual-grid-terrain/result.md` (`before-*`/`after-*`/
+> `lowpass12-*`/`compare-*`/`gallery*` images on disk); ledger
+> `.superpowers/sdd/2026-09-30-dual-grid-terrain-tiles/`.
+> Production cliff style: `FieldTerrainStreamer.CLIFF_STYLE` defaults to `""` and `scenes/world.tscn`
+> sets `"sheet_bedrock"` (= `CliffRockStyle.PRODUCTION`); plain `"sheet"` now selects the plain-sheet
+> study, not production, and earlier entries saying world.tscn sets `CLIFF_STYLE = "sheet"` are superseded.
+
 > September 29 town review (stabilize, after merging the six streams). A
 > storey touching another building is never jetty-inset
 > (`BuildingDesigner._touches_other`; the inset left a 1 m dead slot and put
@@ -3206,9 +3248,9 @@ for the full vision; that document is the design north star.
 
 ## The core invariant: field-driven, deterministic, churn-free
 
-Terrain is a **pure function of `(world_seed, cell)`**. A cell's final height is decided
-before any geometry is instantiated, so tiles never retile, morph, or pop as neighbours
-stream in. This is the whole point of the current architecture — it replaced an older
+Terrain is a **pure function of `(world_seed, point)`**: a 12 m lattice point's final height
+is decided before any geometry is instantiated, and every 12 m tile is a function of its four
+corner points alone, so tiles never retile, morph, or pop as neighbours stream in. This is the whole point of the current architecture — it replaced an older
 socket / module-catalog engine that grew terrain reactively and needed reveal margins and
 churn suppression to hide the settling. **That socket engine is gone.** If you find docs
 referring to `TerrainGenerator`, `TerrainModule*`, sockets, `WaterRule`, `PositionIndex`,
@@ -3222,84 +3264,120 @@ attaches those nodes to the active scene tree. Never create `MeshInstance3D`, `M
 
 ## Terrain pipeline (`scripts/terrain/`)
 
-Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainSurfaceField → TerrainChunkMesher**,
-with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
-**FieldTerrainStreamer**.
+Data flows: **HeightfieldPlan → HeightfieldRegion → TerrainTileField → TerrainChunkMesher**
+(with the cliff sheet from **CliffRockDressing / CliffSlopeField / CliffSlopeEnvelope**), plus
+sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by **FieldTerrainStreamer**.
+Two lattices coexist and must not be confused: terrain heights live on **POINTS 12 m apart**
+(`HeightfieldPlan.POINT`; a 192 m chunk owns points `16k .. 16k+15` per axis); the **24 m CELL**
+(`HeightfieldPlan.CELL`, `TerrainChunkMesher.CELL`, `PathProgram.ROUTE_CELL`) is only the route,
+settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
+`docs/superpowers/specs/2026-09-30-dual-grid-terrain-tiles-design.md`.
 
 - **`heightfield/HeightfieldPlan.gd`** — the deterministic plan. A continuous height field
-  `H(cell)` (layered value noise + rocky-biome mountain spines, faded flat near spawn) is
-  quantized into integer **storeys** (4 m each) and sub-storey **levels** (1 m). A monotone
-  trickle-down **clamp** lowers each cell to at most `max_step` storeys above its lowest
-  cardinal neighbour (diagonals may drop two — a valid formation). The clamp has a unique,
-  order-independent fixpoint, so results are seed-stable. `compute_region()` batches a whole
-  chunk's storeys+levels in two clamps and returns a `HeightfieldRegion`. Per-cell noise+carve
-  samples are **memoized on the plan instance** (`_sample`, cleared by `set_raw_height_override`/
-  `set_water_plan`) so the ~77 %-overlapping windows of successive chunk builds are sampled once —
-  a pure-performance cache, output-identical. This remains the immutable natural planning
-  input. Following the 2026-09-04 ground review, a sealed village publishes a finite
-  `TerrainGradePatch` on its 3 m construction lattice. `WorldFeaturePlan` supplies that
-  patch before final terrain sampling; it never mutates the natural plan or changes a
-  loaded cell in response to streaming neighbours.
-  - **Levels are rendered** (`RENDER_LEVELS = true`): adjacent same-storey cells may differ
-    by one 1 m level, and that short step uses the same shared smootherstep surface patch as
-    a 4 m storey slope. Levels do not emit cliff dressing or vertical backing walls.
-- **`heightfield/HeightfieldRegion.gd`** — precomputed storey/level dictionaries with O(1)
-  `storey_at` / `level_at` / `surface_height`. Same read API as the plan.
-  Its final graded view resolves sealed village ground and foundation constraints
-  through `NativeTerrainGrade` into ordinary world-grid height controls before selecting
-  slopes, flat cliff crowns and native corners. The fine `TerrainGradePatch` remains a
-  planning constraint; it must not bend an already selected native crown or side face.
-  Fixed pads reserve native cells and bounded monotone support closure raises free controls
-  only when an ordinary reconstructed pad would sag. Inherited continuous street samples
-  do not become fixed pads. Canonical complete input and the two-cell discovery margin
-  are independent of chunk query order. Natural maps remain available for deterministic
-  site and parcel selection. Terrain, collision, grass copies and native dressing share
-  the final control dictionary. Legacy post-classification grading remains explicit only
-  for historical fixtures and comparisons; removing that legacy warp retains native controls.
-- **`field/TerrainSurfaceField.gd`** — reconstructs the **continuous walkable height** from a
-  region. Each non-cliff cell quadrant is a smootherstep patch through four shared controls:
-  its centre, the pairwise-minimum height at each adjoining edge midpoint, and the four-cell
-  minimum at the corner. Both owners of an ordinary storey/level seam therefore compute the
-  exact same boundary curve, including T-junctions where one neighbour slopes in a transverse
-  direction. There is **no up-ramp**: a cell never rises to meet a higher neighbour — the
-  higher cell is a flat **cliff top** and walls down vertically. Deliberate cliff/inner-corner
-  discontinuities are filled by the mesher's rock skirts. Also the classifier for everything downstream: `_is_cliff_top`,
-  `has_inner_corner`, `is_flat_cell`, `own_edge_flat`, `is_exposed_edge`, `is_higher_flat`,
-  `edge_profile`. Ordinary slopes are single-valued on the shared grid, and adjacent chunks
-  sample the same controls ⇒ **gap-free by construction** without miniature level walls.
-  `height_bounds(region, footprint)` proves conservative extrema from the four corners of every
-  clipped quadrant sub-patch (bilinear in monotone smootherstep coordinates); structural solvers
-  use it instead of trusting a sample grid or inheriting unrelated far-away quadrant controls.
-- **`field/TerrainChunkMesher.gd`** — builds one chunk (8×8 cells = 192 m, sampled at 2 m).
-  `compute_chunk()` produces CPU-side mesh arrays, collision faces, and cliff placement data on
-  the worker; `commit_chunk()` turns that payload into the chunk
-  `Node3D` on the main thread. Its children are `Surface` (walkable grass mesh, visually clipped
-  behind the cliff lips), a separate full-extent **collision** trimesh (the lip band stays
-  walkable), `CliffFaces` (vertical **rock skirts** filling the gap under each flat cliff edge,
-  double as wall collision), `Aprons` (ground continued under higher neighbours to seal recess
-  slits), and `Cliffs` (the fixed cliff dressing). Ambient environment dressing is intentionally
-  not part of the terrain payload. Quads are **pinned to their own cell** so cliff tops render flat
-  to their boundary; the vertical gap is filled by the skirt. Classic inner-corner sheet points
-  tuck below the rounded piece; any part of that tuck exposed by a low camera uses the same rock
-  atlas texel as the wall, never bright grass. The walkable collision sheet is a
-  raw `PackedVector3Array` fed to `ConcavePolygonShape3D.set_faces` (no `SurfaceTool`/trimesh
-  cook). Much of this file is edge/lip/corner clip geometry — read the inline comments first.
-  Its scale-independent `field_ground_surface()` adapter accepts any sealed lattice-height
-  region and runs the identical `TerrainSurfaceField` centre/edge/corner kernel. Village turf
-  and plaza caps use this path through `LatticeTerrainSurfaceRegion`: one-band changes are real
-  welded smootherstep slopes, only true discontinuities receive a lip, and the committed surface
-  uses the same ground-palette UV, biome tint, collision authority, and logical-cell metadata as
-  streamed terrain. Village code must not rebuild grass panels or infer logical owners from the
-  sub-quads produced by slope tessellation. The village's actual lip/corner layout also feeds
-  the mesher's shared `_clip_vert` kernel, scaled by the lattice/module pitch; no separate
-  garden rectangle trim is permitted. Only visuals retract beneath lips: collision retains
-  the complete cell union. Concave tucked triangles carry `terrain_rock_vertices` through
-  feature commit, preserving the normal terrain's rock backing instead of repainting it green.
-- **`field/CliffDressing.gd`** — hangs real **KayKit** rock-wall + beveled grass-lip + inner/
-  outer/step/junction **corner** pieces on cliff edges, batched into one `MultiMesh` per piece
-  type per chunk. Visual only; the mesh skirt is the collision. `compute()` returns plain
-  `Transform3D` arrays (unit-testable headless); `build()` turns them into nodes. Pieces snap to
-  the **old-tile 10.5 grid** (3 m KayKit modules at ±1.5…±10.5, corners at ±10.5,±10.5).
+  `H(x, z)` (layered value noise + rocky-biome mountain spines + `LandformField`, faded flat near
+  spawn, minus the river carve) is sampled at every lattice point `(i, j)` = world `(12 i, 12 j)`
+  and quantized into integer **storeys** (4 m each) and sub-storey **levels** (1 m, 0..3). A
+  monotone trickle-down **clamp** lowers each point to at most `max_step` storeys above its lowest
+  cardinal neighbour point; levels clamp to one level above the lowest same-storey neighbour. The
+  clamp has a unique, order-independent fixpoint, so results are seed-stable.
+  `compute_region(ci, cj, radius)` / `compute_rect_region` take POINT indices and return a
+  `HeightfieldRegion`. Per-point noise+carve samples are **memoized on the plan instance**
+  (`_sample`, cleared by `set_raw_height_override`/`set_water_plan`) — a pure-performance cache,
+  output-identical. `raw_height` / overrides are keyed by points (multiply by `POINT`, never 24).
+  `static var LOWPASS_M` (default 0 = off, byte-identical) is the spec's low-pass knob: when set
+  before any plan samples, `natural01` is a separable (1,2,1)/4 tent over offsets {-r, 0, +r} of
+  the natural height (the carve is never filtered; `WaterPlan.noise_h` and `SettlementPlan` site
+  scoring follow it, river routing `smooth01` does not). This remains the immutable natural
+  planning input. A sealed village publishes a finite `TerrainGradePatch` on its 3 m
+  construction lattice; `WorldFeaturePlan` supplies it before final terrain sampling; it never
+  mutates the natural plan or changes a loaded point in response to streaming neighbours.
+  - **Levels are rendered** (`RENDER_LEVELS = true`): a 1-3 m step between same-storey points is
+    a LEVEL edge and uses the same smootherstep tile profile as a one-storey slope. Levels never
+    make walls.
+- **`heightfield/HeightfieldRegion.gd`** — precomputed per-point storey/level dictionaries with
+  O(1) `storey_at(i, j)` / `level_at` / `surface_height` / `has_surface_point` (point indices). Its
+  final graded view (`FeatureContext.graded_region`) resolves sealed village grades through
+  `NativeTerrainGrade` into **per-point controls** (`native_control_heights`, keyed by point):
+  every corner of every 12 m tile a fixed pad claim touches is a pad owner at the pad datum (the
+  lowest datum wins a corner two pads share, so a higher pad within one tile of a lower one is
+  not flat — accepted and pinned by a contract test), which makes every isolated pad flat at
+  every point inside it (a tile stays within its corners; the old support fixpoint is gone).
+  Accepted road edges expand to their two point edges (the middle point of a 24 m route edge is a
+  free road point); roads are relaxed last (lowered to one storey above, then raised to one
+  storey below a neighbour) and `_relax_free` pulls free points back toward natural until no new
+  cliff edge separates free points. Relax/road reach is one 24 m cell (`REACH`) inside the 48 m
+  `NATIVE_CONTROL_MARGIN`. `TerrainGradePatch` itself samples targets through `TerrainTileField`
+  on a half-claim-pitch minimum lattice (claim centres + edge minima), so the lower claim stays
+  flat and owns no transition. Terrain, collision, grass and the cliff sheet all read the same
+  final controls through the kernel. Natural maps remain available for site and parcel
+  selection.
+- **`field/TerrainTileField.gd`** — THE terrain kernel (static, worker-pure). Each 12 m tile
+  between four points is a function of its four corner heights alone: `height = t0 + Σ gap_n *
+  layer_n(u, v)` over the corners' distinct heights, where layer n sees a BINARY tile (corner >=
+  t_n). Edge categories (`edge_category`): FLAT, LEVEL (same storey), SLOPE (one storey), CLIFF
+  (two or more storeys; `is_cliff_edge`, high side `is_wall_edge`); `is_walkable_edge` is exactly
+  "not a cliff edge". Slope layers are `bilinear(corners, S(u), S(v))` with `S` = smootherstep, so
+  a one-storey step spans one whole 12 m tile. Cliff layers step at the tile MIDLINES, so every
+  wall is vertical and lies on a dual-cell border `x|z = 12 i + 6`; a three-storey cliff is one
+  12 m wall. Saddles keep the two high corners as separate bumps (`max(bump_a, bump_c)`; cliff:
+  two 6 x 6 m squares meeting at the centre). A layer mixing cliff and slope crossings is a cliff
+  END: `static var cliff_end` selects **E2 (default: wall to the tile centre, then a compact ramp
+  fanning out to the slope profile; the high side never dips)** or E1 (Coons-blended inside the
+  tile; selectable for the gallery). Non-crossing tile edges count as slope ends inside a mixed
+  layer (ruling). Along any tile edge the surface depends only on that edge's two endpoints, so
+  neighbouring tiles agree by construction; walls are the only double-valued places. Ownership:
+  `point_of(v)` = `floori(v / spacing + 0.5)` (the midline belongs to the + side);
+  `surface_y_on_side(region, x, z, owner)` resolves a wall to the owner's side; `bake_point` /
+  `sample_baked` are the mesher's per-point hot path. `wall_segments(region, rect)` is the exact
+  wall outline: one entry per 6 m half-segment of a border where the owners differ (ends `a`/`b`,
+  owners `high`/`low`, `top`/`bottom`, unit `normal` high -> low); the mesher skirts, the cliff
+  sheet's foot lines, grass and water all read walls from it. `height_bounds` /
+  `height_bounds_on_side` are conservative extrema (exact on flat, slope-only and pure-cliff
+  tiles; a mixed layer contributes its whole corner range). Village helpers: `edge_profile` /
+  `own_edge_profile` / `is_exposed_edge` (`EXPOSE_EPS` 0.25) sample one dual-cell border;
+  `transition_weight` is the one smootherstep profile over a width (default 12 m).
+  `spacing(region)` lets a region expose another lattice (`terrain_tile_size()`, village benches
+  at 1.5 m). Properties pinned by `test_terrain_tile_field`: single-valued off walls, edge
+  profiles from endpoints only, all-slope tiles equal the bilinear formula (saddles excepted),
+  each tile stays within its corners.
+- **`field/TerrainChunkMesher.gd`** — builds one chunk (192 m, 16 x 16 points, sampled on a 2 m
+  grid that has a line on every wall). `compute_chunk()` produces CPU-side mesh arrays, collision
+  faces and the cliff/rock payload on the worker; `commit_chunk()` turns it into the chunk
+  `Node3D` on the main thread. Every 2 m quad is pinned to the point owning its centre
+  (`bake_point`/`sample_baked`), so no quad straddles a wall. **Skirts** come from
+  `wall_segments` over the chunk's owned dual-cell rect, emitted only by the chunk owning the
+  wall's HIGH point (exactly once across chunks), sampled at the sheet's own 2 m vertices: a
+  vertical quad from `surface_y_on_side(high)` down to `surface_y_on_side(low)`, doubling as wall
+  collision. There is no lip clip, inner-corner tuck, apron or native KayKit piece on world
+  terrain. The walkable collision sheet is a raw `PackedVector3Array` fed to
+  `ConcavePolygonShape3D.set_faces`. `field_normals` light the sheet with the exact field
+  gradient, continuing across seamless dual borders and one-sided at walls. Path paint keeps the
+  24 m road cell (`roundi(c / CELL)`) for `features.surface_at_cell`. `mesher.water_blocks` is
+  set by `FieldTerrainStreamer` to the worker's `WorldFieldBlockCache` (when it `serves` the same
+  plans), so the cliff sheet reads neighbouring water from the shared field cache instead of
+  rebuilding it per chunk. Its scale-independent `field_ground_surface()` adapter runs the same
+  kernel over any sealed lattice region: village turf and plaza caps use it through
+  `LatticeTerrainSurfaceRegion` (1.5 m columns exposed as points; walls on column faces), with
+  the same ground-palette UV, biome tint and collision authority as streamed terrain; its
+  cache-only lip helpers (`_clip_vert`, `_cell_clip_info`, `LIP_INSET`) exist for village rims
+  only. Village code must not rebuild grass panels or infer logical owners from slope sub-quads.
+- **`field/CliffRockDressing.gd` + `CliffSlopeField.gd` + `CliffSlopeEnvelope.gd`** — the only
+  world cliff dressing (`CliffRockStyle.PRODUCTION = "sheet_bedrock"`; retired style names fall
+  back to it). `CliffRockDressing.compute(region, chunk, seed, features, water, water_blocks)` (`water_blocks`
+  is the worker's shared `WorldFieldBlockCache` used for neighbour water, a pure perf wiring
+  `FieldTerrainStreamer` sets as `mesher.water_blocks = _fields`) takes the foot
+  lines from `wall_segments(owned.grow(24))`; `CliffSlopeField` splits each segment where its
+  top/bottom change and adds outer-corner arcs. `CliffSlopeEnvelope` is a rounded envelope of
+  the terrain itself on a 0.5 m world grid (crest scan lines at `12 b + 6`), with ridges,
+  bedrock, the foot fillet and its gate (each wall's lift carried along its own wall, so the
+  fillet continues past a cliff end without reaching across a wall), moss by steepness, and
+  keep-out cuts for roads, grades and water. A grid with no wall crest returns the ground
+  itself. Output: the slope solid + collision, ground reservations, grass supports and slope
+  rocks.
+- **`field/CliffDressing.gd`** — no longer places anything on world terrain. It owns the KayKit
+  cliff piece vocabulary (`VISUALS`/`ASSETS`/`TERRAIN_SKIN_ASSETS`, `PROFILE_SAMPLES`), THE shared
+  terrain material, ground texel (`ground_uv`) and biome tint (`tint_at`, `compute_tints`) used by
+  every terrain surface; village retaining rims still dress their own lattice with the pieces.
 - **`dressing/DressingField.gd`** — the pure deterministic ambient-nature field. Sets author
   direct per-biome fill rates, then shared `DressingHabitatLayer` fields form correlated groves,
   clearings, ecotones, rock exposures, and small colonies with true negative space. Optional
@@ -3343,11 +3421,14 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   against paths, water, grade, and terrain.
   Path rejection covers the selected patch's full baked footprint, not just its centre. One
   generalized edge scale uniformly shrinks patches toward every ecological grass-bed margin and
-  exposed upper cliff lip (both to 55% over the final 3 m), preserving blade proportions. Additional
+  exposed upper cliff lip (both to 55% over the final 3 m), preserving blade proportions. Wall
+  facts come from one `TerrainTileField.wall_segments` call per 24 m grass tile (+8 m margin),
+  cached per owning point as high (lip) and low (foot) segments; the taper reads the distance to
+  the owner's own high-side walls only. Additional
   hashed layers are visited only by tiles containing such an edge. Moderate edges use
-  `(1 + slope_area_extra) / edge_scale²`; total density is capped at four layers. Cliff
-  classification is symmetric for one-sided surface-normal sampling, so the vertical discontinuity
-  cannot falsely reject a strip as over-grade. The lower side is ordinary full-size carpet meeting
+  `(1 + slope_area_extra) / edge_scale²`; total density is capped at four layers. The surface
+  gradient is one-sided wherever its stencil meets one of the owner's wall segments, so the
+  vertical discontinuity cannot falsely reject a strip as over-grade. The lower side is ordinary full-size carpet meeting
   an opaque rock wall; only upper-lip candidates taper, and their final shrunken footprint must
   stay on the walkable sheet. This prevents both a bare perimeter band and overhanging blades.
   Each tile selects one compiled asset variant and returns at most one packed CPU buffer. The
@@ -3410,17 +3491,19 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   turns and branches without a circle stamped over the junction. Path
   triangles keep the original tan; sparse varied-size world-hashed circular decals use one
   slightly darker tan from the same atlas island. The circles conform to the sheet and share its
-  mesh, material, and draw call; exposed aprons use the base path tan. Path colour replaces the
+  mesh, material, and draw call. Path colour replaces the
   local 0.25m ground triangles in-place rather than riding on a second depth-fighting sheet.
   Mixed triangles partition at the existing feature field's continuous boundary; both paint
   owners share canonical crossing vertices, so curved corners are not whole-tile staircases;
   transition fans give adjacent coarse grass quads the same boundary vertices, so adaptive path
   edges cannot open T-junction hairlines. Bridges are
   exact-water-validated before becoming atomic route macro-edges; ordinary routes use cheap
-  planning water, then validate only the selected corridor against exact water. Every ordinary
-  route edge uses `TerrainSurfaceField.is_walkable_edge`, so a hill may be climbed over the same
-  continuous sub-storey/storey slopes the mesher renders, but a route can never cut through an
-  exposed cliff face. Existing cliffs beside an approach remain natural and optional; no shelf,
+  planning water, then validate only the selected corridor against exact water. Routes run on
+  the 24 m `PathProgram.ROUTE_CELL` lattice (= 2 points); a route edge is walkable iff BOTH of its
+  12 m point edges are (`PathProgram.is_route_edge_walkable` over
+  `TerrainTileField.is_walkable_edge`), so a hill may be climbed over the same continuous
+  sub-storey/storey slopes the mesher renders, but a route can never cut through a wall, even one
+  on the odd point between two route cells. Existing cliffs beside an approach remain natural and optional; no shelf,
   ridge, cutting, or flanking cliff is manufactured for a village. Lamps face inward over the road.
   Large arches walk every accepted route from both village endpoints: the first attempt is centred
   84 m from the node, later segments supply bounded support fallback, and shared segments deduplicate
@@ -3508,7 +3591,8 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   panels; proved perpendicular plain/window/door joins select baked finite miter ends (including
   handed variants), while straight repeats keep square ends. These clipped choices remain
   subsets of the original measured clearance envelope rather than adding overlap exemptions.
-  Village turf is evaluated by the same `TerrainSurfaceField` kernel as streamed ground. Every
+  Village turf is evaluated by the same `TerrainTileField` kernel as streamed ground (its 1.5 m
+  columns are the kernel's points; a one-band step slopes centre-to-centre). Every
   capped yard and planned-green cell is emitted in one logical-cell union, with the complete
   public-surface union supplying its real neighboring height controls; invented equal-height
   rings are forbidden because they suppress exposed lawn edges. Only finished turf and public
@@ -4476,8 +4560,11 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
 - **`field/WorldFieldBlockCache.gd`** — the worker-confined canonical owner of independently lazy
   terrain regions and exact water contexts. Half-open 192 m keys and deterministic bounded LRU
   make planning, meshing, water, and dressing share the same live field objects without locks or
-  output dependence on query order. `TerrainSurfaceField.is_walkable_edge` is likewise the one
-  symmetric exposed-boundary fact shared by path traversal and the rendered mesh.
+  output dependence on query order. A block region is `compute_region(key*16+8, key*16+8, 16)`
+  in points (certified interior `key*16-8 .. key*16+24`); coverage checks the tile corners a
+  rectangle touches (`floor(x0/12) .. floor(x1/12)+1`). `serves(plan, water_plan)` tells the
+  mesher whether it may share the cache (`mesher.water_blocks`). `TerrainTileField.is_walkable_edge`
+  is likewise the one symmetric wall fact shared by path traversal and the rendered mesh.
 - **Environment assets** (`scripts/terrain/environment/`, `terrain/environment/`) — source-pack
   scenes are editor-baked into lightweight descriptors plus self-contained meshes, materials,
   textures, typed visual pieces, and optional typed collision pieces. Manifest scale is applied
@@ -4569,8 +4656,8 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   the compiled record reach is less than one block, the existing one-block feature halo keeps that
   owner resident anywhere the village can intersect terrain while avoiding duplicate per-asset
   MultiMesh and physics batches across several blocks.
-  At startup the player is frozen until every chunk within one logical terrain cell of spawn
-  and its feature square is ready. The production spawn is inset 0.5 m into chunk `(0, 0)` so its
+  At startup the player is frozen until every chunk within one 192 m chunk of spawn
+  (`STARTUP_SUPPORT_HALF_EXTENT`) and its feature square is ready. The production spawn is inset 0.5 m into chunk `(0, 0)` so its
   capsule has one collision owner, but the camera-visible startup boundary still covers all four
   origin quadrants; later, a missing current
   chunk freezes them during teleports or when outrunning the worker. Collision therefore cannot
@@ -4579,7 +4666,10 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   screen; the cold river/path spike stays off the main thread. Owns the
   `world_seed` (random per run). `TerrainWorldTuning` is the single owner of
   `HEIGHTFIELD_AMPLITUDE`, `HEIGHTFIELD_MAX_STOREYS`, and `MAX_CLIFF_STEP`; the streamer has no
-  inert inspector mirrors whose values look editable but are ignored.
+  inert inspector mirrors whose values look editable but are ignored. The worker publishes
+  per-point `storeys` and `points` (height, graded) snapshots for its chunk's 16 x 16 points;
+  main-thread debug queries are `loaded_storey_at(point)` / `loaded_point_at(point)`, never the
+  worker's plan. It sets `mesher.water_blocks` to its own `WorldFieldBlockCache`.
 
 ## Shared fields & utilities (`scripts/core/`)
 
@@ -4598,10 +4688,19 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
 ## Terrain tools & water
 
 - **`terrain/tools/CoordOverlay.gd`** — the F3 debug HUD (in `world.tscn`): a crosshair plus a
-  readout of the seed, the player's cell, the crosshair-target cell, and the 3×3 storey grid
-  around it. A screenshot alone then pins down exactly where a terrain issue is — use it to
-  reproduce a reported bug by its seed and coordinates. Storeys come from immutable snapshots
-  attached to committed chunks; the main-thread HUD never reads the worker-owned plan or caches.
+  readout of the seed, the player's and the crosshair's lattice point (`point_of`), and
+  (`tile_lines`) the tile under the crosshair with its 2 x 2 corner storey/levels and its four
+  edge categories. A screenshot alone then pins down exactly where a terrain issue is — use it to
+  reproduce a reported bug by its seed and coordinates. It reads only committed per-point
+  snapshots; the main-thread HUD never reads the worker-owned plan or caches.
+- **`terrain/tools/TerrainCategoryOverlay.gd`** — the F9 view: a screen-space decal over every
+  surface fed by a 128-point snapshot window. Each lattice edge colours the diamond around its
+  midpoint (grey flat, blue level, green slope, red cliff); magenta/cyan mark rendered surface
+  above/below the kernel, which the shader evaluates through
+  `terrain/materials/debug/terrain_tile_kernel.gdshaderinc`, a line-for-line port of
+  `TerrainTileField` (cliff end pushed from `TerrainTileField.cliff_end`). Tile grid at 12 i, faint
+  wall lines at 12 i + 6, chunk borders every 16 points, yellow stripes on graded points.
+  Harness: `cliff_site_review --categories`.
 - **`terrain/tools/SlopeProfile.gd` / `SlopeAtlas.gd`** — the `smootherstep` slope profile math
   and grass/rock UV sampling from KayKit pieces, shared by the field and mesher.
 - **Water** (`scripts/terrain/water/`): a deterministic **river network carved into the
@@ -4635,6 +4734,33 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   excavate another `CARVE_BED_EXTRA` below the trace bed so 4m storey quantization cannot
   leave only centimetres of cover, while reaches whose trace-bed grade is already a fall face
   keep the original shallow carve (never turn a vertical film into a deep swim volume).
+  **On the dual grid (September 30)** water reads ground only through `TerrainTileField` (12 m
+  points; `WaterField._point_domain` sizes trace/source regions in points, the ground lattice bakes
+  per `point_of` owner). The coarse fill lattice sits off every discontinuity: nodes at 12 i ± 3
+  (`WaterField.FILL_OFFSET`) in chunk windows (one extra cell keeps the 42 m margin) and source
+  solves. The 3 m rescue lattice (same origin) still has nodes and cell edges on wall lines:
+  `_shore_support_level` reads a rescue edge's ground 1 mm off the line on its `point_of` (+x/+z)
+  side. Parked: an unrescued rescue corner on a wall line is judged against its `point_of` ground,
+  so a rescued cell can meet an untouched coarse cell up to ~0.03 m off (pending test
+  `test_september13_water_corner::test_rescued_cell_meets_the_coarse_surface_beside_a_wall_corner`,
+  (1225, -56.375); follow-up: per-side ground for border rescue nodes). One fill evaluator,
+  `WaterField._fill_bilinear`, serves the field and the frozen `WaterSampler` (which keeps the fill
+  arrays and a `WaterGroundSnapshot` of the window's point heights), so the swim sampler matches
+  the rendered field exactly, shoreline support included. It is wall-aware: a cell straddling a
+  real cliff is evaluated per side, probed at the query's own coordinates — a spill runs to a
+  crest held on the wall at crown + `DESCENT_CLAMP`, a wet/dry pair keeps each side's own value,
+  a submerged wall stays linear — and `_wall_span` switches by smooth weights (cliff from
+  `FALL_DROP_MIN`/2 to `FALL_DROP_MIN`, spill over `DESCENT_CLAMP` around the crown), so water
+  stays continuous where an E2 wall tapers. Node grounds are memoized (`node_ground`); cells whose
+  nodes differ by < 1 m skip wall probes. Walls are vertical skirts exactly on the dual border, so
+  `WaterSkin.RIM_WALL_REACH` is 0 (a wall only ever extends rim rows) and the rim end cap fans
+  from the buried outer row. The swell trough reserves `WaterSkin.SHEET_COVER` = 0.05 m (cliff
+  sheet cover over the 2 m chords). Contours are cut at every world chunk line (canonical
+  crossings, even division, arcs <= 2 m) so neighbouring chunks weld exactly. A chunk's swim
+  triggers cover only its own tiles. `WaterPlan.CARVE_FEATHER` (4 m) is the narrow-profile carve
+  band; `FEATHER` (8 m) stays for the containment survey and route spacing. Pond banks
+  (`_pond_level`) are the minimum over every 12 m point within the max-wobble radius + 24 m.
+  Tests: `test_water_dual_grid`, `test_water_wave_clearance`.
   Pure data flows `WaterField → WaterContour → WaterSkin`, turned into nodes by
   `WaterSurfaceBuilder`; one shader renders it all:
   - `WaterField` — profile and canonical-region caches identify both the immutable trace
@@ -4709,15 +4835,16 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
     lattice to a boundary strip that sits directly ON `WaterContour`'s curves (zip-stitched
     via nearest-curve ring ownership — narrow-channel safe), plus a **meniscus rim** that
     curls the strip's own outer edge. Rising banks receive a compact overshoot; a wall-flagged
-    point reaches the KayKit wall's true 1.5m recess (`TILE/2 - CliffDressing.PLACE`) only when
-    its own outward column confirms high ground there. A short sustained-high witness handles
+    point meets the wall skirt on the dual border directly (`RIM_WALL_REACH` 0; the retired KayKit
+    pieces sat 1.5 m inside the high cell) only when its own outward column confirms high ground
+    there. A short sustained-high witness handles
     diagonal cliff arms that leave the normal column before the long probe. Because contour
     smoothing can move the visual curve inside the final signed-depth wet region, every column
     first stays level through its initial continuous wet run; this closes inner-corner and saddle
     gaps without bridging a dry cliff arm to water on its far side. A confirmed wall column then
     measures any remaining contact distance,
-    then stays at water level through the 1.5m recess and another 0.3m behind the visible face before
-    curling down. Adjacent confirmed columns whose wall normals turn use the intersection of their
+    then stays at water level to the face and `RIM_WALL_SHELF_BURY` behind it before curling
+    down. Adjacent confirmed columns whose wall normals turn use the intersection of their
     wall tangents as a bounded miter, so their outer edge follows the actual L-shaped cliff corner
     instead of cutting it off with a diagonal chord. The visible surface therefore meets rounded
     cliff corners flat instead of using the lower curl to fill them. That direct-contact
@@ -4758,8 +4885,8 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   the steep gate above means a tile either has one trigger or none), each carrying
   `set_meta("sampler", sampler)` so a probe anywhere inside reads its exact water height
   from that one shared, chunk-frozen sampler instead of a per-cell plane. The sampler freezes
-  the field's native 6m fill lattice, sparse 3m topology rescue, and required terrain-height twins,
-  then applies the identical dual-resolution signed-depth shoreline evaluation; do not resample
+  the field's 6m fill lattice, sparse 3m topology rescue, and a `WaterGroundSnapshot` of the
+  window's point heights, then calls the field's own `_fill_bilinear`; do not resample
   levels through the render mesh grid, which
   double-interpolates steep shorelines and can turn dry/wade probes into false swimming. It also still owns
   the shared `ShaderMaterial` and the river-trace `surface_profile`/`steepness_profile`
@@ -4886,15 +5013,16 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
 ## Tests & harnesses (`tests/`)
 
 - Unit tests mirror the pipeline: `test_heightfield_plan`, `test_heightfield_region`,
-  `test_heightfield_clamp_step`, `test_terrain_surface_field`, `test_terrain_chunk_mesher`,
-  `test_cliff_dressing`, `test_dressing_field`, `test_dressing_ecology`,
+  `test_heightfield_clamp_step`, `test_heightfield_lowpass`, `test_terrain_tile_field` (case
+  table, properties, wall segments, bounds), `test_terrain_chunk_mesher` (seams, welds, no quad
+  straddles a wall, skirt collision), `test_cliff_sheet_ends`, `test_cliff_rock_foot_lines`,
+  `test_cliff_envelope_shortcuts`, `test_cliff_sheet_normals`, `test_water_dual_grid`,
+  `test_dressing_field`, `test_dressing_ecology`,
   `test_dressing_collision_builder`, `test_dressing_commit_queue`,
   `test_environment_catalog`, `test_water_field_context`, `test_field_streamer`, `test_biomes`,
   `test_helper`, `test_world_field_block_cache`, `test_water_path_queries`, `test_settlement_plan`, `test_path_program`,
   `test_path_plan_nodes`, `test_path_bridge_sites`, `test_path_route_solver`,
-  `test_path_context`, `test_path_features`, and the `test_slope_*` profile/geometry guards. Continuity guards
-  (`test_slope_tile_continuity`, `test_diag_seams`, `test_slope_socket_grounding`) assert the
-  surface is gap-free and dressing sits on the mesh — the invariants above, encoded.
+  `test_path_context`, `test_path_features`, and the `test_slope_*` profile guards.
 - **`tests/harness/`** — visual/screenshot scenes for eyeballing behavior a unit test can't
   (`heightfield_shot.tscn`, `hf_shapes.tscn`, `swim_harness.tscn`,
   `environment_lineup.tscn`, `teleport_deco_harness.tscn`, `debug_water.tscn`, …). The lineup
@@ -4904,6 +5032,14 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   waits for both terrain integration and the independent dressing commit queue before capturing it.
   `path_review.tscn` renders straight/L/T/X/logical-node masks through the real terrain mesher beside the
   rejected offset-width alternative; `path_corpus.gd` is the deterministic smoke/full path gate.
+  `tile_gallery.tscn` (windowed; `-- --output DIR [--only case,...]`) renders every tile case
+  (flat, slope straight/outer/inner/saddle, level steps, cliff straight/outer/inner/saddle/
+  3-storey/stacked, mixed cliff ends E2 and E1 side by side, a terrace hill) through the real
+  mesher + sheet, each with a `_lines` (points, edges, `wall_segments`) and an `_f9` variant.
+  `cliff_site_review.tscn` (`--shot`, `--categories`, `--lowpass M`) captures photo sites;
+  `dual_grid_side_by_side.py OUT LABEL=DIR ...` composes labelled before/after panels.
+  `profile_terrain.gd` (49 chunks) and `profile_mesh_phases.gd` (`--style`, `--detail`,
+  `--hash-out/--hash-check` payload identity) profile the worker.
 
 ## Adding terrain content
 
@@ -4942,11 +5078,14 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   terrain classifier. Review paths in `tests/harness/path_review.tscn`, assets in
   `environment_lineup.tscn -- --show-collision`, and deterministic statistics with
   `tests/harness/path_corpus.gd`.
-- **Different cliff dressing**: change the stable asset IDs in `CliffDressing.ASSETS` (pieces
-  must tile on the 3 m / 10.5 grid — mismatched module widths leave slits at the corners).
-- **Tuning terrain shape**: `FieldTerrainStreamer` exports (amplitude, storey cap, cliff step,
-  radii), `HeightfieldPlan` constants (`STOREY_HEIGHT`, `LEVELS_PER_STOREY`, aggregation), and
-  `Helper` field scales (`MACRO_SCALE`, biome/water scales).
+- **Different cliff look**: world cliffs are the rock skirt under the `sheet_bedrock` slope sheet
+  (`CliffRockStyle`, `CliffSlopeEnvelope` radii/relief, `CliffSlopeField` rocks); change those,
+  never re-add pieces on world walls. Village rims keep the KayKit pieces in `CliffDressing.ASSETS`.
+- **Tuning terrain shape**: `TerrainWorldTuning` (amplitude, storey cap, cliff step),
+  `HeightfieldPlan` constants (`STOREY_HEIGHT`, `LEVELS_PER_STOREY`, aggregation) and
+  `LOWPASS_M`, `TerrainTileField.cliff_end` (E2/E1), and `Helper` field scales (`MACRO_SCALE`,
+  biome/water scales). Changing the plan re-rolls geography: re-pin geography tests to an
+  equivalent current site (found programmatically), never loosen them.
 
 ## Before finishing
 

@@ -16,7 +16,7 @@ class BorderPathPlan extends PathPlan:
 
 class StripedPathPlan extends PathPlan:
 	func _biome_at(point: Vector2) -> StringName:
-		return &"meadow" if floori(point.x / TerrainSurfaceField.TILE) % 2 == 0 \
+		return &"meadow" if floori(point.x / HeightfieldPlan.CELL) % 2 == 0 \
 			else &"deep_forest"
 
 func _plan(seed_value := 4242) -> PathPlan:
@@ -160,7 +160,7 @@ func test_small_arch_is_owned_by_the_exact_biome_crossing() -> void:
 	var batch: Dictionary = payload.batches.get(&"sfv.entrance_arch.001", {})
 	assert_eq(batch.transforms.size(), 1)
 	assert_almost_eq((batch.transforms[0] as Transform3D).origin.x, 12.0,
-		TerrainSurfaceField.TILE / 256.0,
+		HeightfieldPlan.CELL / 256.0,
 		"fixed bisection places the arch at the dominant-biome boundary")
 
 func test_biome_gates_stay_clear_of_villages_and_each_other() -> void:

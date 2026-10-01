@@ -10,7 +10,7 @@ const GRID_EPS := 0.001
 static func solve(request: FoundationRequest, region: HeightfieldRegion,
 		water: WaterFieldContext = null) -> Dictionary:
 	assert(request != null and region != null)
-	var bounds := TerrainSurfaceField.height_bounds(region, request.bounds_xz())
+	var bounds := TerrainTileField.height_bounds(region, request.bounds_xz())
 	var natural_floor_y := bounds.y + request.floor_guard
 	var floor_y := request.target_floor_y if is_finite(
 		request.target_floor_y) else natural_floor_y
@@ -38,7 +38,7 @@ static func solve(request: FoundationRequest, region: HeightfieldRegion,
 		var ground_y := INF
 		for point: Vector2 in item.probes:
 			ground_y = minf(ground_y,
-				TerrainSurfaceField.surface_y(region, point.x, point.y))
+				TerrainTileField.surface_y(region, point.x, point.y))
 		var required := floor_y - ground_y
 		if required <= TraversalEnvelope.MAX_PLANNED_STEP + GRID_EPS:
 			# A terrain-to-floor contact already inside the canonical movement
@@ -172,7 +172,7 @@ static func _closest_edge(corners: Array[Vector2], point: Vector2) -> int:
 
 static func _entrance_connector(request: FoundationRequest,
 		region: HeightfieldRegion, floor_y: float) -> Dictionary:
-	var outside_y := TerrainSurfaceField.surface_y(region,
+	var outside_y := TerrainTileField.surface_y(region,
 		request.doorway_outside.x, request.doorway_outside.y)
 	var rise := floor_y - outside_y
 	if rise < -TraversalEnvelope.MAX_PLANNED_STEP:

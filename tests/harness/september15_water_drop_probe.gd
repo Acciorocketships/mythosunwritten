@@ -12,7 +12,7 @@ func _init()->void:
 	for iz in 181:
 		for ix in 181:
 			var p:=Vector2(-275+ix*.5,-1520+iz*.5)
-			var ground:=TerrainSurfaceField.surface_y(region,p.x,p.y)
+			var ground:=TerrainTileField.surface_y(region,p.x,p.y)
 			var level:=field.level_at(p)
 			out.store_csv_line([str(p.x),str(p.y),str(ground),str(level),str(field.is_wet(p))])
 	out.close()

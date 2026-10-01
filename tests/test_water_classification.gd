@@ -56,7 +56,7 @@ static func _region(seed_v: int, chunk: Vector2i):
 	var key := [seed_v, chunk]
 	if not _regions.has(key):
 		_water(seed_v)
-		_regions[key] = _plans[seed_v].compute_region(chunk.x * 8 + 4, chunk.y * 8 + 4, 8)
+		_regions[key] = _plans[seed_v].compute_region(chunk.x * 16 + 8, chunk.y * 16 + 8, 16)
 	return _regions[key]
 
 
@@ -70,7 +70,7 @@ static func _rect(chunk: Vector2i) -> Rect2:
 ## only (0.8 swim, 0.05 wade) — a single-shot classification has no previous
 ## frame to hold a hysteresis band open, so EXIT thresholds don't apply here.
 static func _field_truth_class(ctx: Dictionary, region, p: Vector2) -> String:
-	var g: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
+	var g: float = TerrainTileField.surface_y(region, p.x, p.y)
 	var lvl: float = WaterField.level_at(ctx, p)
 	if lvl == -INF:
 		return "DRY"
@@ -128,7 +128,7 @@ func _assert_parity(label: String, skin: Dictionary, ctx: Dictionary, region, po
 	var offenders: Array = []
 	var class_counts: Dictionary = {"SWIM": 0, "WADE": 0, "DRY": 0}
 	for p: Vector2 in points:
-		var g: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
+		var g: float = TerrainTileField.surface_y(region, p.x, p.y)
 		var gp := Vector3(p.x, g, p.y)
 		var truth: String = _field_truth_class(ctx, region, p)
 		var got: String = _character_class(skin, gp)
@@ -166,7 +166,7 @@ func test_deep_interior() -> void:
 		var p := Vector2(v.x, v.z)
 		if _dist_to_curves(curves, p) < 1.5:
 			continue
-		var g: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
+		var g: float = TerrainTileField.surface_y(region, p.x, p.y)
 		var lvl: float = WaterField.level_at(ctx, p)
 		if lvl == -INF or lvl - g <= 2.0:
 			continue
@@ -228,7 +228,7 @@ func test_dry_bank() -> void:
 		for i in range(0, pts.size(), 3):
 			for k: float in [3.0, 5.0, 8.0]:
 				var p: Vector2 = pts[i] + normals[i] * k
-				var g: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
+				var g: float = TerrainTileField.surface_y(region, p.x, p.y)
 				var lvl: float = WaterField.level_at(ctx, p)
 				if lvl != -INF and lvl - g > 0.05:
 					continue   # still genuinely wet this far out (a wide body) — not a fair dry-bank sample
@@ -297,7 +297,7 @@ func test_steep_chute() -> void:
 		var x := 44.0
 		while x <= 58.0 + 0.001:
 			var p := Vector2(x, z)
-			var g: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
+			var g: float = TerrainTileField.surface_y(region, p.x, p.y)
 			var lvl: float = WaterField.level_at(ctx, p)
 			if lvl != -INF and lvl - g > 0.5:
 				candidates.append(p)
@@ -317,6 +317,12 @@ func test_steep_chute() -> void:
 ## separated rendered bathymetry from the hydraulic trace bed; it now has
 ## 3m of static cover and must honestly classify SWIM. The load-bearing
 ## invariant remains static-field parity: swell never enters the depth gate.
+## Re-pinned (dual-grid terrain, 2026-09-30): the 12 m resampling of the
+## frozen field moved the I4 wall from x = 36 to the dual-cell border x = 42,
+## putting the old pin (36.4,-1108.7) on the cliff top (static depth -8.9).
+## Scanning the same transect z = -1108.7 eastward, the first point with the
+## stated 3 m static cover is the wall line x = 42.0 (3.12 m); the pin sits
+## 1 m into the river, off the wall line, at (43.0,-1108.7).
 func test_i4_waterline_pin() -> void:
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)
@@ -325,8 +331,8 @@ func test_i4_waterline_pin() -> void:
 	assert_false(skin.is_empty(), "site chunk builds a skin")
 	if skin.is_empty():
 		return
-	var p := Vector2(36.4, -1108.7)
-	var g: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
+	var p := Vector2(43.0, -1108.7)
+	var g: float = TerrainTileField.surface_y(region, p.x, p.y)
 	var lvl: float = WaterField.level_at(ctx, p)
 	var depth: float = lvl - g
 	print("MEAS test_i4_waterline_pin: field level=%.4f ground=%.4f static depth=%.4f" % [
@@ -335,7 +341,7 @@ func test_i4_waterline_pin() -> void:
 		"reported river pin keeps genuinely swimmable static depth (%.4f > 0.8)" % depth)
 	var got: String = _character_class(skin, Vector3(p.x, g, p.y))
 	assert_eq(got, "SWIM",
-		"I4 (36.4,-1108.7) matches its genuinely deep static field through the real trigger+sampler path")
+		"I4 (43.0,-1108.7) matches its genuinely deep static field through the real trigger+sampler path")
 
 
 ## --- Class 5: plunge pool centre (controller addition 3) ---
@@ -360,7 +366,7 @@ func test_plunge_pool_centre() -> void:
 			for jj in range(0, 9):
 				for ii in range(0, 9):
 					var p: Vector2 = lo + Vector2(ii, jj) * 3.0
-					var g: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
+					var g: float = TerrainTileField.surface_y(region, p.x, p.y)
 					var lvl: float = WaterField.level_at(ctx, p)
 					if lvl == -INF or lvl - g <= 0.8:
 						continue
@@ -387,7 +393,7 @@ func test_plunge_pool_centre() -> void:
 	# therefore joins the class's deep candidates instead of retaining its
 	# stale pre-bathymetry WADE expectation.
 	var pool_centre := Vector2(56.0, -1101.0)
-	var g2: float = TerrainSurfaceField.surface_y(region, pool_centre.x, pool_centre.y)
+	var g2: float = TerrainTileField.surface_y(region, pool_centre.x, pool_centre.y)
 	var lvl2: float = WaterField.level_at(ctx, pool_centre)
 	print("MEAS test_plunge_pool_centre: third pin (56,-1101) level=%.4f ground=%.4f static depth=%.4f" % [
 		lvl2, g2, lvl2 - g2])
@@ -422,7 +428,9 @@ func test_sloped_reach_mid_channel() -> void:
 	for zz in [1.0, 4.0, 7.0, 10.0, 13.0, 16.0, 19.0, 22.0]:
 		for xx in [13.0, 15.0]:
 			verts.append(Vector3(xx, WaterField.level_at(ctx, Vector2(xx, zz)), zz))
-	var st: Dictionary = {"verts": verts, "region": region, "ctx": ctx}
+	# The fixture is chunk (0,0): triggers cover only its own tiles.
+	var st: Dictionary = {"verts": verts, "region": region, "ctx": ctx,
+		"rect": Rect2(Vector2.ZERO, Vector2.ONE * WaterField.CHUNK)}
 	var triggers: Array = WaterSkin._triggers(st)
 	# r3 Task 12b: the spread gate (whole-tile + sub-tile suppression) is
 	# RETIRED — triggers are now simple wet-tile coverage, so a legal sloped

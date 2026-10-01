@@ -66,7 +66,9 @@ func test_no_stack_water_and_cliff_relief_reject_atomically() -> void:
 			storeys[Vector2i(x, z)] = 2 if x <= 0 else 0
 			levels[Vector2i(x, z)] = 0
 	var cliff := HeightfieldRegion.new(storeys, levels)
-	var cliff_anchors: Array[Vector2] = [Vector2(12.0, 0.0)]
+	# Keys are 12 m terrain points: the wall between points 0 and 1 lies on
+	# the dual border x = 6, where the anchor's stencil straddles it.
+	var cliff_anchors: Array[Vector2] = [Vector2(6.0, 0.0)]
 	var cliff_request := SupportRequest.new(&"cliff", cliff_anchors, 12.0,
 		0.0, _modules(), 1.0, 0.5, 0.3)
 	assert_eq(SupportSolver.solve(cliff_request, cliff).reason, &"ground_span")

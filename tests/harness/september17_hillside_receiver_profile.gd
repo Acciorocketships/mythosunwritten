@@ -13,7 +13,7 @@ func _initialize()->void:
   var nearest:=0
   for i in river.points.size():
    if river.points[i].distance_to(incoming.points[-1])<river.points[nearest].distance_to(incoming.points[-1]):nearest=i
-  print("RECEIVER_PROFILE source=",river.source_cell," station=",nearest," point=",river.points[nearest]," bed=",river.beds[nearest]," head=",profile.levels[nearest]," local_ground=",TerrainSurfaceField.surface_y(region,river.points[nearest].x,river.points[nearest].y))
+  print("RECEIVER_PROFILE source=",river.source_cell," station=",nearest," point=",river.points[nearest]," bed=",river.beds[nearest]," head=",profile.levels[nearest]," local_ground=",TerrainTileField.surface_y(region,river.points[nearest].x,river.points[nearest].y))
   for i in range(maxi(0,nearest-4),mini(river.points.size(),nearest+3)):
    print("RECEIVER_NEAR source=",river.source_cell," station=",i," point=",river.points[i]," bed=",river.beds[i]," head=",profile.levels[i])
  quit()

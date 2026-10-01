@@ -72,9 +72,9 @@
 # plane pair of metas it used to hang off each volume) is deleted outright;
 # see r3 Task 7's report for the removal.
 # SHORE CONTACT + FREE-EDGE BODY: ordinary rising banks use a compact
-# overshoot; a contour wall flag earns the 1.5m KayKit recess reach only when
-# that point's own outward column actually contacts high ground there. This
-# prevents a flanking wall from stretching an unbounded edge into a skirt.
+# overshoot; a contour wall flag earns a level shelf out to the wall face only
+# when that point's own outward column actually contacts high ground there.
+# This prevents a flanking wall from stretching an unbounded edge into a skirt.
 # A true drop instead keeps a compact 0.64m profile: 4cm crest, then rows at
 # -6cm, -28cm, -55cm, and -65cm. It reads as finite rounded substance rather than a
 # zero-thickness plane or a row teleported to the landing ground.
@@ -150,12 +150,11 @@ const STEEP_UNSWIMMABLE := 0.45
 # spaced so successive tangents keep rotating outward/down; the former
 # 0.52/0.56 pair made the penultimate segment nearly vertical and the final
 # segment shallower again, an inward/concave hook. Rising banks extend to
-# 0.40/0.60/0.70/0.78m; confirmed recessed walls first measure the distance
-# from the signed-depth contour to the real terrain boundary, then continue a
-# further 1.5m through the recessed KayKit face.  Their level shelf extends
-# 0.30m behind that visible face before curling down. A point whose own 0.40m column
-# drops below L forcibly keeps the compact profile unless its own 1.50m
-# column really contacts the recessed wall.
+# 0.40/0.60/0.70/0.78m; confirmed walls measure the distance from the
+# signed-depth contour to the real terrain boundary, which IS the visible face
+# (RIM_WALL_REACH).  Their level shelf extends 0.30m behind that face before
+# curling down. A point whose own 0.40m column drops below L forcibly keeps
+# the compact profile unless its own column really contacts the wall.
 const RIM_ROW1_BULGE := 0.04
 const RIM_ROW2_DROP := 0.06
 const RIM_ROW3_DROP := 0.28
@@ -168,22 +167,25 @@ const RIM_ROW4_REACH := 0.60
 const RIM_ROW5_REACH := 0.64
 const RIM_RISE_REACH := 0.40
 const RIM_RISE_BURY_REACH := 0.60
-# KayKit's visible wall/lip line is 1.5m inside the high cell from its true
-# +/-12m terrain boundary. Wall shores therefore reach the measured terrain
-# contact first, then continue another 1.5m before they physically meet the
-# visible rock. Ordinary rising banks retain the compact blob profile above;
-# only WaterContour's independently-probed wall points use this.
-const RIM_WALL_REACH := WaterField.TILE * 0.5 - CliffDressing.PLACE
+# Distance from the measured terrain contact to the visible wall face. On the
+# dual-grid terrain a wall is a vertical rock skirt standing exactly on the
+# dual-cell border x = 12i + 6 (TerrainTileField), where the surface jumps:
+# the first high-ground sample of a column IS the face, so there is no recess
+# to cross (the retired KayKit wall pieces sat 1.5m inside the high cell,
+# TILE/2 - PLACE). The cliff sheet may cover that face; it only ever bulges
+# toward the water, so the shelf that reaches the skirt is hidden inside it.
+# Ordinary rising banks retain the compact blob profile above; only
+# WaterContour's independently-probed wall points use this.
+const RIM_WALL_REACH := 0.0
 const RIM_WALL_SHELF_BURY := 0.30
 const RIM_WALL_OUTER_BURY := 0.40
 # The waterline is a signed-depth contour interpolated on WaterField's 6m
-# lattice, so it does not necessarily sit on the terrain cell boundary.  A
-# fixed RIM_WALL_REACH therefore accounts for the KayKit recess but can omit
-# the additional contour-to-boundary distance. Search within the same finite
+# lattice, so it does not necessarily sit on the terrain wall line.  A fixed
+# reach would omit that contour-to-boundary distance. Search within the same finite
 # 6m support that created the signed-depth contour. A straight wall stays
 # high at the far probe; a diagonal corner arm can leave this normal column
 # before 6m, so a separately bounded local-sustain probe accepts a real face
-# without turning a one-sample spike into a recessed wall.
+# without turning a one-sample spike into a wall.
 const WALL_CONTACT_SCAN_STEP := 0.05
 const WALL_CONTACT_SCAN_MAX := WaterField.FILL_STEP
 const WALL_CONTACT_LOCAL_SUSTAIN := 0.25
@@ -261,6 +263,14 @@ const SHORE_RADIUS_CELLS := 4   # BUCKET=3.0m cells; safely covers an 8.0m clamp
 const SWELL_SHORE_FADE := 4.0
 const SWELL_TROUGH_BOUND := 1.40 # 0.51m ambient + 0.48m packets + 0.375m interactive ripple, rounded up
 const SWELL_BED_COVER := 0.02    # clearance above the visible terrain envelope
+# What covers the tile surface at the waterline: the cliff sheet solid lies ON
+# the terrain's 2 m mesh chords plus CliffSlopeField.COVER (0.01 m), and those
+# chords themselves rise above the exact tile surface that height_bounds
+# bounds. On a one-level (1 m) smootherstep step the 2 m-quad diagonal
+# (2.83 m) sags at most 1 m * max S'' (5.77) * 2.83^2 / (8 * 12^2) = 0.04 m.
+# 0.01 + 0.04 = 0.05 m of cover a wave trough must not uncover (it replaces
+# the retired native lip lift, which was also 0.05 m).
+const SHEET_COVER := 0.05
 
 # --- Rim normals (controller addition) — curl-rotation angle per rim row,
 # about the curve tangent, sweeping from UP toward the curve's own outward
@@ -300,7 +310,7 @@ static func build(water: WaterPlan, chunk: Vector2i, region,
 		else WaterField.ctx(water, chunk, region)
 	if ctx.ponds.is_empty() and ctx.rivers.is_empty():
 		return {}
-	var span: float = WaterField.TILE * 8.0
+	var span: float = WaterField.CHUNK
 	var rect := Rect2(Vector2(chunk) * span, Vector2.ONE * span)
 	var curves: Array = WaterContour.curves(ctx, rect)
 	# No shoreline can also mean this entire chunk is submerged. Its interior
@@ -439,7 +449,7 @@ static func _current_grid(st: Dictionary, origin: Vector2, step: float,
 			var lvl: float = WaterField.level_at(st.ctx, p)
 			if lvl == -INF:
 				continue
-			var ground: float = TerrainSurfaceField.surface_y(st.region, p.x, p.y)
+			var ground: float = TerrainTileField.surface_y(st.region, p.x, p.y)
 			var depth: float = lvl - ground
 			if depth <= WaterSampler.WET_EPS:
 				continue
@@ -597,12 +607,13 @@ static func _swell_scale(st: Dictionary, p: Vector2, water_y: float, shore_dist:
 			var corner := cell + Vector2i(x,z)
 			if not st.wave_ground_bounds.has(corner):
 				var centre := Vector2(corner) * STEP
-				st.wave_ground_bounds[corner] = TerrainSurfaceField.height_bounds(st.region,
+				st.wave_ground_bounds[corner] = TerrainTileField.height_bounds(st.region,
 					Rect2(centre-Vector2.ONE*reach,Vector2.ONE*reach*2.0)).y
-			# The native lip and its tucked ground sheet rise above the physical
-			# heightfield. Both the mesh and buoyancy sampler reserve that lift.
+			# The cliff sheet (and the terrain's own mesh chords) cover the tile
+			# surface by up to SHEET_COVER. Both the mesh and buoyancy sampler
+			# reserve that lift.
 			var room: float = maxf(0.0,water_y-float(st.wave_ground_bounds[corner])
-				-CliffDressing.LIP_LIFT-SWELL_BED_COVER)
+				-SHEET_COVER-SWELL_BED_COVER)
 			var weight: float = (fraction.x if x==1 else 1.0-fraction.x) \
 				*(fraction.y if z==1 else 1.0-fraction.y)
 			depth_scale += clampf(room/SWELL_TROUGH_BOUND,0.0,1.0)*weight
@@ -984,7 +995,7 @@ static func _lattice_wet(st: Dictionary, p: Vector2) -> Dictionary:
 	var lvl: float = WaterField.level_at(st.ctx, p)
 	if lvl == -INF:
 		return {"wet": false, "dist": 0.0}
-	var g: float = TerrainSurfaceField.surface_y(st.region, p.x, p.y)
+	var g: float = TerrainTileField.surface_y(st.region, p.x, p.y)
 	if lvl <= g + 0.02:
 		return {"wet": false, "dist": 0.0}
 	var dist: float = _nearest_curve_dist(st, p, 1)
@@ -1408,11 +1419,13 @@ static func _nearest_curve_vertex(pts: PackedVector2Array, p: Vector2) -> int:
 ##   row5: default +0.64m, L-0.65m.
 ##
 ## Rising banks extend rows2..5 to 0.40/0.60/0.70/0.78m. A contour wall flag is
-## only allowed to extend them through the KayKit face when the point's own
-## outward column finds sustained high ground within one 6m fill cell. The measured contact distance
-## is added to the KayKit face's own 1.5m recess: the signed-depth waterline can
-## sit between the terrain boundary and the contour, so a fixed 1.5m extrusion
-## alone is not enough. At confirmed walls rows2..4 remain a water-level shelf
+## only allowed to extend them to the wall face when the point's own outward
+## column finds sustained high ground within one 6m fill cell. The measured
+## contact distance is the face (RIM_WALL_REACH adds nothing on the dual grid):
+## the signed-depth waterline can sit short of the terrain boundary, so a fixed
+## extrusion is not enough. A wall only ever EXTENDS a row: a face closer than
+## the ordinary reach keeps the ordinary reach (rows stay outward-ordered).
+## At confirmed walls rows2..4 remain a water-level shelf
 ## through the visible face and another 0.30m behind it; the downward curl starts
 ## only between row4 and row5.  When adjacent wall normals turn, their outer
 ## tangent lines are intersected and the level shelf is mitred through that
@@ -1446,7 +1459,7 @@ static func _rim(st: Dictionary, c: Dictionary) -> void:
 	# to remove.  The point's own outward span is authoritative for a drop.
 	for i in n:
 		var drop_probe: Vector2 = pts[i] + normals[i] * RIM_RISE_REACH
-		var drop_ground: float = TerrainSurfaceField.surface_y(
+		var drop_ground: float = TerrainTileField.surface_y(
 			st.region, drop_probe.x, drop_probe.y)
 		if drop_ground < levels[i] - RISE_MARGIN and wall_contact[i] == 0:
 			wf[i] = 0.0
@@ -1519,20 +1532,23 @@ static func _rim(st: Dictionary, c: Dictionary) -> void:
 		# rf's ordinary rising-bank path stays at 0.40/0.60m.
 		var face_reach: float = wall_face_reach[i] \
 			if wall_face_reach[i] >= 0.0 else RIM_WALL_REACH
-		reach2 = lerpf(reach2, face_reach, wall_strength)
+		# A wall extends the shelf; it never pulls a row back inside its
+		# ordinary reach (a face right at the waterline would otherwise fold
+		# row2 behind row1).
+		reach2 = lerpf(reach2, maxf(reach2, face_reach), wall_strength)
 		# At a confirmed wall row3 and row4 share the same XZ landing behind
 		# the rock and both belong to the level shelf. Giving the lower contact
 		# row an extra 10cm of horizontal reach used the curl, rather than the
 		# shelf, to fill the outside of rounded corners.
-		reach3 = lerpf(reach3, face_reach + RIM_WALL_SHELF_BURY, wall_strength)
-		reach4 = lerpf(reach4, face_reach + RIM_WALL_SHELF_BURY, wall_strength)
-		reach5 = lerpf(reach5, face_reach + RIM_WALL_OUTER_BURY, wall_strength)
+		reach3 = lerpf(reach3, maxf(reach3, face_reach + RIM_WALL_SHELF_BURY), wall_strength)
+		reach4 = lerpf(reach4, maxf(reach4, face_reach + RIM_WALL_SHELF_BURY), wall_strength)
+		reach5 = lerpf(reach5, maxf(reach5, face_reach + RIM_WALL_OUTER_BURY), wall_strength)
 		var p2: Vector2 = p + nrm * reach2
 		# A genuine bank keeps the old under-ground landing.  A falling shore is
 		# deliberately different: row2 remains close to the surface and starts a
 		# compact rounded sidewall instead of teleporting to the landing ground.
 		# That short exposed curl is thickness, not a horizontal water film.
-		# A confirmed recessed wall needs a horizontal TOP contact sheet all the
+		# A confirmed wall needs a horizontal TOP contact sheet all the
 		# way through the visible face.  Extending XZ alone left row2/row3 at their
 		# free-edge drop heights, so the mesh technically reached the corner using
 		# only its lower curl while the visible surface dipped by ~0.5m.  Lift the
@@ -1591,13 +1607,16 @@ static func _rim(st: Dictionary, c: Dictionary) -> void:
 ## Four-triangle fan closing the six-point rim ladder at an open contour
 ## endpoint. It pairs each of the five band-end edges and leaves only the
 ## row0-row5 diagonal, which is accounted for by the endpoint's exact chunk
-## border plus the outer-row invariant.
+## border plus the outer-row invariant. The fan's apex is row5, the buried
+## outer row: a level shelf (wall contact or still-wet column) puts rows 0..4
+## on one straight line at the water level, where a row0 apex degenerates to
+## a single face and leaves a T-junction along the ladder.
 static func _rim_end_cap(st: Dictionary, i0: int, i1: int, i2: int, i3: int,
 		i4: int, i5: int) -> void:
-	_emit_tri(st, i0, i1, i2)
-	_emit_tri(st, i0, i2, i3)
-	_emit_tri(st, i0, i3, i4)
-	_emit_tri(st, i0, i4, i5)
+	_emit_tri(st, i5, i0, i1)
+	_emit_tri(st, i5, i1, i2)
+	_emit_tri(st, i5, i2, i3)
+	_emit_tri(st, i5, i3, i4)
 
 
 ## Tent-filtered (0.25/0.5/0.25) copy of a per-point PackedByteArray flag
@@ -1622,7 +1641,7 @@ static func _smoothed_flags(flags: PackedByteArray, closed: bool) -> PackedFloat
 
 
 ## Per-point RISING flag: true when the bank genuinely climbs above the water
-## level across the span the compact overshoot covers, or direct recessed-wall
+## level across the span the compact overshoot covers, or direct wall
 ## contact has already been confirmed.
 ##
 ## The covered span is [0, RIM_RISE_REACH] — where row2 (the only rim row
@@ -1664,8 +1683,8 @@ static func _rising_flags(st: Dictionary, c: Dictionary,
 		var lvl: float = levels[i]
 		var pnear: Vector2 = p + nrm * RISE_PROBE_NEAR
 		var pland: Vector2 = p + nrm * RIM_RISE_REACH
-		var gnear: float = TerrainSurfaceField.surface_y(st.region, pnear.x, pnear.y)
-		var gland: float = TerrainSurfaceField.surface_y(st.region, pland.x, pland.y)
+		var gnear: float = TerrainTileField.surface_y(st.region, pnear.x, pnear.y)
+		var gland: float = TerrainTileField.surface_y(st.region, pland.x, pland.y)
 		out[i] = 1 if (gnear > lvl + RISE_MARGIN and gland > lvl + RISE_MARGIN) else 0
 	return out
 
@@ -1679,7 +1698,7 @@ static func _rising_flags(st: Dictionary, c: Dictionary,
 ## bulb over water that should still be level.
 ##
 ## Scan only the first continuous wet run. A narrow dry cliff arm may be
-## followed by water again on the far side; that arm is handled as a recessed
+## followed by water again on the far side; that arm is handled as a
 ## wall by `_wall_contacts`, not flooded across at terrain-top height. This
 ## distinction is what fixes the reported cliff/saddle joins without turning
 ## a real island into a water sheet.
@@ -1713,9 +1732,10 @@ static func _wet_shelf_reaches(st: Dictionary, c: Dictionary) -> PackedFloat32Ar
 ## wall exists off to one side. Search only the signed-depth field's finite 6m
 ## interpolation support for the first high-ground sample in THIS point's
 ## outward column. A hit both confirms the wall and measures the contour's
-## retreat from the real terrain boundary. The visible face is another 1.5m
-## inside the high cell, so `face_reach = contact + RIM_WALL_REACH`; omitting
-## `contact` was the fixed-distance bug that left exact recessed corners dry.
+## retreat from the real terrain boundary, which is the visible face
+## (`face_reach = contact + RIM_WALL_REACH`, the reach being zero on the dual
+## grid); omitting `contact` was the fixed-distance bug that left exact
+## corners dry.
 static func _wall_contacts(st: Dictionary, c: Dictionary) -> Dictionary:
 	var pts: PackedVector2Array = c.pts
 	var levels: PackedFloat32Array = c.levels
@@ -1733,14 +1753,14 @@ static func _wall_contacts(st: Dictionary, c: Dictionary) -> Dictionary:
 		# A diagonal corner arm may cross this normal column only locally, so
 		# the far probe is one of two independent sustain witnesses below.
 		var far_q: Vector2 = pts[i] + normals[i] * WALL_CONTACT_SCAN_MAX
-		var far_ground: float = TerrainSurfaceField.surface_y(
+		var far_ground: float = TerrainTileField.surface_y(
 			st.region, far_q.x, far_q.y)
 		var far_high: bool = far_ground > levels[i] + RISE_MARGIN
 		var contact := -1.0
 		var d := 0.0
 		while d <= WALL_CONTACT_SCAN_MAX + 0.0001:
 			var q: Vector2 = pts[i] + normals[i] * d
-			var ground: float = TerrainSurfaceField.surface_y(st.region, q.x, q.y)
+			var ground: float = TerrainTileField.surface_y(st.region, q.x, q.y)
 			if ground > levels[i] + RISE_MARGIN:
 				contact = d
 				break
@@ -1749,7 +1769,7 @@ static func _wall_contacts(st: Dictionary, c: Dictionary) -> Dictionary:
 		if contact >= 0.0:
 			var sustain_q: Vector2 = pts[i] + normals[i] \
 				* (contact + WALL_CONTACT_LOCAL_SUSTAIN)
-			var sustain_ground: float = TerrainSurfaceField.surface_y(
+			var sustain_ground: float = TerrainTileField.surface_y(
 				st.region, sustain_q.x, sustain_q.y)
 			sustained_local = sustain_ground > levels[i] + RISE_MARGIN
 		if contact >= 0.0 and (far_high or sustained_local):
@@ -2022,7 +2042,7 @@ static func _seal_local_surface_holes(st: Dictionary) -> void:
 		if max_edge > STRIP_EDGE_MAX:
 			continue
 		var level: float = WaterField.level_at(st.ctx, centroid)
-		var ground: float = TerrainSurfaceField.surface_y(st.region, centroid.x, centroid.y)
+		var ground: float = TerrainTileField.surface_y(st.region, centroid.x, centroid.y)
 		if level == -INF or level <= ground + 0.02:
 			continue
 		if absf(_polygon_area(polygon)) > STEP * STEP * 4.0:
@@ -2158,9 +2178,15 @@ static func _weld_vert(st: Dictionary, p: Vector2, y: float, nrm: Vector3) -> in
 ## instead (see WaterSampler.gd).
 static func _triggers(st: Dictionary) -> Array:
 	var cells: Dictionary = {}   # Vector2i cell -> {top: float, bottom: float, max_grade: float}
+	var rect: Rect2 = st.rect
 	for v: Vector3 in st.verts:
+		# A chunk owns only its own half-open tiles: its sampler answers
+		# nothing beyond them (the neighbour's box covers that water), and a
+		# rim or border vertex a hair past the edge must not open a box there.
+		if not rect.has_point(Vector2(v.x, v.z)):
+			continue
 		var cell := Vector2i(int(floor(v.x / TILE)), int(floor(v.z / TILE)))
-		var g: float = TerrainSurfaceField.surface_y(st.region, v.x, v.z)
+		var g: float = TerrainTileField.surface_y(st.region, v.x, v.z)
 		var grade: float = absf(WaterField.grade_at(st.ctx, Vector2(v.x, v.z)))
 		if not cells.has(cell):
 			cells[cell] = {"top": v.y, "bottom": g, "max_grade": grade}

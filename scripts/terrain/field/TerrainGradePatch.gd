@@ -2,16 +2,27 @@ class_name TerrainGradePatch
 extends RefCounted
 
 ## A sealed edit of the ground heightfield on an authored construction lattice.
-## Target heights use TerrainSurfaceField's shared centre/edge/corner controls;
+## Target heights are TerrainTileField tiles over the claim lattice (Controls);
 ## the finite collar uses its normal, world-sized slope profile once. No mesh,
 ## ramp, or collision is stored here.
 ## The natural field remains the planning input; this patch is composed before
 ## the final terrain is sampled by rendering, collision, and ground dressing.
-const TRANSITION_WIDTH := TerrainSurfaceField.HALF
+const TRANSITION_WIDTH := (HeightfieldPlan.CELL * 0.5)
 const COLLAR_BLEND := TRANSITION_WIDTH / 8.0
 # A native pad owns its tile plus the neighbouring interpolation controls.
-const NATIVE_CONTROL_MARGIN := TerrainSurfaceField.TILE * 2.0
+const NATIVE_CONTROL_MARGIN := HeightfieldPlan.CELL * 2.0
 
+## The claims as a TerrainTileField lattice at HALF the claim pitch. Point
+## (2x, 2z) is claim (x, z); a point on a claim edge (one odd index) or corner
+## (two odd indices) is the MINIMUM of the claims meeting there. The controls
+## never form a cliff (storey 0), so every tile is the bilinear smootherstep of
+## its four corners. With minimum edges a claim is flat over its whole
+## footprint unless a LOWER claim touches it, and the transition between two
+## claims lies wholly inside the higher one: the lower pad controls the shared
+## transition, exactly as the pre-dual-grid centre/edge/corner kernel did (the
+## two agree for identical controls; a claim-centred 12 m-style tile would put
+## half of every band change inside the lower claim instead). No saddle can
+## form: a corner point is never above either edge point beside it.
 class Controls extends RefCounted:
 	var values: Dictionary
 	var source_values: Dictionary
@@ -24,11 +35,20 @@ class Controls extends RefCounted:
 		pitch = p_pitch
 		fallback = p_fallback
 	func terrain_tile_size() -> float:
-		return pitch
+		return pitch * 0.5
 	func storey_at(_x: int, _z: int) -> int:
 		return 0
 	func surface_height(x: int, z: int) -> float:
-		var cell := Vector2i(x,z)
+		var lo := Vector2i(floori(float(x) * 0.5), floori(float(z) * 0.5))
+		var result := claim_height(lo)
+		if x & 1:
+			result = minf(result, claim_height(lo + Vector2i(1, 0)))
+		if z & 1:
+			result = minf(result, claim_height(lo + Vector2i(0, 1)))
+			if x & 1:
+				result = minf(result, claim_height(lo + Vector2i(1, 1)))
+		return result
+	func claim_height(cell: Vector2i) -> float:
 		if values.has(cell):
 			return float(values[cell])
 		# Stable nearest-source extrapolation for the boundary controls only.
@@ -159,7 +179,7 @@ func surface_y(point: Vector2, natural_height: float) -> float:
 func _target_at(local: Vector2, cell: Vector2i) -> float:
 	if _continuous_source != null and _continuous_cells.has(cell):
 		return _continuous_source.surface_y(_origin+local,_continuous_datum)
-	return _targets.fallback if _uniform else _sample(_targets,_target_cache,cell,local)
+	return _targets.fallback if _uniform else _sample(_targets,_target_cache,local)
 
 
 ## Extend actual boundary values, not the identity of the nearest building.
@@ -180,7 +200,7 @@ func _collar_height(local: Vector2, cell: Vector2i) -> float:
 		var height := _target_at(boundary,key)
 		if distance < 0.000001:
 			return height
-		var w := (1.0 - TerrainSurfaceField.transition_weight(distance,_collar_reach)) / (distance * distance)
+		var w := (1.0 - TerrainTileField.transition_weight(distance,_collar_reach)) / (distance * distance)
 		weighted += height * w
 		total += w
 	return weighted / total if total > 0.0 else _targets.fallback
@@ -250,7 +270,7 @@ func _collar_distance(local: Vector2) -> float:
 func _collar_weight(local: Vector2, cell: Vector2i) -> float:
 	if _claims.has(cell):
 		return 1.0
-	return 1.0-TerrainSurfaceField.transition_weight(_collar_distance(local))
+	return 1.0-TerrainTileField.transition_weight(_collar_distance(local))
 
 
 func _nearby(cell: Vector2i) -> Array:
@@ -284,8 +304,8 @@ func _weight_bounds(area: Rect2) -> Vector2:
 			# interval bounds the common profile over this complete rectangle.
 			var radius := part.size.length() * 0.5
 			var distance := _collar_distance(part.get_center())
-			interval.x=minf(interval.x,1.0-TerrainSurfaceField.transition_weight(distance+radius))
-			interval.y=maxf(interval.y,1.0-TerrainSurfaceField.transition_weight(distance-radius))
+			interval.x=minf(interval.x,1.0-TerrainTileField.transition_weight(distance+radius))
+			interval.y=maxf(interval.y,1.0-TerrainTileField.transition_weight(distance-radius))
 	return interval
 
 
@@ -368,10 +388,10 @@ func _collar_target_bounds(area: Rect2) -> Vector2:
 	return result if result.x <= result.y else Vector2(_targets.fallback,_targets.fallback)
 
 
-## The controls have no cliffs. Each half-cell patch is bilinear in monotone
-## coordinates, so only the clipped corners are extrema. Reuse the same baked
-## controls as point sampling instead of reclassifying each corner on every
-## foundation candidate during the bounded outskirts search.
+## The controls have no cliffs or saddles. Each half-pitch tile is bilinear in
+## monotone coordinates, so only the clipped tile corners are extrema. Reuse the
+## same baked controls as point sampling instead of reclassifying each corner on
+## every foundation candidate during the bounded outskirts search.
 static func _control_bounds(controls: Controls, cache: Dictionary,
 		area: Rect2) -> Vector2:
 	var half := controls.pitch * 0.5
@@ -384,16 +404,15 @@ static func _control_bounds(controls: Controls, cache: Dictionary,
 	var interval := Vector2(INF, -INF)
 	for z: float in zs:
 		for x: float in xs:
-			var value := _sample(controls, cache, Vector2i(roundi(x / controls.pitch),
-				roundi(z / controls.pitch)), Vector2(x, z))
+			var value := _sample(controls, cache, Vector2(x, z))
 			interval.x = minf(interval.x, value)
 			interval.y = maxf(interval.y, value)
 	return interval
 
 
-static func _sample(controls: Controls, cache: Dictionary, cell: Vector2i,
-		point: Vector2) -> float:
-	if not cache.has(cell):
-		cache[cell] = TerrainSurfaceField.bake_cell(controls, cell.x, cell.y)
-	return TerrainSurfaceField.sample_baked(cache[cell], cell.x, cell.y,
-		point.x, point.y, controls)
+static func _sample(controls: Controls, cache: Dictionary, point: Vector2) -> float:
+	var owner := Vector2i(TerrainTileField.point_of(point.x, controls),
+		TerrainTileField.point_of(point.y, controls))
+	if not cache.has(owner):
+		cache[owner] = TerrainTileField.bake_point(controls, owner)
+	return TerrainTileField.sample_baked(cache[owner], owner, point.x, point.y, controls)

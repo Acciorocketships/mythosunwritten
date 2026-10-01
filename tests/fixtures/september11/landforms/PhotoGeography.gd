@@ -18,7 +18,10 @@ static func make_water(seed_value: int) -> WaterPlan:
 
 static func make_heightfield(seed_value: int,water: WaterPlan=null) -> HeightfieldPlan:
 	var plan:=HeightfieldPlan.new(seed_value,32,8,"mean",3)
-	plan.set_raw_height_override(func(x: int,z: int)->float:
-		return Source.height01(Vector3(x*24,0,z*24),seed_value,true)*32.0)
+	# The override is keyed by 12 m terrain points (HeightfieldPlan.POINT): the
+	# frozen continuous field is sampled at every dual-grid lattice point, so
+	# the ground stays under the water plan's world-space rivers.
+	plan.set_raw_height_override(func(i: int,j: int)->float:
+		return Source.height01(Vector3(i*HeightfieldPlan.POINT,0,j*HeightfieldPlan.POINT),seed_value,true)*32.0)
 	if water!=null: plan.set_water_plan(water)
 	return plan

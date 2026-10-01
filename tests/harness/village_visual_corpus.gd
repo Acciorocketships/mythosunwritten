@@ -191,7 +191,7 @@ static func _payload_instances_json(payload: EnvironmentInstancePayload,
 				"yaw": transform.basis.get_euler().y,
 			}
 			if region != null:
-				entry["terrain_y_at_origin"] = TerrainSurfaceField.surface_y(region,
+				entry["terrain_y_at_origin"] = TerrainTileField.surface_y(region,
 					transform.origin.x, transform.origin.z)
 			out.append(entry)
 	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
@@ -434,7 +434,7 @@ static func _entry(super_cell: Vector2i, frame: VillageFrame,
 	urban_placements.sort_custom(func(a: Dictionary,
 			b: Dictionary) -> bool:
 		return String(a.stable_id) < String(b.stable_id))
-	var centre_y := TerrainSurfaceField.surface_y(frame.region,
+	var centre_y := TerrainTileField.surface_y(frame.region,
 		frame.centre.x, frame.centre.y)
 	var sectional := record.urban_fabric.generation_kind in [
 		VillageUrbanFabricPlan.GenerationKind.SECTIONAL_WARREN,
@@ -1957,7 +1957,7 @@ static func _terrain_sightline_penalty(frame: VillageFrame,
 	for index in 17:
 		var t := float(index) / 16.0
 		var point := position.lerp(target, t)
-		var ground_y := TerrainSurfaceField.surface_y(frame.region,
+		var ground_y := TerrainTileField.surface_y(frame.region,
 			point.x, point.z)
 		minimum_clearance = minf(minimum_clearance, point.y - ground_y)
 	var obstruction := maxf(0.0, 0.35 - minimum_clearance)
@@ -2033,7 +2033,7 @@ static func _elevated_camera_position_clear(frame: VillageFrame,
 		structural_volumes: Array[VillageOccupancyVolume] = []) -> bool:
 	return _outside_buildings(Vector2(position.x, position.z),
 		buildings, program, 2.0) and position.y >= \
-		TerrainSurfaceField.surface_y(frame.region,
+		TerrainTileField.surface_y(frame.region,
 			position.x, position.z) + 0.5 \
 		and not _inside_solid_volume(position, structural_volumes, 0.75)
 
@@ -2058,7 +2058,7 @@ static func _elevated_sightline_clear(frame: VillageFrame,
 	for index in sample_count:
 		var sample_t := float(index) / float(SAMPLE_DENOMINATOR)
 		var point := position.lerp(target, sample_t)
-		if point.y < TerrainSurfaceField.surface_y(frame.region,
+		if point.y < TerrainTileField.surface_y(frame.region,
 				point.x, point.z) + 0.05:
 			return false
 		if _inside_solid_volume(point, structural_volumes, 0.35,
@@ -2146,7 +2146,7 @@ static func _safe_orbit_position(frame: VillageFrame, preferred: Vector2,
 static func _terrain_eye(frame: VillageFrame, point: Vector2,
 		eye_height: float) -> Vector3:
 	return Vector3(point.x,
-		TerrainSurfaceField.surface_y(frame.region, point.x, point.y) + eye_height,
+		TerrainTileField.surface_y(frame.region, point.x, point.y) + eye_height,
 		point.y)
 
 

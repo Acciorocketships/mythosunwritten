@@ -176,7 +176,7 @@ func test_field_is_deterministic_grounded_and_half_open() -> void:
 			assert_lt(transform.origin.x, CORE.end.x)
 			assert_gte(transform.origin.z, CORE.position.y)
 			assert_lt(transform.origin.z, CORE.end.y)
-			var ground := TerrainSurfaceField.surface_y(region, transform.origin.x, transform.origin.z)
+			var ground := TerrainTileField.surface_y(region, transform.origin.x, transform.origin.z)
 			if String(asset_id).begins_with("meadow.rock"):
 				# Embedded rocks sink below the ground at their anchor (September 27).
 				assert_lt(transform.origin.y, ground, "an embedded rock sinks into the ground")

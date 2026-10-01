@@ -7,8 +7,33 @@ static func grade(data: Dictionary) -> TerrainGradePatch:
 	result._continuous_datum=data.datum
 	return result
 
+## The frozen fields (September 8-15) store the natural terrain per 24 m CELL.
+## The dual-grid region is keyed by 12 m lattice POINTS: point p lies inside
+## cell round(p / 2) (its odd points on a cell border take the upper cell, a
+## fixed deterministic tie). This re-freezes the recorded geography at 12 m
+## without inventing heights; the town grades are world-space and unchanged.
+## Because odd points take the upper cell, cell i now spans points 2i-1..2i,
+## i.e. dual cells over world [24i - 18, 24i + 6] instead of the old cell's
+## [24i - 12, 24i + 12]: the re-frozen geography sits 6 m toward -x/-z relative
+## to the old cells. Acceptable: grades are world-space, and the tests assert
+## invariants of the graded field, not the old cell heights.
 static func region(path: String) -> HeightfieldRegion:
 	var data: Dictionary=str_to_var(FileAccess.get_file_as_string(path))
-	var result := HeightfieldRegion.new(data.storeys,data.levels,data.carved)
+	var storeys := _points(data.storeys)
+	var result := HeightfieldRegion.new(storeys,_points(data.levels),_points(data.carved))
 	for entry: Dictionary in data.grades: result.terrain_grades.append(grade(entry))
 	return result
+
+static func _points(cells: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	if cells.is_empty(): return out
+	var lo: Vector2i = cells.keys()[0]
+	var hi := lo
+	for cell: Vector2i in cells:
+		lo = Vector2i(mini(lo.x,cell.x),mini(lo.y,cell.y))
+		hi = Vector2i(maxi(hi.x,cell.x),maxi(hi.y,cell.y))
+	for z in range(lo.y*2-1,hi.y*2+1):
+		for x in range(lo.x*2-1,hi.x*2+1):
+			var cell := Vector2i(floori(x*.5+.5),floori(z*.5+.5))
+			if cells.has(cell): out[Vector2i(x,z)] = cells[cell]
+	return out

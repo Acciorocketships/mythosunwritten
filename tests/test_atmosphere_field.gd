@@ -18,7 +18,7 @@ func test_atmosphere_is_resource_free_deterministic_and_grounded() -> void:
 	for recipe: StringName in a.points:
 		for point: Vector3 in a.points[recipe]:
 			var world: Vector3 = point + a.origin
-			assert_almost_eq(world.y, TerrainSurfaceField.surface_y(region, world.x, world.z) + 2.5, 0.0001)
+			assert_almost_eq(world.y, TerrainTileField.surface_y(region, world.x, world.z) + 2.5, 0.0001)
 			assert_between(point.x, 0.0, 192.0)
 			assert_between(point.z, 0.0, 192.0)
 	assert_lte(a.orbs.size(), 4, "bounded moving lights per chunk")
@@ -88,7 +88,7 @@ func test_rivers_and_ground_share_the_new_production_height_input() -> void:
 		for z in range(-8, 9):
 			for x in range(-8, 9):
 				var cell := Vector2i(x * 7, z * 9)
-				var p := Vector2(cell) * HeightfieldPlan.TILE
+				var p := Vector2(cell) * HeightfieldPlan.POINT
 				assert_almost_eq(water.noise_h(p), natural.raw_height(cell.x, cell.y), 0.00001,
 					"river carving must measure the same new landforms as terrain")
 

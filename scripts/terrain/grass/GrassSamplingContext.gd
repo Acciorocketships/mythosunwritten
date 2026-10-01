@@ -33,6 +33,9 @@ static func detached(source_region: HeightfieldRegion, source_water: WaterFieldC
 		result.water._ctx["fill"] = source_water._ctx.fill.duplicate(true)
 		result.water._ctx["fill_base"] = source_water._ctx.fill_base
 		result.water._ctx["fill_size"] = source_water._ctx.get("fill_size",WaterField.FILL_M+1)
+		# The rect is sized with FILL_M * FILL_STEP while the window base moved by
+		# WaterField.FILL_OFFSET; the enclosure still holds because that margin is
+		# kept on both sides of the coverage.
 		var fill_rect := Rect2(source_water._ctx.fill_base,
 			Vector2.ONE*WaterField.FILL_M*WaterField.FILL_STEP)
 		assert(fill_rect.encloses(source_water.coverage()))

@@ -170,7 +170,7 @@ static func make(pose:Transform3D,width:float,height:float,seed_value:int,region
   if region!=null:
    for z:float in [0.0,foot_depth*.5,foot_depth]:
     var foot:Vector3=pose*Vector3(x,0,z)
-    floor_y=minf(floor_y,TerrainSurfaceField.surface_y(region,foot.x,foot.z)-pose.origin.y-.2)
+    floor_y=minf(floor_y,TerrainTileField.surface_y(region,foot.x,foot.z)-pose.origin.y-.2)
   var band_start:=points.size()-1
   for y:float in _height_samples(previous_y,floor_y):
    var depth:float=_surface_depth(u,y,core,crest,boulder,salt,fractures,masses,cuts,0,detail_cache)

@@ -41,7 +41,7 @@ const _WELD_EPS := 0.01       # position-key rounding for chaining segment endpo
 ## `_ground`-style helper convention rather than repeating the ctx.region
 ## destructure at every call site).
 static func _ground(ctx: Dictionary, p: Vector2) -> float:
-	return TerrainSurfaceField.surface_y(ctx.region, p.x, p.y)
+	return TerrainTileField.surface_y(ctx.region, p.x, p.y)
 
 
 static func _wet_f(ctx: Dictionary, p: Vector2) -> float:
@@ -204,11 +204,14 @@ static func _presence_segments(ctx: Dictionary, grown: Rect2) -> Array:
 static func _refine_crossing(ctx: Dictionary, origin: Vector2, a: Vector2i, b: Vector2i) -> Vector2:
 	var pa: Vector2 = origin + Vector2(a) * STEP
 	var pb: Vector2 = origin + Vector2(b) * STEP
-	var fa: float = _wet_f(ctx, pa)
-	var fb: float = _wet_f(ctx, pb)
 	var lo := 0.0
 	var hi := 1.0
-	if fa < 0.0:   # ensure lo starts on the wet end
+	# Ensure lo starts on the wet end, with the SAME test the presence grid
+	# used (_is_wet: depth > _WET_EPS). A node whose depth lies in
+	# [0, _WET_EPS] is dry for the grid; testing `depth < 0` here instead made
+	# the two cells sharing its edge bisect from opposite ends and emit two
+	# different crossings, breaking the shoreline chain.
+	if not _is_wet(ctx, pa):
 		var tmp: Vector2 = pa
 		pa = pb
 		pb = tmp
@@ -349,19 +352,25 @@ static func _chaikin(pts: PackedVector2Array, closed: bool) -> PackedVector2Arra
 	var out := PackedVector2Array()
 	if closed:
 		for i in n:
-			var p0: Vector2 = pts[i]
-			var p1: Vector2 = pts[(i + 1) % n]
-			out.append(p0.lerp(p1, 0.25))
-			out.append(p0.lerp(p1, 0.75))
+			_chaikin_cut(out, pts[i], pts[(i + 1) % n])
 	else:
 		out.append(pts[0])
 		for i in n - 1:
-			var p0: Vector2 = pts[i]
-			var p1: Vector2 = pts[i + 1]
-			out.append(p0.lerp(p1, 0.25))
-			out.append(p0.lerp(p1, 0.75))
+			_chaikin_cut(out, pts[i], pts[i + 1])
 		out.append(pts[-1])
 	return out
+
+
+## The two Chaikin cuts of segment p0 -> p1, evaluated from the segment's
+## canonical (lexicographically lower) end so a neighbouring chunk that chains
+## the same shoreline the other way round computes bit-identical points.
+static func _chaikin_cut(out: PackedVector2Array, p0: Vector2, p1: Vector2) -> void:
+	if p0 < p1:
+		out.append(p0.lerp(p1, 0.25))
+		out.append(p0.lerp(p1, 0.75))
+	else:
+		out.append(p1.lerp(p0, 0.75))
+		out.append(p1.lerp(p0, 0.25))
 
 
 ## Uniform arc-length resample at `spacing`. Walks the (already-smoothed)
@@ -381,28 +390,127 @@ static func _resample(pts: PackedVector2Array, closed: bool, spacing: float) -> 
 	# (eff ~ spacing) removes the remainder entirely and keeps determinism —
 	# same circumference -> same cnt/eff/points on both sides of a chunk
 	# border, so the weld still holds.
+	#
+	# CHUNK WELD: each chunk sees the shoreline through its own MARGIN window,
+	# so the polyline STARTS (and may be chained in a different direction) at
+	# a different place in each chunk. A resample phased from that start puts
+	# different chords across the shared border, and on the 12 m terrain's
+	# tight bends the border crossings drifted apart by centimetres (a hole in
+	# the water mesh at the seam). The curve is therefore first cut at every
+	# world chunk line (x or z a multiple of WaterField.CHUNK); each exact
+	# crossing is a vertex both chunks compute identically, and each piece
+	# between cuts is evenly divided on its own.
+	var split := _split_at_chunk_lines(pts, closed)
+	var cuts: PackedInt32Array = split.cuts
+	if cuts.is_empty():
+		return _resample_closed(pts, spacing) if closed else _resample_even(pts, spacing)
+	var q: PackedVector2Array = split.pts
+	var bounds := PackedInt32Array()
 	if closed:
-		return _resample_closed(pts, spacing)
-	var out := PackedVector2Array([pts[0]])
-	var carry := 0.0
-	for i in n - 1:
-		var a: Vector2 = pts[i]
-		var b: Vector2 = pts[i + 1]
-		var seg_len: float = a.distance_to(b)
-		if seg_len < 0.000001:
-			continue
-		var d: Vector2 = (b - a) / seg_len
-		var t := spacing - carry
-		while t < seg_len:
-			out.append(a + d * t)
-			t += spacing
-		carry = seg_len - (t - spacing)
-	# Preserve the exact original open endpoint (the resample's own drip stops
-	# just short of it — see t < seg_len above) so an open polyline's tip never
-	# drifts before clipping runs.
-	if out[-1].distance_to(pts[n - 1]) > 0.001:
-		out.append(pts[n - 1])
+		# The ring starts at a cut; close it back onto that cut.
+		bounds = cuts.duplicate()
+		q.append(q[0])
+		bounds.append(q.size() - 1)
+	else:
+		bounds.append(0)
+		for c in cuts:
+			if c != bounds[-1]:
+				bounds.append(c)
+		if bounds[-1] != q.size() - 1:
+			bounds.append(q.size() - 1)
+	var out := PackedVector2Array()
+	for k in bounds.size() - 1:
+		var piece := _resample_even(q.slice(bounds[k], bounds[k + 1] + 1), spacing)
+		out.append_array(piece if out.is_empty() else piece.slice(1))
+	if closed:
+		out.resize(out.size() - 1)   # the last point repeats the first cut
 	return out
+
+
+## Open polyline evenly divided into round(length / spacing) equal arcs, with
+## both original endpoints kept exactly. At least ceil(length / 2) arcs keep
+## every arc within 2 m (a 2.0-2.25 m piece becomes two ~1.1 m arcs). A piece
+## shorter than 1 m stays one short arc: its ends are two exact chunk-line
+## crossings (or a crossing and the curve's end) that both must survive, so
+## nothing can merge it away.
+static func _resample_even(pts: PackedVector2Array, spacing: float) -> PackedVector2Array:
+	var n: int = pts.size()
+	var cum := PackedFloat32Array()
+	cum.resize(n)
+	for i in range(1, n):
+		cum[i] = cum[i - 1] + pts[i - 1].distance_to(pts[i])
+	var length: float = cum[n - 1]
+	if length < 0.000001:
+		return PackedVector2Array([pts[0]])
+	var cnt: int = maxi(maxi(1, roundi(length / spacing)), ceili(length / 2.0))
+	var eff: float = length / float(cnt)
+	var out := PackedVector2Array([pts[0]])
+	var seg := 0
+	for k in range(1, cnt):
+		var target: float = eff * float(k)
+		while seg + 2 < n and cum[seg + 1] <= target:
+			seg += 1
+		var seg_len: float = cum[seg + 1] - cum[seg]
+		out.append(pts[seg].lerp(pts[seg + 1], (target - cum[seg]) / seg_len if seg_len > 0.000001 else 0.0))
+	out.append(pts[n - 1])
+	return out
+
+
+## Inserts the exact crossing of every world chunk line into the polyline.
+## Returns {"pts", "cuts"}: `cuts` are the indices of points lying on a chunk
+## line (inserted crossings and any original point exactly on one). A closed
+## ring with cuts is rotated so that its first point is a cut. Each crossing
+## is evaluated from the segment's canonical end, so both chunks of a border
+## compute the identical point whichever way they chained the curve.
+## A crossing is de-duplicated only against the previous cut. That suffices: a
+## segment through a chunk corner crosses the x line and the z line at the same
+## point, and both are computed by the same canonical lerp with the axis
+## coordinate pinned to the line, so the two hits coincide exactly (and sort
+## adjacent) and the second is caught by the distance test.
+static func _split_at_chunk_lines(pts: PackedVector2Array, closed: bool) -> Dictionary:
+	var span: float = WaterField.CHUNK
+	var out := PackedVector2Array()
+	var cuts := PackedInt32Array()
+	var n := pts.size()
+	var last := n if closed else n - 1
+	for i in n:
+		var p: Vector2 = pts[i]
+		if fposmod(p.x, span) == 0.0 or fposmod(p.y, span) == 0.0:
+			cuts.append(out.size())
+		out.append(p)
+		if i >= last:
+			break
+		var a: Vector2 = p
+		var b: Vector2 = pts[(i + 1) % n]
+		var u := a if a < b else b
+		var v := b if a < b else a
+		var hits: Array = []   # [t along a -> b, point]
+		for axis in 2:
+			var lo := minf(u[axis], v[axis])
+			var hi := maxf(u[axis], v[axis])
+			for line_k in range(ceili(lo / span), floori(hi / span) + 1):
+				var line := float(line_k) * span
+				if line <= lo or line >= hi:
+					continue
+				var t_u := (line - u[axis]) / (v[axis] - u[axis])
+				var cross := u.lerp(v, t_u)
+				cross[axis] = line
+				hits.append([t_u if a == u else 1.0 - t_u, cross])
+		hits.sort_custom(func(h0: Array, h1: Array) -> bool: return h0[0] < h1[0])
+		for hit: Array in hits:
+			if not cuts.is_empty() and out[cuts[-1]].distance_to(hit[1]) < 0.000001:
+				continue
+			cuts.append(out.size())
+			out.append(hit[1])
+	if closed and not cuts.is_empty() and cuts[0] != 0:
+		var shift := cuts[0]
+		var rotated := out.slice(shift)
+		rotated.append_array(out.slice(0, shift))
+		for k in cuts.size():
+			cuts[k] = posmod(cuts[k] - shift, out.size())
+		cuts.sort()
+		out = rotated
+	return {"pts": out, "cuts": cuts}
 
 
 ## Even-arc resample of a CLOSED ring (points are a cycle: the last connects

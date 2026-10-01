@@ -20,13 +20,18 @@ func run(review:Node3D)->void:
   out.append("x %d lattice %s shapes %s"%[x,ground._path_at_cell(q,Vector2i(roundi(q.x/24.0),roundi(q.y/24.0))),ids])
  var natural:HeightfieldRegion=review._streamer._fields.region(chunk)
  var graded:HeightfieldRegion=input.region
+ # Route cells are 24 m (cell c = lattice point 2c); storeys are read per point.
  for pair in [[Vector2i(49,22),Vector2i.LEFT],[Vector2i(48,22),Vector2i.LEFT],[Vector2i(50,22),Vector2i.LEFT]]:
-  out.append("edge %s %s natural storeys %d->%d walkable(natural,hw)=%s walkable(graded,hw)=%s natural_y %.2f/%.2f graded_y %.2f/%.2f"%[pair[0],pair[1],natural.storey_at(pair[0].x,pair[0].y),natural.storey_at(pair[0].x+pair[1].x,pair[0].y),
-   TerrainSurfaceField.is_walkable_edge(natural,pair[0],pair[1],PathProgram.PATH_HALF_WIDTH),TerrainSurfaceField.is_walkable_edge(graded,pair[0],pair[1],PathProgram.PATH_HALF_WIDTH),
-   TerrainSurfaceField.surface_y(natural,Vector2(pair[0]).x*24,Vector2(pair[0]).y*24),TerrainSurfaceField.surface_y(natural,Vector2(pair[0]+pair[1]).x*24,Vector2(pair[0]).y*24),
-   TerrainSurfaceField.surface_y(graded,Vector2(pair[0]).x*24,Vector2(pair[0]).y*24),TerrainSurfaceField.surface_y(graded,Vector2(pair[0]+pair[1]).x*24,Vector2(pair[0]).y*24)])
+  var p0:Vector2i=pair[0]*PathProgram.POINTS_PER_ROUTE_CELL
+  var p1:Vector2i=(pair[0]+pair[1])*PathProgram.POINTS_PER_ROUTE_CELL
+  var w0:=Vector2(pair[0])*PathProgram.ROUTE_CELL
+  var w1:=Vector2(pair[0]+pair[1])*PathProgram.ROUTE_CELL
+  out.append("edge %s %s natural point storeys %d->%d walkable(natural)=%s walkable(graded)=%s natural_y %.2f/%.2f graded_y %.2f/%.2f"%[pair[0],pair[1],natural.storey_at(p0.x,p0.y),natural.storey_at(p1.x,p1.y),
+   PathProgram.is_route_edge_walkable(natural,pair[0],pair[1]),PathProgram.is_route_edge_walkable(graded,pair[0],pair[1]),
+   TerrainTileField.surface_y(natural,w0.x,w0.y),TerrainTileField.surface_y(natural,w1.x,w1.y),
+   TerrainTileField.surface_y(graded,w0.x,w0.y),TerrainTileField.surface_y(graded,w1.x,w1.y)])
  out.append("grades %d native controls %d"%[graded.terrain_grades.size(),graded.native_control_heights.size()])
  for x in range(1180,1140,-2):
-  out.append("x %d natural %.2f graded %.2f"%[x,TerrainSurfaceField.surface_y(natural,x,527.4),TerrainSurfaceField.surface_y(graded,x,527.4)])
+  out.append("x %d natural %.2f graded %.2f"%[x,TerrainTileField.surface_y(natural,x,527.4),TerrainTileField.surface_y(graded,x,527.4)])
  FileAccess.open(review._output_dir+"/dead-end-owner.txt",FileAccess.WRITE).store_string("\n".join(out))
  print("[dead_end_owner] done")

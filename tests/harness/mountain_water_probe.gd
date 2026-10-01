@@ -28,7 +28,7 @@ func _run() -> void:
 			var p := tr.points[i]
 			closest = minf(closest, p.distance_to(SITE))
 			if p.distance_to(SITE) > 260.0: continue
-			var g := TerrainSurfaceField.surface_y(region, p.x, p.y) if ctx.covers(p) else NAN
+			var g := TerrainTileField.surface_y(region, p.x, p.y) if ctx.covers(p) else NAN
 			near.append({"i": i, "p": str(p.round()), "bed": snappedf(tr.beds[i], .01),
 				"level": snappedf(levels[i], .01), "ground": snappedf(g, .01),
 				"natural": snappedf(water.noise_h(p), .01), "smooth": snappedf(water.smooth_h(p), .01),
@@ -44,7 +44,7 @@ func _run() -> void:
 		for z in range(-60, 61, 4):
 			var p := SITE + Vector2(x, z)
 			if not ctx.covers(p): continue
-			var g := TerrainSurfaceField.surface_y(region, p.x, p.y)
+			var g := TerrainTileField.surface_y(region, p.x, p.y)
 			result.grid.append([p.x, p.y, snappedf(g, .01), snappedf(WaterField.level_at(raw, p), .01),
 				ctx.is_wet(p), region.storey_at(roundi(p.x / 24.0), roundi(p.y / 24.0))])
 	for s in WaterField.steep_spans(raw, Rect2(SITE - Vector2.ONE * 120, Vector2.ONE * 240)):

@@ -121,6 +121,28 @@ static func shared_junction_shapes(paths: Array[Dictionary], half_width: float,
 					half_width,surface,priority,StringName("%s.%s.%d.%d" % [stable_id,point,i,j])))
 	return out
 
+## Roads stay on the 24 m route lattice (route cell c at world 24 c) while the
+## terrain is sampled on 12 m lattice points, so route cell c is point 2 c.
+const ROUTE_CELL := 24.0
+const POINTS_PER_ROUTE_CELL := 2
+
+## The lattice edges a route edge c -> c + d crosses, as [point, direction]:
+## 2c -> 2c+d and 2c+d -> 2c+2d. The middle point 2c+d is no route cell.
+static func route_point_edges(cell: Vector2i, d: Vector2i) -> Array[Array]:
+	assert(absi(d.x) + absi(d.y) == 1, "a route edge joins cardinal neighbours")
+	var start := cell * POINTS_PER_ROUTE_CELL
+	return [[start, d], [start + d, d]]
+
+## A route edge is walkable iff both of its point edges are (neither is a
+## cliff edge). A 4 m road cannot reach a wall on a parallel dual-cell border
+## 6 m away, and an E2 cliff end stops at the tile centre, so the point edges
+## are the complete fact.
+static func is_route_edge_walkable(region, cell: Vector2i, d: Vector2i) -> bool:
+	for edge: Array in route_point_edges(cell, d):
+		if not TerrainTileField.is_walkable_edge(region, edge[0], edge[1]):
+			return false
+	return true
+
 const SUPER_CELLS := SettlementPlan.SUPER_CELLS
 const NODE_MAX_SUPPORT_SPAN := 1.0
 # Additional climbing/descending beyond the endpoint elevation difference.
@@ -175,6 +197,9 @@ static func compile(catalog: EnvironmentCatalog,
 		authored: Dictionary = {}) -> PathProgram:
 	if catalog == null:
 		return _fail("PathProgram requires an environment catalogue")
+	if ROUTE_CELL != HeightfieldPlan.CELL \
+			or ROUTE_CELL != HeightfieldPlan.POINT * float(POINTS_PER_ROUTE_CELL):
+		return _fail("the route lattice must be two terrain lattice points per cell")
 	var data := _authored_metrics() if authored.is_empty() else authored.duplicate(true)
 	var program := PathProgram.new()
 	program.query_margin = float(data.get("query_margin", -1.0))

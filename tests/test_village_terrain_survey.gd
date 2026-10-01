@@ -137,7 +137,7 @@ func test_survey_uses_conservative_bounds_without_mutating_the_region() -> void:
 		var aabb_half: Vector2 = (axes[0] as Vector2).abs() \
 			* perch.half_extents.x + (axes[1] as Vector2).abs() \
 			* perch.half_extents.y
-		var bounds := TerrainSurfaceField.height_bounds(region,
+		var bounds := TerrainTileField.height_bounds(region,
 			Rect2(perch.anchor - aabb_half, aabb_half * 2.0))
 		assert_almost_eq(perch.minimum_y, bounds.x, 0.0001)
 		assert_almost_eq(perch.maximum_y, bounds.y, 0.0001)

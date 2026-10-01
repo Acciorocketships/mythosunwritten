@@ -1,6 +1,10 @@
 # Dual-grid terrain tiles (corner-sampled 12 m tiles)
 
-Status: DRAFT for owner review (September 30). No code changes yet.
+Status: IMPLEMENTED on branch `dual-grid-terrain` (September 30 - October 1; plan
+`docs/superpowers/plans/2026-09-30-dual-grid-terrain-tiles.md`). E2 is the default cliff end
+(E1 selectable via `TerrainTileField.cliff_end`); the low-pass knob `HeightfieldPlan.LOWPASS_M`
+exists with default 0 (off). Open for the owner: the dome look of steep massifs (section 9,
+risk 1). Review: `docs/qa/2026-09-30-dual-grid-terrain/result.md`.
 
 ## 1. Intent
 

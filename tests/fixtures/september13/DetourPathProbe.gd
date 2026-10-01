@@ -17,7 +17,7 @@ func _route_record(start_cell: Vector2i, goal_cell: Vector2i, pair_key: String) 
 		for x in range(min_cell.x, max_cell.x + 1):
 			var index := (z - min_cell.y) * width + x - min_cell.x
 			var cell := Vector2i(x, z)
-			var p := Vector2(cell) * TerrainSurfaceField.TILE
+			var p := Vector2(cell) * TerrainTileField.SPACING
 			cells[index] = cell
 			heights[index] = int(round(_ground(p)))
 			rocky[index] = Helper.biome_rocky01(Vector3(p.x, 0.0, p.y), _world_seed)
@@ -29,12 +29,12 @@ func _route_record(start_cell: Vector2i, goal_cell: Vector2i, pair_key: String) 
 		for direction: Vector2i in directions:
 			var next := cell + direction
 			if next.x < min_cell.x or next.y < min_cell.y or next.x > max_cell.x or next.y > max_cell.y: continue
-			var segment_a := Vector2(cell) * TerrainSurfaceField.TILE
-			var segment_b := Vector2(next) * TerrainSurfaceField.TILE
+			var segment_a := Vector2(cell) * TerrainTileField.SPACING
+			var segment_b := Vector2(next) * TerrainTileField.SPACING
 			var intervals := _planning_intervals_cells(cell, next)
 			if intervals.is_empty():
 				var region := _fields.region_at((segment_a + segment_b) * 0.5)
-				if not TerrainSurfaceField.is_walkable_edge(region, cell, direction):
+				if not TerrainTileField.is_walkable_edge(region, cell, direction):
 					continue
 				var to := _local_index(next, min_cell, width)
 				cell_edges.append({"to": to, "dir": _dir_index(direction),

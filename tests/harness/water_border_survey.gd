@@ -32,7 +32,7 @@ func _initialize() -> void:
 							max_jump = jump
 							worst = p
 				if mismatches:
-					var row := {"chunk": str(chunk), "neighbour": str(chunk + direction), "mismatches": mismatches, "max_jump": max_jump, "point": str(worst), "a": str(own.level_at(worst)), "b": str(other.level_at(worst)), "ground": TerrainSurfaceField.surface_y(fields.region(chunk), worst.x, worst.y)}
+					var row := {"chunk": str(chunk), "neighbour": str(chunk + direction), "mismatches": mismatches, "max_jump": max_jump, "point": str(worst), "a": str(own.level_at(worst)), "b": str(other.level_at(worst)), "ground": TerrainTileField.surface_y(fields.region(chunk), worst.x, worst.y)}
 					rows.append(row)
 					print("WATER_BORDER ", JSON.stringify(row))
 		print("WATER_SURVEY row=", z, " ms=", Time.get_ticks_msec() - start)

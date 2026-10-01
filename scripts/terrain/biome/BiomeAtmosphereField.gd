@@ -15,7 +15,7 @@ static func compute(chunk: Vector2i, region, world_seed: int, water: WaterFieldC
 	for z in GRID:
 		for x in GRID:
 			var pos := origin + Vector3(x * STEP, 0, z * STEP)
-			var height := TerrainSurfaceField.surface_y(region, pos.x, pos.z)
+			var height := TerrainTileField.surface_y(region, pos.x, pos.z)
 			fog.append(BiomeRegistry.local_atmosphere(pos, world_seed))
 			ground.append(height)
 			lo = minf(lo, height)
@@ -31,7 +31,7 @@ static func compute(chunk: Vector2i, region, world_seed: int, water: WaterFieldC
 			var px := (x + lerpf(0.2, 0.8, Helper._cell_hash01(world_seed + 710, cx, cz))) * 24.0
 			var pz := (z + lerpf(0.2, 0.8, Helper._cell_hash01(world_seed + 711, cx, cz))) * 24.0
 			var pos := origin + Vector3(px, 0, pz)
-			pos.y = TerrainSurfaceField.surface_y(region, pos.x, pos.z) + 2.5
+			pos.y = TerrainTileField.surface_y(region, pos.x, pos.z) + 2.5
 			if water != null:
 				var point := Vector2(pos.x, pos.z)
 				var level := water.level_at(point)

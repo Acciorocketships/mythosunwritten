@@ -31,7 +31,7 @@ func _initialize()->void:
   if trace==incoming:discovered=true
  print("TERMINAL_DISCOVERED endpoint_owner=",discovered)
  for i in range(maxi(0,target.start-2),incoming.points.size()):
-  print("CARVED_STATION i=",i," p=",incoming.points[i]," bed=",incoming.beds[i]," head=",profile.levels[i]," native_ground=",TerrainSurfaceField.surface_y(region,incoming.points[i].x,incoming.points[i].y))
+  print("CARVED_STATION i=",i," p=",incoming.points[i]," bed=",incoming.beds[i]," head=",profile.levels[i]," native_ground=",TerrainTileField.surface_y(region,incoming.points[i].x,incoming.points[i].y))
  if "--fill" in OS.get_cmdline_user_args():
   var centre:Vector2=receiver.points[station]
   var start:Vector2=incoming.points[target.start]
@@ -46,7 +46,7 @@ func _initialize()->void:
     wet+=1
     if is_finite(previous):rise=maxf(rise,level-previous)
    samples+=1;previous=level
-   print("TERMINAL_FILL_SAMPLE p=",point," level=",level," ground=",TerrainSurfaceField.surface_y(region,point.x,point.y))
+   print("TERMINAL_FILL_SAMPLE p=",point," level=",level," ground=",TerrainTileField.surface_y(region,point.x,point.y))
   print("TERMINAL_FILL wet=",wet," total=",samples," maximum_rise=",rise," end_level=",context.level_at(centre)," receiver_profile=",receiving.levels[station])
  print("CARVED_DEPENDENCIES nesting=",water.max_dependency_nesting," edges=",water.dependency_edges.size())
  quit()

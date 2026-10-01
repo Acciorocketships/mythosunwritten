@@ -3,7 +3,8 @@ extends RefCounted
 
 ## Precomputed storey/level maps over a region, with the same read interface as
 ## HeightfieldPlan (storey_at/level_at/surface_height/tile_plan) but O(1) lookups.
-## Built by HeightfieldPlan.compute_region; values equal the per-cell reference.
+## Built by HeightfieldPlan.compute_region; values equal the per-point reference.
+## Everything is keyed by lattice point index (world position 12 i, 12 j).
 
 const STOREY_HEIGHT: float = 4.0
 const LEVEL_HEIGHT: float = 1.0
@@ -14,7 +15,8 @@ var _carved: Dictionary   # Vector2i -> true (water carve removed ground here)
 var terrain_grades: Array[TerrainGradePatch] = []
 # Only this inner domain is certified independent of the finite clamp edges.
 # Scratch margins and hand-built fixtures must not be reused as complete fields.
-var certified_cells := Rect2i()
+var certified_points := Rect2i()
+# Vector2i point -> metres (town grades; per-point).
 var native_control_heights: Dictionary = {}
 var _native_grade_views: Dictionary = {}
 
@@ -95,13 +97,18 @@ func _init(storeys: Dictionary, levels: Dictionary, carved: Dictionary = {}, p_p
 	plan = p_plan
 
 
+## World pitch of the lattice this region is keyed by (TerrainTileField reads it).
+func terrain_tile_size() -> float:
+	return HeightfieldPlan.POINT
+
+
 func storey_at(cx: int, cz: int) -> int:
 	if native_control_heights.has(Vector2i(cx,cz)):
 		return floori(float(native_control_heights[Vector2i(cx,cz)])/STOREY_HEIGHT)
 	return int(_storeys.get(Vector2i(cx, cz), 0))
 
 
-## Whether the water carve lowered this cell — a water basin/channel cell.
+## Whether the water carve lowered this point — a water basin/channel cell.
 ## Retained for water-aware cliff dressing; this tag does not create a wall.
 func is_carved(cx: int, cz: int) -> bool:
 	return _carved.has(Vector2i(cx, cz))
@@ -113,7 +120,7 @@ func level_at(cx: int, cz: int) -> int:
 	return int(_levels.get(Vector2i(cx, cz), 0))
 
 
-func has_surface_cell(cx: int, cz: int) -> bool:
+func has_surface_point(cx: int, cz: int) -> bool:
 	return _levels.has(Vector2i(cx, cz))
 
 
@@ -121,8 +128,8 @@ func surface_height(cx: int, cz: int) -> float:
 	if native_control_heights.has(Vector2i(cx,cz)):
 		return float(native_control_heights[Vector2i(cx,cz)])
 	# Level terraces are IN the rendered surface (HeightfieldPlan.RENDER_LEVELS, owner 2026-07-15):
-	# each 1m level step ramps through the same half-cell slope profile as the 4m storey slopes —
-	# short slope tiles, no KayKit dressing (walls/lips/skirts key off storey_at only).
+	# each 1m level step ramps through the same tile slope profile as a one-storey edge —
+	# short slope tiles (walls key off storey_at only).
 	var h := float(storey_at(cx, cz)) * STOREY_HEIGHT
 	if HeightfieldPlan.RENDER_LEVELS:
 		h += float(level_at(cx, cz)) * LEVEL_HEIGHT

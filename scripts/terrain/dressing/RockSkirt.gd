@@ -35,24 +35,23 @@ const WIDTH_MAX := 2.6
 static func rise_for(exposed: float) -> float:
 	return minf(RISE * exposed, RISE_MAX)
 
-## The rendered terrain: the mesher's 2 m lattice quads, each evaluated in its
-## own cell (so a cliff top stays flat to its edge; the drop is a separate
-## wall) and split along the same (0,0)-(1,1) diagonal.
+## The rendered terrain: the mesher's 2 m lattice quads, each evaluated on the
+## side of the lattice point owning it (so a cliff top stays flat to its wall;
+## the drop is a separate skirt) and split along the same (0,0)-(1,1) diagonal.
 static func terrain_ground(region: HeightfieldRegion) -> Callable:
 	var step := TerrainChunkMesher.STEP
 	return func(p: Vector2) -> float:
-		var cx := TerrainSurfaceField._cell_of(p.x, region)
-		var cz := TerrainSurfaceField._cell_of(p.y, region)
+		var owner := Vector2i(TerrainTileField.point_of(p.x, region), TerrainTileField.point_of(p.y, region))
 		var x0 := floorf(p.x / step) * step
 		var z0 := floorf(p.y / step) * step
 		var fx := p.x / step - x0 / step
 		var fz := p.y / step - z0 / step
-		var h00 := TerrainSurfaceField.surface_y_in_cell(region, x0, z0, cx, cz)
-		var h11 := TerrainSurfaceField.surface_y_in_cell(region, x0 + step, z0 + step, cx, cz)
+		var h00 := TerrainTileField.surface_y_on_side(region, x0, z0, owner)
+		var h11 := TerrainTileField.surface_y_on_side(region, x0 + step, z0 + step, owner)
 		if fx >= fz:
-			var h10 := TerrainSurfaceField.surface_y_in_cell(region, x0 + step, z0, cx, cz)
+			var h10 := TerrainTileField.surface_y_on_side(region, x0 + step, z0, owner)
 			return h00 + fx * (h10 - h00) + fz * (h11 - h10)
-		var h01 := TerrainSurfaceField.surface_y_in_cell(region, x0, z0 + step, cx, cz)
+		var h01 := TerrainTileField.surface_y_on_side(region, x0, z0 + step, owner)
 		return h00 + fz * (h01 - h00) + fx * (h11 - h01)
 
 ## Contact radius in each of SIDES directions: the support function of the
@@ -77,33 +76,33 @@ static func ellipse_radii(semi: Vector2, axis_u: Vector2) -> PackedFloat32Array:
 	return contact_radii(outline, Vector2.ZERO)
 
 ## The rendered terrain surface: height (`terrain_ground`), the mesher's
-## smooth lattice normal and its bilinear 24 m cell-corner biome tint.
+## field-gradient lattice normal and its bilinear 24 m tint-lattice biome tint.
 static func terrain_surface(region: HeightfieldRegion, world_seed: int) -> Dictionary:
 	var ground := terrain_ground(region)
 	var step := TerrainChunkMesher.STEP
-	var tile := TerrainChunkMesher.TILE
-	# generate_normals() on the welded 2 m lattice averages its incident faces:
-	# a central difference at each node, interpolated across the quad. Welding
-	# never joins a cliff's upper and lower quads, so every node is taken in
-	# the cell of the point being shaded.
+	var tile := TerrainChunkMesher.CELL
+	# The sheet lights each vertex of its 2 m lattice with the exact field
+	# gradient there (TerrainChunkMesher.field_normals), interpolated across
+	# the quad. The quad's corners lie on the side of the lattice point owning
+	# the point being shaded (a cliff's upper and lower quads never weld).
+	var baked := {}
 	return {
 		"height": ground,
 		"normal": func(p: Vector2) -> Vector3:
-			var cx := TerrainSurfaceField._cell_of(p.x, region)
-			var cz := TerrainSurfaceField._cell_of(p.y, region)
-			var h := func(x: float, z: float) -> float:
-				return TerrainSurfaceField.surface_y_in_cell(region, x, z, cx, cz)
+			var owner := Vector2i(TerrainTileField.point_of(p.x, region), TerrainTileField.point_of(p.y, region))
 			var x0 := floorf(p.x / step) * step
 			var z0 := floorf(p.y / step) * step
 			var fx := (p.x - x0) / step
 			var fz := (p.y - z0) / step
-			var n := Vector3.ZERO
+			var nodes := PackedVector3Array()
 			for corner: Vector2 in [Vector2(0, 0), Vector2(1, 0), Vector2(0, 1), Vector2(1, 1)]:
 				var x := x0 + corner.x * step
 				var z := z0 + corner.y * step
-				var w := (fx if corner.x > 0 else 1.0 - fx) * (fz if corner.y > 0 else 1.0 - fz)
-				n += Vector3(float(h.call(x - step, z)) - float(h.call(x + step, z)), 2.0 * step,
-					float(h.call(x, z - step)) - float(h.call(x, z + step))) * w
+				nodes.append(Vector3(x, TerrainTileField.surface_y_on_side(region, x, z, owner), z))
+			var normals := TerrainChunkMesher.field_normals(nodes, region, baked)
+			var n := Vector3.ZERO
+			for k in 4:
+				n += normals[k] * (fx if k & 1 else 1.0 - fx) * (fz if k & 2 else 1.0 - fz)
 			return n.normalized(),
 		"tint": func(p: Vector2) -> Color:
 			var x0 := floorf(p.x / tile) * tile

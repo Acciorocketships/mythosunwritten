@@ -90,11 +90,14 @@ func test_pond_level_at_or_below_ring_minimum() -> void:
 		return
 	var pond: PondStamp = t.pond
 	var min_h: float = INF
-	var r_cells: int = int(ceil((pond.bound_radius() + WaterPlan.TILE) / WaterPlan.TILE))
-	var cc: Vector2i = Vector2i(roundi(pond.center.x / WaterPlan.TILE), roundi(pond.center.y / WaterPlan.TILE))
+	# Original oracle: the footprint plus a 24 m ring. Sampled at every 12 m
+	# terrain point (a superset of the original 24 m samples, so at least as strict).
+	var pitch := HeightfieldPlan.POINT
+	var r_cells: int = int(ceil((pond.bound_radius() + WaterPlan.TILE) / pitch))
+	var cc: Vector2i = Vector2i(roundi(pond.center.x / pitch), roundi(pond.center.y / pitch))
 	for dz in range(-r_cells, r_cells + 1):
 		for dx in range(-r_cells, r_cells + 1):
-			var p: Vector2 = Vector2(float(cc.x + dx) * WaterPlan.TILE, float(cc.y + dz) * WaterPlan.TILE)
+			var p: Vector2 = Vector2(float(cc.x + dx) * pitch, float(cc.y + dz) * pitch)
 			if pond.footprint_t(p) <= 1.0 + WaterPlan.TILE / pond.radius:
 				min_h = minf(min_h, plan.noise_h(p))
 	# maxf mirrors _pond_level's floor of storey 1 (beds must stay above y=0);
@@ -125,9 +128,10 @@ func test_channel_water_is_contained_by_both_banks() -> void:
 					continue   # backwater — pond level, pond containment rules
 				var dir: Vector2 = (t.points[i] - t.points[i - 1]).normalized()
 				var n: Vector2 = Vector2(-dir.y, dir.x)
-				var d0: float = t.widths[i] + WaterPlan.FEATHER + WaterPlan.TILE * 0.5
+				# Bank probes one 12 m terrain point apart past the feather.
+				var d0: float = t.widths[i] + WaterPlan.FEATHER + HeightfieldPlan.POINT * 0.5
 				var bank: float = INF
-				for off in [n * d0, -n * d0, n * (d0 + WaterPlan.TILE), -n * (d0 + WaterPlan.TILE)]:
+				for off in [n * d0, -n * d0, n * (d0 + HeightfieldPlan.POINT), -n * (d0 + HeightfieldPlan.POINT)]:
 					bank = minf(bank, roundf(plan.noise_h(t.points[i] + off) / 4.0) * 4.0)
 				if bank <= 0.0:
 					continue   # storey-0 world floor — containment impossible
@@ -170,12 +174,15 @@ func test_source_pool_never_overtops_its_ring() -> void:
 			continue
 		var pool: PondStamp = t.source_pool
 		var bound: float = pool.bound_radius() + WaterPlan.TILE
-		var r_cells: int = int(ceil(bound / WaterPlan.TILE))
-		var cc: Vector2i = Vector2i(roundi(pool.center.x / WaterPlan.TILE), roundi(pool.center.y / WaterPlan.TILE))
+		# Original 24 m ring, sampled at every 12 m terrain point (a superset of
+		# the original 24 m samples): an odd point can be the lowest rim.
+		var pitch := HeightfieldPlan.POINT
+		var r_cells: int = int(ceil(bound / pitch))
+		var cc: Vector2i = Vector2i(roundi(pool.center.x / pitch), roundi(pool.center.y / pitch))
 		var min_h: float = INF
 		for dz in range(-r_cells, r_cells + 1):
 			for dx in range(-r_cells, r_cells + 1):
-				var p: Vector2 = Vector2(float(cc.x + dx) * WaterPlan.TILE, float(cc.y + dz) * WaterPlan.TILE)
+				var p: Vector2 = Vector2(float(cc.x + dx) * pitch, float(cc.y + dz) * pitch)
 				if p.distance_to(pool.center) <= bound:
 					min_h = minf(min_h, plan.noise_h(p))
 		if float(pool.level) * 4.0 <= 4.0 + 0.0001:
@@ -287,7 +294,7 @@ func test_join_target_hits_pond_footprint() -> void:
 func test_carve_zero_in_spawn_disk() -> void:
 	var plan: WaterPlan = _plan()
 	for cell in [Vector2i(0, 0), Vector2i(3, -2), Vector2i(-5, 5)]:
-		assert_eq(plan.carve_at_cell(cell.x, cell.y), 0.0, "spawn cell %s dry" % cell)
+		assert_eq(plan.carve_at(cell.x * WaterPlan.TILE, cell.y * WaterPlan.TILE), 0.0, "spawn cell %s dry" % cell)
 
 func test_carve_positive_under_a_terminal_pond() -> void:
 	var plan: WaterPlan = _plan()
@@ -303,7 +310,7 @@ func test_carve_positive_under_a_terminal_pond() -> void:
 	assert_not_null(pond, "window contains a terminal pond")
 	var cx: int = roundi(pond.center.x / WaterPlan.TILE)
 	var cz: int = roundi(pond.center.y / WaterPlan.TILE)
-	var carve: float = plan.carve_at_cell(cx, cz)
+	var carve: float = plan.carve_at(cx * WaterPlan.TILE, cz * WaterPlan.TILE)
 	var ground: float = plan.noise_h(Vector2(cx * WaterPlan.TILE, cz * WaterPlan.TILE))
 	# The trace ends at the pond centre, so the river's inlet trench (down to
 	# bed - CHANNEL_DEPTH, floored at BED_MIN) may legitimately cut DEEPER than
@@ -318,10 +325,10 @@ func test_carve_identical_across_instances_and_query_order() -> void:
 	var a: WaterPlan = _plan()
 	var b: WaterPlan = _plan()
 	# Prime b with a far-away query first — result must not depend on history.
-	b.carve_at_cell(400, 400)
+	b.carve_at(400 * WaterPlan.TILE, 400 * WaterPlan.TILE)
 	var cells: Array = [Vector2i(40, -60), Vector2i(-33, 21), Vector2i(90, 88)]
 	for c in cells:
-		assert_almost_eq(a.carve_at_cell(c.x, c.y), b.carve_at_cell(c.x, c.y), 0.0001,
+		assert_almost_eq(a.carve_at(c.x * WaterPlan.TILE, c.y * WaterPlan.TILE), b.carve_at(c.x * WaterPlan.TILE, c.y * WaterPlan.TILE), 0.0001,
 			"carve at %s is a pure function of (seed, cell)" % c)
 
 func test_bodies_near_finds_the_water_that_carved() -> void:
@@ -330,7 +337,7 @@ func test_bodies_near_finds_the_water_that_carved() -> void:
 	var hit: Vector2i = Vector2i.MAX
 	for cz in range(20, 120):
 		for cx in range(20, 120):
-			if plan.carve_at_cell(cx, cz) > 0.5:
+			if plan.carve_at(cx * WaterPlan.TILE, cz * WaterPlan.TILE) > 0.5:
 				hit = Vector2i(cx, cz)
 				break
 		if hit != Vector2i.MAX:
@@ -358,7 +365,7 @@ func test_bodies_near_covers_carved_cells_when_window_straddles_super_cells() ->
 				for dx in range(-radius, radius + 1):
 					var cx: int = center_cell.x + dx
 					var cz: int = center_cell.y + dz
-					if plan.carve_at_cell(cx, cz) > 0.5:
+					if plan.carve_at(cx * WaterPlan.TILE, cz * WaterPlan.TILE) > 0.5:
 						carved.append(Vector2(cx * WaterPlan.TILE, cz * WaterPlan.TILE))
 			if carved.is_empty():
 				continue
@@ -418,7 +425,7 @@ func test_carve_lazy_gates_match_reference():
 	for cz in range(-90, 91, 3):
 		for cx in range(-90, 91, 3):
 			var expect := _carve_reference(w, cx, cz)
-			var got: float = w.carve_at_cell(cx, cz)
+			var got: float = w.carve_at(cx * WaterPlan.TILE, cz * WaterPlan.TILE)
 			assert_almost_eq(got, expect, 0.0001, "cell (%d,%d)" % [cx, cz])
 			checked += 1
 			if expect > 0.05:
@@ -478,7 +485,95 @@ func _carve_reference(w: WaterPlan, cx: int, cz: int) -> float:
 				var weights := w.bank_strengths(t)
 				var strength := lerpf(weights[si], weights[si+1], along)
 				var original_weight := SlopeProfile.smootherstep(clampf(
-					(width+WaterPlan.FEATHER-d)/WaterPlan.FEATHER,0,1))
+					(width+WaterPlan.CARVE_FEATHER-d)/WaterPlan.CARVE_FEATHER,0,1))
 				var original_carve := maxf(0.0,ground-carve_bed)*original_weight
 				best = maxf(best,lerpf(original_carve,maxf(0.0,ground-target),strength))
+	return best
+
+
+# ------------------------------------------------------------
+# carve_at(x, z): pure in position, valid at every 12 m lattice point
+# ------------------------------------------------------------
+
+func test_carve_at_is_zero_in_the_spawn_disk_at_odd_points() -> void:
+	var plan: WaterPlan = _plan()
+	for p in [Vector2(12, 12), Vector2(-36, 60), Vector2(132, -12)]:
+		assert_eq(plan.carve_at(p.x, p.y), 0.0, "spawn point %s dry" % p)
+
+func test_carve_at_is_pure_in_position_across_instances_and_order() -> void:
+	var a: WaterPlan = _plan()
+	var b: WaterPlan = _plan()
+	b.carve_at(9600.0, -9600.0)  # prime b with a far region first
+	for p in [Vector2(12 * 41, -12 * 55), Vector2(-12 * 33, 12 * 21), Vector2(12 * 181, 12 * 177),
+			Vector2(768.0 - 12.0, 768.0 - 12.0), Vector2(-768.0 + 12.0, 768.0 + 12.0)]:
+		assert_almost_eq(a.carve_at(p.x, p.y), b.carve_at(p.x, p.y), 0.0001,
+			"carve at %s is a pure function of (seed, position)" % p)
+
+# The bucket index must not hide water from 12 m lattice points: odd points and
+# points on a 24 m cell border (x = 24 c + 12), including the 12 m strip at a
+# super-cell edge (which belongs to the neighbouring super-cell's last point
+# but to THIS super-cell's first cell), must equal a brute-force evaluation over
+# every river/pond of the owning region.
+func test_carve_at_twelve_metre_points_match_bruteforce_reference() -> void:
+	var w := WaterPlan.new(991177, 22.0, 8)
+	var wet := 0
+	var border := 0
+	var checked := 0
+	for j in range(-150, 151, 2):
+		for i in range(-150, 151, 2):
+			# (i, j) are 12 m point indices; stepping by 2 alternates the
+			# sweep origin so odd points are hit by the +1 offsets below.
+			for off in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]:
+				var pt: Vector2i = Vector2i(i, j) + off
+				var p := Vector2(pt) * HeightfieldPlan.POINT
+				var expect := _carve_bruteforce(w, p)
+				assert_almost_eq(w.carve_at(p.x, p.y), expect, 0.0001, "point %s" % pt)
+				checked += 1
+				if expect > 0.05:
+					wet += 1
+					if posmod(pt.x, 2) == 1 or posmod(pt.y, 2) == 1:
+						border += 1
+	assert_gt(wet, 50, "sweep found only %d/%d carved points" % [wet, checked])
+	assert_gt(border, 20, "sweep found only %d carved odd/border points" % border)
+
+func _carve_bruteforce(w: WaterPlan, p: Vector2) -> float:
+	if p.length() < WaterPlan.SPAWN_WATER_RADIUS:
+		return 0.0
+	var cx := floori(p.x / WaterPlan.TILE + 0.5)
+	var cz := floori(p.y / WaterPlan.TILE + 0.5)
+	var per := int(WaterPlan.SUPER / WaterPlan.TILE)
+	var region: Dictionary = w._region_for(Vector2i(floori(float(cx) / per), floori(float(cz) / per)))
+	var ground: float = w.noise_h(p)
+	var best := 0.0
+	for t: RiverTrace in region.rivers:
+		if t.source_pool != null:
+			best = maxf(best, t.source_pool.carve_at(p, ground))
+		if t.pond != null:
+			best = maxf(best, t.pond.carve_at(p, ground))
+		for si in t.points.size() - 1:
+			var a: Vector2 = t.points[si]
+			var ab: Vector2 = t.points[si + 1] - a
+			var len2: float = ab.length_squared()
+			var along: float = clampf((p - a).dot(ab) / len2, 0.0, 1.0) if len2 > 0.000001 else 0.0
+			var width: float = lerpf(t.widths[si], t.widths[si + 1], along)
+			var d: float = p.distance_to(a + ab * along)
+			if d >= width + WaterPlan.BANK_FEATHER:
+				continue
+			var grade: float = absf(t.beds[si + 1] - t.beds[si]) / maxf(sqrt(len2), 0.001)
+			var extra: float = WaterPlan.CARVE_BED_EXTRA if grade < WaterPlan.CARVE_EXTRA_MAX_GRADE else 0.0
+			var bed: float = lerpf(t.beds[si], t.beds[si + 1], along)
+			var carve_bed: float = maxf(bed - extra, WaterPlan.BED_MIN)
+			var target := carve_bed
+			if d > width:
+				target = lerpf(bed + WaterField.SURFACE_RIDE + 0.5, ground,
+					(d - width) / WaterPlan.BANK_FEATHER)
+			var weights := w.bank_strengths(t)
+			var strength := lerpf(weights[si], weights[si + 1], along)
+			var original_weight := SlopeProfile.smootherstep(clampf(
+				(width + WaterPlan.CARVE_FEATHER - d) / WaterPlan.CARVE_FEATHER, 0, 1))
+			var original_carve := maxf(0.0, ground - carve_bed) * original_weight
+			var carve := lerpf(original_carve, maxf(0.0, ground - target), strength)
+			var crest := ceilf((bed + WaterField.SURFACE_RIDE + .75) / WaterPlan.STOREY) * WaterPlan.STOREY
+			var bar_carve := maxf(0.0, ground - crest)
+			best = maxf(best, lerpf(carve, minf(carve, bar_carve), t.retained_ground_weight(p)))
 	return best

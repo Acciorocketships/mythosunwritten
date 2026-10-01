@@ -20,7 +20,7 @@ func test_street_extension_preserves_one_normal_terrain_slope() -> void:
 		var grade := VillageOutskirtsConstruction._extend_street_grade(source,streets,8.0)
 		for step in range(1,109):
 			var point := axis*step*0.25
-			var expected := lerpf(11.0,8.0,TerrainSurfaceField.transition_weight(maxf(0,point.length()-1.5)))
+			var expected := lerpf(11.0,8.0,TerrainTileField.transition_weight(maxf(0,point.length()-1.5)))
 			assert_almost_eq(grade.surface_y(point,8.0),expected,0.00002,"a reserved street must not re-sample the 12 m terrain curve into 3 m plateaus")
 		assert_eq(source._claims.size(),1,"extending the street does not mutate its source")
 

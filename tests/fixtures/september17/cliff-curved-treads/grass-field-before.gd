@@ -1,6 +1,6 @@
 extends RefCounted
 
-const TILE_WORLD := TerrainChunkMesher.TILE
+const TILE_WORLD := 24.0   # frozen: the retired TerrainChunkMesher.TILE (24 m)
 ## Collection 5 is a complete broad 311-blade patch rather than one small
 ## tuft. An 18×18 primary lattice closes saturated beds while the bake's broad
 ## root spread keeps neighbouring patches from reading as repeated clumps.
@@ -337,9 +337,9 @@ static func _footprint_overlaps_feature_surface(features: FeatureContext,
 static func _cliff_scale(region: HeightfieldRegion,
 		anchor: Vector2, footprint_radius: float,
 		edge_cache: Dictionary = {}) -> float:
-	var cell := Vector2i(roundi(anchor.x / TerrainSurfaceField.TILE),
-		roundi(anchor.y / TerrainSurfaceField.TILE))
-	var local := anchor - Vector2(cell) * TerrainSurfaceField.TILE
+	var cell := Vector2i(roundi(anchor.x / TerrainTileField.SPACING),
+		roundi(anchor.y / TerrainTileField.SPACING))
+	var local := anchor - Vector2(cell) * TerrainTileField.SPACING
 	var high_edge_distance := INF
 	var low_edge_distance := INF
 	var masks := _cliff_masks(region, cell, edge_cache)
@@ -349,7 +349,7 @@ static func _cliff_scale(region: HeightfieldRegion,
 		if (boundary_mask & (1 << index)) == 0:
 			continue
 		var direction: Vector2i = CARDINALS[index]
-		var centre_distance := TerrainSurfaceField.HALF \
+		var centre_distance := (TerrainTileField.SPACING * 0.5) \
 			- local.dot(Vector2(direction))
 		if (high_mask & (1 << index)) != 0:
 			high_edge_distance = minf(high_edge_distance, centre_distance)
@@ -379,11 +379,11 @@ static func _tile_has_coverage_edge(tile_fields: Array[Dictionary]) -> bool:
 
 static func _tile_has_cliff_lip(region: HeightfieldRegion, origin: Vector2,
 		edge_cache: Dictionary) -> bool:
-	var first := Vector2i(roundi(origin.x / TerrainSurfaceField.TILE),
-		roundi(origin.y / TerrainSurfaceField.TILE))
+	var first := Vector2i(roundi(origin.x / TerrainTileField.SPACING),
+		roundi(origin.y / TerrainTileField.SPACING))
 	var last_point := origin + Vector2.ONE * (TILE_WORLD - 0.001)
-	var last := Vector2i(roundi(last_point.x / TerrainSurfaceField.TILE),
-		roundi(last_point.y / TerrainSurfaceField.TILE))
+	var last := Vector2i(roundi(last_point.x / TerrainTileField.SPACING),
+		roundi(last_point.y / TerrainTileField.SPACING))
 	for z in range(first.y, last.y + 1):
 		for x in range(first.x, last.x + 1):
 			if _cliff_masks(region, Vector2i(x, z), edge_cache).y != 0:
@@ -401,10 +401,10 @@ static func _cliff_masks(region: HeightfieldRegion, cell: Vector2i,
 	var high_mask := 0
 	for index in CARDINALS.size():
 		var direction: Vector2i = CARDINALS[index]
-		var high_here := TerrainSurfaceField.is_exposed_edge(
-			region, cell.x, cell.y, direction)
-		var high_there := TerrainSurfaceField.is_exposed_edge(region,
-			cell.x + direction.x, cell.y + direction.y, -direction)
+		var high_here := TerrainTileField.is_exposed_edge(
+			region, Vector2i(cell.x, cell.y), direction)
+		var high_there := TerrainTileField.is_exposed_edge(region,
+			Vector2i(cell.x + direction.x, cell.y + direction.y), -direction)
 		if high_here or high_there:
 			boundary_mask |= 1 << index
 		if high_here:
@@ -420,19 +420,19 @@ static func _cliff_masks(region: HeightfieldRegion, cell: Vector2i,
 static func _surface_gradient(region: HeightfieldRegion, anchor: Vector2,
 		surface_cache: Dictionary, edge_cache: Dictionary = {}) -> Vector2:
 	var step := DressingCompiler.SURFACE_STENCIL
-	var cell := Vector2i(roundi(anchor.x / TerrainSurfaceField.TILE),
-		roundi(anchor.y / TerrainSurfaceField.TILE))
-	var local := anchor - Vector2(cell) * TerrainSurfaceField.TILE
+	var cell := Vector2i(roundi(anchor.x / TerrainTileField.SPACING),
+		roundi(anchor.y / TerrainTileField.SPACING))
+	var local := anchor - Vector2(cell) * TerrainTileField.SPACING
 	var boundary_mask := _cliff_masks(region, cell, edge_cache).x
 	var centre := _surface_y(region, surface_cache, anchor.x, anchor.y)
 	var left_crosses := (boundary_mask & (1 << 1)) != 0 \
-		and local.x - step < -TerrainSurfaceField.HALF
+		and local.x - step < -(TerrainTileField.SPACING * 0.5)
 	var right_crosses := (boundary_mask & (1 << 0)) != 0 \
-		and local.x + step > TerrainSurfaceField.HALF
+		and local.x + step > (TerrainTileField.SPACING * 0.5)
 	var back_crosses := (boundary_mask & (1 << 3)) != 0 \
-		and local.y - step < -TerrainSurfaceField.HALF
+		and local.y - step < -(TerrainTileField.SPACING * 0.5)
 	var front_crosses := (boundary_mask & (1 << 2)) != 0 \
-		and local.y + step > TerrainSurfaceField.HALF
+		and local.y + step > (TerrainTileField.SPACING * 0.5)
 	var gradient_x: float
 	if left_crosses:
 		gradient_x = (_surface_y(region, surface_cache,
@@ -459,11 +459,11 @@ static func _surface_gradient(region: HeightfieldRegion, anchor: Vector2,
 
 static func _surface_y(region: HeightfieldRegion, cache: Dictionary,
 		x: float, z: float) -> float:
-	var cell := Vector2i(roundi(x / TerrainSurfaceField.TILE),
-		roundi(z / TerrainSurfaceField.TILE))
+	var cell := Vector2i(roundi(x / TerrainTileField.SPACING),
+		roundi(z / TerrainTileField.SPACING))
 	if not cache.has(cell):
-		cache[cell] = TerrainSurfaceField.bake_cell(region, cell.x, cell.y)
-	return TerrainSurfaceField.sample_baked(cache[cell], cell.x, cell.y, x, z, region)
+		cache[cell] = TerrainTileField.bake_point(region, Vector2i(cell.x, cell.y))
+	return TerrainTileField.sample_baked(cache[cell], Vector2i(cell.x, cell.y), x, z, region)
 
 static func _biome_dot(values: PackedFloat32Array, weights: Dictionary) -> float:
 	var total := 0.0

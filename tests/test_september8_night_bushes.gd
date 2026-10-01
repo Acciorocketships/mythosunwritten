@@ -19,7 +19,9 @@ func test_bushes_replace_green_hue_using_the_existing_biome_canopy_material() ->
 					assert_eq(material.shader.resource_path, "res://terrain/environment/materials/biome_canopy.gdshader")
 
 func test_actual_bush_base_rejects_cliff_overhang_at_each_yaw_and_scale() -> void:
-	_assert_support_for_step(2, Vector2(-10.9,12))
+	# Points x >= 0 stand two storeys up: the wall lies on the dual border
+	# x = -6 (12 m points), so the anchor stands 1.1 m inside the lip.
+	_assert_support_for_step(2, Vector2(-4.9,12))
 
 func test_actual_bush_base_rejects_hanging_off_a_walkable_slope() -> void:
 	_assert_support_for_step(1, Vector2(-6,12))

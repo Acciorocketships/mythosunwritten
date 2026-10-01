@@ -173,6 +173,12 @@ static func solve(terrain: VillageTerrainView, settlement_id: StringName,
 							{"area":pad.bounds(),"height":ground_y}], true)
 						if candidate_grade == null:
 							continue
+						# NOTE (dual-grid, parked for an owner decision): this is the
+						# patch TARGET, not the final native ground. NativeTerrainGrade
+						# gives a 12 m tile corner shared by claims of different datums
+						# to the LOWER one, so a pad within one 12 m tile of a lower-datum
+						# claim is reported flat here while its native ground dips toward
+						# that datum (tested in test_september15_grade_topology).
 						var pad_bounds := candidate_grade.height_bounds(pad.bounds(), Vector2(ground_y,ground_y))
 						if absf(pad_bounds.x - ground_y) > 0.001 or absf(pad_bounds.y - ground_y) > 0.001:
 							continue # another ground band owns part of this footprint
@@ -1870,7 +1876,7 @@ static func _market_stalls(terrain: VillageTerrainView,
 		var centre := back - outward * half_depth
 		var footprint := Rect2(centre - half_extents, half_extents * 2.0)
 		var base_y := terrain.surface_y(origin)
-		var height_range := TerrainSurfaceField.height_bounds(
+		var height_range := TerrainTileField.height_bounds(
 			terrain.region_covering(footprint), footprint)
 		if terrain.may_be_wet(origin) \
 				or height_range.y > base_y \

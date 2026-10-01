@@ -185,14 +185,14 @@ static func _evaluate(terrain: VillageTerrainView,
 		if not water_proved_dry and terrain.may_be_wet(point):
 			return null
 	var bounds := _bounds(anchor, half_extents, right, forward)
-	var extrema := TerrainSurfaceField.height_bounds(region, bounds)
+	var extrema := TerrainTileField.height_bounds(region, bounds)
 	var relief := extrema.y - extrema.x
 	if relief > MAX_RETAINED_RELIEF + 0.001:
 		return null
 	var floor_y := extrema.y + FLOOR_GUARD
 	var supported := 0
 	for point: Vector2 in samples:
-		if floor_y - TerrainSurfaceField.surface_y(region,
+		if floor_y - TerrainTileField.surface_y(region,
 				point.x, point.y) <= SUPPORT_CONTACT_EPS + FLOOR_GUARD:
 			supported += 1
 	var support_ratio := float(supported) / float(samples.size())
@@ -336,7 +336,7 @@ static func _exposed_edges(region: HeightfieldRegion, anchor: Vector2,
 	for index in directions.size():
 		var point := anchor + directions[index] \
 			* (reaches[index] + EXPOSURE_PROBE_DISTANCE)
-		if floor_y - TerrainSurfaceField.surface_y(region,
+		if floor_y - TerrainTileField.surface_y(region,
 				point.x, point.y) >= CLIFF_EXPOSURE_DROP:
 			mask |= 1 << index
 	return mask

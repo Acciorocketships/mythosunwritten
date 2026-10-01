@@ -17,7 +17,7 @@ func test_one_new_cell_does_not_discard_the_whole_warm_height_field()->void:
 	assert_eq(plan.raw_height(hot.x,hot.y),7.0,"changing the field invalidates the cache normally")
 
 class ExtremeCarve extends RefCounted:
-	func carve_at_cell(_x:int,_z:int)->float: return 10000000000000000.0
+	func carve_at(_x:float,_z:float)->float: return 10000000000000000.0
 
 func test_original_height_reuses_the_exact_input_before_carve_subtraction()->void:
 	var calls:Dictionary={"count":0}

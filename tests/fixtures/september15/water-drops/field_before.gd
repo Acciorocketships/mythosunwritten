@@ -159,7 +159,7 @@ static func _trace_owned_region(trace: RiverTrace, plan: HeightfieldPlan,
 	var required := Rect2i(first_cell,last_cell-first_cell+Vector2i.ONE)
 	if available != null and available.plan == plan and available.terrain_grades.is_empty() \
 			and available.native_control_heights.is_empty() \
-			and available.certified_cells.encloses(required):
+			and available.certified_points.encloses(required):
 		return available
 	var started := Time.get_ticks_usec() if profile_source_cost else 0
 	var region: HeightfieldRegion = plan.compute_rect_region(required)
@@ -598,10 +598,10 @@ static func _ground_at(region, base: Vector2, m1: int, gnd: PackedFloat32Array,
 		var p: Vector2 = base + Vector2(i, j) * step
 		if bakes != null and region.terrain_grades.is_empty():
 			var cell := Vector2i(roundi(p.x / TILE), roundi(p.y / TILE))
-			if not bakes.has(cell): bakes[cell] = TerrainSurfaceField.bake_cell(region, cell.x, cell.y)
-			g = TerrainSurfaceField.sample_baked(bakes[cell], cell.x, cell.y, p.x, p.y)
+			if not bakes.has(cell): bakes[cell] = TerrainTileField.bake_point(region, Vector2i(cell.x, cell.y))
+			g = TerrainTileField.sample_baked(bakes[cell], Vector2i(cell.x, cell.y), p.x, p.y)
 		else:
-			g = TerrainSurfaceField.surface_y(region, p.x, p.y)
+			g = TerrainTileField.surface_y(region, p.x, p.y)
 		gnd[idx] = g
 	return gnd[idx]
 
@@ -624,12 +624,12 @@ static func _sample_ground_lattice(region: HeightfieldRegion, base: Vector2,
 		if cz != previous_z:
 			cells.clear()
 			for cx in range(first_x, last_x + 1):
-				cells.append(TerrainSurfaceField.bake_cell(region, cx, cz))
+				cells.append(TerrainTileField.bake_point(region, Vector2i(cx, cz)))
 			previous_z = cz
 		for i in side:
 			var x := base.x + i * step
 			var cx := roundi(x / TILE)
-			out[j * side + i] = TerrainSurfaceField.sample_baked(cells[cx - first_x], cx, cz, x, z)
+			out[j * side + i] = TerrainTileField.sample_baked(cells[cx - first_x], Vector2i(cx, cz), x, z)
 	return out
 
 
@@ -1554,7 +1554,7 @@ static func _descend_segment(region, a: Vector2, b: Vector2, start_lvl: float, e
 	for k in range(1, steps + 1):
 		var t: float = float(k) / float(steps)
 		var p: Vector2 = a.lerp(b, t)
-		var ground: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
+		var ground: float = TerrainTileField.surface_y(region, p.x, p.y)
 		var smooth_t: float = lerpf(start_lvl, end_target, SlopeProfile.smootherstep(t))
 		var hug_t: float = ground + FILM
 		var w: float = SlopeProfile.smootherstep(clampf((hug_t - smooth_t) / _EASE_BAND, 0.0, 1.0))
@@ -1641,8 +1641,8 @@ static func _find_descent_spans(raw: PackedFloat32Array, arclen: PackedFloat32Ar
 ## competition re-quantizes the ramp right back into steps.
 static func _shape_descent_span(region, trace: RiverTrace, lo: int, hi: int,
 		anchor_start: float, anchor_end: float, arclen: PackedFloat32Array) -> Dictionary:
-	var ground_lo: float = TerrainSurfaceField.surface_y(region, trace.points[lo].x, trace.points[lo].y)
-	var ground_hi: float = TerrainSurfaceField.surface_y(region, trace.points[hi].x, trace.points[hi].y)
+	var ground_lo: float = TerrainTileField.surface_y(region, trace.points[lo].x, trace.points[lo].y)
+	var ground_hi: float = TerrainTileField.surface_y(region, trace.points[hi].x, trace.points[hi].y)
 	anchor_start = maxf(anchor_start, ground_lo + DESCENT_CLAMP)
 	anchor_end = maxf(anchor_end, ground_hi + DESCENT_CLAMP)
 	var span_len: float = arclen[hi] - arclen[lo]
@@ -1708,7 +1708,7 @@ static func _dense_span_curve(region, trace: RiverTrace, lo: int, hi: int,
 	var ground := PackedFloat32Array()
 	ground.resize(steps + 1)
 	for k in range(steps + 1):
-		ground[k] = TerrainSurfaceField.surface_y(region, pos[k].x, pos[k].y)
+		ground[k] = TerrainTileField.surface_y(region, pos[k].x, pos[k].y)
 	var knots: Array = _find_descent_knots(ground, steps, anchor_start, anchor_end)
 	var dense: PackedFloat32Array = _eval_descent_knots(knots, steps)
 	dense[0] = anchor_start
@@ -2110,10 +2110,10 @@ static func _fill_bilinear_coarse(c: Dictionary, p: Vector2,
 			if c.has("dry_ground"):
 				var memo: PackedFloat64Array = c.dry_ground
 				var index: int = cnr[1] * m1 + cnr[0]
-				if memo[index] == INF: memo[index] = TerrainSurfaceField.surface_y(c.region, q.x, q.y)
+				if memo[index] == INF: memo[index] = TerrainTileField.surface_y(c.region, q.x, q.y)
 				ground = memo[index]
 			else:
-				ground = TerrainSurfaceField.surface_y(c.region, q.x, q.y)
+				ground = TerrainTileField.surface_y(c.region, q.x, q.y)
 			dry_heights[k] = ground
 			lvl = minf(wet_ref, ground + EPS - SHORE_DRY_DEPTH)
 		acc += lvl * cnr[2]
@@ -2153,7 +2153,7 @@ static func _fill_bilinear_sub(c: Dictionary, p: Vector2, i0: int, j0: int,
 		var q: Vector2 = base + Vector2(cnr[0], cnr[1]) * FILL_SUB_STEP
 		var ground: float = sub_ground[idx]
 		if ground == INF:
-			ground = TerrainSurfaceField.surface_y(c.region, q.x, q.y)
+			ground = TerrainTileField.surface_y(c.region, q.x, q.y)
 		var lvl: float = sub_levels[idx]
 		if lvl == -INF:
 			lvl = _fill_bilinear_coarse(c, q)
@@ -2202,7 +2202,7 @@ static func _shore_support_level(c: Dictionary, p: Vector2, interpolated: float,
 		var q := a.lerp(b, t)
 		var limiting_head := lerpf(minf(head, dry_heights[edge.x] + EPS - SHORE_DRY_DEPTH),
 			minf(head, dry_heights[edge.y] + EPS - SHORE_DRY_DEPTH), t)
-		var edge_ground := TerrainSurfaceField.surface_y(c.region, q.x, q.y)
+		var edge_ground := TerrainTileField.surface_y(c.region, q.x, q.y)
 		var edge_support := _fine_edge_support(c, q, edge_ground + EPS - SHORE_DRY_DEPTH)
 		var excess := maxf(limiting_head - edge_support, 0.0)
 		var support := clampf(p.distance_to(q) / step, 0.0, 1.0)
@@ -2283,7 +2283,7 @@ static func _sample_level(tr: RiverTrace, si: int, p: Vector2, region = null) ->
 ## would otherwise have reached.
 static func wet(c: Dictionary, region, p: Vector2) -> bool:
 	var lvl: float = level_at(c, p)
-	return lvl > -INF and lvl > TerrainSurfaceField.surface_y(region, p.x, p.y) + EPS
+	return lvl > -INF and lvl > TerrainTileField.surface_y(region, p.x, p.y) + EPS
 
 
 ## Nearest-claimant helper shared by flow/grade: returns
@@ -2475,7 +2475,7 @@ static func _channel_ground_walk(tr: RiverTrace, region, step: float, clip_rect 
 			# nothing steep_spans could ever report for this trace/chunk.
 			return {"grounds": grounds, "pos": pos, "seg_of": seg_of}
 	for i in range(lo_idx, hi_idx + 1):
-		grounds.append(TerrainSurfaceField.surface_y(region, all_pos[i].x, all_pos[i].y))
+		grounds.append(TerrainTileField.surface_y(region, all_pos[i].x, all_pos[i].y))
 		pos.append(all_pos[i])
 		seg_of.append(all_seg_of[i])
 	return {"grounds": grounds, "pos": pos, "seg_of": seg_of}

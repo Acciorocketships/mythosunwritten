@@ -11,5 +11,5 @@ func _run()->void:
 	for z in range(-1746,-1724,3):
 		for x in range(678,700,3):
 			var p:=Vector2(x,z);var sub:=Vector2i(((p-fill.base)/3).round());var idx:int=sub.y*sub_n+sub.x
-			rows.append({"p":str(p),"ground":TerrainSurfaceField.surface_y(ctx.region,p.x,p.y),"level":str(WaterField.level_at(ctx,p)),"coarse":str(WaterField._fill_bilinear_coarse(ctx,p)),"sub":str(fill.sub_levels[idx]),"sub_ground":str(fill.sub_ground[idx])})
+			rows.append({"p":str(p),"ground":TerrainTileField.surface_y(ctx.region,p.x,p.y),"level":str(WaterField.level_at(ctx,p)),"coarse":str(WaterField._fill_bilinear_coarse(ctx,p)),"sub":str(fill.sub_levels[idx]),"sub_ground":str(fill.sub_ground[idx])})
 	FileAccess.open(OS.get_cmdline_user_args()[0],FileAccess.WRITE).store_string(JSON.stringify(rows,"  "));quit()

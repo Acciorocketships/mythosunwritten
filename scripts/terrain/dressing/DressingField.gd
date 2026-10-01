@@ -269,7 +269,7 @@ static func _qualify(set_data: Dictionary, anchor: Vector2,
 		return {} if is_nan(level) else {"y": level}
 	var heights := PackedFloat32Array()
 	for point: Vector2 in points:
-		heights.append(TerrainSurfaceField.surface_y(region, point.x, point.y))
+		heights.append(TerrainTileField.surface_y(region, point.x, point.y))
 	var min_height: float = heights[0]
 	var max_height: float = heights[0]
 	for height: float in heights:
@@ -288,10 +288,10 @@ static func _qualify(set_data: Dictionary, anchor: Vector2,
 			return {}
 	else:
 		var step: float = DressingCompiler.SURFACE_STENCIL
-		var hx: float = TerrainSurfaceField.surface_y(region, anchor.x + step, anchor.y) \
-			- TerrainSurfaceField.surface_y(region, anchor.x - step, anchor.y)
-		var hz: float = TerrainSurfaceField.surface_y(region, anchor.x, anchor.y + step) \
-			- TerrainSurfaceField.surface_y(region, anchor.x, anchor.y - step)
+		var hx: float = TerrainTileField.surface_y(region, anchor.x + step, anchor.y) \
+			- TerrainTileField.surface_y(region, anchor.x - step, anchor.y)
+		var hz: float = TerrainTileField.surface_y(region, anchor.x, anchor.y + step) \
+			- TerrainTileField.surface_y(region, anchor.x, anchor.y - step)
 		if Vector2(hx, hz).length() / (2.0 * step) > set_data.max_grade:
 			return {}
 	var relief_radius: float = set_data.get("relief_radius",0.0)
@@ -299,7 +299,7 @@ static func _qualify(set_data: Dictionary, anchor: Vector2,
 		var rise := 0.0
 		for index in 16:
 			var point := anchor+Vector2.RIGHT.rotated(index*TAU/16.0)*relief_radius
-			rise=maxf(rise,TerrainSurfaceField.surface_y(region,point.x,point.y)-heights[0])
+			rise=maxf(rise,TerrainTileField.surface_y(region,point.x,point.y)-heights[0])
 		var relief: Vector2 = set_data.relief_range
 		if rise < relief.x or rise > relief.y: return {}
 	var embed: float = set_data.get("embed_fraction", 0.0)

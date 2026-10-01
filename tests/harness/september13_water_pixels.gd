@@ -47,7 +47,7 @@ func _run()->void:
 			for q:Vector3 in [record.hit]+record.triangle:
 				var p:=Vector2(q.x,q.z)
 				var field:=fields.water_at(p)
-				record.samples.append({"point":str(q),"ground":TerrainSurfaceField.surface_y(field._region,p.x,p.y),"raw_water":str(WaterField.level_at(field._ctx,p)),"wet_water":str(field.level_at(p))})
+				record.samples.append({"point":str(q),"ground":TerrainTileField.surface_y(field._region,p.x,p.y),"raw_water":str(WaterField.level_at(field._ctx,p)),"wet_water":str(field.level_at(p))})
 		print("WATER_PIXEL ",JSON.stringify(record))
 		rows.append(record)
 	FileAccess.open(folder+"/pixels.json",FileAccess.WRITE).store_string(JSON.stringify(rows,"  "))

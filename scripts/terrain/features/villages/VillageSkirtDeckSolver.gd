@@ -100,7 +100,7 @@ static func _inside_core(cell: VillageModuleCell, core: Dictionary) -> bool:
 static func _ground_bounds(terrain: VillageTerrainView,
 		cell: VillageModuleCell) -> Vector2:
 	var shape := cell.shape()
-	return TerrainSurfaceField.height_bounds(
+	return TerrainTileField.height_bounds(
 		terrain.region_covering(shape.bounds()), shape.bounds())
 
 
