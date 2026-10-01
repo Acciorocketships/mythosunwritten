@@ -13,7 +13,11 @@ func test_water_tag_cannot_turn_an_ordinary_slope_into_a_wall() -> void:
 		for x in range(-3,4): heights[Vector2i(x,z)] = 1 if x <= 0 else 0
 	var plain := HeightfieldRegion.new(heights,{})
 	var bank := HeightfieldRegion.new(heights,{}, {Vector2i(1,0):true})
-	assert_false(TerrainSurfaceField._is_cliff_top(bank,0,0))
+	# The retired cell kernel's _is_cliff_top was "any wall edge"; on 12 m
+	# points the same fact is the four cardinal wall-edge tests.
+	for d: Vector2i in [Vector2i.RIGHT,Vector2i.LEFT,Vector2i.UP,Vector2i.DOWN]:
+		assert_false(TerrainTileField.is_wall_edge(bank,Vector2i.ZERO,d),
+			"the carved bank tag cannot turn the one-storey edge %s into a wall" % d)
 	for x in range(0,25):
 		assert_almost_eq(TerrainSurfaceField.surface_y(bank,x,0),
 			TerrainSurfaceField.surface_y(plain,x,0),0.000001,

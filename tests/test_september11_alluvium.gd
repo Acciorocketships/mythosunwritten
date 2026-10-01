@@ -46,5 +46,6 @@ func test_alluvial_bars_have_low_broad_crests_instead_of_retained_high_bank_pill
 	for bar:Dictionary in water.trace.land_bars:
 		var center:Vector2=bar.center
 		assert_gte(float(bar.half_width),36.0,"A bar spans several terrain samples across its width")
-		var cell:=Vector2i((center/24).round())
-		assert_lte(plan.raw_height(cell.x,cell.y),8.0,"Deposition must not retain a tall bank pillar")
+		# raw_height is keyed by 12 m terrain points (HeightfieldPlan.POINT).
+		var point:=Vector2i((center/HeightfieldPlan.POINT).round())
+		assert_lte(plan.raw_height(point.x,point.y),8.0,"Deposition must not retain a tall bank pillar")

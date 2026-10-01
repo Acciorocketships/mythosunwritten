@@ -7,7 +7,8 @@ func test_a_river_and_its_receiving_lake_share_the_reserved_island() -> void:
 	water.trace.pond.island_offset=Vector2(0,72)
 	var center:=water.trace.pond.center+water.trace.pond.island_offset
 	var plan:=water.heightfield()
-	var cell:=Vector2i((center/24).round())
+	# raw_height is keyed by 12 m terrain points (HeightfieldPlan.POINT).
+	var cell:=Vector2i((center/HeightfieldPlan.POINT).round())
 	assert_gte(plan.raw_height(cell.x,cell.y),4.0,"A broad river cannot excavate its own lake's reserved dry land")
 	var fields:=WorldFieldBlockCache.new(plan,water,26,0)
 	assert_false(fields.water_at(center).is_wet(center),"The reserved lake island must remain physically dry")
