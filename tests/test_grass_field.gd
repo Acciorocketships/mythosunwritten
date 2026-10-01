@@ -368,6 +368,21 @@ func test_a_low_side_wall_only_affects_the_taper_minimum() -> void:
 	var scale := GrassField._cliff_scale(region, Vector2(8.0, 0.0), 1.4)
 	assert_almost_eq(scale, 1.0, 0.0001, "the foot never shrinks")
 
+func test_a_nearer_low_side_wall_does_not_cancel_the_high_side_taper() -> void:
+	# Stepped terrace corner: point (0,0) (storey 2) is the LOW owner of its
+	# x = 6 wall (east neighbour storey 4) and the HIGH owner of its z = 6 wall
+	# (north neighbour default storey 0). (-1,0) and (0,-1) match it so no
+	# other wall is near. The anchor is 1 m from the low wall and 2 m from the
+	# high lip: the lip still tapers by its own distance.
+	var region := HeightfieldRegion.new({Vector2i.ZERO: 2, Vector2i(1, 0): 4,
+		Vector2i(-1, 0): 2, Vector2i(0, -1): 2, Vector2i(1, -1): 4}, {})
+	var radius := 0.5
+	var scale := GrassField._cliff_scale(region, Vector2(5.0, 4.0), radius)
+	var expected := lerpf(GrassField.CLIFF_EDGE_MIN_SCALE, 1.0,
+		smoothstep(0.0, GrassField.CLIFF_TAPER_DISTANCE, 2.0 - radius))
+	assert_almost_eq(scale, expected, 0.0001,
+		"the high lip 2 m away tapers even though the foot wall is nearer")
+
 func test_gradient_is_one_sided_when_its_stencil_crosses_a_wall() -> void:
 	var region := HeightfieldRegion.new({Vector2i.ZERO: 3}, {})
 	var surface_cache: Dictionary = {}

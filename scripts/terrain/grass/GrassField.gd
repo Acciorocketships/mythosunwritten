@@ -401,18 +401,17 @@ static func _footprint_overlaps_feature_surface(features: FeatureContext,
 static func _cliff_scale(region: HeightfieldRegion,
 		anchor: Vector2, footprint_radius: float,
 		edge_cache: Dictionary = {}) -> float:
+	# Only the high side (the exposed upper lip) tapers and needs containment;
+	# the foot meets an opaque rock face, so a nearer low-side wall never
+	# cancels the taper toward a high lip a few metres away (stepped terraces).
 	var walls := _owner_walls(region, anchor, edge_cache)
 	var high_edge_distance := _wall_distance(walls.high, anchor)
-	var low_edge_distance := _wall_distance(walls.low, anchor)
-	var edge_distance := minf(high_edge_distance, low_edge_distance)
-	if is_inf(edge_distance):
+	if is_inf(high_edge_distance):
 		return 1.0
-	var footprint_clearance := maxf(0.0, edge_distance - footprint_radius)
-	var minimum_scale := CLIFF_EDGE_MIN_SCALE if \
-		high_edge_distance <= low_edge_distance else 1.0
-	var taper_scale := lerpf(minimum_scale, 1.0,
+	var footprint_clearance := maxf(0.0, high_edge_distance - footprint_radius)
+	var taper_scale := lerpf(CLIFF_EDGE_MIN_SCALE, 1.0,
 		smoothstep(0.0, CLIFF_TAPER_DISTANCE, footprint_clearance))
-	var contained_scale := 1.0 if is_inf(high_edge_distance) else clampf(
+	var contained_scale := clampf(
 		(high_edge_distance - CLIFF_FOOTPRINT_MARGIN) / footprint_radius, 0.0, 1.0)
 	return minf(taper_scale, contained_scale)
 
