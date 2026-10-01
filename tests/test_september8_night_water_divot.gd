@@ -14,7 +14,7 @@ func test_connected_rescue_pocket_inherits_water_head_not_shoreline_taper() -> v
 	levels.resize(n*n);levels.fill(-INF)
 	for j in n:
 		for i in range(16,n):
-			if TerrainSurfaceField.surface_y(region,i*WaterField.FILL_STEP,j*WaterField.FILL_STEP)<4.65:
+			if TerrainTileField.surface_y(region,i*WaterField.FILL_STEP,j*WaterField.FILL_STEP)<4.65:
 				levels[j*n+i]=4.7
 	var rescue := WaterField._build_sub_lattice_rescue(region,Vector2.ZERO,levels)
 	var ctx := {"fill_base":Vector2.ZERO,"region":region,"fill":{"levels":levels,"sub_levels":rescue.levels,"sub_ground":rescue.ground}}

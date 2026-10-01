@@ -27,7 +27,7 @@ func test_flat_legal_threshold_needs_no_decorative_foundation_ring() -> void:
 		for x_index in 25:
 			var point := Vector2(-3.0 + 6.0 * float(x_index) / 24.0,
 				-3.0 + 6.0 * float(z_index) / 24.0)
-			assert_lt(TerrainSurfaceField.surface_y(region, point.x, point.y),
+			assert_lt(TerrainTileField.surface_y(region, point.x, point.y),
 				float(plan.floor_y))
 	assert_true(plan.foundation_pieces.is_empty(),
 		"a legal natural threshold must not expose a mostly-buried wall outline")

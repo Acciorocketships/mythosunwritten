@@ -245,7 +245,7 @@ func _build_ground(plan: SettlementFabricPlan,
 
 static func _support_heightfield(plan: SettlementFabricPlan) -> Dictionary:
 	var heights: Dictionary = {}
-	# This fixture has no live TerrainSurfaceField. Terrain-street claims are the
+	# This fixture has no live TerrainTileField. Terrain-street claims are the
 	# frozen surrogate for surveyed natural perches, so render their ground mass
 	# all the way down instead of showing a tan sheet floating like a platform.
 	# Structural courts and bridges remain timber and are never included here.
@@ -267,7 +267,7 @@ static func _support_heightfield(plan: SettlementFabricPlan) -> Dictionary:
 	# harness did that to make high houses look naturally perched; screenshots
 	# then appeared healthier while proving a landform the planner had never
 	# surveyed. Runtime acceptance must qualify these contacts against the real
-	# immutable TerrainSurfaceField (or replace them with an explicit retained
+	# immutable TerrainTileField (or replace them with an explicit retained
 	# support). The deliberately literal fixture makes any missing terrain
 	# integration visible instead of concealing it with a post-plan ziggurat.
 	return heights

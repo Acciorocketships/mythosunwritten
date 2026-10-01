@@ -65,7 +65,7 @@ func test_structural_terrain_uses_the_world_slope_kernel_at_its_own_scale() -> v
 	assert_almost_eq(shared_edge_max, 2.25, 0.0001)
 	assert_almost_eq(shared_edge_min, TerrainTileField.surface_y(region, 0.75, 0.0), 0.0001,
 		"the village sheet is the world kernel at its own lattice scale")
-	assert_false(TerrainSurfaceField.is_exposed_edge(region, 0, 0,
+	assert_false(TerrainTileField.is_exposed_edge(region, Vector2i(0, 0),
 		Vector2i.RIGHT), "a one-band transition is a slope, not a lipped cliff")
 	var indices := payload.indices as PackedInt32Array
 	var front_a := vertices[indices[0]]

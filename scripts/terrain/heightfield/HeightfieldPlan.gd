@@ -285,10 +285,11 @@ func storey_at(cx: int, cz: int) -> int:
 
 
 ## Whether the 1m sub-storey LEVEL terraces contribute to the rendered surface. ON (owner,
-## 2026-07-16): level steps render through the SAME half-cell smootherstep ramp as the 4m storey
-## slopes (TerrainSurfaceField._edge_weight), at one quarter of the storey height. No
-## KayKit dressing is involved: walls/lips/skirts key off storey_at/is_flat_cell, and level_at
-## pins to 0 near storey boundaries, so levels only ever read as short procedural slopes.
+## 2026-07-16): a level step between two points is a LEVEL edge of the tile kernel and renders
+## through the SAME smootherstep slope profile as a one-storey edge (TerrainTileField), at one
+## quarter of the storey height. Walls key off storey_at alone (a cliff edge differs by two or
+## more storeys), and level_at pins to 0 near storey boundaries, so levels only ever read as
+## short procedural slopes.
 const RENDER_LEVELS: bool = true
 
 ## Rendered surface height (metres): storey tier (4m steps), plus the level tier (1m) only when

@@ -18,7 +18,7 @@ func test_atmosphere_is_resource_free_deterministic_and_grounded() -> void:
 	for recipe: StringName in a.points:
 		for point: Vector3 in a.points[recipe]:
 			var world: Vector3 = point + a.origin
-			assert_almost_eq(world.y, TerrainSurfaceField.surface_y(region, world.x, world.z) + 2.5, 0.0001)
+			assert_almost_eq(world.y, TerrainTileField.surface_y(region, world.x, world.z) + 2.5, 0.0001)
 			assert_between(point.x, 0.0, 192.0)
 			assert_between(point.z, 0.0, 192.0)
 	assert_lte(a.orbs.size(), 4, "bounded moving lights per chunk")

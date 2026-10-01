@@ -11,8 +11,8 @@ func _init() -> void:
 			for fine: Vector2i in grade._claims:
 				heights[grade._claims[fine]]=true
 				var point := grade._origin+Vector2(fine)*grade._targets.pitch
-				var before := TerrainSurfaceField.surface_y(region,point.x,point.y)
-				var after := TerrainSurfaceField.surface_y(candidate,point.x,point.y)
+				var before := TerrainTileField.surface_y(region,point.x,point.y)
+				var after := TerrainTileField.surface_y(candidate,point.x,point.y)
 				if absf(after-before) > .15:
 					errors.append([point,before,after,grade._continuous_cells.has(fine)])
 			print("CLAIM_HEIGHTS ",heights.keys())
@@ -30,7 +30,7 @@ func _init() -> void:
 							claimed+=1
 				for dz: float in [-10.5,0,10.5]:
 					for dx: float in [-10.5,0,10.5]:
-						var h := TerrainSurfaceField.surface_y(region,center.x+dx,center.y+dz)
+						var h := TerrainTileField.surface_y(region,center.x+dx,center.y+dz)
 						minimum=minf(minimum,h);maximum=maxf(maximum,h)
 				print(Vector2i(x,z)," natural=",region.surface_height(x,z)," claims=",claimed," graded=",Vector2(minimum,maximum))
 	quit()

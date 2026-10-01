@@ -35,7 +35,7 @@ func _run() -> void:
 			for j in 193:
 				for i in 193:
 					var p := origin + Vector2(i, j)
-					var g := TerrainSurfaceField.surface_y(region, p.x, p.y)
+					var g := TerrainTileField.surface_y(region, p.x, p.y)
 					var level := WaterField.level_at(ctx, p)
 					ground.append(g)
 					wet.append(1 if is_finite(level) and level > g + WaterField.EPS else 0)
@@ -72,7 +72,7 @@ func _measure(ctx: Dictionary, corner: Vector2) -> Vector3:
 			for column in 601:
 				var p := corner + (Vector2(column * .01, row * .1) if axis == 0 \
 					else Vector2(row * .1, column * .01))
-				var ground := TerrainSurfaceField.surface_y(ctx.region, p.x, p.y)
+				var ground := TerrainTileField.surface_y(ctx.region, p.x, p.y)
 				var level := WaterField.level_at(ctx, p)
 				var wet := is_finite(level) and level > ground + WaterField.EPS
 				if not previous.is_empty() and absf(previous.ground - ground) < .001:

@@ -89,7 +89,7 @@ static func make(pose:Transform3D,height:float,seed_value:int,region:Heightfield
   roots[position]=[native[1],smoothstep(.08,1.8,depth-float(native[0]))]
   if region!=null and p.y<=minimum+.001:
    var world:Vector3=pose*position
-   floor_y=minf(floor_y,TerrainSurfaceField.surface_y(region,world.x,world.z)-pose.origin.y-.2)
+   floor_y=minf(floor_y,TerrainTileField.surface_y(region,world.x,world.z)-pose.origin.y-.2)
  if floor_y<minimum:
   for p:Vector3 in mapping.keys():
    if p.y>minimum+.001:continue

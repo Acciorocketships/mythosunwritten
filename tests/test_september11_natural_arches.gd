@@ -42,7 +42,7 @@ func test_arch_tops_undersides_and_complete_bearings_are_physical() -> void:
 		assert_true(physics.intersect_ray(PhysicsRayQueryParameters3D.create(from,from+Vector3(0,0,20))).is_empty(),"The low passage remains open beneath the arch")
 		for sign_value: float in [-1,1]:
 			var end := p+Vector3(record.axis.x,0,record.axis.y)*sign_value*18
-			assert_almost_eq(TerrainSurfaceField.surface_y(region,end.x,end.z),record.top,.15)
+			assert_almost_eq(TerrainTileField.surface_y(region,end.x,end.z),record.top,.15)
 		count+=1
 	assert_gt(count,0)
 	assert_eq(data.structure_clearance.size(),count,"Vegetation receives the complete overhead footprint")

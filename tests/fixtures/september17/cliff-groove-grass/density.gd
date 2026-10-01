@@ -23,7 +23,7 @@ func _roots(f:Dictionary,seed_value:int=99)->Array[Vector3]:
    for i in batch.count:
     var k:int=i*GrassPayload.FLOATS_PER_INSTANCE
     var p:=Vector3(batch.buffer[k+3],batch.buffer[k+7],batch.buffer[k+11])
-    if p.y>TerrainSurfaceField.surface_y(f.region,p.x,p.z)+.5:roots.append(p)
+    if p.y>TerrainTileField.surface_y(f.region,p.x,p.z)+.5:roots.append(p)
  return roots
 func test_paired_grass_density()->void:
  ROCKS=load("res://scripts/terrain/field/CliffRockDressing.gd")

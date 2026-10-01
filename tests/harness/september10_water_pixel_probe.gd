@@ -26,7 +26,7 @@ func _run()->void:
 				if hit==null or camera.position.distance_to(hit)>=best:continue
 				best=camera.position.distance_to(hit)
 				found={"photo":spec[0],"pixel":str(pixel),"point":str(hit),"triangle":[str(a),str(b),str(c)],"samples":[]}
-				for p:Vector3 in [hit,a,b,c]:found.samples.append({"point":str(p),"ground":TerrainSurfaceField.surface_y(ctx.region,p.x,p.z),"water":str(WaterField.level_at(ctx,Vector2(p.x,p.z)))})
+				for p:Vector3 in [hit,a,b,c]:found.samples.append({"point":str(p),"ground":TerrainTileField.surface_y(ctx.region,p.x,p.z),"water":str(WaterField.level_at(ctx,Vector2(p.x,p.z)))})
 			result.append(found)
 			print("WATER_PIXEL ",JSON.stringify(found))
 	FileAccess.open(OS.get_cmdline_user_args()[0],FileAccess.WRITE).store_string(JSON.stringify(result,"  "))

@@ -27,11 +27,11 @@ func test_retained_islands_and_both_branches_use_actual_ground_and_water() -> vo
 	for bar: Dictionary in water.trace.land_bars:
 		var center: Vector2=bar.center
 		var region:=fields.region_at(center)
-		assert_almost_eq(TerrainSurfaceField.surface_y(region,center.x,center.y),8.0,.01)
+		assert_almost_eq(TerrainTileField.surface_y(region,center.x,center.y),8.0,.01)
 		assert_false(fields.water_at(center).is_wet(center),"Retained ground is a physical island")
 		for point: Vector2 in [Vector2(center.x,1008),Vector2(center.x,1008+(108 if center.y>1008 else -108))]:
 			assert_true(fields.water_at(point).is_wet(point),"Both sides of the island carry connected water")
-			assert_gt(fields.water_at(point).level_at(point)-TerrainSurfaceField.surface_y(fields.region_at(point),point.x,point.y),.2)
+			assert_gt(fields.water_at(point).level_at(point)-TerrainTileField.surface_y(fields.region_at(point),point.x,point.y),.2)
 
 func test_wide_reach_claims_cover_outer_branches_without_a_ground_context() -> void:
 	var water := preload("res://tests/fixtures/september11/landforms/AlluvialFixture.gd").new()

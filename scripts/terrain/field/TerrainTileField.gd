@@ -25,6 +25,8 @@ extends RefCounted
 
 const SPACING := 12.0
 const STOREY := 4.0
+## A neighbour surface this far below a point's flat top exposes the border.
+const EXPOSE_EPS := 0.25
 
 enum EdgeCategory { FLAT, LEVEL, SLOPE, CLIFF }
 ## E1: blend slope and cliff layers inside the tile (the wall shortens across
@@ -53,6 +55,12 @@ static func spacing(region = null) -> float:
 ## round-half-away), matching tile_y's rule that the u > 0.5 corner owns it.
 static func point_of(v: float, region = null) -> int:
 	return floori(v / spacing(region) + 0.5)
+
+
+## One physical transition profile for natural slopes and sealed ground edits:
+## a smootherstep over `width`, by default one whole tile (12 m).
+static func transition_weight(distance: float, width: float = SPACING) -> float:
+	return SlopeProfile.smootherstep(clampf(distance / width, 0.0, 1.0))
 
 
 # --- edges ------------------------------------------------------------------
@@ -377,6 +385,49 @@ static func _tile_has_cliff(region, tile: Vector2i, storeys: Dictionary, cliff_t
 		or absi(c[3] - c[2]) >= 2 or absi(c[0] - c[3]) >= 2
 	cliff_tiles[tile] = cliff
 	return cliff
+
+
+# --- dual-cell border profiles (village turf rims) --------------------------------
+
+## The NEIGHBOUR's surface sampled along the shared border of point `p` toward
+## `d`: samples+1 heights ordered along pdir = (d.y, d.x) from the -pdir end to
+## the +pdir end (the same along-edge axis the mesher grid uses).
+static func edge_profile(region, p: Vector2i, d: Vector2i, samples: int) -> PackedFloat32Array:
+	return _border_profile(region, p, d, samples, p + d)
+
+
+## The point's OWN surface along the same border (same ordering as edge_profile).
+## Where the two differ the border is a wall: the face spans from this profile
+## down to the neighbour's.
+static func own_edge_profile(region, p: Vector2i, d: Vector2i, samples: int) -> PackedFloat32Array:
+	return _border_profile(region, p, d, samples, p)
+
+
+static func _border_profile(region, p: Vector2i, d: Vector2i, samples: int,
+		owner: Vector2i) -> PackedFloat32Array:
+	var span := spacing(region)
+	var half := span * 0.5
+	var bx := float(p.x) * span + float(d.x) * half
+	var bz := float(p.y) * span + float(d.y) * half
+	var out := PackedFloat32Array()
+	for i in samples + 1:
+		var t := (float(i) / float(samples)) * 2.0 - 1.0
+		out.append(surface_y_on_side(region, bx + float(d.y) * half * t, bz + float(d.x) * half * t, owner))
+	return out
+
+
+## The border of point `p` toward `d` is EXPOSED: its own surface is flat at the
+## point's height along the whole border while the neighbour's falls at least
+## EXPOSE_EPS below it somewhere. The dressable subset of the wall borders.
+static func is_exposed_edge(region, p: Vector2i, d: Vector2i) -> bool:
+	var h: float = region.surface_height(p.x, p.y)
+	for f in own_edge_profile(region, p, d, 8):
+		if f < h - 0.01:
+			return false
+	for f in edge_profile(region, p, d, 8):
+		if f < h - EXPOSE_EPS:
+			return true
+	return false
 
 
 # --- bounds ------------------------------------------------------------------------

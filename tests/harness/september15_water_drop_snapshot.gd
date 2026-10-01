@@ -8,11 +8,11 @@ func _init() -> void:
 		var row:=[]
 		for x in [-237,-234,-231,-228,-225,-222]:
 			var p:=Vector2(x,z)
-			row.append([x,TerrainSurfaceField.surface_y(region,p.x,p.y),WaterField.level_at(ctx,p)])
+			row.append([x,TerrainTileField.surface_y(region,p.x,p.y),WaterField.level_at(ctx,p)])
 		print(z," ",row)
 	for z in [-1434,-1431,-1428]:
 		var a:=Vector2(-231,z)
 		var p:=Vector2(-228,z)
 		var inside:=p-Vector2(.01,0)
-		print("APPROACH ",z," bounds=",TerrainSurfaceField.height_bounds(region,Rect2(a,inside-a).abs())," crown=",TerrainSurfaceField.surface_y(region,inside.x,inside.y)," foot=",TerrainSurfaceField.surface_y(region,p.x+.01,p.y))
+		print("APPROACH ",z," bounds=",TerrainTileField.height_bounds(region,Rect2(a,inside-a).abs())," crown=",TerrainTileField.surface_y(region,inside.x,inside.y)," foot=",TerrainTileField.surface_y(region,p.x+.01,p.y))
 	quit()

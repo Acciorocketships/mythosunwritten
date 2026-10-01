@@ -94,7 +94,7 @@ func test_foundation_courses_cannot_float_below_upper_rooms() -> void:
 		var transform := entry.transform as Transform3D
 		var bounds := transform * _catalog.descriptor(entry.asset_id).measured_aabb
 		var centre := Vector2(bounds.get_center().x, bounds.get_center().z)
-		var natural := TerrainSurfaceField.surface_y(_fields.region_at(centre),
+		var natural := TerrainTileField.surface_y(_fields.region_at(centre),
 			centre.x, centre.y)
 		if bounds.position.y > grade.surface_y(centre, natural) + 0.2:
 			suspended.append(String(entry.stable_id))

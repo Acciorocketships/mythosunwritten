@@ -15,7 +15,7 @@ func _run()->void:
 			var p:Vector2=point+spec[1]*k*.5
 			var q:=Vector2i(((p-source.base)/6.0).round())
 			var idx:int=q.y*int(source.size)+q.x
-			result.samples.append({"p":str(p),"ground":TerrainSurfaceField.surface_y(ctx.region,p.x,p.y),"level":str(WaterField.level_at(ctx,p)),"coarse":str(WaterField._fill_bilinear_coarse(ctx,p)),"untapered":str(WaterField._fill_untapered_level(ctx,p)),"channel":str(WaterField._channel_membership_level(ctx,p)),"nearest_lattice":str(source.base+Vector2(q)*6),"anchor":str(source.rivers[idx]),"source_level":str(source.levels[idx])})
+			result.samples.append({"p":str(p),"ground":TerrainTileField.surface_y(ctx.region,p.x,p.y),"level":str(WaterField.level_at(ctx,p)),"coarse":str(WaterField._fill_bilinear_coarse(ctx,p)),"untapered":str(WaterField._fill_untapered_level(ctx,p)),"channel":str(WaterField._channel_membership_level(ctx,p)),"nearest_lattice":str(source.base+Vector2(q)*6),"anchor":str(source.rivers[idx]),"source_level":str(source.levels[idx])})
 		for trace:RiverTrace in ctx.rivers:
 			var profile:=WaterField.profile(trace,ctx.region)
 			var near:=[]

@@ -111,7 +111,7 @@ func test_ambient_rocks_are_embedded_and_met_by_a_ground_skirt() -> void:
 		var height: float = EnvironmentCatalog.load_default().descriptor(rock.asset).measured_aabb.end.y
 		for local: Vector2 in program.ground_stencil_by_asset[rock.asset]:
 			var w := t * Vector3(local.x, 0.0, local.y)
-			assert_lte(w.y - TerrainSurfaceField.surface_y(region, w.x, w.z),
+			assert_lte(w.y - TerrainTileField.surface_y(region, w.x, w.z),
 				-0.22 * height * t.basis.y.length() + 0.0001,
 				"the whole visible base outline is sunk below the ground")
 	for skirt: Dictionary in payload.ground_skirts:

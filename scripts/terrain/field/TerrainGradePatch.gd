@@ -200,7 +200,7 @@ func _collar_height(local: Vector2, cell: Vector2i) -> float:
 		var height := _target_at(boundary,key)
 		if distance < 0.000001:
 			return height
-		var w := (1.0 - TerrainSurfaceField.transition_weight(distance,_collar_reach)) / (distance * distance)
+		var w := (1.0 - TerrainTileField.transition_weight(distance,_collar_reach)) / (distance * distance)
 		weighted += height * w
 		total += w
 	return weighted / total if total > 0.0 else _targets.fallback
@@ -270,7 +270,7 @@ func _collar_distance(local: Vector2) -> float:
 func _collar_weight(local: Vector2, cell: Vector2i) -> float:
 	if _claims.has(cell):
 		return 1.0
-	return 1.0-TerrainSurfaceField.transition_weight(_collar_distance(local))
+	return 1.0-TerrainTileField.transition_weight(_collar_distance(local))
 
 
 func _nearby(cell: Vector2i) -> Array:
@@ -304,8 +304,8 @@ func _weight_bounds(area: Rect2) -> Vector2:
 			# interval bounds the common profile over this complete rectangle.
 			var radius := part.size.length() * 0.5
 			var distance := _collar_distance(part.get_center())
-			interval.x=minf(interval.x,1.0-TerrainSurfaceField.transition_weight(distance+radius))
-			interval.y=maxf(interval.y,1.0-TerrainSurfaceField.transition_weight(distance-radius))
+			interval.x=minf(interval.x,1.0-TerrainTileField.transition_weight(distance+radius))
+			interval.y=maxf(interval.y,1.0-TerrainTileField.transition_weight(distance-radius))
 	return interval
 
 

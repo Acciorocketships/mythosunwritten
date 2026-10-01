@@ -45,7 +45,7 @@ static func make(pose:Transform3D,width:float,height:float,seed_value:int,left_e
    var furthest:=0.0
    for b:Dictionary in boulders:furthest=maxf(furthest,b.depth)
    var foot:Vector3=pose*Vector3(x,0,furthest)
-   floor_y=minf(floor_y,TerrainSurfaceField.surface_y(region,foot.x,foot.z)-pose.origin.y-.2)
+   floor_y=minf(floor_y,TerrainTileField.surface_y(region,foot.x,foot.z)-pose.origin.y-.2)
   var elevations:Array[float]=[height,floor_y]
   for row in range(1,rows):elevations.append(lerpf(height,floor_y,float(row)/rows))
   # Resolve the rounded crown instead of stretching a single triangle several

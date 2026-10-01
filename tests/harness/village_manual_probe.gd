@@ -59,7 +59,7 @@ func _init() -> void:
 	for z in range(305, 326):
 		for x in range(310, 331):
 			var p := Vector2(x,z)
-			var natural := TerrainSurfaceField.surface_y(fields.region_at(p), x, z)
+			var natural := TerrainTileField.surface_y(fields.region_at(p), x, z)
 			report.grade_samples.append([x,z,natural,grade.surface_y(p,natural)])
 	var spatial := record.urban_fabric.volumetric_spatial
 	report["room_bearings"] = []

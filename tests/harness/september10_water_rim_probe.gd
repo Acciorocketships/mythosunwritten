@@ -19,8 +19,8 @@ func _run()->void:
 				var n:Vector2=curve.normals[i]
 				var level:float=curve.levels[i]
 				var outer:=p+n*WaterSkin.RIM_ROW5_REACH
-				var ground:=TerrainSurfaceField.surface_y(ctx.region,p.x,p.y)
-				var outer_ground:=TerrainSurfaceField.surface_y(ctx.region,outer.x,outer.y)
+				var ground:=TerrainTileField.surface_y(ctx.region,p.x,p.y)
+				var outer_ground:=TerrainTileField.surface_y(ctx.region,outer.x,outer.y)
 				result.append({"point":[p.x,p.y],"normal":[n.x,n.y],"level":level,"ground":ground,"outer_ground":outer_ground,"wall":int(contacts.flags[i]),"outer_level":str(WaterField.level_at(ctx,outer)),"wet_reach":reaches[i],"shelf_field":str(WaterField.level_at(ctx,p+n*reaches[i])),"open_gap":level-WaterSkin.RIM_ROW5_DROP-outer_ground})
 		print("WATER_RIM_PROBE ",chunk)
 	FileAccess.open(OS.get_cmdline_user_args()[0],FileAccess.WRITE).store_string(JSON.stringify(result,"  "))

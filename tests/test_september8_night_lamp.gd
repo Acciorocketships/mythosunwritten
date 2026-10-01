@@ -20,7 +20,7 @@ func test_photographed_lamp_base_meets_final_town_ground() -> void:
 		var final_index: int = final_batch.ids.find(raw_batch.ids[index])
 		assert_gte(final_index,0,"grading preserves the lamp identity")
 		var seated: Transform3D = final_batch.transforms[final_index]
-		var surface := TerrainSurfaceField.surface_y(context.graded_region(fields.region_at(anchor)),anchor.x,anchor.y)
+		var surface := TerrainTileField.surface_y(context.graded_region(fields.region_at(anchor)),anchor.x,anchor.y)
 		print("LAMP_GROUND ",original.origin," final=",seated.origin," surface=",surface)
 		assert_almost_eq(seated.origin.y,surface,0.01,"lamp base must meet final graded terrain")
 		assert_eq(seated.basis,original.basis,"authored size and orientation are preserved")

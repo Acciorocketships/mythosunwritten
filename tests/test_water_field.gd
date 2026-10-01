@@ -399,7 +399,7 @@ func test_level_at_known_water_and_dry_land() -> void:
 	# The mid pool at the owner's site: cell (2,-46) centre, water level ~5.
 	# NOTE: brief's literal (60.0, -1092.0) is the CORNER shared by cells
 	# (2,-46)/(3,-46)/(2,-45)/(3,-45), not the cell's centre (2*24, -46*24) —
-	# it lands exactly on TerrainSurfaceField's round-half-up cell boundary,
+	# it lands exactly on the retired 24 m kernel's round-half-up cell boundary,
 	# resolving to (3,-46), the one dry corner of the four (confirmed: cells
 	# (2,-46) and (2,-45) are carved/wet, (3,-46) and (3,-45) are dry banks).
 	# Corrected to the actual cell (2,-46) centre the comment names.
@@ -492,7 +492,7 @@ func test_reported_site_continuous_bathymetry_has_no_false_fall_span() -> void:
 ## HeightfieldRegion (HeightfieldRegion.gd's own {storeys, levels, carved}
 ## dictionary constructor — practical to build directly, no world plan
 ## needed) carrying a genuine 12m vertical cliff (storey 3 -> storey 0,
-## TerrainSurfaceField's own _is_cliff_top logic renders that as a real
+## the tile kernel (TerrainTileField) renders that as a real
 ## sheer face, not a ramp, since the drop is >= 2 storeys), with a hand-built
 ## RiverTrace running straight down through it. This is the practical
 ## alternative the brief allows when a stub ground array alone would not

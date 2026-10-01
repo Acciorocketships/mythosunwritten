@@ -95,7 +95,7 @@ func test_photo16_water_enters_the_ledge_at_ground_height()->void:
 		var p:=FREE_SHORE_CORNER+Vector2(6-i*.01,3)
 		var wet:=WaterField.wet(ctx,ctx.region,p)
 		if wet and not was_wet:
-			worst=maxf(worst,WaterField.level_at(ctx,p)-TerrainSurfaceField.surface_y(ctx.region,p.x,p.y))
+			worst=maxf(worst,WaterField.level_at(ctx,p)-TerrainTileField.surface_y(ctx.region,p.x,p.y))
 			crossings+=1
 		was_wet=wet
 	assert_gt(crossings,0,"retain the upper ledge's real shoreline")
@@ -109,8 +109,8 @@ func test_photo16_fine_support_boundary_has_no_vertical_water_step()->void:
 	for row in 61:
 		var z:=FREE_SHORE_CORNER.y+row*.1
 		var a:=Vector2(890.99,z);var b:=Vector2(891,z)
-		var ga:=TerrainSurfaceField.surface_y(ctx.region,a.x,a.y)
-		var gb:=TerrainSurfaceField.surface_y(ctx.region,b.x,b.y)
+		var ga:=TerrainTileField.surface_y(ctx.region,a.x,a.y)
+		var gb:=TerrainTileField.surface_y(ctx.region,b.x,b.y)
 		assert_almost_eq(ga,gb,.001,"the interpolation boundary crosses one flat ledge")
 		var la:=WaterField.level_at(ctx,a);var lb:=WaterField.level_at(ctx,b)
 		if la<=ga+WaterField.EPS or lb<=gb+WaterField.EPS:continue
@@ -127,7 +127,7 @@ func test_photo16_entire_ledge_has_continuous_wet_entries_and_refinement_seams()
 			var previous:Dictionary={}
 			for column in 601:
 				var p:=FREE_SHORE_CORNER+(Vector2(column*.01,row*.1) if axis==0 else Vector2(row*.1,column*.01))
-				var ground:=TerrainSurfaceField.surface_y(ctx.region,p.x,p.y)
+				var ground:=TerrainTileField.surface_y(ctx.region,p.x,p.y)
 				var level:=WaterField.level_at(ctx,p)
 				var wet:=is_finite(level) and level>ground+WaterField.EPS
 				if not previous.is_empty() and absf(previous.ground-ground)<.001:

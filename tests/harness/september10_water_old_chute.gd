@@ -10,5 +10,5 @@ func _run()->void:
 		var profile:=WaterField.profile(trace,region)
 		var descent:Dictionary=profile.descents[0]
 		for i in descent.pos.size():
-			var p:Vector2=descent.pos[i];rows.append({"p":str(p),"target":descent.lvl[i],"level":WaterField.level_at(ctx,p),"ground":TerrainSurfaceField.surface_y(region,p.x,p.y)})
+			var p:Vector2=descent.pos[i];rows.append({"p":str(p),"target":descent.lvl[i],"level":WaterField.level_at(ctx,p),"ground":TerrainTileField.surface_y(region,p.x,p.y)})
 	FileAccess.open(OS.get_cmdline_user_args()[0],FileAccess.WRITE).store_string(JSON.stringify(rows,"  "));quit()

@@ -9,5 +9,5 @@ func _init() -> void:
 	var cell:=Vector2i((center/24).round())
 	print("LAKE_GROUND coarse=",cell," raw=",plan.raw_height(cell.x,cell.y)," carve=",water.carve_at(cell.x*24.0,cell.y*24.0))
 	var region:=plan.compute_region(cell.x,cell.y,26)
-	print("LAKE_GROUND actual=",TerrainSurfaceField.surface_y(region,center.x,center.y))
+	print("LAKE_GROUND actual=",TerrainTileField.surface_y(region,center.x,center.y))
 	quit()

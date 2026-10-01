@@ -13,7 +13,7 @@ func _init() -> void:
 			for ix in 121:
 				var p:=Vector2(-252+ix*.25,z)
 				var level:float=before.level_at(ctx,p) if phase=="before" else WaterField.level_at(ctx,p)
-				file.store_csv_line([str(p.x),str(p.y),str(TerrainSurfaceField.surface_y(region,p.x,p.y)),str(level)])
+				file.store_csv_line([str(p.x),str(p.y),str(TerrainTileField.surface_y(region,p.x,p.y)),str(level)])
 		file.close()
 		print("DROP_SECTIONS_DONE ",phase)
 	quit()

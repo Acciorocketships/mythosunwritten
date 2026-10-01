@@ -42,7 +42,7 @@ static func region(source: HeightfieldRegion) -> HeightfieldRegion:
 			var unsupported := false
 			for offset: Vector2 in [Vector2.ZERO,Vector2(-1,-1),Vector2(-1,1),Vector2(1,-1),Vector2(1,1)]:
 				var point: Vector2=request[0]+offset*request[1]*.999
-				if TerrainSurfaceField.surface_y(result,point.x,point.y)<request[4]-.00001:
+				if TerrainTileField.surface_y(result,point.x,point.y)<request[4]-.00001:
 					unsupported=true
 			if not unsupported: continue
 			for z in range(request[2].y,request[3].y+1):

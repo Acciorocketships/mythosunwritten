@@ -7,7 +7,7 @@ func _jump(sample: Callable, p: Vector2, axis: Vector2) -> float:
 
 func test_reported_diagonal_collar_has_no_slope_jump() -> void:
 	var region := Frozen.region("res://tests/fixtures/september8-night-crease-field.txt")
-	var sample := func(p: Vector2) -> float: return TerrainSurfaceField.surface_y(region,p.x,p.y)
+	var sample := func(p: Vector2) -> float: return TerrainTileField.surface_y(region,p.x,p.y)
 	for i in range(17):
 		var p := Vector2(1910.0,403.0)+Vector2.ONE*float(i)*0.25
 		for axis in [Vector2.RIGHT,Vector2.DOWN]:

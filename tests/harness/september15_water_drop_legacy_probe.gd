@@ -12,8 +12,8 @@ func _init() -> void:
 			for x in range(672,709,3):
 				var p:=Vector2(x,z)
 				var level:float=old.level_at(ctx,p) if phase=="before" else WaterField.level_at(ctx,p)
-				row.append([x,TerrainSurfaceField.surface_y(region,p.x,p.y),level])
-				samples.append([x,z,TerrainSurfaceField.surface_y(region,p.x,p.y),level if is_finite(level) else null])
+				row.append([x,TerrainTileField.surface_y(region,p.x,p.y),level])
+				samples.append([x,z,TerrainTileField.surface_y(region,p.x,p.y),level if is_finite(level) else null])
 			print(phase," ",z," ",row)
 		var data:Dictionary={"fill":ctx.fill,"fill_base":ctx.fill_base,"storeys":region._storeys,"levels":region._levels,"carved":region._carved}
 		FileAccess.open("res://docs/qa/2026-09-15-manual/05-water-drops/legacy-"+phase+".bin",FileAccess.WRITE).store_var(data)

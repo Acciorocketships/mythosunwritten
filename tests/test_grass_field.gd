@@ -177,7 +177,7 @@ func test_field_is_deterministic_grounded_and_capped_at_one_batch() -> void:
 			every_instance_is_grounded = every_instance_is_grounded \
 				and x >= CORE.position.x and x < CORE.end.x \
 				and z >= CORE.position.y and z < CORE.end.y \
-				and absf(y - TerrainSurfaceField.surface_y(
+				and absf(y - TerrainTileField.surface_y(
 					inputs.region, x, z)) <= 0.001
 		assert_true(ranks_are_exact, "dropout ranks follow packed sort order")
 		assert_true(every_instance_is_grounded,

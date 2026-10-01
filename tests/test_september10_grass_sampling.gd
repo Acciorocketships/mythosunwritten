@@ -25,8 +25,8 @@ func test_detached_sampling_does_not_retain_plans_or_share_mutable_grade_caches(
 	for z in range(-14,15):
 		for x in range(-14,15):
 			var p := Vector2(x,z)*0.73
-			var actual := TerrainSurfaceField.surface_y(copy.region,p.x,p.y)
-			unchanged = unchanged and actual == TerrainSurfaceField.surface_y(region,p.x,p.y)
+			var actual := TerrainTileField.surface_y(copy.region,p.x,p.y)
+			unchanged = unchanged and actual == TerrainTileField.surface_y(region,p.x,p.y)
 	assert_true(unchanged,"private caches preserve the exact continuous ground field")
 	copy.region.terrain_grades[0]._surface_cache.clear()
 	assert_false(extended._surface_cache.is_empty(),"private cache mutation cannot change the canonical cache")

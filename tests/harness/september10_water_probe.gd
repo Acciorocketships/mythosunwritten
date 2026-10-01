@@ -30,8 +30,8 @@ func _run()->void:
 				var ctx:=fields.water(chunk)
 				var level:=ctx.level_at(p)
 				var raw:=WaterField.level_at(ctx._ctx,p)
-				samples.append([TerrainSurfaceField.surface_y(regions[chunk],p.x,p.y),
-					TerrainSurfaceField.surface_y(natural_regions[chunk],p.x,p.y),
+				samples.append([TerrainTileField.surface_y(regions[chunk],p.x,p.y),
+					TerrainTileField.surface_y(natural_regions[chunk],p.x,p.y),
 					level if is_finite(level) else null,raw if is_finite(raw) else null])
 		var bodies:=water.bodies_in_rect(Rect2(base,Vector2.ONE*120.0))
 		var sources:Array=[]

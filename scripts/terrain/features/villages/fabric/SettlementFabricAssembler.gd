@@ -1956,7 +1956,7 @@ static func maze_terrain_surface_region(capped_cells: Dictionary,
 		var top := cell.y + 1
 		tops[column] = top
 		minimum_top = mini(minimum_top, top)
-	# TerrainSurfaceField derives every edge and corner from the neighboring
+	# TerrainTileField derives every edge and corner from the neighboring
 	# lattice controls, not from the subset selected for rendering. Public plank
 	# and path claims therefore participate in this control field even though
 	# they remain rendered by their own surface authority. Without them, a turf
@@ -4061,8 +4061,8 @@ static func maze_green_rim_layout(shell: Dictionary,
 			# turf and planks; its broad green top was the apparently random panel at
 			# floor seams. Equal-height materials already share the welded field edge
 			# and need no additional geometry.
-			if not TerrainSurfaceField.is_exposed_edge(
-					terrain_region, face.x, face.z,
+			if not TerrainTileField.is_exposed_edge(
+					terrain_region, Vector2i(face.x, face.z),
 					Vector2i(direction.x, direction.z)):
 				continue
 		exposed[face] = true
@@ -4156,7 +4156,7 @@ static func maze_turf_clip_cache(cells: Dictionary,
 		var direction := FACE_DIRECTIONS[face.w]
 		var dir := Vector2i(direction.x, direction.z)
 		cache[Vector2i(face.x, face.z)].dirs[dir] = {"lips": [true],
-			"prof": TerrainSurfaceField.edge_profile(region, face.x, face.z,
+			"prof": TerrainTileField.edge_profile(region, Vector2i(face.x, face.z),
 				dir, CliffDressing.PROFILE_SAMPLES)}
 	return cache
 
@@ -8394,7 +8394,7 @@ static func rendered_surface_cap_cells(surface_plan: PublicRealmSurfacePlan) \
 static func maze_terrain_control_surface_cells(plan: SettlementFabricPlan) \
 		-> Dictionary:
 	## The complete lattice-height field needed to evaluate the selected village
-	## turf with TerrainSurfaceField. Public surfaces are controls even when their
+	## turf with TerrainTileField. Public surfaces are controls even when their
 	## own planks/path remain the render authority. Never invent a same-height
 	## ring around a green: it erases its exposed-edge classification and leaves
 	## a floating paper edge. Missing neighbours are real drops; the shared

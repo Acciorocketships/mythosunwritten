@@ -47,7 +47,7 @@ func _run() -> void:
 							var bank := far + Vector2(0, side)
 							if not field.covers(bank) or field.is_wet(bank):
 								continue
-							var ground := TerrainSurfaceField.surface_y(region, bank.x, bank.y)
+							var ground := TerrainTileField.surface_y(region, bank.x, bank.y)
 							if ground > levels[start + 24]:
 								print("CORNER start=", Vector2(origin.x + start * 0.25, z),
 									" rise=", levels[start + 24] - levels[start],

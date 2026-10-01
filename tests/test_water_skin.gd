@@ -359,7 +359,7 @@ static func _max_outward_reach(verts: PackedVector3Array, p: Vector2, nrm2d: Vec
 
 ## Finds the first point outside a wet contour where the rendered bank rises
 ## to the contour's own level.  This is intentionally test-side sampling of
-## TerrainSurfaceField, not WaterSkin's rim formula: it measures the physical
+## TerrainTileField, not WaterSkin's rim formula: it measures the physical
 ## contact the visible water surface has to reach.
 static func _bank_contact_distance(region, p: Vector2, nrm: Vector2, level: float) -> float:
 	var step := 0.02
@@ -374,7 +374,7 @@ static func _bank_contact_distance(region, p: Vector2, nrm: Vector2, level: floa
 
 ## Test-side field-truth counterpart to the renderer's contact concept:
 ## distance along one outward column until the first dry sample. This reads
-## WaterField/TerrainSurfaceField directly and deliberately knows nothing
+## WaterField/TerrainTileField directly and deliberately knows nothing
 ## about the rim's row layout.
 static func _field_wet_reach(ctx: Dictionary, region, p: Vector2,
 		nrm: Vector2, max_reach: float = WaterField.FILL_STEP) -> float:
@@ -1973,7 +1973,7 @@ func test_no_trigger_where_unswimmably_steep() -> void:
 	tr.source_pool = null
 	tr.pond = null
 	# A real (if trivially flat, storey-0-everywhere) HeightfieldRegion —
-	# TerrainSurfaceField.surface_y needs a real region object, not null
+	# TerrainTileField.surface_y needs a real region object, not null
 	# (unlike WaterField.grade_at, which tolerates a null region gracefully
 	# via profile()'s own region-optional fallback).
 	var region := HeightfieldRegion.new({}, {})

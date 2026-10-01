@@ -28,7 +28,7 @@ func test_two_real_turf_levels_still_use_the_shared_slope() -> void:
 	var region := SettlementFabricAssembler.maze_terrain_surface_region(capped)
 	assert_eq(region.storey_at(0,0), 4)
 	assert_eq(region.storey_at(1,0), 3)
-	assert_lt(TerrainSurfaceField.surface_y(region,0.6,0), 6.0)
+	assert_lt(TerrainTileField.surface_y(region,0.6,0), 6.0)
 
 func test_straight_and_corner_lips_use_the_same_uniform_scale() -> void:
 	var edge := SettlementFabricAssembler._maze_green_rim_transform(

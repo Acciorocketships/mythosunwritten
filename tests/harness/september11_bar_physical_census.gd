@@ -16,7 +16,7 @@ func _init() -> void:
 				var p:=center+side*offset
 				var region:=fields.region_at(p)
 				var field:=fields.water_at(p)
-				var ground:=TerrainSurfaceField.surface_y(region,p.x,p.y)
+				var ground:=TerrainTileField.surface_y(region,p.x,p.y)
 				points.append({"offset":offset,"point":str(p),"ground":ground,"level":field.level_at(p) if is_finite(field.level_at(p)) else null,"wet":field.is_wet(p)})
 			var passed:bool=not points[0].wet and points[1].wet and points[2].wet
 			rows.append({"seed":site[0],"source":str(site[1]),"points":points,"passed":passed})

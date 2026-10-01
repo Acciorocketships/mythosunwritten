@@ -14,6 +14,6 @@ func _run()->void:
 				var q:=origin+Vector2(x,z)*3.0
 				var ij:Vector2i=Vector2i(((q-ctx.fill_base)/3.0).round())
 				var sub:float=ctx.fill.sub_levels[ij.y*sub_n+ij.x]
-				rows.append({"point":str(q),"ground":TerrainSurfaceField.surface_y(ctx.region,q.x,q.y),"head":str(WaterField._fill_untapered_level(ctx,q)),"coarse":str(WaterField._fill_bilinear_coarse(ctx,q)),"unbounded":str(WaterField._fill_bilinear_coarse(ctx,q,false)),"sub":str(sub),"final":str(WaterField.level_at(ctx,q))})
+				rows.append({"point":str(q),"ground":TerrainTileField.surface_y(ctx.region,q.x,q.y),"head":str(WaterField._fill_untapered_level(ctx,q)),"coarse":str(WaterField._fill_bilinear_coarse(ctx,q)),"unbounded":str(WaterField._fill_bilinear_coarse(ctx,q,false)),"sub":str(sub),"final":str(WaterField.level_at(ctx,q))})
 		print("FIELD ",JSON.stringify({"point":str(p),"coarse":WaterField._fill_bilinear_coarse(ctx,p),"unbounded":WaterField._fill_bilinear_coarse(ctx,p,false),"head":WaterField._fill_untapered_level(ctx,p),"final":WaterField.level_at(ctx,p),"grid":rows}))
 	quit()

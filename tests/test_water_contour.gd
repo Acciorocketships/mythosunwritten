@@ -241,7 +241,7 @@ func test_pond_yields_smooth_closed_curve() -> void:
 	# from 8.0 (3m BELOW its 11.0 surface) to 20.0 (9m ABOVE it) within
 	# 0.5m across almost the whole shoreline, i.e. a 12m canyon wall at the
 	# waterline. That is the terrain's own design, not an artifact:
-	# TerrainSurfaceField._is_cliff_top walls ANY dry cell overlooking a
+	# the retired 24 m kernel's _is_cliff_top walled ANY dry cell overlooking a
 	# water-carved cell ("shorelines read as crisp dressed banks"), so on
 	# this terrain nearly every carved shore is a genuine wall. Measured
 	# fraction here: 122/124 = 0.984, with EVERY formula-wall point

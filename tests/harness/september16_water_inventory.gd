@@ -21,7 +21,7 @@ func _init() -> void:
 			var samples := []
 			for i in range(maxi(0,nearest-3),mini(river.points.size(),nearest+4)):
 				var p: Vector2 = river.points[i]
-				samples.append({"i":i,"xz":[p.x,p.y],"ground":TerrainSurfaceField.surface_y(region,p.x,p.y),"bed":river.beds[i],"level":profile.levels[i]})
+				samples.append({"i":i,"xz":[p.x,p.y],"ground":TerrainTileField.surface_y(region,p.x,p.y),"bed":river.beds[i],"level":profile.levels[i]})
 			rivers.append({"source":str(river.source_cell),"first":str(river.points[0]),"last":str(river.points[-1]),"nearest_distance":distance,"nearest_index":nearest,"count":river.points.size(),"samples":samples})
 		reports.append({"point":str(point),"rivers":rivers,"pond_count":ctx.ponds.size()})
 		print("WATER_INVENTORY ",JSON.stringify(reports[-1]))

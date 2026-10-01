@@ -32,12 +32,12 @@ func _run() -> void:
 				if p.distance_to(site) > half or not area.has_point(p): continue
 				var level := ctx.level_at(p)
 				out.centre.append([tr.source_cell.x, tr.source_cell.y, i, p.x, p.y,
-					TerrainSurfaceField.surface_y(region, p.x, p.y), level, env.sample(p)])
+					TerrainTileField.surface_y(region, p.x, p.y), level, env.sample(p)])
 	for x in range(-int(half), int(half) + 1, 3):
 		for z in range(-int(half), int(half) + 1, 3):
 			var p := site + Vector2(x, z)
 			if not area.has_point(p): continue
-			out.grid.append([p.x, p.y, TerrainSurfaceField.surface_y(region, p.x, p.y),
+			out.grid.append([p.x, p.y, TerrainTileField.surface_y(region, p.x, p.y),
 				ctx.level_at(p), env.sample(p)])
 	FileAccess.open(args[0], FileAccess.WRITE).store_string(JSON.stringify(out))
 	print("done")

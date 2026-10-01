@@ -9,7 +9,7 @@ func _run()->void:
 			var previous:Dictionary={}
 			for column in 601:
 				var p:=Vector2(684,-1740)+ (Vector2(column*.01,row*.1) if axis==0 else Vector2(row*.1,column*.01))
-				var ground:=TerrainSurfaceField.surface_y(ctx.region,p.x,p.y)
+				var ground:=TerrainTileField.surface_y(ctx.region,p.x,p.y)
 				var level:=WaterField.level_at(ctx,p)
 				var wet:=is_finite(level) and level>ground+WaterField.EPS
 				if not previous.is_empty() and absf(previous.ground-ground)<.001:

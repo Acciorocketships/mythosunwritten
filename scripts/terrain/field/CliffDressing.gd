@@ -38,22 +38,12 @@ const TERRAIN_SKIN_ASSETS := {
 	&"kaykit.cliff.inner_lip": true,
 }
 
-const STOREY := 4.0
-const PLACE := 10.5         # wall/lip/corner node origin — the OLD-TILE spacing (git 0bcc47ea
-                            # CliffCorner.tscn), which is the only grid the 3-unit KayKit modules tile
-                            # on: straight pieces at ±1.5..±10.5 along the 10.5 line, the corner piece
-                            # AT (±10.5, ±10.5) in the end slot the edges drop. At 11.0 every corner
-                            # left a 0.5 slit to the last straight piece and the corner lip protruded
-                            # past the ±12 boundary (the owner's gaps + planes sticking out). The rock
-                            # face spans PLACE+0.25..PLACE+1.0 (10.75..11.5), recessed inside the cell.
-                            # Village rims and WaterSkin's rim reach still read it.
 const PROFILE_SAMPLES := 24 # edge-profile resolution: 25 points, one per unit along the 24u edge.
                             # Wall depth is PER SLOT from the neighbour's actual boundary surface
-                            # (TerrainSurfaceField.edge_profile): exactly the storey drop against a
+                            # (TerrainTileField.edge_profile): exactly the storey drop against a
                             # flat neighbour (no jutting slab below its thin surface), deeper where a
                             # slope neighbour dips along the edge (no see-through void — owner).
-const LIP_LIFT := 0.05      # raise the grass lip a hair so it cleanly overlays the field
-                            # grass (which now renders to the boundary) instead of z-fighting
+
 static var _pieces: Dictionary = {}   # name -> [mesh, local_transform]
 static var _shared_mat: Material = null
 static var _ground_uv := Vector2.ZERO

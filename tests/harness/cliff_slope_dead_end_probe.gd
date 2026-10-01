@@ -18,7 +18,7 @@ func run(review:Node3D)->void:
  for z in [player.z-4.0,player.z,player.z+4.0]:
   for x in range(int(player.x)+6,int(player.x)-30,-1):
    var q:=Vector2(x,z);var i:int=node.call(q)
-   var cx:=TerrainSurfaceField._cell_of(q.x,region);var cz:=TerrainSurfaceField._cell_of(q.y,region)
+   var cx:=TerrainTileField.point_of(q.x,region);var cz:=TerrainTileField.point_of(q.y,region)
    var kind:int=input.features.ground_field().surface_sampler_in(Rect2(q-Vector2.ONE,Vector2.ONE*2)).call(q) if input.features.has_modified_surface() else -1
    lines.append("x %6.1f z %6.1f ground %6.2f uncut %6.2f surf %6.2f caps %6.2f excl %d kind %d storey %d level %d rock %.2f"%[q.x,q.y,env.ground[i],(env.get_meta("uncut") as PackedFloat64Array)[i],env.surface[i],(env.get_meta("caps") as PackedFloat64Array)[i],(env.get_meta("excluded") as PackedByteArray)[i],kind,region.storey_at(cx,cz),region.level_at(cx,cz),env.rock_at(q)])
  FileAccess.open(review._output_dir+"/dead-end-profile.txt",FileAccess.WRITE).store_string("\n".join(lines))

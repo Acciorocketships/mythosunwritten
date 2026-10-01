@@ -28,7 +28,7 @@ func test_photo16_actual_free_shore_closes_into_ground_or_connected_water()->voi
 			var vertex:Vector3=st.verts[index];var p:=Vector2(vertex.x,vertex.z)
 			if not chunk.has_point(p) or seen.has(index):continue
 			seen[index]=true
-			var support:=TerrainSurfaceField.surface_y(ctx.region,p.x,p.y)
+			var support:=TerrainTileField.surface_y(ctx.region,p.x,p.y)
 			var level:=WaterField.level_at(ctx,p)
 			if is_finite(level):support=maxf(support,level)
 			worst=maxf(worst,vertex.y-support)

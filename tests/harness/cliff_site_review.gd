@@ -22,7 +22,7 @@ const RELOAD := [
 	"res://scripts/terrain/field/CliffSlopeField.gd",
 	"res://scripts/terrain/grass/GrassSupportSurfaces.gd",
 	"res://scripts/terrain/grass/GrassField.gd",
-	"res://scripts/terrain/field/TerrainSurfaceField.gd",
+	"res://scripts/terrain/field/TerrainTileField.gd",
 	"res://scripts/terrain/field/TerrainChunkMesher.gd",
 	"res://scripts/terrain/water/WaterSkin.gd",
 ]

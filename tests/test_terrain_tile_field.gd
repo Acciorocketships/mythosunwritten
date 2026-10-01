@@ -5,7 +5,6 @@ extends GutTest
 ## four corners (and the edge categories those corners imply).
 
 const Tile := preload("res://scripts/terrain/field/TerrainTileField.gd")
-const Field := preload("res://scripts/terrain/field/TerrainSurfaceField.gd")
 const Region := preload("res://tests/fixtures/tile_point_region.gd")
 const EPS := 0.0001
 
@@ -385,58 +384,31 @@ func test_height_bounds_on_side_are_sound_over_random_fields() -> void:
 							"mode %s owner %s %s at %s,%s" % [mode, owner, rect, x, z])
 
 
-# --- TerrainSurfaceField facade --------------------------------------------------------
+# --- point lattice, border profiles and one-sided bounds ------------------------------
 
-func _random_region(seed_value: int):
-	var rng := RandomNumberGenerator.new()
-	rng.seed = seed_value
-	var heights := {}
-	for j in range(-1, 4):
-		for i in range(-1, 4):
-			heights[Vector2i(i, j)] = float(rng.randi_range(0, 3)) * 4.0 + float(rng.randi_range(0, 2))
-	return Region.new(heights)
-
-
-func test_facade_uses_the_twelve_metre_point_lattice() -> void:
-	assert_eq(Field.TILE, 12.0)
-	assert_eq(Field.HALF, 6.0)
-	assert_eq(Field.tile_size(), 12.0)
-	assert_eq(Field._cell_of(5.99), 0)
-	assert_eq(Field._cell_of(6.0), 1)
-	assert_eq(Field._cell_of(-6.0), 0)
-	assert_almost_eq(Field.transition_weight(6.0), 0.5, EPS, "a slope spans the whole 12 m tile")
-	assert_almost_eq(Field.transition_weight(12.0), 1.0, EPS)
+func test_point_lattice_and_transition_weight() -> void:
+	assert_eq(Tile.SPACING, 12.0)
+	assert_eq(Tile.spacing(), 12.0)
+	assert_eq(Tile.point_of(5.99), 0)
+	assert_eq(Tile.point_of(6.0), 1)
+	assert_eq(Tile.point_of(-6.0), 0)
+	assert_almost_eq(Tile.transition_weight(6.0), 0.5, EPS, "a slope spans the whole 12 m tile")
+	assert_almost_eq(Tile.transition_weight(12.0), 1.0, EPS)
 
 
-func test_facade_in_cell_sampling_is_the_kernels_owner_side() -> void:
-	for mode in [Tile.CliffEnd.E1, Tile.CliffEnd.E2]:
-		Tile.cliff_end = mode
-		var region = _random_region(3)
-		for pj in range(0, 3):
-			for pi in range(0, 3):
-				var baked := Field.bake_cell(region, pi, pj)
-				for k in 49:
-					var x := 12.0 * pi - 7.0 + 14.0 * float(k % 7) / 6.0
-					var z := 12.0 * pj - 7.0 + 14.0 * float(k / 7) / 6.0
-					var expected := Tile.surface_y_on_side(region, x, z, Vector2i(pi, pj))
-					assert_almost_eq(Field.surface_y_in_cell(region, x, z, pi, pj), expected, EPS)
-					assert_almost_eq(Field.sample_baked(baked, pi, pj, x, z, region), expected, EPS)
-					assert_almost_eq(Field.surface_y(region, x, z), Tile.surface_y(region, x, z), EPS)
-
-
-func test_facade_edge_predicates_follow_the_points() -> void:
+func test_edge_predicates_follow_the_points() -> void:
 	var region = Region.tile(12.0, 4.0, 4.0, 12.0)
 	# (0,0)=12 (1,0)=4: two storeys -> cliff; (0,0)-(0,1): both 12 -> flat.
-	assert_true(Field.is_cliff_edge(region, 0, 0, Vector2i(1, 0)))
-	assert_true(Field.is_wall_edge(region, 0, 0, Vector2i(1, 0)))
-	assert_false(Field.is_wall_edge(region, 1, 0, Vector2i(-1, 0)), "the low side carries no wall")
-	assert_false(Field.is_cliff_edge(region, 0, 0, Vector2i(0, 1)))
-	assert_false(Field.is_walkable_edge(region, Vector2i(0, 0), Vector2i(1, 0)))
-	assert_false(Field.is_walkable_edge(region, Vector2i(1, 0), Vector2i(-1, 0)))
-	assert_true(Field.is_walkable_edge(region, Vector2i(0, 0), Vector2i(0, 1)))
+	assert_true(Tile.is_cliff_edge(region, Vector2i(0, 0), Vector2i(1, 0)))
+	assert_true(Tile.is_wall_edge(region, Vector2i(0, 0), Vector2i(1, 0)))
+	assert_false(Tile.is_wall_edge(region, Vector2i(1, 0), Vector2i(-1, 0)), "the low side carries no wall")
+	assert_false(Tile.is_cliff_edge(region, Vector2i(0, 0), Vector2i(0, 1)))
+	assert_false(Tile.is_walkable_edge(region, Vector2i(0, 0), Vector2i(1, 0)))
+	assert_false(Tile.is_walkable_edge(region, Vector2i(1, 0), Vector2i(-1, 0)))
+	assert_true(Tile.is_walkable_edge(region, Vector2i(0, 0), Vector2i(0, 1)))
 
 
-func test_facade_is_exposed_edge_on_a_straight_cliff() -> void:
+func test_is_exposed_edge_on_a_straight_cliff() -> void:
 	# Points with i <= 0 stand at 12, points with i >= 1 at 0: a straight wall on x = 6.
 	var heights := {}
 	for j in range(-2, 3):
@@ -444,40 +416,40 @@ func test_facade_is_exposed_edge_on_a_straight_cliff() -> void:
 		heights[Vector2i(-1, j)] = 12.0
 	var region = Region.new(heights, 0.0)
 	for j in range(-1, 2):
-		assert_true(Field.is_exposed_edge(region, 0, j, Vector2i(1, 0)), "the high side of the wall is exposed")
-		assert_false(Field.is_exposed_edge(region, 1, j, Vector2i(-1, 0)), "the low side is not")
-		assert_false(Field.is_exposed_edge(region, 0, j, Vector2i(0, 1)), "a border along a flat neighbour is not")
-		assert_false(Field.is_exposed_edge(region, 0, j, Vector2i(-1, 0)))
+		assert_true(Tile.is_exposed_edge(region, Vector2i(0, j), Vector2i(1, 0)), "the high side of the wall is exposed")
+		assert_false(Tile.is_exposed_edge(region, Vector2i(1, j), Vector2i(-1, 0)), "the low side is not")
+		assert_false(Tile.is_exposed_edge(region, Vector2i(0, j), Vector2i(0, 1)), "a border along a flat neighbour is not")
+		assert_false(Tile.is_exposed_edge(region, Vector2i(0, j), Vector2i(-1, 0)))
 	# A one-storey slope is no wall: the neighbour never falls EXPOSE_EPS below a flat own border.
 	var slope = Region.new({Vector2i(0, 0): 4.0, Vector2i(0, 1): 4.0, Vector2i(0, -1): 4.0}, 0.0)
-	assert_false(Field.is_exposed_edge(slope, 0, 0, Vector2i(1, 0)), "own border already slopes away")
+	assert_false(Tile.is_exposed_edge(slope, Vector2i(0, 0), Vector2i(1, 0)), "own border already slopes away")
 
 
-func test_facade_edge_profile_runs_along_pdir() -> void:
+func test_edge_profile_runs_along_pdir() -> void:
 	# A wall on x = 6 whose low side steps up toward +z: the neighbour profile
 	# must start low (-pdir end, z = -6) and end high (+pdir end, z = +6).
 	var region = Region.new({Vector2i(0, -1): 12.0, Vector2i(0, 0): 12.0, Vector2i(0, 1): 12.0,
 		Vector2i(1, -1): 0.0, Vector2i(1, 0): 0.0, Vector2i(1, 1): 4.0}, 0.0)
 	var d := Vector2i(1, 0)
-	var profile := Field.edge_profile(region, 0, 0, d, 8)
+	var profile := Tile.edge_profile(region, Vector2i(0, 0), d, 8)
 	assert_eq(profile.size(), 9)
-	assert_almost_eq(profile[0], Field.surface_y_in_cell(region, 6.0, -6.0, 1, 0), EPS)
-	assert_almost_eq(profile[8], Field.surface_y_in_cell(region, 6.0, 6.0, 1, 0), EPS)
+	assert_almost_eq(profile[0], Tile.surface_y_on_side(region, 6.0, -6.0, Vector2i(1, 0)), EPS)
+	assert_almost_eq(profile[8], Tile.surface_y_on_side(region, 6.0, 6.0, Vector2i(1, 0)), EPS)
 	assert_almost_eq(profile[0], 0.0, EPS)
 	assert_gt(profile[8], profile[0] + 0.5, "ordered from -z to +z (pdir = (d.y, d.x))")
-	var own := Field.own_edge_profile(region, 0, 0, d, 8)
+	var own := Tile.own_edge_profile(region, Vector2i(0, 0), d, 8)
 	for f in own:
 		assert_almost_eq(f, 12.0, EPS)
 	# The transposed direction runs along +x.
 	var south := Region.new({Vector2i(-1, 0): 12.0, Vector2i(0, 0): 12.0, Vector2i(1, 0): 12.0,
 		Vector2i(-1, 1): 0.0, Vector2i(0, 1): 0.0, Vector2i(1, 1): 4.0}, 0.0)
-	var along_x := Field.edge_profile(south, 0, 0, Vector2i(0, 1), 8)
+	var along_x := Tile.edge_profile(south, Vector2i(0, 0), Vector2i(0, 1), 8)
 	assert_almost_eq(along_x[0], 0.0, EPS)
 	assert_gt(along_x[8], along_x[0] + 0.5)
 
 
-func test_facade_height_bounds_in_cell_is_one_sided() -> void:
+func test_height_bounds_on_side_is_one_sided() -> void:
 	var region = Region.tile(12.0, 0.0, 0.0, 12.0)
-	assert_eq(Field.height_bounds_in_cell(region, Rect2(2.0, 1.0, 4.0, 4.0), Vector2i(0, 0)), Vector2(12.0, 12.0))
-	assert_eq(Field.height_bounds_in_cell(region, Rect2(6.0, 1.0, 4.0, 4.0), Vector2i(1, 0)), Vector2(0.0, 0.0))
-	assert_eq(Field.height_bounds(region, Rect2(4.0, 1.0, 4.0, 4.0)), Vector2(0.0, 12.0))
+	assert_eq(Tile.height_bounds_on_side(region, Rect2(2.0, 1.0, 4.0, 4.0), Vector2i(0, 0)), Vector2(12.0, 12.0))
+	assert_eq(Tile.height_bounds_on_side(region, Rect2(6.0, 1.0, 4.0, 4.0), Vector2i(1, 0)), Vector2(0.0, 0.0))
+	assert_eq(Tile.height_bounds(region, Rect2(4.0, 1.0, 4.0, 4.0)), Vector2(0.0, 12.0))

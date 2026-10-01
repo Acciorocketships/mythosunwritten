@@ -56,7 +56,7 @@ func _rim(ctx: Dictionary, rect: Rect2, key: Vector2i) -> void:
 				continue
 			seen[index] = true
 			var v: Vector3 = st.verts[index]
-			var support := TerrainSurfaceField.surface_y(ctx.region, v.x, v.z)
+			var support := TerrainTileField.surface_y(ctx.region, v.x, v.z)
 			var level := WaterField.level_at(ctx, Vector2(v.x, v.z))
 			if is_finite(level):
 				support = maxf(support, level)
@@ -80,10 +80,10 @@ func _pairs(field: WaterFieldContext, ctx: Dictionary, origin: Vector2, key: Vec
 			var b := a + Vector2(0, 3)
 			if not field.is_wet(a) or not field.is_wet(b):
 				continue
-			var g0 := TerrainSurfaceField.surface_y(region, a.x, a.y)
+			var g0 := TerrainTileField.surface_y(region, a.x, a.y)
 			var flat := true
 			for s in range(1, 7):
-				if absf(TerrainSurfaceField.surface_y(region, a.x, a.y + s * 0.5) - g0) > 0.001:
+				if absf(TerrainTileField.surface_y(region, a.x, a.y + s * 0.5) - g0) > 0.001:
 					flat = false
 					break
 			if not flat:

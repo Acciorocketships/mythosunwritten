@@ -8,7 +8,7 @@ func _gradient(sample: Callable, point: Vector2) -> float:
 
 func test_reported_eastern_approach_stays_below_player_climb_limit() -> void:
 	var region := Frozen.region("res://docs/qa/2026-09-13-manual/17-village-grade/P11-field.txt")
-	var sample := func(p: Vector2) -> float: return TerrainSurfaceField.surface_y(region,p.x,p.y)
+	var sample := func(p: Vector2) -> float: return TerrainTileField.surface_y(region,p.x,p.y)
 	var steepest := 0.0
 	for z in range(21):
 		for x in range(17):

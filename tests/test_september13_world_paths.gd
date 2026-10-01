@@ -159,7 +159,7 @@ func test_accepted_road_width_has_no_hidden_step_between_boundary_controls() -> 
 					var point := boundary+tangent*lerpf(-2.0,2.0,float(index)/80.0)
 					var a := TerrainTileField.surface_y_on_side(region,point.x,point.y,p)
 					var b := TerrainTileField.surface_y_on_side(region,point.x,point.y,q)
-					assert_lte(absf(a-b),TerrainSurfaceField.EXPOSE_EPS+.000001)
+					assert_lte(absf(a-b),TerrainTileField.EXPOSE_EPS+.000001)
 	assert_gt(accepted,8,"The dense audit must inspect legal crossings, not only reject walls")
 
 func test_graph_search_matches_exhaustive_simple_paths_with_detours() -> void:

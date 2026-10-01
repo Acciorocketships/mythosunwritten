@@ -16,7 +16,7 @@ func test_collar_uses_one_natural_length_slope_not_fine_cell_ripples() -> void:
 	var patch := TerrainGradePatch.new(&"profile", {Vector2i.ZERO: 5.0}, Vector2.ZERO, 3.0)
 	for index in range(1, 48):
 		var distance := index * 0.25
-		var expected := lerpf(5.0, 4.0, TerrainSurfaceField.transition_weight(distance))
+		var expected := lerpf(5.0, 4.0, TerrainTileField.transition_weight(distance))
 		assert_almost_eq(patch.surface_y(Vector2(1.5 + distance, 0), 4.0), expected, 0.00001,
 			"construction snapping must not shorten or restart the terrain curve")
 	assert_almost_eq(patch.surface_y(Vector2(7.5, 0), 4), 4.5, 0.00001)

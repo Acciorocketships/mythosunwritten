@@ -19,8 +19,8 @@ func test_water_tag_cannot_turn_an_ordinary_slope_into_a_wall() -> void:
 		assert_false(TerrainTileField.is_wall_edge(bank,Vector2i.ZERO,d),
 			"the carved bank tag cannot turn the one-storey edge %s into a wall" % d)
 	for x in range(0,25):
-		assert_almost_eq(TerrainSurfaceField.surface_y(bank,x,0),
-			TerrainSurfaceField.surface_y(plain,x,0),0.000001,
+		assert_almost_eq(TerrainTileField.surface_y(bank,x,0),
+			TerrainTileField.surface_y(plain,x,0),0.000001,
 			"a river uses the same slope as ordinary terrain")
 
 func test_photographed_bank_has_a_continuous_walk_to_shallow_water() -> void:
@@ -28,10 +28,10 @@ func test_photographed_bank_has_a_continuous_walk_to_shallow_water() -> void:
 	var water := _fields.water(Vector2i(-3,-2))
 	var entered := 0
 	for x in [-552.0,-528.0,-518.4]:
-		var previous := TerrainSurfaceField.surface_y(region,x,-300.0)
+		var previous := TerrainTileField.surface_y(region,x,-300.0)
 		for i in range(1,161):
 			var p := Vector2(x,-300.0+i*0.5)
-			var ground := TerrainSurfaceField.surface_y(region,p.x,p.y)
+			var ground := TerrainTileField.surface_y(region,p.x,p.y)
 			assert_lt(absf(ground-previous),0.4,"half-metre samples cannot hide a bank wall")
 			previous = ground
 			var level := water.level_at(p)
@@ -50,8 +50,8 @@ func test_bank_and_water_agree_across_the_streamed_chunk_border() -> void:
 	var wet_count := 0
 	for x in range(-576,-383,3):
 		var p := Vector2(x,-192)
-		assert_almost_eq(TerrainSurfaceField.surface_y(a,p.x,p.y),
-			TerrainSurfaceField.surface_y(b,p.x,p.y),0.000001)
+		assert_almost_eq(TerrainTileField.surface_y(a,p.x,p.y),
+			TerrainTileField.surface_y(b,p.x,p.y),0.000001)
 		var la := wa.level_at(p)
 		var lb := wb.level_at(p)
 		assert_eq(is_finite(la),is_finite(lb),"wetness must agree at %s: %s / %s" % [p,la,lb])

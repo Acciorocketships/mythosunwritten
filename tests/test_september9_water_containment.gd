@@ -16,7 +16,7 @@ func test_baked_water_lattice_keeps_the_exact_natural_surface_samples()->void:
 		for j in 49:
 			for i in 49:
 				var p:=base+Vector2(i,j)*step
-				expected.append(TerrainSurfaceField.surface_y(region,p.x,p.y))
+				expected.append(TerrainTileField.surface_y(region,p.x,p.y))
 		assert_eq(actual,expected,"exact float32 samples include positive/negative half-cell ownership at step "+str(step))
 
 func test_priority_flood_matches_the_full_heap_reference()->void:
@@ -46,7 +46,7 @@ func test_lazy_fine_ground_preserves_a_real_connected_pocket()->void:
 	for j in 17:
 		for i in range(8,17):
 			var p:=base+Vector2(i,j)*6
-			if TerrainSurfaceField.surface_y(region,p.x,p.y)<4.65: levels[j*17+i]=4.7
+			if TerrainTileField.surface_y(region,p.x,p.y)<4.65: levels[j*17+i]=4.7
 	var dense:=WaterField._build_sub_lattice_rescue(region,base,levels,PackedFloat32Array(),17,WaterField._sample_ground_lattice(region,base,33,3))
 	var lazy:=WaterField._build_sub_lattice_rescue(region,base,levels,PackedFloat32Array(),17)
 	assert_eq(lazy.levels,dense.levels,"sampling terrain on demand preserves every fine hydraulic value")
