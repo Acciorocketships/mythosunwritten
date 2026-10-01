@@ -462,6 +462,11 @@ static func _resample_even(pts: PackedVector2Array, spacing: float) -> PackedVec
 ## ring with cuts is rotated so that its first point is a cut. Each crossing
 ## is evaluated from the segment's canonical end, so both chunks of a border
 ## compute the identical point whichever way they chained the curve.
+## A crossing is de-duplicated only against the previous cut. That suffices: a
+## segment through a chunk corner crosses the x line and the z line at the same
+## point, and both are computed by the same canonical lerp with the axis
+## coordinate pinned to the line, so the two hits coincide exactly (and sort
+## adjacent) and the second is caught by the distance test.
 static func _split_at_chunk_lines(pts: PackedVector2Array, closed: bool) -> Dictionary:
 	var span: float = WaterField.CHUNK
 	var out := PackedVector2Array()

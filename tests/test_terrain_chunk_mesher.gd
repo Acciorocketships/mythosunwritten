@@ -560,9 +560,31 @@ func test_adjacent_chunks_share_border_vertices_and_each_wall_once() -> void:
 	assert_eq(a.keys().size(), b.keys().size(), "same border vertex count")
 	for v: Vector3 in a:
 		assert_true(b.has(v), "right chunk has the left chunk's border vertex %s" % v)
+	_assert_walls_skirted_once(region, m, [Vector2i(0, 0), Vector2i(1, 0)])
+
+## The same exactly-once wall ownership across negative chunk borders, where
+## floor-vs-truncation division would put a wall on the wrong side.
+func test_walls_are_skirted_once_across_negative_chunk_borders() -> void:
+	var region := _points(func(i: int, j: int) -> float:
+		# A plateau over points -8..8 x -8..-1 (walls on z = -6 cross x = -6),
+		# and a ridge on i = -1, j >= 2 (a wall on x = -6 in chunks (-1,0)/(0,0)).
+		if i >= -8 and i <= 8 and j >= -8 and j <= -1: return 12.0
+		if i == -1 and j >= 2: return 20.0
+		return 0.0)
+	var m := _mesher()
+	_assert_walls_skirted_once(region, m, [Vector2i(-1, -1), Vector2i(0, -1)])
+	_assert_walls_skirted_once(region, m, [Vector2i(-1, 0), Vector2i(0, 0)])
+
+## Every wall of every listed chunk's points is skirted, by exactly one chunk.
+func _assert_walls_skirted_once(region: HeightfieldRegion, m: TerrainChunkMesher, chunks: Array) -> void:
+	var datas: Array = []
+	for chunk: Vector2i in chunks:
+		datas.append(m.compute_chunk(chunk, region))
 	var quads := {}
 	var duplicated := 0
-	for data: Dictionary in [left, right]:
+	for data: Dictionary in datas:
+		if (data.wall_collision_arrays as Array).is_empty():
+			continue   # a chunk that owns no wall emits no skirt
 		var verts: PackedVector3Array = data.wall_collision_arrays[Mesh.ARRAY_VERTEX]
 		var seen := {}
 		for t in range(0, verts.size(), 12):
@@ -576,7 +598,7 @@ func test_adjacent_chunks_share_border_vertices_and_each_wall_once() -> void:
 			quads[key] = true
 	assert_eq(duplicated, 0, "no wall face is emitted by both chunks")
 	# Every wall of both chunks' points is skirted somewhere.
-	for chunk: Vector2i in [Vector2i(0, 0), Vector2i(1, 0)]:
+	for chunk: Vector2i in chunks:
 		for wall: Dictionary in _owned_walls(region, chunk):
 			var p: Vector2 = wall.a
 			var covered := false

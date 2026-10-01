@@ -36,6 +36,9 @@
 > `docs/qa/2026-09-30-dual-grid-terrain/result.md` (`before-*`/`after-*`/
 > `lowpass12-*`/`compare-*`/`gallery*` images on disk); ledger
 > `.superpowers/sdd/2026-09-30-dual-grid-terrain-tiles/`.
+> Production cliff style: `FieldTerrainStreamer.CLIFF_STYLE` defaults to `""` and `scenes/world.tscn`
+> sets `"sheet_bedrock"` (= `CliffRockStyle.PRODUCTION`); plain `"sheet"` now selects the plain-sheet
+> study, not production, and earlier entries saying world.tscn sets `CLIFF_STYLE = "sheet"` are superseded.
 
 > September 29 town review (stabilize, after merging the six streams). A
 > storey touching another building is never jetty-inset
@@ -3360,7 +3363,9 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
   only. Village code must not rebuild grass panels or infer logical owners from slope sub-quads.
 - **`field/CliffRockDressing.gd` + `CliffSlopeField.gd` + `CliffSlopeEnvelope.gd`** — the only
   world cliff dressing (`CliffRockStyle.PRODUCTION = "sheet_bedrock"`; retired style names fall
-  back to it). `CliffRockDressing.compute(region, chunk, seed, features, water)` takes the foot
+  back to it). `CliffRockDressing.compute(region, chunk, seed, features, water, water_blocks)` (`water_blocks`
+  is the worker's shared `WorldFieldBlockCache` used for neighbour water, a pure perf wiring
+  `FieldTerrainStreamer` sets as `mesher.water_blocks = _fields`) takes the foot
   lines from `wall_segments(owned.grow(24))`; `CliffSlopeField` splits each segment where its
   top/bottom change and adds outer-corner arcs. `CliffSlopeEnvelope` is a rounded envelope of
   the terrain itself on a 0.5 m world grid (crest scan lines at `12 b + 6`), with ridges,
