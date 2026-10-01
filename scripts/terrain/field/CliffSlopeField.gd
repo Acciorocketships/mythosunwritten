@@ -36,14 +36,18 @@ var rock_list:Array[Dictionary]=[]
 var _focus:=Rect2(-1e9,-1e9,2e9,2e9)
 var _features:FeatureContext
 var _water:WaterFieldContext
+var _water_blocks:WorldFieldBlockCache
 ## `walls`: wall segments as TerrainTileField.wall_segments returns them
 ## ({a, b: segment ends, normal: unit direction from the high toward the low
 ## side, top / bottom: Vector2 heights at a and b on the high / low side,
 ## high / low: the owning lattice points}). Synthetic walls may omit the
 ## owners; their heights are then linear between the ends.
+## `water_blocks`: an optional block cache over the same fields to share
+## across slopes (see _water_level); one is built otherwise.
 func _init(walls:Array,seed_value:int,region:HeightfieldRegion=null,focus:=Rect2(-1e9,-1e9,2e9,2e9),
-  features:FeatureContext=null,water:WaterFieldContext=null)->void:
+  features:FeatureContext=null,water:WaterFieldContext=null,water_blocks:WorldFieldBlockCache=null)->void:
  _seed=seed_value;_region=region;_focus=focus.grow(16.0);_features=features;_water=water
+ _water_blocks=water_blocks
  for wall:Dictionary in walls:_add_wall(wall)
  _add_outer_corners(walls)
  _find_open_ends()
@@ -611,8 +615,10 @@ const MARGIN:=8
 const EMERGE:=.5
 const COVER:=.01
 func _solid_top(env:ENVELOPE,q:Vector2)->float:
- var e:=env.at(q)
- var g:=env.ground_node(q)
+ return _solid_top_over(env,q,env.at(q),env.ground_node(q))
+
+## _solid_top given the envelope `e` and ground `g` at node q.
+func _solid_top_over(env:ENVELOPE,q:Vector2,e:float,g:float)->float:
  var raised:=smoothstep(RAISED,EMERGE,e-g)
  if raised>=1.0 or _region==null:return e-SINK
  # Painted ground (roads, plazas, towns) keeps its own surface: there the
@@ -629,22 +635,32 @@ func _solid_top(env:ENVELOPE,q:Vector2)->float:
  return e+(mesh-g)*(1.0-raised)+COVER*(1.0-raised)-SINK*raised
 
 var _mesh_cells:Dictionary={}
+## The four corner heights of each 2 m quad sampled so far (one quad serves
+## the sixteen solid nodes inside it).
+var _mesh_quads:Dictionary={}
 ## Height of the rendered terrain sheet (TerrainChunkMesher's 2 m quads, each
 ## pinned to the lattice point owning its centre, split along their
 ## (x0,z0)-(x1,z1) diagonal).
 func _mesh_height(q:Vector2)->float:
  var step:=TerrainChunkMesher.STEP
  var x0:=floorf(q.x/step)*step;var z0:=floorf(q.y/step)*step
- var point:=Vector2i(TerrainTileField.point_of(x0+step*.5,_region),TerrainTileField.point_of(z0+step*.5,_region))
- if not _mesh_cells.has(point):_mesh_cells[point]=TerrainTileField.bake_point(_region,point)
- var baked:PackedFloat32Array=_mesh_cells[point]
- var y:=func(x:float,z:float)->float:return TerrainTileField.sample_baked(baked,point,x,z,_region)
+ var quad:=Vector2(x0,z0)
+ var c:PackedFloat64Array=_mesh_quads.get(quad,PackedFloat64Array())
+ if c.is_empty():
+  var point:=Vector2i(TerrainTileField.point_of(x0+step*.5,_region),TerrainTileField.point_of(z0+step*.5,_region))
+  var baked:PackedFloat32Array=_mesh_cells.get(point,PackedFloat32Array())
+  if baked.is_empty():baked=TerrainTileField.bake_point(_region,point);_mesh_cells[point]=baked
+  c=PackedFloat64Array([TerrainTileField.sample_baked(baked,point,x0,z0,_region),
+   TerrainTileField.sample_baked(baked,point,x0+step,z0,_region),
+   TerrainTileField.sample_baked(baked,point,x0,z0+step,_region),
+   TerrainTileField.sample_baked(baked,point,x0+step,z0+step,_region)])
+  _mesh_quads[quad]=c
  var fx:=(q.x-x0)/step;var fz:=(q.y-z0)/step
- var y00:float=y.call(x0,z0);var y11:float=y.call(x0+step,z0+step)
+ var y00:=c[0];var y11:=c[3]
  if fx>=fz:
-  var y10:float=y.call(x0+step,z0)
+  var y10:=c[1]
   return y00+fx*(y10-y00)+fz*(y11-y10)
- var y01:float=y.call(x0,z0+step)
+ var y01:=c[2]
  return y00+fz*(y01-y00)+fx*(y11-y01)
 
 var _groups:Array[Dictionary]=[]
@@ -756,7 +772,7 @@ var _env:ENVELOPE
 func envelope()->ENVELOPE:
  if _env==null:
   var rect:=_focus.grow(12.0) if _focus.size.x<1e8 else _line_bounds().grow(30.0)
-  _env=ENVELOPE.build(rect,_ground_sampler(),_exclusion(rect.grow(ENVELOPE.PAD+1.0)),_seed,_water_level()) as ENVELOPE
+  _env=ENVELOPE.build(rect,_ground_sampler(),_exclusion(rect.grow(ENVELOPE.PAD+1.0)),_seed,_water_level(),_ground_grid()) as ENVELOPE
  return _env
 
 func _line_bounds()->Rect2:
@@ -772,11 +788,35 @@ func _line_bounds()->Rect2:
 ## ground()). A query on a wall line resolves to the point that owns it.
 func _ground_sampler()->Callable:
  if _region==null:return ground_at if ground_at.is_valid() else ground
- var baked:Dictionary={};var region:=_region
+ var baked:=_ground_baked;var region:=_region
  return func(q:Vector2)->float:
   var key:=Vector2i(TerrainTileField.point_of(q.x,region),TerrainTileField.point_of(q.y,region))
   if not baked.has(key):baked[key]=TerrainTileField.bake_point(region,key)
   return TerrainTileField.sample_baked(baked[key],key,q.x,q.y,region)
+
+## The same samples over a whole envelope grid (node (i, k) at
+## origin + (i, k) H), each point's bake looked up once per run of nodes.
+var _ground_baked:Dictionary={}
+func _ground_grid()->Callable:
+ if _region==null:return Callable()
+ var baked:=_ground_baked;var region:=_region
+ return func(origin:Vector2,w:int,h:int)->PackedFloat64Array:
+  var out:=PackedFloat64Array();out.resize(w*h)
+  # A node's x (its point column) depends on i alone, its z on k alone (the
+  # same single-precision sums as origin + Vector2(i, k) H).
+  var xs:=PackedFloat64Array();xs.resize(w);var pxs:=PackedInt32Array();pxs.resize(w)
+  for i in w:xs[i]=(origin+Vector2(i,0)*ENVELOPE.H).x;pxs[i]=TerrainTileField.point_of(xs[i],region)
+  var key:=Vector2i(1<<30,1<<30);var current:=PackedFloat32Array()
+  for k in h:
+   var z:=(origin+Vector2(0,k)*ENVELOPE.H).y;var pz:=TerrainTileField.point_of(z,region)
+   for i in w:
+    var at:=Vector2i(pxs[i],pz)
+    if at!=key:
+     key=at
+     if not baked.has(key):baked[key]=TerrainTileField.bake_point(region,key)
+     current=baked[key]
+    out[k*w+i]=TerrainTileField.sample_baked(current,key,xs[i],z,region)
+  return out
 
 ## Water level at a point (NAN where dry), queried only in or beside a carved
 ## channel or basin: the slope runs into water and sinks under it.
@@ -790,7 +830,10 @@ func _water_level()->Callable:
  # cliff chunks use identical constraints throughout their shared mesh halo.
  var canonical:WorldFieldBlockCache=null
  if region!=null and region.plan!=null:
-  canonical=WorldFieldBlockCache.new(region.plan,water.raw_context().water,0.0,0.0,16)
+  # Block levels are pure functions of the fields: a shared cache over the
+  # same fields (the streamer's, across chunks) returns the very same levels.
+  if _water_blocks!=null and _water_blocks.serves(region.plan,water.raw_context().water):canonical=_water_blocks
+  else:canonical=WorldFieldBlockCache.new(region.plan,water.raw_context().water,0.0,0.0,16)
  var home:=WorldFieldBlockCache.key_of(water.coverage().get_center())
  return func(q:Vector2)->float:
   var cell:=Vector2i(roundi(q.x/tile),roundi(q.y/tile))
@@ -914,39 +957,75 @@ func _columns(owned:Rect2)->Dictionary:
  var w:=hi.x-lo.x+1+2*MARGIN;var h:=hi.y-lo.y+1+2*MARGIN
  var top:=PackedFloat64Array();top.resize(w*h);top.fill(-INF)
  var grounds:=PackedFloat64Array();grounds.resize(w*h)
+ var row_any:=PackedByteArray();row_any.resize(h)
  for k in h:
   for i in w:
    var q:=Vector2(lo.x-MARGIN+i,lo.y-MARGIN+k)*GRID
    var s:float=env.at(q);var g:float=env.ground_node(q)
    grounds[k*w+i]=g
-   if s-g>RAISED:top[k*w+i]=s
+   if s-g>RAISED:top[k*w+i]=s;row_any[k]=1
  # Road/graded cuts can consume the whole raised slope. They still have
  # a cliff: seed its ground discontinuity so the solid supplies backing even
  # when no raised surface survives nearby.
  if STYLE.sheet_study=="bedrock":
+  var offsets:=PackedInt32Array([-1,1,-w,w])
   for k in range(1,h-1):
    for i in range(1,w-1):
     var idx:=k*w+i;var g:=grounds[idx]
-    for offset:int in [-1,1,-w,w]:
+    for offset:int in offsets:
      if absf(g-grounds[idx+offset])>=2.0:
-      top[idx]=maxf(top[idx],g);break
- # Highest raised surface within MARGIN nodes (separable max filter).
- var rows:=top.duplicate()
+      top[idx]=maxf(top[idx],g);row_any[k]=1;break
+ # Highest raised surface within MARGIN nodes (separable max filter, each
+ # line in linear time; a line with nothing raised stays -INF).
+ var rows:=PackedFloat64Array();rows.resize(w*h);rows.fill(-INF)
+ var any_row:=false
  for k in h:
-  for i in w:
-   var m:=-INF
-   for d in range(maxi(0,i-MARGIN),mini(w,i+MARGIN+1)):m=maxf(m,top[k*w+d])
-   rows[k*w+i]=m
+  if not row_any[k]:continue
+  any_row=true
+  var m:=_window_max(top.slice(k*w,k*w+w),MARGIN)
+  for i in w:rows[k*w+i]=m[i]
  var cols:Dictionary={}
+ if not any_row:
+  _column_cache[owned]=cols
+  return cols
+ var column:=PackedFloat64Array();column.resize(h)
+ var col_max:=PackedFloat64Array();col_max.resize(w*h);col_max.fill(-INF)
+ for i in range(MARGIN,w-MARGIN):
+  var any:=false
+  for k in h:
+   column[k]=rows[k*w+i];any=any or column[k]!=-INF
+  if not any:continue
+  var m:=_window_max(column,MARGIN)
+  for k in range(MARGIN,h-MARGIN):col_max[k*w+i]=m[k]
  for k in range(MARGIN,h-MARGIN):
   for i in range(MARGIN,w-MARGIN):
-   var m:=-INF
-   for d in range(k-MARGIN,k+MARGIN+1):m=maxf(m,rows[d*w+i])
+   var m:=col_max[k*w+i]
    # A bedrock notch can fall below its plateau. Its upper columns still
    # need meshing: the height comparison omitted them and exposed the void.
    if (is_finite(m) if STYLE.sheet_study=="bedrock" else m>grounds[k*w+i]-.5):cols[Vector2i(lo.x-MARGIN+i,lo.y-MARGIN+k)]=true
  _column_cache[owned]=cols
  return cols
+
+## Maximum of f over [i-r, i+r] clipped to the line, for every i, in linear
+## time (van Herk / Gil-Werman: prefix and suffix maxima of 2r+1 blocks).
+## Exactly the clipped window maximum (max is order-independent).
+static func _window_max(f:PackedFloat64Array,r:int)->PackedFloat64Array:
+ var n:=f.size();var size:=2*r+1
+ var pre:=PackedFloat64Array();pre.resize(n)
+ var suf:=PackedFloat64Array();suf.resize(n)
+ for i in n:pre[i]=f[i] if i%size==0 else maxf(pre[i-1],f[i])
+ for i in range(n-1,-1,-1):suf[i]=f[i] if (i%size==size-1 or i==n-1) else maxf(suf[i+1],f[i])
+ var out:=PackedFloat64Array();out.resize(n)
+ for i in n:
+  var a:=maxi(0,i-r);var b:=mini(n-1,i+r)
+  if a/size!=b/size:out[i]=maxf(suf[a],pre[b])
+  elif a%size==0:out[i]=pre[b]
+  elif b%size==size-1 or b==n-1:out[i]=suf[a]
+  else:
+   var m:=-INF
+   for d in range(a,b+1):m=maxf(m,f[d])
+   out[i]=m
+ return out
 
 ## Grass reuses the rendered solid triangles, spatially indexed in the
 ## support grid. Bilinear envelope heights are not the rendered surface on
@@ -966,11 +1045,13 @@ func grass_support(area:Rect2)->Dictionary:
  for k in h:
   for i in w:
    var key:=lo+Vector2i(i,k)
-   lifts[k*w+i]=env.at(Vector2(key)*GRID)-env.ground_node(Vector2(key)*GRID)
-   heights[k*w+i]=_solid_top(env,Vector2(key)*GRID)
+   var q:=Vector2(key)*GRID
+   var e:=env.at(q);var g:=env.ground_node(q)
+   lifts[k*w+i]=e-g
+   heights[k*w+i]=_solid_top_over(env,q,e,g)
    # Where the slope has sunk under the terrain (its foot), the terrain's own
    # grass grows; grass planted on the buried slope would be invisible.
-   if cols.has(key) and heights[k*w+i]>=env.ground_node(Vector2(key)*GRID)-.05:flags[k*w+i]=1
+   if heights[k*w+i]>=g-.05 and cols.has(key):flags[k*w+i]=1
  for r:Dictionary in rock_list:
   var c:Vector3=r.centre;var reach:=maxf(float(r.ry),maxf(float(r.ru),float(r.ro)))/.75
   for k in range(maxi(0,floori((c.z-reach)/GRID)-lo.y),mini(h,ceili((c.z+reach)/GRID)-lo.y+1)):

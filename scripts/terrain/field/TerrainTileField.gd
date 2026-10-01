@@ -37,6 +37,10 @@ const _CARDINALS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0
 
 
 static func spacing(region = null) -> float:
+	# HeightfieldRegion answers HeightfieldPlan.POINT; the type test spares the
+	# hot sampling paths a method lookup by name.
+	if region is HeightfieldRegion:
+		return HeightfieldPlan.POINT
 	if region != null and region.has_method("terrain_tile_size"):
 		var value: float = region.terrain_tile_size()
 		assert(is_finite(value) and value > 0.0)
@@ -93,10 +97,15 @@ static func tile_params(region, tile: Vector2i) -> PackedFloat32Array:
 	out[1] = region.surface_height(i + 1, j)
 	out[2] = region.surface_height(i + 1, j + 1)
 	out[3] = region.surface_height(i, j + 1)
-	out[4] = 1.0 if is_cliff_edge(region, Vector2i(i, j), Vector2i(1, 0)) else 0.0
-	out[5] = 1.0 if is_cliff_edge(region, Vector2i(i + 1, j), Vector2i(0, 1)) else 0.0
-	out[6] = 1.0 if is_cliff_edge(region, Vector2i(i, j + 1), Vector2i(1, 0)) else 0.0
-	out[7] = 1.0 if is_cliff_edge(region, Vector2i(i, j), Vector2i(0, 1)) else 0.0
+	# The four edges' cliff flags (is_cliff_edge) from the corners' storeys.
+	var sa := int(region.storey_at(i, j))
+	var sb := int(region.storey_at(i + 1, j))
+	var sc := int(region.storey_at(i + 1, j + 1))
+	var sd := int(region.storey_at(i, j + 1))
+	out[4] = 1.0 if absi(sa - sb) >= 2 else 0.0
+	out[5] = 1.0 if absi(sb - sc) >= 2 else 0.0
+	out[6] = 1.0 if absi(sd - sc) >= 2 else 0.0
+	out[7] = 1.0 if absi(sa - sd) >= 2 else 0.0
 	return out
 
 
@@ -246,6 +255,9 @@ static func surface_y_on_side(region, x: float, z: float, owner: Vector2i) -> fl
 
 
 static func _apply_grade(region, x: float, z: float, height: float) -> float:
+	if region is HeightfieldRegion:
+		# graded_height folds the (often empty) grade list over the height.
+		return height if region.terrain_grades.is_empty() else region.graded_height(x, z, height)
 	return region.graded_height(x, z, height) \
 		if region != null and region.has_method("graded_height") else height
 
@@ -307,6 +319,12 @@ static func wall_segments(region, rect: Rect2) -> Array[Dictionary]:
 	var i1 := ceili(rect.end.x / s) + 1
 	var j0 := floori(rect.position.y / s) - 1
 	var j1 := ceili(rect.end.y / s) + 1
+	# A half-segment lies inside one tile, where both owners evaluate the same
+	# tile at the same (u, v) and differ only in `side`, which matters only on
+	# a cliff crossing: a tile without a cliff edge has no wall (both owners'
+	# heights are bit-identical there), so it is skipped before sampling.
+	var storeys := {}
+	var cliff_tiles := {}
 	for j in range(j0, j1 + 1):
 		for i in range(i0, i1 + 1):
 			var p := Vector2i(i, j)
@@ -319,6 +337,9 @@ static func wall_segments(region, rect: Rect2) -> Array[Dictionary]:
 					var b: Vector2 = pair[1]
 					var seg := Rect2(a, Vector2.ZERO).expand(b)
 					if not seg.intersects(rect, true):
+						continue
+					var tile := Vector2i(floori((a.x + b.x) * 0.5 / s), floori((a.y + b.y) * 0.5 / s))
+					if not _tile_has_cliff(region, tile, storeys, cliff_tiles):
 						continue
 					var inset := (b - a) * 0.001
 					var pa := surface_y_on_side(region, a.x + inset.x, a.y + inset.y, p)
@@ -338,6 +359,24 @@ static func wall_segments(region, rect: Rect2) -> Array[Dictionary]:
 						"normal": Vector2(d) if p_high else -Vector2(d),
 					})
 	return out
+
+
+## Whether any edge of `tile` is a cliff edge (storeys two or more apart),
+## memoized per call in `cliff_tiles`, with the corner storeys in `storeys`.
+static func _tile_has_cliff(region, tile: Vector2i, storeys: Dictionary, cliff_tiles: Dictionary) -> bool:
+	if cliff_tiles.has(tile):
+		return cliff_tiles[tile]
+	var c := PackedInt32Array()
+	c.resize(4)
+	for k in 4:
+		var corner := tile + Vector2i([0, 1, 1, 0][k], [0, 0, 1, 1][k])
+		if not storeys.has(corner):
+			storeys[corner] = int(region.storey_at(corner.x, corner.y))
+		c[k] = storeys[corner]
+	var cliff := absi(c[0] - c[1]) >= 2 or absi(c[1] - c[2]) >= 2 \
+		or absi(c[3] - c[2]) >= 2 or absi(c[0] - c[3]) >= 2
+	cliff_tiles[tile] = cliff
+	return cliff
 
 
 # --- bounds ------------------------------------------------------------------------

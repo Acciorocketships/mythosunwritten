@@ -120,7 +120,13 @@ const WATER_SINK:=.4
 ## Rock relief may stand proud, but must not excavate metre-deep benches
 ## into an otherwise continuous mountain shoulder.
 const BEDROCK_RECESS:=.25
-static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:int,water_at:Callable=Callable())->RefCounted:
+## Tests only: run every transform even where the result is known to be the
+## ground (build's no-wall shortcut), to prove the shortcut exact.
+static var always_transform:=false
+## `ground_grid`, when given, returns ground_at over the whole grid at once
+## (origin, w, h -> the w*h node values, row by row): the same values, without
+## a call per node.
+static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:int,water_at:Callable=Callable(),ground_grid:=Callable())->RefCounted:
  var env:=new()
  var grid:=rect.grow(PAD)
  env.origin=(grid.position/H).floor()*H
@@ -130,12 +136,16 @@ static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:
  var clock:=Time.get_ticks_usec();var profile:=OS.has_environment("SLOPE_ENV_PROFILE")
  var mark:=func(label:String)->void:
   if profile:print("[slope_envelope] %s %.0f ms (%dx%d)"%[label,(Time.get_ticks_usec()-clock)/1000.0,env.w,env.h])
- env.ground.resize(n)
  var excluded:=PackedByteArray();excluded.resize(n)
  var any_excluded:=false
- for k in env.h:
-  for i in env.w:
-   env.ground[k*env.w+i]=ground_at.call(env.origin+Vector2(i,k)*H)
+ if ground_grid.is_valid():
+  env.ground=ground_grid.call(env.origin,env.w,env.h)
+  assert(env.ground.size()==n)
+ else:
+  env.ground.resize(n)
+  for k in env.h:
+   for i in env.w:
+    env.ground[k*env.w+i]=ground_at.call(env.origin+Vector2(i,k)*H)
  mark.call("ground")
  # Keep-out areas on a coarser lattice: water and feature queries are far
  # dearer than the ground, and the cut's margin absorbs the block size.
@@ -170,6 +180,18 @@ static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:
  var tight_sh:=TIGHT.x
  var tight_foot:=TIGHT.y
  var walls:=_walls(env,g,ground_at,wet_level)
+ mark.call("walls")
+ # Ground with no wall crest anywhere in the grid: every closing below
+ # returns the ground itself (an erosion never rises over its input, and each
+ # blend of equal surfaces is that surface), the fillet's gate is closed, no
+ # rock is exposed and no cap lowers it. Only the moss grade remains to compute.
+ if not always_transform and walls[0][0].count(-INF)==n and walls[1][0].count(-INF)==n:
+  env.surface=g.duplicate()
+  if STYLE.sheet_study=="bedrock":
+   env.moss_grade=_moss_grade(env,env.surface)
+   env.rock.resize(n)
+  mark.call("done (no walls)")
+  return env
  # Nodes a channel-fitted bank reaches (see CHANNEL_CORE).
  var channel:=PackedByteArray();channel.resize(n)
  # Each rounding also says how far along its walls it reaches (see the
@@ -178,11 +200,14 @@ static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:
  var along_wide:=PackedFloat64Array();along_wide.resize(n)
  var along_tight:=PackedFloat64Array();along_tight.resize(n)
  var along_tight_wide:=PackedFloat64Array();along_tight_wide.resize(n)
- var narrow:=_close_walls(g,walls,env.w,env.h,sh.x,foot,channel,along_narrow)
+ var ground_rows:={}
+ var narrow:=_close_walls(g,walls,env.w,env.h,sh.x,foot,channel,along_narrow,ground_rows)
+ mark.call("close narrow")
  var wide_dilated:=_dilate(g,env.w,env.h,sh.y+foot)
- var wide:=_close_walls(g,walls,env.w,env.h,sh.y,foot,channel,along_wide)
- var tight:=_close_walls(g,walls,env.w,env.h,tight_sh,tight_foot,channel,along_tight)
- var tight_wide:=_close_walls(g,walls,env.w,env.h,6.4,tight_foot,channel,along_tight_wide)
+ var wide:=_close_walls(g,walls,env.w,env.h,sh.y,foot,channel,along_wide,ground_rows)
+ var tight:=_close_walls(g,walls,env.w,env.h,tight_sh,tight_foot,channel,along_tight,ground_rows)
+ var tight_wide:=_close_walls(g,walls,env.w,env.h,6.4,tight_foot,channel,along_tight_wide,ground_rows)
+ mark.call("close all four")
  # Local relief: highest reach minus lowest reach nearby; continuous even
  # across the terrain's own cliffs, so the blend never opens a step.
  var floor_level:=_erode(g,env.w,env.h,SHOULDER.y+FOOT)
@@ -224,7 +249,9 @@ static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:
  # the wall: up over its top or over to an opposing bank).
  # In a fitted channel never above the water: filleting the valley between
  # opposing banks dammed the channel they were fitted to leave open.
+ mark.call("blend")
  var filleted:=_erode(_dilate(env.surface,env.w,env.h,FOOT),env.w,env.h,FOOT)
+ mark.call("fillet transform")
  for idx in n:
   var fill:=filleted[idx]
   if channel[idx] and _deep(wet_level,env.ground,idx):fill=minf(fill,wet_level[idx]-.3)
@@ -241,6 +268,7 @@ static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:
  # not a ceiling that flattens every rock ledge.
  var rock_caps:=caps.duplicate()
  for idx in n:env.surface[idx]=minf(env.surface[idx],maxf(env.ground[idx],caps[idx]))
+ mark.call("fillet and caps")
  if STYLE.sheet_study=="bedrock":
   # A dry rock face can stand proud; a submerged point must stay submerged.
   # Fade its available relief in above the actual bank/water contact.
@@ -261,7 +289,8 @@ static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:
   if any_wet:
    for idx in n:
     if _deep(wet_level,env.ground,idx):cliff[idx]*=1.0-smoothstep(-.5,0.0,wet_level[idx]-env.surface[idx])
-  _bedrock(env,floor_level,wide_dilated,cliff,seed_value,cut)
+  # Only a keep-out cap cuts the slope back.
+  _bedrock(env,floor_level,wide_dilated,cliff,seed_value,cut,any_excluded)
   for idx in n:env.surface[idx]=minf(env.surface[idx],maxf(env.ground[idx],rock_caps[idx]))
  mark.call("done")
  return env
@@ -309,7 +338,8 @@ static func _deep(wet:PackedFloat64Array,ground:PackedFloat64Array,idx:int)->boo
 
 ## Wall crests per direction: [0] walls along x (a drop between z-
 ## neighbours), [1] walls along z, each [crest height, drop, step toward the
-## low side], at the higher node; [2] convex corners (crests of both).
+## low side, water run, lead, water depth, crest node indices], at the higher
+## node; [2] convex corners (crests of both).
 static func _walls(env,g:PackedFloat64Array,ground_at:Callable,wet:=PackedFloat64Array())->Array:
  var w:int=env.w;var h:int=env.h;var n:=g.size()
  var out:=[]
@@ -383,7 +413,12 @@ static func _walls(env,g:PackedFloat64Array,ground_at:Callable,wet:=PackedFloat6
      var foot:=idx+toward[idx]*ahead
      if foot>=0 and foot<n and _wet(wet,env.ground,foot):
       depth[idx]=wet[foot]-env.ground[foot];break
-  out.append([crest,drop,toward,run,lead,depth])
+  # The crest nodes in index order (the closings visit only these).
+  var crests:=PackedInt32Array()
+  if crest.count(-INF)<n:
+   for idx in n:
+    if crest[idx]!=-INF:crests.append(idx)
+  out.append([crest,drop,toward,run,lead,depth,crests])
  var corners:=PackedFloat64Array();corners.resize(n)
  for idx in n:corners[idx]=minf(out[0][0][idx],out[1][0][idx])
  out.append(corners)
@@ -401,8 +436,11 @@ static func _walls(env,g:PackedFloat64Array,ground_at:Callable,wet:=PackedFloat6
 ## this is the former stamp.
 ## `along`, when given (sized like g), receives each wall's lift carried
 ## along the wall (dilated by the foot radius in the wall's own direction).
-static func _close_walls(g:PackedFloat64Array,walls:Array,w:int,h:int,shoulder:float,foot:float,channel:=PackedByteArray(),along:=PackedFloat64Array())->PackedFloat64Array:
+## `ground_rows`: a cache, shared by calls over the same ground, of its rows'
+## erosions per foot radius.
+static func _close_walls(g:PackedFloat64Array,walls:Array,w:int,h:int,shoulder:float,foot:float,channel:=PackedByteArray(),along:=PackedFloat64Array(),ground_rows=null)->PackedFloat64Array:
  var out:=g.duplicate()
+ var n:=g.size()
  for axis in 2:
   var crest:PackedFloat64Array=walls[axis][0];var drop:PackedFloat64Array=walls[axis][1]
   var toward:PackedInt32Array=walls[axis][2]
@@ -412,10 +450,16 @@ static func _close_walls(g:PackedFloat64Array,walls:Array,w:int,h:int,shoulder:f
   # scale that varies smoothly along the wall, so neighbouring columns never
   # jump between a fitted and a free bank.
   var scale:=PackedFloat64Array()
-  if walls[axis].size()>3:scale=_channel_scale(walls[axis],w,g.size(),axis,shoulder,foot)
+  if walls[axis].size()>3:scale=_channel_scale(walls[axis],w,n,axis,shoulder,foot)
   var fitted:=g.duplicate();var any_fitted:=false
-  for idx in g.size():
+  # The lines (columns for axis 0, rows for axis 1) a crest stamps; the
+  # stamps run along them. An unstamped line closes to its own ground, which
+  # an erosion never rises over: it is skipped (always_transform: not).
+  var lines:=PackedByteArray();lines.resize(w if axis==0 else h)
+  if always_transform:lines.fill(1)
+  for idx:int in (walls[axis][6] if walls[axis].size()>6 else range(n)):
    if crest[idx]==-INF:continue
+   lines[idx%w if axis==0 else idx/w]=1
    var shoulder_radius:=shoulder*clampf(LOW/drop[idx],1.0,WIDEN)
    var radius:=shoulder_radius+foot
    var lead:float=walls[axis][4][idx] if walls[axis].size()>4 else 0.0
@@ -429,7 +473,7 @@ static func _close_walls(g:PackedFloat64Array,walls:Array,w:int,h:int,shoulder:f
     var extent:=sqrt(2.0*(rs+rf)*drop[idx]);var x1:=extent*rs/(rs+rf)
     var base:float=crest[idx]-drop[idx]
     for j in ceili((extent+lead)/H)+1:
-     if q<0 or q>=g.size():break
+     if q<0 or q>=n:break
      var x:=maxf(0.0,j*H-lead)
      var y:=crest[idx]-x*x/(2.0*rs) if x<=x1 else base+(extent-x)*(extent-x)/(2.0*rf)
      fitted[q]=maxf(fitted[q],y)
@@ -440,7 +484,7 @@ static func _close_walls(g:PackedFloat64Array,walls:Array,w:int,h:int,shoulder:f
    var plain:=shoulder+foot
    var reach:=ceili((maxf(sqrt(2.0*plain*(drop[idx]+1.0)),sqrt(2.0*radius*drop[idx]))+lead)/H)+1
    for j in reach+1:
-    if q<0 or q>=g.size():break
+    if q<0 or q>=n:break
     var d:=maxf(0.0,j*H-lead)
     # The widened shoulder keeps the face's plan width, never its height:
     # it stands at most the crest's drop over the ground (see above).
@@ -449,19 +493,77 @@ static func _close_walls(g:PackedFloat64Array,walls:Array,w:int,h:int,shoulder:f
     # Stay in this row/column.
     if axis==1 and (q%w==0 and toward[idx]<0 or q%w==w-1 and toward[idx]>0):break
     q+=toward[idx]
-  var closed:=_envelope_axis(spread,w,h,H*H/(2.0*foot),axis==0)
-  for idx in out.size():out[idx]=maxf(out[idx],maxf(closed[idx],fitted[idx]) if any_fitted else closed[idx])
+  var closed:=_envelope_axis(spread,w,h,H*H/(2.0*foot),axis==0,lines)
+  # Where along each stamped line the closing lifts the ground: the lines
+  # across them (rows for axis 0) that carry any lift.
+  var lifted:=PackedByteArray();lifted.resize(h if axis==0 else w)
+  if always_transform:lifted.fill(1)
+  var lift:=PackedFloat64Array()
+  if not along.is_empty():
+   lift.resize(n);lift.fill(-0.0)
+  var count:=w if axis==0 else h
+  var length:=h if axis==0 else w
+  var stride:=w if axis==0 else 1
+  for line in count:
+   if not lines[line]:continue
+   var idx:=line if axis==0 else line*w
+   for t in length:
+    out[idx]=maxf(out[idx],maxf(closed[idx],fitted[idx]) if any_fitted else closed[idx])
+    if not along.is_empty():
+     lift[idx]=-maxf(closed[idx]-g[idx],0.0)
+     if lift[idx]<0.0:lifted[t]=1
+    idx+=stride
   if not along.is_empty():
    # Walls of axis 0 run along x (rows), of axis 1 along z (columns).
-   var lift:=PackedFloat64Array();lift.resize(g.size())
-   for idx in g.size():lift[idx]=-maxf(closed[idx]-g[idx],0.0)
-   lift=_envelope_axis(lift,w,h,H*H/(2.0*foot),axis==1)
-   for idx in g.size():along[idx]=maxf(along[idx],-lift[idx])
+   lift=_envelope_axis(lift,w,h,H*H/(2.0*foot),axis==1,lifted)
+   # A line with no lift erodes to zero everywhere: along keeps its value.
+   for line in lifted.size():
+    if not lifted[line]:continue
+    var idx:=line*w if axis==0 else line
+    for t in (w if axis==0 else h):
+     along[idx]=maxf(along[idx],-lift[idx])
+     idx+=1 if axis==0 else w
+ # Convex corners round isotropically. Without one the rounding is the
+ # ground's own erosion, which never rises over it.
  var corners:PackedFloat64Array=walls[2]
- var round:=_dilate(corners,w,h,shoulder+foot)
- for idx in round.size():round[idx]=maxf(round[idx],g[idx])
- round=_erode(round,w,h,foot)
- for idx in out.size():out[idx]=maxf(out[idx],round[idx])
+ if always_transform:
+  var full:=_dilate(corners,w,h,shoulder+foot)
+  for idx in full.size():full[idx]=maxf(full[idx],g[idx])
+  full=_erode(full,w,h,foot)
+  for idx in out.size():out[idx]=maxf(out[idx],full[idx])
+  return out
+ if corners.count(-INF)==n:return out
+ # The same closing, computed only where it can lift: a row without a corner
+ # dilates to nothing (it stays -INF until the column pass); the rounding
+ # stands over the ground only at nodes D, and elsewhere the erosion stays
+ # under the ground. Rows where the rounding is the ground erode exactly as
+ # the ground does (shared per foot in `ground_rows`).
+ var corner_rows:=PackedByteArray();corner_rows.resize(h)
+ for k in h:
+  for i in w:
+   if corners[k*w+i]!=-INF:corner_rows[k]=1;break
+ var neg:=PackedFloat64Array();neg.resize(n)
+ for idx in n:neg[idx]=-corners[idx]
+ var reach:=H*H/(2.0*(shoulder+foot))
+ neg=_envelope_axis(_envelope_axis(neg,w,h,reach,false,corner_rows),w,h,reach,true)
+ var round:=g.duplicate()
+ var lift_rows:=PackedByteArray();lift_rows.resize(h)
+ var lift_cols:=PackedByteArray();lift_cols.resize(w)
+ for idx in n:
+  var dilated:=-neg[idx]
+  if dilated>g[idx]:round[idx]=dilated;lift_rows[idx/w]=1;lift_cols[idx%w]=1
+ var a:=H*H/(2.0*foot)
+ if ground_rows==null:ground_rows={}
+ if not ground_rows.has(foot):ground_rows[foot]=_envelope_axis(g,w,h,a,false)
+ var lifted_rows:=_envelope_axis(round,w,h,a,false,lift_rows)
+ var row_pass:PackedFloat64Array=(ground_rows[foot] as PackedFloat64Array).duplicate()
+ for k in h:
+  if not lift_rows[k]:continue
+  for i in w:row_pass[k*w+i]=lifted_rows[k*w+i]
+ round=_envelope_axis(row_pass,w,h,a,true,lift_cols)
+ for i in w:
+  if not lift_cols[i]:continue
+  for k in h:out[k*w+i]=maxf(out[k*w+i],round[k*w+i])
  return out
 
 ## Horizontal squeeze (area scale) of each crest's closed profile so its bank
@@ -498,24 +600,31 @@ static func _channel_scale(wall:Array,w:int,n:int,axis:int,shoulder:float,foot:f
  return root
 
 ## min over nodes of the same column (or row) of f(p) + a*|q-p|^2.
-static func _envelope_axis(f:PackedFloat64Array,w:int,h:int,a:float,columns:bool)->PackedFloat64Array:
- var out:=f.duplicate()
+## `only`, when given (one flag per column or row): lines without a flag are
+## left as they are.
+static func _envelope_axis(f:PackedFloat64Array,w:int,h:int,a:float,columns:bool,only:=PackedByteArray())->PackedFloat64Array:
  var n:=maxi(w,h)
- var line:=PackedFloat64Array();line.resize(n)
  var result:=PackedFloat64Array();result.resize(n)
  var v:=PackedInt32Array();v.resize(n)
  var z:=PackedFloat64Array();z.resize(n+1)
  if columns:
+  var out:=f.duplicate()
+  var line:=PackedFloat64Array();line.resize(h)
   for i in w:
+   if not only.is_empty() and not only[i]:continue
    for k in h:line[k]=f[k*w+i]
    _envelope1(line,h,a,result,v,z)
    for k in h:out[k*w+i]=result[k]
- else:
-  for k in h:
-   for i in w:line[i]=f[k*w+i]
+  return out
+ # Rows are contiguous: copied in and out whole.
+ var rows:=PackedFloat64Array()
+ for k in h:
+  var line:=f.slice(k*w,k*w+w)
+  if only.is_empty() or only[k]:
    _envelope1(line,w,a,result,v,z)
-   for i in w:out[k*w+i]=result[i]
- return out
+   line=result.slice(0,w)
+  rows.append_array(line)
+ return rows
 
 ## Separable square-window max (or min) over `reach` metres, in linear time
 ## (van Herk / Gil-Werman: block prefix and suffix extrema).
@@ -717,21 +826,7 @@ static func _distance(mask:PackedByteArray,w:int,h:int)->PackedFloat64Array:
 
 ## min over nodes of f(p) + a*|q-p|^2 (grid units): rows then columns.
 static func _envelope2(f:PackedFloat64Array,w:int,h:int,a:float)->PackedFloat64Array:
- var out:=f.duplicate()
- var n:=maxi(w,h)
- var line:=PackedFloat64Array();line.resize(n)
- var result:=PackedFloat64Array();result.resize(n)
- var v:=PackedInt32Array();v.resize(n)
- var z:=PackedFloat64Array();z.resize(n+1)
- for k in h:
-  for i in w:line[i]=out[k*w+i]
-  _envelope1(line,w,a,result,v,z)
-  for i in w:out[k*w+i]=result[i]
- for i in w:
-  for k in h:line[k]=out[k*w+i]
-  _envelope1(line,h,a,result,v,z)
-  for k in h:out[k*w+i]=result[k]
- return out
+ return _envelope_axis(_envelope_axis(f,w,h,a,false),w,h,a,true)
 
 ## Lower envelope of the parabolas f[k] + a*(q-k)^2 (Felzenszwalb and
 ## Huttenlocher). Infinite entries take no part.
@@ -788,7 +883,19 @@ static func _blur(f:PackedFloat64Array,w:int,h:int,r:int)->PackedFloat64Array:
 const BLOCK:=5.5
 const PATCH:=14.0
 const STRETCH:=2.2
-static func _bedrock(env,floor_level:PackedFloat64Array,top:PackedFloat64Array,cliff:PackedFloat64Array,seed_value:int,cut:PackedFloat64Array)->void:
+## The bedrock moss grade of surface F (as _bedrock computes it): the slope's
+## steepness, blurred; zero on the grid border.
+static func _moss_grade(env,F:PackedFloat64Array)->PackedFloat64Array:
+ var n:int=env.w*env.h;var w:int=env.w;var hh:int=env.h
+ var grade:=PackedFloat64Array();grade.resize(n)
+ for k in range(1,hh-1):
+  for i in range(1,w-1):
+   var idx:=k*w+i
+   var gx:=(F[idx+1]-F[idx-1])/(2.0*H);var gz:=(F[idx+w]-F[idx-w])/(2.0*H)
+   grade[idx]=1.0-1.0/sqrt(1.0+gx*gx+gz*gz)
+ return _blur(grade,w,hh,2)
+## `any_cut`: false when `cut` is zero everywhere.
+static func _bedrock(env,floor_level:PackedFloat64Array,top:PackedFloat64Array,cliff:PackedFloat64Array,seed_value:int,cut:PackedFloat64Array,any_cut:=true)->void:
  var n:int=env.w*env.h;var w:int=env.w;var hh:int=env.h
  var F:PackedFloat64Array=env.surface.duplicate()
  env.moss_grade.resize(n)
@@ -832,10 +939,12 @@ static func _bedrock(env,floor_level:PackedFloat64Array,top:PackedFloat64Array,c
  raw=_blur(_blur(raw,w,hh,2),w,hh,2)
  # Benches stay clear of cut faces too: a tread running out over a cut's
  # crease stood proud as a lone column.
- var cut_zone:=PackedFloat64Array();cut_zone.resize(n)
- for idx in n:cut_zone[idx]=smoothstep(.05,.3,cut[idx])
- cut_zone=_blur(_blur(cut_zone,w,hh,2),w,hh,2)
- for idx in n:patch[idx]*=1.0-smoothstep(0.0,.2,cut_zone[idx])
+ # (Without a cut the zone is zero and leaves the patch as it is.)
+ if any_cut or always_transform:
+  var cut_zone:=PackedFloat64Array();cut_zone.resize(n)
+  for idx in n:cut_zone[idx]=smoothstep(.05,.3,cut[idx])
+  cut_zone=_blur(_blur(cut_zone,w,hh,2),w,hh,2)
+  for idx in n:patch[idx]*=1.0-smoothstep(0.0,.2,cut_zone[idx])
  patch=_blur(_blur(patch,w,hh,2),w,hh,2)
  var cells:={}
  var cell_at:=func(c:Vector2i)->Array:

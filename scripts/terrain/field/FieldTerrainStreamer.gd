@@ -228,6 +228,8 @@ func _ready() -> void:
 	# ordinary play. Detailed bounded event samples remain explicitly opt-in.
 	_features.profile_stage_callback = Callable(self, "_begin_worker_phase")
 	_fields.profile_callback = Callable(self, "_profile_field_operation")
+	# The cliff slope samples neighbouring blocks' water from the same cache.
+	_mesher.water_blocks = _fields
 	_mesher.phase_callback = Callable(self, "_begin_worker_phase")
 	_features.set_progress_callback(Callable(self, "_on_feature_context_progress"))
 	_features.set_planning_progress_callback(

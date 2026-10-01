@@ -36,6 +36,13 @@ func _init(plan: HeightfieldPlan, water_plan: WaterPlan, query_margin: float,
 	_shore_limit = shore_limit
 	_capacity = capacity
 
+## Whether this cache was built over these fields. Its blocks' regions and
+## water levels are then the ones any cache over them builds: the query
+## margin and shore limit set only a context's coverage (always its whole
+## block) and its shore curves, never its levels (WaterFieldContext.build).
+func serves(plan: HeightfieldPlan, water_plan: WaterPlan) -> bool:
+	return _plan == plan and _water_plan == water_plan
+
 static func key_of(world_xz: Vector2) -> Vector2i:
 	return Vector2i(int(floor(world_xz.x / BLOCK_WORLD)),
 		int(floor(world_xz.y / BLOCK_WORLD)))

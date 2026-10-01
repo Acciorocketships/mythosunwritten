@@ -24,11 +24,14 @@ static func owned_rect(chunk:Vector2i)->Rect2:
  var s:=TerrainTileField.SPACING
  return Rect2(Vector2(chunk*POINTS_PER_CHUNK)*s-Vector2.ONE*s*.5,Vector2.ONE*POINTS_PER_CHUNK*s)
 
+## `water_blocks`: see CliffSlopeField._init (the mesher shares one across
+## its chunks).
 static func compute(region:HeightfieldRegion,chunk:Vector2i,seed_value:int,
-  features:FeatureContext=null,water:WaterFieldContext=null)->Dictionary:
+  features:FeatureContext=null,water:WaterFieldContext=null,
+  water_blocks:WorldFieldBlockCache=null)->Dictionary:
  var owned:=owned_rect(chunk)
  var walls:=TerrainTileField.wall_segments(region,owned.grow(WALL_HALO))
- var slope:=SLOPE_FIELD.new(walls,seed_value,region,owned,features,water)
+ var slope:=SLOPE_FIELD.new(walls,seed_value,region,owned,features,water,water_blocks)
  var placements:Array[Dictionary]=slope.solid(owned)
  # Basal rocks stand in the ground, which swells to meet them: the skirt over
  # the sheet joins the sheet's own mesh.

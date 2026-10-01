@@ -453,7 +453,8 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 	if phase_callback.is_valid(): phase_callback.call(chunk, &"terrain_arches")
 	var arches := ARCHES.compute(region, lo.x, lo.y, POINTS_PER_CHUNK, _water_seed, features, _skirt_uv)
 	if phase_callback.is_valid(): phase_callback.call(chunk, &"cliff_formations")
-	var rocks := CLIFF_ROCKS.compute(region, chunk, _water_seed, features, water)
+	var rocks := CLIFF_ROCKS.compute(region, chunk, _water_seed, features, water,
+		_canonical_water_blocks(region, water))
 	# The slope solid buries most of each skirt; the faces it covers are withdrawn.
 	wall_arrays = rocks.sheet_cover.uncovered_faces(wall_arrays)
 	rocks.erase("sheet_cover")
@@ -473,6 +474,24 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 		"structure_clearance": arches.clearance,
 		"world_seed": _water_seed,
 	}
+
+
+## The cliff slope reads water levels per world block
+## (CliffSlopeField._water_level). Block levels are pure functions of the
+## plans, so the worker's own field cache (`water_blocks`, set by the
+## streamer) serves every chunk; without one the mesher keeps its own.
+## Building them per chunk rebuilt the neighbours' water for every chunk.
+var water_blocks: WorldFieldBlockCache
+var _own_water_blocks: WorldFieldBlockCache
+func _canonical_water_blocks(region: HeightfieldRegion, water: WaterFieldContext) -> WorldFieldBlockCache:
+	if water == null or region.plan == null:
+		return null
+	var water_plan: WaterPlan = water.raw_context().water
+	if water_blocks != null and water_blocks.serves(region.plan, water_plan):
+		return water_blocks
+	if _own_water_blocks == null or not _own_water_blocks.serves(region.plan, water_plan):
+		_own_water_blocks = WorldFieldBlockCache.new(region.plan, water_plan, 0.0, 0.0, 16)
+	return _own_water_blocks
 
 
 ## Main-thread half of chunk generation. This is deliberately the only path
