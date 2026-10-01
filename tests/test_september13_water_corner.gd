@@ -15,13 +15,26 @@ func fields()->WorldFieldBlockCache:
 ## far-end water). The nearest strong hit is x 1185..1191, z 18.625: rise
 ## 0.78 m, dry bank ground 15.77 m at (1190,21.625) over 15.0 m water.
 func test_photographed_bank_keeps_connected_water_above_its_lower_reach()->void:
-	var field:=fields().water_at(Vector2(1188,18.625))
-	var lower:=field.level_at(Vector2(1185,18.625))
+	_assert_connected_rising_line(Vector2(1185,18.625))
+
+## Regression (dual-grid water, 2026-10-01): the same scan over chunks
+## (4..6,-1..1) also hits x 1191.75..1197.75, z 183.625. Its 3 m rescue cells
+## have their far edge on the wall line z = 186 (12 i + 6), where a cliff dies
+## into a slope at x = 1194 (E2: wall from the tile centre on, a steep ramp
+## before it). The shore-support probe on that edge read the ramp's midline
+## (12.0) for x < 1194 and the wall top (14.0) from x = 1194: the correction
+## jumped and so did the water (0.083 m at x = 1194).
+func test_rescued_bank_beside_a_dying_wall_has_no_step()->void:
+	_assert_connected_rising_line(Vector2(1191.75,183.625))
+
+func _assert_connected_rising_line(start:Vector2)->void:
+	var field:=fields().water_at(start+Vector2(3,0))
+	var lower:=field.level_at(start)
 	var worst:=INF
 	var previous:=lower
 	var jump:=0.0
 	for i in 601:
-		var p:=Vector2(1185+i*.01,18.625)
+		var p:=start+Vector2(i*.01,0)
 		var level:=field.level_at(p)
 		assert_true(is_finite(level),"the whole photographed bank is wet")
 		worst=minf(worst,level)

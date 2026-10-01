@@ -173,6 +173,57 @@ func test_spill_surface_is_continuous_where_the_cliff_ends() -> void:
 		assert_lt(worst, 0.05, "no tear along z at x = %.1f (%.3f m within 1 mm at z = %.3f)" % [x, worst, at])
 
 
+## The 3 m rescue lattice keeps nodes on dual borders, so a fine cell's edge
+## can lie on a wall line. Where that wall dies (E2: wall from the tile centre
+## on, a steep ramp before it) the terrain ON the line is the ramp's midline
+## before the wall end and the wall top after it: a shore-support probe read
+## there switched with the terrain owner and stepped the water mid-pool.
+## Fixture (the photographed site, 2026-10-01): tile (0, 0) with corners 12
+## (0,0), 8 (12,0), 16 (12,12), 12 (0,12); its right edge is a two-storey
+## cliff, so the wall on z = 6 runs x 6..12 and dies into the ramp at x = 6.
+## Rescue water at 11.95 on the row z = 3, dry nodes on the wall line z = 6.
+## Scanned along z = 3.625 across x = 6 at 1 cm.
+func test_rescue_shore_is_continuous_where_its_edge_wall_dies() -> void:
+	var storeys := {}
+	var levels_map := {}
+	for j in range(-6, 7):
+		for i in range(-6, 7):
+			var h := 12
+			if i >= 1:
+				h = 8 if j <= 0 else 16
+			storeys[Vector2i(i, j)] = h / 4
+			levels_map[Vector2i(i, j)] = 0
+	var region := HeightfieldRegion.new(storeys, levels_map)
+	assert_almost_eq(TerrainTileField.surface_y(region, 6.0, 6.0) - TerrainTileField.surface_y(region, 6.0, 5.999),
+		4.0, 0.01, "fixture: the wall on z = 6 stands from x = 6 on")
+	var base := Vector2(-15.0, -15.0)
+	var n := 6
+	var coarse := PackedFloat32Array(); coarse.resize(n * n); coarse.fill(-INF)
+	var sub_n := WaterField.FILL_SUB_M + 1
+	var sub := PackedFloat32Array(); sub.resize(sub_n * sub_n); sub.fill(-INF)
+	var sub_ground := PackedFloat32Array(); sub_ground.resize(sub_n * sub_n); sub_ground.fill(INF)
+	for x: float in [0.0, 3.0, 6.0, 9.0, 12.0]:
+		var node := Vector2i(((Vector2(x, 3.0) - base) / WaterField.FILL_SUB_STEP).round())
+		sub[node.y * sub_n + node.x] = 11.95
+	var ctx := {"fill_base": base, "fill_size": n, "region": region,
+		"fill": {"levels": coarse, "sub_levels": sub, "sub_ground": sub_ground}}
+	var prev: float = WaterField._fill_bilinear(ctx, Vector2(3.0, 3.625))
+	var worst := 0.0
+	var at := 0.0
+	var dry := 0
+	for k in range(1, 601):
+		var p := Vector2(3.0 + k * 0.01, 3.625)
+		var l: float = WaterField._fill_bilinear(ctx, p)
+		if not (l > TerrainTileField.surface_y(region, p.x, p.y) + WaterField.EPS):
+			dry += 1
+		if absf(l - prev) > worst:
+			worst = absf(l - prev)
+			at = p.x
+		prev = l
+	assert_eq(dry, 0, "the rescued row stays wet")
+	assert_lte(worst, 0.01, "no step along the rescued row (%.4f m at x = %.2f)" % [worst, at])
+
+
 func test_water_code_has_no_native_cliff_piece_dependency() -> void:
 	var dir := DirAccess.open("res://scripts/terrain/water")
 	var offenders: Array = []

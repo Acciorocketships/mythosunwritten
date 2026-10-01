@@ -2309,6 +2309,16 @@ static func _fill_bilinear_sub(c: Dictionary, p: Vector2, i0: int, j0: int,
 ## plane, continuously fading the correction across the cell. Each resolution
 ## uses its own actual dry edges; fine cells inherit the bounded coarse values
 ## at unrescued corners to preserve their shared boundary.
+##
+## The edge's ground is read just off the edge line on its +x / +z side, the
+## side TerrainTileField.point_of gives a node ON that line. A 3 m rescue edge
+## can lie on a dual border (12 i + 6): where a wall on it dies into its E2
+## ramp, the terrain exactly on the line is the ramp's midline before the wall
+## end and the owner's wall side after it, so an on-line probe jumped there
+## and stepped the water across the whole cell. The one-sided limit is
+## continuous along the line and agrees with the corner nodes' dry heights;
+## both cells sharing the edge read the same value.
+const SHORE_EDGE_PROBE := 0.001
 static func _shore_support_level(c: Dictionary, p: Vector2, interpolated: float,
 		head: float, origin: Vector2, step: float,
 		dry_heights: PackedFloat32Array) -> float:
@@ -2324,7 +2334,9 @@ static func _shore_support_level(c: Dictionary, p: Vector2, interpolated: float,
 		var q := a.lerp(b, t)
 		var limiting_head := lerpf(minf(head, dry_heights[edge.x] + EPS - SHORE_DRY_DEPTH),
 			minf(head, dry_heights[edge.y] + EPS - SHORE_DRY_DEPTH), t)
-		var edge_ground := TerrainTileField.surface_y(c.region, q.x, q.y)
+		# Edges (0, 2) / (1, 3) run along z (x constant); (0, 1) / (2, 3) along x.
+		var off := Vector2(SHORE_EDGE_PROBE, 0.0) if edge.y - edge.x == 2 else Vector2(0.0, SHORE_EDGE_PROBE)
+		var edge_ground := TerrainTileField.surface_y(c.region, q.x + off.x, q.y + off.y)
 		var edge_support := _fine_edge_support(c, q, edge_ground + EPS - SHORE_DRY_DEPTH)
 		var excess := maxf(limiting_head - edge_support, 0.0)
 		var support := clampf(p.distance_to(q) / step, 0.0, 1.0)
