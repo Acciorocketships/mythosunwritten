@@ -14,8 +14,12 @@ func fields()->WorldFieldBlockCache:
 ## dry bank (a dry sample 3 m to the side of the far half standing above the
 ## far-end water). The nearest strong hit is x 1185..1191, z 18.625: rise
 ## 0.78 m, dry bank ground 15.77 m at (1190,21.625) over 15.0 m water.
+## Re-pinned again (terrain regimes, 2026-10-02): x 1185, z 18.625 is dry under
+## the regime field. The same scan over chunks (-6..6, -6..6) finds x
+## -612..-606, z -845.375: rise 1.76 m, dry bank ground 16.0 m at
+## (-607, -848.375) over 13.15 m water.
 func test_photographed_bank_keeps_connected_water_above_its_lower_reach()->void:
-	_assert_connected_rising_line(Vector2(1185,18.625))
+	_assert_connected_rising_line(Vector2(-612,-845.375))
 
 ## Regression (dual-grid water, 2026-10-01): the same scan over chunks
 ## (4..6,-1..1) also hits x 1191.75..1197.75, z 183.625. Its 3 m rescue cells
@@ -24,8 +28,12 @@ func test_photographed_bank_keeps_connected_water_above_its_lower_reach()->void:
 ## before it). The shore-support probe on that edge read the ramp's midline
 ## (12.0) for x < 1194 and the wall top (14.0) from x = 1194: the correction
 ## jumped and so did the water (0.083 m at x = 1194).
+## Re-pinned (terrain regimes, 2026-10-02): z 183.625 is dry under the regime
+## field. Of the chunk (-6..6)^2 scan hits, x 1264.25..1270.25, z 171.625 is
+## the one beside a wall that ends inside the line: its far edge lies on the
+## wall line z = 174 and the wall stops at x = 1266.
 func test_rescued_bank_beside_a_dying_wall_has_no_step()->void:
-	_assert_connected_rising_line(Vector2(1191.75,183.625))
+	_assert_connected_rising_line(Vector2(1264.25,171.625))
 
 ## PARKED (dual-grid water, 2026-10-01): the same scan also hits x
 ## 1225..1231, z -56.375. A 3 m rescue node on the wall corner (1230,-54) reads
@@ -70,15 +78,18 @@ func _assert_connected_rising_line(start:Vector2)->void:
 	assert_lte(m.pit,.001,"the connected upper water cannot form a pit below the lower reach beside a high dry bank")
 	assert_lte(m.jump,.01,"coarse/fine ownership cannot insert a step into the same water body")
 
-## Same re-pinned corner as above: the window spans the rising reach and its
-## dry bank (x 1183..1191, z 16..21).
+## Same re-pinned corner as the photographed bank above: the window spans the
+## rising reach and its dry bank (x -614..-606, z -848..-843).
 func test_photographed_swimming_surface_matches_the_visible_corner()->void:
-	var field:=fields().water_at(Vector2(1188,18.625))
-	var sampler:=WaterSampler.build(field.raw_context(),field._region,Vector2(1183,16),1,10,7)
+	var field:=fields().water_at(Vector2(-609,-845.375))
+	var sampler:=WaterSampler.build(field.raw_context(),field._region,Vector2(-614,-848),1,10,7)
 	var worst:=0.0
+	var checked:=0
 	for z in 11:
 		for x in 81:
-			var p:=Vector2(1183+x*.1,16+z*.5)
+			var p:=Vector2(-614+x*.1,-848+z*.5)
 			if not field.is_wet(p):continue
+			checked+=1
 			worst=maxf(worst,absf(sampler.level_at(p)-field.level_at(p)))
+	assert_gt(checked,100,"the window holds the reported wet corner")
 	assert_lte(worst,.001,"the frozen swimming surface must agree with visible water at the reported bank")
