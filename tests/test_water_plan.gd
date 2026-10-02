@@ -6,8 +6,10 @@ extends GutTest
 
 const SEED := 991177
 
+# Production amplitude: since the 2026-10-02 regime field (metres over the
+# 128 m amplitude) a 22 m world never reaches the 15.36 m headwater floor.
 func _plan() -> WaterPlan:
-	return WaterPlan.new(SEED, 22.0, 8)
+	return TerrainWorldTuning.make_water(SEED)
 
 ## Scan a super-cell window for cells that have a source. Returns Array[Vector2i].
 func _sources_in(plan: WaterPlan, r: int) -> Array:
@@ -419,7 +421,7 @@ func test_source_pos_is_cached_and_pure() -> void:
 # gated-out terms all contribute exactly 0. Sweeps a band far enough out to
 # cross rivers/ponds for this seed; the wet-count guard keeps the sweep honest.
 func test_carve_lazy_gates_match_reference():
-	var w := WaterPlan.new(991177, 22.0, 8)
+	var w := TerrainWorldTuning.make_water(991177)
 	var checked := 0
 	var wet := 0
 	for cz in range(-90, 91, 3):
@@ -515,7 +517,7 @@ func test_carve_at_is_pure_in_position_across_instances_and_order() -> void:
 # but to THIS super-cell's first cell), must equal a brute-force evaluation over
 # every river/pond of the owning region.
 func test_carve_at_twelve_metre_points_match_bruteforce_reference() -> void:
-	var w := WaterPlan.new(991177, 22.0, 8)
+	var w := TerrainWorldTuning.make_water(991177)
 	var wet := 0
 	var border := 0
 	var checked := 0

@@ -268,7 +268,9 @@ func test_wall_face_is_the_measured_dual_border() -> void:
 func test_pond_level_respects_every_twelve_metre_point() -> void:
 	var checked := 0
 	for seed_value: int in [2697992464, 991177]:
-		var plan := WaterPlan.new(seed_value, 22.0, 8)
+		# Production amplitude: a 22 m world has no rivers since the 2026-10-02
+		# regime field (it never reaches the 15.36 m headwater floor).
+		var plan := TerrainWorldTuning.make_water(seed_value)
 		for sz in range(-6, 7):
 			for sx in range(-6, 7):
 				if not plan.has_source(Vector2i(sx, sz)):
@@ -299,7 +301,7 @@ func test_pond_level_respects_every_twelve_metre_point() -> void:
 ## river centreline crosses is excavated to the channel bed, so the carved
 ## points along a river form one cardinally connected chain.
 func test_carve_is_continuous_along_a_trace_at_twelve_metre_points() -> void:
-	var w := WaterPlan.new(SEED, 22.0, 8)
+	var w := TerrainWorldTuning.make_water(SEED)
 	var traced := 0
 	var checked := 0
 	for sz in range(-2, 3):
