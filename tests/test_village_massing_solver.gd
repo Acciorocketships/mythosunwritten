@@ -88,8 +88,10 @@ func test_reported_seed_exposes_a_viable_compact_terrain_led_core() -> void:
 		feature_program.query_margin, feature_program.shore_distance_limit,
 		feature_program.field_cache_cap)
 	var settlements := SettlementPlan.new(seed_value, water_plan)
-	# Re-pinned (terrain regimes, 2026-10-02): (0, -1) has no site any more.
-	var site := settlements.site_for(Vector2i(0, -2))
+	# Re-pinned (terrain regimes, 2026-10-02): (0, -1) has no site any more and
+	# (0, -2)'s site is a platform cluster; (-1, -1) is the nearest site whose
+	# terrain-led massing solves (8 buildings).
+	var site := settlements.site_for(Vector2i(-1, -1))
 	assert_false(site.is_empty())
 	var centre := Vector2(site.cell) * HeightfieldPlan.CELL
 	var tier := VillageProgram.production_tier(0.5)
