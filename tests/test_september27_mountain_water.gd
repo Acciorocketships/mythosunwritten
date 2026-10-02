@@ -27,18 +27,20 @@ func test_every_river_leaves_its_summit() -> void:
 ## The reported mountain: its summit spring (super-cell (0,1)) looped round a
 ## 20 m circle and ended in a lake 79 m below the flank, excavating the
 ## 12 m staircase the owner photographed. The mountain now keeps its ground.
+## Re-pinned (terrain regimes, 2026-10-02): the reported mountain is gone
+## (district (0, 1) now holds an ordinary river). A scan of districts -6..6 for
+## a summit spring rejected only by the leave-the-summit rule finds (-5, -6):
+## a 59 m summit at (-3337.9, -3858.4) whose walk loops (11 steps, 43 m reach).
 func test_reported_mountain_is_not_excavated_by_a_flank_lake() -> void:
 	var water := TerrainWorldTuning.make_water(SEED)
-	assert_false(water.has_source(Vector2i(0, 1)), "the looping summit spring feeds no river")
+	assert_false(water.has_source(Vector2i(-5, -6)), "the looping summit spring feeds no river")
 	var plan := TerrainWorldTuning.make_heightfield(SEED, water)
 	var carved := 0
-	# x 408..528, z 816..936 (12 m terrain points 34..44 x 68..78); the next
-	# 24 m column east lies in the bank feather of the real river (0,0) and is
-	# legitimately graded by up to 3.8 m.
-	for cz in range(68, 79):
-		for cx in range(34, 45):
+	# 12 m terrain points within 60 m of the summit (x -3396..-3276, z -3924..-3804).
+	for cz in range(-327, -316):
+		for cx in range(-283, -272):
 			if plan.raw_height(cx, cz) < plan.uncarved_height(cx, cz) - 0.01: carved += 1
-	assert_eq(carved, 0, "no water body excavates the reported mountainside")
+	assert_eq(carved, 0, "no water body excavates the summit's flanks")
 
 
 class CascadeWater extends WaterFieldContext:

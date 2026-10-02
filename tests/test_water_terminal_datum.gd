@@ -2,11 +2,15 @@ extends GutTest
 
 func test_terminal_lake_cannot_raise_an_excavated_river() -> void:
 	var water := TerrainWorldTuning.make_water(2697992464)
-	# Source (0,1) was the looping summit spring retired September 27; check
-	# nearby rivers instead (three of these four districts fire).
+	# Re-pinned (terrain regimes, 2026-10-02): the four named districts no
+	# longer fire, so check the first rivers of the central 5x5 window.
 	var checked := 0
-	for source in [Vector2i(-2, -2), Vector2i(-1, -1), Vector2i(1, 1), Vector2i.ZERO]:
-		if not water.has_source(source): continue
+	var sources: Array[Vector2i] = []
+	for z in range(-2, 3):
+		for x in range(-2, 3):
+			if sources.size() < 4 and water.has_source(Vector2i(x, z)):
+				sources.append(Vector2i(x, z))
+	for source in sources:
 		checked += 1
 		var river := water.river_for(source, 0)
 		var target := river.beds[-1] + WaterField.SURFACE_RIDE
