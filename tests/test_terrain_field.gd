@@ -37,7 +37,8 @@ func test_no_archetype_clips_at_the_amplitude() -> void:
 				top = maxf(top, TerrainField.height_m(Vector2(x * 61.0 + 3000.0, z * 59.0), SEED, true))
 		assert_lt(top, TerrainField.REF_AMPLITUDE - 0.5, "%s stays under the ceiling" % a)
 
-## A real jump does not shrink when re-sampled finer; a steep riser does.
+## A real jump survives bisection down to half a micrometre; a steep riser
+## (terraces are near-vertical but continuous) shrinks to nothing.
 func _assert_continuous_along(from: Vector2, to: Vector2, step: float) -> void:
 	var n := int(from.distance_to(to) / step)
 	var dir := (to - from).normalized()
@@ -45,15 +46,21 @@ func _assert_continuous_along(from: Vector2, to: Vector2, step: float) -> void:
 	for i in range(1, n + 1):
 		var p := from + dir * (i * step)
 		var h := TerrainField.height_m(p, SEED, true)
-		var d := absf(h - prev)
-		if d > 0.5:
-			var fine := 0.0
-			var q_prev := prev
-			for k in range(1, 65):
-				var q := TerrainField.height_m(p - dir * step + dir * (k * step / 64.0), SEED, true)
-				fine = maxf(fine, absf(q - q_prev))
-				q_prev = q
-			assert_lt(fine, d * 0.5, "jump of %.2f m at %s does not shrink when refined" % [d, p])
+		if absf(h - prev) > 0.05:
+			var a := p - dir * step
+			var b := p
+			var ha := prev
+			var hb := h
+			for k in 20:
+				var m := (a + b) * 0.5
+				var hm := TerrainField.height_m(m, SEED, true)
+				if absf(hm - ha) >= absf(hb - hm):
+					b = m
+					hb = hm
+				else:
+					a = m
+					ha = hm
+			assert_lt(absf(hb - ha), 0.01, "jump of %.3f m at %s" % [absf(hb - ha), a])
 		prev = h
 
 func test_field_is_continuous_across_regions_and_setpieces() -> void:

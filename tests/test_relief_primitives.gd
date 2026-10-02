@@ -53,3 +53,14 @@ func test_worley_distances_are_ordered_and_continuous() -> void:
 		assert_lte(w.x, w.y)
 		assert_lt(absf((w.y - w.x) - (prev.y - prev.x)), 0.51, "F2-F1 continuous")
 		prev = w
+
+## Reported in final review: the Gaussian window was cut off at the 3x3 block,
+## so gully jumped ~0.04 at every kernel-cell line (e.g. x = 1800, seed 123).
+func test_gully_is_continuous_across_kernel_cells() -> void:
+	var down := Vector2(0.3, 1.0)
+	for k in range(-20, 21):
+		for z in [285.07, -133.3, 17.9]:
+			var x := k * 50.0
+			var a := ReliefPrimitives.gully(Vector2(x - 1e-4, z), 123, 50.0, down)
+			var b := ReliefPrimitives.gully(Vector2(x + 1e-4, z), 123, 50.0, down)
+			assert_lt(absf(a - b), 1e-3, "gully jump at (%s, %s)" % [x, z])

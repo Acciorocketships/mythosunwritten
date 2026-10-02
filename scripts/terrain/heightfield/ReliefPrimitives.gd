@@ -72,7 +72,7 @@ static func pass_mod(p: Vector2, seed: int, spacing_m: float, depth: float) -> f
 
 
 ## Grooves and spurs running downhill: a Gabor-like sum of jittered kernels,
-## each a cosine across the downhill direction, Gaussian-windowed.
+## each a cosine across the downhill direction, in a compactly supported window.
 static func gully(p: Vector2, seed: int, spacing_m: float, downhill: Vector2) -> float:
 	if downhill.length_squared() < 1e-12:
 		return 0.0
@@ -88,7 +88,11 @@ static func gully(p: Vector2, seed: int, spacing_m: float, downhill: Vector2) ->
 				0.25 + 0.5 * Helper._cell_hash01(seed, cell.x, cell.y),
 				0.25 + 0.5 * Helper._cell_hash01(seed + 1, cell.x, cell.y))
 			var d := q - centre
-			var w := exp(-d.length_squared() / (2.0 * 0.45 * 0.45))
+			# Compact window (zero at 1.25 cells): kernels outside the 3x3 block
+			# sit at least 1.25 cells away, so they contribute exactly nothing
+			# and the sum is continuous; the own-cell kernel is within 1.06.
+			var w := maxf(0.0, 1.0 - d.length_squared() / (1.25 * 1.25))
+			w *= w
 			var phase := Helper._cell_hash01(seed + 2, cell.x, cell.y) * TAU
 			total += w * cos(TAU * d.dot(across) + phase)
 			weights += w
