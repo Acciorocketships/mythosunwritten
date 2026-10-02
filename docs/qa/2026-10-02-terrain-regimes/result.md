@@ -93,7 +93,44 @@ Retired with `LandformField`: `test_september15_landform_cache`, two `test_atmos
 landform tests, and the harnesses `september11_landmark_survey`, `september15_streaming_qa`
 (+ scene), `september15_landform_cost`.
 
-SUITE_COMPARISON
+## Suite comparison (`tests/tools/run_suite_isolated.sh`, per file, both trees)
+
+| | files | files with a failure | failing tests |
+|---|---|---|---|
+| baseline `b8e130d9` | 344 | 67 | 105 |
+| this branch | 350 | 67 | 104 |
+
+The seven new test files pass. Better than baseline: `test_village_plan` (its span test
+passes at the re-pinned site). Worse than baseline: `test_september13_water_turf`, left red
+on purpose (below). Nine files failed on first run because they pin old geography; all were
+re-pinned to equivalent current sites found programmatically, assertions unchanged:
+
+| Test | Old site | New site / fixture |
+|---|---|---|
+| `test_heightfield_plan` carve, `test_water_plan`, `test_water_dual_grid` (2) | 22 m-amplitude worlds (no rivers can exist now) | production amplitude, same seeds/windows |
+| `test_water_terminal_datum` | districts (-2,-2), (-1,-1), (1,1), (0,0) | first four firing districts of the central 5x5 |
+| `test_september27_mountain_water` | looping spring (0,1) | looping spring (-5,-6), found by scan |
+| `test_september13_water_corner` (3) | (1185,18.625), (1191.75,183.625) | (-612,-845.375), dying wall (1264.25,171.625) via `september13_water_corner_scan` |
+| `test_september15_water_drops` (3) | lips (-240,-1473), (-231,-1446) | lips x = 1206 and z = -1806 in chunk (6,-10), via a `wall_segments` spill scan |
+| `test_village_plan` | super-cell (0,-1) | (0,-2) |
+| `test_village_massing_solver` | (0,-1) | (-1,-1) ((0,-2) is a platform cluster) |
+| `test_september13_water_turf` | chunk (4,1) window (826,342) | chunk (4,6) window (810,1178), densest shallow water |
+
+`test_september13_water_turf` fails at its new site: the cliff sheet's rounded shoulder
+over a submerged wall (x = 822) stands 0.07-0.17 m above the terrain field, the wave budget
+reserves only `WaterSkin.SHEET_COVER` (0.05 m), so the maximum trough shows turf in 12 of
+1460 samples (up to 9.4 cm). The water code is unchanged on this branch; the new geography
+exposes a pre-existing water/sheet clearance gap. Fix belongs with water (sub-project C).
+
+## Startup profile (`tests/harness/profile_terrain.gd`, 49 chunks round spawn)
+
+| | worker total | terrain mesh payload | peak memory |
+|---|---|---|---|
+| baseline | 1775 s | 967 s | 7609 MiB |
+| this branch | 681 s | 276 s | 7362 MiB |
+
+The 49 chunks lie inside the calm rolling downs round spawn (few cliffs, so a much cheaper
+cliff sheet); this is not a world-wide speed-up. Runs were on a shared machine.
 
 ## Open for owner review
 
@@ -105,3 +142,7 @@ SUITE_COMPARISON
    (`TerrainRegimeField.SPAWN_CALM_M`).
 5. Pre-existing F4 review spots point at re-rolled geography; eight new `regime <archetype>`
    spots were added.
+6. `test_september13_water_turf` is red: turf shows through maximum wave troughs over a
+   submerged cliff-sheet shoulder (water/sheet clearance, see the suite section).
+7. The photographed September water sites now sit in the calm spawn zone; their tests moved
+   1.5-2 km out.

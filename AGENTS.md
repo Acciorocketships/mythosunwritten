@@ -34,7 +34,10 @@
 > `terrain_field_cost.gd`, `regime_gallery.tscn` (windowed, per archetype oblique/top/close).
 > Cost: smooth 21-27 us/sample (baseline 25), detailed 55-66 (27). Survey: tactical windows
 > concentrate in tableland/escarpment; speckle ~5x (trigger for the deferred clean-up pass);
-> ridge/massif still read gentle. Review:
+> ridge/massif still read gentle. Isolated suite: 67 files with a failure before and after (105 ->
+> 104 failing tests); nine geography-pinned tests re-pinned; `test_september13_water_turf` left
+> red (cliff-sheet shoulder over a submerged wall exceeds the 0.05 m SHEET_COVER trough budget,
+> pre-existing water gap newly exposed). Review:
 > `docs/qa/2026-10-02-terrain-regimes/result.md`.
 
 > September 30 dual-grid terrain tiles (branch `dual-grid-terrain`; spec
