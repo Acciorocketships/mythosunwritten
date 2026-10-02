@@ -22,6 +22,9 @@ static var _regions: Dictionary = {}     # seed -> {Vector2i: Dictionary}
 static var _region_keys: Array = []
 static var _region_cursor := 0
 static var _nodes: Dictionary = {}       # seed -> {Vector2i: float}
+static var _hoods: Dictionary = {}       # seed -> {Vector2i: PackedVector2Array}
+static var _hood_keys: Array = []
+static var _hood_cursor := 0
 static var _node_keys: Array = []
 static var _node_cursor := 0
 static var _mutex := Mutex.new()
@@ -41,6 +44,9 @@ static func clear_caches() -> void:
 	_nodes.clear()
 	_node_keys.clear()
 	_node_cursor = 0
+	_hoods.clear()
+	_hood_keys.clear()
+	_hood_cursor = 0
 	_mutex.unlock()
 
 
@@ -99,26 +105,57 @@ static func region(seed: int, cell: Vector2i) -> Dictionary:
 	return cached
 
 
+## The 25 site positions of the 5x5 cells around cell c, row-major from
+## c - (2, 2). Pure performance cache: hashing them costs most of a sample.
+static func _neighbourhood(seed: int, c: Vector2i) -> PackedVector2Array:
+	_mutex.lock()
+	var cached = (_hoods.get(seed, {}) as Dictionary).get(c)
+	_mutex.unlock()
+	if cached != null:
+		return cached
+	var sites := PackedVector2Array()
+	for dz in range(-2, 3):
+		for dx in range(-2, 3):
+			sites.append(site_of(seed, c + Vector2i(dx, dz)))
+	_mutex.lock()
+	var per_seed: Dictionary = _hoods.get(seed, {})
+	if not per_seed.has(c):
+		if _hood_keys.size() == CACHE_LIMIT:
+			var old: Array = _hood_keys[_hood_cursor]
+			(_hoods.get(old[0], {}) as Dictionary).erase(old[1])
+			_hood_keys[_hood_cursor] = [seed, c]
+			_hood_cursor = (_hood_cursor + 1) % CACHE_LIMIT
+		else:
+			_hood_keys.append([seed, c])
+		per_seed[c] = sites
+		_hoods[seed] = per_seed
+	_mutex.unlock()
+	return sites
+
+
+static func _cell_of(c: Vector2i, index: int) -> Vector2i:
+	return c + Vector2i(index % 5 - 2, index / 5 - 2)
+
+
 ## Nearest and second-nearest sites around p: [cell1, d1, cell2, d2].
 static func _nearest_two(seed: int, p: Vector2) -> Array:
 	var c := Vector2i(floori(p.x / REGION_CELL), floori(p.y / REGION_CELL))
+	var sites := _neighbourhood(seed, c)
 	var d1 := INF
 	var d2 := INF
-	var c1 := c
-	var c2 := c
-	for dz in range(-2, 3):
-		for dx in range(-2, 3):
-			var cell := c + Vector2i(dx, dz)
-			var d := p.distance_to(site_of(seed, cell))
-			if d < d1:
-				d2 = d1
-				c2 = c1
-				d1 = d
-				c1 = cell
-			elif d < d2:
-				d2 = d
-				c2 = cell
-	return [c1, d1, c2, d2]
+	var i1 := 0
+	var i2 := 0
+	for i in sites.size():
+		var d := p.distance_to(sites[i])
+		if d < d1:
+			d2 = d1
+			i2 = i1
+			d1 = d
+			i1 = i
+		elif d < d2:
+			d2 = d
+			i2 = i
+	return [_cell_of(c, i1), d1, _cell_of(c, i2), d2]
 
 
 static func region_at(seed: int, p: Vector2) -> Dictionary:
@@ -134,27 +171,25 @@ static func region_at(seed: int, p: Vector2) -> Dictionary:
 static func sample(seed: int, p: Vector2) -> Array:
 	var q := ReliefPrimitives.warp(p, seed + 1409, BORDER_WARP_M, BORDER_WARP_WL)
 	var c := Vector2i(floori(q.x / REGION_CELL), floori(q.y / REGION_CELL))
-	var cells: Array[Vector2i] = []
-	var dists: Array[float] = []
+	var sites := _neighbourhood(seed, c)
+	var dists := PackedFloat64Array()
+	dists.resize(sites.size())
 	var d1 := INF
 	var nearest := 0
-	for dz in range(-2, 3):
-		for dx in range(-2, 3):
-			var cell := c + Vector2i(dx, dz)
-			var d := q.distance_to(site_of(seed, cell))
-			if d < d1:
-				d1 = d
-				nearest = cells.size()
-			cells.append(cell)
-			dists.append(d)
-	var out: Array = [[region(seed, cells[nearest]), 1.0]]
+	for i in sites.size():
+		var d := q.distance_to(sites[i])
+		dists[i] = d
+		if d < d1:
+			d1 = d
+			nearest = i
+	var out: Array = [[region(seed, _cell_of(c, nearest)), 1.0]]
 	var total := 1.0
-	for i in cells.size():
+	for i in sites.size():
 		if i == nearest or dists[i] - d1 >= BAND_M:
 			continue
 		var w := 1.0 - SlopeProfile.smootherstep((dists[i] - d1) / BAND_M)
 		if w > 0.0:
-			out.append([region(seed, cells[i]), w])
+			out.append([region(seed, _cell_of(c, i)), w])
 			total += w
 	if total > 1.0:
 		for pair: Array in out:

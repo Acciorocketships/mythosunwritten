@@ -1,0 +1,19 @@
+{
+  "build_ms": 106580,
+  "center": [
+    60,
+    40
+  ],
+  "points": 256,
+  "seed": 2697992464,
+  "slope_edges_per_km2": 2421.27312554253,
+  "speckle_per_km2": 18.8615587022569,
+  "structured": 0.710002519526329,
+  "tactical": 0.229276895943563,
+  "trapped_area": 0.005889892578125,
+  "wall_edges_per_km2": 498.983595106337,
+  "wall_run_max": 19,
+  "wall_run_p50": 1,
+  "wall_run_p95": 5,
+  "water": true
+}
