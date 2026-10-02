@@ -35,22 +35,6 @@ func test_biome_boundaries_are_continuous_at_walking_speed() -> void:
 	assert_lt(largest, 0.04, "one walking step cannot switch a biome")
 	assert_eq(Helper.biome_at(Vector3.ZERO, 2697992464), &"meadow", "clear spawn")
 
-func test_landforms_have_distinct_structural_silhouettes() -> void:
-	assert_gt(LandformField.shape(0, Vector2(0, 0.3)), LandformField.shape(0, Vector2(0, -0.3)) + 0.4, "escarpment")
-	assert_gt(LandformField.shape(1, Vector2(0, -0.58)), LandformField.shape(1, Vector2.ZERO) + 0.5, "amphitheatre wall")
-	assert_gt(LandformField.shape(1, Vector2(0, -0.58)), LandformField.shape(1, Vector2(0, 0.58)) + 0.4, "open mouth")
-	assert_almost_eq(LandformField.shape(3, Vector2.ZERO), LandformField.shape(3, Vector2(0.2, 0)), 0.001, "flat mesa crown")
-	assert_gt(LandformField.shape(4, Vector2(0.35, -sin(0.35 * 3.5) * 0.15)), LandformField.shape(4, Vector2.ZERO) + 0.3, "ridge saddle")
-	assert_gt(LandformField.shape(5, Vector2(0.7, 0)), LandformField.shape(5, Vector2.ZERO) + 0.4, "sheltered hollow")
-	assert_gt(LandformField.shape(6, Vector2(0, 0.3)), LandformField.shape(6, Vector2.ZERO) + 0.4, "cleft")
-
-func test_landform_provinces_do_not_introduce_grid_seams() -> void:
-	for seed in [7, 991177, 2697992464]:
-		for i in range(-8, 9):
-			var p := Vector3(i * LandformField.SCALE, 0, 431.0)
-			assert_almost_eq(LandformField.height01(p - Vector3(0.01, 0, 0), seed),
-				LandformField.height01(p + Vector3(0.01, 0, 0), seed), 0.001)
-
 func test_islands_preserve_ground_without_raising_or_flooding_it() -> void:
 	var pond := PondStamp.new(Vector2.ZERO, 110.0, 99, 4, 3.5)
 	pond.island_radius = 28.0

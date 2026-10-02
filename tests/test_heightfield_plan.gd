@@ -455,12 +455,13 @@ func test_height01_smooth_ignores_detail_octave() -> void:
 # ------------------------------------------------------------
 
 func test_water_plan_carve_lowers_raw_height() -> void:
-	var dry: HeightfieldPlan = HeightfieldPlan.new(991177, 22.0, 8)
-	var wet: HeightfieldPlan = HeightfieldPlan.new(991177, 22.0, 8)
-	wet.set_water_plan(WaterPlan.new(991177, 22.0, 8))
+	# Production amplitude: since the 2026-10-02 regime field, a 22 m world
+	# never reaches the 15.36 m headwater floor, so it has no rivers at all.
+	var dry: HeightfieldPlan = TerrainWorldTuning.make_heightfield(991177)
+	var wet: HeightfieldPlan = TerrainWorldTuning.make_heightfield(991177, TerrainWorldTuning.make_water(991177))
 	# Find a carved point (same 24 m scan band as the WaterPlan tests, in 12 m
 	# point indices so odd points are scanned as well).
-	var water: WaterPlan = WaterPlan.new(991177, 22.0, 8)
+	var water: WaterPlan = TerrainWorldTuning.make_water(991177)
 	var hit: Vector2i = Vector2i.MAX
 	for j in range(40, 240):
 		for i in range(40, 240):

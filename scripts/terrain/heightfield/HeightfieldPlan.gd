@@ -148,23 +148,13 @@ func uncarved_height(cx: int, cz: int) -> float:
 	return _sample(cx, cz)[2]
 
 
-## Biome-owned geological shapes and relief, with a small fine octave.
-## Mountain ranges, mesas and sheltered lowlands share continuous biome weights.
+## Natural terrain in [0, 1] (spec 2026-10-02): TerrainField's metre field over
+## the production amplitude. include_detail=false is the SMOOTH field (continental
+## base + placed set pieces) that river tracing descends; include_detail=true adds
+## the regime relief and terraces and is the rendered field (raw_height).
 ## A flat clearing near the world origin keeps the spawn gentle.
-##
-## Shared landform field in [0, 1]. include_detail=false is the SMOOTH field
-## (biome geology and origin falloff, without the fine octave):
-## river tracing descends it so channels follow the rendered mountains
-## without jittering on the detail noise. include_detail=true is the exact
-## rendered terrain field (used by _height01 / raw_height).
 static func height01(pos: Vector3, p_world_seed: int, include_detail: bool = true) -> float:
-	var weights := Helper.biome_weights5(pos,p_world_seed)
-	var h := LandformField.height01(pos,p_world_seed,weights)
-	if include_detail:
-		var relief := 0.0
-		for biome: StringName in weights:
-			relief += float(LandformField.PROFILES[biome][1])*weights[biome]
-		h += (Helper._value_noise01(pos,p_world_seed+9,46.0)-.5)*.015*relief
+	var h := TerrainField.height_m(Vector2(pos.x, pos.z), p_world_seed, include_detail) / TerrainField.REF_AMPLITUDE
 	var falloff: float = SlopeProfile.smootherstep(clampf((Vector2(pos.x, pos.z).length() - 60.0) / 180.0, 0.0, 1.0))
 	return clampf(h * falloff, 0.0, 1.0)
 

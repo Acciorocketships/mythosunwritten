@@ -14,8 +14,10 @@ func _points() -> Array[Vector2]:
 func _snapshot(points: Array[Vector2]) -> Array:
 	var out := []
 	for p in points:
-		var s := TerrainRegimeField.sample(SEED, p)
-		out.append([s[0].archetype, s[1].archetype, s[2], TerrainRegimeField.base_m(SEED, p)])
+		var row := [TerrainRegimeField.base_m(SEED, p)]
+		for pair: Array in TerrainRegimeField.sample(SEED, p):
+			row.append_array([pair[0].archetype, pair[1]])
+		out.append(row)
 	return out
 
 func test_sampling_is_query_order_independent() -> void:
@@ -44,9 +46,15 @@ func test_one_regime_outside_the_border_band() -> void:
 	var inside := 0
 	for p in _points():
 		var s := TerrainRegimeField.sample(SEED, p)
-		assert_between(float(s[2]), 0.5, 1.0)
-		if s[2] < 1.0:
+		var total := 0.0
+		for pair: Array in s:
+			total += float(pair[1])
+		assert_almost_eq(total, 1.0, 1e-9)
+		assert_gte(float(s[0][1]), float(s[-1][1]), "nearest region weighs most")
+		if s.size() > 1:
 			inside += 1
+		else:
+			assert_eq(float(s[0][1]), 1.0)
 	assert_gt(inside, 0, "some points fall in a border band")
 	assert_lt(inside, 150, "most points have exactly one regime")
 
@@ -73,3 +81,10 @@ func test_force_archetype_overrides_every_region() -> void:
 	TerrainRegimeField.set_force_archetype(&"tableland")
 	for p in _points():
 		assert_eq(TerrainRegimeField.region_at(SEED, p).archetype, &"tableland")
+
+## The border blend must not depend on which of two equidistant runner-up sites
+## is "second": found at (-433, -123.406) where escarpment and karst swapped.
+func test_border_blend_is_continuous_where_runner_up_sites_swap() -> void:
+	var a := TerrainField.height_m(Vector2(-433.0, -123.4062), SEED, true)
+	var b := TerrainField.height_m(Vector2(-433.0, -123.4061), SEED, true)
+	assert_lt(absf(a - b), 0.05)

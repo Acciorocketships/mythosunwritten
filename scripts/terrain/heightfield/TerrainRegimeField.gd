@@ -125,14 +125,41 @@ static func region_at(seed: int, p: Vector2) -> Dictionary:
 	return region(seed, _nearest_two(seed, p)[0])
 
 
-## [nearest region, second region, weight of nearest] at p. Outside the border
-## band the weight is exactly 1.
+## Regions blended at p: an Array of [region, weight] pairs, nearest first,
+## weights summing to 1. Every site whose distance is within BAND_M of the
+## nearest gets weight 1 - smootherstep((d - d1) / BAND_M) before
+## normalization, so a weight is a continuous function of position even where
+## two runner-up sites swap order. Outside every border band the result is the
+## single nearest region with weight exactly 1.
 static func sample(seed: int, p: Vector2) -> Array:
 	var q := ReliefPrimitives.warp(p, seed + 1409, BORDER_WARP_M, BORDER_WARP_WL)
-	var n := _nearest_two(seed, q)
-	var e := float(n[3]) - float(n[1])
-	var w := 1.0 if e >= BAND_M else 0.5 + 0.5 * SlopeProfile.smootherstep(e / BAND_M)
-	return [region(seed, n[0]), region(seed, n[2]), w]
+	var c := Vector2i(floori(q.x / REGION_CELL), floori(q.y / REGION_CELL))
+	var cells: Array[Vector2i] = []
+	var dists: Array[float] = []
+	var d1 := INF
+	var nearest := 0
+	for dz in range(-2, 3):
+		for dx in range(-2, 3):
+			var cell := c + Vector2i(dx, dz)
+			var d := q.distance_to(site_of(seed, cell))
+			if d < d1:
+				d1 = d
+				nearest = cells.size()
+			cells.append(cell)
+			dists.append(d)
+	var out: Array = [[region(seed, cells[nearest]), 1.0]]
+	var total := 1.0
+	for i in cells.size():
+		if i == nearest or dists[i] - d1 >= BAND_M:
+			continue
+		var w := 1.0 - SlopeProfile.smootherstep((dists[i] - d1) / BAND_M)
+		if w > 0.0:
+			out.append([region(seed, cells[i]), w])
+			total += w
+	if total > 1.0:
+		for pair: Array in out:
+			pair[1] = float(pair[1]) / total
+	return out
 
 
 static func _node_base(seed: int, node: Vector2i) -> float:
