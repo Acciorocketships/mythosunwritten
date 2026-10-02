@@ -3,14 +3,17 @@ extends GutTest
 func test_shallow_water_trough_keeps_the_actual_native_turf_covered()->void:
 	var water:=TerrainWorldTuning.make_water(2697992464)
 	var fields:=WorldFieldBlockCache.new(TerrainWorldTuning.make_heightfield(2697992464,water),water,26,0,64)
-	var chunk:=Vector2i(4,1)
+	# Re-pinned (terrain regimes, 2026-10-02): chunk (4,1) is dry now. A scan of
+	# chunks -6..6 for the densest 12 x 8 m window of 0..0.4 m-deep water picks
+	# (810, 1178) in chunk (4,6).
+	var chunk:=Vector2i(4,6)
 	var region:=fields.region(chunk)
 	var field:=fields.water(chunk)
 	var mesher:=TerrainChunkMesher.new();mesher.set_seed(2697992464);mesher.prepare_resources()
 	var terrain_data:=mesher.compute_chunk(chunk,region,field)
 	var ground:=mesher.commit_chunk(terrain_data);add_child_autofree(ground)
 	var skin:=WaterSkin.build(water,chunk,region,field)
-	var local:=Rect2(826,342,12,8)
+	var local:=Rect2(810,1178,12,8)
 	var terrain:Array=[]
 	for node:MeshInstance3D in ground.find_children("*","MeshInstance3D",true,false):
 		for surface in node.mesh.get_surface_count():

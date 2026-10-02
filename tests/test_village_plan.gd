@@ -146,11 +146,13 @@ func test_reported_seed_builds_an_inhabited_dense_multilevel_village() -> void:
 	var settlements := SettlementPlan.new(seed_value, water)
 	var world := WorldFeaturePlan.new(seed_value, water, fields,
 		feature_program, settlements)
-	var frame := world.frame_for(Vector2i(0, -1))
+	# Re-pinned (terrain regimes, 2026-10-02): super-cell (0, -1) lost its
+	# site under the new terrain; (0, -2) is the nearest super-cell with one.
+	var frame := world.frame_for(Vector2i(0, -2))
 	assert_not_null(frame)
 	var record := world.village_plan().record_for(frame)
 	assert_not_null(record)
-	assert_eq(record.stable_id, &"settlement.29bc5c240c52f84a")
+	assert_eq(record.stable_id, &"settlement.15289ce93c11a72d")
 	assert_true(VillageProgram.PRODUCTION_TIERS.has(record.tier))
 	assert_true(record.urban_fabric.accepted,
 		String(record.urban_fabric.reason))
