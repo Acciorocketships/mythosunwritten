@@ -6,8 +6,10 @@ extends RefCounted
 ## evaluated in the region's rotated frame with the region's own salt, so two
 ## regions of one archetype never share a pattern.
 ## detail=false is the regime's MACRO relief, the part rivers must see: ridge
-## spines (two ridged octaves, no gullies), escarpment stairs, valley troughs
-## and plateau cells. Fine hummocks, knolls, sinkholes and mounds are detail.
+## spines (two ridged octaves, no gullies), escarpment stairs, valley troughs,
+## plateau cells, and the first hummock octave of the gentle archetypes (their
+## rounded hills are where headwaters rise). Finer hummock octaves, knolls,
+## sinkholes and mounds are detail.
 
 const ST := TerrainRegimeCatalog.STOREY
 
@@ -19,7 +21,7 @@ static func relief_m(region: Dictionary, p: Vector2, detail: bool = true) -> flo
 	match region.archetype:
 		&"rolling_downs":
 			if not detail:
-				return 0.0
+				return ReliefPrimitives.hummock(pr, s, q.hummock_wl_m, 1) * q.relief_st * ST
 			return ReliefPrimitives.hummock(pr, s, q.hummock_wl_m, 3) * q.relief_st * ST \
 				+ ReliefPrimitives.sites_bump(pr, s + 5, q.knoll_spacing_m, q.knoll_density,
 					minf(q.knoll_radius_m, q.knoll_spacing_m), 0.1) * q.knoll_st * ST
@@ -47,7 +49,7 @@ static func relief_m(region: Dictionary, p: Vector2, detail: bool = true) -> flo
 				+ ReliefPrimitives.hummock(pr, s, q.hummock_wl_m, 2) * q.relief_st * ST
 		&"karst_hollows":
 			if not detail:
-				return 0.0
+				return ReliefPrimitives.hummock(pr, s, q.hummock_wl_m, 1) * q.relief_st * ST
 			return ReliefPrimitives.hummock(pr, s, q.hummock_wl_m, 2) * q.relief_st * ST \
 				- ReliefPrimitives.sites_bump(pr, s + 5, q.sink_spacing_m, q.sink_density,
 					q.sink_radius_m, 0.55) * q.sink_st * ST \
@@ -61,7 +63,7 @@ static func relief_m(region: Dictionary, p: Vector2, detail: bool = true) -> flo
 			return interior * lerpf(0.55, 1.0, w.z) * q.rim_st * ST
 		&"low_flats":
 			if not detail:
-				return 0.0
+				return ReliefPrimitives.hummock(pr, s, q.hummock_wl_m, 1) * q.relief_st * ST
 			return ReliefPrimitives.hummock(pr, s, q.hummock_wl_m, 2) * q.relief_st * ST \
 				+ ReliefPrimitives.sites_bump(pr, s + 5, q.mound_spacing_m, 0.4,
 					minf(q.mound_radius_m, q.mound_spacing_m), 0.0) * q.mound_st * ST

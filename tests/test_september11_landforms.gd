@@ -11,12 +11,12 @@ func test_production_terrain_has_room_for_large_mountains() -> void:
 	assert_gt(highest,60.0,"Real production geography must realize the taller range")
 
 func test_larger_height_range_retains_frequent_physical_headwaters() -> void:
-	for seed_value: int in [991177,2697992464,314159]:
+	for seed_value: int in [991177,2697992464,314159,42,1,77777,123456789]:
 		var water := TerrainWorldTuning.make_water(seed_value)
 		var count := 0
 		for z in range(-4,5):
 			for x in range(-4,5): count += int(water.has_source(Vector2i(x,z)))
-		assert_gte(count,30,"Retain the existing 81-district river-density minimum")
+		assert_gte(count,30,"seed %d: retain the existing 81-district river-density minimum" % seed_value)
 
 func test_archetypes_have_distinct_elevations() -> void:
 	var means: Dictionary = {}
