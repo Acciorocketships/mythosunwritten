@@ -14,6 +14,8 @@ const MAX_RADIUS := 480.0
 const FEATHER := 48.0
 const ST := TerrainRegimeCatalog.STOREY
 const CACHE_LIMIT := 4096
+## No set-piece footprint comes closer than this to the world origin.
+const SPAWN_CLEAR_M := 400.0
 
 static var _candidates: Dictionary = {}   # seed -> {cell: Dictionary}
 static var _admitted: Dictionary = {}
@@ -81,6 +83,8 @@ static func _candidate(seed: int, cell: Vector2i) -> Dictionary:
 			"rot": Helper._cell_hash01(seed + 1504, cell.x, cell.y) * TAU,
 			"priority": Helper._cell_hash01(seed + 1505, cell.x, cell.y),
 			"radius": footprint_radius(kind, params)}
+		if pos.length() - float(value.radius) < SPAWN_CLEAR_M:
+			value = {}
 	return _store(_candidates, seed, cell, value)
 
 

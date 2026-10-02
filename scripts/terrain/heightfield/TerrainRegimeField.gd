@@ -15,6 +15,12 @@ const BORDER_WARP_M := 60.0
 const BORDER_WARP_WL := 240.0
 const BASE_NODE := 320.0
 const MERGE_CHANCE := 0.2
+## Regions whose site lies this close to the world origin are calm rolling
+## downs (base <= 2 storeys, relief <= 1 storey) and never merge, so the spawn
+## clearing opens onto gentle meadow on every seed. A point 452 m from the
+## origin (the base nodes the spawn ring interpolates) always has its nearest
+## site within this radius.
+const SPAWN_CALM_M := 1200.0
 const CACHE_LIMIT := 4096
 
 static var _force: StringName = &""
@@ -59,12 +65,17 @@ static func site_of(seed: int, cell: Vector2i) -> Vector2:
 ## The region's own draw, before territory merging.
 static func _own_region(seed: int, cell: Vector2i) -> Dictionary:
 	var site := site_of(seed, cell)
-	var archetype := _force
+	var calm := _force == &"" and site.length() < SPAWN_CALM_M
+	var archetype := &"rolling_downs" if calm else _force
 	if archetype == &"":
 		var weights := Helper.biome_weights5(Vector3(site.x, 0.0, site.y), seed)
 		archetype = TerrainRegimeCatalog.choose(weights, Helper._cell_hash01(seed + 1403, cell.x, cell.y))
 	var scale := lerpf(0.6, 1.7, Helper._cell_hash01(seed + 1404, cell.x, cell.y))
 	var params := TerrainRegimeCatalog.draw(seed, cell, 1410, TerrainRegimeCatalog.PARAMS[archetype], scale)
+	if calm:
+		params.base_level_st = minf(params.base_level_st, 2.0)
+		params.relief_st = minf(params.relief_st, 1.0)
+		params.knoll_st = minf(params.knoll_st, 1.0)
 	return {
 		"archetype": archetype, "params": params, "scale": scale, "site": site, "cell": cell,
 		"base_m": float(params.base_level_st) * TerrainRegimeCatalog.STOREY,
@@ -84,7 +95,8 @@ static func region(seed: int, cell: Vector2i) -> Dictionary:
 	if cached != null:
 		return cached
 	var donor := cell
-	if Helper._cell_hash01(seed + 1407, cell.x, cell.y) < MERGE_CHANCE:
+	if site_of(seed, cell).length() >= SPAWN_CALM_M \
+			and Helper._cell_hash01(seed + 1407, cell.x, cell.y) < MERGE_CHANCE:
 		donor += Vector2i(-1, 0) if Helper._cell_hash01(seed + 1408, cell.x, cell.y) < 0.5 else Vector2i(0, -1)
 	var value := _own_region(seed, donor)
 	_mutex.lock()

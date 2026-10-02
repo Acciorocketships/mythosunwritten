@@ -84,3 +84,13 @@ func test_relief_now_survives_storey_quantization() -> void:
 			windows += 1
 			structured += int(hi > lo)
 	assert_gt(float(structured) / windows, 0.4, "most 48 m windows hold a storey change")
+
+## Reported in final review: the origin region was unconstrained, so several
+## seeds had 30-40 m peaks and cliffs within 180 m of spawn (baseline 5-12 m).
+func test_spawn_surroundings_stay_gentle_on_every_seed() -> void:
+	for seed_value: int in [42, 77777, 123456789, 991177, 2697992464, 1, 314159]:
+		var top := 0.0
+		for k in 64:
+			var p := Vector2.from_angle(k * TAU / 64.0) * 180.0
+			top = maxf(top, HeightfieldPlan.height01(Vector3(p.x, 0, p.y), seed_value) * TerrainField.REF_AMPLITUDE)
+		assert_lte(top, 16.0, "seed %d: ring at 180 m stays within four storeys" % seed_value)
