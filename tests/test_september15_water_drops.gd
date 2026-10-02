@@ -7,23 +7,41 @@ func _water_fields() -> WorldFieldBlockCache:
 		_fields=WorldFieldBlockCache.new(TerrainWorldTuning.make_heightfield(2697992464,water),water,26,0,64)
 	return _fields
 
+## Re-pinned (terrain regimes, 2026-10-02): the photographed lips at (-240,-1473)
+## and (-231,-1446) lie inside the calm rolling downs around spawn now, where no
+## river crosses a cliff. A scan of chunks 7..12 out from spawn for wall_segments
+## half-segments wet 1 m on both sides, upper water above the wall top by more
+## than EPS and receiving water below it (a supplied spill), wet across +-3 m,
+## finds the wall x = 1206 (z -1830..-1824, top 28.0, upper water 28.1, falling
+## to -x) and, in the same chunk (6, -10), the wall z = -1806 (x 1194..1200,
+## falling to -z). LIP_NORMAL points from the high side to the low side.
+const LIP_A := Vector2(1206, -1830)
+const LIP_B := Vector2(1206, -1824)
+const LIP_NORMAL := Vector2(-1, 0)
+const LIP_BANK := Vector2(1218, -1827)
+const LIP2_A := Vector2(1200, -1806)
+const LIP2_B := Vector2(1194, -1806)
+const LIP2_NORMAL := Vector2(0, -1)
+
 func test_reported_connected_river_clears_the_upper_lip_before_falling() -> void:
 	var fields := _water_fields()
-	var field := fields.water_at(Vector2(-240,-1473))
-	var region := fields.region_at(Vector2(-240,-1473))
+	var mid := (LIP_A + LIP_B) * 0.5
+	var field := fields.water_at(mid)
+	var region := fields.region_at(mid)
 	var missing := 0
 	var worst_depth := INF
-	for x: float in [-246,-240,-234]:
-		for offset in range(1,61):
-			var p := Vector2(x,-1476+offset*.1)
-			var ground := TerrainTileField.surface_y(region,p.x,p.y)
-			var level := WaterField.level_at(field.raw_context(),p)
-			worst_depth=minf(worst_depth,level-ground)
-			if not field.is_wet(p): missing+=1
-	assert_eq(missing,0,"water supplied above and below the cliff must not dry before the lip")
-	assert_gt(worst_depth,WaterField.EPS,"the full upper approach clears its real supporting ground")
-	assert_true(field.is_wet(Vector2(-240,-1477)),"the downstream receiving water remains")
-	assert_false(field.is_wet(Vector2(-260,-1500)),"the neighboring high dry bank stays dry")
+	for t: float in [0.1, 0.5, 0.9]:
+		var m := LIP_A.lerp(LIP_B, t)
+		for offset in range(1, 61):
+			var p := m - LIP_NORMAL * 3.0 + LIP_NORMAL * (offset * .1)
+			var ground := TerrainTileField.surface_y(region, p.x, p.y)
+			var level := WaterField.level_at(field.raw_context(), p)
+			worst_depth = minf(worst_depth, level - ground)
+			if not field.is_wet(p): missing += 1
+	assert_eq(missing, 0, "water supplied above and below the cliff must not dry before the lip")
+	assert_gt(worst_depth, WaterField.EPS, "the full upper approach clears its real supporting ground")
+	assert_true(field.is_wet(mid + LIP_NORMAL * 4.0), "the downstream receiving water remains")
+	assert_false(field.is_wet(LIP_BANK), "the neighboring high dry bank stays dry")
 
 ## Synthetic cliff on 12 m lattice points (dual-grid terrain): storey
 ## `storeys` where x*dir.x + z*dir.y >= 0, so the wall stands on the dual-cell
@@ -72,21 +90,14 @@ func test_ordinary_slopes_keep_their_existing_water_profile() -> void:
 		assert_almost_eq(WaterField._fill_bilinear_coarse(f.ctx,p),WaterField._fill_untapered_level(f.ctx,p),0.00001,
 			"a continuous native slope has no cliff crest: plain interpolation at "+str(p))
 
-## Re-pinned (dual-grid terrain, 2026-09-30): the photographed second lip at
-## (-229,-1432) no longer carries water on the 12 m field. Scan criteria: in
-## the four chunks around the reported lips, every TerrainTileField
-## wall_segments half-segment whose field is wet 1 m on both sides, with the
-## upper water above the wall top by more than EPS and the receiving water
-## below it (a supplied spill); the one nearest the old lip, excluding the
-## first lip's reach at z = -1470..-1476, is the z = -1446 wall at
-## x = -234..-228 (top 8.00, upper water 8.10, fall below at 7.17). The points
-## run from 4 m up the approach, across the lip, 2 m down the fall.
+## The second spill (see the re-pin note above): points from 4 m up the
+## approach, across the lip, 2 m down the fall, at four places along the wall.
 func test_the_other_reported_lip_retains_its_incoming_water() -> void:
-	var field:=_water_fields().water_at(Vector2(-231,-1446))
+	var field:=_water_fields().water_at((LIP2_A+LIP2_B)*.5)
 	var missing:=0
-	for z in [-1442,-1444,-1445.5,-1446.5,-1448]:
-		for x in [-232.5,-231.5,-230.5,-229.5]:
-			if not field.is_wet(Vector2(x,z)):
+	for d: float in [-4.0,-2.0,-0.5,0.5,2.0]:
+		for t: float in [0.125,0.375,0.625,0.875]:
+			if not field.is_wet(LIP2_A.lerp(LIP2_B,t)+LIP2_NORMAL*d):
 				missing+=1
 	assert_eq(missing,0,"the supplied upper flow crosses the left-hand lip as well")
 
@@ -106,16 +117,17 @@ func test_a_supplied_dry_crest_connects_only_to_existing_receiving_water() -> vo
 			"no lower body or hanging outlet is invented at "+str(p))
 
 func test_spill_and_receiving_water_match_the_detached_physics_sampler() -> void:
-	var field:=_water_fields().water_at(Vector2(-240,-1473))
+	var field:=_water_fields().water_at((LIP_A+LIP_B)*.5)
 	var ctx:=field.raw_context()
-	var sampler:=WaterSampler.build(ctx,ctx.region,Vector2(-250,-1485),3,13,23)
+	var sampler:=WaterSampler.build(ctx,ctx.region,Vector2(1188,-1836),3,13,13)
 	var worst:=0.0
 	var dry:=0
-	# The second line crosses the re-pinned second lip (z = -1446, see
-	# test_the_other_reported_lip_retains_its_incoming_water) from 6 m up its
-	# approach to 6 m down its fall.
-	for line:Array in [[Vector2(-240,-1470),Vector2(0,-.125),89],
-			[Vector2(-231,-1440),Vector2(0,-.125),97]]:
+	# Each line runs from 3 m (first lip) or 6 m (second lip) up the approach
+	# across the lip and down the fall.
+	var mid := (LIP_A+LIP_B)*.5
+	var mid2 := (LIP2_A+LIP2_B)*.5
+	for line:Array in [[mid-LIP_NORMAL*3.0,LIP_NORMAL*.125,89],
+			[mid2-LIP2_NORMAL*6.0,LIP2_NORMAL*.125,97]]:
 		for i in line[2]:
 			var p:Vector2=line[0]+line[1]*i
 			var expected:=WaterField.level_at(ctx,p)
