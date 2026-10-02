@@ -50,9 +50,6 @@ class LoadedPoints extends RefCounted:
 		return (source.loaded_point_at(Vector2i(i, j)) as Vector2).x
 
 
-## The tile under world xz: its index floor(v / 12), its corners a (-x -z),
-## b (+x -z), d (-x +z), c (+x +z) as storey/level, and its four lattice-edge
-## categories. `source` answers loaded_storey_at / loaded_point_at by point.
 ## The terrain regimes blended at a world position (TerrainRegimeField), nearest
 ## first with weights, and the nearest region's site.
 static func regime_line(seed: int, world: Vector3) -> String:
@@ -64,6 +61,9 @@ static func regime_line(seed: int, world: Vector3) -> String:
 	return "terrain %s   (site %.0f, %.0f)" % [", ".join(parts), site.x, site.y]
 
 
+## The tile under world xz: its index floor(v / 12), its corners a (-x -z),
+## b (+x -z), d (-x +z), c (+x +z) as storey/level, and its four lattice-edge
+## categories. `source` answers loaded_storey_at / loaded_point_at by point.
 static func tile_lines(source, world_xz: Vector2) -> Array[String]:
 	var s := TerrainTileField.SPACING
 	var tile := Vector2i(floori(world_xz.x / s), floori(world_xz.y / s))

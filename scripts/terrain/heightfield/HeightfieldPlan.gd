@@ -149,9 +149,10 @@ func uncarved_height(cx: int, cz: int) -> float:
 
 
 ## Natural terrain in [0, 1] (spec 2026-10-02): TerrainField's metre field over
-## the production amplitude. include_detail=false is the SMOOTH field (continental
-## base + placed set pieces) that river tracing descends; include_detail=true adds
-## the regime relief and terraces and is the rendered field (raw_height).
+## the production amplitude. include_detail=false is the SMOOTH field that river
+## tracing descends (continental base + placed set pieces + each regime's macro
+## relief, no terraces); include_detail=true adds the fine relief and terraces
+## and is the rendered field (raw_height).
 ## A flat clearing near the world origin keeps the spawn gentle.
 static func height01(pos: Vector3, p_world_seed: int, include_detail: bool = true) -> float:
 	var h := TerrainField.height_m(Vector2(pos.x, pos.z), p_world_seed, include_detail) / TerrainField.REF_AMPLITUDE
