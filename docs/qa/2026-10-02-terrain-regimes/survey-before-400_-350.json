@@ -1,0 +1,32 @@
+{
+  "build_ms": 74144,
+  "center": [
+    400,
+    -350
+  ],
+  "districts": 25,
+  "per_archetype": {
+    "baseline": {
+      "area_share": 1.0,
+      "speckle_per_km2": 3.9826468541826,
+      "structured": 0.740236835474931,
+      "tactical": 0.132527084908037,
+      "trapped_area": 0.003999007998016,
+      "wall_edges_per_km2": 342.399990355536
+    }
+  },
+  "points": 256,
+  "river_sources": 13,
+  "seed": 2697992464,
+  "settlement_sites": 24,
+  "slope_edges_per_km2": 2711.7199367947,
+  "speckle_per_km2": 3.92066107855903,
+  "structured": 0.740236835474931,
+  "tactical": 0.132527084908037,
+  "trapped_area": 0.003936767578125,
+  "wall_edges_per_km2": 337.070888943142,
+  "wall_run_max": 19,
+  "wall_run_p50": 1,
+  "wall_run_p95": 6,
+  "water": true
+}

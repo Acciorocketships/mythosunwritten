@@ -3,3 +3,4 @@ tests/harness/terrain_field_cost.gd (20000 samples near spawn, seed 2697992464),
 baseline b8e130d9    25.0                    27.0
 regimes (first)      60.1                    92.1     (5x5 site hashing = 37 us of 47 us in sample)
 regimes (cached)     21.2                    55.2     <- committed; budget smooth <= 1.5x (37.5), detail <= 3x (81): both within
+regimes (final, after review fixes; measured while two test suites ran) 27.4 / 66.1 — within budget

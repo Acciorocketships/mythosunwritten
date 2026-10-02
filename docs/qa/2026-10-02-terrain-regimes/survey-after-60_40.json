@@ -1,0 +1,88 @@
+{
+  "build_ms": 77222,
+  "center": [
+    60,
+    40
+  ],
+  "districts": 25,
+  "per_archetype": {
+    "escarpment_country": {
+      "area_share": 0.0848781697563395,
+      "speckle_per_km2": 8.87712036360685,
+      "structured": 0.6797583081571,
+      "tactical": 0.344410876132931,
+      "trapped_area": 0.00420014609203798,
+      "wall_edges_per_km2": 675.929307686064
+    },
+    "highland_massif": {
+      "area_share": 0.0297135594271189,
+      "speckle_per_km2": 0.0,
+      "structured": 0.838095238095238,
+      "tactical": 0.0476190476190476,
+      "trapped_area": 0.0,
+      "wall_edges_per_km2": 36.2255839564134
+    },
+    "karst_hollows": {
+      "area_share": 0.0815301630603261,
+      "speckle_per_km2": 42.247570764681,
+      "structured": 0.707936507936508,
+      "tactical": 0.142857142857143,
+      "trapped_area": 0.0032319391634981,
+      "wall_edges_per_km2": 249.524714828897
+    },
+    "low_flats": {
+      "area_share": 0.0309535619071238,
+      "speckle_per_km2": 0.0,
+      "structured": 0.623853211009174,
+      "tactical": 0.036697247706422,
+      "trapped_area": 0.0,
+      "wall_edges_per_km2": 41.7292605575029
+    },
+    "ridge_and_pass": {
+      "area_share": 0.0522816045632091,
+      "speckle_per_km2": 39.1178311427348,
+      "structured": 0.894472361809045,
+      "tactical": 0.206030150753769,
+      "trapped_area": 0.00533649570115624,
+      "wall_edges_per_km2": 366.472312810884
+    },
+    "rolling_downs": {
+      "area_share": 0.574880649761299,
+      "speckle_per_km2": 12.3576621999335,
+      "structured": 0.505598621877692,
+      "tactical": 0.0534022394487511,
+      "trapped_area": 0.0000269621720725822,
+      "wall_edges_per_km2": 104.478416781256
+    },
+    "tableland": {
+      "area_share": 0.119288238576477,
+      "speckle_per_km2": 73.0899168399168,
+      "structured": 0.897540983606557,
+      "tactical": 0.694672131147541,
+      "trapped_area": 0.0167619542619543,
+      "wall_edges_per_km2": 2008.6191961192
+    },
+    "terraced_valleys": {
+      "area_share": 0.0264740529481059,
+      "speckle_per_km2": 12.1975019516003,
+      "structured": 0.96,
+      "tactical": 0.03,
+      "trapped_area": 0.0,
+      "wall_edges_per_km2": 32.5266718709342
+    }
+  },
+  "points": 256,
+  "river_sources": 10,
+  "seed": 2697992464,
+  "settlement_sites": 23,
+  "slope_edges_per_km2": 1878.84436713325,
+  "speckle_per_km2": 22.0404730902778,
+  "structured": 0.627362055933484,
+  "tactical": 0.170068027210884,
+  "trapped_area": 0.00286865234375,
+  "wall_edges_per_km2": 393.549601236979,
+  "wall_run_max": 12,
+  "wall_run_p50": 1,
+  "wall_run_p95": 4,
+  "water": true
+}

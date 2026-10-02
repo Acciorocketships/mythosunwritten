@@ -1,3 +1,42 @@
+> October 2 terrain regimes (branch `claude/terrain-generation-overhaul-adb98f`; spec
+> `docs/superpowers/specs/2026-10-02-terrain-regimes-local-relief-design.md`, plan
+> `docs/superpowers/plans/2026-10-02-terrain-regimes-local-relief.md`). `LandformField` (one
+> analytic shape per 768 m province, averaged across four owners and seven biomes, which
+> blurred every landform into a bump) is retired. `HeightfieldPlan.height01` now delegates to
+> `TerrainField.height_m(p, seed, include_detail)` (metres, / `REF_AMPLITUDE` 128) in
+> `scripts/terrain/heightfield/`: `base` (smootherstep-bilinear of region base levels on a
+> 320 m node grid) + `LandformSetpieces` (sparse placed escarpment, amphitheatre, mesa,
+> big ridge with pass, open cleft, hanging valley; one candidate per 512 m cell, Matern-II
+> over 5x5 cells so footprints never overlap; radius <= 480 m; relief suppressed 70% inside)
+> + per-regime `RegimeRelief` with its storey-aligned terrace (`ReliefPrimitives`: hummock,
+> ridged + pass_mod + gully, sites_bump, worley, terrace). Regimes: `TerrainRegimeField`
+> jittered Voronoi (640 m cells, sites in [0.2, 0.8], 5x5 search; a cell may adopt its west or
+> north neighbour's draw, MERGE_CHANCE 0.2), archetype chosen at the site from
+> `TerrainRegimeCatalog.AFFINITY` (visual biome bias, floor 0.03), parameters drawn from
+> ranges (`*_m` scaled by a per-region 0.6-1.7 scale, `*_st` storeys). Eight archetypes:
+> rolling_downs, ridge_and_pass, escarpment_country (warped triangle-wave stair: one tread
+> rise per tread depth, long parallel cliff bands), terraced_valleys, karst_hollows,
+> tableland, highland_massif, low_flats. `sample(seed, p)` returns `[[region, weight], ...]`:
+> every site within BAND_M 120 m of the nearest weighs `1 - smootherstep((d - d1)/BAND)`,
+> normalized (a two-site blend jumped 1.2 m where runner-ups swapped). The SMOOTH field
+> (`include_detail=false`, what rivers trace) = base + set pieces + each regime's MACRO relief
+> (`RegimeRelief.relief_m(..., detail=false)`: two ridged octaves, stairs, troughs, plateau
+> cells, first hummock octave of the gentle archetypes; no terraces); without it sources fell
+> to 9-18 per 81 districts (guard >= 30 now checked on seven seeds). Regions whose site is
+> within `SPAWN_CALM_M` 1.2 km of the origin are calm rolling downs (base <= 2, relief <= 1
+> storey, never merged) and no set piece comes within 400 m (spawn ring at 180 m <= 16 m on
+> seven seeds). Gully kernels use a compact window (the cut-off Gaussian seamed). Valley damping near
+> rivers, border escarpments, the F9 gallery view and the lattice clean-up pass are deferred.
+> `TerrainRegimeField.set_force_archetype(a)` forces one archetype (tests, gallery). F3 shows
+> the blended regimes; F4 has one `regime <archetype>` spot each. Harnesses:
+> `tests/harness/terrain_regime_map.gd` (headless top-down PNG + `--spots`),
+> `terrain_structure_survey.gd` (48 m window metrics; runs on the baseline too),
+> `terrain_field_cost.gd`, `regime_gallery.tscn` (windowed, per archetype oblique/top/close).
+> Cost: smooth 21-27 us/sample (baseline 25), detailed 55-66 (27). Survey: tactical windows
+> concentrate in tableland/escarpment; speckle ~5x (trigger for the deferred clean-up pass);
+> ridge/massif still read gentle. Review:
+> `docs/qa/2026-10-02-terrain-regimes/result.md`.
+
 > September 30 dual-grid terrain tiles (branch `dual-grid-terrain`; spec
 > `docs/superpowers/specs/2026-09-30-dual-grid-terrain-tiles-design.md`, plan
 > `docs/superpowers/plans/2026-09-30-dual-grid-terrain-tiles.md`). Terrain heights
@@ -3274,7 +3313,8 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
 `docs/superpowers/specs/2026-09-30-dual-grid-terrain-tiles-design.md`.
 
 - **`heightfield/HeightfieldPlan.gd`** — the deterministic plan. A continuous height field
-  `H(x, z)` (layered value noise + rocky-biome mountain spines + `LandformField`, faded flat near
+  `H(x, z)` (`TerrainField`: continental base + `LandformSetpieces` + per-regime `RegimeRelief`
+  from `TerrainRegimeField`/`TerrainRegimeCatalog`, see the October 2 entry; faded flat near
   spawn, minus the river carve) is sampled at every lattice point `(i, j)` = world `(12 i, 12 j)`
   and quantized into integer **storeys** (4 m each) and sub-storey **levels** (1 m, 0..3). A
   monotone trickle-down **clamp** lowers each point to at most `max_step` storeys above its lowest
@@ -5081,7 +5121,9 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
 - **Different cliff look**: world cliffs are the rock skirt under the `sheet_bedrock` slope sheet
   (`CliffRockStyle`, `CliffSlopeEnvelope` radii/relief, `CliffSlopeField` rocks); change those,
   never re-add pieces on world walls. Village rims keep the KayKit pieces in `CliffDressing.ASSETS`.
-- **Tuning terrain shape**: `TerrainWorldTuning` (amplitude, storey cap, cliff step),
+- **Tuning terrain shape**: `TerrainRegimeCatalog` (archetype parameter ranges, biome
+  affinities, set-piece densities and sizes) is the first place to look; then
+  `TerrainWorldTuning` (amplitude, storey cap, cliff step),
   `HeightfieldPlan` constants (`STOREY_HEIGHT`, `LEVELS_PER_STOREY`, aggregation) and
   `LOWPASS_M`, `TerrainTileField.cliff_end` (E2/E1), and `Helper` field scales (`MACRO_SCALE`,
   biome/water scales). Changing the plan re-rolls geography: re-pin geography tests to an

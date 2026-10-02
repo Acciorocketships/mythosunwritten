@@ -1,6 +1,6 @@
 # Terrain regimes and local relief — design
 
-Date: 2026-10-02. Status: draft for owner review. Branch: `claude/terrain-generation-overhaul-adb98f`.
+Date: 2026-10-02. Status: phase 1 implemented (see Deviations); awaiting visual review. Branch: `claude/terrain-generation-overhaul-adb98f`.
 Scope: sub-projects **A** (structured local relief) and **B** (terrain-biome "regimes") of the
 terrain overhaul. **C** (water-coupled landforms: gorges/waterfalls, deltas/braided channels,
 lake islands/peninsulas) and **D** (overhangs: caves, arches, roofed clefts) get their own specs;
@@ -279,3 +279,27 @@ field ≤ 3× current. Report the 49-chunk `profile_terrain.gd` startup against 
 2. **Phase 2 (conditional on §7):** discrete clean-up pass in the reserved slot.
 3. **Later specs:** C (water-coupled landforms, using set-piece/regime hooks), D (overhangs), and
    a possible 6 m lattice (sampling plus slope-rule change only, since landforms are in metres).
+
+## Deviations in the phase 1 implementation
+
+- Voronoi site jitter is ±30% (offsets in [0.2, 0.8]) with a 5×5 search, so nearest
+  distances are exact.
+- `base` is a smootherstep-bilinear interpolation of region base levels on a 320 m node grid,
+  not a Gaussian-weighted site mean.
+- Border blending weighs **every** site within 120 m of the nearest
+  (`1 - smootherstep((d - d1) / 120)`, normalized), not just the two nearest: a two-site blend
+  jumps where runner-up sites swap order.
+- The smooth field rivers trace is base + set pieces + each regime's **macro** relief (ridge
+  spines, escarpment stairs, valley troughs, plateau cells), not base + set pieces alone. Without
+  it, mountains were invisible to rivers and headwater sources fell below the density guard.
+- The gentle archetypes (rolling downs, karst hollows, low flats) contribute their first
+  hummock octave to the macro relief, so headwaters have rounded hills to rise from.
+- Spawn: regions whose site lies within 1.2 km of the origin are calm rolling downs (base ≤ 2
+  storeys, relief ≤ 1) and never merge; no set piece comes within 400 m of the origin.
+- Gully kernels use a compactly supported window (a truncated Gaussian left seams).
+- Escarpment country uses a warped triangle-wave stair (one tread rise per tread depth), not
+  value noise.
+- Gullies follow the gradient of the region's own ridged term (ridge and massif archetypes only).
+- Set-piece lengths are capped at 840 m (footprint radius ≤ 480 m).
+- Deferred: border escarpments, valley damping near rivers, the F9 view in the archetype gallery.
+- Archetype recipes live in `RegimeRelief.gd`; the catalogue stays pure data.
