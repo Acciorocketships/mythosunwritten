@@ -53,6 +53,17 @@ class LoadedPoints extends RefCounted:
 ## The tile under world xz: its index floor(v / 12), its corners a (-x -z),
 ## b (+x -z), d (-x +z), c (+x +z) as storey/level, and its four lattice-edge
 ## categories. `source` answers loaded_storey_at / loaded_point_at by point.
+## The terrain regimes blended at a world position (TerrainRegimeField), nearest
+## first with weights, and the nearest region's site.
+static func regime_line(seed: int, world: Vector3) -> String:
+	var regimes := TerrainRegimeField.sample(seed, Vector2(world.x, world.z))
+	var parts: Array[String] = []
+	for pair: Array in regimes:
+		parts.append("%s %.2f" % [pair[0].archetype, pair[1]])
+	var site: Vector2 = regimes[0][0].site
+	return "terrain %s   (site %.0f, %.0f)" % [", ".join(parts), site.x, site.y]
+
+
 static func tile_lines(source, world_xz: Vector2) -> Array[String]:
 	var s := TerrainTileField.SPACING
 	var tile := Vector2i(floori(world_xz.x / s), floori(world_xz.y / s))
@@ -112,6 +123,7 @@ func _process(_dt: float) -> void:
 				if w5[k] >= 0.05:
 					parts.append("%s %.2f" % [k, w5[k]])
 			lines.append("biome %s   (%s)" % [BiomeRegistry.profile(dominant).display_name, ", ".join(parts)])
+			lines.append(regime_line(int(wseed), pp))
 	# Raycast from screen centre onto the terrain.
 	var vp := get_viewport().get_visible_rect().size
 	var centre := vp * 0.5
