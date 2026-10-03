@@ -275,29 +275,35 @@ func priority_of(sc: Vector2i) -> int:
 
 
 ## Deterministic hill-climb on the smooth field: fixed stride uphill (falling
-## back to the best of eight compass directions along a crest), halving on
-## overshoot, until the gradient flattens (summit) or the budget runs out.
+## back to the best of eight compass directions along a crest, or off a
+## saddle where the gradient vanishes), halving on overshoot, until nothing
+## is higher at a flat point (summit) or the budget runs out.
 func _ascend(start: Vector2) -> Vector2:
 	var p: Vector2 = start
 	var step: float = ASCEND_STEP
 	var h: float = smooth_h(p)
 	for i in ASCEND_MAX_STEPS:
 		var g: Vector2 = grad(p)
-		if g.length() < SOURCE_PEAK_EPS * 0.5:
-			break
-		var q: Vector2 = p + g.normalized() * step
-		var hq: float = smooth_h(q)
+		var q: Vector2 = p
+		var hq: float = h
+		if g.length() >= SOURCE_PEAK_EPS * 0.5:
+			q = p + g.normalized() * step
+			hq = smooth_h(q)
 		if hq <= h:
 			# Across a narrow crest the gradient step overshoots although the
 			# crest still rises along itself: try the eight compass directions
 			# at this stride before tightening it.
+			# Off a flat point (saddle or shoulder) look two strides out.
+			var reach := step if g.length() >= SOURCE_PEAK_EPS * 0.5 else 2.0 * ASCEND_STEP
 			for k in 8:
-				var c: Vector2 = p + Vector2.from_angle(k * TAU / 8.0) * step
+				var c: Vector2 = p + Vector2.from_angle(k * TAU / 8.0) * reach
 				var hc: float = smooth_h(c)
 				if hc > hq:
 					q = c
 					hq = hc
 		if hq <= h:
+			if g.length() < SOURCE_PEAK_EPS * 0.5:
+				break     # flat and nothing higher at this stride: a summit
 			step *= 0.5   # overshot the summit — tighten the stride
 			if step < 1.0:
 				break
