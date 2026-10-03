@@ -274,8 +274,9 @@ func priority_of(sc: Vector2i) -> int:
 	return _hash_cell(sc, 0x51ED)
 
 
-## Deterministic hill-climb on the smooth field: fixed stride uphill, halving
-## on overshoot, until the gradient flattens (summit) or the budget runs out.
+## Deterministic hill-climb on the smooth field: fixed stride uphill (falling
+## back to the best of eight compass directions along a crest), halving on
+## overshoot, until the gradient flattens (summit) or the budget runs out.
 func _ascend(start: Vector2) -> Vector2:
 	var p: Vector2 = start
 	var step: float = ASCEND_STEP
@@ -286,6 +287,16 @@ func _ascend(start: Vector2) -> Vector2:
 			break
 		var q: Vector2 = p + g.normalized() * step
 		var hq: float = smooth_h(q)
+		if hq <= h:
+			# Across a narrow crest the gradient step overshoots although the
+			# crest still rises along itself: try the eight compass directions
+			# at this stride before tightening it.
+			for k in 8:
+				var c: Vector2 = p + Vector2.from_angle(k * TAU / 8.0) * step
+				var hc: float = smooth_h(c)
+				if hc > hq:
+					q = c
+					hq = hc
 		if hq <= h:
 			step *= 0.5   # overshot the summit — tighten the stride
 			if step < 1.0:
@@ -307,13 +318,15 @@ func _ring_prominence(p: Vector2) -> float:
 
 ## The jittered pre-climb candidate point inside the super-cell.
 func _jitter_pos(sc: Vector2i) -> Vector2:
-	# Survey four stratified candidates before climbing the highest. A single
-	# random foothill used to reject a whole 768m mountain district.
+	# Survey sixteen stratified candidates before climbing the highest. A single
+	# random foothill used to reject a whole 768m mountain district, and with
+	# the mid-scale landforms (2026-10-02) four candidates often started too far
+	# from any summit for the bounded climb to converge.
 	var best := Vector2.ZERO
 	var best_h := -INF
-	for i in 4:
-		var jx := (float(i % 2) + Helper._hash01(_hash_cell(sc, 101 + i * 17))) * 0.5
-		var jz := (float(i / 2) + Helper._hash01(_hash_cell(sc, 102 + i * 17))) * 0.5
+	for i in 16:
+		var jx := (float(i % 4) + Helper._hash01(_hash_cell(sc, 101 + i * 17))) * 0.25
+		var jz := (float(i / 4) + Helper._hash01(_hash_cell(sc, 102 + i * 17))) * 0.25
 		var p := (Vector2(sc) + Vector2(jx, jz)) * SUPER
 		var h := smooth01(p)
 		if h > best_h:
@@ -619,7 +632,11 @@ func _contour_step(t: RiverTrace, visited: Dictionary, p: Vector2,
 		dir: Vector2, g: Vector2, source: Vector2, arc: float,
 		phase: float, hand: float) -> Vector2:
 	var down := -g.normalized() if g.length_squared() > 0.000001 else dir
-	var contour := down.rotated(hand * acos(CONTOUR_DESCENT))
+	# Leave the summit straight downhill first: contour-following on a small
+	# rounded hill (the mid-scale landforms, 2026-10-02) orbited it until its
+	# own reach boxed it in.
+	var contour := down if p.distance_to(source) < SUMMIT_REACH \
+		else down.rotated(hand * acos(CONTOUR_DESCENT))
 	var strength := clampf(g.length() / STEEP_HI, 0.0, 1.0)
 	# Outside the summit's first bend, a broad outward potential carries the
 	# river through successive lowland basins instead of orbiting one hollow.

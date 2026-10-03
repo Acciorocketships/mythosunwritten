@@ -40,6 +40,7 @@ static func set_force_archetype(a: StringName) -> void:
 	_force = a
 	clear_caches()
 	LandformSetpieces.clear_caches()
+	LandformFeatures.clear_caches()
 
 
 static func clear_caches() -> void:
@@ -78,6 +79,7 @@ static func _own_region(seed: int, cell: Vector2i) -> Dictionary:
 		params.knoll_st = minf(params.knoll_st, 1.0)
 	return {
 		"archetype": archetype, "params": params, "scale": scale, "site": site, "cell": cell,
+		"calm": calm,
 		"base_m": float(params.base_level_st) * TerrainRegimeCatalog.STOREY,
 		"rot": Helper._cell_hash01(seed + 1405, cell.x, cell.y) * TAU,
 		"salt": int(Helper._cell_hash01(seed + 1406, cell.x, cell.y) * 1000000.0),

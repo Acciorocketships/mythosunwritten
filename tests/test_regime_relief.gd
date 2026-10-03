@@ -24,9 +24,10 @@ func test_every_archetype_is_deterministic_finite_and_bounded() -> void:
 		assert_between(lo, -30.0, 60.0, "%s min" % a)
 		assert_between(hi, -30.0, 60.0, "%s max" % a)
 
-func test_structured_archetypes_produce_storey_scale_relief() -> void:
-	for a: StringName in [&"ridge_and_pass", &"escarpment_country", &"terraced_valleys",
-			&"tableland", &"highland_massif", &"karst_hollows"]:
+## Since the mid-scale feature layer (owner review 2026-10-02) the regime relief
+## is texture: bounded so it never drowns the structured landforms, yet present.
+func test_regime_texture_stays_secondary_to_landforms() -> void:
+	for a: StringName in TerrainRegimeCatalog.ARCHETYPES:
 		var r := _region(a, Vector2i(1, 1))
 		var lo := INF
 		var hi := -INF
@@ -35,7 +36,9 @@ func test_structured_archetypes_produce_storey_scale_relief() -> void:
 			var h := RegimeRelief.relief_m(r, p)
 			lo = minf(lo, h)
 			hi = maxf(hi, h)
-		assert_gt(hi - lo, 8.0, "%s spans at least two storeys over 360 m" % a)
+		assert_lt(hi - lo, 20.0, "%s texture spans under five storeys over 360 m" % a)
+		if a != &"low_flats":
+			assert_gt(hi - lo, 0.5, "%s texture is not flat" % a)
 
 func test_terrace_regimes_use_storey_steps() -> void:
 	for a: StringName in TerrainRegimeCatalog.ARCHETYPES:
@@ -43,5 +46,9 @@ func test_terrace_regimes_use_storey_steps() -> void:
 		if t.x > 0.0:
 			assert_almost_eq(fmod(t.x, 4.0), 0.0, 1e-6, "%s step is whole storeys" % a)
 			assert_between(t.y, 0.0, 1.0)
-	assert_gt(RegimeRelief.terrace_of(_region(&"escarpment_country", Vector2i(0, 0))).x, 0.0)
+	# Only terraced valleys terrace the whole field: terracing a noisy field
+	# broke gentle slopes into dashed cliffs (escarpment and tableland terrace
+	# only their own stepped component).
+	assert_gt(RegimeRelief.terrace_of(_region(&"terraced_valleys", Vector2i(0, 0))).x, 0.0)
+	assert_eq(RegimeRelief.terrace_of(_region(&"escarpment_country", Vector2i(0, 0))).x, 0.0)
 	assert_eq(RegimeRelief.terrace_of(_region(&"rolling_downs", Vector2i(0, 0))).x, 0.0)

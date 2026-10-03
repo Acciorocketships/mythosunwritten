@@ -26,6 +26,10 @@ static func relief_m(region: Dictionary, p: Vector2, detail: bool = true) -> flo
 				+ ReliefPrimitives.sites_bump(pr, s + 5, q.knoll_spacing_m, q.knoll_density,
 					minf(q.knoll_radius_m, q.knoll_spacing_m), 0.1) * q.knoll_st * ST
 		&"ridge_and_pass", &"highland_massif":
+			# Their macro shape is the feature layer's ridges and peak clusters;
+			# ridged-noise crests are V-shaped and stalled the summit climb.
+			if not detail:
+				return 0.0
 			return _ridges(q, s, pr, 4 if region.archetype == &"ridge_and_pass" else 5, detail)
 		&"escarpment_country":
 			var pw := ReliefPrimitives.warp(pr, s + 1, q.tread_depth_m * 0.5, q.tread_depth_m * 2.0)
@@ -34,10 +38,13 @@ static func relief_m(region: Dictionary, p: Vector2, detail: bool = true) -> flo
 			# cliff bands (`steps` treads up, then down again).
 			var period: float = 2.0 * q.steps * q.tread_depth_m
 			var u: float = pw.x + ReliefPrimitives.vnoise(pw, s + 3, q.tread_depth_m * 4.0) * q.tread_depth_m
-			var stair := absf(fposmod(u / period, 1.0) - 0.5) * 2.0
+			var stair: float = absf(fposmod(u / period, 1.0) - 0.5) * 2.0 * q.steps * q.tread_rise_st * ST
 			if not detail:
-				return stair * q.steps * q.tread_rise_st * ST
-			return stair * q.steps * q.tread_rise_st * ST \
+				# The same wave rounded (no kink at its crest) for the smooth field.
+				return (0.5 + 0.5 * cos(TAU * u / period)) * q.steps * q.tread_rise_st * ST
+			# Only the stair is terraced: terracing the whole noisy field broke
+			# every gentle slope that crossed a step line into dashed cliffs.
+			return ReliefPrimitives.terrace(stair, roundf(q.tread_rise_st) * ST, q.riser_frac) \
 				+ ReliefPrimitives.hummock(pr, s, q.hummock_wl_m, 2) * q.relief_st * ST
 		&"terraced_valleys":
 			var axis := Vector2.from_angle(region.rot).orthogonal()
@@ -90,10 +97,6 @@ static func _ridges(q: Dictionary, s: int, pr: Vector2, octaves: int, detail: bo
 static func terrace_of(region: Dictionary) -> Vector2:
 	var q: Dictionary = region.params
 	match region.archetype:
-		&"escarpment_country":
-			return Vector2(roundf(q.tread_rise_st) * ST, q.riser_frac)
 		&"terraced_valleys":
 			return Vector2(ST, q.riser_frac)
-		&"tableland":
-			return Vector2(ST, 0.15)
 	return Vector2.ZERO

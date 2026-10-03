@@ -94,3 +94,40 @@ func test_spawn_surroundings_stay_gentle_on_every_seed() -> void:
 			var p := Vector2.from_angle(k * TAU / 64.0) * 180.0
 			top = maxf(top, HeightfieldPlan.height01(Vector3(p.x, 0, p.y), seed_value) * TerrainField.REF_AMPLITUDE)
 		assert_lte(top, 16.0, "seed %d: ring at 180 m stays within four storeys" % seed_value)
+
+## Owner review 2026-10-02: relief stayed "within the same few levels". Median
+## relief over nine 500 m windows per archetype (before the mid-scale feature
+## layer: rolling 13 m, ridge 21, escarpment 40, terraced 25, karst 17,
+## tableland 24, massif 30, flats 5).
+const MIN_RELIEF_500 := {&"rolling_downs": 30.0, &"ridge_and_pass": 45.0,
+	&"escarpment_country": 45.0, &"terraced_valleys": 40.0, &"karst_hollows": 45.0,
+	&"tableland": 45.0, &"highland_massif": 45.0, &"low_flats": 16.0}
+
+func test_every_archetype_has_mid_scale_relief() -> void:
+	for a: StringName in MIN_RELIEF_500:
+		TerrainRegimeField.set_force_archetype(a)
+		var ranges: Array[float] = []
+		for wz in 3:
+			for wx in 3:
+				var lo := INF
+				var hi := -INF
+				for z in 21:
+					for x in 21:
+						var h := TerrainField.height_m(Vector2(9000.0 + wx * 600.0 + x * 24.0,
+							600.0 + wz * 600.0 + z * 24.0), SEED, true)
+						lo = minf(lo, h)
+						hi = maxf(hi, h)
+				ranges.append(hi - lo)
+		ranges.sort()
+		assert_gt(ranges[4], float(MIN_RELIEF_500[a]), "%s median relief per 500 m" % a)
+
+## ...and wide areas of the map sit at very different elevations.
+func test_wide_areas_differ_in_elevation() -> void:
+	var means: Array[float] = []
+	for k in 12:
+		var total := 0.0
+		for z in range(-4, 5):
+			for x in range(-4, 5):
+				total += TerrainField.height_m(Vector2(3000.0 + k * 1500.0 + x * 100.0, 4000.0 + z * 100.0), SEED, false)
+		means.append(total / 81.0)
+	assert_gt(means.max() - means.min(), 24.0, "1 km areas along an 18 km transect differ by six storeys or more")
