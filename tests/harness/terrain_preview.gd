@@ -8,7 +8,9 @@ extends Node3D
 ## structure quickly; confirm finished looks with regime_gallery or the game.
 ##   Godot --path . res://tests/harness/terrain_preview.tscn -- --output DIR
 ##     [--archetype NAME|all|world] [--samples N] [--size M] [--step M]
-##     [--seed S] [--center X,Z]
+##     [--seed S] [--center X,Z] [--yaw DEG]
+## --yaw turns the oblique/low/ground cameras round the centre (0 = from the
+## south-west); the ground shot stands 0.45 size out, 25 m above the terrain.
 ## `world` renders the unforced world at --center; an archetype forces it
 ## everywhere and renders `samples` sites spaced far apart.
 
@@ -21,6 +23,10 @@ var _size := 1536.0
 var _step := 4.0
 var _seed := 2697992464
 var _center := Vector2(6000, -3000)
+var _yaw := 0.0
+var _heights := PackedFloat32Array()
+var _origin := Vector2.ZERO
+var _n := 0
 var _camera := Camera3D.new()
 var _terrain := MeshInstance3D.new()
 
@@ -36,6 +42,7 @@ func _ready() -> void:
 			"--size": _size = float(next)
 			"--step": _step = float(next)
 			"--seed": _seed = int(next)
+			"--yaw": _yaw = deg_to_rad(float(next))
 			"--center":
 				var parts := next.split(",")
 				_center = Vector2(float(parts[0]), float(parts[1]))
@@ -90,9 +97,9 @@ void fragment() {
 	vec3 mid = vec3(0.34, 0.40, 0.18);
 	vec3 high = vec3(0.45, 0.40, 0.28);
 	vec3 peak = vec3(0.55, 0.53, 0.50);
-	vec3 c = mix(low, mid, smoothstep(0.0, 60.0, h));
-	c = mix(c, high, smoothstep(60.0, 120.0, h));
-	c = mix(c, peak, smoothstep(125.0, 175.0, h));
+	vec3 c = mix(low, mid, smoothstep(0.0, 70.0, h));
+	c = mix(c, high, smoothstep(70.0, 150.0, h));
+	c = mix(c, peak, smoothstep(160.0, 240.0, h));
 	float steep = 1.0 - smoothstep(0.55, 0.8, world_normal.y);
 	c = mix(c, vec3(0.33, 0.30, 0.28), steep);
 	float band = abs(fract(h / 4.0 + 0.5) - 0.5) * 4.0;
@@ -122,8 +129,11 @@ func _run() -> void:
 		print("[terrain_preview] %s built in %d ms, top %.1f m" % [site[2], Time.get_ticks_msec() - started, top])
 		var c: Vector2 = site[1]
 		var focus := Vector3(c.x, top * 0.35, c.y)
-		await _shoot("%s/%s_oblique.png" % [_output, site[2]], focus + Vector3(-0.62, 0.48, 0.62) * _size * 0.95, focus)
-		await _shoot("%s/%s_low.png" % [_output, site[2]], focus + Vector3(-0.55, 0.16, 0.55) * _size * 0.75, focus)
+		await _shoot("%s/%s_oblique.png" % [_output, site[2]], focus + Vector3(-0.62, 0.48, 0.62).rotated(Vector3.UP, _yaw) * _size * 0.95, focus)
+		await _shoot("%s/%s_low.png" % [_output, site[2]], focus + Vector3(-0.55, 0.16, 0.55).rotated(Vector3.UP, _yaw) * _size * 0.75, focus)
+		var out := Vector2(-0.707, 0.707).rotated(-_yaw) * _size * 0.45
+		var eye := Vector3(c.x + out.x, _height_at(c + out) + 25.0, c.y + out.y)
+		await _shoot("%s/%s_ground.png" % [_output, site[2]], eye, Vector3(c.x, _height_at(c) + 10.0, c.y))
 		await _shoot("%s/%s_top.png" % [_output, site[2]], Vector3(c.x, _size * 1.25, c.y + 0.01), Vector3(c.x, 0, c.y))
 	TerrainRegimeField.set_force_archetype(&"")
 	print("[terrain_preview] done -> ", _output)
@@ -173,7 +183,16 @@ func _build(c: Vector2) -> float:
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	_terrain.mesh = mesh
+	_heights = heights
+	_origin = c - Vector2(half, half)
+	_n = n
 	return top
+
+
+func _height_at(p: Vector2) -> float:
+	var i := clampi(roundi((p.x - _origin.x) / _step), 0, _n - 1)
+	var j := clampi(roundi((p.y - _origin.y) / _step), 0, _n - 1)
+	return _heights[j * _n + i]
 
 
 func _shoot(path: String, from: Vector3, target: Vector3) -> void:

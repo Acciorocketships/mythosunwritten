@@ -144,3 +144,52 @@ func test_highlands_and_lowlands_across_the_map() -> void:
 				total += TerrainField.height_m(Vector2(4000.0 + k * 3000.0 + x * 400.0, -6000.0 + z * 400.0), SEED, false)
 		means.append(total / 49.0)
 	assert_gt(means.max() - means.min(), 60.0, "3 km areas differ by fifteen storeys or more")
+
+## Owner review 2026-10-03 (second pass): a 96 m rise over ~1.5 km did not
+## read even across the edge. Upland fronts rise over about 700 m: where the
+## front is half way up, the elevation layer climbs at least 0.13 m per metre
+## (104 m / 700 m averages 0.15).
+func test_upland_fronts_rise_within_about_700_m() -> void:
+	var slopes: Array[float] = []
+	for z in range(-60, 61):
+		for x in range(-60, 61):
+			var p := Vector2(x * 200.0 + 37.0, z * 200.0 + 11.0)
+			if p.length() < 3000.0:
+				continue
+			var u := TerrainField.upland01(SEED, p)
+			if u < 0.4 or u > 0.6:
+				continue
+			var gx := TerrainField.elevation_m(SEED, p + Vector2(10, 0)) - TerrainField.elevation_m(SEED, p - Vector2(10, 0))
+			var gz := TerrainField.elevation_m(SEED, p + Vector2(0, 10)) - TerrainField.elevation_m(SEED, p - Vector2(0, 10))
+			slopes.append(Vector2(gx, gz).length() / 20.0)
+	slopes.sort()
+	assert_gt(slopes.size(), 20, "the window crosses upland fronts")
+	assert_gt(slopes[slopes.size() / 2], 0.13, "median front slope")
+
+## ...and highlands are not flat tables: their interiors swell toward broad
+## high ground and lowlands dip into basins, so the large-scale layer varies
+## inside each. The whole layer spans at least 140 m.
+func test_highlands_swell_and_lowlands_dip() -> void:
+	var high: Array[float] = []
+	var low: Array[float] = []
+	for z in range(-60, 61):
+		for x in range(-60, 61):
+			var p := Vector2(x * 200.0 + 37.0, z * 200.0 + 11.0)
+			if p.length() < 3000.0:
+				continue
+			var u := TerrainField.upland01(SEED, p)
+			if u > 0.98:
+				high.append(TerrainField.elevation_m(SEED, p))
+			elif u < 0.02:
+				low.append(TerrainField.elevation_m(SEED, p))
+	assert_gt(_std(high), 8.0, "highland interiors vary")
+	assert_gt(_std(low), 5.0, "lowlands vary")
+	assert_gt(high.max() - low.min(), 140.0, "the layer spans 140 m")
+
+func _std(a: Array[float]) -> float:
+	var m := 0.0
+	for v in a: m += v
+	m /= maxf(1.0, a.size())
+	var s := 0.0
+	for v in a: s += (v - m) * (v - m)
+	return sqrt(s / maxf(1.0, a.size()))

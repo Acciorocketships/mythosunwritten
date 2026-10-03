@@ -33,8 +33,8 @@ func _run() -> void:
 		for x in n:
 			var p := origin + Vector2(x + 0.5, z + 0.5) * mpp
 			heights[z * n + x] = HeightfieldPlan.height01(Vector3(p.x, 0, p.y), seed, false) * TerrainField.REF_AMPLITUDE
-	var stops := [[0.0, Color(0.16, 0.32, 0.12)], [40.0, Color(0.36, 0.48, 0.20)],
-		[80.0, Color(0.62, 0.58, 0.30)], [120.0, Color(0.58, 0.44, 0.30)], [170.0, Color(0.85, 0.85, 0.85)]]
+	var stops := [[0.0, Color(0.16, 0.32, 0.12)], [50.0, Color(0.36, 0.48, 0.20)],
+		[110.0, Color(0.62, 0.58, 0.30)], [160.0, Color(0.58, 0.44, 0.30)], [230.0, Color(0.85, 0.85, 0.85)]]
 	var image := Image.create(n, n, false, Image.FORMAT_RGB8)
 	for z in n:
 		for x in n:

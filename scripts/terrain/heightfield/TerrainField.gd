@@ -8,9 +8,10 @@ extends RefCounted
 ## evaluated per blended regime (each applying its own storey-aligned terrace),
 ## summed with the regime weights from TerrainRegimeField.sample, then passed
 ## through a soft ceiling under REF_AMPLITUDE.
-## - elevation: broad highland plateaus and lowlands (0..ELEVATION_M) from a
-##   4.5-9 km noise, sharpened so transitions take about 1 km (owner review
-##   2026-10-03); the noise is shifted per seed so spawn lies in a lowland.
+## - elevation: broad highlands and lowlands (0..ELEVATION_M) from a 4.5-9 km
+##   noise: upland fronts rising over about 700 m, highland interiors swelling
+##   higher, lowland basins dipping (owner review 2026-10-03); the noise is
+##   shifted per seed so spawn lies in a lowland.
 ## - continental: a 1.3-2.6 km undulation (0..CONTINENTAL_M) on top of it;
 ##   faded out round spawn.
 ## - features: LandformFeatures, the mid-scale structured landforms (hills,
@@ -21,33 +22,53 @@ extends RefCounted
 const REF_AMPLITUDE := TerrainWorldTuning.HEIGHTFIELD_AMPLITUDE
 const SETPIECE_RELIEF_SUPPRESSION := 0.7
 const CONTINENTAL_M := 28.0
-const ELEVATION_M := 96.0
+const ELEVATION_M := 160.0
 ## Heights above SOFT_CEILING approach REF_AMPLITUDE asymptotically.
 const SOFT_CEILING := REF_AMPLITUDE - 16.0
 
 
-## Broad highlands and lowlands in [0, 1] (before the spawn fade): shaped so
-## areas are clearly high or low rather than one uniform tilt.
+## Broad highlands and lowlands in [0, 1] (before the spawn fade), from one
+## slow noise n (owner review 2026-10-03, second pass):
+## - the upland front, a rise of UPLAND of the layer over about 700 m where n
+##   crosses 0.5 (`upland01`);
+## - SWELL more toward the interior of a highland, where n keeps rising, so
+##   highlands are not flat tables;
+## - lowland floors at FLOOR, dipping to 0 in basins where n keeps falling.
+const FLOOR := 0.15
+const UPLAND := 0.65
+const SWELL := 0.2
+const FRONT_LO := 0.477
+const FRONT_HI := 0.523
+
 static func elevation01(seed: int, p: Vector2) -> float:
-	return _elevation_raw(seed, p + _elevation_offset(seed))
+	return _elevation01_of(_elevation_noise(seed, p + _elevation_offset(seed)))
 
 
-static func _elevation_raw(seed: int, q: Vector2) -> float:
+static func _elevation01_of(n: float) -> float:
+	return FLOOR * (1.0 - smoothstep(0.46, 0.28, n)) + UPLAND * smoothstep(FRONT_LO, FRONT_HI, n) \
+		+ SWELL * smoothstep(0.53, 0.72, n)
+
+
+## The upland front alone: 0 in lowlands, 1 on highlands.
+static func upland01(seed: int, p: Vector2) -> float:
+	return smoothstep(FRONT_LO, FRONT_HI, _elevation_noise(seed, p + _elevation_offset(seed)))
+
+
+static func _elevation_noise(seed: int, q: Vector2) -> float:
 	# Rotated octaves and a 1.5 km warp hide the value-noise lattice (boxy,
 	# axis-aligned plateau edges at this scale).
 	var w := ReliefPrimitives.warp(q.rotated(0.45), seed + 1715, 1500.0, 5000.0)
-	var n := 0.65 * ReliefPrimitives.vnoise01(w, seed + 1711, 9000.0) \
+	return 0.65 * ReliefPrimitives.vnoise01(w, seed + 1711, 9000.0) \
 		+ 0.35 * ReliefPrimitives.vnoise01(w.rotated(1.3), seed + 1712, 4500.0)
-	return smoothstep(0.42, 0.58, n)
 
 
 static var _offsets: Dictionary = {}
 static var _offset_mutex := Mutex.new()
 
 ## Shift of the elevation noise that puts spawn naturally in a lowland: the
-## first of a fixed sequence of hashed offsets whose elevation at the origin is
-## low. (Fading the field round spawn cut an artificial round pit into
-## highlands.) Pure function of the seed; cached.
+## first of a fixed sequence of hashed offsets whose layer stays low (a
+## lowland basin) within 1.5 km of the origin. (Fading the field round spawn cut an
+## artificial round pit into highlands.) Pure function of the seed; cached.
 static func _elevation_offset(seed: int) -> Vector2:
 	_offset_mutex.lock()
 	var cached = _offsets.get(seed)
@@ -61,7 +82,7 @@ static func _elevation_offset(seed: int) -> Vector2:
 			Helper._cell_hash01(seed + 1714, k, 0) - 0.5) * 40000.0
 		var e := 0.0
 		for d in [Vector2.ZERO, Vector2(1500, 0), Vector2(-1500, 0), Vector2(0, 1500), Vector2(0, -1500)]:
-			e = maxf(e, _elevation_raw(seed, off + d))
+			e = maxf(e, _elevation01_of(_elevation_noise(seed, off + d)))
 		if e < best_e:
 			best_e = e
 			best = off
