@@ -131,3 +131,16 @@ func test_wide_areas_differ_in_elevation() -> void:
 				total += TerrainField.height_m(Vector2(3000.0 + k * 1500.0 + x * 100.0, 4000.0 + z * 100.0), SEED, false)
 		means.append(total / 81.0)
 	assert_gt(means.max() - means.min(), 24.0, "1 km areas along an 18 km transect differ by six storeys or more")
+
+## Owner review 2026-10-03: "large-scale height variation, where some parts of
+## the map are higher than others". 3 km areas along a 40 km transect sit at
+## mean elevations at least 60 m (15 storeys) apart.
+func test_highlands_and_lowlands_across_the_map() -> void:
+	var means: Array[float] = []
+	for k in 14:
+		var total := 0.0
+		for z in range(-3, 4):
+			for x in range(-3, 4):
+				total += TerrainField.height_m(Vector2(4000.0 + k * 3000.0 + x * 400.0, -6000.0 + z * 400.0), SEED, false)
+		means.append(total / 49.0)
+	assert_gt(means.max() - means.min(), 60.0, "3 km areas differ by fifteen storeys or more")

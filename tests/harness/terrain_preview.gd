@@ -90,9 +90,9 @@ void fragment() {
 	vec3 mid = vec3(0.34, 0.40, 0.18);
 	vec3 high = vec3(0.45, 0.40, 0.28);
 	vec3 peak = vec3(0.55, 0.53, 0.50);
-	vec3 c = mix(low, mid, smoothstep(0.0, 40.0, h));
-	c = mix(c, high, smoothstep(40.0, 80.0, h));
-	c = mix(c, peak, smoothstep(85.0, 115.0, h));
+	vec3 c = mix(low, mid, smoothstep(0.0, 60.0, h));
+	c = mix(c, high, smoothstep(60.0, 120.0, h));
+	c = mix(c, peak, smoothstep(125.0, 175.0, h));
 	float steep = 1.0 - smoothstep(0.55, 0.8, world_normal.y);
 	c = mix(c, vec3(0.33, 0.30, 0.28), steep);
 	float band = abs(fract(h / 4.0 + 0.5) - 0.5) * 4.0;

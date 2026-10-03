@@ -15,36 +15,36 @@ const ARCHETYPES: Array[StringName] = [&"rolling_downs", &"ridge_and_pass",
 
 const PARAMS := {
 	&"rolling_downs": {
-		"base_level_st": [1.0, 4.0], "relief_st": [0.4, 0.8], "hummock_wl_m": [60.0, 140.0],
+		"base_level_st": [0.0, 2.0], "relief_st": [0.4, 0.8], "hummock_wl_m": [60.0, 140.0],
 		"knoll_spacing_m": [150.0, 300.0], "knoll_radius_m": [30.0, 60.0],
 		"knoll_density": [0.3, 0.6], "knoll_st": [0.5, 1.0]},
 	&"ridge_and_pass": {
-		"base_level_st": [3.0, 8.0], "ridge_spacing_m": [60.0, 200.0], "ridge_st": [1.0, 2.5],
+		"base_level_st": [1.0, 4.0], "ridge_spacing_m": [60.0, 200.0], "ridge_st": [1.0, 2.5],
 		"pass_spacing_m": [150.0, 400.0], "pass_depth": [0.5, 0.8],
 		"gully_spacing_m": [30.0, 60.0], "gully_st": [0.3, 0.6]},
 	&"escarpment_country": {
-		"base_level_st": [2.0, 6.0], "relief_st": [0.3, 0.6], "hummock_wl_m": [80.0, 160.0],
+		"base_level_st": [1.0, 3.0], "relief_st": [0.3, 0.6], "hummock_wl_m": [80.0, 160.0],
 		"tread_rise_st": [2.0, 3.0], "tread_depth_m": [300.0, 500.0], "riser_frac": [0.06, 0.12],
 		"steps": [1.0, 1.0]},
 	&"terraced_valleys": {
-		"base_level_st": [1.0, 5.0], "valley_half_width_m": [40.0, 120.0], "treads": [2.0, 4.0],
+		"base_level_st": [0.0, 2.0], "valley_half_width_m": [40.0, 120.0], "treads": [2.0, 4.0],
 		"tread_depth_m": [24.0, 60.0], "riser_frac": [0.2, 0.4], "relief_st": [0.2, 0.5],
 		"hummock_wl_m": [60.0, 120.0]},
 	&"karst_hollows": {
-		"base_level_st": [2.0, 6.0], "relief_st": [0.3, 0.6], "hummock_wl_m": [80.0, 160.0],
+		"base_level_st": [1.0, 3.0], "relief_st": [0.3, 0.6], "hummock_wl_m": [80.0, 160.0],
 		"sink_spacing_m": [60.0, 120.0], "sink_radius_m": [10.0, 30.0], "sink_density": [0.3, 0.6],
 		"sink_st": [1.0, 2.0], "hollow_spacing_m": [150.0, 300.0], "hollow_radius_m": [40.0, 100.0],
 		"hollow_density": [0.3, 0.6], "hollow_st": [0.5, 1.5], "knob_spacing_m": [100.0, 200.0],
 		"knob_radius_m": [15.0, 30.0], "knob_st": [0.5, 1.0]},
 	&"tableland": {
-		"base_level_st": [4.0, 8.0], "cell_m": [80.0, 250.0], "channel_m": [15.0, 40.0],
+		"base_level_st": [2.0, 5.0], "cell_m": [80.0, 250.0], "channel_m": [15.0, 40.0],
 		"rim_st": [0.5, 1.0]},
 	&"highland_massif": {
-		"base_level_st": [5.0, 9.0], "ridge_spacing_m": [120.0, 300.0], "ridge_st": [1.5, 3.0],
+		"base_level_st": [2.0, 5.0], "ridge_spacing_m": [120.0, 300.0], "ridge_st": [1.5, 3.0],
 		"pass_spacing_m": [250.0, 600.0], "pass_depth": [0.3, 0.6],
 		"gully_spacing_m": [40.0, 80.0], "gully_st": [0.5, 1.0]},
 	&"low_flats": {
-		"base_level_st": [0.0, 2.0], "relief_st": [0.0, 0.6], "hummock_wl_m": [80.0, 200.0],
+		"base_level_st": [0.0, 1.0], "relief_st": [0.0, 0.6], "hummock_wl_m": [80.0, 200.0],
 		"mound_spacing_m": [120.0, 260.0], "mound_radius_m": [30.0, 80.0], "mound_st": [0.3, 0.6]},
 }
 
@@ -150,8 +150,19 @@ static func draw(seed: int, key: Vector2i, salt: int, spec: Dictionary, scale: f
 	return out
 
 
+## Altitude preference: at the large-scale elevation altitude01 (0 lowland,
+## 1 highland) an archetype's affinity is multiplied by
+## max(0.15, 1 + bias * (2 altitude01 - 1)), so massifs gather on highlands and
+## flats in lowlands; 0.5 (mid) leaves the biome affinities unchanged.
+const ALTITUDE_BIAS := {
+	&"highland_massif": 1.0, &"ridge_and_pass": 0.6, &"tableland": 0.6,
+	&"escarpment_country": 0.3, &"karst_hollows": 0.0, &"rolling_downs": -0.3,
+	&"terraced_valleys": -0.3, &"low_flats": -1.0,
+}
+
+
 ## Pick an archetype for biome weights with a uniform draw u in [0, 1).
-static func choose(weights: Dictionary, u: float) -> StringName:
+static func choose(weights: Dictionary, u: float, altitude01: float = 0.5) -> StringName:
 	var scores: Array[float] = []
 	var total := 0.0
 	for a: StringName in ARCHETYPES:
@@ -159,6 +170,7 @@ static func choose(weights: Dictionary, u: float) -> StringName:
 		for biome: StringName in weights:
 			var table: Dictionary = AFFINITY.get(biome, {})
 			s += float(weights[biome]) * maxf(AFFINITY_FLOOR, float(table.get(a, 0.0)))
+		s *= maxf(0.15, 1.0 + float(ALTITUDE_BIAS.get(a, 0.0)) * (2.0 * altitude01 - 1.0))
 		scores.append(s)
 		total += s
 	var t := u * total

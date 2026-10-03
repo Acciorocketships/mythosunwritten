@@ -70,7 +70,8 @@ static func _own_region(seed: int, cell: Vector2i) -> Dictionary:
 	var archetype := &"rolling_downs" if calm else _force
 	if archetype == &"":
 		var weights := Helper.biome_weights5(Vector3(site.x, 0.0, site.y), seed)
-		archetype = TerrainRegimeCatalog.choose(weights, Helper._cell_hash01(seed + 1403, cell.x, cell.y))
+		archetype = TerrainRegimeCatalog.choose(weights, Helper._cell_hash01(seed + 1403, cell.x, cell.y),
+			TerrainField.elevation01(seed, site))
 	var scale := lerpf(0.6, 1.7, Helper._cell_hash01(seed + 1404, cell.x, cell.y))
 	var params := TerrainRegimeCatalog.draw(seed, cell, 1410, TerrainRegimeCatalog.PARAMS[archetype], scale)
 	if calm:

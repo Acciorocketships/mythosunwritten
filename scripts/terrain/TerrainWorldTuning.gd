@@ -5,8 +5,10 @@ extends RefCounted
 ## production-representative corpus/review harnesses must read these values
 ## instead of copying literals, or a valid pin in a harness may not exist in
 ## the rendered world at all.
-const HEIGHTFIELD_AMPLITUDE := 128.0
-const HEIGHTFIELD_MAX_STOREYS := 32
+## 192 m / 48 storeys since the large-scale elevation layer (owner review
+## 2026-10-03): highlands sit up to ~64 m above lowlands before any landform.
+const HEIGHTFIELD_AMPLITUDE := 192.0
+const HEIGHTFIELD_MAX_STOREYS := 48
 const MAX_CLIFF_STEP := 3
 
 
