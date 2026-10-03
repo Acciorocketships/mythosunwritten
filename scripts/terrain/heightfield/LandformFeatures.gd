@@ -96,8 +96,11 @@ static func _compute(seed: int, cell: Vector2i) -> Dictionary:
 	var radius := footprint_radius(kind, params)
 	if pos.length() - radius < SPAWN_CLEAR_M:
 		return {}
+	var salt := int(_hash(seed, cell, 1607) * 1000000.0)
+	if kind in [&"hill", &"peak", &"mesa", &"basin"]:
+		params["_blob"] = blob_components(params, salt)
 	return {"kind": kind, "pos": pos, "params": params, "radius": radius, "cell": cell,
-		"rot": _hash(seed, cell, 1606) * TAU, "salt": int(_hash(seed, cell, 1607) * 1000000.0)}
+		"rot": _hash(seed, cell, 1606) * TAU, "salt": salt}
 
 
 ## (raise m, cut m) at p from every feature reaching it.
@@ -167,6 +170,100 @@ static func _h(salt: int, i: int, k: int) -> float:
 	return Helper._cell_hash01(salt + k, i, 0)
 
 
+const PROFILE_DOME := 0
+const PROFILE_PEAK := 1
+const PROFILE_PLATEAU := 2
+const BLOB_STRIDE := 6
+
+## The blob of a hill/peak/mesa/basin (owner review 2026-10-03: circles read
+## as artificial): a core ellipse and 0-2 satellite ellipses, each with its own
+## centre, semi-axes, rotation and relative height, all inside 0.92 of the
+## radius. Flat array [cx, cy, a, b, rot, rel] per component; cached in the
+## feature's params at creation (computed on the fly for synthetic params).
+static func _components(q: Dictionary, salt: int) -> PackedFloat64Array:
+	var cached = q.get("_blob")
+	if cached != null:
+		return cached
+	return blob_components(q, salt)
+
+
+static func blob_components(q: Dictionary, salt: int) -> PackedFloat64Array:
+	var radius: float = q.radius_m
+	var sat_lo := 0.55
+	var sat_hi := 0.9
+	if q.has("peaks") or q.has("spread"):
+		sat_lo = 0.4
+		sat_hi = 0.7
+	var out := PackedFloat64Array()
+	# 1-3 ellipses in all (owner, 2026-10-03). A lone core is never near-round.
+	var satellites := int(_h(salt, 0, 46) * 2.999)
+	var core_a := radius * (0.6 + 0.18 * _h(salt, 0, 41))
+	var core_aspect := (0.5 + 0.3 * _h(salt, 0, 44)) if satellites == 0 else (0.5 + 0.45 * _h(salt, 0, 44))
+	out.append_array([(_h(salt, 0, 42) - 0.5) * 0.16 * radius, (_h(salt, 0, 43) - 0.5) * 0.16 * radius,
+		core_a, core_a * core_aspect, _h(salt, 0, 45) * TAU, 1.0])
+	for i in range(1, satellites + 1):
+		var dist := radius * (0.3 + 0.2 * _h(salt, i, 47))
+		var at := Vector2.from_angle(_h(salt, i, 48) * TAU) * dist
+		var a := minf(radius * (0.28 + 0.22 * _h(salt, i, 49)), 0.92 * radius - dist)
+		out.append_array([at.x, at.y, a, a * (0.4 + 0.5 * _h(salt, i, 50)), _h(salt, i, 53) * TAU,
+			lerpf(sat_lo, sat_hi, _h(salt, i, 54))])
+	return out
+
+
+## Light domain warp so blob outlines are never clean conics.
+static func _warp(q: Dictionary, local: Vector2, salt: int) -> Vector2:
+	var wl: float = 0.4 * q.radius_m
+	return local + Vector2(ReliefPrimitives.vnoise(local, salt + 61, wl),
+		ReliefPrimitives.vnoise(local, salt + 62, wl)) * 0.18 * q.radius_m
+
+
+## Normalised elliptical distance of a warped point to component k (1 at its outline).
+static func _component_t(c: PackedFloat64Array, k: int, w: Vector2) -> float:
+	var i := k * BLOB_STRIDE
+	var d := (w - Vector2(c[i], c[i + 1])).rotated(-c[i + 4])
+	return Vector2(d.x / c[i + 2], d.y / c[i + 3]).length()
+
+
+## Height fraction (0..1) of the blob: max over components of rel * profile.
+static func _blob_height(q: Dictionary, local: Vector2, salt: int, profile: int, detail: bool) -> float:
+	var c := _components(q, salt)
+	var w := _warp(q, local, salt)
+	var best := 0.0
+	for k in c.size() / BLOB_STRIDE:
+		var t := _component_t(c, k, w)
+		if t >= 1.0:
+			continue
+		var v := 0.0
+		match profile:
+			PROFILE_DOME:
+				v = pow(1.0 - t * t, 2.0)
+			PROFILE_PEAK:
+				v = pow(1.0 - _round01(t, 0.05 if detail else 0.25), 1.7)
+			PROFILE_PLATEAU:
+				var b: float = c[k * BLOB_STRIDE + 3]
+				var rim := 6.0 / b if detail else 0.6
+				v = 1.0 - smoothstep(1.0 - rim, 1.0, t)
+		best = maxf(best, v * c[k * BLOB_STRIDE + 5])
+	return best
+
+
+## The blob's normalised distance: the minimum over its components (union).
+static func _blob_t(q: Dictionary, local: Vector2, salt: int) -> float:
+	var c := _components(q, salt)
+	var w := _warp(q, local, salt)
+	var best := INF
+	for k in c.size() / BLOB_STRIDE:
+		best = minf(best, _component_t(c, k, w))
+	return best
+
+
+## A planar tilt: one flank up to 30% taller than the other.
+static func _tilt(q: Dictionary, local: Vector2, salt: int) -> float:
+	var dir := Vector2.from_angle(_h(salt, 0, 55) * TAU)
+	var amount := 0.3 * _h(salt, 0, 56)
+	return 1.0 + amount * clampf(local.dot(dir) / q.radius_m, -1.0, 1.0)
+
+
 ## Summit positions of a peak cluster (local frame).
 static func cluster_summits(q: Dictionary, salt: int) -> Array[Vector2]:
 	var n := clampi(roundi(q.peaks), 2, 4)
@@ -185,17 +282,9 @@ static func shape(kind: StringName, q: Dictionary, local: Vector2, salt: int, de
 	var cut := 0.0
 	match kind:
 		&"hill":
-			var lq := Vector2(local.x, local.y / q.aspect)
-			var t: float = lq.length() / (q.radius_m * (0.85 + 0.15 * _lobes(local, salt)))
-			if t < 1.0:
-				raise = q.height_st * ST * pow(1.0 - t * t, 2.0)
+			raise = q.height_st * ST * _blob_height(q, local, salt, PROFILE_DOME, detail) * _tilt(q, local, salt)
 		&"peak":
-			var t: float = r / (q.radius_m * (0.85 + 0.15 * _lobes(local, salt)))
-			if t < 1.0:
-				# Rounded summit, normalised so the profile still ends at exactly t = 1.
-				var ts: float = (sqrt(t * t + 0.0025) - 0.05) / (sqrt(1.0025) - 0.05)
-				var spur := 1.0 + 0.18 * (_lobes(local * 3.0, salt + 1) - 0.5) * 4.0 * t * (1.0 - t)
-				raise = q.height_st * ST * pow(1.0 - clampf(ts, 0.0, 1.0), 1.7) * spur
+			raise = q.height_st * ST * _blob_height(q, local, salt, PROFILE_PEAK, detail) * _tilt(q, local, salt)
 		&"peak_cluster":
 			raise = _cluster(q, local, salt, detail)
 		&"ridge":
@@ -207,18 +296,21 @@ static func shape(kind: StringName, q: Dictionary, local: Vector2, salt: int, de
 		&"tower_cluster":
 			raise = _scatter(q, local, salt, q.towers, q.tower_radius_m, 0.65, false, detail)
 		&"basin":
-			var rw: float = r / (0.88 + 0.12 * _lobes(local, salt))
+			# The bowl and its rim follow the blob outline (t = 1); the depth
+			# tilts across the basin.
+			var t := _blob_t(q, local, salt)
 			var depth: float = q.depth_st * ST
-			var floor_r: float = q.floor * q.radius_m
-			cut = depth * (1.0 - smoothstep(floor_r, 0.88 * q.radius_m, rw))
-			raise = q.rim_st * ST * exp(-pow((rw - 0.9 * q.radius_m) / (0.08 * q.radius_m), 2.0))
+			cut = depth * (1.0 - smoothstep(q.floor, 0.95, t)) * _tilt(q, local, salt)
+			raise = q.rim_st * ST * exp(-pow((t - 1.0) / 0.12, 2.0))
 			if q.island >= 0.4:
-				# The island stands island_st above the surrounding ground: a
-				# sheer-sided mesa or a rounded hill, by the feature's hash.
-				var ir: float = q.island_radius * floor_r
-				var t := r / ir
-				var profile := 1.0 - smoothstep(0.85, 1.0, t) if detail and salt % 2 == 0 \
-					else pow(maxf(0.0, 1.0 - t * t), 1.5)
+				# The island stands island_st above the surrounding ground: an
+				# elliptical sheer-sided mesa or rounded hill, by the feature's hash.
+				var ir: float = q.island_radius * q.floor * q.radius_m
+				var off: Vector2 = Vector2.from_angle(_h(salt, 0, 57) * TAU) * 0.3 * q.floor * q.radius_m * _h(salt, 0, 58)
+				var e := (local - off).rotated(-_h(salt, 0, 51) * TAU)
+				var ti := Vector2(e.x / ir, e.y / (ir * (0.55 + 0.4 * _h(salt, 0, 52)))).length()
+				var profile := 1.0 - smoothstep(0.85, 1.0, ti) if detail and salt % 2 == 0 \
+					else pow(maxf(0.0, 1.0 - ti * ti), 1.5)
 				raise = maxf(raise, (depth + q.island_st * ST) * profile)
 		&"valley":
 			var half: float = q.half_length_m
@@ -235,8 +327,8 @@ static func shape(kind: StringName, q: Dictionary, local: Vector2, salt: int, de
 			var along := 1.0 - smoothstep(0.7 * half, half, absf(local.x))
 			raise = q.rise_st * ST * step * back * along
 		&"amphitheatre":
-			var radius: float = q.radius_m
-			var ring := exp(-pow((r - radius) / (q.thickness * radius), 2.0))
+			var radius: float = q.radius_m * (0.8 + 0.4 * _lobes(local, salt))
+			var ring := exp(-pow((r - radius) / (q.thickness * q.radius_m), 2.0))
 			var mouth := smoothstep(-0.2, 0.5, local.x / maxf(r, 1.0))
 			raise = q.wall_st * ST * ring * (1.0 - 0.9 * mouth)
 	var env := _envelope(r, footprint_radius(kind, q))
@@ -293,16 +385,19 @@ static func _ridge(q: Dictionary, local: Vector2, salt: int, detail: bool) -> fl
 
 
 static func _mesa(q: Dictionary, local: Vector2, salt: int, detail: bool) -> float:
-	var r := local.length()
 	var height: float = q.height_st * ST
-	var edge: float = q.radius_m * (1.0 - q.wobble * _lobes(local, salt))
-	var rim := 6.0 if detail else 0.6 * edge
-	var top := height * (1.0 - smoothstep(edge - rim, edge, r))
-	var apron: float = q.apron * height * (1.0 - smoothstep(edge, edge + 40.0, r))
+	var top := height * _blob_height(q, local, salt, PROFILE_PLATEAU, detail)
+	# Apron: a low talus skirt just outside the cliff (the blob outline).
+	var t := _blob_t(q, local, salt)
+	var apron: float = q.apron * height * (1.0 - smoothstep(1.0, 1.0 + 40.0 / (0.6 * q.radius_m), t))
 	var h := maxf(top, apron)
 	if q.tier >= 0.5:
-		var tier_edge := 0.5 * edge
-		h += q.tier_st * ST * (1.0 - smoothstep(tier_edge - (5.0 if detail else 0.8 * tier_edge), tier_edge, r))
+		# A second tier on the core lobe, at half its size.
+		var c := _components(q, salt)
+		var d := (local - Vector2(c[0], c[1])).rotated(-c[4])
+		var tt := Vector2(d.x / (0.5 * c[2]), d.y / (0.5 * c[3])).length()
+		var rim := 5.0 if detail else 0.8 * 0.5 * c[3]
+		h += q.tier_st * ST * (1.0 - smoothstep(1.0 - rim / (0.5 * c[3]), 1.0, tt))
 	return h
 
 
@@ -316,7 +411,8 @@ static func _scatter(q: Dictionary, local: Vector2, salt: int, count: float, eac
 		var at: Vector2 = Vector2.from_angle(_h(salt, i, 21) * TAU) * sqrt(_h(salt, i, 22)) * reach * q.radius_m
 		var radius := each_r * (0.75 + 0.5 * _h(salt, i, 23))
 		var hi := height * (0.7 + 0.3 * _h(salt, i, 24))
-		var t := local.distance_to(at) / radius
+		var e := (local - at).rotated(-_h(salt, i, 25) * TAU)
+		var t := Vector2(e.x, e.y / (0.55 + 0.45 * _h(salt, i, 26))).length() / radius
 		var h: float
 		if not detail:
 			h = hi * pow(maxf(0.0, 1.0 - t * t), 2.0)

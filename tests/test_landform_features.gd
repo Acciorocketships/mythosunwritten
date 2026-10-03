@@ -41,14 +41,23 @@ func test_every_kind_fits_the_neighbourhood_and_vanishes_at_its_radius() -> void
 func test_basin_is_a_hollow_with_an_island_above_its_floor() -> void:
 	var q := _mid_params(&"basin")
 	q.island = 1.0
-	var floor_at := _h(&"basin", q, Vector2(q.radius_m * 0.45, 0))
-	var rim_at := _h(&"basin", q, Vector2(q.radius_m * 0.9, 0))
-	var island_at := _h(&"basin", q, Vector2.ZERO)
-	assert_lt(floor_at, -3.0 * ST, "the floor sinks at least three storeys")
-	assert_gt(rim_at, floor_at + 3.0 * ST, "a rim stands over the floor")
-	assert_gt(island_at, floor_at + 3.0 * ST, "the island rises clear of the floor")
+	var radius: float = q.radius_m
+	var lowest := INF
+	var rim := -INF
+	for i in 41:
+		for j in 41:
+			var p := Vector2(i - 20, j - 20) / 20.0 * radius
+			var h := _h(&"basin", q, p)
+			lowest = minf(lowest, h)
+			if p.length() > 0.5 * radius:
+				rim = maxf(rim, h)
+	assert_lt(lowest, -3.0 * ST, "the floor sinks at least three storeys")
+	assert_gt(rim, lowest + 3.0 * ST, "a rim stands over the floor")
+	assert_gt(_h(&"basin", q, Vector2.ZERO), lowest + 3.0 * ST, "the island rises clear of the floor")
 	q.island = 0.0
-	assert_almost_eq(_h(&"basin", q, Vector2.ZERO), floor_at, 1.0, "no island: flat floor")
+	# The floor tilts (up to 30% deeper on one side), so the centre is floor
+	# but not necessarily its lowest point.
+	assert_lt(_h(&"basin", q, Vector2.ZERO), 0.7 * lowest, "no island: the centre is floor")
 
 func test_peak_cluster_has_separate_summits_joined_by_lower_ridges() -> void:
 	var q := _mid_params(&"peak_cluster")
@@ -69,7 +78,7 @@ func test_mesa_has_a_flat_top_and_a_sheer_edge() -> void:
 	var q := _mid_params(&"mesa")
 	q.tier = 0.0
 	var top := _h(&"mesa", q, Vector2.ZERO)
-	assert_almost_eq(_h(&"mesa", q, Vector2(q.radius_m * 0.3, 0)), top, 0.5, "flat top")
+	assert_almost_eq(_h(&"mesa", q, Vector2(q.radius_m * 0.1, 0)), top, 0.5, "flat top")
 	assert_gte(top, 5.0 * ST, "a tall mesa")
 	# Somewhere on the rim the ground drops at least three storeys within 12 m.
 	var sheer := 0.0
@@ -101,7 +110,42 @@ func test_hill_is_a_tall_rounded_hill() -> void:
 	var q := _mid_params(&"hill")
 	var top := _h(&"hill", q, Vector2.ZERO)
 	assert_gt(top, 3.0 * ST)
-	assert_gt(_h(&"hill", q, Vector2(q.radius_m * 0.5, 0)), 0.3 * top, "broad shoulders")
+	# Broad, not a spike: a few percent of the footprint stands above half the
+	# summit height (a lone elongated ellipse gives ~5%, a spike under 1%).
+	var high := 0
+	var total := 0
+	for i in 41:
+		for j in 41:
+			var p: Vector2 = Vector2(i - 20, j - 20) / 20.0 * q.radius_m
+			if p.length() > q.radius_m:
+				continue
+			total += 1
+			high += int(_h(&"hill", q, p) >= 0.5 * top)
+	assert_gt(float(high) / total, 0.03, "a broad hill")
+
+## Owner review 2026-10-03: features read as perfectly circular bumps and
+## divots. Each outline (where the feature reaches half its centre value) must
+## vary by at least 25% in radius round the feature, for several seeds.
+func test_outlines_are_not_circular() -> void:
+	for kind: StringName in [&"hill", &"peak", &"mesa", &"basin"]:
+		var q := _mid_params(kind)
+		q.island = 0.0
+		for salt in [7, 8, 9, 10]:
+			var centre := LandformFeatures.shape(kind, q, Vector2.ZERO, salt)
+			var c := centre.x - centre.y
+			var lo := INF
+			var hi := 0.0
+			for i in 32:
+				var dir := Vector2.from_angle(i * TAU / 32.0)
+				var r := 0.0
+				while r < q.radius_m * 1.4:
+					var v := LandformFeatures.shape(kind, q, dir * r, salt)
+					if absf(v.x - v.y) < 0.5 * absf(c):
+						break
+					r += 2.0
+				lo = minf(lo, r)
+				hi = maxf(hi, r)
+			assert_gt(hi, 1.25 * lo, "%s (salt %d) outline radius varies %.0f..%.0f m" % [kind, salt, lo, hi])
 
 func test_valley_cuts_a_long_trough() -> void:
 	var q := _mid_params(&"valley")

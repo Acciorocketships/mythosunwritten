@@ -305,7 +305,9 @@ func _ascend(start: Vector2) -> Vector2:
 			if g.length() < SOURCE_PEAK_EPS * 0.5:
 				break     # flat and nothing higher at this stride: a summit
 			step *= 0.5   # overshot the summit — tighten the stride
-			if step < 1.0:
+			# Settle within a quarter metre: 1 m from a narrow summit (a karst
+			# tower, a tall peak) the 6 m gradient still exceeds the accept bound.
+			if step < 0.25:
 				break
 			continue
 		p = q
