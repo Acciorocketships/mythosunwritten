@@ -52,3 +52,26 @@ func test_terrace_regimes_use_storey_steps() -> void:
 	assert_gt(RegimeRelief.terrace_of(_region(&"terraced_valleys", Vector2i(0, 0))).x, 0.0)
 	assert_eq(RegimeRelief.terrace_of(_region(&"escarpment_country", Vector2i(0, 0))).x, 0.0)
 	assert_eq(RegimeRelief.terrace_of(_region(&"rolling_downs", Vector2i(0, 0))).x, 0.0)
+
+## Owner review 2026-10-03: no lunar speckle. The regime texture holds no
+## isolated knobs or pits: no point stands 1.5 m above every point of a 48 m
+## ring round it, or 1.5 m below every one (knolls, karst sinks, knobs and
+## mounds did, by up to a storey or two). Ridge crests are not knobs: the ring
+## meets them again along the crest.
+func test_regime_texture_has_no_isolated_knobs_or_pits() -> void:
+	for a: StringName in TerrainRegimeCatalog.ARCHETYPES:
+		if a in [&"escarpment_country", &"terraced_valleys", &"tableland"]:
+			continue  # their steps and plateau cells are structure, not knobs
+		var r := _region(a, Vector2i(1, 1))
+		var worst := 0.0
+		for i in 1600:
+			var p: Vector2 = r.site + Vector2(i % 40, i / 40) * 9.0 - Vector2(180, 180)
+			var hi := -INF
+			var lo := INF
+			for k in 8:
+				var v := RegimeRelief.relief_m(r, p + Vector2.from_angle(k * TAU / 8.0) * 48.0)
+				hi = maxf(hi, v)
+				lo = minf(lo, v)
+			var h := RegimeRelief.relief_m(r, p)
+			worst = maxf(worst, maxf(h - hi, lo - h))
+		assert_lt(worst, 1.5, "%s: largest knob or pit" % a)

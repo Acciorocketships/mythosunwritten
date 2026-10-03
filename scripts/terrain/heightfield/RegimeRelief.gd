@@ -8,8 +8,9 @@ extends RefCounted
 ## detail=false is the regime's MACRO relief, the part rivers must see: ridge
 ## spines (two ridged octaves, no gullies), escarpment stairs, valley troughs,
 ## plateau cells, and the first hummock octave of the gentle archetypes (their
-## rounded hills are where headwaters rise). Finer hummock octaves, knolls,
-## sinkholes and mounds are detail.
+## rounded hills are where headwaters rise). The second hummock octave is
+## detail. No isolated knolls, sinkholes, knobs or mounds (owner review
+## 2026-10-03: "not a lunar landscape"); structure comes from LandformFeatures.
 
 const ST := TerrainRegimeCatalog.STOREY
 
@@ -22,15 +23,13 @@ static func relief_m(region: Dictionary, p: Vector2, detail: bool = true) -> flo
 		&"rolling_downs":
 			if not detail:
 				return ReliefPrimitives.hummock(pr, s, q.hummock_wl_m, 1) * q.relief_st * ST
-			return ReliefPrimitives.hummock(pr, s, q.hummock_wl_m, 3) * q.relief_st * ST \
-				+ ReliefPrimitives.sites_bump(pr, s + 5, q.knoll_spacing_m, q.knoll_density,
-					minf(q.knoll_radius_m, q.knoll_spacing_m), 0.1) * q.knoll_st * ST
+			return ReliefPrimitives.hummock(pr, s, q.hummock_wl_m, 2) * q.relief_st * ST
 		&"ridge_and_pass", &"highland_massif":
 			# Their macro shape is the feature layer's ridges and peak clusters;
 			# ridged-noise crests are V-shaped and stalled the summit climb.
 			if not detail:
 				return 0.0
-			return _ridges(q, s, pr, 4 if region.archetype == &"ridge_and_pass" else 5, detail)
+			return _ridges(q, s, pr, 2, detail)
 		&"escarpment_country":
 			var pw := ReliefPrimitives.warp(pr, s + 1, q.tread_depth_m * 0.5, q.tread_depth_m * 2.0)
 			# A warped triangle wave across the region's frame: a constant gradient
@@ -57,13 +56,7 @@ static func relief_m(region: Dictionary, p: Vector2, detail: bool = true) -> flo
 		&"karst_hollows":
 			if not detail:
 				return ReliefPrimitives.hummock(pr, s, q.hummock_wl_m, 1) * q.relief_st * ST
-			return ReliefPrimitives.hummock(pr, s, q.hummock_wl_m, 2) * q.relief_st * ST \
-				- ReliefPrimitives.sites_bump(pr, s + 5, q.sink_spacing_m, q.sink_density,
-					q.sink_radius_m, 0.55) * q.sink_st * ST \
-				- ReliefPrimitives.sites_bump(pr, s + 6, q.hollow_spacing_m, q.hollow_density,
-					q.hollow_radius_m, 0.0) * q.hollow_st * ST \
-				+ ReliefPrimitives.sites_bump(pr, s + 7, q.knob_spacing_m, 0.3,
-					q.knob_radius_m, 0.3) * q.knob_st * ST
+			return ReliefPrimitives.hummock(pr, s, q.hummock_wl_m, 2) * q.relief_st * ST
 		&"tableland":
 			var w := ReliefPrimitives.worley(ReliefPrimitives.warp(pr, s + 1, q.channel_m, q.cell_m), s + 7, q.cell_m)
 			var interior := smoothstep(q.channel_m * 0.5, q.channel_m, w.y - w.x)
@@ -71,9 +64,7 @@ static func relief_m(region: Dictionary, p: Vector2, detail: bool = true) -> flo
 		&"low_flats":
 			if not detail:
 				return ReliefPrimitives.hummock(pr, s, q.hummock_wl_m, 1) * q.relief_st * ST
-			return ReliefPrimitives.hummock(pr, s, q.hummock_wl_m, 2) * q.relief_st * ST \
-				+ ReliefPrimitives.sites_bump(pr, s + 5, q.mound_spacing_m, 0.4,
-					minf(q.mound_radius_m, q.mound_spacing_m), 0.0) * q.mound_st * ST
+			return ReliefPrimitives.hummock(pr, s, q.hummock_wl_m, 2) * q.relief_st * ST
 	return 0.0
 
 

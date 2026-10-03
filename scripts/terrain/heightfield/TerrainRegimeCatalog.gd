@@ -15,9 +15,7 @@ const ARCHETYPES: Array[StringName] = [&"rolling_downs", &"ridge_and_pass",
 
 const PARAMS := {
 	&"rolling_downs": {
-		"base_level_st": [0.0, 2.0], "relief_st": [0.4, 0.8], "hummock_wl_m": [60.0, 140.0],
-		"knoll_spacing_m": [150.0, 300.0], "knoll_radius_m": [30.0, 60.0],
-		"knoll_density": [0.3, 0.6], "knoll_st": [0.5, 1.0]},
+		"base_level_st": [0.0, 2.0], "relief_st": [0.4, 0.8], "hummock_wl_m": [100.0, 180.0]},
 	&"ridge_and_pass": {
 		"base_level_st": [1.0, 4.0], "ridge_spacing_m": [60.0, 200.0], "ridge_st": [1.0, 2.5],
 		"pass_spacing_m": [150.0, 400.0], "pass_depth": [0.5, 0.8],
@@ -31,11 +29,7 @@ const PARAMS := {
 		"tread_depth_m": [24.0, 60.0], "riser_frac": [0.2, 0.4], "relief_st": [0.2, 0.5],
 		"hummock_wl_m": [60.0, 120.0]},
 	&"karst_hollows": {
-		"base_level_st": [1.0, 3.0], "relief_st": [0.3, 0.6], "hummock_wl_m": [80.0, 160.0],
-		"sink_spacing_m": [60.0, 120.0], "sink_radius_m": [10.0, 30.0], "sink_density": [0.3, 0.6],
-		"sink_st": [1.0, 2.0], "hollow_spacing_m": [150.0, 300.0], "hollow_radius_m": [40.0, 100.0],
-		"hollow_density": [0.3, 0.6], "hollow_st": [0.5, 1.5], "knob_spacing_m": [100.0, 200.0],
-		"knob_radius_m": [15.0, 30.0], "knob_st": [0.5, 1.0]},
+		"base_level_st": [1.0, 3.0], "relief_st": [0.3, 0.6], "hummock_wl_m": [100.0, 180.0]},
 	&"tableland": {
 		"base_level_st": [2.0, 5.0], "cell_m": [80.0, 250.0], "channel_m": [15.0, 40.0],
 		"rim_st": [0.5, 1.0]},
@@ -44,8 +38,7 @@ const PARAMS := {
 		"pass_spacing_m": [250.0, 600.0], "pass_depth": [0.3, 0.6],
 		"gully_spacing_m": [40.0, 80.0], "gully_st": [0.5, 1.0]},
 	&"low_flats": {
-		"base_level_st": [0.0, 1.0], "relief_st": [0.0, 0.6], "hummock_wl_m": [80.0, 200.0],
-		"mound_spacing_m": [120.0, 260.0], "mound_radius_m": [30.0, 80.0], "mound_st": [0.3, 0.6]},
+		"base_level_st": [0.0, 1.0], "relief_st": [0.0, 0.6], "hummock_wl_m": [100.0, 200.0]},
 }
 
 ## Visual biome -> archetype weights; every archetype also gets AFFINITY_FLOOR.
@@ -66,9 +59,9 @@ const SETPIECE_DENSITY := {
 	&"rolling_downs": {&"escarpment": 0.03},
 	&"ridge_and_pass": {&"big_ridge": 0.12},
 	&"escarpment_country": {&"escarpment": 0.18, &"cleft": 0.05},
-	&"terraced_valleys": {&"amphitheatre": 0.1},
+	&"terraced_valleys": {},
 	&"karst_hollows": {&"cleft": 0.08},
-	&"tableland": {&"mesa": 0.15, &"cleft": 0.05},
+	&"tableland": {&"cleft": 0.08},
 	&"highland_massif": {&"hanging_valley": 0.1, &"big_ridge": 0.1},
 	&"low_flats": {},
 }
@@ -76,8 +69,6 @@ const SETPIECE_DENSITY := {
 const SETPIECE_PARAMS := {
 	&"escarpment": {"length_m": [400.0, 840.0], "rise_st": [2.0, 4.0], "face_m": [16.0, 32.0],
 		"back_m": [120.0, 200.0]},
-	&"amphitheatre": {"radius_m": [100.0, 240.0], "wall_st": [2.0, 4.0]},
-	&"mesa": {"radius_m": [60.0, 200.0], "height_st": [3.0, 6.0], "face_m": [12.0, 24.0]},
 	&"big_ridge": {"length_m": [500.0, 840.0], "height_st": [3.0, 5.0],
 		"half_width_m": [40.0, 90.0], "pass_frac": [0.5, 0.75]},
 	&"cleft": {"length_m": [200.0, 600.0], "slot_m": [24.0, 40.0], "shoulder_st": [2.0, 4.0],
@@ -94,39 +85,38 @@ const SETPIECE_PARAMS := {
 const FEATURES := {
 	&"rolling_downs": {"density": 0.95, "kinds": {&"hill": 0.85, &"valley": 0.1, &"basin": 0.05},
 		"height_scale": [0.8, 1.2]},
-	&"ridge_and_pass": {"density": 0.85, "kinds": {&"ridge": 0.6, &"peak": 0.25, &"valley": 0.15},
+	&"ridge_and_pass": {"density": 0.85, "kinds": {&"ridge": 0.6, &"valley": 0.25, &"hill": 0.15},
 		"height_scale": [0.9, 1.2]},
 	&"escarpment_country": {"density": 0.85, "kinds": {&"escarpment": 0.55, &"butte_group": 0.3,
 		&"valley": 0.15}, "height_scale": [1.0, 1.25]},
 	&"terraced_valleys": {"density": 0.8, "kinds": {&"valley": 0.6, &"hill": 0.25,
 		&"amphitheatre": 0.15}, "height_scale": [0.9, 1.2]},
-	&"karst_hollows": {"density": 0.85, "kinds": {&"basin": 0.45, &"tower_cluster": 0.45,
-		&"hill": 0.1}, "height_scale": [0.9, 1.2]},
+	&"karst_hollows": {"density": 0.85, "kinds": {&"basin": 0.4, &"tower_cluster": 0.35,
+		&"hill": 0.25}, "height_scale": [0.9, 1.2]},
 	&"tableland": {"density": 0.85, "kinds": {&"mesa": 0.55, &"butte_group": 0.3, &"valley": 0.15},
 		"height_scale": [0.9, 1.2]},
-	&"highland_massif": {"density": 0.9, "kinds": {&"peak_cluster": 0.55, &"ridge": 0.25,
-		&"peak": 0.2}, "height_scale": [1.0, 1.25]},
-	&"low_flats": {"density": 0.55, "kinds": {&"basin": 0.6, &"hill": 0.4}, "height_scale": [0.45, 0.7]},
+	&"highland_massif": {"density": 0.9, "kinds": {&"peak_cluster": 0.55, &"ridge": 0.45},
+		"height_scale": [1.0, 1.25]},
+	&"low_flats": {"density": 0.55, "kinds": {&"basin": 0.6, &"hill": 0.4}, "height_scale": [0.55, 0.8]},
 }
 
 ## Feature shape ranges. Lengths are NOT scaled by the region scale (the
 ## feature lattice is global); every footprint stays within
 ## LandformFeatures.MAX_RADIUS.
 const FEATURE_PARAMS := {
-	&"hill": {"radius_m": [150.0, 280.0], "height_st": [4.0, 9.0], "aspect": [0.55, 1.0]},
-	&"peak": {"radius_m": [110.0, 230.0], "height_st": [6.0, 13.0]},
+	&"hill": {"radius_m": [220.0, 340.0], "height_st": [6.0, 10.0], "aspect": [0.55, 1.0]},
 	&"peak_cluster": {"radius_m": [240.0, 350.0], "height_st": [10.0, 16.0], "peaks": [2.0, 4.0],
 		"saddle": [0.45, 0.65], "spread": [0.38, 0.5]},
 	&"ridge": {"half_length_m": [260.0, 360.0], "half_width_m": [50.0, 90.0], "height_st": [7.0, 13.0],
-		"pass_depth": [0.35, 0.6], "pass_at": [-0.4, 0.4]},
-	&"mesa": {"radius_m": [90.0, 190.0], "height_st": [5.0, 10.0], "wobble": [0.1, 0.25],
+		"pass_depth": [0.3, 0.5], "pass_at": [-0.25, 0.25]},
+	&"mesa": {"radius_m": [140.0, 240.0], "height_st": [5.0, 10.0], "wobble": [0.1, 0.25],
 		"tier": [0.0, 1.0], "tier_st": [2.0, 4.0], "apron": [0.15, 0.3]},
-	&"butte_group": {"radius_m": [180.0, 280.0], "buttes": [2.0, 4.0], "butte_radius_m": [26.0, 50.0],
-		"height_st": [4.0, 8.0]},
-	&"tower_cluster": {"radius_m": [180.0, 280.0], "towers": [3.0, 6.0], "tower_radius_m": [35.0, 60.0],
-		"height_st": [8.0, 15.0]},
+	&"butte_group": {"radius_m": [220.0, 300.0], "buttes": [2.0, 4.0], "butte_radius_m": [55.0, 90.0],
+		"height_st": [5.0, 9.0], "plinth": [0.4, 0.55]},
+	&"tower_cluster": {"radius_m": [220.0, 300.0], "towers": [2.0, 4.0], "tower_radius_m": [60.0, 95.0],
+		"height_st": [8.0, 15.0], "plinth": [0.4, 0.55]},
 	&"basin": {"radius_m": [150.0, 300.0], "depth_st": [4.0, 8.0], "floor": [0.45, 0.6],
-		"rim_st": [1.0, 3.0], "island": [0.0, 1.0], "island_radius": [0.35, 0.6], "island_st": [2.0, 5.0]},
+		"rim_st": [0.25, 1.0], "island": [0.0, 1.0], "island_radius": [0.35, 0.6], "island_st": [2.0, 5.0]},
 	&"valley": {"half_length_m": [230.0, 330.0], "floor_half_m": [18.0, 45.0], "side_m": [40.0, 90.0],
 		"depth_st": [4.0, 8.0]},
 	&"escarpment": {"half_length_m": [260.0, 360.0], "rise_st": [5.0, 10.0], "face_m": [8.0, 16.0],

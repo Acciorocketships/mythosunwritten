@@ -27,10 +27,15 @@ const ST := TerrainRegimeCatalog.STOREY
 const SPAWN_CLEAR_M := 300.0
 const CACHE_LIMIT := 8192
 
-static var _cache: Dictionary = {}   # seed -> {cell: Dictionary}
+static var _cache: Dictionary = {}   # seed -> {Vector3i(cell, table): value}
 static var _keys: Array = []
 static var _cursor := 0
 static var _mutex := Mutex.new()
+
+const _MAIN := 0
+const _CHOSEN := 1
+const _CANDIDATE := 2
+const _LINKS := 3
 
 
 static func clear_caches() -> void:
@@ -45,29 +50,60 @@ static func _hash(seed: int, cell: Vector2i, salt: int) -> float:
 	return Helper._cell_hash01(seed + salt, cell.x, cell.y)
 
 
-## The feature hosted by a cell, or {} if none.
-static func candidate(seed: int, cell: Vector2i) -> Dictionary:
+## Bounded, thread-safe memo of one per-cell table; values are pure functions
+## of (seed, cell), so a race only computes one twice.
+static func _memo(seed: int, cell: Vector2i, table: int, compute: Callable) -> Variant:
+	var key := Vector3i(cell.x, cell.y, table)
 	_mutex.lock()
-	var cached = (_cache.get(seed, {}) as Dictionary).get(cell)
+	var cached = (_cache.get(seed, {}) as Dictionary).get(key)
 	_mutex.unlock()
 	if cached != null:
 		return cached
-	var value := _compute(seed, cell)
+	var value = compute.call()
 	_mutex.lock()
 	var per_seed: Dictionary = _cache.get(seed, {})
-	if not per_seed.has(cell):
+	if not per_seed.has(key):
 		if _keys.size() == CACHE_LIMIT:
 			var old: Array = _keys[_cursor]
 			(_cache.get(old[0], {}) as Dictionary).erase(old[1])
-			_keys[_cursor] = [seed, cell]
+			_keys[_cursor] = [seed, key]
 			_cursor = (_cursor + 1) % CACHE_LIMIT
 		else:
-			_keys.append([seed, cell])
-		per_seed[cell] = value
+			_keys.append([seed, key])
+		per_seed[key] = value
 		_cache[seed] = per_seed
-	value = per_seed[cell]
+	value = per_seed[key]
 	_mutex.unlock()
 	return value
+
+
+## The feature hosted by a cell, or {}; "links" lists the cells of the
+## neighbouring features it is joined to (see _chosen).
+static func candidate(seed: int, cell: Vector2i) -> Dictionary:
+	return _memo(seed, cell, _CANDIDATE, func() -> Dictionary:
+		var f := _main(seed, cell)
+		if f.is_empty():
+			return f
+		var out := f.duplicate()
+		var links: Array[Vector2i] = _chosen(seed, cell).duplicate()
+		for dz in range(-1, 2):
+			for dx in range(-1, 2):
+				var other := cell + Vector2i(dx, dz)
+				if other != cell and not links.has(other) and _chosen(seed, other).has(cell):
+					links.append(other)
+		out["links"] = links
+		return out)
+
+
+## The prevailing grain: ridges, valleys, scarps and elongated hills near p
+## run along this angle (+- jitter), so neighbours line up into ranges and
+## valley systems instead of pointing every way.
+static func grain(seed: int, p: Vector2) -> float:
+	return TAU * ReliefPrimitives.vnoise01(p.rotated(0.7), seed + 1620, 4000.0)
+
+
+static func _main(seed: int, cell: Vector2i) -> Dictionary:
+	return _memo(seed, cell, _MAIN, func() -> Dictionary: return _compute(seed, cell))
 
 
 static func _compute(seed: int, cell: Vector2i) -> Dictionary:
@@ -97,25 +133,33 @@ static func _compute(seed: int, cell: Vector2i) -> Dictionary:
 	if pos.length() - radius < SPAWN_CLEAR_M:
 		return {}
 	var salt := int(_hash(seed, cell, 1607) * 1000000.0)
-	if kind in [&"hill", &"peak", &"mesa", &"basin"]:
+	if kind in [&"hill", &"mesa", &"basin"]:
 		params["_blob"] = blob_components(params, salt)
+	var rot := grain(seed, pos) + (_hash(seed, cell, 1606) - 0.5) * 0.7
 	return {"kind": kind, "pos": pos, "params": params, "radius": radius, "cell": cell,
-		"rot": _hash(seed, cell, 1606) * TAU, "salt": salt}
+		"rot": rot, "salt": salt}
 
 
-## (raise m, cut m) at p from every feature reaching it.
+## (raise m, cut m) at p from every feature and link reaching it.
 static func sample(seed: int, p: Vector2, detail: bool = true) -> Vector2:
 	var c := Vector2i(floori(p.x / CELL), floori(p.y / CELL))
 	var raise := 0.0
 	var cut := 0.0
 	for dz in range(-1, 2):
 		for dx in range(-1, 2):
-			var f := candidate(seed, c + Vector2i(dx, dz))
-			if f.is_empty() or p.distance_to(f.pos) >= f.radius:
-				continue
-			var v := shape(f.kind, f.params, (p - f.pos).rotated(-f.rot), f.salt, detail)
-			raise = _union(raise, v.x)
-			cut = _union(cut, v.y)
+			var cell := c + Vector2i(dx, dz)
+			var f := _main(seed, cell)
+			if not f.is_empty() and p.distance_to(f.pos) < f.radius:
+				var v := shape(f.kind, f.params, (p - f.pos).rotated(-f.rot), f.salt, detail)
+				raise = _union(raise, v.x)
+				cut = _union(cut, v.y)
+			for link: Dictionary in _links_owned(seed, cell):
+				if p.distance_to(link.pos) < link.radius:
+					var h := link_shape(link, p, detail)
+					if link.raise:
+						raise = _union(raise, h)
+					else:
+						cut = _union(cut, h)
 	return Vector2(raise, cut)
 
 
@@ -142,7 +186,7 @@ static func features_in_rect(seed: int, rect: Rect2) -> Array[Dictionary]:
 
 static func footprint_radius(kind: StringName, q: Dictionary) -> float:
 	match kind:
-		&"hill", &"peak", &"peak_cluster", &"butte_group", &"tower_cluster", &"basin":
+		&"hill", &"peak_cluster", &"butte_group", &"tower_cluster", &"basin":
 			return q.radius_m
 		&"ridge", &"valley":
 			return q.half_length_m
@@ -163,7 +207,9 @@ static func _envelope(r: float, radius: float) -> float:
 ## A smooth per-feature value in [0, 1] varying with direction (organic outlines).
 static func _lobes(local: Vector2, salt: int) -> float:
 	var dir := local.normalized() if local.length_squared() > 1e-6 else Vector2.RIGHT
-	return ReliefPrimitives.vnoise01(dir * 2.5, salt, 1.0)
+	# Low frequency round the circle (about four swells): at 2.5 the outline
+	# zigzagged every ~25 degrees and broke amphitheatre walls into beads.
+	return ReliefPrimitives.vnoise01(dir * 0.65, salt, 1.0)
 
 
 static func _h(salt: int, i: int, k: int) -> float:
@@ -171,11 +217,10 @@ static func _h(salt: int, i: int, k: int) -> float:
 
 
 const PROFILE_DOME := 0
-const PROFILE_PEAK := 1
 const PROFILE_PLATEAU := 2
 const BLOB_STRIDE := 6
 
-## The blob of a hill/peak/mesa/basin (owner review 2026-10-03: circles read
+## The blob of a hill/mesa/basin (owner review 2026-10-03: circles read
 ## as artificial): a core ellipse and 0-2 satellite ellipses, each with its own
 ## centre, semi-axes, rotation and relative height, all inside 0.92 of the
 ## radius. Flat array [cx, cy, a, b, rot, rel] per component; cached in the
@@ -189,7 +234,7 @@ static func _components(q: Dictionary, salt: int) -> PackedFloat64Array:
 
 static func blob_components(q: Dictionary, salt: int) -> PackedFloat64Array:
 	var radius: float = q.radius_m
-	var sat_lo := 0.55
+	var sat_lo := 0.7
 	var sat_hi := 0.9
 	if q.has("peaks") or q.has("spread"):
 		sat_lo = 0.4
@@ -199,12 +244,21 @@ static func blob_components(q: Dictionary, salt: int) -> PackedFloat64Array:
 	var satellites := int(_h(salt, 0, 46) * 2.999)
 	var core_a := radius * (0.6 + 0.18 * _h(salt, 0, 41))
 	var core_aspect := (0.5 + 0.3 * _h(salt, 0, 44)) if satellites == 0 else (0.5 + 0.45 * _h(salt, 0, 44))
+	if q.has("depth_st"):
+		# Basins are troughs and lake hollows along the grain, never round
+		# craters (owner review 2026-10-03).
+		core_aspect = 0.35 + 0.25 * _h(salt, 0, 44)
 	out.append_array([(_h(salt, 0, 42) - 0.5) * 0.16 * radius, (_h(salt, 0, 43) - 0.5) * 0.16 * radius,
-		core_a, core_a * core_aspect, _h(salt, 0, 45) * TAU, 1.0])
+		core_a, core_a * core_aspect, (_h(salt, 0, 45) - 0.5) * 0.6, 1.0])
+	# Satellites are lobes grown off the core's ends (either end, a little to
+	# one side), never separate bumps beside it (owner review 2026-10-03).
+	var core_rot := out[4]
+	var first_end := 1.0 if _h(salt, 1, 48) < 0.5 else -1.0
 	for i in range(1, satellites + 1):
-		var dist := radius * (0.3 + 0.2 * _h(salt, i, 47))
-		var at := Vector2.from_angle(_h(salt, i, 48) * TAU) * dist
-		var a := minf(radius * (0.28 + 0.22 * _h(salt, i, 49)), 0.92 * radius - dist)
+		var end := (first_end if i == 1 else -first_end) * (0.5 + 0.3 * _h(salt, i, 47)) * core_a
+		var at := Vector2(out[0], out[1]) + Vector2(end, (_h(salt, i, 52) - 0.5) * 0.5 * core_a * core_aspect).rotated(core_rot)
+		var dist := at.length()
+		var a := maxf(0.1 * radius, minf(radius * (0.28 + 0.22 * _h(salt, i, 49)), 0.92 * radius - dist))
 		out.append_array([at.x, at.y, a, a * (0.4 + 0.5 * _h(salt, i, 50)), _h(salt, i, 53) * TAU,
 			lerpf(sat_lo, sat_hi, _h(salt, i, 54))])
 	return out
@@ -237,8 +291,6 @@ static func _blob_height(q: Dictionary, local: Vector2, salt: int, profile: int,
 		match profile:
 			PROFILE_DOME:
 				v = pow(1.0 - t * t, 2.0)
-			PROFILE_PEAK:
-				v = pow(1.0 - _round01(t, 0.05 if detail else 0.25), 1.7)
 			PROFILE_PLATEAU:
 				var b: float = c[k * BLOB_STRIDE + 3]
 				var rim := 6.0 / b if detail else 0.6
@@ -283,8 +335,6 @@ static func shape(kind: StringName, q: Dictionary, local: Vector2, salt: int, de
 	match kind:
 		&"hill":
 			raise = q.height_st * ST * _blob_height(q, local, salt, PROFILE_DOME, detail) * _tilt(q, local, salt)
-		&"peak":
-			raise = q.height_st * ST * _blob_height(q, local, salt, PROFILE_PEAK, detail) * _tilt(q, local, salt)
 		&"peak_cluster":
 			raise = _cluster(q, local, salt, detail)
 		&"ridge":
@@ -294,19 +344,23 @@ static func shape(kind: StringName, q: Dictionary, local: Vector2, salt: int, de
 		&"butte_group":
 			raise = _scatter(q, local, salt, q.buttes, q.butte_radius_m, 0.6, true, detail)
 		&"tower_cluster":
-			raise = _scatter(q, local, salt, q.towers, q.tower_radius_m, 0.65, false, detail)
+			raise = _scatter(q, local, salt, q.towers, q.tower_radius_m, 0.55, false, detail)
 		&"basin":
 			# The bowl and its rim follow the blob outline (t = 1); the depth
 			# tilts across the basin.
 			var t := _blob_t(q, local, salt)
 			var depth: float = q.depth_st * ST
 			cut = depth * (1.0 - smoothstep(q.floor, 0.95, t)) * _tilt(q, local, salt)
-			raise = q.rim_st * ST * exp(-pow((t - 1.0) / 0.12, 2.0))
-			if q.island >= 0.4:
+			# A low lip on one side only: a full raised ring read as a crater.
+			var lip := Vector2.from_angle(_h(salt, 0, 59) * TAU)
+			var side := smoothstep(-0.2, 0.8, local.normalized().dot(lip)) if local.length_squared() > 1.0 else 0.0
+			raise = q.rim_st * ST * exp(-pow((t - 1.0) / 0.12, 2.0)) * side
+			if q.island >= 0.7:
 				# The island stands island_st above the surrounding ground: an
 				# elliptical sheer-sided mesa or rounded hill, by the feature's hash.
 				var ir: float = q.island_radius * q.floor * q.radius_m
-				var off: Vector2 = Vector2.from_angle(_h(salt, 0, 57) * TAU) * 0.3 * q.floor * q.radius_m * _h(salt, 0, 58)
+				# Off-centre along the basin's long axis: a central peak reads as a crater.
+				var off: Vector2 = Vector2((0.3 + 0.25 * _h(salt, 0, 58)) * (1.0 if _h(salt, 0, 57) < 0.5 else -1.0) * q.floor * q.radius_m, 0.0)
 				var e := (local - off).rotated(-_h(salt, 0, 51) * TAU)
 				var ti := Vector2(e.x / ir, e.y / (ir * (0.55 + 0.4 * _h(salt, 0, 52)))).length()
 				var profile := 1.0 - smoothstep(0.85, 1.0, ti) if detail and salt % 2 == 0 \
@@ -327,9 +381,13 @@ static func shape(kind: StringName, q: Dictionary, local: Vector2, salt: int, de
 			var along := 1.0 - smoothstep(0.7 * half, half, absf(local.x))
 			raise = q.rise_st * ST * step * back * along
 		&"amphitheatre":
+			# A horseshoe cut into rising ground, longer across than deep, open
+			# over well over half its circle (a near-closed ring read as a crater).
+			var e := Vector2(local.x * 1.35, local.y)
+			var re := e.length()
 			var radius: float = q.radius_m * (0.8 + 0.4 * _lobes(local, salt))
-			var ring := exp(-pow((r - radius) / (q.thickness * q.radius_m), 2.0))
-			var mouth := smoothstep(-0.2, 0.5, local.x / maxf(r, 1.0))
+			var ring := exp(-pow((re - radius) / (q.thickness * q.radius_m), 2.0))
+			var mouth := smoothstep(-0.55, 0.05, local.x / maxf(r, 1.0))
 			raise = q.wall_st * ST * ring * (1.0 - 0.9 * mouth)
 	var env := _envelope(r, footprint_radius(kind, q))
 	return Vector2(maxf(raise, 0.0) * env, maxf(cut, 0.0) * env)
@@ -392,23 +450,33 @@ static func _mesa(q: Dictionary, local: Vector2, salt: int, detail: bool) -> flo
 	var apron: float = q.apron * height * (1.0 - smoothstep(1.0, 1.0 + 40.0 / (0.6 * q.radius_m), t))
 	var h := maxf(top, apron)
 	if q.tier >= 0.5:
-		# A second tier on the core lobe, at half its size.
+		# A second tier toward one end of the core lobe, at half its size (a
+		# concentric tier read as a crater rim).
 		var c := _components(q, salt)
-		var d := (local - Vector2(c[0], c[1])).rotated(-c[4])
+		var d := (local - Vector2(c[0], c[1])).rotated(-c[4]) - Vector2((0.3 if salt % 3 == 0 else -0.3) * c[2], 0.0)
 		var tt := Vector2(d.x / (0.5 * c[2]), d.y / (0.5 * c[3])).length()
 		var rim := 5.0 if detail else 0.8 * 0.5 * c[3]
 		h += q.tier_st * ST * (1.0 - smoothstep(1.0 - rim / (0.5 * c[3]), 1.0, tt))
 	return h
 
 
-## Small flat-topped buttes (sharp; domes in the smooth field) or rounded karst
-## towers (steep sides; domes in the smooth field) scattered in a disc.
+## Flat-topped buttes (sharp; domes in the smooth field) or rounded karst
+## towers (steep sides; domes in the smooth field) strung along the grain on a
+## shared bench, the remnant of the plateau they were cut from (owner review
+## 2026-10-03: lone pimples read as a lunar landscape).
 static func _scatter(q: Dictionary, local: Vector2, salt: int, count: float, each_r: float,
 		reach: float, flat: bool, detail: bool = true) -> float:
 	var height: float = q.height_st * ST
-	var best := 0.0
+	var long: float = reach * q.radius_m
+	var e0 := local / Vector2(long + each_r, 0.35 * long + 1.2 * each_r)
+	e0 += Vector2(ReliefPrimitives.vnoise(local, salt + 63, 0.5 * long), ReliefPrimitives.vnoise(local, salt + 64, 0.5 * long)) * 0.15
+	var bench_t := e0.length()
+	# Buttes stand on a flat bench with a sharp edge (a plateau remnant);
+	# karst towers rise from a rounded swell (a flat-edged ring read as a crater).
+	var bench_lo := (0.7 if detail else 0.4) if flat else 0.0
+	var best: float = q.plinth * height * (1.0 - smoothstep(bench_lo, 1.0, bench_t))
 	for i in clampi(roundi(count), 1, 8):
-		var at: Vector2 = Vector2.from_angle(_h(salt, i, 21) * TAU) * sqrt(_h(salt, i, 22)) * reach * q.radius_m
+		var at := Vector2((_h(salt, i, 21) - 0.5) * 2.0 * long, (_h(salt, i, 22) - 0.5) * 0.6 * long)
 		var radius := each_r * (0.75 + 0.5 * _h(salt, i, 23))
 		var hi := height * (0.7 + 0.3 * _h(salt, i, 24))
 		var e := (local - at).rotated(-_h(salt, i, 25) * TAU)
@@ -424,3 +492,178 @@ static func _scatter(q: Dictionary, local: Vector2, salt: int, count: float, eac
 			h = hi * (1.0 - smoothstep(0.45, 1.0, t))
 		best = maxf(best, h)
 	return best
+
+
+# --- Links (owner review 2026-10-03: features should "connect to other
+# things"). Each raised feature (hill, ridge, peak cluster, mesa, butte group,
+# tower cluster) may join its best-placed raised neighbour in the 8 cells round
+# it by a saddle ridge, or a flat bench between plateau forms; each valley or
+# basin may join a neighbouring one by a channel. "Best placed" prefers short
+# links along the grain, so linked features run into ranges and valley chains.
+# A link is owned by the cell holding its midpoint and its footprint radius is
+# at most LINK_MAX_RADIUS (< one cell), so the 3x3 cells round a point still
+# hold every link that reaches it.
+
+const LINK_MAX_RADIUS := 300.0
+const LINK_FIRST := 0.95
+const LINK_SECOND := 0.4
+const _RAISED := [&"hill", &"ridge", &"peak_cluster", &"mesa", &"butte_group", &"tower_cluster"]
+const _HOLLOW := [&"valley", &"basin"]
+const _BENCHED := [&"mesa", &"butte_group", &"tower_cluster"]
+
+
+static func _link_class(kind: StringName) -> int:
+	if kind in _RAISED:
+		return 1
+	if kind in _HOLLOW:
+		return -1
+	return 0
+
+
+## Where a link leaves feature f toward a point: on a ridge crest or valley
+## floor line, else part way out from the centre.
+static func _endpoint(f: Dictionary, toward: Vector2) -> Vector2:
+	var q: Dictionary = f.params
+	var dir := Vector2.from_angle(f.rot)
+	match f.kind:
+		&"ridge":
+			var half: float = q.half_length_m
+			var u := clampf((toward - f.pos).dot(dir), -0.6 * half, 0.6 * half)
+			var v: float = -(1.0 if int(f.salt) % 2 == 0 else -1.0) * 0.6 * q.half_width_m * sin(u / half * PI * 1.3)
+			return f.pos + Vector2(u, v).rotated(f.rot)
+		&"valley":
+			var half: float = q.half_length_m
+			var u := clampf((toward - f.pos).dot(dir), -0.55 * half, 0.55 * half)
+			return f.pos + Vector2(u, 0.7 * q.floor_half_m * sin(u / half * PI)).rotated(f.rot)
+	# From inside the high (or deep) core, so the link rises out of it.
+	return f.pos + (toward - f.pos).normalized() * 0.15 * q.radius_m
+
+
+## Height (raised) or depth (hollow) a link carries from f, before its fraction.
+static func _top(f: Dictionary) -> float:
+	var q: Dictionary = f.params
+	if f.kind in _HOLLOW:
+		return q.depth_st * ST
+	if f.kind in [&"butte_group", &"tower_cluster"]:
+		return q.plinth * q.height_st * ST
+	return q.height_st * ST
+
+
+static func _link_width(f: Dictionary) -> float:
+	var q: Dictionary = f.params
+	match f.kind:
+		&"ridge":
+			return 0.9 * q.half_width_m
+		&"valley":
+			return q.floor_half_m + 0.6 * q.side_m
+		&"basin":
+			return clampf(0.2 * q.radius_m, 35.0, 80.0)
+	return clampf(0.28 * q.radius_m, 50.0, 100.0)
+
+
+## The link between two features (in canonical cell order), or {} when it
+## would not fit (too long) or is not needed (the features already touch).
+static func _link_geometry(seed: int, fa: Dictionary, fb: Dictionary) -> Dictionary:
+	var ca: Vector2i = fa.cell
+	var cb: Vector2i = fb.cell
+	if cb.x < ca.x or (cb.x == ca.x and cb.y < ca.y):
+		var t := fa
+		fa = fb
+		fb = t
+	ca = fa.cell
+	cb = fb.cell
+	var a := _endpoint(fa, fb.pos)
+	var b := _endpoint(fb, fa.pos)
+	var length := a.distance_to(b)
+	if length < 24.0:
+		return {}
+	var salt := int(Helper._cell_hash01(seed + 1630 + cb.x * 7919 + cb.y * 104729, ca.x, ca.y) * 1000000.0)
+	var wa := _link_width(fa)
+	var wb := _link_width(fb)
+	var amp := (_h(salt, 0, 3) - 0.5) * 0.3 * length
+	var radius := 0.5 * length + maxf(wa, wb) + absf(amp)
+	if radius > LINK_MAX_RADIUS:
+		return {}
+	var raised := _link_class(fa.kind) > 0
+	var bench: bool = raised and fa.kind in _BENCHED and fb.kind in _BENCHED
+	var frac := 0.45 + 0.2 * _h(salt, 0, 1)
+	var ha := frac * _top(fa)
+	var hb := frac * _top(fb)
+	if bench:
+		ha = 0.55 * minf(_top(fa), _top(fb))
+		hb = ha
+	return {"pos": (a + b) * 0.5, "a": a, "b": b, "radius": radius, "raise": raised, "bench": bench,
+		"ha": ha, "hb": hb, "wa": wa, "wb": wb, "sag": 0.15 + 0.25 * _h(salt, 0, 2), "amp": amp}
+
+
+## The neighbour cells this cell's feature reaches out to (at most two).
+static func _chosen(seed: int, cell: Vector2i) -> Array[Vector2i]:
+	return _memo(seed, cell, _CHOSEN, func() -> Array[Vector2i]:
+		var out: Array[Vector2i] = []
+		var f := _main(seed, cell)
+		if f.is_empty() or _link_class(f.kind) == 0:
+			return out
+		var g := grain(seed, f.pos)
+		var options: Array = []
+		for dz in range(-1, 2):
+			for dx in range(-1, 2):
+				var other := cell + Vector2i(dx, dz)
+				var o := _main(seed, other)
+				if other == cell or o.is_empty() or _link_class(o.kind) != _link_class(f.kind):
+					continue
+				if _link_geometry(seed, f, o).is_empty():
+					continue
+				var to: Vector2 = o.pos - f.pos
+				options.append([to.length() * (1.0 + 0.7 * absf(sin(to.angle() - g))), other])
+		options.sort_custom(func(x: Array, y: Array) -> bool: return x[0] < y[0])
+		if options.size() > 0 and _hash(seed, cell, 1631) < LINK_FIRST:
+			out.append(options[0][1])
+		if options.size() > 1 and _hash(seed, cell, 1632) < LINK_SECOND:
+			out.append(options[1][1])
+		return out)
+
+
+## Links whose midpoint lies in this cell.
+static func _links_owned(seed: int, cell: Vector2i) -> Array:
+	return _memo(seed, cell, _LINKS, func() -> Array:
+		var out: Array = []
+		var seen := {}
+		for dz in range(-1, 2):
+			for dx in range(-1, 2):
+				var ca := cell + Vector2i(dx, dz)
+				for cb: Vector2i in _chosen(seed, ca):
+					var key := Vector4i(ca.x, ca.y, cb.x, cb.y)
+					if ca.x > cb.x or (ca.x == cb.x and ca.y > cb.y):
+						key = Vector4i(cb.x, cb.y, ca.x, ca.y)
+					if seen.has(key):
+						continue
+					seen[key] = true
+					var link := _link_geometry(seed, _main(seed, ca), _main(seed, cb))
+					if not link.is_empty() and Vector2i(floori(link.pos.x / CELL), floori(link.pos.y / CELL)) == cell:
+						out.append(link)
+		return out)
+
+
+## Height (raised link) or depth (hollow link) in metres at world p: a
+## meandering capsule from a to b. Raised: a saddle ridge sagging between its
+## ends, or a flat bench between plateau forms; hollow: a channel.
+static func link_shape(link: Dictionary, p: Vector2, detail: bool = true) -> float:
+	var ab: Vector2 = link.b - link.a
+	var length := ab.length()
+	var dir := ab / length
+	var rel: Vector2 = p - link.a
+	var u := rel.dot(dir)
+	var t := clampf(u / length, 0.0, 1.0)
+	var v: float = rel.dot(dir.orthogonal()) - link.amp * sin(PI * t)
+	var du := -u if u < 0.0 else maxf(0.0, u - length)
+	var d := sqrt(du * du + v * v)
+	var w: float = lerpf(link.wa, link.wb, t)
+	if d >= w:
+		return 0.0
+	var x := d / w
+	var level: float = lerpf(link.ha, link.hb, t)
+	if not link.raise:
+		return level * (1.0 - 0.25 * sin(PI * t)) * (1.0 - smoothstep(0.35, 1.0, x))
+	if link.bench:
+		return level * (1.0 - smoothstep(0.75 if detail else 0.3, 1.0, x))
+	return level * (1.0 - link.sag * sin(PI * t)) * pow(1.0 - (x if detail else _round01(x, 0.3)), 1.3)

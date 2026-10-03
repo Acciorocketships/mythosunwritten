@@ -77,7 +77,6 @@ static func _own_region(seed: int, cell: Vector2i) -> Dictionary:
 	if calm:
 		params.base_level_st = minf(params.base_level_st, 2.0)
 		params.relief_st = minf(params.relief_st, 1.0)
-		params.knoll_st = minf(params.knoll_st, 1.0)
 	return {
 		"archetype": archetype, "params": params, "scale": scale, "site": site, "cell": cell,
 		"calm": calm,

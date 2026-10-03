@@ -53,7 +53,11 @@ func test_basin_is_a_hollow_with_an_island_above_its_floor() -> void:
 				rim = maxf(rim, h)
 	assert_lt(lowest, -3.0 * ST, "the floor sinks at least three storeys")
 	assert_gt(rim, lowest + 3.0 * ST, "a rim stands over the floor")
-	assert_gt(_h(&"basin", q, Vector2.ZERO), lowest + 3.0 * ST, "the island rises clear of the floor")
+	# The island sits off-centre along the basin's long axis.
+	var island_top := -INF
+	for k in range(-20, 21):
+		island_top = maxf(island_top, _h(&"basin", q, Vector2(k / 20.0 * 0.6 * q.floor * radius, 0.0)))
+	assert_gt(island_top, lowest + 3.0 * ST, "the island rises clear of the floor")
 	q.island = 0.0
 	# The floor tilts (up to 30% deeper on one side), so the centre is floor
 	# but not necessarily its lowest point.
@@ -127,7 +131,7 @@ func test_hill_is_a_tall_rounded_hill() -> void:
 ## divots. Each outline (where the feature reaches half its centre value) must
 ## vary by at least 25% in radius round the feature, for several seeds.
 func test_outlines_are_not_circular() -> void:
-	for kind: StringName in [&"hill", &"peak", &"mesa", &"basin"]:
+	for kind: StringName in [&"hill", &"mesa", &"basin"]:
 		var q := _mid_params(kind)
 		q.island = 0.0
 		for salt in [7, 8, 9, 10]:
@@ -183,21 +187,6 @@ func test_no_feature_near_spawn() -> void:
 			if not c.is_empty():
 				assert_gt(c.pos.length() - c.radius, LandformFeatures.SPAWN_CLEAR_M - 1e-3)
 
-## Found by the field continuity test (1547.1, 211): the peak's rounded summit
-## left 0.6% of its height at the profile edge, then dropped to zero.
-func test_peak_profile_reaches_zero_at_its_edge() -> void:
-	var q := _mid_params(&"peak")
-	for i in 32:
-		var dir := Vector2.from_angle(i * TAU / 32.0)
-		var lo := 0.0
-		var hi: float = q.radius_m
-		# Find where the profile ends along this direction, then step across it.
-		for k in 40:
-			var mid := (lo + hi) * 0.5
-			if LandformFeatures.shape(&"peak", q, dir * mid, 7).x > 0.0: lo = mid
-			else: hi = mid
-		assert_lt(LandformFeatures.shape(&"peak", q, dir * lo, 7).x, 0.01, "no ledge at the edge (%d)" % i)
-
 ## River sources climb to summits and need the slope to vanish there: pointed
 ## cone tips and V crests stalled 30 of 81 district climbs (2026-10-02).
 func test_summits_and_crests_are_rounded() -> void:
@@ -219,3 +208,91 @@ func test_summits_and_crests_are_rounded() -> void:
 			crest_v = k * 0.5
 	var g2 := _h(&"ridge", r, Vector2(u, crest_v + 0.5)) - _h(&"ridge", r, Vector2(u, crest_v - 0.5))
 	assert_lt(absf(g2), 0.1, "a ridge crest is rounded")
+
+## Owner review 2026-10-03: "a lot of single small little bumps... I prefer
+## features that have some structure and connect to other things; not a lunar
+## landscape". Raised landforms (net feature height > 6 m) over two 4 km windows,
+## per archetype, ignoring landforms cut by the window edge and islands
+## standing in a basin: at most 20% are little bumps (under 0.02 km², ~160 m
+## across, and standing 3 m or more above the 6 m contour) and, except where
+## the landforms are mostly hollows (low flats, terraced valleys), at least 40%
+## of the raised area belongs to
+## landforms of 0.25 km² or more. Baseline (2026-10-03): small 48-99%.
+const SCATTER_STEP := 24.0
+const SCATTER_N := 167
+
+## Raised landforms as [size, cut by the window edge, top m] (islands skipped).
+func _raised_components(archetype: StringName, origin: Vector2) -> Array:
+	TerrainRegimeField.set_force_archetype(archetype)
+	var net := PackedFloat32Array()
+	var raised := PackedByteArray()
+	var in_hollow := PackedByteArray()
+	net.resize(SCATTER_N * SCATTER_N)
+	raised.resize(SCATTER_N * SCATTER_N)
+	in_hollow.resize(SCATTER_N * SCATTER_N)
+	for j in SCATTER_N:
+		for i in SCATTER_N:
+			var v := LandformFeatures.sample(SEED, origin + Vector2(i, j) * SCATTER_STEP)
+			net[j * SCATTER_N + i] = v.x - v.y
+			raised[j * SCATTER_N + i] = int(v.x - v.y > 6.0)
+			in_hollow[j * SCATTER_N + i] = int(v.y > 1.0)
+	var seen := PackedByteArray()
+	seen.resize(raised.size())
+	var sizes: Array = []
+	for s in raised.size():
+		if raised[s] == 0 or seen[s] == 1:
+			continue
+		seen[s] = 1
+		var stack: Array[int] = [s]
+		var count := 0
+		var edge := false
+		var hollow := 0
+		var top := 0.0
+		while not stack.is_empty():
+			var k: int = stack.pop_back()
+			count += 1
+			hollow += in_hollow[k]
+			top = maxf(top, net[k])
+			for d: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+				var x := k % SCATTER_N + d.x
+				var z := k / SCATTER_N + d.y
+				if x < 0 or z < 0 or x >= SCATTER_N or z >= SCATTER_N:
+					edge = true
+					continue
+				var nk := z * SCATTER_N + x
+				if raised[nk] == 1 and seen[nk] == 0:
+					seen[nk] = 1
+					stack.append(nk)
+		if hollow * 2 < count:
+			sizes.append([count, edge, top])
+	return sizes
+
+func test_raised_landforms_are_connected_not_scattered() -> void:
+	for a: StringName in TerrainRegimeCatalog.ARCHETYPES:
+		var small := 0
+		var whole := 0
+		var area := 0
+		var large := 0
+		for entry: Array in _raised_components(a, Vector2(9000, -1000)) + _raised_components(a, Vector2(-9000, 6000)):
+			var c: int = entry[0]
+			area += c
+			large += c if c * SCATTER_STEP * SCATTER_STEP >= 250000.0 else 0
+			if not entry[1]:
+				whole += 1
+				small += int(c * SCATTER_STEP * SCATTER_STEP < 20000.0 and float(entry[2]) >= 9.0)
+		assert_gt(area, 0, "%s has raised landforms" % a)
+		assert_lte(float(small) / maxf(1.0, whole), 0.2, "%s: share of small isolated bumps (%d of %d)" % [a, small, whole])
+		if a not in [&"low_flats", &"terraced_valleys"]:  # mostly hollows by design
+			assert_gte(float(large) / maxf(1.0, area), 0.4, "%s: share of raised area in large landforms" % a)
+
+## Features link to neighbours: most raised features share a landform with
+## another feature (ranges, linked hills, mesas joined by benches).
+func test_features_link_into_ranges_and_chains() -> void:
+	var linked := 0
+	var total := 0
+	for f in LandformFeatures.features_in_rect(SEED, Rect2(9000, -1000, 4000, 4000)):
+		if f.kind in [&"hill", &"ridge", &"peak_cluster", &"mesa", &"butte_group", &"tower_cluster"]:
+			total += 1
+			linked += int(not (f.get("links", []) as Array).is_empty())
+	assert_gt(total, 20)
+	assert_gte(float(linked) / total, 0.6, "share of raised features linked to a neighbour")

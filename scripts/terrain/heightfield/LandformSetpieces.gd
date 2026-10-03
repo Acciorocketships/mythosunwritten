@@ -140,10 +140,6 @@ static func footprint_radius(kind: StringName, q: Dictionary) -> float:
 	match kind:
 		&"escarpment", &"big_ridge", &"hanging_valley":
 			return q.length_m * 0.5 + FEATHER * 0.5
-		&"amphitheatre":
-			return q.radius_m * 1.35 + FEATHER
-		&"mesa":
-			return q.radius_m + FEATHER
 		&"cleft":
 			return maxf(q.length_m * 0.5, q.slot_m * 0.5 + q.shoulder_m + FEATHER) + FEATHER * 0.5
 	return 0.0
@@ -172,17 +168,6 @@ static func shape(kind: StringName, q: Dictionary, local: Vector2, phase: float)
 			var along := _along(local.x, half)
 			delta = (step - 0.5) * q.rise_st * ST * across * along
 			mask = across * along
-		&"amphitheatre":
-			var r := local.length()
-			var radius: float = q.radius_m
-			var ring := exp(-pow((r - radius) / (0.25 * radius), 2.0))
-			var mouth := smoothstep(-0.2, 0.5, local.x / maxf(r, 1.0))
-			delta = q.wall_st * ST * ring * (1.0 - 0.9 * mouth)
-			mask = 1.0 - smoothstep(radius, radius * 1.35, r)
-		&"mesa":
-			var r := local.length()
-			delta = q.height_st * ST * (1.0 - smoothstep(q.radius_m - q.face_m, q.radius_m, r))
-			mask = 1.0 - smoothstep(q.radius_m, q.radius_m + FEATHER, r)
 		&"big_ridge":
 			var across: float = exp(-pow(local.y / q.half_width_m, 2.0))
 			var saddle: float = 1.0 - q.pass_frac * exp(-pow(local.x / (0.12 * q.length_m), 2.0))

@@ -25,9 +25,6 @@ func test_shapes_have_their_silhouettes() -> void:
 	var e := {"length_m": 600.0, "rise_st": 3.0, "face_m": 20.0, "back_m": 160.0}
 	assert_gt(LandformSetpieces.shape(&"escarpment", e, Vector2(0, 40), 0.0).x
 		- LandformSetpieces.shape(&"escarpment", e, Vector2(0, -40), 0.0).x, 3.0 * ST * 0.8, "escarpment step")
-	var m := {"radius_m": 120.0, "height_st": 4.0, "face_m": 16.0}
-	assert_almost_eq(LandformSetpieces.shape(&"mesa", m, Vector2.ZERO, 0.0).x,
-		LandformSetpieces.shape(&"mesa", m, Vector2(60, 0), 0.0).x, 1e-4, "flat mesa crown")
 	var g := {"length_m": 700.0, "height_st": 4.0, "half_width_m": 60.0, "pass_frac": 0.6}
 	assert_gt(LandformSetpieces.shape(&"big_ridge", g, Vector2(200, 0), 0.0).x,
 		LandformSetpieces.shape(&"big_ridge", g, Vector2.ZERO, 0.0).x + 4.0, "pass in the ridge")
@@ -37,11 +34,6 @@ func test_shapes_have_their_silhouettes() -> void:
 	var h := {"length_m": 600.0, "trunk_half_m": 60.0, "trunk_st": 4.0, "trib_half_m": 20.0, "lip_st": 2.0}
 	assert_gt(LandformSetpieces.shape(&"hanging_valley", h, Vector2(0, 150), 0.0).x
 		- LandformSetpieces.shape(&"hanging_valley", h, Vector2(0, 0), 0.0).x, 2.0 * ST * 0.8, "lip above trunk floor")
-	var a := {"radius_m": 160.0, "wall_st": 3.0}
-	assert_gt(LandformSetpieces.shape(&"amphitheatre", a, Vector2(-160, 0), 0.0).x,
-		LandformSetpieces.shape(&"amphitheatre", a, Vector2.ZERO, 0.0).x + 8.0, "back wall")
-	assert_gt(LandformSetpieces.shape(&"amphitheatre", a, Vector2(-160, 0), 0.0).x,
-		LandformSetpieces.shape(&"amphitheatre", a, Vector2(160, 0), 0.0).x + 6.0, "open mouth")
 
 func test_admitted_footprints_never_overlap_and_are_order_independent() -> void:
 	var cells: Array[Vector2i] = []
@@ -71,3 +63,11 @@ func test_sample_matches_rect_query() -> void:
 		if v.y > 0.0:
 			var hit := pieces.any(func(a): return p.distance_to(a.pos) < a.radius)
 			assert_true(hit, "masked point %s lies in a listed footprint" % p)
+
+## Owner review 2026-10-03: perfect circles read as craters. Round set pieces
+## (mesa, amphitheatre) are retired; the feature layer's irregular mesas and
+## amphitheatres replace them. Every set piece is a long, linear form.
+func test_set_pieces_are_linear_forms_only() -> void:
+	for a: StringName in TerrainRegimeCatalog.SETPIECE_DENSITY:
+		for kind: StringName in TerrainRegimeCatalog.SETPIECE_DENSITY[a]:
+			assert_has([&"escarpment", &"big_ridge", &"cleft", &"hanging_valley"], kind, "%s: %s" % [a, kind])
