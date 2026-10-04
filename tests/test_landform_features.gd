@@ -233,8 +233,8 @@ func _raised_components(archetype: StringName, origin: Vector2) -> Array:
 	for j in SCATTER_N:
 		for i in SCATTER_N:
 			var v := LandformFeatures.sample(SEED, origin + Vector2(i, j) * SCATTER_STEP)
-			net[j * SCATTER_N + i] = v.x - v.y
-			raised[j * SCATTER_N + i] = int(v.x - v.y > 6.0)
+			net[j * SCATTER_N + i] = LandformFeatures.net(v)
+			raised[j * SCATTER_N + i] = int(LandformFeatures.net(v) > 6.0)
 			in_hollow[j * SCATTER_N + i] = int(v.y > 1.0)
 	var seen := PackedByteArray()
 	seen.resize(raised.size())

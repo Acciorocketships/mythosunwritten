@@ -38,7 +38,7 @@ const PARAMS := {
 		"pass_spacing_m": [250.0, 600.0], "pass_depth": [0.3, 0.6],
 		"gully_spacing_m": [40.0, 80.0], "gully_st": [0.5, 1.0]},
 	&"low_flats": {
-		"base_level_st": [0.0, 1.0], "relief_st": [0.0, 0.6], "hummock_wl_m": [100.0, 200.0]},
+		"base_level_st": [0.0, 1.0], "relief_st": [0.3, 0.8], "hummock_wl_m": [100.0, 200.0]},
 }
 
 ## Visual biome -> archetype weights; every archetype also gets AFFINITY_FLOOR.
@@ -49,9 +49,9 @@ const AFFINITY := {
 	&"highland": {&"highland_massif": 0.40, &"ridge_and_pass": 0.25, &"tableland": 0.20,
 		&"escarpment_country": 0.15},
 	&"blossom_grove": {&"terraced_valleys": 0.45, &"rolling_downs": 0.35},
-	&"twilight_marsh": {&"low_flats": 0.65, &"karst_hollows": 0.25},
+	&"twilight_marsh": {&"low_flats": 0.4, &"rolling_downs": 0.25, &"karst_hollows": 0.25},
 	&"amber_heath": {&"tableland": 0.45, &"escarpment_country": 0.35},
-	&"jade_wetlands": {&"low_flats": 0.50, &"terraced_valleys": 0.30},
+	&"jade_wetlands": {&"low_flats": 0.30, &"rolling_downs": 0.20, &"terraced_valleys": 0.30},
 }
 
 ## Probability that a 512 m set-piece cell in this archetype hosts each kind.
@@ -83,7 +83,7 @@ const SETPIECE_PARAMS := {
 ## cell hosts a feature, the weighted kinds, and a height scale drawn per
 ## feature that multiplies every *_st parameter.
 const FEATURES := {
-	&"rolling_downs": {"density": 0.95, "kinds": {&"hill": 0.85, &"valley": 0.1, &"basin": 0.05},
+	&"rolling_downs": {"density": 0.95, "kinds": {&"hill": 0.55, &"ridge": 0.25, &"valley": 0.15, &"basin": 0.05},
 		"height_scale": [0.8, 1.2]},
 	&"ridge_and_pass": {"density": 0.85, "kinds": {&"ridge": 0.6, &"valley": 0.25, &"hill": 0.15},
 		"height_scale": [0.9, 1.2]},
@@ -97,14 +97,15 @@ const FEATURES := {
 		"height_scale": [0.9, 1.2]},
 	&"highland_massif": {"density": 0.9, "kinds": {&"peak_cluster": 0.55, &"ridge": 0.45},
 		"height_scale": [1.0, 1.25]},
-	&"low_flats": {"density": 0.55, "kinds": {&"basin": 0.6, &"hill": 0.4}, "height_scale": [0.55, 0.8]},
+	&"low_flats": {"density": 0.85, "kinds": {&"basin": 0.45, &"hill": 0.35, &"valley": 0.2},
+		"height_scale": [0.75, 1.0]},
 }
 
 ## Feature shape ranges. Lengths are NOT scaled by the region scale (the
 ## feature lattice is global); every footprint stays within
 ## LandformFeatures.MAX_RADIUS.
 const FEATURE_PARAMS := {
-	&"hill": {"radius_m": [220.0, 340.0], "height_st": [6.0, 10.0], "aspect": [0.55, 1.0]},
+	&"hill": {"radius_m": [260.0, 360.0], "height_st": [6.0, 10.0], "aspect": [0.55, 1.0]},
 	&"peak_cluster": {"radius_m": [240.0, 350.0], "height_st": [10.0, 16.0], "peaks": [2.0, 4.0],
 		"saddle": [0.45, 0.65], "spread": [0.38, 0.5]},
 	&"ridge": {"half_length_m": [260.0, 360.0], "half_width_m": [50.0, 90.0], "height_st": [7.0, 13.0],

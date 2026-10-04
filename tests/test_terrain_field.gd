@@ -21,8 +21,9 @@ func test_smooth_field_carries_regime_macro_relief() -> void:
 	assert_gt(hi - lo, 12.0, "massif spines are visible to rivers")
 
 func test_height01_is_bounded_and_spawn_is_flat() -> void:
-	assert_eq(HeightfieldPlan.height01(Vector3.ZERO, SEED), 0.0)
-	assert_eq(HeightfieldPlan.height01(Vector3(40, 0, -30), SEED), 0.0)
+	# The clearing is flat at its surroundings' level (2026-10-04: no longer 0).
+	assert_almost_eq(HeightfieldPlan.height01(Vector3(40, 0, -30), SEED), HeightfieldPlan.height01(Vector3.ZERO, SEED), 1e-6)
+	assert_almost_eq(HeightfieldPlan.height01(Vector3.ZERO, SEED) * TerrainField.REF_AMPLITUDE, TerrainField.spawn_level_m(SEED), 1e-3)
 	for z in range(-30, 31, 3):
 		for x in range(-30, 31, 3):
 			var h := HeightfieldPlan.height01(Vector3(x * 97.0, 0, z * 89.0), SEED)
@@ -87,13 +88,33 @@ func test_relief_now_survives_storey_quantization() -> void:
 
 ## Reported in final review: the origin region was unconstrained, so several
 ## seeds had 30-40 m peaks and cliffs within 180 m of spawn (baseline 5-12 m).
+## Since 2026-10-04 the spawn clearing sits at its surroundings' level, not
+## at zero, so the ring is measured from the spawn's own height.
 func test_spawn_surroundings_stay_gentle_on_every_seed() -> void:
 	for seed_value: int in [42, 77777, 123456789, 991177, 2697992464, 1, 314159]:
-		var top := 0.0
+		var spawn := HeightfieldPlan.height01(Vector3.ZERO, seed_value) * TerrainField.REF_AMPLITUDE
+		var worst := 0.0
 		for k in 64:
 			var p := Vector2.from_angle(k * TAU / 64.0) * 180.0
-			top = maxf(top, HeightfieldPlan.height01(Vector3(p.x, 0, p.y), seed_value) * TerrainField.REF_AMPLITUDE)
-		assert_lte(top, 16.0, "seed %d: ring at 180 m stays within four storeys" % seed_value)
+			worst = maxf(worst, absf(HeightfieldPlan.height01(Vector3(p.x, 0, p.y), seed_value) * TerrainField.REF_AMPLITUDE - spawn))
+		assert_lte(worst, 16.0, "seed %d: ring at 180 m stays within four storeys of spawn" % seed_value)
+
+## Owner judging pass 2026-10-04 (found while checking it): on two of five
+## seeds spawn stood in 1.2 m of water. The spawn clearing was flattened to
+## height 0 and the large-scale layers faded to 0 round it, while lowlands now
+## stand 24 m and more: spawn was a bowl that rivers ended in. The clearing
+## must not sit in a bowl: the smooth field at spawn is within one storey of
+## the median ground 400 m out or above it (hills may stand round spawn; the
+## water itself is checked by test_september13_water_origin).
+func test_spawn_is_not_a_pit() -> void:
+	for seed_value: int in [42, 77777, 123456789, 991177, 2697992464, 1, 314159]:
+		var spawn := HeightfieldPlan.height01(Vector3.ZERO, seed_value, false) * TerrainField.REF_AMPLITUDE
+		var ring: Array[float] = []
+		for k in 32:
+			var p := Vector2.from_angle(k * TAU / 32.0) * 400.0
+			ring.append(HeightfieldPlan.height01(Vector3(p.x, 0, p.y), seed_value, false) * TerrainField.REF_AMPLITUDE)
+		ring.sort()
+		assert_gte(spawn, ring[16] - 4.0, "seed %d: spawn %.1f m, median ground 400 m out %.1f m" % [seed_value, spawn, ring[16]])
 
 ## Owner review 2026-10-02: relief stayed "within the same few levels". Median
 ## relief over nine 500 m windows per archetype (before the mid-scale feature
@@ -193,3 +214,32 @@ func _std(a: Array[float]) -> float:
 	var s := 0.0
 	for v in a: s += (v - m) * (v - m)
 	return sqrt(s / maxf(1.0, a.size()))
+
+## Owner review 2026-10-04: "when I first spawned the terrain was very flat ...
+## if this is the case in many places, I would like to fix it." Share of 96 m
+## patches whose relief is under one storey (4 m): at most 13% between 400 m
+## and 1.5 km from spawn and at most 8% from 1.5 to 10 km out (2026-10-03:
+## about 22% and 12%; the low flats alone 31%). Measured 2026-10-04 on five
+## seeds: 5-12% near spawn (seed 42, spawn on a broad lowland plain, 12.3%) and
+## 6-8% beyond.
+func _flat_share(seed_value: int, r_lo: float, r_hi: float, samples: int) -> float:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 11
+	var flat := 0
+	for n in samples:
+		var r := sqrt(lerpf(r_lo * r_lo, r_hi * r_hi, rng.randf()))
+		var c := Vector2.from_angle(rng.randf() * TAU) * r
+		var lo := INF
+		var hi := -INF
+		for j in 5:
+			for i in 5:
+				var h := HeightfieldPlan.height01(Vector3(c.x - 48 + i * 24, 0, c.y - 48 + j * 24), seed_value)
+				lo = minf(lo, h)
+				hi = maxf(hi, h)
+		flat += int((hi - lo) * TerrainField.REF_AMPLITUDE < 4.0)
+	return float(flat) / samples
+
+func test_little_ground_is_flat_near_spawn_or_beyond() -> void:
+	for seed_value: int in [SEED, 42]:
+		assert_lte(_flat_share(seed_value, 400.0, 1500.0, 300), 0.13, "seed %d: flat share near spawn" % seed_value)
+		assert_lte(_flat_share(seed_value, 1500.0, 10000.0, 900), 0.08, "seed %d: flat share beyond" % seed_value)

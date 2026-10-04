@@ -12,10 +12,13 @@
 # is a SLOPE (the two endpoints are at most one storey apart) or a CLIFF (two
 # or more storeys). Slopes use the smootherstep profile across the whole
 # tile; cliffs step at the tile midline, so every wall lies on the border of
-# the 12 m "dual cell" around a lattice point. A saddle keeps its two high
-# corners as separate bumps. Where a layer mixes cliff and slope crossings
-# (a cliff end) the rule is `cliff_end` (E2 by default: a full wall to the
-# tile centre, then the wall shortens to nothing at the slope edge).
+# the 12 m "dual cell" around a lattice point. A layer with one high (or one
+# low) corner is the product of its two crossings' own edge profiles, and a
+# saddle is the sum of its two corner shapes (for slopes, the smooth bilinear
+# saddle), so every tile only rises or only falls along each axis: no divots
+# (owner review 2026-10-04). Where a straight layer mixes a cliff and a slope
+# crossing (a cliff end) the rule is `cliff_end` (E2 by default: a full wall
+# to the tile centre, then the wall shortens to nothing at the slope edge).
 #
 # Along any tile edge the surface depends only on that edge's two endpoints,
 # so neighbouring tiles agree by construction; walls are the only
@@ -148,9 +151,9 @@ static func eval_params(p: PackedFloat32Array, u: float, v: float, side := Vecto
 	var cr := p[o + 5]
 	var ct := p[o + 6]
 	var cl := p[o + 7]
-	# Fast path: every crossing a slope and no saddle -> the bilinear smootherstep
-	# patch (bilinear is linear in the corner values, so the layers collapse).
-	if cb + cr + ct + cl == 0.0 and not _has_saddle_layer(h0, h1, h2, h3):
+	# Fast path: every crossing a slope -> the bilinear smootherstep patch
+	# (every layer is bilinear in the same profiles, so the layers collapse).
+	if cb + cr + ct + cl == 0.0:
 		var su := SlopeProfile.smootherstep(u)
 		var sv := SlopeProfile.smootherstep(v)
 		return lerpf(lerpf(h0, h1, su), lerpf(h3, h2, su), sv)
@@ -173,21 +176,36 @@ static func eval_params(p: PackedFloat32Array, u: float, v: float, side := Vecto
 	return result
 
 
-# Only the middle distinct value(s) can form a saddle layer; one check covers all.
-static func _has_saddle_layer(h0: float, h1: float, h2: float, h3: float) -> bool:
-	return _saddle_at(h0, h1, h2, h3, h0) or _saddle_at(h0, h1, h2, h3, h1) \
-		or _saddle_at(h0, h1, h2, h3, h2) or _saddle_at(h0, h1, h2, h3, h3)
-
-
-static func _saddle_at(h0: float, h1: float, h2: float, h3: float, t: float) -> bool:
-	var b0 := h0 >= t
-	var b1 := h1 >= t
-	return b0 != b1 and b0 == (h2 >= t) and b1 == (h3 >= t)
-
-
 static func _layer(ba: bool, bb: bool, bc: bool, bd: bool,
 		cb: float, cr: float, ct: float, cl: float,
 		u: float, v: float, side: Vector2i) -> float:
+	var highs := int(ba) + int(bb) + int(bc) + int(bd)
+	if highs != 2 or ba == bc:
+		# One high corner, one low corner or a saddle is built from CORNER
+		# shapes: a corner's shape is the product of its two crossings' profiles
+		# (_corner_profile), so it only falls away from the corner along both
+		# axes. One high corner is its shape; one low corner the complement of
+		# its shape; a saddle is the plateau with both low corners carved out.
+		# Every edge reproduces its crossing exactly and no row or column dips
+		# (owner review 2026-10-04: the former saddle, max(bump_a, bump_c),
+		# sagged between the bumps, and a cliff weight varied across the whole
+		# tile undercut the slope beside a wall's end).
+		var mixed := ((ba != bb) and cb < 1.0) or ((bd != bc) and ct < 1.0) \
+			or ((ba != bd) and cl < 1.0) or ((bb != bc) and cr < 1.0)
+		var corners := [
+			(1.0 - _corner_profile(u, cb, v, 0.0, mixed, side.x)) * (1.0 - _corner_profile(v, cl, u, 0.0, mixed, side.y)),
+			_corner_profile(u, cb, v, 1.0, mixed, side.x) * (1.0 - _corner_profile(v, cr, 1.0 - u, 0.0, mixed, side.y)),
+			_corner_profile(u, ct, 1.0 - v, 1.0, mixed, side.x) * _corner_profile(v, cr, 1.0 - u, 1.0, mixed, side.y),
+			(1.0 - _corner_profile(u, ct, 1.0 - v, 0.0, mixed, side.x)) * _corner_profile(v, cl, u, 1.0, mixed, side.y)]
+		var bits := [ba, bb, bc, bd]
+		if highs == 1:
+			return corners[bits.find(true)]
+		var plateau := 1.0
+		for k in 4:
+			if not bits[k]:
+				plateau *= 1.0 - float(corners[k])
+		return plateau
+	# Two adjacent high corners: one straight pair of crossings.
 	# A layer's value on an edge it does not cross is constant, so a non-crossing
 	# edge is a slope end (k = 0) ONLY in a mixed layer, where it lets the wall
 	# fade to the slope profile. When every crossing of the layer is a cliff
@@ -209,12 +227,29 @@ static func _layer(ba: bool, bb: bool, bc: bool, bd: bool,
 	var b := 1.0 if bb else 0.0
 	var c := 1.0 if bc else 0.0
 	var d := 1.0 if bd else 0.0
-	if ba == bc and bb == bd and ba != bb:
-		# Saddle: the low diagonal connects, the two high corners are separate bumps.
-		if ba:
-			return maxf((1.0 - pu) * (1.0 - pv), pu * pv)
-		return maxf(pu * (1.0 - pv), (1.0 - pu) * pv)
 	return lerpf(lerpf(a, b, pu), lerpf(d, c, pu), pv)
+
+
+## A crossing's profile inside one CORNER shape: t runs across the crossing,
+## the corner lies at t = corner_t (0 or 1), s is the distance from the
+## crossing's own edge (0) toward the opposite edge (1), where the corner's
+## other factor vanishes. A slope is the smootherstep; a cliff in a pure-cliff
+## layer is the full step. A cliff in a mixed layer is the full wall from its
+## edge to the tile centre (E2) that then gives way to a half-tile ramp on the
+## corner's own side: the far side of the wall stays level (no notch), and
+## the corner only deepens toward its corner along t.
+static func _corner_profile(t: float, k: float, s: float, corner_t: float, mixed: bool, side: int) -> float:
+	if k <= 0.0:
+		return SlopeProfile.smootherstep(t)
+	if not mixed:
+		return _step(t, side)
+	var wall := 1.0 - s if cliff_end == CliffEnd.E1 else \
+		SlopeProfile.smootherstep(clampf((1.0 - CLIFF_END_CLEAR - s) / (0.5 - CLIFF_END_CLEAR), 0.0, 1.0))
+	# A cubic smoothstep: over half a tile a storey ramp peaks at 45 degrees,
+	# lawn (SlopeProfile.LAWN_STEEPNESS); the smootherstep peaked at 51 and read
+	# as a dark moss groove beside the wall's end.
+	var ramp := smoothstep(0.0, 1.0, clampf((t - 0.5 * corner_t) * 2.0, 0.0, 1.0))
+	return lerpf(ramp, _step(t, side), wall)
 
 
 ## Profile of one direction's crossing at coordinate t, given the cliff weight
@@ -525,7 +560,7 @@ static func _tile_bounds(p: PackedFloat32Array, u0: float, u1: float, v0: float,
 		var hb: float = h[[1, 2, 2, 3][e]]
 		if ha != hb and p[4 + e] == 0.0:
 			cliff_only = false
-	if slope_only and not _has_saddle_layer(p[0], p[1], p[2], p[3]):
+	if slope_only:
 		# Bilinear in monotone smootherstep coordinates: extrema at the clipped corners.
 		var out := Vector2(INF, -INF)
 		for uv: Vector2 in [Vector2(u0, v0), Vector2(u1, v0), Vector2(u1, v1), Vector2(u0, v1)]:

@@ -146,3 +146,17 @@ cliff sheet); this is not a world-wide speed-up. Runs were on a shared machine.
    submerged cliff-sheet shoulder (water/sheet clearance, see the suite section).
 7. The photographed September water sites now sit in the calm spawn zone; their tests moved
    1.5-2 km out.
+
+## October 3 iterations (owner review)
+
+See the AGENTS.md October 3 entry for the design. Measured:
+
+- Large scale: 2 km areas over 24 km differ by a standard deviation of 43.5 m (inside one area
+  18.4 m) before the fronts were sharpened; upland fronts now climb at a median 0.13 m/m or
+  more where half way up (before: 0.04), highland interiors vary (std > 8 m; before 0.3 m).
+- Mid scale, two 4 km windows per archetype: little isolated bumps (< 0.02 km², standing 3 m
+  over the 6 m contour) 28-84% of raised landforms before, at most 20% after; at least 40% of
+  raised area in landforms of 0.25 km² or more (except the hollow-dominated low flats and
+  terraced valleys); at least 60% of raised features linked to a neighbour.
+- Preview images: `tests/harness/terrain_preview.tscn` (`--archetype all`, and `world` with
+  `--yaw` for a ground view up at an upland front).

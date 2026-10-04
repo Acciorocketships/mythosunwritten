@@ -75,19 +75,36 @@ float tile_profile(float t, float k0, float k1, float s, int side) {
 	return mix(tile_smootherstep(t), tile_step(t, side), k);
 }
 
-bool tile_saddle_at(vec4 h, float t) {
-	bool b0 = h.x >= t;
-	bool b1 = h.y >= t;
-	return b0 != b1 && b0 == (h.z >= t) && b1 == (h.w >= t);
-}
-
-bool tile_has_saddle_layer(vec4 h) {
-	return tile_saddle_at(h, h.x) || tile_saddle_at(h, h.y)
-		|| tile_saddle_at(h, h.z) || tile_saddle_at(h, h.w);
+// A crossing's profile inside one corner shape (TerrainTileField._corner_profile).
+float tile_corner_profile(float t, float k, float s, float corner_t, bool mixed, int side) {
+	if (k <= 0.0) return tile_smootherstep(t);
+	if (!mixed) return tile_step(t, side);
+	float wall = cliff_end == 0 ? 1.0 - s : tile_smootherstep(clamp((0.8 - s) / 0.3, 0.0, 1.0));
+	float ramp = smoothstep(0.0, 1.0, clamp((t - 0.5 * corner_t) * 2.0, 0.0, 1.0));
+	return mix(ramp, tile_step(t, side), wall);
 }
 
 // cl4 = cliff flags (bottom a-b, right b-c, top d-c, left a-d).
 float tile_layer(bool ba, bool bb, bool bc, bool bd, vec4 cl4, float u, float v, ivec2 side) {
+	int highs = int(ba) + int(bb) + int(bc) + int(bd);
+	if (highs != 2 || ba == bc) {
+		// Corner shapes (TerrainTileField._layer): one high corner is its shape,
+		// one low corner the complement, a saddle the plateau with both low
+		// corners carved out.
+		bool mixed = (ba != bb && cl4.x < 1.0) || (bd != bc && cl4.z < 1.0)
+			|| (ba != bd && cl4.w < 1.0) || (bb != bc && cl4.y < 1.0);
+		float c0 = (1.0 - tile_corner_profile(u, cl4.x, v, 0.0, mixed, side.x)) * (1.0 - tile_corner_profile(v, cl4.w, u, 0.0, mixed, side.y));
+		float c1 = tile_corner_profile(u, cl4.x, v, 1.0, mixed, side.x) * (1.0 - tile_corner_profile(v, cl4.y, 1.0 - u, 0.0, mixed, side.y));
+		float c2 = tile_corner_profile(u, cl4.z, 1.0 - v, 1.0, mixed, side.x) * tile_corner_profile(v, cl4.y, 1.0 - u, 1.0, mixed, side.y);
+		float c3 = (1.0 - tile_corner_profile(u, cl4.z, 1.0 - v, 0.0, mixed, side.x)) * tile_corner_profile(v, cl4.w, u, 1.0, mixed, side.y);
+		if (highs == 1) return ba ? c0 : (bb ? c1 : (bc ? c2 : c3));
+		float plateau = 1.0;
+		if (!ba) plateau *= 1.0 - c0;
+		if (!bb) plateau *= 1.0 - c1;
+		if (!bc) plateau *= 1.0 - c2;
+		if (!bd) plateau *= 1.0 - c3;
+		return plateau;
+	}
 	bool xb = ba != bb;
 	bool xt = bd != bc;
 	bool xl = ba != bd;
@@ -105,11 +122,6 @@ float tile_layer(bool ba, bool bb, bool bc, bool bd, vec4 cl4, float u, float v,
 	float b = bb ? 1.0 : 0.0;
 	float c = bc ? 1.0 : 0.0;
 	float d = bd ? 1.0 : 0.0;
-	if (ba == bc && bb == bd && ba != bb) {
-		// Saddle: the low diagonal connects, the two high corners are separate bumps.
-		if (ba) return max((1.0 - pu) * (1.0 - pv), pu * pv);
-		return max(pu * (1.0 - pv), (1.0 - pu) * pv);
-	}
 	return mix(mix(a, b, pu), mix(d, c, pu), pv);
 }
 
@@ -118,7 +130,7 @@ float tile_eval(vec4 h, vec4 cl4, float u, float v, ivec2 side) {
 	float lo = min(min(h.x, h.y), min(h.z, h.w));
 	float hi = max(max(h.x, h.y), max(h.z, h.w));
 	if (hi - lo <= 0.0) return lo;
-	if (cl4.x + cl4.y + cl4.z + cl4.w == 0.0 && !tile_has_saddle_layer(h)) {
+	if (cl4.x + cl4.y + cl4.z + cl4.w == 0.0) {
 		float su = tile_smootherstep(u);
 		float sv = tile_smootherstep(v);
 		return mix(mix(h.x, h.y, su), mix(h.w, h.z, su), sv);

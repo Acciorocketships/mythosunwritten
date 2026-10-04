@@ -15,7 +15,7 @@ const FEATHER := 48.0
 const ST := TerrainRegimeCatalog.STOREY
 const CACHE_LIMIT := 4096
 ## No set-piece footprint comes closer than this to the world origin.
-const SPAWN_CLEAR_M := 400.0
+const SPAWN_CLEAR_M := 250.0
 
 static var _candidates: Dictionary = {}   # seed -> {cell: Dictionary}
 static var _admitted: Dictionary = {}

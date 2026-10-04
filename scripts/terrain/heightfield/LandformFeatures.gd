@@ -24,7 +24,7 @@ const MAX_RADIUS := 368.0
 const NORM := 6.0
 const ST := TerrainRegimeCatalog.STOREY
 ## No footprint comes closer than this to the world origin (spawn clearing).
-const SPAWN_CLEAR_M := 300.0
+const SPAWN_CLEAR_M := 200.0
 const CACHE_LIMIT := 8192
 
 static var _cache: Dictionary = {}   # seed -> {Vector3i(cell, table): value}
@@ -124,8 +124,6 @@ static func _compute(seed: int, cell: Vector2i) -> Dictionary:
 	var params := TerrainRegimeCatalog.draw(seed, cell, 1610, TerrainRegimeCatalog.FEATURE_PARAMS[kind], 1.0)
 	var range_: Array = table.height_scale
 	var scale := lerpf(float(range_[0]), float(range_[1]), _hash(seed, cell, 1605))
-	if region.get("calm", false):
-		scale *= 0.6
 	for name: String in params:
 		if name.ends_with("_st"):
 			params[name] = float(params[name]) * scale
@@ -161,6 +159,14 @@ static func sample(seed: int, p: Vector2, detail: bool = true) -> Vector2:
 					else:
 						cut = _union(cut, h)
 	return Vector2(raise, cut)
+
+
+## Net height of a sample (raise, cut): a valley or basin crossing a raised
+## landform taller than a few storeys breaches it as a pass (a quarter of its
+## depth over 12 m of raise) instead of cutting a gap that strands a stub
+## (owner review 2026-10-03: no lone bumps).
+static func net(v: Vector2) -> float:
+	return v.x - v.y * (1.0 - 0.75 * smoothstep(0.0, 12.0, v.x))
 
 
 ## Zero-preserving smooth max of two non-negative heights.
@@ -506,7 +512,7 @@ static func _scatter(q: Dictionary, local: Vector2, salt: int, count: float, eac
 
 const LINK_MAX_RADIUS := 300.0
 const LINK_FIRST := 0.95
-const LINK_SECOND := 0.4
+const LINK_SECOND := 0.6
 const _RAISED := [&"hill", &"ridge", &"peak_cluster", &"mesa", &"butte_group", &"tower_cluster"]
 const _HOLLOW := [&"valley", &"basin"]
 const _BENCHED := [&"mesa", &"butte_group", &"tower_cluster"]

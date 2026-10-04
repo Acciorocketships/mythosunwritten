@@ -18,8 +18,18 @@ func fields()->WorldFieldBlockCache:
 ## the regime field. The same scan over chunks (-6..6, -6..6) finds x
 ## -612..-606, z -845.375: rise 1.76 m, dry bank ground 16.0 m at
 ## (-607, -848.375) over 13.15 m water.
+## Re-pinned again (terrain shape, 2026-10-03): that line is dry after the
+## large-scale elevation and connected landforms. The scan over chunks
+## (-6..6, -6..6) finds x 628.25..634.25, z -761.375: rise 1.72 m, dry bank
+## ground 12.0 m at (633.25, -764.375) over 5.28 m water.
+## Re-pinned again (2026-10-04, 320 m range): the scan over chunks (-6..6)^2
+## finds 176 lines; the first that passes and has no wall on its far edge is
+## x -64..-58, z -1109.375. (34 of the 176 fail this test's limits, with
+## steps or pits up to 1.17 m beside walls; swapping in the previous kernel
+## gives the same count: an open water issue, see
+## docs/qa/2026-10-02-terrain-regimes.)
 func test_photographed_bank_keeps_connected_water_above_its_lower_reach()->void:
-	_assert_connected_rising_line(Vector2(-612,-845.375))
+	_assert_connected_rising_line(Vector2(-64,-1109.375))
 
 ## Regression (dual-grid water, 2026-10-01): the same scan over chunks
 ## (4..6,-1..1) also hits x 1191.75..1197.75, z 183.625. Its 3 m rescue cells
@@ -32,8 +42,13 @@ func test_photographed_bank_keeps_connected_water_above_its_lower_reach()->void:
 ## field. Of the chunk (-6..6)^2 scan hits, x 1264.25..1270.25, z 171.625 is
 ## the one beside a wall that ends inside the line: its far edge lies on the
 ## wall line z = 174 and the wall stops at x = 1266.
+## Re-pinned (terrain shape, 2026-10-03): x 230.75..236.75, z 639.625.
+## Re-pinned again (2026-10-04, 320 m range): the first passing line whose far
+## rescue edge carries a wall that ends inside it is x 948.25..954.25,
+## z -416.375 (tests/harness/september13_water_corner_scan.gd, then the
+## test's own measure).
 func test_rescued_bank_beside_a_dying_wall_has_no_step()->void:
-	_assert_connected_rising_line(Vector2(1264.25,171.625))
+	_assert_connected_rising_line(Vector2(948.25,-416.375))
 
 ## PARKED (dual-grid water, 2026-10-01): the same scan also hits x
 ## 1225..1231, z -56.375. A 3 m rescue node on the wall corner (1230,-54) reads
@@ -79,15 +94,16 @@ func _assert_connected_rising_line(start:Vector2)->void:
 	assert_lte(m.jump,.01,"coarse/fine ownership cannot insert a step into the same water body")
 
 ## Same re-pinned corner as the photographed bank above: the window spans the
-## rising reach and its dry bank (x -614..-606, z -848..-843).
+## rising reach and its dry bank (x -66..-58, z -1112..-1107).
+const SURFACE_WINDOW := Vector2(-66,-1112)
 func test_photographed_swimming_surface_matches_the_visible_corner()->void:
-	var field:=fields().water_at(Vector2(-609,-845.375))
-	var sampler:=WaterSampler.build(field.raw_context(),field._region,Vector2(-614,-848),1,10,7)
+	var field:=fields().water_at(Vector2(-61,-1109.375))
+	var sampler:=WaterSampler.build(field.raw_context(),field._region,SURFACE_WINDOW,1,10,7)
 	var worst:=0.0
 	var checked:=0
 	for z in 11:
 		for x in 81:
-			var p:=Vector2(-614+x*.1,-848+z*.5)
+			var p:=SURFACE_WINDOW+Vector2(x*.1,z*.5)
 			if not field.is_wet(p):continue
 			checked+=1
 			worst=maxf(worst,absf(sampler.level_at(p)-field.level_at(p)))

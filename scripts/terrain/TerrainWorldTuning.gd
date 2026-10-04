@@ -5,11 +5,11 @@ extends RefCounted
 ## production-representative corpus/review harnesses must read these values
 ## instead of copying literals, or a valid pin in a harness may not exist in
 ## the rendered world at all.
-## 256 m / 64 storeys since the large-scale elevation layer (owner review
-## 2026-10-03): highland interiors sit up to 160 m above lowland basins before
-## any landform.
-const HEIGHTFIELD_AMPLITUDE := 256.0
-const HEIGHTFIELD_MAX_STOREYS := 64
+## 320 m / 80 storeys since the large-scale elevation layer (owner reviews
+## 2026-10-03/04): highland interiors sit up to 200 m above lowland basins,
+## with a 44 m undulation over that, before any landform.
+const HEIGHTFIELD_AMPLITUDE := 320.0
+const HEIGHTFIELD_MAX_STOREYS := 80
 const MAX_CLIFF_STEP := 3
 
 

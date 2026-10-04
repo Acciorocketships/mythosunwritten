@@ -7,7 +7,12 @@ func test_cliff_step_limits_the_sampled_dependency_radius() -> void:
 	var plan := TerrainWorldTuning.make_heightfield(17)
 	plan.set_raw_height_override(func(_x: int,_z: int) -> float: return 128.0)
 	plan.compute_region(0,0,4)
-	assert_lte(plan._samples.size(),2500,"A three-storey step cannot transmit a 32-storey influence beyond eleven cells")
+	# The clamp's influence reaches storey_margin() = ceil(max storeys / step)
+	# cells (eleven at 32 storeys, when this bound was 2500; 22 at the 64-storey
+	# range of 2026-10-03); the window adds the four owned cells and a fixed
+	# level/cliff-search pad of ten.
+	var reach := 4+plan.storey_margin()+10
+	assert_lte(plan._samples.size(),(2*reach+1)*(2*reach+1),"A three-storey step cannot transmit a %d-storey influence beyond %d cells" % [TerrainWorldTuning.HEIGHTFIELD_MAX_STOREYS,plan.storey_margin()])
 
 func test_reduced_domain_matches_full_domain_at_every_owned_sample() -> void:
 	for step: int in [1,2,3,5]:

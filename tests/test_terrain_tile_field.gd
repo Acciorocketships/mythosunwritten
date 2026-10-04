@@ -89,10 +89,14 @@ func test_three_storey_cliff_is_one_vertical_wall_at_the_tile_midline() -> void:
 		assert_eq(wall.high, Vector2i(0, wall.high.y))
 
 
-func test_slope_saddle_keeps_the_two_high_corners_separate() -> void:
+## Superseded ruling (owner review 2026-10-04): a slope saddle used to keep its
+## two high corners as separate bumps (max of the bumps, centre at a quarter
+## of the rise), which sagged between them into a divot. It is now the smooth
+## bilinear saddle: centre at half the rise, every row and column monotone.
+func test_slope_saddle_is_the_smooth_bilinear_saddle() -> void:
 	var region = Region.tile(4.0, 0.0, 4.0, 0.0)
 	var centre := Tile.tile_y(region, Vector2i.ZERO, 0.5, 0.5)
-	assert_almost_eq(centre, 4.0 * 0.25, EPS, "max of the two bumps, not their sum")
+	assert_almost_eq(centre, 4.0 * 0.5, EPS, "half way, no sag between the high corners")
 	# On every edge the saddle equals the ordinary slope profile.
 	for i in 9:
 		var t := float(i) / 8.0
@@ -476,3 +480,101 @@ func test_height_bounds_on_side_is_one_sided() -> void:
 	assert_eq(Tile.height_bounds_on_side(region, Rect2(2.0, 1.0, 4.0, 4.0), Vector2i(0, 0)), Vector2(12.0, 12.0))
 	assert_eq(Tile.height_bounds_on_side(region, Rect2(6.0, 1.0, 4.0, 4.0), Vector2i(1, 0)), Vector2(0.0, 0.0))
 	assert_eq(Tile.height_bounds(region, Rect2(4.0, 1.0, 4.0, 4.0)), Vector2(0.0, 12.0))
+
+
+## Owner review 2026-10-04: "dimples/divots in the ground ... the building
+## pieces of the ground (other than the cliff sides) should be simple and
+## predictable". Every tile a real field can produce (corners within three
+## storeys of their cardinal neighbours; levels only inside one storey) is
+## monotone along both axes: along any line across the tile parallel to an
+## edge the ground only rises or only falls (walls included), so no point dips
+## below the ground on both sides of it. Reported at seed 2697992464 tile
+## (41, 72), corners 24/12/24/20: the saddle's max-of-two-bumps sagged to
+## 20.4 m between 20.8 and 22.8 beside a dying wall.
+func test_every_tile_is_monotone_along_both_axes() -> void:
+	var heights: Array[float] = []
+	for s in 7:
+		heights.append(4.0 * s)
+	var levels: Array[float] = [5.0, 6.0, 7.0]
+	var corners := heights + levels
+	var bad: Array[String] = []
+	for a in corners:
+		for b in corners:
+			for c in corners:
+				for d in corners:
+					if not _real_tile([a, b, c, d]):
+						continue
+					var region = Region.tile(a, b, c, d)
+					var worst := _worst_dip(region)
+					if worst > 0.02 and not _two_way_cliff_saddle([a, b, c, d]):
+						bad.append("%s dips %.2f m" % [[a, b, c, d], worst])
+	assert_eq(bad.size(), 0, "tiles with a divot (first 8): %s" % [bad.slice(0, 8)])
+
+## Known residual: a saddle layer (high corners diagonal) whose cliffs cross
+## the tile in both directions and that also has a slope edge. A dip-free
+## surface would need each wall to stop exactly at the tile centre (a short
+## wall along the midline); 39 of 176,400 tiles round the review seed's spawn
+## (0.02%; the former kernel: 3,841, worst 2.0 m). Pinned so it cannot grow.
+func test_two_way_cliff_saddles_dip_less_than_a_metre() -> void:
+	var corners: Array[float] = [0.0, 4.0, 8.0, 12.0, 16.0]
+	var worst := 0.0
+	var count := 0
+	for a in corners:
+		for b in corners:
+			for c in corners:
+				for d in corners:
+					if _real_tile([a, b, c, d]) and _two_way_cliff_saddle([a, b, c, d]):
+						count += 1
+						worst = maxf(worst, _worst_dip(Region.tile(a, b, c, d)))
+	assert_gt(count, 0)
+	assert_lt(worst, 0.95, "residual dip of a two-way cliff saddle")
+
+## Some layer of the tile is a saddle whose crossings include a cliff in u
+## (bottom or top edge), a cliff in v (left or right edge) and a slope.
+func _two_way_cliff_saddle(h: Array) -> bool:
+	var cliff := func(i: int, j: int) -> bool: return absi(floori(h[i] / 4.0) - floori(h[j] / 4.0)) >= 2
+	for t: float in h:
+		var bits := [h[0] >= t, h[1] >= t, h[2] >= t, h[3] >= t]
+		if bits[0] != bits[2] or bits[1] != bits[3] or bits[0] == bits[1]:
+			continue
+		var u_cliff: bool = cliff.call(0, 1) or cliff.call(3, 2)
+		var v_cliff: bool = cliff.call(0, 3) or cliff.call(1, 2)
+		var slope: bool = not (cliff.call(0, 1) and cliff.call(3, 2) and cliff.call(0, 3) and cliff.call(1, 2))
+		if u_cliff and v_cliff and slope:
+			return true
+	return false
+
+## Corner sets a lattice can hold: cardinal neighbours within three storeys,
+## and a level only where every corner shares that storey.
+func _real_tile(h: Array) -> bool:
+	for i in 4:
+		if absi(floori(h[i] / 4.0) - floori(h[(i + 1) % 4] / 4.0)) > 3:
+			return false
+	var storeys := {}
+	var has_level := false
+	for v: float in h:
+		storeys[floori(v / 4.0)] = true
+		has_level = has_level or fposmod(v, 4.0) > 0.0
+	return not has_level or storeys.size() == 1
+
+## The deepest dip along rows and columns: for each sample, how far it lies
+## below both the highest ground before it and the highest ground after it.
+func _worst_dip(region) -> float:
+	var worst := 0.0
+	for axis in 2:
+		for k in 33:
+			var s := float(k) / 32.0
+			var row: Array[float] = []
+			for i in 65:
+				var t := float(i) / 64.0
+				row.append(Tile.tile_y(region, Vector2i.ZERO, t, s) if axis == 0 else Tile.tile_y(region, Vector2i.ZERO, s, t))
+			var before: Array[float] = []
+			var top := -INF
+			for h in row:
+				top = maxf(top, h)
+				before.append(top)
+			top = -INF
+			for i in range(row.size() - 1, -1, -1):
+				top = maxf(top, row[i])
+				worst = maxf(worst, minf(before[i], top) - row[i])
+	return worst

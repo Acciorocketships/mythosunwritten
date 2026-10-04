@@ -303,3 +303,21 @@ field ≤ 3× current. Report the 49-chunk `profile_terrain.gd` startup against 
 - Set-piece lengths are capped at 840 m (footprint radius ≤ 480 m).
 - Deferred: border escarpments, valley damping near rivers, the F9 view in the archetype gallery.
 - Archetype recipes live in `RegimeRelief.gd`; the catalogue stays pure data.
+
+## Owner review iterations (October 2-3)
+
+The first pass "read as noise". Three review rounds changed the design; AGENTS.md (October 3
+entry) is the current description.
+
+- **Mid-scale landforms** (`LandformFeatures`): one structured feature per 320 m cell (hills,
+  peak clusters, ridges with passes, mesas, butte groups, tower clusters, basins with islands,
+  valleys, escarpments, amphitheatres), drawn per archetype. Regime relief became texture.
+- **Irregular outlines**: hills, mesas and basins are blobs of 1-3 tilted ellipses with a
+  domain warp, not circles.
+- **Large-scale elevation**: a 4.5-9 km layer of lowlands and highlands, 160 m in all, with
+  upland fronts rising over about 700 m and highland interiors swelling higher; height range
+  256 m. Spawn is placed in a lowland by shifting the noise per seed (fading the layer round
+  spawn dug a pit). Archetypes prefer altitudes.
+- **Connection over scatter**: features link to neighbours (saddle ridges, benches, channels)
+  along a shared grain. Lone cones, knolls, sinkholes, knobs, mounds, crater-like round basins
+  and the circular set-piece mesa and amphitheatre were retired.

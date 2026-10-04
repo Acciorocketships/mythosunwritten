@@ -20,7 +20,7 @@ const MERGE_CHANCE := 0.2
 ## clearing opens onto gentle meadow on every seed. A point 452 m from the
 ## origin (the base nodes the spawn ring interpolates) always has its nearest
 ## site within this radius.
-const SPAWN_CALM_M := 1200.0
+const SPAWN_CALM_M := 300.0
 const CACHE_LIMIT := 4096
 
 static var _force: StringName = &""

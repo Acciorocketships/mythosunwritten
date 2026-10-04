@@ -1,3 +1,66 @@
+> October 4 judging pass (seed 2697992464): DIVOTS. The kernel's saddle rule (max of the two
+> high corners' bumps) sagged between the bumps, and a cliff weight varied across the whole tile
+> undercut the slope beside a wall's end: 3,841 of 176,400 real tiles dipped by more than 0.1 m
+> (worst 2 m). `TerrainTileField._layer` now builds every layer that is not a straight pair of
+> crossings from CORNER shapes, each the product of its two crossings' profiles
+> (`_corner_profile`): one high corner is its shape, one low corner the complement of its shape,
+> a saddle the plateau with both low corners carved out (an all-slope saddle is the smooth
+> bilinear saddle: centre at half the rise). In a mixed layer a cliff crossing is the full wall
+> from its edge to the tile centre (E2) and then a half-tile cubic ramp on its corner's side, so
+> the far side of the wall stays level and the ramp stays lawn (45 degrees). Straight layers keep
+> the E2 rule. Property test `test_every_tile_is_monotone_along_both_axes` (every real corner
+> set rises or falls monotonically along both axes); residual: saddles whose cliffs run in both
+> directions (39 tiles, 0.02%, under 0.95 m, pinned). F9's GPU port follows. The dark streak in
+> owner photo 1 is NOT a dip: it is the cliff sheet's foot where it meets plain ground at a
+> cliff end (shading fold; open). SPAWN: the clearing was flattened to 0 and the large-scale
+> layers faded to 0 round spawn while lowlands now stand 24 m+, a bowl rivers ended in (spawn
+> in 1.2 m of water on 2 of 5 seeds). The clearing now lies at `TerrainField.spawn_level_m`
+> (mean smooth field 240 m out), the elevation and continental layers are no longer faded
+> round spawn (easing to the origin's own value raised a plateau where the origin sat on a
+> high), and `_elevation_offset` picks a lowland floor (not a basin). FLATNESS (96 m patches under 4 m relief: 22% near spawn, 12% beyond, low flats
+> 31% -> 5-12% near spawn over five seeds, 6-8% beyond, low flats 12%): calm spawn regions 300 m
+> (was 1.2 km; their features are no longer scaled down), feature/set-piece spawn clearance
+> 200/250 m, the clearing never below the median ground 400 m out, `ELEVATION_M` 200, `CONTINENTAL_M` 44, height range 320 m / 80 storeys (the clamp
+> margin, ceil(80 / 3) = 27 points, grows the region window), low flats rarer (marsh and
+> wetland lean to rolling downs) with more and taller features, rolling downs gain ridges and
+> larger hills, `LINK_SECOND` 0.6. `LandformFeatures.net`: a valley crossing a raised landform
+> taller than 12 m breaches it as a pass (a quarter of its depth) instead of stranding a stub.
+> Tests: `test_terrain_field` (spawn not a pit, spawn ring relative to spawn, flat share).
+
+> October 3 terrain shape (owner review of the October 2 regimes; same branch, merged to main).
+> `TerrainField.height_m` = region `base` + `elevation_m` + `continental_m` + `LandformSetpieces`
+> + `LandformFeatures` (raise - cut) + per-regime `RegimeRelief`, blended over regimes, then a
+> tanh soft ceiling 16 m under `REF_AMPLITUDE`. Height range 256 m / 64 storeys
+> (`TerrainWorldTuning`; supersedes the 128 m above). LARGE SCALE: `elevation01` comes from one
+> warped 4.5-9 km noise n: lowland floor 0.15 (dipping to 0 in basins), an upland front
+> (`upland01`, n crossing 0.5) adding 0.65 over about 700 m, and a 0.2 swell toward highland
+> interiors; times `ELEVATION_M` 160. The noise is shifted per seed (`_elevation_offset`, 64
+> hashed tries) so spawn lies in a lowland basin; archetype choice is biased by altitude
+> (`TerrainRegimeCatalog.ALTITUDE_BIAS`: massifs up, flats down). MID SCALE: `LandformFeatures`,
+> one candidate per 320 m cell (centre in [0.2, 0.8], footprint <= 368 m, so 3x3 cells hold
+> every feature reaching a point), kinds per archetype in `TerrainRegimeCatalog.FEATURES` /
+> `FEATURE_PARAMS`: hill, peak_cluster, ridge (central pass), mesa (+ offset tier), butte_group
+> and tower_cluster (2-4 on a shared bench along the grain), basin (elongated trough, one-sided
+> lip, rare off-centre island), valley, escarpment, amphitheatre (open horseshoe). Hills, mesas
+> and basins are blobs of 1-3 ellipses (core along the grain, satellite lobes off its ends) with
+> a domain warp and a tilt. Overlaps merge by a zero-preserving 6-norm. A slow `grain(seed, p)`
+> orients every feature. LINKS: each raised feature joins its best-placed raised neighbour in
+> the 8 cells round it (p 0.95; a second at 0.4; score = distance x (1 + 0.7 |sin(angle - grain)|))
+> by a sagging saddle ridge, or a flat bench between mesa/butte/tower forms; valleys and basins
+> join by channels. A link is owned by the cell holding its midpoint, radius <= 300 m
+> (`LINK_MAX_RADIUS`); `candidate()` lists partner cells in `links`. Retired as "single little
+> bumps" / "lunar": the lone `peak` cone, knolls/sinkholes/knobs/mounds in `RegimeRelief`
+> (`sites_bump` no longer used there), the circular set-piece mesa and amphitheatre; ridged
+> texture is two octaves. Smooth mode (rivers) rounds rims, crests, benches and links.
+> WaterPlan summit climb probes 8 directions, steps off saddles, settles to 0.25 m; springs leave
+> a summit straight downhill within `SUMMIT_REACH`; 16 stratified survey candidates per district.
+> Tests: `test_terrain_field` (upland fronts >= 0.13 m/m, highlands swell, spawn ring, 60 m
+> areas), `test_landform_features` (<= 20% little bumps per archetype, raised area in large
+> landforms, >= 60% linked), `test_regime_relief` (no texture knobs/pits), `test_landform_setpieces`
+> (set pieces linear). Harnesses: `tests/harness/terrain_preview.tscn` (fast kernel-height preview:
+> `--archetype NAME|all|world --center X,Z --size --step --yaw`, oblique/low/top/ground shots) and
+> `terrain_height_map.gd` (headless 24 km height map).
+
 > October 2 terrain regimes (branch `claude/terrain-generation-overhaul-adb98f`; spec
 > `docs/superpowers/specs/2026-10-02-terrain-regimes-local-relief-design.md`, plan
 > `docs/superpowers/plans/2026-10-02-terrain-regimes-local-relief.md`). `LandformField` (one
@@ -3347,7 +3410,8 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
 `docs/superpowers/specs/2026-09-30-dual-grid-terrain-tiles-design.md`.
 
 - **`heightfield/HeightfieldPlan.gd`** — the deterministic plan. A continuous height field
-  `H(x, z)` (`TerrainField`: continental base + `LandformSetpieces` + per-regime `RegimeRelief`
+  `H(x, z)` (`TerrainField`: region base + large-scale elevation + `LandformSetpieces` +
+  linked `LandformFeatures` + per-regime `RegimeRelief`
   from `TerrainRegimeField`/`TerrainRegimeCatalog`, see the October 2 entry; faded flat near
   spawn, minus the river carve) is sampled at every lattice point `(i, j)` = world `(12 i, 12 j)`
   and quantized into integer **storeys** (4 m each) and sub-storey **levels** (1 m, 0..3). A
@@ -3398,8 +3462,10 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
   "not a cliff edge". Slope layers are `bilinear(corners, S(u), S(v))` with `S` = smootherstep, so
   a one-storey step spans one whole 12 m tile. Cliff layers step at the tile MIDLINES, so every
   wall is vertical and lies on a dual-cell border `x|z = 12 i + 6`; a three-storey cliff is one
-  12 m wall. Saddles keep the two high corners as separate bumps (`max(bump_a, bump_c)`; cliff:
-  two 6 x 6 m squares meeting at the centre). A layer mixing cliff and slope crossings is a cliff
+  12 m wall. Layers with one high or one low corner and saddles are built from corner shapes
+  (products of the crossings' profiles; a slope saddle is the smooth bilinear saddle, a cliff
+  saddle two 6 x 6 m squares meeting at the centre), so every tile is monotone along both axes
+  (no divots, October 4). A straight layer mixing cliff and slope crossings is a cliff
   END: `static var cliff_end` selects **E2 (default: a full wall to the tile centre, then the
   wall shortens to nothing `CLIFF_END_CLEAR` (2.4 m) before the slope edge, E1's blend over that
   stretch; October 1,
@@ -5172,7 +5238,9 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
   (`CliffRockStyle`, `CliffSlopeEnvelope` radii/relief, `CliffSlopeField` rocks); change those,
   never re-add pieces on world walls. Village rims keep the KayKit pieces in `CliffDressing.ASSETS`.
 - **Tuning terrain shape**: `TerrainRegimeCatalog` (archetype parameter ranges, biome
-  affinities, set-piece densities and sizes) is the first place to look; then
+  affinities, altitude bias, feature kinds and shapes, set-piece densities and sizes) is the
+  first place to look; `TerrainField` (elevation layer) and `LandformFeatures` (links, grain);
+  then
   `TerrainWorldTuning` (amplitude, storey cap, cliff step),
   `HeightfieldPlan` constants (`STOREY_HEIGHT`, `LEVELS_PER_STOREY`, aggregation) and
   `LOWPASS_M`, `TerrainTileField.cliff_end` (E2/E1), and `Helper` field scales (`MACRO_SCALE`,

@@ -207,12 +207,16 @@ func test_rescue_shore_is_continuous_where_its_edge_wall_dies() -> void:
 		sub[node.y * sub_n + node.x] = 11.95
 	var ctx := {"fill_base": base, "fill_size": n, "region": region,
 		"fill": {"levels": coarse, "sub_levels": sub, "sub_ground": sub_ground}}
-	var prev: float = WaterField._fill_bilinear(ctx, Vector2(3.0, 3.625))
+	# The row runs x 4..9 across the wall's end at x = 6. (Since the divot fix
+	# of 2026-10-04 the plateau stays level beside the dying wall, so at x 3
+	# the 11.95 m water meets a real shore under the 12 m top; the row starts
+	# a metre clear of it.)
+	var prev: float = WaterField._fill_bilinear(ctx, Vector2(4.0, 3.625))
 	var worst := 0.0
 	var at := 0.0
 	var dry := 0
-	for k in range(1, 601):
-		var p := Vector2(3.0 + k * 0.01, 3.625)
+	for k in range(1, 501):
+		var p := Vector2(4.0 + k * 0.01, 3.625)
 		var l: float = WaterField._fill_bilinear(ctx, p)
 		if not (l > TerrainTileField.surface_y(region, p.x, p.y) + WaterField.EPS):
 			dry += 1

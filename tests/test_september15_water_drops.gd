@@ -9,19 +9,25 @@ func _water_fields() -> WorldFieldBlockCache:
 
 ## Re-pinned (terrain regimes, 2026-10-02): the photographed lips at (-240,-1473)
 ## and (-231,-1446) lie inside the calm rolling downs around spawn now, where no
-## river crosses a cliff. A scan of chunks 7..12 out from spawn for wall_segments
-## half-segments wet 1 m on both sides, upper water above the wall top by more
-## than EPS and receiving water below it (a supplied spill), wet across +-3 m,
-## finds the wall x = 1206 (z -1830..-1824, top 28.0, upper water 28.1, falling
-## to -x) and, in the same chunk (6, -10), the wall z = -1806 (x 1194..1200,
-## falling to -z). LIP_NORMAL points from the high side to the low side.
-const LIP_A := Vector2(1206, -1830)
-const LIP_B := Vector2(1206, -1824)
+## river crosses a cliff; the sites became x = 1206 (z -1830..-1824) and
+## z = -1806 (x 1194..1200) in chunk (6, -10).
+## Re-pinned (2026-10-03, connected landforms): x = 1326 (z 786..792) and
+## x = 1302 (z 816..822) in chunk (6, 4). Re-pinned again (terrain shape,
+## 2026-10-04): with the 320 m range and the flatter-ground changes those are
+## dry. tests/harness/september15_water_drop_scan.gd
+## over chunks -6..6: SPILL at x = 1074 (z -372..-366, wall top 20 m, falling
+## to -x, dry bank 12 m behind) and, 15 m away in the same chunk (5, -2), CROSS
+## at z = -378 (x 1080..1086, falling to -z). LIP_NORMAL points from the high
+## side to the low side.
+const LIP_A := Vector2(1074, -372)
+const LIP_B := Vector2(1074, -366)
 const LIP_NORMAL := Vector2(-1, 0)
-const LIP_BANK := Vector2(1218, -1827)
-const LIP2_A := Vector2(1200, -1806)
-const LIP2_B := Vector2(1194, -1806)
+const LIP_BANK := Vector2(1086, -369)
+const LIP2_A := Vector2(1086, -378)
+const LIP2_B := Vector2(1080, -378)
 const LIP2_NORMAL := Vector2(0, -1)
+## The detached sampler's window (13 x 13 nodes, 3 m) spans both lips' lines.
+const SAMPLER_ORIGIN := Vector2(1063, -386)
 
 func test_reported_connected_river_clears_the_upper_lip_before_falling() -> void:
 	var fields := _water_fields()
@@ -119,7 +125,7 @@ func test_a_supplied_dry_crest_connects_only_to_existing_receiving_water() -> vo
 func test_spill_and_receiving_water_match_the_detached_physics_sampler() -> void:
 	var field:=_water_fields().water_at((LIP_A+LIP_B)*.5)
 	var ctx:=field.raw_context()
-	var sampler:=WaterSampler.build(ctx,ctx.region,Vector2(1188,-1836),3,13,13)
+	var sampler:=WaterSampler.build(ctx,ctx.region,SAMPLER_ORIGIN,3,13,13)
 	var worst:=0.0
 	var dry:=0
 	# Each line runs from 3 m (first lip) or 6 m (second lip) up the approach

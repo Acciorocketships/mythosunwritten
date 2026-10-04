@@ -153,11 +153,15 @@ func uncarved_height(cx: int, cz: int) -> float:
 ## tracing descends (continental base + placed set pieces + each regime's macro
 ## relief, no terraces); include_detail=true adds the fine relief and terraces
 ## and is the rendered field (raw_height).
-## A flat clearing near the world origin keeps the spawn gentle.
+## A flat clearing near the world origin keeps the spawn gentle. It lies at
+## the level of its surroundings (TerrainField.spawn_level_m), never at zero:
+## a clearing at zero was a bowl that rivers ended in (2026-10-04).
 static func height01(pos: Vector3, p_world_seed: int, include_detail: bool = true) -> float:
-	var h := TerrainField.height_m(Vector2(pos.x, pos.z), p_world_seed, include_detail) / TerrainField.REF_AMPLITUDE
+	var h := TerrainField.height_m(Vector2(pos.x, pos.z), p_world_seed, include_detail)
 	var falloff: float = SlopeProfile.smootherstep(clampf((Vector2(pos.x, pos.z).length() - 60.0) / 180.0, 0.0, 1.0))
-	return clampf(h * falloff, 0.0, 1.0)
+	if falloff < 1.0:
+		h = lerpf(TerrainField.spawn_level_m(p_world_seed), h, falloff)
+	return clampf(h / TerrainField.REF_AMPLITUDE, 0.0, 1.0)
 
 
 func _height01(pos: Vector3) -> float:
