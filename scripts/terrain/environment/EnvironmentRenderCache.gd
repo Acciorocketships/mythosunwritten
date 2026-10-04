@@ -1,6 +1,8 @@
 class_name EnvironmentRenderCache
 extends RefCounted
 
+const PREFETCH := preload("res://scripts/core/ResourcePrefetch.gd")
+
 ## Main-thread-only owner of heavy environment visuals. Workers traffic only
 ## in asset IDs; commits resolve those IDs through this cache.
 var _catalog: EnvironmentCatalog
@@ -22,6 +24,20 @@ func prepare(asset_ids: Array[StringName]) -> bool:
 			return false
 	return true
 
+## Starts the given visuals loading in parallel (ResourcePrefetch); a later
+## `prepare`/`visual` takes each one. Startup calls this once for everything
+## it is about to prepare, so the 4K rock textures decode concurrently.
+func prefetch(asset_ids: Array) -> void:
+	_assert_main_thread()
+	if _catalog == null:
+		return
+	var paths: Array[String] = []
+	for asset_id: StringName in asset_ids:
+		var descriptor_value := _catalog.descriptor(asset_id)
+		if descriptor_value != null and not _visuals.has(asset_id):
+			paths.append(descriptor_value.visual_path)
+	PREFETCH.request(paths)
+
 func visual(asset_id: StringName) -> EnvironmentVisual:
 	_assert_main_thread()
 	var cached := _visuals.get(asset_id) as EnvironmentVisual
@@ -34,7 +50,7 @@ func visual(asset_id: StringName) -> EnvironmentVisual:
 	if descriptor_value == null:
 		push_error("Unknown environment asset ID: %s" % String(asset_id))
 		return null
-	var loaded := load(descriptor_value.visual_path) as EnvironmentVisual
+	var loaded := PREFETCH.take(descriptor_value.visual_path) as EnvironmentVisual
 	if not _validate_visual(asset_id, loaded):
 		return null
 	# Ambient stone shares the cliff stone palette; source geometry, UV detail

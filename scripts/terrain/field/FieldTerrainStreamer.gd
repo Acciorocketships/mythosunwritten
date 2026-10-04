@@ -195,6 +195,17 @@ func _ready() -> void:
 	_environment_cache = EnvironmentRenderCache.new(_environment_catalog)
 	var dressing_index := load("res://terrain/dressing/index.tres") as DressingCatalogIndex
 	assert(dressing_index != null)
+	# Decode every visual startup needs in parallel on the loader threads and
+	# keep it (EnvironmentRenderCache) before the compilers read its geometry:
+	# each 4K Meadow rock texture then decodes once, not once per reader.
+	var startup_visuals := DressingCompiler.authored_asset_ids(dressing_index)
+	for asset_id: StringName in CliffDressing.ASSETS.values():
+		if not startup_visuals.has(asset_id):
+			startup_visuals.append(asset_id)
+	_environment_cache.prefetch(startup_visuals)
+	preload("res://scripts/terrain/field/CliffSlopeRocks.gd").prefetch()
+	var startup_prepared := _environment_cache.prepare(startup_visuals)
+	assert(startup_prepared)
 	_dressing_program = DressingCompiler.compile(dressing_index, _environment_catalog)
 	assert(_dressing_program != null)
 	_feature_program = FeatureProgram.compile(_environment_catalog)
@@ -850,21 +861,20 @@ func _request_neighborhood(centre: Vector2i, lod_origin: Vector2,
 		# dependencies. Such merging used to make the overlay wait while unrelated
 		# chunks were meshed. Once startup is complete, resume nearest-first
 		# streaming normally.
-		if not _built.has(centre) and not _has_pending_terrain(centre):
-			_mutex.lock()
-			var wake := _request_job_locked(centre, true, true, 0, 0)
-			_mutex.unlock()
-			if wake:
-				_sem.post()
 		var requested := 0
+		_mutex.lock()
+		_begin_sort_batch_locked()
+		if not _built.has(centre) and not _has_pending_terrain(centre):
+			if _request_job_locked(centre, true, true, 0, 0):
+				requested += 1
 		for c: Vector2i in desired_chunks(centre, CHUNK_RADIUS):
 			if _built.has(c) or _has_pending_terrain(c):
 				continue
-			_mutex.lock()
 			requested += _request_terrain_dependencies_locked(c,
 				maxi(absi(c.x - centre.x), absi(c.y - centre.y)),
 				_terrain_priority_tier(c, centre, lod_origin))
-			_mutex.unlock()
+		_end_sort_batch_locked()
+		_mutex.unlock()
 		for _i in requested:
 			_sem.post()
 
@@ -956,6 +966,7 @@ func _drain_results(centre: Vector2i) -> void:
 		_pending_terrain.append(result)
 		var requested := 0
 		_mutex.lock()
+		_begin_sort_batch_locked()
 		for key: Vector2i in _feature_halo_keys(c):
 			if not _feature_ready.has(key) \
 				and _request_job_locked(key, false, true,
@@ -963,6 +974,7 @@ func _drain_results(centre: Vector2i) -> void:
 					_terrain_priority_tier(c, centre,
 						Vector2(player.global_position.x, player.global_position.z))):
 				requested += 1
+		_end_sort_batch_locked()
 		_mutex.unlock()
 		for _i in requested:
 			_sem.post()
@@ -1382,7 +1394,18 @@ func _job_travel_distance(job:Dictionary)->float:
 				distance=minf(distance,_travel_entry_distance(parent,_queue_lod_origin))
 	return distance
 
+## Batched requests (_request_neighborhood, _drain_results) set this so each
+## enqueue marks the queue dirty instead of re-sorting it; the batch sorts
+## once under the same lock. The comparator is a total order, so the result is
+## the order per-enqueue sorting reached, without its O(n^2 log n) cost (it
+## held the main thread 50-64 ms per chunk crossing with a backlogged queue).
+var _defer_sort := false
+var _sort_dirty := false
+
 func _sort_jobs_locked() -> void:
+	if _defer_sort:
+		_sort_dirty = true
+		return
 	var started := Time.get_ticks_usec() if PROFILE_STREAMING else 0
 	# Queue geometry is unchanged throughout a sort. Compute its two metrics
 	# once per job instead of rescanning feature parents in every comparison.
@@ -1415,6 +1438,16 @@ func _sort_jobs_locked() -> void:
 		job.erase("_sort_ground")
 		job.erase("_sort_travel")
 	_telemetry.timing(&"queue/sort", Time.get_ticks_usec() - started)
+
+func _begin_sort_batch_locked() -> void:
+	_defer_sort = true
+	_sort_dirty = false
+
+func _end_sort_batch_locked() -> void:
+	_defer_sort = false
+	if _sort_dirty:
+		_sort_dirty = false
+		_sort_jobs_locked()
 
 static func _job_key(job: Dictionary) -> Vector2i:
 	return job.chunk

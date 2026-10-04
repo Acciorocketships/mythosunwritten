@@ -23,7 +23,20 @@ const PIECES := {
 "face_meadow_05": [ANGRY + "P_Rock_05_Summer.glb", Vector3(2.835713,1.6161067,2.6579242)],
 }
 static var _pieces: Dictionary = {}
+const PREFETCH := preload("res://scripts/core/ResourcePrefetch.gd")
 const STYLE = preload("res://scripts/terrain/field/CliffRockStyle.gd")
+
+
+## Starts the source scenes loading in parallel (ResourcePrefetch) so a later
+## prepare() only waits for them.
+static func prefetch() -> void:
+	if not _pieces.is_empty():
+		return
+	var paths: Array[String] = []
+	for name: String in PIECES:
+		if not paths.has(PIECES[name][0]):
+			paths.append(PIECES[name][0])
+	PREFETCH.request(paths)
 
 
 static func prepare() -> void:
@@ -32,7 +45,7 @@ static func prepare() -> void:
 	assert(OS.get_thread_caller_id() == OS.get_main_thread_id())
 
 	for name: String in PIECES:
-		var root := (load(PIECES[name][0]) as PackedScene).instantiate()
+		var root := (PREFETCH.take(PIECES[name][0]) as PackedScene).instantiate()
 		var instance := root.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
 		var local := Transform3D.IDENTITY
 		var node: Node = instance

@@ -20,6 +20,23 @@ const BASE_NESTLE := 0.25
 static func nestle_distance(a: float, b: float) -> float:
 	return maxf(a, b) + BASE_NESTLE * minf(a, b)
 
+## Every asset an index's choices name (unvalidated, sorted): what startup
+## prefetches and prepares before compiling, so the compiler's stencil reads
+## find each visual already decoded.
+static func authored_asset_ids(index: DressingCatalogIndex) -> Array[StringName]:
+	var unique: Dictionary = {}
+	if index != null:
+		for set_resource: DressingSet in index.sets:
+			if set_resource == null:
+				continue
+			for choice: DressingChoice in set_resource.choices:
+				if choice != null and not choice.asset_id.is_empty():
+					unique[choice.asset_id] = true
+	var out: Array[StringName] = []
+	out.assign(unique.keys())
+	out.sort_custom(func(a: StringName, b: StringName) -> bool: return String(a) < String(b))
+	return out
+
 static func compile(index: DressingCatalogIndex,
 		environment_catalog: EnvironmentCatalog) -> DressingProgram:
 	if index == null or environment_catalog == null:
@@ -338,7 +355,9 @@ static func _ground_support_points(descriptor: EnvironmentAssetDescriptor,
 	if visual == null:
 		_fail("Dressing asset %s has no readable visual" % descriptor.id)
 		return PackedVector2Array()
-	var vertices: Array[Vector3] = []
+	# Whole surfaces transform natively (the same Transform3D::xform as a
+	# per-vertex multiply); only the near-ground band is scanned per direction.
+	var vertices := PackedVector3Array()
 	var minimum_y := INF
 	var maximum_y := -INF
 	for piece: EnvironmentVisualPiece in visual.pieces:
@@ -349,27 +368,28 @@ static func _ground_support_points(descriptor: EnvironmentAssetDescriptor,
 			var vertex_value: Variant = arrays[Mesh.ARRAY_VERTEX]
 			if not vertex_value is PackedVector3Array:
 				continue
-			for vertex: Vector3 in vertex_value:
-				var transformed := piece.local_transform * vertex
-				vertices.append(transformed)
-				minimum_y = minf(minimum_y, transformed.y)
-				maximum_y = maxf(maximum_y, transformed.y)
+			var transformed: PackedVector3Array = piece.local_transform * (vertex_value as PackedVector3Array)
+			for vertex: Vector3 in transformed:
+				minimum_y = minf(minimum_y, vertex.y)
+				maximum_y = maxf(maximum_y, vertex.y)
+			vertices.append_array(transformed)
 	if vertices.is_empty():
 		_fail("Dressing asset %s has no visual vertices" % descriptor.id)
 		return PackedVector2Array()
 	var band_height := clampf((maximum_y - minimum_y) * GROUND_BAND_HEIGHT_FRACTION,
 		GROUND_BAND_MIN, GROUND_BAND_MAX)
 	var band_top := minimum_y + band_height
+	var band := PackedVector2Array()
+	for vertex: Vector3 in vertices:
+		if not vertex.y > band_top:
+			band.append(Vector2(vertex.x, vertex.z))
 	var out := PackedVector2Array()
 	for direction_index in SUPPORT_DIRECTION_COUNT:
 		var angle := TAU * float(direction_index) / float(SUPPORT_DIRECTION_COUNT)
 		var direction := Vector2(cos(angle), sin(angle))
 		var best := Vector2.ZERO
 		var best_projection := -INF
-		for vertex: Vector3 in vertices:
-			if vertex.y > band_top:
-				continue
-			var point := Vector2(vertex.x, vertex.z)
+		for point: Vector2 in band:
 			var projection := point.dot(direction)
 			if projection > best_projection:
 				best_projection = projection

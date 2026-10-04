@@ -26,6 +26,7 @@ var _log: FileAccess
 var _running := false
 var _x := 0.5
 var _z := 0.5
+var _startup_timeout_msec := 300000
 
 func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
@@ -37,6 +38,7 @@ func _ready() -> void:
 		if args[i] == "--x" and i + 1 < args.size(): _x = float(args[i + 1])
 		if args[i] == "--z" and i + 1 < args.size(): _z = float(args[i + 1])
 		if args[i] == "--ablate": _ablate = true
+		if args[i] == "--startup-timeout" and i + 1 < args.size(): _startup_timeout_msec = int(float(args[i + 1]) * 1000.0)
 		if args[i] == "--render-only": _render_only = true; _seconds = 0.0; _ablate = true
 	_log = FileAccess.open(_report_path + ".jsonl", FileAccess.WRITE)
 	_start = Time.get_ticks_msec()
@@ -103,7 +105,7 @@ func _process(delta: float) -> void:
 
 func _run() -> void:
 	while not _streamer.startup_loading_complete():
-		if Time.get_ticks_msec() - _start > 300000:
+		if Time.get_ticks_msec() - _start > _startup_timeout_msec:
 			_finish("startup_timeout")
 			return
 		await get_tree().create_timer(0.1).timeout
