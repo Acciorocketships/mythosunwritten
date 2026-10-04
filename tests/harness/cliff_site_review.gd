@@ -14,6 +14,8 @@ extends Node3D
 const WAIT_HARD_TIMEOUT_SECONDS := 1500.0
 const IDLE_SETTLE_SECONDS := 3.0
 const RELOAD := [
+	# The kernel first: scripts reloaded after it parse against its new API.
+	"res://scripts/terrain/field/TerrainTileField.gd",
 	"res://scripts/terrain/field/CliffRockCrags.gd",
 	"res://scripts/terrain/field/CliffRockDressing.gd",
 	"res://scripts/terrain/dressing/RockSkirt.gd",
@@ -22,7 +24,6 @@ const RELOAD := [
 	"res://scripts/terrain/field/CliffSlopeField.gd",
 	"res://scripts/terrain/grass/GrassSupportSurfaces.gd",
 	"res://scripts/terrain/grass/GrassField.gd",
-	"res://scripts/terrain/field/TerrainTileField.gd",
 	"res://scripts/terrain/field/TerrainChunkMesher.gd",
 	"res://scripts/terrain/water/WaterSkin.gd",
 ]
@@ -165,7 +166,7 @@ func _capture_iteration(iteration: int) -> void:
 	if _full:
 		for style: String in (_styles if not _styles.is_empty() else PackedStringArray([""])):
 			if not style.is_empty():
-				STYLE.apply(style)
+				_apply_style(style)
 			if iteration > 0 or not style.is_empty():
 				await _rebuild_full()
 			await _capture_all(iteration, style)
@@ -176,12 +177,18 @@ func _capture_iteration(iteration: int) -> void:
 		await _capture_all(iteration)
 		return
 	for style: String in _styles:
-		STYLE.apply(style)
+		_apply_style(style)
 		var started := Time.get_ticks_msec()
 		_rebuild_rocks()
 		print("[cliff_site_review] style=%s rebuilt ms=%d" % [style, Time.get_ticks_msec() - started])
 		await _capture_all(iteration, style)
-	STYLE.apply(STYLE.PRODUCTION)
+	_apply_style(STYLE.PRODUCTION)
+
+
+## A style, and its moss on the terrain sheet too (one shared material).
+func _apply_style(style: String) -> void:
+	STYLE.apply(style)
+	load("res://scripts/terrain/field/CliffRockCrags.gd").apply_moss(CliffDressing.shared_material())
 
 
 func _framed_chunks() -> Array:

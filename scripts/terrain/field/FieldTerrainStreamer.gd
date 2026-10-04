@@ -209,8 +209,13 @@ func _ready() -> void:
 		"FeatureProgram clearance coverage must contain every dressing margin")
 	var combined_query_margin := maxf(_dressing_program.query_margin,
 		_feature_program.query_margin)
-	var feature_context_margin := maxf(_feature_program.query_margin,
-		_dressing_program.feature_query_margin)
+	# Road verges (HeightfieldRegion.with_road_verges) grade a point from the
+	# roads within one point of it: every point the cliff slope reads beyond
+	# its chunk (CliffSlopeField.GROUND_REACH) needs the same roads its own
+	# chunk sees, or neighbouring chunks dress one cliff differently.
+	var feature_context_margin := maxf(maxf(_feature_program.query_margin,
+		_dressing_program.feature_query_margin),
+		preload("res://scripts/terrain/field/CliffSlopeField.gd").GROUND_REACH + HeightfieldPlan.POINT)
 	var combined_shore_limit := maxf(_dressing_program.shore_distance_limit,
 		_feature_program.shore_distance_limit)
 	if _grass_program != null:

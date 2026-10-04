@@ -91,6 +91,8 @@ static func shared_material() -> Material:
 	var surface := ShaderMaterial.new()
 	surface.shader = load("res://terrain/materials/ground_surface.gdshader")
 	surface.set_shader_parameter("ground_palette_texture", mat.albedo_texture)
+	# The cliff sheet's moss: steep terrain takes the same lawn-to-moss grade.
+	load("res://scripts/terrain/field/CliffRockCrags.gd").apply_moss(surface)
 	_shared_mat = surface
 	return _shared_mat
 

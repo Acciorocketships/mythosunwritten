@@ -124,10 +124,10 @@ func test_edge_categories_follow_the_two_endpoints() -> void:
 	assert_false(Tile.is_walkable_edge(region, Vector2i(3, 0), Vector2i(-1, 0)))
 
 
-func test_e2_cliff_end_walls_to_the_tile_centre_then_ramps() -> void:
+func test_e2_cliff_end_walls_to_the_tile_centre_then_shortens() -> void:
 	# Bottom edge a-b is a cliff (0 vs 8), top edge d-c a slope (8 vs 4).
 	var region = Region.tile(8.0, 0.0, 4.0, 8.0)
-	# Wall on the lower half of the midline, high side level.
+	# A full wall on the lower half of the midline, high side level.
 	assert_almost_eq(Tile.tile_y(region, Vector2i.ZERO, 0.49, 0.2), 8.0, EPS)
 	assert_almost_eq(Tile.tile_y(region, Vector2i.ZERO, 0.2, 0.45), 8.0, EPS)
 	var low := Tile.tile_y(region, Vector2i.ZERO, 0.51, 0.2)
@@ -136,14 +136,32 @@ func test_e2_cliff_end_walls_to_the_tile_centre_then_ramps() -> void:
 	for i in 9:
 		var t := float(i) / 8.0
 		assert_almost_eq(Tile.tile_y(region, Vector2i.ZERO, t, 1.0), lerpf(8.0, 4.0, _s(t)), EPS)
-	# Continuous above the centre (no wall there).
-	var above_l := Tile.tile_y(region, Vector2i.ZERO, 0.499, 0.8)
-	var above_r := Tile.tile_y(region, Vector2i.ZERO, 0.501, 0.8)
-	assert_almost_eq(above_l, above_r, 0.2)
-	# The high side stays level beside the wall (no E1-style dip).
+	# The high side stays level beside the full wall (no E1-style dip).
 	for iv in 6:
 		var y := Tile.tile_y(region, Vector2i.ZERO, 0.2, float(iv) / 10.0)
 		assert_almost_eq(y, 8.0, EPS)
+	# Past the centre the wall shortens smoothly to nothing at the slope edge.
+	var previous := INF
+	for iv in range(5, 11):
+		var v := float(iv) / 10.0
+		var jump := Tile.tile_y(region, Vector2i.ZERO, 0.4999, v) - Tile.tile_y(region, Vector2i.ZERO, 0.5001, v)
+		assert_lt(jump, previous + EPS, "the wall only shortens toward the slope edge")
+		previous = jump
+	assert_almost_eq(previous, 0.0, 0.01, "no wall left at the slope edge")
+	# ...nor within the last fifth of the tile: a road crossing the slope edge
+	# (4 m wide) meets no step.
+	for iv in range(81, 101):
+		var v := float(iv) / 100.0
+		var jump := Tile.tile_y(region, Vector2i.ZERO, 0.4999, v) - Tile.tile_y(region, Vector2i.ZERO, 0.5001, v)
+		assert_almost_eq(jump, 0.0, 0.01, "no wall at v = %.2f" % v)
+	# No notch beside the wall's end (owner review, October 1): the former
+	# fan, centimetres wide there, dropped the plateau by metres within the
+	# last metre before the wall line. The high side may descend no steeper
+	# than a one-storey slope does.
+	for iv in range(5, 11):
+		var v := float(iv) / 10.0
+		var crease := Tile.tile_y(region, Vector2i.ZERO, 0.45, v) - Tile.tile_y(region, Vector2i.ZERO, 0.4999, v)
+		assert_lt(crease, 0.8, "a crease beside the wall's end at v = %.1f" % v)
 
 
 func test_e1_cliff_end_shortens_the_wall_across_the_tile() -> void:
@@ -298,9 +316,10 @@ func test_surface_y_takes_the_high_index_side_on_a_midline_wall() -> void:
 	assert_almost_eq(Tile.surface_y(west, -6.0, 3.0), 12.0, EPS, "x = -6: point 0 (high) owns the wall")
 
 
-func test_wall_segments_e2_cliff_end_emits_one_half_segment() -> void:
-	# Bottom edge a-b is a cliff, the top edge a slope: the wall covers the lower
-	# half of the x = 6 midline only.
+func test_wall_segments_e2_cliff_end_shortens_on_the_upper_half() -> void:
+	# Bottom edge a-b is a cliff, the top edge a slope: the full wall covers the
+	# lower half of the x = 6 midline, the upper half carries the shortening
+	# wall, down to nothing at the slope edge.
 	var region = Region.tile(8.0, 0.0, 4.0, 8.0)
 	var lower: Array = Tile.wall_segments(region, Rect2(5.0, 1.0, 2.0, 4.0))
 	assert_eq(lower.size(), 1)
@@ -311,7 +330,11 @@ func test_wall_segments_e2_cliff_end_emits_one_half_segment() -> void:
 	assert_almost_eq(lower[0].top.x, 8.0, EPS)
 	assert_almost_eq(lower[0].bottom.x, 0.0, EPS)
 	var upper: Array = Tile.wall_segments(region, Rect2(5.0, 7.0, 2.0, 4.0))
-	assert_eq(upper.size(), 0, "no wall above the tile centre")
+	assert_eq(upper.size(), 1)
+	assert_eq(upper[0].high, Vector2i(0, 1))
+	assert_almost_eq(upper[0].top.x - upper[0].bottom.x, lower[0].top.y - lower[0].bottom.y, 0.05,
+		"the wall continues across the tile centre")
+	assert_almost_eq(upper[0].top.y - upper[0].bottom.y, 0.0, 0.01, "nothing at the slope edge")
 
 
 func test_wall_segments_cliff_saddle_has_four_half_segments_at_the_centre() -> void:

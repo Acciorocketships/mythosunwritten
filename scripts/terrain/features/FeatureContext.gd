@@ -9,10 +9,23 @@ var _payload: EnvironmentInstancePayload
 var connection_masks: Dictionary
 var node_cells: Dictionary
 var bridge_cells: Dictionary
-var terrain_grades: Array[TerrainGradePatch] = []
+var _graded: Dictionary = {}
+var terrain_grades: Array[TerrainGradePatch] = []:
+	set(value):
+		terrain_grades = value
+		_graded.clear()
 
+## The final terrain: town grades, then road verges (no cliff beside a road;
+## HeightfieldRegion.with_road_verges) wherever a grade does not already own a
+## point. Memoized per natural region: placement seating asks per prop.
 func graded_region(natural: HeightfieldRegion) -> HeightfieldRegion:
-	return natural.with_terrain_grades(terrain_grades)
+	if _graded.has(natural):
+		return _graded[natural]
+	var result := natural.with_terrain_grades(terrain_grades).with_road_verges(connection_masks)
+	if _graded.size() >= 8:
+		_graded.erase(_graded.keys()[0])
+	_graded[natural] = result
+	return result
 
 func _init(p_coverage: Rect2, ground: FeatureGroundField,
 		p_payload: EnvironmentInstancePayload, masks: Dictionary = {},

@@ -14,8 +14,8 @@ uniform ivec2 origin_point;
 uniform int points_size = 128;
 uniform float spacing = 12.0;
 uniform float storey_height = 4.0;
-// TerrainTileField.CliffEnd: 0 = E1 (blend inside the tile), 1 = E2 (wall to
-// the tile centre, then a fan).
+// TerrainTileField.CliffEnd: 0 = E1 (blend inside the tile), 1 = E2 (full wall
+// to the tile centre, then it shortens to nothing over the slope half).
 uniform int cliff_end = 1;
 
 const float TILE_NO_DATA = -1e6;
@@ -62,20 +62,17 @@ float tile_step(float t, int side) {
 }
 
 float tile_profile(float t, float k0, float k1, float s, int side) {
-	if (cliff_end == 0) {
-		float k = mix(k0, k1, s);
-		return mix(tile_smootherstep(t), tile_step(t, side), k);
-	}
-	float w;
-	if (k0 == k1) {
-		w = 1.0 - k0;
-	} else if (k0 > k1) {   // cliff at s = 0: wall to the centre, then fan out
-		w = s <= 0.5 ? 0.0 : tile_smootherstep((s - 0.5) * 2.0);
+	float k;
+	if (cliff_end == 0 || k0 == k1) {
+		k = mix(k0, k1, s);
+	} else if (k0 > k1) {   // cliff at s = 0: full wall to the centre, then it shortens
+		k = tile_smootherstep(clamp((0.8 - s) / 0.3, 0.0, 1.0));   // TerrainTileField.CLIFF_END_CLEAR = 0.2
 	} else {
-		w = s >= 0.5 ? 0.0 : tile_smootherstep((0.5 - s) * 2.0);
+		k = tile_smootherstep(clamp((s - 0.2) / 0.3, 0.0, 1.0));
 	}
-	if (w <= 0.0) return tile_step(t, side);
-	return tile_smootherstep((t - 0.5) / w + 0.5);
+	if (k >= 1.0) return tile_step(t, side);
+	if (k <= 0.0) return tile_smootherstep(t);
+	return mix(tile_smootherstep(t), tile_step(t, side), k);
 }
 
 bool tile_saddle_at(vec4 h, float t) {

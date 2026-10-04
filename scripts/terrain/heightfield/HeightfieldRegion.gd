@@ -34,6 +34,46 @@ func with_terrain_grades(grades: Array[TerrainGradePatch]) -> HeightfieldRegion:
 	_native_grade_views[grades.duplicate()] = result
 	return result
 
+## Road verges (owner review, October 1): no cliff stands beside a road. A
+## point next to a road point (cardinal, not itself on the road) that stands
+## two or more storeys above it is lowered to one storey above it, so the
+## nearest wall rising from the road is one point back (18 m from the road's
+## centre line) and its cliff dressing never meets the road's keep-out in a
+## sheer cut. Only lowering: a road on a cliff top keeps its drop (the
+## dressing falls away from it), water points are never touched (water is
+## solved on the natural field) and points another control already owns (a
+## town grade) keep it. `masks`: the 24 m route cells' connection masks
+## (bit 1 +x, 2 -x, 4 +z, 8 -z), as FeatureGroundField paints them.
+func with_road_verges(masks: Dictionary) -> HeightfieldRegion:
+	var road := {}
+	for cell: Vector2i in masks:
+		var mask: int = masks[cell]
+		var p := cell * PathProgram.POINTS_PER_ROUTE_CELL
+		road[p] = true
+		for arm: Array in [[1, Vector2i(1, 0)], [2, Vector2i(-1, 0)], [4, Vector2i(0, 1)], [8, Vector2i(0, -1)]]:
+			if (mask & int(arm[0])) != 0:
+				road[p + arm[1]] = true
+	var verges := {}
+	for p: Vector2i in road:
+		if not has_surface_point(p.x, p.y):
+			continue
+		var top := (storey_at(p.x, p.y) + 1) * STOREY_HEIGHT
+		for d: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var n := p + d
+			if road.has(n) or not has_surface_point(n.x, n.y) or is_carved(n.x, n.y) \
+					or native_control_heights.has(n):
+				continue
+			if storey_at(n.x, n.y) - storey_at(p.x, p.y) >= 2:
+				verges[n] = minf(float(verges.get(n, INF)), top)
+	if verges.is_empty():
+		return self
+	var result := HeightfieldRegion.new(_storeys, _levels, _carved, plan)
+	result.terrain_grades = terrain_grades
+	result.native_control_heights = native_control_heights.duplicate()
+	result.native_control_heights.merge(verges, false)
+	return result
+
+
 func without_terrain_grades() -> HeightfieldRegion:
 	# Remove only the legacy post-classification warp. Native controls are
 	# already the final terrain lattice and must survive native piece selection.

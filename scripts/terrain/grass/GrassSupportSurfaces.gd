@@ -38,8 +38,9 @@ static func at_index(cells:Dictionary,point:Vector2)->Dictionary:
 ## its gentle ground and thins out as it steepens. `flags` marks the nodes the
 ## slope covers (off under its rocks); `over_ground` lets it stand in for the
 ## terrain it lies on, flush or above.
-const GRID_MIN_UP:=.62
-const GRID_FULL_UP:=.9
+## The moss band (SlopeProfile.grass_scale): full grass on lawn, none on moss.
+const GRID_MIN_UP:=1.0-SlopeProfile.MOSS_STEEPNESS
+const GRID_FULL_UP:=1.0-SlopeProfile.LAWN_STEEPNESS
 static func at_grid(grid:Dictionary,point:Vector2)->Dictionary:
 	var step:float=grid.step
 	var p:Vector2=(point-(grid.origin as Vector2))/step

@@ -14,8 +14,8 @@
 # tile; cliffs step at the tile midline, so every wall lies on the border of
 # the 12 m "dual cell" around a lattice point. A saddle keeps its two high
 # corners as separate bumps. Where a layer mixes cliff and slope crossings
-# (a cliff end) the rule is `cliff_end` (E2 by default: wall to the tile
-# centre, then a ramp that fans out to the slope profile at the slope edge).
+# (a cliff end) the rule is `cliff_end` (E2 by default: a full wall to the
+# tile centre, then the wall shortens to nothing at the slope edge).
 #
 # Along any tile edge the surface depends only on that edge's two endpoints,
 # so neighbouring tiles agree by construction; walls are the only
@@ -30,9 +30,15 @@ const EXPOSE_EPS := 0.25
 
 enum EdgeCategory { FLAT, LEVEL, SLOPE, CLIFF }
 ## E1: blend slope and cliff layers inside the tile (the wall shortens across
-## one tile, the high side dips). E2: the wall runs to the tile centre, then
-## a compact ramp fans out to the slope profile (no dip).
+## one tile, the high side dips). E2: the wall runs at full height to the tile
+## centre, then shortens to nothing 2.4 m before the slope edge (the
+## same blend as E1, confined to that stretch; owner review October 1: the former E2 fan,
+## centimetres wide beside the wall's end, cut a V-notch into the plateau).
 enum CliffEnd { E1, E2 }
+## Under E2 the last fifth of the tile (2.4 m) before the slope edge carries no
+## wall at all: a road crossing that slope edge (4 m wide, on the lattice line)
+## never meets a step (test_september13_world_paths).
+const CLIFF_END_CLEAR := 0.2
 static var cliff_end: int = CliffEnd.E2
 
 const _CARDINALS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
@@ -214,19 +220,18 @@ static func _layer(ba: bool, bb: bool, bc: bool, bd: bool,
 ## Profile of one direction's crossing at coordinate t, given the cliff weight
 ## k0 of the crossing edge at s = 0 and k1 at s = 1 (s = transverse coordinate).
 static func _profile(t: float, k0: float, k1: float, s: float, side: int) -> float:
-	if cliff_end == CliffEnd.E1:
-		var k := lerpf(k0, k1, s)
-		return lerpf(SlopeProfile.smootherstep(t), _step(t, side), k)
-	var w: float
-	if k0 == k1:
-		w = 1.0 - k0
-	elif k0 > k1:   # cliff at s = 0: wall to the centre, then fan out
-		w = 0.0 if s <= 0.5 else SlopeProfile.smootherstep((s - 0.5) * 2.0)
+	var k: float
+	if cliff_end == CliffEnd.E1 or k0 == k1:
+		k = lerpf(k0, k1, s)
+	elif k0 > k1:   # cliff at s = 0: full wall to the centre, then it shortens
+		k = SlopeProfile.smootherstep(clampf((1.0 - CLIFF_END_CLEAR - s) / (0.5 - CLIFF_END_CLEAR), 0.0, 1.0))
 	else:
-		w = 0.0 if s >= 0.5 else SlopeProfile.smootherstep((0.5 - s) * 2.0)
-	if w <= 0.0:
+		k = SlopeProfile.smootherstep(clampf((s - CLIFF_END_CLEAR) / (0.5 - CLIFF_END_CLEAR), 0.0, 1.0))
+	if k >= 1.0:
 		return _step(t, side)
-	return SlopeProfile.smootherstep((t - 0.5) / w + 0.5)
+	if k <= 0.0:
+		return SlopeProfile.smootherstep(t)
+	return lerpf(SlopeProfile.smootherstep(t), _step(t, side), k)
 
 
 static func _step(t: float, side: int) -> float:

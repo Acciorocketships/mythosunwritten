@@ -58,3 +58,51 @@ func test_native_control_heights_are_per_point() -> void:
 	assert_eq(region.surface_height(1, 0), 9.0, "the override applies to exactly its point")
 	assert_eq(region.storey_at(1, 0), 2)
 	assert_eq(region.level_at(1, 0), 1)
+
+
+## Owner review, October 1 (seed 2697992464, the road at (696, 1146)): a road
+## ran beside an 8 m wall 4 m from its edge; the cliff dressing met the road's
+## keep-out in a sheer cut. Road verges lower such a point to one storey above
+## the road, so the nearest wall rising from it is one point back.
+static func _verge_region(carved := {}) -> HeightfieldRegion:
+	var storeys := {}
+	var levels := {}
+	for z in range(-6, 7):
+		for x in range(-6, 7):
+			# The road runs along x = 0 (points), a cliff rises at x >= 1.
+			storeys[Vector2i(x, z)] = 3 if x <= 0 else (6 if x == 1 else 7)
+			levels[Vector2i(x, z)] = 0
+	return HeightfieldRegion.new(storeys, levels, carved)
+
+static func _road_masks() -> Dictionary:
+	var masks := {}
+	for c in range(-2, 3):
+		masks[Vector2i(0, c)] = 4 | 8   # route cells along +z / -z
+	return masks
+
+func test_road_verges_lower_a_cliff_beside_the_road() -> void:
+	var region := _verge_region().with_road_verges(_road_masks())
+	for z in range(-4, 5):
+		assert_eq(region.storey_at(1, z), 4, "the verge at z=%d is one storey above the road" % z)
+		assert_true(TerrainTileField.is_walkable_edge(region, Vector2i(0, z), Vector2i(1, 0)),
+			"no cliff edge touches the road at z=%d" % z)
+		assert_eq(region.storey_at(2, z), 7, "the cliff stands one point back")
+		assert_true(TerrainTileField.is_cliff_edge(region, Vector2i(1, z), Vector2i(1, 0)))
+
+func test_road_verges_never_raise_and_keep_water_and_existing_controls() -> void:
+	# A road on the high side keeps its drop.
+	var storeys := {}
+	var levels := {}
+	for z in range(-6, 7):
+		for x in range(-6, 7):
+			storeys[Vector2i(x, z)] = 6 if x <= 0 else 2
+			levels[Vector2i(x, z)] = 0
+	var high := HeightfieldRegion.new(storeys, levels)
+	assert_same(high.with_road_verges(_road_masks()), high, "nothing to lower: the region itself")
+	# Water points and points another control owns are left alone.
+	var region := _verge_region({Vector2i(1, 0): true})
+	region.native_control_heights[Vector2i(1, 2)] = 24.0
+	var verged := region.with_road_verges(_road_masks())
+	assert_eq(verged.storey_at(1, 0), 6, "a water point keeps its height")
+	assert_eq(verged.storey_at(1, 2), 6, "a controlled point keeps its control")
+	assert_eq(verged.storey_at(1, 1), 4)

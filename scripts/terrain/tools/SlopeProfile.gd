@@ -12,6 +12,34 @@ static var HEIGHT := 4.0
 static func bottom() -> float:    # plateau top is y=0, lower ground is y=-HEIGHT
 	return -HEIGHT
 
+## The lawn-to-moss band of every ground surface, as 1 - normal.y. The
+## steepest ordinary slope is 41.5 degrees (a tile rising one storey along both
+## axes: levels are pinned to 0 beside every storey change, so a slope edge is
+## exactly 4 m; the smootherstep peaks at 1.875x the mean gradient on each
+## axis), and every mountainside reaches it. Lawn with full grass runs to
+## LAWN_STEEPNESS (47.6 degrees), clear of it, so the small bumps on such a
+## slope (rock mounds, ridges, bedrock) stay lawn; moss without grass by
+## MOSS_STEEPNESS (60 degrees, cliff faces). Owner review October 2: a band
+## starting at 41.5 degrees speckled mountainsides with hard moss patches and
+## darkened the rounded cliff shoulders, which read as sheer. The terrain, the
+## cliff sheet and both grass supports read this one band.
+const LAWN_STEEPNESS := 0.326
+const MOSS_STEEPNESS := 0.5
+
+## Moss grade of ground of this normal, as every slope shader reads it
+## (slope_green_grade: none up to .05, full moss from .24): 0 on lawn, .05 to
+## .24 across the band.
+static func moss_grade(normal_y: float) -> float:
+	var steep := 1.0 - normal_y
+	if steep <= LAWN_STEEPNESS:
+		return 0.0
+	return lerpf(.05, .24, clampf((steep - LAWN_STEEPNESS) / (MOSS_STEEPNESS - LAWN_STEEPNESS), 0.0, 1.0))
+
+## Grass scale on ground of this normal: full on lawn, none on full moss.
+static func grass_scale(normal_y: float) -> float:
+	return smoothstep(1.0 - MOSS_STEEPNESS, 1.0 - LAWN_STEEPNESS, normal_y)
+
+
 static func smootherstep(t: float) -> float:
 	t = clampf(t, 0.0, 1.0)
 	return t * t * t * (t * (t * 6.0 - 15.0) + 10.0)

@@ -15,16 +15,17 @@ const SIZE := 128                # lattice points per side of the data window (1
 const REFRESH_SECONDS := 0.5
 
 const LEGEND := "TERRAIN CATEGORIES (F9)\n" \
-	+ "each 12 m lattice edge colours the diamond around its midpoint:\n" \
-	+ "grey    flat edge: same height\n" \
-	+ "blue    level edge: same storey, 1-3 m apart (slope)\n" \
-	+ "green   slope edge: 1 storey (4 m) apart\n" \
-	+ "red     cliff edge: 2+ storeys (wall on the tile midline)\n" \
-	+ "magenta rendered ABOVE the tile kernel (cliff envelope, bedrock, rocks)\n" \
-	+ "cyan    rendered BELOW the tile kernel (road/water cut, recess)\n" \
-	+ "yellow stripes  town grade (points a town, its streets or its road ramps moved)\n" \
+	+ "each 12 m tile is filled by its strongest lattice edge; grid lines: each edge's own colour\n" \
+	+ "grey    flat: all four points the same height\n" \
+	+ "blue    level: same storey, 1 m level steps (a low slope)\n" \
+	+ "green   slope: an edge one storey (4 m) apart\n" \
+	+ "red     cliff: an edge two or more storeys apart (wall on the tile midline)\n" \
+	+ "brown   cliff end: a cliff edge and a slope or level edge in one tile\n" \
+	+ "magenta hatch: rendered ABOVE the tile kernel (cliff sheet, bedrock, rocks)\n" \
+	+ "cyan hatch: rendered BELOW the tile kernel (road/water cut, recess)\n" \
+	+ "yellow stripes  graded points (a town, its streets and ramps; road verges lowered)\n" \
 	+ "thin dark lines: 1 m contours   white: 4 m storey contours\n" \
-	+ "black: tile grid (points, 12 m)   faint orange: wall lines (12 i + 6)   blue: chunk border (192 m)"
+	+ "tile grid (lattice edges, 12 m)   faint orange: wall lines (12 i + 6)   blue: chunk border (192 m)"
 
 @export var enabled := false
 
@@ -64,7 +65,7 @@ func _ready() -> void:
 	_legend.anchor_top = 1.0
 	_legend.anchor_bottom = 1.0
 	_legend.offset_left = 10.0
-	_legend.offset_top = -290.0
+	_legend.offset_top = -315.0
 	add_child(_legend)
 	_apply()
 

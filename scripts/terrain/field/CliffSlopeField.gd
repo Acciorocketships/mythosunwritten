@@ -26,6 +26,13 @@ const WALL_SPLIT:=.25
 const WALL_SAMPLE:=.5
 
 var _seed:int
+## How far beyond its owned rectangle the slope reads the ground: the focus
+## and envelope margins plus the envelope's pad. The terrain it reads there
+## must be the very terrain its neighbours build (road verges: the streamer's
+## feature contexts reach this far, FieldTerrainStreamer).
+const FOCUS_GROW:=16.0
+const ENVELOPE_GROW:=12.0
+const GROUND_REACH:=FOCUS_GROW+ENVELOPE_GROW+ENVELOPE.PAD
 var _region:HeightfieldRegion
 var _primitives:Array[Dictionary]=[]
 var _buckets:Dictionary={}
@@ -46,7 +53,7 @@ var _water_blocks:WorldFieldBlockCache
 ## across slopes (see _water_level); one is built otherwise.
 func _init(walls:Array,seed_value:int,region:HeightfieldRegion=null,focus:=Rect2(-1e9,-1e9,2e9,2e9),
   features:FeatureContext=null,water:WaterFieldContext=null,water_blocks:WorldFieldBlockCache=null)->void:
- _seed=seed_value;_region=region;_focus=focus.grow(16.0);_features=features;_water=water
+ _seed=seed_value;_region=region;_focus=focus.grow(FOCUS_GROW);_features=features;_water=water
  _water_blocks=water_blocks
  for wall:Dictionary in walls:_add_wall(wall)
  _add_outer_corners(walls)
@@ -495,7 +502,9 @@ func _substrate(centre:Vector2,radius:float)->Vector2:
   var q:=centre+Vector2.from_angle(TAU*k/8.0)*radius
   if env.sample(q)-SINK<=ground(q):continue
   var exposure:=env.rock_at(q)
-  var grade:=1.0-sheet_normal(q).y
+  # The grade the sheet draws there (CliffRockCrags.mesh_arrays), not the
+  # raw steepness: the rock's contact band must match its lawn or moss.
+  var grade:=SlopeProfile.moss_grade(sheet_normal(q).y)
   if not env.moss_grade.is_empty():grade=maxf(grade,env.moss_grade_at(q)*smoothstep(.1,.5,exposure))
   sum+=Vector2(exposure,grade)
  return sum/8.0
@@ -567,11 +576,14 @@ func add_skirts(sheet:Dictionary,owned:Rect2)->void:
    if roots.has(vertices[i]):continue
    # A triangle straddling the sheet's edge keeps each corner's own covered
    # surface: over terrain, the lawn of its gentle normal and no exposure.
+   # The root's grade is bedrock's own, as solid() stores it; mesh_arrays adds
+   # the steepness band (October 2: a raw 1 - normal.y here painted every
+   # gentle mound full moss, a dark disc round each rock).
    var q:=Vector2(vertices[i].x,vertices[i].z)
    var sheet_vertex:bool=sk.on_sheet[i]==1
    var exposure:=env.rock_at(q) if sheet_vertex else 0.0
-   var grade:=1.0-(sk.normals[i] as Vector3).y
-   if sheet_vertex and not env.moss_grade.is_empty():grade=maxf(grade,env.moss_grade_at(q)*smoothstep(.1,.5,exposure))
+   var grade:=0.0
+   if sheet_vertex and not env.moss_grade.is_empty():grade=env.moss_grade_at(q)*smoothstep(.1,.5,exposure)
    roots[vertices[i]]=[sk.normals[i],exposure,grade]
  # The moss scale (UV2.y) reads the placement's top: keep the sheet's own.
  sheet.faces=faces;sheet.bounds=bounds;sheet.anchor=bounds.get_center();sheet.base=bounds.position.y
@@ -625,12 +637,11 @@ func _solid_top_over(env:ENVELOPE,q:Vector2,e:float,g:float)->float:
  # solid only backs the terrain, under its chords.
  var mesh:=_mesh_height(q)
  if env.excluded_node(q):return minf(e,mesh)-SINK-.12
- # Where a chord sags under the ground it does not follow it: a ramp that
- # drops metres within one 2 m quad (just past a cliff's end, where the wall
- # hands over to the ramp fanning out beyond the tile centre) slants the
- # quad on the high side down to the ramp's middle, a notch in the lip up to
- # 1.5 m deep (dual-grid tile gallery, September 30). There the solid takes
- # the ground's own shape, handing back to the chords as their sag fades.
+ # Where a chord sags under the ground it does not follow it: ground that
+ # drops metres within one 2 m quad slants the quad on the high side, a
+ # notch in the lip (dual-grid tile gallery, September 30). There the solid
+ # takes the ground's own shape, handing back to the chords as their sag
+ # fades.
  raised=maxf(raised,smoothstep(RAISED,EMERGE,g-mesh))
  return e+(mesh-g)*(1.0-raised)+COVER*(1.0-raised)-SINK*raised
 
@@ -771,7 +782,7 @@ static func _extent(height:float)->float:
 var _env:ENVELOPE
 func envelope()->ENVELOPE:
  if _env==null:
-  var rect:=_focus.grow(12.0) if _focus.size.x<1e8 else _line_bounds().grow(30.0)
+  var rect:=_focus.grow(ENVELOPE_GROW) if _focus.size.x<1e8 else _line_bounds().grow(30.0)
   _env=ENVELOPE.build(rect,_ground_sampler(),_exclusion(rect.grow(ENVELOPE.PAD+1.0)),_seed,_water_level(),_ground_grid()) as ENVELOPE
  return _env
 

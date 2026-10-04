@@ -352,6 +352,10 @@ static func _qualified_surface(program: GrassProgram, anchor: Vector2,
 	var physical_edge_scale := known_physical_edge_scale if \
 		known_physical_edge_scale >= 0.0 else _cliff_scale(
 			region, anchor, footprint_radius, cliff_edge_cache)
+	if support.is_empty():
+		# Steep terrain thins out over the moss band, like the slope sheet's
+		# grass (GrassSupportSurfaces): grass and moss share one edge.
+		physical_edge_scale *= SlopeProfile.grass_scale(normal.y)
 	if physical_edge_scale < CLIFF_MIN_VISIBLE_SCALE:
 		return {}
 	return {

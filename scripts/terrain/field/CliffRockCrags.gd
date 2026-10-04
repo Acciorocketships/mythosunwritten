@@ -15,6 +15,10 @@ const MOSS_TEXTURES:={
  "angry":{"moss_detail":"res://terrain/materials/moss/angry_moss.png","moss_detail_mean":Vector3(.332,.5174,.1911),"moss_detail_strength":.9,"moss_detail_scale":.3,
   "moss_mask":"res://terrain/materials/moss/angry_mask.png","moss_mask_weight":.45,"moss_mask_scale":.12},
  "polyart":{"moss_detail":"res://terrain/materials/moss/polyart_moss.png","moss_detail_mean":Vector3(.3238,.5127,.1931),"moss_detail_strength":.9,"moss_detail_scale":.3},
+ # Pure Village (October 1): its mottled Grass01 (the owner's pick, the
+ # default) and its patchy Grass02 (green over sandy earth).
+ "village":{"moss_detail":"res://terrain/materials/moss/village_grass.png","moss_detail_mean":Vector3(.2227,.4568,.1908),"moss_detail_strength":.85,"moss_detail_scale":.35},
+ "village_patches":{"moss_detail":"res://terrain/materials/moss/village_patches.png","moss_detail_mean":Vector3(.4428,.5703,.3252),"moss_detail_strength":.9,"moss_detail_scale":.25},
 }
 ## Shared moss parameters for the slope and slope-rock materials (main thread).
 static func apply_moss(material:ShaderMaterial)->void:
@@ -23,6 +27,9 @@ static func apply_moss(material:ShaderMaterial)->void:
  material.set_shader_parameter("moss_amount",1.0)
  material.set_shader_parameter("moss_slopes",true)
  material.set_shader_parameter("moss_full",true)
+ material.set_shader_parameter("lawn_steepness",SHEET_LAWN_STEEPNESS)
+ material.set_shader_parameter("moss_steepness",SHEET_MOSS_STEEPNESS)
+ material.set_shader_parameter("moss_rise",SHEET_MOSS_RISE)
  var moss:Dictionary=MOSS_TEXTURES[STYLE.moss_texture]
  for key:String in moss:
   var value=moss[key]
@@ -46,12 +53,10 @@ static func mesh(rock:Dictionary)->ArrayMesh:
 ## Moss grade height per unit of (1 - normal.y) on the whole-wall slope: a
 ## 20 degree slope stays mostly lawn, 35 degrees is moss.
 const SHEET_MOSS_RISE:=28.0
-## 1 - normal.y of the steepest ordinary slope: one storey plus three levels
-## (7 m) over one 12 m tile, whose smootherstep peaks at 1.875x the mean
-## gradient (47.6 degrees). Below it the sheet is exactly the terrain's lawn.
-const SHEET_LAWN_STEEPNESS:=0.326
-## Fully mossy from 60 degrees (cliff faces and cliff-end ramps).
-const SHEET_MOSS_STEEPNESS:=0.5
+## The lawn-to-moss band (SlopeProfile.LAWN_STEEPNESS / MOSS_STEEPNESS):
+## below it the sheet is exactly the terrain's lawn, above it moss.
+const SHEET_LAWN_STEEPNESS:=SlopeProfile.LAWN_STEEPNESS
+const SHEET_MOSS_STEEPNESS:=SlopeProfile.MOSS_STEEPNESS
 ## One surface of detached render arrays for a slope-solid placement (its
 ## `faces`, and per-vertex `native_roots` [normal, rock exposure, moss grade]).
 ## No mesh, material, node or rendering-server resource is created here.
@@ -99,10 +104,7 @@ static func mesh_arrays(rock:Dictionary,_region:HeightfieldRegion=null,seed_valu
  # grade reads (the shader maps x/28 through .05..24).
  var rise:=PackedVector2Array();rise.resize(points.size())
  for i in points.size():
-  var steep:=1.0-normals[i].y
-  var grade:=0.0
-  if steep>SHEET_LAWN_STEEPNESS:
-   grade=lerpf(.05,.24,clampf((steep-SHEET_LAWN_STEEPNESS)/(SHEET_MOSS_STEEPNESS-SHEET_LAWN_STEEPNESS),0.0,1.0))
+  var grade:=SlopeProfile.moss_grade(normals[i].y)
   var root:Array=rock.native_roots[points[i]]
   if root.size()>2:grade=maxf(grade,root[2])
   rise[i]=Vector2(SHEET_MOSS_RISE*grade,top)

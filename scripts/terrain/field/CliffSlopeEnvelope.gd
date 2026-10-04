@@ -240,8 +240,8 @@ static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:
  # Fillet the concave creases where wall faces meet (see JUMP).
  # Only where walls are being rounded: the ground's own concave bends
  # (a slope's foot, a valley between two banks) keep their surface. Where a
- # wall ends (dual-grid tiles, September 30: under E2 the wall runs to the
- # tile centre and a ramp fans out beyond it) the fillet between its rounded
+ # wall ends (dual-grid tiles: under E2 the wall runs to the tile centre and
+ # shortens to nothing beyond it) the fillet between its rounded
  # end and the ground beyond continues ALONG the wall, over ground the
  # rounding does not raise: gated by the lift at each node it stopped in a
  # steep cut across the fall line. So the gate also counts the rounding's

@@ -230,6 +230,45 @@ func test_sheet_moss_depends_on_steepness_alone() -> void:
 	assert_gt(mossy, 100, "and cliff-steep faces")
 
 
+## Owner review October 2 (rings round the slope rocks): a rock's ground
+## skirt joined to the sheet stored its raw steepness (1 - normal.y) where the
+## sheet keeps only bedrock's own moss grade, so mesh_arrays read a 15 degree
+## mound as grade .03-.3 and painted it full moss: a dark grass-free disc round
+## every rock. A skirt vertex takes the grade the sheet would have there.
+func test_rock_skirts_on_the_sheet_follow_the_sheet_moss_rule() -> void:
+	_STYLE.apply("sheet_bedrock")
+	var storeys: Dictionary = {}
+	var levels: Dictionary = {}
+	for z in range(-12, 13):
+		for x in range(-12, 13):
+			storeys[Vector2i(x, z)] = 6 if z <= 0 else (3 if x <= 0 else 5)
+			levels[Vector2i(x, z)] = 0
+	var region := HeightfieldRegion.new(storeys, levels)
+	var owned := Rect2(-48, -48, 96, 96)
+	var field = _SLOPE.new(TerrainTileField.wall_segments(region, owned.grow(48.0)), 2697992464, region, owned)
+	var sheets: Array = field.solid(owned)
+	field.add_skirts(sheets[0], owned)
+	var env = field.envelope()
+	var roots: Dictionary = sheets[0].native_roots
+	var checked := 0
+	var worst := 0.0
+	for rock: Dictionary in field.skirts():
+		if not owned.has_point(rock.bunch):
+			continue
+		var sk: Dictionary = field.skirts()[rock]
+		for i: int in sk.sheet_indices:
+			var v: Vector3 = sk.vertices[i]
+			var q := Vector2(v.x, v.z)
+			var exposure: float = env.rock_at(q) if sk.on_sheet[i] == 1 else 0.0
+			var bedrock: float = env.moss_grade_at(q) * smoothstep(.1, .5, exposure) \
+				if sk.on_sheet[i] == 1 and not env.moss_grade.is_empty() else 0.0
+			var root: Array = roots[v]
+			if root.size() > 2:
+				worst = maxf(worst, absf(float(root[2]) - bedrock))
+			checked += 1
+	assert_gt(checked, 50, "the fixture's rocks have skirts on the sheet")
+	assert_lt(worst, 0.0001, "a skirt vertex keeps only bedrock's own moss grade (the band adds steepness)")
+
 ## Off the road, a town's grade still made cliffs between cells no pad owns:
 ## the collar's rounded blend put a cell a storey down beside natural ground
 ## (e.g. 4 -> 10 m beside 0 m), and pad support lifted one 8 m beside a 12 m

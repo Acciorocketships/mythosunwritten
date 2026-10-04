@@ -51,6 +51,14 @@ func visual(asset_id: StringName) -> EnvironmentVisual:
 				stone.set_shader_parameter("albedo_texture", source.albedo_texture)
 				stone.set_shader_parameter("source_color_value", source.albedo_color)
 				piece.mesh.surface_set_material(surface, stone)
+	# Meadow rocks' grass tops are the cliff moss (meadow_rock.gdshader): they
+	# take the current moss choice, not the one their bake happened to copy.
+	if String(asset_id).begins_with("meadow.rock."):
+		loaded = loaded.duplicate(true)
+		for piece: EnvironmentVisualPiece in loaded.pieces:
+			if piece.material_override is ShaderMaterial:
+				piece.material_override = piece.material_override.duplicate()
+				load("res://scripts/terrain/field/CliffRockCrags.gd").apply_moss(piece.material_override)
 	_visuals[asset_id] = loaded
 	return loaded
 

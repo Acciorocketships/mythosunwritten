@@ -40,6 +40,37 @@
 > pre-existing water gap newly exposed). Review:
 > `docs/qa/2026-10-02-terrain-regimes/result.md`.
 
+> October 1 terrain review (owner photos 1-5, seed 2697992464). (1) REJECTED and
+> reverted: confining the cliff dressing to cliff tiles (the "lips" on plain
+> mountain slopes are 10-14 m roundings of nearby walls); squeezing each wall's
+> rounding into its own half tile made cliffs angular and tile-shaped, and the
+> owner prefers the smooth gentle rounding. The lips remain open.
+> (2) E2 cliff ends: a full wall to the tile centre, then the wall shortens to
+> nothing 2.4 m before the slope edge (`TerrainTileField.CLIFF_END_CLEAR`, so a
+> road crossing there meets no step; the former narrow fan cut a V-notch "divot").
+> (3) Road verges (`HeightfieldRegion.with_road_verges`, applied by
+> `FeatureContext.graded_region` after town grades): a point beside a road point
+> two or more storeys above it is lowered to one storey above; no wall stands
+> within one point of a road (the sheer face beside a path); feature contexts
+> now reach `CliffSlopeField.GROUND_REACH` + one point. (4) One lawn/moss band
+> (`SlopeProfile.LAWN_STEEPNESS` 47.6 deg, `MOSS_STEEPNESS` 60 deg) for the
+> terrain shader, the cliff sheet and grass on both (`SlopeProfile.grass_scale`):
+> moss and the grass carpet share one edge. (October 2: a 41.5-50 deg band,
+> starting AT the steepest ordinary slope, speckled mountainsides with hard
+> moss patches and darkened rounded cliff shoulders so they read as sheer;
+> the band sits clear above ordinary slopes. A rock skirt joined to the sheet
+> stores bedrock's moss grade only, like the sheet (`SlopeProfile.moss_grade`
+> adds steepness); its raw steepness had painted a dark disc round every
+> slope rock.) F9 now fills each tile with its
+> strongest edge (brown = cliff end) and hatches sheet deviation. Levels answer:
+> every point touching another storey is level 0, so slope edges are exactly
+> 4 m and cliffs 8/12 m. Moss default is now Pure Village Grass01
+> (`CliffRockStyle.moss_texture = "village"`, owner pick; `village_patches` and
+> the four older packs remain; style suffix `sheet_bedrock@<moss>`). Ambient
+> Meadow rocks (`meadow.rock.*`) take the current moss at load
+> (`EnvironmentRenderCache.visual`); their bake had frozen the old texture.
+> See `docs/qa/2026-10-01-terrain-review/result.md`.
+
 > September 30 dual-grid terrain tiles (branch `dual-grid-terrain`; spec
 > `docs/superpowers/specs/2026-09-30-dual-grid-terrain-tiles-design.md`, plan
 > `docs/superpowers/plans/2026-09-30-dual-grid-terrain-tiles.md`). Terrain heights
@@ -3352,7 +3383,12 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
   `NATIVE_CONTROL_MARGIN`. `TerrainGradePatch` itself samples targets through `TerrainTileField`
   on a half-claim-pitch minimum lattice (claim centres + edge minima), so the lower claim stays
   flat and owns no transition. Terrain, collision, grass and the cliff sheet all read the same
-  final controls through the kernel. Natural maps remain available for site and parcel
+  final controls through the kernel. ROAD VERGES (`with_road_verges`, applied by
+  `FeatureContext.graded_region` after town grades): a point beside a road point standing two
+  or more storeys above it is lowered to one storey above (never raised, never a water point,
+  never a town-controlled point), so no wall stands within one point of a road; the streamer's
+  feature context reaches `CliffSlopeField.GROUND_REACH` + one point so chunks agree. Natural
+  maps remain available for site and parcel
   selection.
 - **`field/TerrainTileField.gd`** — THE terrain kernel (static, worker-pure). Each 12 m tile
   between four points is a function of its four corner heights alone: `height = t0 + Σ gap_n *
@@ -3364,8 +3400,10 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
   wall is vertical and lies on a dual-cell border `x|z = 12 i + 6`; a three-storey cliff is one
   12 m wall. Saddles keep the two high corners as separate bumps (`max(bump_a, bump_c)`; cliff:
   two 6 x 6 m squares meeting at the centre). A layer mixing cliff and slope crossings is a cliff
-  END: `static var cliff_end` selects **E2 (default: wall to the tile centre, then a compact ramp
-  fanning out to the slope profile; the high side never dips)** or E1 (Coons-blended inside the
+  END: `static var cliff_end` selects **E2 (default: a full wall to the tile centre, then the
+  wall shortens to nothing `CLIFF_END_CLEAR` (2.4 m) before the slope edge, E1's blend over that
+  stretch; October 1,
+  the former narrow fan cut a V-notch "divot" into the plateau)** or E1 (Coons-blended inside the
   tile; selectable for the gallery). Non-crossing tile edges count as slope ends inside a mixed
   layer (ruling). Along any tile edge the surface depends only on that edge's two endpoints, so
   neighbouring tiles agree by construction; walls are the only double-valued places. Ownership:
@@ -3415,7 +3453,8 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
   bedrock, the foot fillet and its gate (each wall's lift carried along its own wall, so the
   fillet continues past a cliff end without reaching across a wall), moss by steepness, and
   keep-out cuts for roads, grades and water. A grid with no wall crest returns the ground
-  itself. Output: the slope solid + collision, ground reservations, grass supports and slope
+  itself. (Confining the rounding to cliff tiles was tried and rejected on October 1: it made
+  cliffs angular.) Output: the slope solid + collision, ground reservations, grass supports and slope
   rocks.
 - **`field/CliffDressing.gd`** — no longer places anything on world terrain. It owns the KayKit
   cliff piece vocabulary (`VISUALS`/`ASSETS`/`TERRAIN_SKIN_ASSETS`, `PROFILE_SAMPLES`), THE shared
@@ -3452,6 +3491,12 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
   and discards stale chunk generations. Dressing still owns no gameplay identity, interaction,
   persistence, navigation, or world-feature planning. Dense grass is intentionally separate;
   the former sparse `ambient_grass` dressing set is retired.
+- **Lawn/moss band (`SlopeProfile.LAWN_STEEPNESS` 47.6 deg / `MOSS_STEEPNESS` 60 deg)** — one
+  steepness rule for every ground surface: the terrain shader (`ground_surface.gdshader`) and the
+  cliff sheet (`cliff_crag.gdshader`, `CliffRockCrags.apply_moss` sets both) grade lawn into moss
+  over it, and grass on the terrain and on the sheet thins over the same band
+  (`SlopeProfile.grass_scale`), so moss and the grass carpet share one edge. The band starts
+  above the steepest ordinary slope (41.5 deg) so ordinary hillsides and their bumps stay lawn.
 - **`grass/GrassField.gd` / `grass/GrassStreamer.gd`** — the deterministic, visual-only dense
   ground-cover pipeline. The pure worker field places a primary 17×17 jittered candidate lattice
   per 24 m tile, plus a deterministic supplemental lattice admitted in exact proportion to a
@@ -4737,9 +4782,11 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
   reproduce a reported bug by its seed and coordinates. It reads only committed per-point
   snapshots; the main-thread HUD never reads the worker-owned plan or caches.
 - **`terrain/tools/TerrainCategoryOverlay.gd`** — the F9 view: a screen-space decal over every
-  surface fed by a 128-point snapshot window. Each lattice edge colours the diamond around its
-  midpoint (grey flat, blue level, green slope, red cliff); magenta/cyan mark rendered surface
-  above/below the kernel, which the shader evaluates through
+  surface fed by a 128-point snapshot window. Each 12 m tile is filled by its strongest edge
+  (grey flat, blue level, green slope, red cliff; brown cliff end: a cliff edge with a slope or
+  level edge in one tile) and every lattice edge is drawn as a line in its own category;
+  magenta/cyan hatching marks rendered surface above/below the kernel (grass is hidden while F9
+  is on), which the shader evaluates through
   `terrain/materials/debug/terrain_tile_kernel.gdshaderinc`, a line-for-line port of
   `TerrainTileField` (cliff end pushed from `TerrainTileField.cliff_end`). Tile grid at 12 i, faint
   wall lines at 12 i + 6, chunk borders every 16 points, yellow stripes on graded points.
