@@ -74,7 +74,8 @@ func drain(max_asset_loads: int, max_collision_shapes: int,
 			if loaded >= max_asset_loads:
 				continue
 			var asset_id: StringName = ids[int(job.asset_index)]
-			assert(_render_cache.visual(asset_id) != null)
+			var demanded_visual := _render_cache.visual(asset_id)
+			assert(demanded_visual != null)
 			job.asset_index = int(job.asset_index) + 1
 			loaded += 1
 		if int(job.asset_index) == ids.size():

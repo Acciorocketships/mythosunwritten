@@ -1310,7 +1310,8 @@ static func commit(parent: Node3D, plan: SettlementFabricPlan,
 			demanded_assets.append(asset_id)
 	demanded_assets.sort_custom(func(a: StringName, b: StringName) -> bool:
 		return String(a) < String(b))
-	assert(cache.prepare(demanded_assets))
+	var demanded_prepared := cache.prepare(demanded_assets)
+	assert(demanded_prepared)
 	# Village rims use the same KayKit pieces as ordinary terrain. Apply the
 	# latter's canonical UV/material preparation to this commit-local cache too;
 	# otherwise the isolated review path renders a different asset from the

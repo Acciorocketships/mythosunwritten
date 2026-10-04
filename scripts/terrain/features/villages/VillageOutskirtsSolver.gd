@@ -265,7 +265,8 @@ static func solve(terrain: VillageTerrainView, settlement_id: StringName,
 						if candidate_grade != null:
 							urban.terrain_grade = candidate_grade
 							terrain = candidate_terrain
-						assert(occupancy.add_all(novel_volumes))
+						var novel_added := occupancy.add_all(novel_volumes)
+						assert(novel_added)
 						blockers.append(placement)
 						selected_spec = spec
 						accepted_contact = survey_key
@@ -1629,7 +1630,8 @@ static func _candidate(terrain: VillageTerrainView,
 				"existing_owner": String(internal_existing.owner_id),
 				"existing_role": internal_existing.role,
 			}}
-	assert(local.add_all(volumes))
+	var volumes_added := local.add_all(volumes)
+	assert(volumes_added)
 	return {"accepted": true, "reason": &"accepted", "entries": entries,
 		"volumes": volumes, "surfaces": surfaces,
 		"clearances": clearances, "stair_count": stairs.stair_count,

@@ -267,7 +267,8 @@ func _ready() -> void:
 	active_visuals.assign(active_set.keys())
 	active_visuals.sort_custom(func(a: StringName, b: StringName) -> bool:
 		return String(a) < String(b))
-	assert(_environment_cache.prepare(active_visuals))
+	var active_prepared := _environment_cache.prepare(active_visuals)
+	assert(active_prepared)
 	_dressing_queue = EnvironmentCommitQueue.new(_environment_cache, &"Dressing")
 	_feature_queue = FeatureCommitQueue.new(_environment_cache)
 	_features_root = Node3D.new()
