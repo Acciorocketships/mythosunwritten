@@ -60,14 +60,20 @@ static func desired_tiles(origin: Vector2) -> Array[Vector2i]:
 	var centre := GrassField.tile_of(origin)
 	var reach := int(ceil(GRASS_RADIUS / GrassField.TILE_WORLD)) + 1
 	var out: Array[Vector2i] = []
+	# Each tile's distance is measured once; the comparator reads it (the
+	# streamer calls this every frame, and recomputing both distances in every
+	# comparison was its largest per-frame cost). Same comparisons, same order.
+	var distances: Dictionary = {}
 	for dz in range(-reach, reach + 1):
 		for dx in range(-reach, reach + 1):
 			var tile := centre + Vector2i(dx, dz)
-			if distance_to_tile(origin, tile) < GRASS_RADIUS:
+			var distance := distance_to_tile(origin, tile)
+			if distance < GRASS_RADIUS:
 				out.append(tile)
+				distances[tile] = distance
 	out.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
-		var da := distance_to_tile(origin, a)
-		var db := distance_to_tile(origin, b)
+		var da: float = distances[a]
+		var db: float = distances[b]
 		return da < db or (is_equal_approx(da, db) and _key_less(a, b)))
 	return out
 
