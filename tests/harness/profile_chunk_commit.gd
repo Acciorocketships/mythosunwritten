@@ -14,6 +14,10 @@ const MESHER_ROCKS := preload("res://scripts/terrain/field/CliffRockDressing.gd"
 var _seed := 2697992464
 var _centre := Vector2i.ZERO
 var _radius := 1
+var _chunks: Array[Vector2i] = []
+var _skip: PackedStringArray = []
+var _serial := false
+var _busy_frames: Array[float] = []
 var plan: HeightfieldPlan
 var water: WaterPlan
 var mesher: TerrainChunkMesher
@@ -38,6 +42,12 @@ func _init() -> void:
 	for arg: String in OS.get_cmdline_user_args():
 		if arg.begins_with("--seed="): _seed = int(arg.trim_prefix("--seed="))
 		elif arg.begins_with("--radius="): _radius = int(arg.trim_prefix("--radius="))
+		elif arg == "--serial": _serial = true
+		elif arg.begins_with("--skip="): _skip = arg.trim_prefix("--skip=").split(",")
+		elif arg.begins_with("--chunks="):
+			for pair: String in arg.trim_prefix("--chunks=").split(";"):
+				var xz := pair.split(",")
+				_chunks.append(Vector2i(int(xz[0]), int(xz[1])))
 		elif arg.begins_with("--centre="):
 			var p := arg.trim_prefix("--centre=").split(",")
 			_centre = Vector2i(int(p[0]), int(p[1]))
@@ -78,30 +88,32 @@ func _init() -> void:
 	_camera.look_at_from_position(c + Vector3(-180, 160, -180), c, Vector3.UP)
 	if not Helper.is_headless():
 		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
-		RenderingServer.viewport_set_measure_render_time(root.get_viewport().get_viewport_rid(), true)
+		RenderingServer.viewport_set_measure_render_time(root.get_viewport_rid(), true)
 	print("[commitprof] ready ms=%.0f" % ((Time.get_ticks_usec() - _t0) / 1000.0))
 	_thread = Thread.new()
 	_thread.start(_work)
 	_last_usec = Time.get_ticks_usec()
 
 func _work() -> void:
-	for dz in range(-_radius, _radius + 1):
-		for dx in range(-_radius, _radius + 1):
-			var chunk := _centre + Vector2i(dx, dz)
-			var t := Time.get_ticks_usec()
-			var region := fields.region(chunk)
-			var water_ctx := fields.water(chunk)
-			var terrain := mesher.compute_chunk(chunk, region, water_ctx, null)
-			var water_payload := water_builder.compute_chunk(water, chunk, region, water_ctx)
-			var core := Rect2(Vector2(chunk) * 192.0, Vector2.ONE * 192.0)
-			var dressing := DressingField.compute(dressing_program, _seed, core, region,
-				water_ctx, null, terrain.cliff_terraces.ground_reservations)
-			print("[commitprof] computed chunk=%d,%d worker_ms=%.0f" % [chunk.x, chunk.y,
-				(Time.get_ticks_usec() - t) / 1000.0])
-			_mutex.lock()
-			_ready_items.append({"chunk": chunk, "terrain": terrain, "water": water_payload,
-				"dressing": dressing})
-			_mutex.unlock()
+	if _chunks.is_empty():
+		for dz in range(-_radius, _radius + 1):
+			for dx in range(-_radius, _radius + 1):
+				_chunks.append(_centre + Vector2i(dx, dz))
+	for chunk: Vector2i in _chunks:
+		var t := Time.get_ticks_usec()
+		var region := fields.region(chunk)
+		var water_ctx := fields.water(chunk)
+		var terrain := mesher.compute_chunk(chunk, region, water_ctx, null)
+		var water_payload := water_builder.compute_chunk(water, chunk, region, water_ctx)
+		var core := Rect2(Vector2(chunk) * 192.0, Vector2.ONE * 192.0)
+		var dressing := DressingField.compute(dressing_program, _seed, core, region,
+			water_ctx, null, terrain.cliff_terraces.ground_reservations)
+		print("[commitprof] computed chunk=%d,%d worker_ms=%.0f" % [chunk.x, chunk.y,
+			(Time.get_ticks_usec() - t) / 1000.0])
+		_mutex.lock()
+		_ready_items.append({"chunk": chunk, "terrain": terrain, "water": water_payload,
+			"dressing": dressing})
+		_mutex.unlock()
 	_mutex.lock()
 	_worker_done = true
 	_mutex.unlock()
@@ -120,9 +132,14 @@ func _process(_delta: float) -> bool:
 			print("[commitprof]   %s next_frames_max_ms=%.1f" % [_after_label, _after_max])
 		return false
 	_mutex.lock()
-	var item: Dictionary = {} if _ready_items.is_empty() else _ready_items.pop_front()
+	# --serial: commit only after the worker has finished every chunk, so the
+	# frames after each attach are not shared with a busy worker thread.
+	var hold := _serial and not _worker_done
+	var item: Dictionary = {} if _ready_items.is_empty() or hold else _ready_items.pop_front()
 	var done := _worker_done and _ready_items.is_empty()
 	_mutex.unlock()
+	if hold:
+		_busy_frames.append(frame_ms)
 	if item.is_empty():
 		if done:
 			# Steady state with everything attached: separates a per-attach
@@ -133,13 +150,18 @@ func _process(_delta: float) -> bool:
 			_thread.wait_to_finish()
 			var sorted := _idle_frames.duplicate()
 			sorted.sort()
-			var rid := root.get_viewport().get_viewport_rid()
+			var rid := root.get_viewport_rid()
 			print("[commitprof] idle frames p50_ms=%.1f p95_ms=%.1f max_ms=%.1f render_cpu_ms=%.2f render_gpu_ms=%.2f draws=%d prims=%d" % [
 				sorted[sorted.size() / 2], sorted[int(sorted.size() * 0.95)], sorted.back(),
 				RenderingServer.viewport_get_measured_render_time_cpu(rid),
 				RenderingServer.viewport_get_measured_render_time_gpu(rid),
 				Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),
 				Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)])
+			if not _busy_frames.is_empty():
+				var busy := _busy_frames.duplicate()
+				busy.sort()
+				print("[commitprof] frames while worker busy (nothing attaching) p50_ms=%.1f p95_ms=%.1f max_ms=%.1f n=%d" % [
+					busy[busy.size() / 2], busy[int(busy.size() * 0.95)], busy.back(), busy.size()])
 			print("[commitprof] DONE")
 			return true
 		return false
@@ -166,12 +188,21 @@ func _process(_delta: float) -> bool:
 	EnvironmentCollisionBuilder.commit(full, item.dressing, render_cache, &"DressingCollision")
 	RockSkirt.commit(full, item.dressing.ground_skirts)
 	steps["dressing_collision"] = Time.get_ticks_usec() - t; t = Time.get_ticks_usec()
+	for part: String in _skip:
+		match part:
+			"collision": full.get_node("Body").free()
+			"surface": full.get_node("Surface").free()
+			"cliff": full.get_node("CliffRockFormations").free()
+			"dressing_collision":
+				var n := full.get_node_or_null("DressingCollision")
+				if n != null: n.free()
 	_root.add_child(full)
 	steps["add_child"] = Time.get_ticks_usec() - t; t = Time.get_ticks_usec()
-	var queue := EnvironmentCommitQueue.new(render_cache, &"Dressing")
-	queue.register_chunk(item.chunk, 1)
-	queue.enqueue(item.chunk, 1, full, item.dressing)
-	queue.drain(1000000)
+	if not _skip.has("dressing"):
+		var queue := EnvironmentCommitQueue.new(render_cache, &"Dressing")
+		queue.register_chunk(item.chunk, 1)
+		queue.enqueue(item.chunk, 1, full, item.dressing)
+		queue.drain(1000000)
 	steps["dressing_visuals"] = Time.get_ticks_usec() - t
 	surface = null
 	rocks.free()
