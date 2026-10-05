@@ -28,6 +28,9 @@ const LEVELS_PER_STOREY: int = 4
 const _CLIFF_SEARCH_MAX: int = LEVELS_PER_STOREY
 const _NO_CLIFF: int = 999
 
+## C# mirror of TerrainField.height_m, used per seed once verified bit-identical.
+const NativeHeightField := preload("res://scripts/native/NativeHeightField.gd")
+
 var world_seed: int
 var height_amplitude: float   # metres; macro field [0,1] -> [0, amplitude]
 var max_storeys: int          # caps column height -> bounds clamp margin
@@ -116,6 +119,9 @@ func _init(
 	max_storeys = p_max_storeys
 	aggregation = p_aggregation
 	max_step = p_max_step
+	# Main thread for the streamer (its _ready builds the plan before the worker
+	# starts); a no-op after the seed's first plan and under the standard editor.
+	NativeHeightField.setup(world_seed)
 
 
 ## Replace the noise source with a synthetic field for tests. fn(i, j) -> float,
@@ -157,7 +163,11 @@ func uncarved_height(cx: int, cz: int) -> float:
 ## the level of its surroundings (TerrainField.spawn_level_m), never at zero:
 ## a clearing at zero was a bowl that rivers ended in (2026-10-04).
 static func height01(pos: Vector3, p_world_seed: int, include_detail: bool = true) -> float:
-	var h := TerrainField.height_m(Vector2(pos.x, pos.z), p_world_seed, include_detail)
+	var h: float
+	if NativeHeightField.ready_for(p_world_seed):
+		h = NativeHeightField.height_m(Vector2(pos.x, pos.z), p_world_seed, include_detail)
+	else:
+		h = TerrainField.height_m(Vector2(pos.x, pos.z), p_world_seed, include_detail)
 	var falloff: float = SlopeProfile.smootherstep(clampf((Vector2(pos.x, pos.z).length() - 60.0) / 180.0, 0.0, 1.0))
 	if falloff < 1.0:
 		h = lerpf(TerrainField.spawn_level_m(p_world_seed), h, falloff)

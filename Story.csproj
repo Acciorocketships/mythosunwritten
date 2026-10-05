@@ -1,0 +1,22 @@
+<Project Sdk="Godot.NET.Sdk/4.5.1">
+  <!-- C# companions of GDScript systems (scripts/native/). Optional: the game
+       runs unchanged under the standard (non-.NET) Godot editor; under the
+       .NET editor NativeHeightField.gd verifies parity and switches over. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <!-- Run on any newer installed .NET runtime too (only 9 may be present). -->
+    <RollForward>LatestMajor</RollForward>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- The terrain math is the whole point: optimize Debug builds as well. -->
+    <Optimize>true</Optimize>
+    <RootNamespace>Story</RootNamespace>
+    <!-- Only scripts/native is C#; tools/ and imported packs hold unrelated
+         Unity/editor .cs files that must not be compiled. -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="scripts/native/**/*.cs" />
+  </ItemGroup>
+</Project>
