@@ -1410,6 +1410,20 @@ func _refresh_job_priorities_locked(centre: Vector2i, lod_origin: Vector2) -> vo
 			continue
 		followup.priority_distance = distance
 		followup.priority_tier = _terrain_priority_tier(chunk, centre, lod_origin)
+	# A feature job inherits the urgency of every terrain parent within the
+	# halo. Each parent's tier/distance is computed once and spread over its
+	# halo, instead of rescanning every parent for every job.
+	var inherited: Dictionary = {}
+	for parent: Vector2i in _terrain_feature_parents:
+		var parent_distance := maxi(absi(parent.x - centre.x), absi(parent.y - centre.y))
+		if parent_distance > KEEP_RADIUS:
+			continue
+		var parent_tier := _terrain_priority_tier(parent, centre, lod_origin)
+		for dz in range(-halo, halo + 1):
+			for dx in range(-halo, halo + 1):
+				var key := parent + Vector2i(dx, dz)
+				var best: Vector2i = inherited.get(key, Vector2i(parent_tier, parent_distance))
+				inherited[key] = Vector2i(mini(best.x, parent_tier), mini(best.y, parent_distance))
 	for index in range(_jobs.size() - 1, -1, -1):
 		var job: Dictionary = _jobs[index]
 		var distance := maxi(absi(job.chunk.x - centre.x), absi(job.chunk.y - centre.y))
@@ -1425,12 +1439,10 @@ func _refresh_job_priorities_locked(centre: Vector2i, lod_origin: Vector2) -> vo
 		job.priority_tier = _terrain_priority_tier(job.chunk, centre, lod_origin)
 		if not startup_loading_complete() and job.chunk in _startup_feature_keys:
 			job.priority_tier = 0
-		for parent: Vector2i in _terrain_feature_parents:
-			if not bool(job.build_features): break
-			var parent_distance := maxi(absi(parent.x - centre.x), absi(parent.y - centre.y))
-			if parent_distance <= KEEP_RADIUS and maxi(absi(job.chunk.x-parent.x),absi(job.chunk.y-parent.y)) <= halo:
-				job.priority_tier = mini(int(job.priority_tier), _terrain_priority_tier(parent, centre, lod_origin))
-				job.priority_distance = mini(int(job.priority_distance), parent_distance)
+		if bool(job.build_features) and inherited.has(job.chunk):
+			var urgency: Vector2i = inherited[job.chunk]
+			job.priority_tier = mini(int(job.priority_tier), urgency.x)
+			job.priority_distance = mini(int(job.priority_distance), urgency.y)
 	_sort_jobs_locked()
 
 
