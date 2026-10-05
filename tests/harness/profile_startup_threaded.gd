@@ -68,6 +68,7 @@ func _init() -> void:
 		render_cache.prefetch(startup_visuals)
 		preload("res://scripts/terrain/field/CliffSlopeRocks.gd").prefetch()
 		render_cache.prepare(startup_visuals)
+		preload("res://scripts/core/ResourcePrefetch.gd").wait_all()
 		t = _mark("ready.prefetch_prepare", t)
 	dressing_program = DressingCompiler.compile(dressing_index, catalog)
 	t = _mark("ready.dressing_compile", t)

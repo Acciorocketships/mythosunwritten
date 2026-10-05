@@ -206,6 +206,7 @@ func _ready() -> void:
 	preload("res://scripts/terrain/field/CliffSlopeRocks.gd").prefetch()
 	var startup_prepared := _environment_cache.prepare(startup_visuals)
 	assert(startup_prepared)
+	preload("res://scripts/core/ResourcePrefetch.gd").wait_all()
 	_dressing_program = DressingCompiler.compile(dressing_index, _environment_catalog)
 	assert(_dressing_program != null)
 	_feature_program = FeatureProgram.compile(_environment_catalog)
