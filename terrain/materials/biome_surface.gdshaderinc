@@ -14,6 +14,6 @@ vec2 substrate_finish(vec2 world_xz, float normal_up) {
 	float patches = 0.75 + 0.25 * sin(world_xz.x * 0.053) * sin(world_xz.y * 0.059);
 	damp *= patches * mix(0.5, 1.0, clamp(normal_up, 0.0, 1.0));
 	// Broad soft highlights only; dry stone stays matte and recognizably stone.
-	return vec2(1.0 - 0.42 * damp, 0.18 * damp);
+	return vec2(1.0 - 0.62 * damp, 0.38 * damp);
 }
 #endif

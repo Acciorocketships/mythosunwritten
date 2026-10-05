@@ -42,10 +42,12 @@ static func halo_mesh(size: float) -> QuadMesh:
 	return mesh
 
 static func configure_light(light: OmniLight3D, small: bool) -> void:
-	light.light_energy = 0.7 if small else 1.0
-	light.omni_range = 8.5 if small else 14.0
+	light.light_energy = 2.4 if small else 3.5
+	light.omni_range = 7.5 if small else 11.0
 	light.shadow_enabled = false
-	light.light_volumetric_fog_energy = 0.15
+	light.light_volumetric_fog_energy = 1.6 if small else 2.2
+	light.add_to_group("atmosphere_local_light")
+	light.set_meta("atmosphere_shadow_candidate", false)
 	light.distance_fade_enabled = true
 	light.distance_fade_begin = 35.0 if small else 60.0
 	light.distance_fade_length = 15.0 if small else 20.0

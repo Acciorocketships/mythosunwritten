@@ -77,7 +77,11 @@ void fragment(){
  float cover=max(top,base);
  NORMAL_MAP=mix(bn,vec3(.5,.5,1.0),cover);
  vec2 finish=substrate_finish(world_position.xz,n.y);
- ROUGHNESS=mix(clamp(1.0-texture(base_sma,UV).r,.65,1.0),finish.x,cover);
- METALLIC=0.0;SPECULAR=mix(.2,finish.y,cover);
+ float wet=biome_surface(world_position.xz).r;
+ float stone_rough=clamp(1.0-texture(base_sma,UV).r,.65,1.0);
+ ROUGHNESS=mix(mix(stone_rough,.32,wet),finish.x,cover);
+ METALLIC=0.0;SPECULAR=mix(mix(.2,.45,wet),finish.y,cover);
+ CLEARCOAT=wet*(1.0-cover)*.22;
+ CLEARCOAT_ROUGHNESS=.3;
  AO=mix(texture(base_sma,UV).b,1.0,.5);
 }

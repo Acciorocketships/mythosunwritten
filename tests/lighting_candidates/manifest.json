@@ -1,0 +1,26 @@
+[
+  {
+    "repository": "ARez2/compositor-effect-lens-effects",
+    "commit": "0ce061271f672f05fbb9aed08a61e019a875c1ad",
+    "directory": "res://tests/lighting_candidates/ARez2",
+    "url": "https://github.com/ARez2/compositor-effect-lens-effects/tree/0ce061271f672f05fbb9aed08a61e019a875c1ad"
+  },
+  {
+    "repository": "joryleech/Godot-Fake-Lightweight-God-Rays",
+    "commit": "8d5ef3df89955d9a0ec8f452e11ade0960cea175",
+    "directory": "res://tests/lighting_candidates/joryleech",
+    "url": "https://github.com/joryleech/Godot-Fake-Lightweight-God-Rays/tree/8d5ef3df89955d9a0ec8f452e11ade0960cea175"
+  },
+  {
+    "repository": "TheAenema/Godot-Six-Way-Volumetric-Shader",
+    "commit": "52c13df24f556361b17f5f378f69e26d48fe9894",
+    "directory": "res://tests/lighting_candidates/TheAenema",
+    "url": "https://github.com/TheAenema/Godot-Six-Way-Volumetric-Shader/tree/52c13df24f556361b17f5f378f69e26d48fe9894"
+  },
+  {
+    "repository": "MangoButtermilch/Godot-volumetric-renderer",
+    "commit": "9783f079e4672fdfafcad8ac90dd2573f3961cf2",
+    "directory": "res://tests/lighting_candidates/MangoButtermilch",
+    "url": "https://github.com/MangoButtermilch/Godot-volumetric-renderer/tree/9783f079e4672fdfafcad8ac90dd2573f3961cf2"
+  }
+]

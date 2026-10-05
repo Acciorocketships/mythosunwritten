@@ -9,6 +9,6 @@ void vertex() {
 void fragment() {
 	float r = length(UV - vec2(0.5)) * 2.0;
 	float halo = exp(-r*r*5.5) * (1.0-smoothstep(0.6,1.0,r));
-	ALBEDO = orb_color.rgb * 0.7;
-	ALPHA = halo * 0.65;
+	ALBEDO = orb_color.rgb * 1.25;
+	ALPHA = halo * 0.72;
 }

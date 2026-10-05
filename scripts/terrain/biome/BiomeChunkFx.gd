@@ -219,6 +219,7 @@ static func build_field(data: Dictionary) -> Node3D:
 		material.set_shader_parameter("chunk_origin", Vector2(data.origin.x, data.origin.z))
 		volume.material = material
 		root.add_child(volume)
+	preload("res://scripts/terrain/biome/BiomeMistWisps.gd").attach(root, data)
 	for recipe: StringName in data.points:
 		var points: PackedVector3Array = data.points[recipe]
 		if points.is_empty():

@@ -70,3 +70,18 @@ func test_emission_band_follows_surface_heights() -> void:
 	var m := e.process_material as ParticleProcessMaterial
 	assert_between(m.emission_shape_offset.y, 8.0, 20.0 + 10.0, "emission band sits over the surface range")
 	e.free()
+
+func test_sparse_wisps_use_ground_and_have_no_collision_or_shadows() -> void:
+	var root := Node3D.new()
+	var fog: Array[Color] = []
+	var ground := PackedFloat32Array()
+	for i in 169:
+		fog.append(Color(0.5, 0.5, 0.5, 0.01))
+		ground.append(20.0)
+	preload("res://scripts/terrain/biome/BiomeMistWisps.gd").attach(root, {"fog": fog, "ground": ground})
+	assert_eq(root.get_child_count(), 4)
+	for wisp in root.get_children():
+		assert_almost_eq(wisp.position.y, 21.3, 0.001)
+		assert_eq(wisp.cast_shadow, GeometryInstance3D.SHADOW_CASTING_SETTING_OFF)
+		assert_eq(wisp.get_child_count(), 0)
+	root.free()

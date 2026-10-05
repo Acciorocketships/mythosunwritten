@@ -29,6 +29,10 @@ func _run_replay() -> void:
 		_scale_mist_layers(world,
 			float(args[lower_scale + 1]) if lower_scale >= 0 and lower_scale + 1 < args.size() else 1.0,
 			float(args[upper_scale + 1]) if upper_scale >= 0 and upper_scale + 1 < args.size() else 1.0)
+	if args.has("--foundation-baseline"):
+		_restore_foundation_cores(world)
+	if args.has("--refresh-fx"):
+		_refresh_frozen_fx(world)
 	world.process_mode = Node.PROCESS_MODE_DISABLED
 	var globals: Dictionary = world.get_meta("shader_globals", {})
 	for key: StringName in globals:
@@ -77,6 +81,7 @@ func _run_replay() -> void:
 	add_child(director)
 	director.set_process(false)
 	director._apply_mood(BiomeRegistry.blend_atmosphere(weights))
+	if args.has("--refresh-fx"): director._light_budget.update_lights(camera, _quality)
 	if not args.has("--solid-canopy"):
 		print("[lighting-replay] porous canopy proxies=", _attach_canopy_shadows(world))
 	else:
@@ -96,6 +101,20 @@ func _run_replay() -> void:
 		director._ground_map.update(_review_position, REVIEW_SEED)
 		print("[lighting-replay] legacy geometry; fresh material lookup, not current terrain acceptance")
 	var environment := environment_node.environment
+	if args.has("--foundation-baseline"):
+		environment.adjustment_enabled = false
+		var defaults := Environment.new()
+		environment.glow_blend_mode = defaults.glow_blend_mode
+		for i in 7: environment.set_glow_level(i, defaults.get_glow_level(i))
+		environment.glow_bloom = 0.035
+		environment.glow_hdr_threshold = 1.15
+		environment.glow_normalized = true
+		environment.volumetric_fog_length = 256.0
+		environment.volumetric_fog_ambient_inject = 0.45
+		sun.shadow_blur = 2.0
+		sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+		sun.directional_shadow_split_1 = 0.3
+		if float(weights.get(&"deep_forest", 0.0)) > 0.99: sun.light_volumetric_fog_energy = 2.2
 	var fog_ambient_arg := args.find("--fog-ambient")
 	if fog_ambient_arg >= 0 and fog_ambient_arg + 1 < args.size():
 		environment.volumetric_fog_ambient_inject = float(args[fog_ambient_arg + 1])
@@ -161,6 +180,10 @@ func _run_replay() -> void:
 			Vector3(float(values[0]), _review_position.y, float(values[1])))
 	if _orbit:
 		await _capture_orbit(camera, _review_position + Vector3.UP * 2.0, director)
+	world.queue_free()
+	director.queue_free()
+	await get_tree().process_frame
+	await RenderingServer.frame_post_draw
 	get_tree().quit(0 if result == OK else 1)
 
 ## A camera flight through fixed production geometry exercises the real spatial
@@ -245,3 +268,52 @@ func _scale_mist_layers(node: Node, lower: float, upper: float) -> void:
 			node.material = material
 	for child: Node in node.get_children():
 		_scale_mist_layers(child, lower, upper)
+
+func _process(dt: float) -> void:
+	if OS.get_cmdline_user_args().has("--quick-capture"):
+		if _capture_view != null and Time.get_ticks_usec() - _last_draw_usec > 100000:
+			_forced_draws += 1
+			RenderingServer.force_draw(false)
+	else:
+		super._process(dt)
+
+func _refresh_frozen_fx(node: Node) -> void:
+	# Frozen captures store source energies and numeric mist maps, not live recipes.
+	if node is GeometryInstance3D:
+		var mat: Material = node.material_override
+		var mesh: Mesh = node.mesh if node is MeshInstance3D else (node.multimesh.mesh if node is MultiMeshInstance3D and node.multimesh != null else null)
+		if mat == null and mesh != null and mesh.get_surface_count() > 0: mat = mesh.surface_get_material(0)
+		if mat is ShaderMaterial and mat.shader != null and "orb_color" in mat.shader.code and "world_normal" in mat.shader.code:
+			var fresh := mat.duplicate() as ShaderMaterial
+			fresh.shader = preload("res://terrain/materials/spirit_orb_core.gdshader")
+			node.material_override = fresh
+	if node is OmniLight3D:
+		if node.name == "SmallOrbLight" or node.name == "Light":
+			SpiritOrb.configure_light(node, node.name == "SmallOrbLight")
+		elif node.name == "LanternLight":
+			node.light_energy *= 2.3
+			node.light_volumetric_fog_energy = 2.0
+			node.add_to_group("atmosphere_local_light")
+			node.set_meta("atmosphere_shadow_candidate", true)
+	if node is FogVolume and node.material is ShaderMaterial:
+		var mat := node.material as ShaderMaterial
+		var ground := (mat.get_shader_parameter("ground_field") as Texture2D).get_image()
+		var fog := (mat.get_shader_parameter("atmosphere_field") as Texture2D).get_image()
+		var heights := PackedFloat32Array()
+		var colours: Array[Color] = []
+		for i in 169:
+			heights.append(ground.get_pixel(i % 13, i / 13).r)
+			colours.append(fog.get_pixel(i % 13, i / 13))
+		preload("res://scripts/terrain/biome/BiomeMistWisps.gd").attach(node.get_parent(), {"ground": heights, "fog": colours})
+	for child in node.get_children(): _refresh_frozen_fx(child)
+
+func _restore_foundation_cores(node: Node) -> void:
+	if node is GeometryInstance3D:
+		var mat: Material = node.material_override
+		var mesh: Mesh = node.mesh if node is MeshInstance3D else (node.multimesh.mesh if node is MultiMeshInstance3D and node.multimesh != null else null)
+		if mat == null and mesh != null and mesh.get_surface_count() > 0: mat = mesh.surface_get_material(0)
+		if mat is ShaderMaterial and mat.shader != null and "orb_color" in mat.shader.code and "world_normal" in mat.shader.code:
+			var fresh := mat.duplicate() as ShaderMaterial
+			fresh.shader = preload("res://tests/harness/lighting_lab/foundation_orb.gdshader")
+			node.material_override = fresh
+	for child in node.get_children(): _restore_foundation_cores(child)

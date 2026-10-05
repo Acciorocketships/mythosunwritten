@@ -8,5 +8,5 @@ void fragment() {
  ALBEDO = texel * COLOR.rgb;
  ROUGHNESS = 1.0;
  bool glass = UV.x > 0.34375 && UV.x < 0.375 && UV.y > 0.0 && UV.y < 0.03125;
- EMISSION = glass ? vec3(1.0, 0.64, 0.25) * 3.0 : vec3(0.0);
+ EMISSION = glass ? vec3(1.0, 0.64, 0.25) * 7.0 : vec3(0.0);
 }
