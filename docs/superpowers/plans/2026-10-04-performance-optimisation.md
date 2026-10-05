@@ -323,3 +323,25 @@ Load only meshes for `CliffSlopeRocks` (its GLB textures are unused).
   channel, so there is no cheap exact shortcut. Options: decide site
   dryness from a smaller, still-exact domain, or accept the cost and cache
   it (Task 3) / make it fast (Tasks 1, 4).
+
+## Lighting branch merge (2026-10-05)
+
+Merged `main` (biome lighting foundation) and `codex/biome-lighting-foundation`
+(HDR local lighting, mist wisps). Changes made for performance:
+
+- `RenderWarmup` also attaches the `CanopyShadows` shadow-only proxy that
+  `EnvironmentCommitQueue` now puts on tree crowns, so its alpha-scissor
+  shadow pipeline compiles behind the loading screen, not on the first
+  forest commit.
+- `LocalLightBudget.update_lights` (every frame) used to write energy 0 and
+  `shadow_enabled = false` to every streamed light and then restore the
+  chosen ones: two or more RenderingServer calls per light per frame, plus a
+  shadow-atlas reallocation for each shadowed light every frame. It now
+  decides the selection first and writes only changes. Same selection
+  (`test_local_light_budget`).
+
+Not changed, worth measuring on the next live walk: the sun now uses four
+blended shadow splits (was the default two), Standard quality enables MSAA 2x,
+SSAO and volumetric fog, and up to two (Standard) or four (High) omni lights
+cast shadows. Planning code is unaffected (scripts changed, so the planning
+disk cache starts fresh once).
