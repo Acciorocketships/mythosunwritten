@@ -280,6 +280,14 @@ func _ready() -> void:
 	CliffDressing.shared_material()
 	WaterSurfaceBuilder.sheet_material()
 	_mesher.prepare_resources()
+	for index in TAIL_THREADS:
+		var tail_mesher := TerrainChunkMesher.new()
+		tail_mesher.profile_enabled = PROFILE_STREAMING
+		tail_mesher.set_seed(world_seed)
+		tail_mesher.prepare_resources()
+		_tail_meshers.append(tail_mesher)
+		_tail_free.append(index)
+		_tail_slots.post()
 	_grass_runtime_enabled = GRASS_ENABLED and not _headless
 	if _grass_runtime_enabled:
 		_grass_streamer = GrassStreamer.new(_grass_program, _environment_cache)
@@ -510,55 +518,123 @@ func _worker() -> void:
 			_set_startup_worker_progress(c, 0.62)
 			_begin_worker_phase(c, &"water_context")
 			var water_context := _fields.water(c)
+			# The cliff sheet reads its neighbours' water (CliffSlopeField
+			# _water_level); plan them here so the tail only reads a frozen view.
+			var view_keys: Array[Vector2i] = []
+			for dz in range(-1, 2):
+				for dx in range(-1, 2):
+					view_keys.append(c + Vector2i(dx, dz))
+			var blocks := _fields.frozen_view(view_keys)
 			if _worker_should_cancel():
 				_publish_worker_result({}, job)
 				continue
 			_set_startup_worker_progress(c, 0.67)
-			var core := Rect2(Vector2(c) * CHUNK_WORLD, Vector2.ONE * CHUNK_WORLD)
-			result["storeys"] = _storey_snapshot(c, region)
-			result["points"] = _point_snapshot(c, region)
-			_begin_worker_phase(c, &"terrain_mesh")
-			result["terrain"] = _mesher.compute_chunk(c, region, water_context,
-				features)
-			if _worker_should_cancel():
+			var terrain_result := {"kind": &"chunk", "chunk": c, "build_terrain": true,
+				"terrain_generation": int(job.terrain_generation), "build_features": false,
+				"feature_generation": int(job.feature_generation),
+				"storeys": _storey_snapshot(c, region), "points": _point_snapshot(c, region)}
+			_begin_worker_phase(c, &"tail_wait")
+			# The rest is pure per-chunk work on immutable inputs: run it on the
+			# thread pool and go on planning the next chunk.
+			_tail_slots.wait()
+			_mutex.lock()
+			var exiting := _exit
+			var mesher_index := -1 if exiting else int(_tail_free.pop_back())
+			if not exiting:
+				_tails_in_flight[c] = int(job.terrain_generation)
+			_mutex.unlock()
+			if exiting:
+				_tail_slots.post()
 				_publish_worker_result({}, job)
 				continue
-			if PROFILE_STREAMING:
-				for phase: String in result.terrain.profile:
-					_telemetry.timing(StringName("mesh/" + phase), result.terrain.profile[phase])
-				for metric: String in result.terrain.profile_counts:
-					_telemetry.count(StringName("mesh/" + metric), int(result.terrain.profile_counts[metric]))
-			_set_startup_worker_progress(c, 0.82)
-			_begin_worker_phase(c, &"water_mesh")
-			result["water"] = _water_builder.compute_chunk(_water, c, region,
-				water_context)
-			if _worker_should_cancel():
-				_publish_worker_result({}, job)
-				continue
-			_set_startup_worker_progress(c, 0.88)
-			_begin_worker_phase(c, &"dressing")
-			var structure_clearance: Array[FeatureGroundShape] = result.terrain.structure_clearance
-			if not structure_clearance.is_empty():
-				features = features.extended([],structure_clearance,
-					EnvironmentInstancePayload.new(),Rect2())
-			result["dressing"] = DressingField.compute(_dressing_program, world_seed,
-				core, region, water_context, features,result.terrain.cliff_terraces.ground_reservations)
-			if _grass_runtime_enabled:
-				_begin_worker_phase(c, &"grass_sampling")
-				# Embedded rocks' ground skirts carry their own grass support.
-				var grass_supports: Array = result.terrain.cliff_terraces.grass_supports.duplicate()
-				# (A neighbouring chunk's skirt reaching across the border is
-				# not included: its blades there root in the terrain beneath.)
-				for skirt: Dictionary in result.dressing.ground_skirts:
-					grass_supports.append(skirt.grass_support)
-				result["grass_sampling"] = GrassSamplingContext.detached(
-					region, water_context, features, grass_supports)
-			_set_startup_worker_progress(c, 0.97)
-			# FX data stays worker-side; nodes are built during integration.
-			_begin_worker_phase(c, &"biome_fx")
-			result["fx"] = _biome_fx_data(c, region, water_context)
-			_set_startup_worker_progress(c, 1.0)
+			if PARALLEL_TAILS:
+				var task := WorkerThreadPool.add_task(_run_tail.bind(terrain_result, region,
+					water_context, features, blocks, mesher_index), false, "terrain chunk tail")
+				_mutex.lock()
+				_tail_tasks[task] = c
+				_mutex.unlock()
+			else:
+				_run_tail(terrain_result, region, water_context, features, blocks, mesher_index)
+			result["build_terrain"] = false
 		_publish_worker_result(result, job)
+
+
+## Parallel chunk tails. The planning worker (one thread, owner of the
+## shared caches) prepares a chunk's region, water and a frozen 3x3 block view,
+## then hands the pure remainder (terrain mesh + cliff sheet, water skin,
+## dressing, grass sampling, biome fx; 0.6-40 s a chunk) to the thread pool
+## with a mesher of its own, and plans the next chunk meanwhile. Results land
+## in _done like any other; a chunk in flight is not requested again.
+## tests/harness/parallel_tail_check.gd proves the tail payloads identical to
+## serial ones while planning runs concurrently.
+const TAIL_THREADS := 3
+## Off: the planning worker runs each tail itself (same code, serial).
+static var PARALLEL_TAILS := true
+var _tail_meshers: Array[TerrainChunkMesher] = []
+var _tail_free: Array[int] = []
+var _tail_slots := Semaphore.new()
+var _tail_tasks: Dictionary = {}       # WorkerThreadPool task id -> chunk
+var _tails_in_flight: Dictionary = {}  # chunk -> terrain generation
+
+## Every WorkerThreadPool task must be waited for once to release it.
+func _reap_tail_tasks(wait_all := false) -> void:
+	_mutex.lock()
+	var ids: Array = _tail_tasks.keys()
+	_mutex.unlock()
+	for id: int in ids:
+		if wait_all or WorkerThreadPool.is_task_completed(id):
+			WorkerThreadPool.wait_for_task_completion(id)
+			_mutex.lock()
+			_tail_tasks.erase(id)
+			_mutex.unlock()
+
+func _run_tail(result: Dictionary, region: HeightfieldRegion,
+		water_context: WaterFieldContext, features: FeatureContext,
+		blocks: WorldFieldBlockCache, mesher_index: int) -> void:
+	var c: Vector2i = result.chunk
+	var mesher := _tail_meshers[mesher_index]
+	mesher.water_blocks = blocks
+	var started := Time.get_ticks_usec()
+	result["terrain"] = mesher.compute_chunk(c, region, water_context, features)
+	var mesh_done := Time.get_ticks_usec()
+	_set_startup_worker_progress(c, 0.82)
+	result["water"] = WaterSurfaceBuilder.new().compute_chunk(_water, c, region, water_context)
+	_set_startup_worker_progress(c, 0.88)
+	var dressing_features := features
+	var structure_clearance: Array[FeatureGroundShape] = result.terrain.structure_clearance
+	if not structure_clearance.is_empty():
+		dressing_features = features.extended([], structure_clearance,
+			EnvironmentInstancePayload.new(), Rect2())
+	var core := Rect2(Vector2(c) * CHUNK_WORLD, Vector2.ONE * CHUNK_WORLD)
+	result["dressing"] = DressingField.compute(_dressing_program, world_seed,
+		core, region, water_context, dressing_features,
+		result.terrain.cliff_terraces.ground_reservations)
+	if _grass_runtime_enabled:
+		# Embedded rocks' ground skirts carry their own grass support.
+		var grass_supports: Array = result.terrain.cliff_terraces.grass_supports.duplicate()
+		# (A neighbouring chunk's skirt reaching across the border is
+		# not included: its blades there root in the terrain beneath.)
+		for skirt: Dictionary in result.dressing.ground_skirts:
+			grass_supports.append(skirt.grass_support)
+		result["grass_sampling"] = GrassSamplingContext.detached(
+			region, water_context, dressing_features, grass_supports)
+	# FX data stays worker-side; nodes are built during integration.
+	result["fx"] = _biome_fx_data(c, region, water_context)
+	_set_startup_worker_progress(c, 1.0)
+	var finished := Time.get_ticks_usec()
+	_mutex.lock()
+	if PROFILE_STREAMING:
+		_telemetry.timing(&"tail/terrain_mesh", mesh_done - started)
+		_telemetry.timing(&"tail/job", finished - started)
+		for phase: String in result.terrain.profile:
+			_telemetry.timing(StringName("mesh/" + phase), result.terrain.profile[phase])
+		for metric: String in result.terrain.profile_counts:
+			_telemetry.count(StringName("mesh/" + metric), int(result.terrain.profile_counts[metric]))
+	_tails_in_flight.erase(c)
+	_tail_free.append(mesher_index)
+	_done.append(result)
+	_mutex.unlock()
+	_tail_slots.post()
 
 
 func _publish_worker_result(result: Dictionary, job: Dictionary) -> void:
@@ -759,6 +835,7 @@ func _process(_delta: float) -> void:
 			MAX_FEATURE_COLLISION_SHAPES_PER_FRAME,
 			MAX_DRESSING_BATCHES_PER_FRAME, MAX_FEATURE_COMMIT_USEC):
 		_accept_feature_ready(event)
+	_reap_tail_tasks()
 	_drain_results(centre)
 	_integrate_pending_terrain(centre)
 	if _grass_runtime_enabled:
@@ -1318,7 +1395,8 @@ func _request_job_locked(chunk: Vector2i, build_terrain: bool,
 		build_features: bool, priority_distance: int,
 		priority_tier: int = 3) -> bool:
 	_telemetry.count(&"chunk_requests")
-	if build_terrain and (_built.has(chunk) or _has_pending_terrain(chunk)):
+	if build_terrain and (_built.has(chunk) or _has_pending_terrain(chunk)
+			or int(_tails_in_flight.get(chunk, -1)) == int(_terrain_generation.get(chunk, 1))):
 		build_terrain = false
 	if build_features and (_feature_ready.has(chunk) or (_feature_queue != null and _feature_queue.has_chunk(chunk))):
 		build_features = false
@@ -1548,7 +1626,9 @@ func _exit_tree() -> void:
 	_exit = true
 	_mutex.unlock()
 	_sem.post()
+	# A worker waiting for a tail slot is released as running tails finish.
 	_thread.wait_to_finish()
+	_reap_tail_tasks(true)
 	# Pending entries are CPU-side payloads only; releasing the arrays and
 	# RefCounted samplers is sufficient and safe on the main thread.
 	_done.clear()

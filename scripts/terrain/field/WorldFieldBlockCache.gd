@@ -114,6 +114,21 @@ func water(key: Vector2i) -> WaterFieldContext:
 	_touch(key, entry)
 	return entry.water
 
+## A read-only copy holding just these blocks' regions and water, for work
+## that runs off the planning thread (parallel chunk tails): the shared cache
+## keeps building and evicting on the planning thread, the view never changes.
+## A query outside `keys` is a bug in the caller's halo; it is reported and
+## then computed (which touches the plans' own caches).
+func frozen_view(keys: Array[Vector2i]) -> WorldFieldBlockCache:
+	var view := WorldFieldBlockCache.new(_plan, _water_plan, _query_margin,
+		_shore_limit, maxi(keys.size(), 1))
+	for key: Vector2i in keys:
+		view._entries[key] = {"region": region(key), "water": water(key), "stamp": 0}
+	view._frozen = true
+	return view
+
+var _frozen := false
+
 func has_region(key: Vector2i) -> bool:
 	return _entries.has(key) and _entries[key].region != null
 
@@ -134,6 +149,8 @@ func clear() -> void:
 
 func _entry(key: Vector2i) -> Dictionary:
 	if not _entries.has(key):
+		if _frozen:
+			push_error("WorldFieldBlockCache frozen view missed block %s" % key)
 		_evict_if_full()
 		_entries[key] = {"region": null, "water": null, "stamp": 0}
 	return _entries[key]
