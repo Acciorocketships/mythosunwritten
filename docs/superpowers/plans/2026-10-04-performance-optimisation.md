@@ -129,6 +129,74 @@ them.
   3,200 origins, 0.80 -> 0.49 ms/frame.
 - `06183069d` side-effecting asserts; `profile_chunk_commit.gd`.
 
+## Status after implementation (2026-10-05)
+
+The owner asked for every plan item, and for C# where it helps. Live numbers
+below are windowed walks (travel_profile, 300 s, seed 2697992464) on the
+shared working tree, i.e. WITH the terrain session's uncommitted 480 m
+amplification (more cliffs, slower regions), so compare rows with each
+other, not with the e1e738d1c findings above.
+
+| Run | Startup to playable | Walked in 300 s | Frozen | Walk frame p99 / max |
+| --- | --- | --- | --- | --- |
+| standard editor, before this session's main-thread fixes (walk2, at e1e738d1c) | 889 s | 610 m | most of it | 10.1 / 1036 ms |
+| standard editor, all GDScript-side fixes (walk3) | 1098 s* | 407 m | 158 s | 6.5 / 126 ms |
+| .NET editor, native heights (walk4) | 415 s | 771 m | 211 s | 7.6 / 1232 ms |
+| .NET, + grid kernels, warm-up, planning cache cold (walk5) | 374 s | 828 m | 202 s | 8.4 / 438 ms |
+| .NET, same, planning cache warm (walk6) | **101 s** | 872 m | 191 s | 29.6 / 1121 ms |
+
+\* walk3 already ran on the amplified terrain; walk2 did not.
+
+Landed (all output-identical where it touches terrain; each commit lists its proof):
+
+| Plan task | Commit(s) | Result |
+| --- | --- | --- |
+| startup decode once / in parallel | 760f32e97, b2c7fa128 | `_ready` 34-39 s -> 7-8 s; headless loads stay serial (the dummy renderer's RIDs are not thread-safe) |
+| queue sort once per batch | 760f32e97 | chunk crossing 50-154 ms -> 3.4-4 ms |
+| priority refresh | 3e407b870 | 4.1 -> 1.9 ms per 8 m |
+| grass desired tiles | 0a55d1293 | 0.80 -> 0.49 ms per frame |
+| side-effecting asserts (release bug) | 06183069d | five call sites fixed |
+| Task 5: heightmap collision | 6fd9719c1 | wall-free tiles 0.06 ms vs 15-25 ms trimesh; 9,000-ray equivalence test |
+| Task 5: staged integration | c5d5ef16d | a chunk spreads over frames under 6 ms (single steps up to ~70 ms) |
+| Task 4: parallel chunk tails | 91dc3b364 | 3 pool threads; tails identical to serial (parallel_tail_check); 6 tails 80 s -> 44 s |
+| Task 8: Meadow textures | 540db0f38 | 2048^2 BC7; VRAM ~1.8 GB -> ~110 MB; 20 textures load in 51 ms |
+| Task 1: C# height field | 64f34b913 | bit-identical (parity gate per seed); cold compute_region ~25x; test_heightfield_plan 543 s -> 43 s |
+| C# cliff-sheet grid kernels | 5495f3be2 (+ 4 dispatch lines in CliffSlopeEnvelope.gd, landing with the terrain session's commit) | envelope/blur 14-48x, bit-identical |
+| Task 6: render warm-up | 5495f3be2 | worst first-use frame 1500 -> 207 ms (A/B, same chunks) |
+| PriorityQueue (water fill) | a83fb376a | identical pops, 1.7x |
+| Task 3: planning cache | 7a4d0300b | block water from disk; identical results (digest); cold 374 s -> warm 101 s startup |
+| WaterPlan.carve_at | patch handed to the terrain session (its file) | identical on 15,320 points, 1.4x warm |
+
+Not done / still open:
+
+- Streaming still cannot keep up with a walk in this (amplified, cliff-heavy)
+  terrain: ~190-200 s of 300 s frozen even with native heights and parallel
+  tails. Remaining per-chunk costs: the cliff sheet (`CliffSlopeField.solid`
+  10-13 s on cliffy chunks; the native kernels take about half of
+  `CliffSlopeEnvelope.build`, the rest is GDScript in the terrain session's
+  envelope code), new hydraulic water domains (GDScript `WaterField` fill),
+  and village solves (`feature_villages`, 130 s over a walk). Next steps: port
+  more of the cliff envelope and the water fill to C# (same parity-gate
+  pattern), and/or the design levers in Task 9 (CHUNK_RADIUS 3 -> 2 halves
+  the streaming work).
+- Startup attach of the first chunk can take 0.2-3.2 s (step 10/10: attach +
+  biome FX build), under the loading screen. One 1.1 s walk frame right after
+  the loading screen is not from the streamer (likely first draws); not yet
+  isolated.
+- Integration steps over the 6 ms budget (dressing collision, cliff pieces)
+  make p99 13-15 ms on frames that integrate; split those steps further.
+- `FeatureProgram.compile` (~5 s of `_ready`) is unchanged: overlapping it
+  with the prefetch raced the renderer; caching the compiled program is the
+  safe route.
+- AGENTS.md entry for the native path, planning cache and profiling tools:
+  not written (AGENTS.md carries the terrain session's uncommitted edits).
+
+To use the native path: run the game with /Applications/Godot_mono.app
+(Godot 4.5.1 .NET) after `dotnet build Story.csproj`. The standard editor
+keeps working and simply uses the GDScript paths. After editing the
+GDScript height field or the three envelope kernels, the native code turns
+itself off (with a warning naming the files) until the C# mirror is re-synced.
+
 ## Plan (larger or riskier work)
 
 Ordered by expected impact per unit of risk. Owner of the heightfield /
