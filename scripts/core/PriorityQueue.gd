@@ -49,29 +49,42 @@ func _rebuild_heap() -> void:
 		_bubble_down(i)
 		i -= 1
 
-func _bubble_up(i):
+## Sift with a hole: the moving entry's priority is read once and parents
+## (children) shift into the hole. The comparisons are the swap version's,
+## so the heap ends identical; this was the hydraulic fill's hottest code.
+func _bubble_up(i: int) -> void:
+	var entry: Dictionary = heap[i]
+	var priority: float = entry["priority"]
 	while i > 0:
-		var p = int((i - 1) / 2)
-		if heap[i]["priority"] >= heap[p]["priority"]:
+		var p := int((i - 1) / 2)
+		var parent: Dictionary = heap[p]
+		if priority >= float(parent["priority"]):
 			break
-		var tmp = heap[i]
-		heap[i] = heap[p]
-		heap[p] = tmp
+		heap[i] = parent
 		i = p
+	heap[i] = entry
 
-func _bubble_down(i):
-	var n = heap.size()
+func _bubble_down(i: int) -> void:
+	var n: int = heap.size()
+	var entry: Dictionary = heap[i]
+	var priority: float = entry["priority"]
 	while true:
-		var l = i * 2 + 1
-		var r = l + 1
-		var smallest = i
-		if l < n and heap[l]["priority"] < heap[smallest]["priority"]:
+		var l := i * 2 + 1
+		if l >= n:
+			break
+		var smallest := i
+		var smallest_priority := priority
+		var left_priority: float = heap[l]["priority"]
+		if left_priority < smallest_priority:
 			smallest = l
-		if r < n and heap[r]["priority"] < heap[smallest]["priority"]:
-			smallest = r
+			smallest_priority = left_priority
+		var r := l + 1
+		if r < n:
+			var right_priority: float = heap[r]["priority"]
+			if right_priority < smallest_priority:
+				smallest = r
 		if smallest == i:
 			break
-		var tmp = heap[i]
 		heap[i] = heap[smallest]
-		heap[smallest] = tmp
 		i = smallest
+	heap[i] = entry
