@@ -1,0 +1,70 @@
+{
+	"frames": [
+		{
+			"camera": "Transform3D(0.7719302, -0.25179815, 0.58371353, 0, 0.91821116, 0.39609134, -0.63570726, -0.30575487, 0.70879495, -163.99945, 21.194145, -206.00076)",
+			"frame": 0,
+			"image": "/Users/ryko/.codex/worktrees/a66d/story/docs/qa/2026-10-05-lighting-trials/world-twilight-final-orbit-000.png"
+		},
+		{
+			"camera": "Transform3D(0.6823499, -0.2895529, 0.671236, 0, 0.91821116, 0.39609125, -0.73102576, -0.27027282, 0.6265413, -159.8011, 21.194145, -209.94637)",
+			"frame": 15,
+			"image": "/Users/ryko/.codex/worktrees/a66d/story/docs/qa/2026-10-05-lighting-trials/world-twilight-final-orbit-015.png"
+		},
+		{
+			"camera": "Transform3D(0.58109426, -0.32235354, 0.7472735, 0, 0.91821116, 0.39609134, -0.8138363, -0.23016642, 0.5335672, -156.15369, 21.194145, -214.40622)",
+			"frame": 30,
+			"image": "/Users/ryko/.codex/worktrees/a66d/story/docs/qa/2026-10-05-lighting-trials/world-twilight-final-orbit-030.png"
+		},
+		{
+			"camera": "Transform3D(0.46989575, -0.3496385, 0.8105251, 0, 0.91821116, 0.3960913, -0.88272196, -0.18612163, 0.4314635, -153.11958, 21.194145, -219.304)",
+			"frame": 45,
+			"image": "/Users/ryko/.codex/worktrees/a66d/story/docs/qa/2026-10-05-lighting-trials/world-twilight-final-orbit-045.png"
+		},
+		{
+			"camera": "Transform3D(0.3506573, -0.370941, 0.85990834, 0, 0.91821116, 0.39609128, -0.9365039, -0.1388923, 0.32197747, -150.75073, 21.194145, -224.55591)",
+			"frame": 60,
+			"image": "/Users/ryko/.codex/worktrees/a66d/story/docs/qa/2026-10-05-lighting-trials/world-twilight-final-orbit-060.png"
+		},
+		{
+			"camera": "Transform3D(0.22541946, -0.3858967, 0.89457804, 0, 0.9182111, 0.3960914, -0.9742618, -0.08928671, 0.20698266, -149.08768, 21.194145, -230.07207)",
+			"frame": 75,
+			"image": "/Users/ryko/.codex/worktrees/a66d/story/docs/qa/2026-10-05-lighting-trials/world-twilight-final-orbit-075.png"
+		},
+		{
+			"camera": "Transform3D(0.09632431, -0.3942495, 0.9139415, 0, 0.9182111, 0.39609134, -0.99535, -0.038153224, 0.08844606, -148.15883, 21.194145, -235.75812)",
+			"frame": 90,
+			"image": "/Users/ryko/.codex/worktrees/a66d/story/docs/qa/2026-10-05-lighting-trials/world-twilight-final-orbit-090.png"
+		},
+		{
+			"camera": "Transform3D(-0.034419097, -0.39585665, 0.9176671, 0, 0.91821116, 0.3960913, -0.9994075, 0.013633107, -0.031604003, -147.98012, 21.194145, -241.51677)",
+			"frame": 105,
+			"image": "/Users/ryko/.codex/worktrees/a66d/story/docs/qa/2026-10-05-lighting-trials/world-twilight-final-orbit-105.png"
+		},
+		{
+			"camera": "Transform3D(-0.1645737, -0.39069048, 0.90569115, 0, 0.91821116, 0.39609125, -0.9863648, 0.0651862, -0.1511134, -148.55458, 21.194145, -247.24948)",
+			"frame": 120,
+			"image": "/Users/ryko/.codex/worktrees/a66d/story/docs/qa/2026-10-05-lighting-trials/world-twilight-final-orbit-120.png"
+		},
+		{
+			"camera": "Transform3D(-0.29191193, -0.3788396, 0.87821865, 0, 0.91821116, 0.39609128, -0.9564452, 0.11562377, -0.26803678, -149.8724, 21.194145, -252.85815)",
+			"frame": 135,
+			"image": "/Users/ryko/.codex/worktrees/a66d/story/docs/qa/2026-10-05-lighting-trials/world-twilight-final-orbit-135.png"
+		},
+		{
+			"camera": "Transform3D(-0.41425562, -0.36050674, 0.8357196, 0, 0.9182111, 0.39609137, -0.9101606, 0.16408306, -0.38037413, -151.91104, 21.194145, -258.24683)",
+			"frame": 150,
+			"image": "/Users/ryko/.codex/worktrees/a66d/story/docs/qa/2026-10-05-lighting-trials/world-twilight-final-orbit-150.png"
+		},
+		{
+			"camera": "Transform3D(-0.5295117, -0.33600527, 0.778921, 0, 0.91821116, 0.39609128, -0.84830266, 0.20973495, -0.48620355, -154.63559, 21.194145, -263.32333)",
+			"frame": 165,
+			"image": "/Users/ryko/.codex/worktrees/a66d/story/docs/qa/2026-10-05-lighting-trials/world-twilight-final-orbit-165.png"
+		},
+		{
+			"camera": "Transform3D(-0.6357074, -0.30575487, 0.7087949, 0, 0.91821116, 0.39609137, -0.7719302, 0.25179818, -0.5837136, -157.99945, 21.194145, -268.00076)",
+			"frame": 180,
+			"image": "/Users/ryko/.codex/worktrees/a66d/story/docs/qa/2026-10-05-lighting-trials/world-twilight-final-orbit-180.png"
+		}
+	],
+	"freeze_time": 12.0
+}

@@ -28,7 +28,7 @@ const LIGHTING := {
 # sunlight scattering. Spatial shapes blend on the canonical fog lattice.
 const MIST := {
 	&"meadow": [5.0, 24.0, 0.08, 0.10, 0.00018, 1.2],
-	&"deep_forest": [4.5, 30.0, 0.24, 0.12, 0.00040, 2.2],
+	&"deep_forest": [4.5, 30.0, 0.48, 0.035, 0.00040, 4.5],
 	&"highland": [3.0, 36.0, 0.08, 0.10, 0.00032, 1.0],
 	&"blossom_grove": [6.0, 24.0, 0.20, 0.48, 0.00032, 1.5],
 	&"twilight_marsh": [2.8, 14.0, 0.12, 0.42, 0.00055, 1.1],

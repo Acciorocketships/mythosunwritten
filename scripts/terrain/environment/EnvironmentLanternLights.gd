@@ -2,7 +2,7 @@ extends RefCounted
 
 ## Main-thread lighting semantics for the finite native lantern families.
 ## Positions are in baked visual coordinates; the placement transform applies
-## once. Lights have world-metre ranges, do not cast shadows, and fade at distance.
+## once. Lights have world-metre ranges, use the shared shadow budget, and fade at distance.
 const SOURCES := {
 	&"sfv.light_pole.001": [Vector3(-0.007571,4.495525,0.9382445),18.0,1.8],
 	&"lpfv.fabric.prop.lantern.table.01": [Vector3(0.0,0.100772,0.0),12.0,1.1],
@@ -17,11 +17,13 @@ static func attach(parent: Node3D, asset_id: StringName, placements: Array) -> v
 		light.name = "LanternLight"
 		light.position = pose*Vector3(source[0])
 		light.light_color = Color("ffd19a")
-		light.light_energy = source[2]
+		light.light_energy = source[2] * 2.3
 		light.omni_range = source[1]
-		light.omni_attenuation = 1.2
+		light.omni_attenuation = 1.6
 		light.shadow_enabled = false
-		light.light_volumetric_fog_energy = 0.35
+		light.light_volumetric_fog_energy = 2.0
+		light.add_to_group("atmosphere_local_light")
+		light.set_meta("atmosphere_shadow_candidate", true)
 		light.distance_fade_enabled = true
 		light.distance_fade_begin = 55.0
 		light.distance_fade_length = 25.0

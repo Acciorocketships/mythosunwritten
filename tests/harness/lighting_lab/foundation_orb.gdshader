@@ -11,6 +11,5 @@ void fragment() {
 	// A luminous interior with a readable round surface under a fixed soft key.
 	float key = pow(max(dot(normalize(world_normal),normalize(vec3(-0.4,0.8,0.45))),0.0),1.5);
 	vec3 warm = orb_color.rgb;
-	ALBEDO = mix(warm, vec3(1.0), 0.12) * (5.0 + 3.0 * key);
-	// Unshaded output uses ALBEDO radiance; EMISSION alone does not bloom here.
+	ALBEDO = warm * (0.35 + 0.45*key) + mix(warm,vec3(1.0),0.45) * (0.4 + 0.5*key);
 }

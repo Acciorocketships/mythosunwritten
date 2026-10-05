@@ -1,0 +1,21 @@
+{
+	"biome_weights": {
+		"amber_heath": 0.029764790355176,
+		"blossom_grove": 0.00710283551381379,
+		"deep_forest": 0.0,
+		"highland": 0.0,
+		"jade_wetlands": 0.0,
+		"meadow": 0.00329346861578473,
+		"twilight_marsh": 0.959838905515225
+	},
+	"camera_fov": 52.0,
+	"camera_transform": "Transform3D(0.7719302, -0.25179815, 0.58371353, 0, 0.91821116, 0.39609134, -0.63570726, -0.30575487, 0.70879495, -163.99945, 21.194145, -206.00076)",
+	"frozen_replay": true,
+	"grass_density_scale": 1.0,
+	"position": "Vector3(-191.99945, 0.19414543, -240.00076)",
+	"quality": 1,
+	"resolution": "Vector2i(1920, 1080)",
+	"seed": 2697992464,
+	"source": "/tmp/story-lighting/moonfen-current.scn",
+	"visual_time": 12.0
+}

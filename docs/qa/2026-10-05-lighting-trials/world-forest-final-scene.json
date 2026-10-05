@@ -1,0 +1,21 @@
+{
+	"biome_weights": {
+		"amber_heath": 0.0,
+		"blossom_grove": 0.0,
+		"deep_forest": 1.0,
+		"highland": 0.0,
+		"jade_wetlands": 0.0,
+		"meadow": 0.0,
+		"twilight_marsh": 0.0
+	},
+	"camera_fov": 52.0,
+	"camera_transform": "Transform3D(0.7719302, -0.25179815, 0.58371353, 0, 0.91821116, 0.39609134, -0.63570726, -0.30575487, 0.70879495, -632, 38.45297, 573)",
+	"frozen_replay": true,
+	"grass_density_scale": 1.0,
+	"position": "Vector3(-660, 17.452969, 539)",
+	"quality": 1,
+	"resolution": "Vector2i(1920, 1080)",
+	"seed": 2697992464,
+	"source": "/tmp/story-lighting/forest-dry-live.scn",
+	"visual_time": 12.0
+}

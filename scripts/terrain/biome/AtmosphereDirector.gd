@@ -11,6 +11,7 @@ extends Node
 ## High adds screen-space bounce; SDFGI is an explicit review experiment.
 @export_enum("Economical", "Standard", "High") var quality: int = 1
 
+var _light_budget: Node
 var _underwater:Node
 var _frontier: Node
 
@@ -22,11 +23,14 @@ const SUN_COLOR := Color("ffe3be")
 const SUN_ENERGY := 1.2
 const SUN_ANGLE_DEG := Vector3(-32.0, -110.0, 0.0)
 const SUN_SHADOW_OPACITY := 0.82
-const GLOW_BLOOM := 0.035
-const GLOW_HDR_THRESHOLD := 1.15
+const GLOW_BLOOM := 0.0
+const GLOW_HDR_THRESHOLD := 1.4
 const ECONOMICAL_GRASS_DENSITY := 0.65
 
 func _ready() -> void:
+	process_priority = 100
+	_light_budget = preload("res://scripts/terrain/biome/LocalLightBudget.gd").new()
+	add_child(_light_budget)
 	_underwater=preload("res://scripts/camera/UnderwaterView.gd").new()
 	add_child(_underwater)
 	_frontier = preload("res://scripts/terrain/diagnostics/LoadingFrontierFog.gd").new()
@@ -46,17 +50,22 @@ func _apply_grade() -> void:
 	env.glow_hdr_threshold = GLOW_HDR_THRESHOLD
 	env.glow_intensity = 0.8
 	env.glow_strength = 1.1
-	env.glow_normalized = true
+	env.glow_normalized = false
+	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_ADDITIVE
+	for i in 7: env.set_glow_level(i, [0.4, 0.9, 0.65, 0.3, 0.12, 0.0, 0.0][i])
+	env.adjustment_enabled = true
+	env.adjustment_saturation = 1.10
+	env.adjustment_contrast = 1.025
 	env.fog_enabled = true
 	env.fog_density = 0.00035
 	env.fog_light_color = Color("b4c9d1")
 	env.fog_sky_affect = 0.12
 	env.volumetric_fog_enabled = true
 	env.volumetric_fog_density = 0.0
-	env.volumetric_fog_length = 256.0
+	env.volumetric_fog_length = 144.0
 	env.volumetric_fog_anisotropy = 0.45
 	env.volumetric_fog_detail_spread = 0.65
-	env.volumetric_fog_ambient_inject = 0.45
+	env.volumetric_fog_ambient_inject = 0.20
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color("bacede")
 	env.ambient_light_energy = 0.65
@@ -78,13 +87,22 @@ func _apply_grade() -> void:
 	# Wide PCF preserves softened contact shadows without the per-fragment
 	# blocker search of angular PCSS across the dense grass carpet.
 	sun.light_angular_distance = 0.0
-	sun.shadow_blur = 2.0
+	sun.shadow_blur = 1.5
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	sun.directional_shadow_blend_splits = true
+	sun.directional_shadow_split_1 = 0.08
+	sun.directional_shadow_split_2 = 0.22
+	sun.directional_shadow_split_3 = 0.5
 	sun.light_volumetric_fog_energy = 1.1
 	# Leave the scene sharp until the camera redesign establishes a focus model.
 	camera.attributes = null
 	set_quality(quality)
 
 func _process(dt: float) -> void:
+	if is_instance_valid(_light_budget): _light_budget.update_lights(camera, quality)
+	for wisp in get_tree().get_nodes_in_group("atmosphere_mist_wisp"):
+		if camera != null and wisp.get_world_3d() == camera.get_world_3d():
+			wisp.visible = quality >= 1
 	if not Helper.is_headless() and streamer != null and player != null:
 		_underwater.camera=camera
 		_underwater.world_seed=streamer.world_seed
