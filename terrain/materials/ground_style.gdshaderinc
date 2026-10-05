@@ -2,7 +2,7 @@
 #define TACTICAL_TERRAIN_MATERIAL
 global uniform sampler2D biome_ground_a;
 global uniform sampler2D biome_ground_b;
-global uniform vec2 biome_ground_origin;
+#include "res://terrain/materials/biome_surface.gdshaderinc"
 global uniform sampler2D biome_ground_color;
 float ground_hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);

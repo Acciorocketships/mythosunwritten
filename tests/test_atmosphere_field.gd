@@ -7,6 +7,7 @@ func test_neighbouring_fog_chunks_have_identical_edges() -> void:
 	var east := BiomeAtmosphereField.compute(Vector2i.RIGHT, region, plan.world_seed)
 	for z in BiomeAtmosphereField.GRID:
 		assert_eq(west.fog[z * 13 + 12], east.fog[z * 13], "shared extinction and hue")
+		assert_eq(west.mist_shape[z * 13 + 12], east.mist_shape[z * 13], "shared vertical shape and glow")
 		assert_almost_eq(west.ground[z * 13 + 12], east.ground[z * 13], 0.00001, "shared ground datum")
 
 func test_atmosphere_is_resource_free_deterministic_and_grounded() -> void:
@@ -57,7 +58,8 @@ func test_every_new_biome_has_a_distinct_name_and_complete_ecology() -> void:
 func test_scrolling_ground_lookup_preserves_overlapping_world_samples() -> void:
 	var first := BiomeGroundMap.samples(Vector2(-1536, -1536), 2697992464)
 	var next := BiomeGroundMap.samples(Vector2(-768, -1536), 2697992464)
-	for layer in 3:
+	assert_eq(first.size(), 4, "Material response shares the canonical scrolling field")
+	for layer in first.size():
 		assert_eq(first[layer].size(), 65 * 65)
 		for z in range(0, 65, 8):
 			for x in range(0, 49, 8):
@@ -87,6 +89,8 @@ func test_wetland_particles_float_above_water_instead_of_the_lake_bed() -> void:
 	var region := plan.compute_region(4, 4, 14)
 	var data := BiomeAtmosphereField.compute(Vector2i.ZERO, region,
 		plan.world_seed, RaisedWater.new())
+	for height: float in data.ground:
+		assert_almost_eq(height, 40.0, 0.0001, "Mist rests on the water surface, not the submerged bed")
 	var checked := 0
 	for recipe: StringName in data.points:
 		for point: Vector3 in data.points[recipe]:

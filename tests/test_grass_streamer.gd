@@ -34,6 +34,46 @@ func test_intersection_ring_has_no_square_holes_inside_the_fade() -> void:
 	assert_true(all_covered,
 		"every point inside the fade belongs to a requested tile")
 
+func test_quality_changes_restore_grass_without_rebuilding_buffers() -> void:
+	var fixture := _program_and_cache()
+	var grass := GrassStreamer.new(fixture.program, fixture.cache)
+	assert_true(grass.has_method("set_density_scale"), "Grass quality needs a reversible render-only density control")
+	if not grass.has_method("set_density_scale"): return
+	var director := AtmosphereDirector.new()
+	director.streamer = FieldTerrainStreamer.new()
+	director.streamer._grass_streamer = grass
+	director.set_quality(0)
+	grass.begin_frame(Vector2(12, 12))
+	var generation := grass.mark_requested(Vector2i.ZERO)
+	var payload := _payload(fixture.program)
+	var original := payload.batches.duplicate(true)
+	assert_true(grass.accept_result(Vector2i.ZERO, generation, payload))
+	var committed: Array[Dictionary] = []
+	for frame in 2: committed.append_array(grass.drain_commits())
+	assert_eq(committed.size(), 1)
+	if committed.is_empty():
+		director.streamer.free()
+		director.free()
+		return
+	var node: Node3D = committed[0].node
+	add_child_autofree(node)
+	for child: MultiMeshInstance3D in node.get_children():
+		var mesh := child.multimesh
+		var count := mesh.instance_count
+		assert_eq(mesh.visible_instance_count, ceili(count * 0.65), "New tiles inherit economical density")
+		director.set_quality(1)
+		assert_same(child.multimesh, mesh, "Quality changes keep the existing GPU buffer")
+		assert_eq(mesh.visible_instance_count, count, "Standard restores every near instance")
+		director.set_quality(0)
+		grass.begin_frame(Vector2(90, 12))
+		var density := GrassStreamer.density(GrassStreamer.distance_to_tile(Vector2(90, 12), Vector2i.ZERO))
+		assert_eq(mesh.visible_instance_count, ceili(count * density * 0.65), "Moving LOD retains the quality cap")
+		director.set_quality(2)
+		assert_eq(mesh.visible_instance_count, ceili(count * density), "High restores the correct moving LOD")
+	assert_eq(payload.batches, original, "Rendering quality never rewrites deterministic worker payloads")
+	director.streamer.free()
+	director.free()
+
 func test_density_endpoints_and_tile_distance_are_exact() -> void:
 	assert_eq(GrassStreamer.density(0.0), 1.0)
 	assert_eq(GrassStreamer.density(GrassStreamer.FULL_RADIUS), 1.0)

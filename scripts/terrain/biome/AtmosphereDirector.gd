@@ -8,6 +8,8 @@ extends Node
 @export var camera: Camera3D
 @export var streamer: FieldTerrainStreamer
 @export var player: Node3D
+## High adds screen-space bounce; SDFGI is an explicit review experiment.
+@export_enum("Economical", "Standard", "High") var quality: int = 1
 
 var _underwater:Node
 var _frontier: Node
@@ -18,10 +20,11 @@ const MOOD_RESPONSE_SECONDS := 3.0
 
 const SUN_COLOR := Color("ffe3be")
 const SUN_ENERGY := 1.2
-const SUN_ANGLE_DEG := Vector3(-32.0, -28.0, 0.0)
-const SUN_SHADOW_OPACITY := 0.65
+const SUN_ANGLE_DEG := Vector3(-32.0, -110.0, 0.0)
+const SUN_SHADOW_OPACITY := 0.82
 const GLOW_BLOOM := 0.035
 const GLOW_HDR_THRESHOLD := 1.15
+const ECONOMICAL_GRASS_DENSITY := 0.65
 
 func _ready() -> void:
 	_underwater=preload("res://scripts/camera/UnderwaterView.gd").new()
@@ -50,7 +53,8 @@ func _apply_grade() -> void:
 	env.fog_sky_affect = 0.12
 	env.volumetric_fog_enabled = true
 	env.volumetric_fog_density = 0.0
-	env.volumetric_fog_length = 512.0
+	env.volumetric_fog_length = 256.0
+	env.volumetric_fog_anisotropy = 0.45
 	env.volumetric_fog_detail_spread = 0.65
 	env.volumetric_fog_ambient_inject = 0.45
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
@@ -69,6 +73,7 @@ func _apply_grade() -> void:
 	sun.light_color = SUN_COLOR
 	sun.light_energy = SUN_ENERGY
 	sun.rotation_degrees = SUN_ANGLE_DEG
+	RenderingServer.global_shader_parameter_set("atmosphere_sun_ray", -sun.basis.z)
 	sun.shadow_opacity = SUN_SHADOW_OPACITY
 	# Wide PCF preserves softened contact shadows without the per-fragment
 	# blocker search of angular PCSS across the dense grass carpet.
@@ -77,14 +82,19 @@ func _apply_grade() -> void:
 	sun.light_volumetric_fog_energy = 1.1
 	# Leave the scene sharp until the camera redesign establishes a focus model.
 	camera.attributes = null
+	set_quality(quality)
 
 func _process(dt: float) -> void:
 	if not Helper.is_headless() and streamer != null and player != null:
 		_underwater.camera=camera
 		_underwater.world_seed=streamer.world_seed
-		_underwater.update_view()
 		_ground_map.update(player.global_position, streamer.world_seed)
+		# Grass may be created after the director's initial grade. The setter is
+		# idempotent and changes only draw counts, never worker-generated payloads.
+		if streamer._grass_streamer != null:
+			streamer._grass_streamer.set_density_scale(ECONOMICAL_GRASS_DENSITY if quality == 0 else 1.0)
 		_update_mood(dt, Helper.biome_weights5(player.global_position,streamer.world_seed))
+		_underwater.update_view()
 		_frontier.update_view(camera, streamer._built, environment_node.environment.fog_light_color)
 
 func _update_mood(dt: float, target: Dictionary) -> void:
@@ -102,7 +112,7 @@ func _apply_mood(mood: Dictionary) -> void:
 	env.ambient_light_energy = mood[&"ambient_energy"]
 	env.glow_intensity = mood[&"glow_intensity"]
 	env.fog_light_color = mood[&"fog_color"]
-	env.fog_density = float(mood[&"fog_density"])*0.035
+	env.fog_density = float(mood[&"haze_density"])
 	var sky := env.sky.sky_material as ProceduralSkyMaterial
 	sky.sky_top_color = mood[&"sky_top"]
 	sky.sky_horizon_color = mood[&"sky_horizon"]
@@ -110,3 +120,44 @@ func _apply_mood(mood: Dictionary) -> void:
 	sky.ground_bottom_color = mood[&"ambient_color"] * 0.5
 	sun.light_color = mood[&"sun_color"]
 	sun.light_energy = mood[&"sun_energy"]
+	sun.light_volumetric_fog_energy = mood[&"sun_scattering"]
+	var top := (mood[&"sky_top"] as Color).srgb_to_linear()
+	var horizon := (mood[&"sky_horizon"] as Color).srgb_to_linear()
+	RenderingServer.global_shader_parameter_set("atmosphere_sky_top", Vector4(top.r, top.g, top.b, 1.0))
+	RenderingServer.global_shader_parameter_set("atmosphere_sky_horizon", Vector4(horizon.r, horizon.g, horizon.b, 1.0))
+	var gain := water_light_gain(mood)
+	RenderingServer.global_shader_parameter_set("atmosphere_water_gain", gain)
+	if is_instance_valid(_underwater):
+		_underwater.light_gain = gain
+
+func set_quality(level: int) -> void:
+	quality = clampi(level, 0, 2)
+	RenderingServer.global_shader_parameter_set("canopy_shadow_detail", 1.0 if quality >= 1 else 0.0)
+	var grass_density := ECONOMICAL_GRASS_DENSITY if quality == 0 else 1.0
+	RenderingServer.global_shader_parameter_set(&"grass_density_scale", grass_density)
+	if streamer != null and streamer._grass_streamer != null:
+		streamer._grass_streamer.set_density_scale(grass_density)
+	if environment_node == null or environment_node.environment == null:
+		return
+	var env := environment_node.environment
+	env.volumetric_fog_enabled = quality >= 1
+	env.ssao_enabled = quality >= 1
+	env.ssil_enabled = quality >= 2
+	env.ssil_intensity = 0.45
+	env.ssil_radius = 3.0
+	env.sdfgi_enabled = false
+	if camera != null and camera.is_inside_tree():
+		camera.get_viewport().msaa_3d = [Viewport.MSAA_DISABLED, Viewport.MSAA_2X, Viewport.MSAA_4X][quality]
+		camera.get_viewport().screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if quality == 0 else Viewport.SCREEN_SPACE_AA_DISABLED
+
+static func water_light_gain(mood: Dictionary) -> float:
+	# Only water's authored scattering/foam is lit here. Its screen transmission
+	# already contains scene lighting and must never be multiplied a second time.
+	return clampf((float(mood[&"ambient_energy"]) + float(mood[&"sun_energy"]) * 0.3) / 1.1, 0.08, 1.5)
+
+func _exit_tree() -> void:
+	RenderingServer.global_shader_parameter_set("canopy_shadow_detail", 0.0)
+	RenderingServer.global_shader_parameter_set(&"grass_density_scale", 1.0)
+	RenderingServer.global_shader_parameter_set("atmosphere_sky_top", Vector4.ZERO)
+	RenderingServer.global_shader_parameter_set("atmosphere_sky_horizon", Vector4.ZERO)
+	RenderingServer.global_shader_parameter_set("atmosphere_water_gain", 1.0)

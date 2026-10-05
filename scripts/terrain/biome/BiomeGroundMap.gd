@@ -15,6 +15,7 @@ static func samples(origin: Vector2, seed: int) -> Array[PackedColorArray]:
 	var a := PackedColorArray()
 	var b := PackedColorArray()
 	var c := PackedColorArray()
+	var surface := PackedColorArray()
 	for z in SIDE:
 		for x in SIDE:
 			var point := origin + Vector2(x, z) * STEP
@@ -22,7 +23,8 @@ static func samples(origin: Vector2, seed: int) -> Array[PackedColorArray]:
 			a.append(Color(w[&"deep_forest"], w[&"highland"], w[&"blossom_grove"], w[&"twilight_marsh"]))
 			b.append(Color(w[&"amber_heath"], w[&"jade_wetlands"], w[&"meadow"], 1.0))
 			c.append(BiomeRegistry.substrate_color(w))
-	return [a, b, c]
+			surface.append(BiomeRegistry.surface_response(w))
+	return [a, b, c, surface]
 
 func update(pos: Vector3, seed: int) -> void:
 	var centre := Vector2(roundf(pos.x / SCROLL), roundf(pos.z / SCROLL)) * SCROLL
@@ -33,7 +35,7 @@ func update(pos: Vector3, seed: int) -> void:
 	var origin := centre - Vector2.ONE * SPAN * 0.5
 	var values := samples(origin, seed)
 	var textures: Array[ImageTexture] = []
-	for layer in 3:
+	for layer in values.size():
 		var pixels := Image.create_empty(SIDE, SIDE, false, Image.FORMAT_RGBAF)
 		for i in SIDE * SIDE:
 			pixels.set_pixel(i % SIDE, i / SIDE, values[layer][i])
@@ -41,6 +43,7 @@ func update(pos: Vector3, seed: int) -> void:
 	RenderingServer.global_shader_parameter_set("biome_ground_a", textures[0])
 	RenderingServer.global_shader_parameter_set("biome_ground_b", textures[1])
 	RenderingServer.global_shader_parameter_set("biome_ground_color", textures[2])
+	RenderingServer.global_shader_parameter_set("biome_surface_map", textures[3])
 	RenderingServer.global_shader_parameter_set("biome_ground_origin", origin)
 	# RenderingServer retains global texture references, but keep the resources
 	# alive explicitly so the bindings cannot outlive their owning ImageTextures.

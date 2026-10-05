@@ -194,15 +194,18 @@ static func _emitter(recipe: StringName, density: float, surf_lo := 0.0, surf_hi
 static func build_field(data: Dictionary) -> Node3D:
 	var root := Node3D.new()
 	root.name = "BiomeFx"
-	var fog_image := Image.create_empty(13, 13, false, Image.FORMAT_RGBAF)
-	var ground_image := Image.create_empty(13, 13, false, Image.FORMAT_RF)
 	var density_max := 0.0
-	for i in 169:
-		var c: Color = data.fog[i]
-		fog_image.set_pixel(i % 13, i / 13, c)
-		ground_image.set_pixel(i % 13, i / 13, Color(data.ground[i], 0, 0))
-		density_max = maxf(density_max, c.a)
+	for atmosphere: Color in data.fog:
+		density_max = maxf(density_max, atmosphere.a)
 	if density_max > 0.0001:
+		# Clear chunks and orb-only previews need no fog textures or shape data.
+		var fog_image := Image.create_empty(13, 13, false, Image.FORMAT_RGBAF)
+		var ground_image := Image.create_empty(13, 13, false, Image.FORMAT_RF)
+		var shape_image := Image.create_empty(13, 13, false, Image.FORMAT_RGBAF)
+		for i in 169:
+			fog_image.set_pixel(i % 13, i / 13, data.fog[i])
+			shape_image.set_pixel(i % 13, i / 13, data.mist_shape[i])
+			ground_image.set_pixel(i % 13, i / 13, Color(data.ground[i], 0, 0))
 		var volume := FogVolume.new()
 		volume.name = "WorldMist"
 		volume.shape = RenderingServer.FOG_VOLUME_SHAPE_BOX
@@ -212,6 +215,7 @@ static func build_field(data: Dictionary) -> Node3D:
 		material.shader = load("res://terrain/materials/biome_mist.gdshader")
 		material.set_shader_parameter("atmosphere_field", ImageTexture.create_from_image(fog_image))
 		material.set_shader_parameter("ground_field", ImageTexture.create_from_image(ground_image))
+		material.set_shader_parameter("mist_shape_field", ImageTexture.create_from_image(shape_image))
 		material.set_shader_parameter("chunk_origin", Vector2(data.origin.x, data.origin.z))
 		volume.material = material
 		root.add_child(volume)

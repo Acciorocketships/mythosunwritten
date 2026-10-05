@@ -1,0 +1,21 @@
+{
+	"biome_weights": {
+		"amber_heath": 0.0,
+		"blossom_grove": 0.0,
+		"deep_forest": 1.0,
+		"highland": 0.0,
+		"jade_wetlands": 0.0,
+		"meadow": 0.0,
+		"twilight_marsh": 0.0
+	},
+	"camera_fov": 52.0,
+	"camera_transform": "Transform3D(0.32971188, -0.20480004, 0.9216002, 0, 0.97618705, 0.21693043, -0.9440816, -0.071524546, 0.32186046, -643.00653, 21, 544.9348)",
+	"frozen_replay": true,
+	"grass_density_scale": 1.0,
+	"position": "Vector3(-660, 16, 539)",
+	"quality": 1,
+	"resolution": "Vector2i(1280, 720)",
+	"seed": 2697992464,
+	"source": "/tmp/story-lighting/lanternwood-current.scn",
+	"visual_time": 12.0
+}

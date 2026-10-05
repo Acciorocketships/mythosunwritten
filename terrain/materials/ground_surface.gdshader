@@ -41,6 +41,7 @@ void fragment() {
 		lawn = slope_green_grade(ground_world, n, COLOR.rgb, moss_rise * grade, grade);
 	}
 	ALBEDO = mix(mix(base, stone_albedo(texel,ground_world), rock), lawn, turf);
-	ROUGHNESS = 1.0;
-	SPECULAR = 0.0;
+	vec2 finish = substrate_finish(ground_world.xz, n.y);
+	ROUGHNESS = finish.x;
+	SPECULAR = finish.y;
 }

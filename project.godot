@@ -81,6 +81,43 @@ zoom_out={
 
 [shader_globals]
 
+atmosphere_sun_ray={
+"type": "vec3",
+"value": Vector3(0.797, -0.530, 0.290)
+}
+canopy_shadow_detail={
+"type": "float",
+"value": 0.0
+}
+
+grass_density_scale={
+"type": "float",
+"value": 1.0
+}
+
+review_visual_time={
+"type": "float",
+"value": -1.0
+}
+
+atmosphere_sky_top={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 0)
+}
+atmosphere_sky_horizon={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 0)
+}
+atmosphere_water_gain={
+"type": "float",
+"value": 1.0
+}
+
+biome_surface_map={
+"type": "sampler2D",
+"value": "res://terrain/materials/empty_biome_map.tres"
+}
+
 biome_ground_a={
 "type": "sampler2D",
 "value": "res://terrain/materials/empty_biome_map.tres"

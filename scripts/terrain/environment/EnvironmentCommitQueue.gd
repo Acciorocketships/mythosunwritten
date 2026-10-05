@@ -118,5 +118,6 @@ func _commit_batch(parent: Node3D, item: Dictionary) -> void:
 		instance.add_to_group("tactical_solid_earth", true)
 	instance.material_override = LANTERN_LIGHTS.glass_material(item.asset_id, piece)
 	container.add_child(instance)
+	preload("res://scripts/terrain/biome/CanopyShadows.gd").attach(instance)
 	if int(item.piece_index) == 0:
 		LANTERN_LIGHTS.attach(container,item.asset_id,transforms)

@@ -32,6 +32,15 @@ var _worker_max_usec := 0
 var _worker_result_count := 0
 var _commit_max_usec := 0
 var _lod_update_max_usec := 0
+var _density_scale := 1.0
+
+func set_density_scale(value: float) -> void:
+	assert(OS.get_thread_caller_id() == OS.get_main_thread_id())
+	value = clampf(value, 0.1, 1.0)
+	if is_equal_approx(value, _density_scale): return
+	_density_scale = value
+	RenderingServer.global_shader_parameter_set(&"grass_density_scale", value)
+	_update_visible_counts()
 
 func _init(program: GrassProgram, render_cache: EnvironmentRenderCache) -> void:
 	assert(OS.get_thread_caller_id() == OS.get_main_thread_id())
@@ -275,7 +284,7 @@ func _update_visible_counts() -> void:
 		_update_tile_visible(tile)
 
 func _update_tile_visible(tile: Vector2i) -> void:
-	var tile_density := density(distance_to_tile(_lod_origin, tile))
+	var tile_density := density(distance_to_tile(_lod_origin, tile)) * _density_scale
 	for batch: Dictionary in _built[tile].batches:
 		var count: int = batch.count
 		var multimesh: MultiMesh = batch.multimesh

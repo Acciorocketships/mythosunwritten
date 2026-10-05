@@ -121,4 +121,6 @@ void fragment(){
   ALBEDO=mix(stone,green,cover);
   ROUGHNESS=1.0;SPECULAR=0.0;
  }
+ vec2 finish=substrate_finish(stone_position.xz,normalize(stone_normal).y);
+ ROUGHNESS=finish.x;SPECULAR=finish.y;
 }

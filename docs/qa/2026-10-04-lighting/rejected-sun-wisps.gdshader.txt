@@ -1,0 +1,52 @@
+shader_type fog;
+#include "res://terrain/materials/visual_clock.gdshaderinc"
+uniform sampler2D atmosphere_field : source_color, filter_linear, repeat_disable;
+uniform sampler2D ground_field : filter_linear, repeat_disable;
+// Numeric data: metres, metres, upper weight, emission. Never colour-convert.
+uniform sampler2D mist_shape_field : filter_linear, repeat_disable;
+uniform vec2 chunk_origin;
+uniform float review_time = -1.0;
+// Review-only opt-in until production landscape and cost acceptance.
+uniform float review_shafts = 0.0;
+uniform vec3 review_sun_ray = vec3(0.797, -0.530, 0.290);
+float mist_hash(vec3 p) {
+	p = fract(p * 0.1031);
+	p += dot(p, p.yzx + 33.33);
+	return fract((p.x + p.y) * p.z);
+}
+float mist_noise(vec3 p) {
+	vec3 cell = floor(p);
+	vec3 f = fract(p);
+	f = f * f * (3.0 - 2.0 * f);
+	return mix(mix(mix(mist_hash(cell), mist_hash(cell + vec3(1,0,0)), f.x),
+		mix(mist_hash(cell + vec3(0,1,0)), mist_hash(cell + vec3(1,1,0)), f.x), f.y),
+		mix(mix(mist_hash(cell + vec3(0,0,1)), mist_hash(cell + vec3(1,0,1)), f.x),
+		mix(mist_hash(cell + vec3(0,1,1)), mist_hash(cell + vec3(1,1,1)), f.x), f.y), f.z);
+}
+void fog() {
+	vec2 local = (WORLD_POSITION.xz - chunk_origin) / 192.0;
+	vec2 uv = (local * 12.0 + 0.5) / 13.0;
+	vec4 atmosphere = texture(atmosphere_field, uv);
+	vec4 shape = texture(mist_shape_field, uv);
+	float ground = texture(ground_field, uv).r;
+	float height = max(0.0, WORLD_POSITION.y - ground);
+	float time = review_time >= 0.0 ? review_time : visual_time();
+	// One broad octave is enough at froxel resolution; world coordinates keep
+	// the drifting pockets continuous across streamed chunk boundaries.
+	vec3 drift = WORLD_POSITION * vec3(0.035, 0.065, 0.035) + vec3(time * 0.012, 0, time * 0.006);
+	float pockets = mix(0.35, 1.25, smoothstep(0.15, 0.85, mist_noise(drift)));
+	float upper_pockets = pockets;
+	if (review_shafts > 0.0) {
+		// Project onto a plane perpendicular to the light's path. Long wisps
+		// scatter the real shadowed sun; no emissive beam geometry is added.
+		vec2 beam = WORLD_POSITION.xz - WORLD_POSITION.y * review_sun_ray.xz / review_sun_ray.y;
+		float columns = mist_noise(vec3(beam * 0.09 + vec2(time * 0.004, 0.0), 0.7));
+		upper_pockets = mix(pockets, mix(0.08, 5.0, smoothstep(0.50, 0.78, columns)), review_shafts);
+	}
+	float layer = exp(-height / max(shape.r, 0.5)) * pockets
+		+ shape.b * exp(-height / max(shape.g, 0.5)) * upper_pockets;
+	DENSITY = atmosphere.a * 0.55 * layer;
+	// A lightly tinted scattering medium lets the sun supply the shaft colour.
+	ALBEDO = mix(atmosphere.rgb, vec3(0.8), 0.35);
+	EMISSION = atmosphere.rgb * DENSITY * shape.a;
+}

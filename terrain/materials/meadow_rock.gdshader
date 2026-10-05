@@ -76,7 +76,8 @@ void fragment(){
  NORMAL=normalize(mix(NORMAL,(VIEW_MATRIX*vec4(n,0.0)).xyz,base));
  float cover=max(top,base);
  NORMAL_MAP=mix(bn,vec3(.5,.5,1.0),cover);
- ROUGHNESS=mix(clamp(1.0-texture(base_sma,UV).r,.65,1.0),1.0,cover);
- METALLIC=0.0;SPECULAR=mix(.2,0.0,cover);
+ vec2 finish=substrate_finish(world_position.xz,n.y);
+ ROUGHNESS=mix(clamp(1.0-texture(base_sma,UV).r,.65,1.0),finish.x,cover);
+ METALLIC=0.0;SPECULAR=mix(.2,finish.y,cover);
  AO=mix(texture(base_sma,UV).b,1.0,.5);
 }

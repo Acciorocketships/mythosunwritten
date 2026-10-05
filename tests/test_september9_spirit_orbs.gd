@@ -3,6 +3,7 @@ extends GutTest
 func test_orb_motion_is_slow_bounded_and_keeps_its_light_attached() -> void:
 	var fog := PackedColorArray()
 	fog.resize(169)
+	fog.fill(Color(0, 0, 0, 0)) # Orb-only fixture: resize defaults alpha to one.
 	var ground := PackedFloat32Array()
 	ground.resize(169)
 	var fx := BiomeChunkFx.build_field({"origin":Vector3.ZERO,"fog":fog,

@@ -1,0 +1,21 @@
+{
+	"biome_weights": {
+		"amber_heath": 0.0,
+		"blossom_grove": 0.0,
+		"deep_forest": 0.0,
+		"highland": 1.0,
+		"jade_wetlands": 0.0,
+		"meadow": 0.0,
+		"twilight_marsh": 0.0
+	},
+	"camera_fov": 52.0,
+	"camera_transform": "Transform3D(0.7719302, -0.25179815, 0.58371353, 0, 0.91821116, 0.39609134, -0.63570726, -0.30575487, 0.70879495, 412, 25.000341, 706)",
+	"frozen_replay": true,
+	"grass_density_scale": 0.65,
+	"position": "Vector3(384, 4.000342, 672)",
+	"quality": 0,
+	"resolution": "Vector2i(1920, 1080)",
+	"seed": 2697992464,
+	"source": "/tmp/story-lighting/highland-current.scn",
+	"visual_time": 12.0
+}
