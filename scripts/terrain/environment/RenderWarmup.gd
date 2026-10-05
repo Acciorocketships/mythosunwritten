@@ -4,10 +4,12 @@ extends RefCounted
 ## EnvironmentCommitQueue builds its batches (MultiMesh with the same
 ## transform/colour/custom-data format and material override), so the
 ## renderer compiles their pipelines while the loading screen is up instead
-## of in the first gameplay frame that shows each one (200-1030 ms stalls).
+## of in the first gameplay frame that shows each one (200-1030 ms stalls),
+## including the CanopyShadows proxy the queue attaches to tree crowns.
 ## The caller places the returned node in front of the active camera for a few
 ## frames and then frees it. Main thread only.
 const LANTERN_LIGHTS := preload("res://scripts/terrain/environment/EnvironmentLanternLights.gd")
+const CANOPY_SHADOWS := preload("res://scripts/terrain/biome/CanopyShadows.gd")
 
 static func build(render_cache: EnvironmentRenderCache,
 		asset_ids: Array[StringName]) -> Node3D:
@@ -41,5 +43,8 @@ static func build(render_cache: EnvironmentRenderCache,
 			instance.multimesh = multimesh
 			instance.material_override = LANTERN_LIGHTS.glass_material(asset_id, piece)
 			root.add_child(instance)
+			# Tree crowns also get the shadow-only canopy proxy, so its
+			# shadow-pass pipeline compiles here too.
+			CANOPY_SHADOWS.attach(instance)
 			slot += 1
 	return root
