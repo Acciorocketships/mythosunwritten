@@ -184,6 +184,8 @@ func _ready() -> void:
 		world_seed, str(_startup_support_chunks)])
 	# The canonical tuning keeps the streamed world and offline harnesses from
 	# silently constructing different terrain fields.
+	# Solved planning for this seed persists across launches (user://plan_cache).
+	preload("res://scripts/terrain/field/PlanningDiskCache.gd").configure(world_seed)
 	_water = TerrainWorldTuning.make_water(world_seed)
 	_settlements = SettlementPlan.new(world_seed, _water)
 	_plan = TerrainWorldTuning.make_heightfield(world_seed, _water)

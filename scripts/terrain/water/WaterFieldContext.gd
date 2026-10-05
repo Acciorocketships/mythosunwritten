@@ -10,6 +10,7 @@ var _coverage: Rect2
 var _shore_limit: float
 var _shore_curves: Array = []
 var _shore_curves_ready := false
+const DISK_CACHE := preload("res://scripts/terrain/field/PlanningDiskCache.gd")
 
 static func build(water: WaterPlan, query_rect: Rect2, region: HeightfieldRegion,
 		shore_distance_limit: float) -> WaterFieldContext:
@@ -19,7 +20,23 @@ static func build(water: WaterPlan, query_rect: Rect2, region: HeightfieldRegion
 	var span := WaterField.CHUNK
 	var centre := query_rect.get_center()
 	var chunk := Vector2i(int(floor(centre.x / span)), int(floor(centre.y / span)))
-	var raw := WaterField.ctx(water, chunk, region)
+	# A relaunch of the same seed reads the solved fill (and shore curves)
+	# back from disk; the river/pond objects and region are rebuilt cheaply.
+	var disk_key := ""
+	var cached: Variant = null
+	if region.plan != null and DISK_CACHE.active_for(water.world_seed):
+		disk_key = "water_%d_%d_%s_%s" % [chunk.x, chunk.y,
+			str(query_rect).md5_text().left(8), str(shore_distance_limit)]
+		cached = DISK_CACHE.load_entry(disk_key)
+	var raw: Dictionary
+	if cached is Dictionary:
+		raw = WaterField.ctx(water, chunk, null)
+		var saved: Dictionary = cached.raw
+		for key: Variant in saved:
+			raw[key] = saved[key]
+		raw["region"] = region
+	else:
+		raw = WaterField.ctx(water, chunk, region)
 	var fill_rect := Rect2(raw.fill_base, Vector2.ONE * (WaterField.FILL_M * WaterField.FILL_STEP))
 	var contour_rect := query_rect.grow(shore_distance_limit)
 	assert(fill_rect.encloses(contour_rect.grow(WaterContour.MARGIN)),
@@ -31,12 +48,30 @@ static func build(water: WaterPlan, query_rect: Rect2, region: HeightfieldRegion
 	result._shore_limit = shore_distance_limit
 	if not result.has_sources():
 		result._shore_curves_ready = true
+	elif cached is Dictionary and (cached as Dictionary).has("curves"):
+		result._shore_curves = cached.curves
+		result._shore_curves_ready = true
 	elif shore_distance_limit > 0.0:
 		# Include contours just outside the declared query window: they can still
 		# be the nearest shore to a point inside it. WaterContour grows this rect
 		# by its own fixed sampling margin before clipping back to it.
 		result._shore_curves = WaterContour.curves(raw, contour_rect)
 		result._shore_curves_ready = true
+	if not disk_key.is_empty() and cached == null:
+		# Plain-data keys only (the river/pond objects, plan and region are not
+		# stored); each must round-trip exactly or the entry is not written.
+		var saved := {}
+		for key: Variant in raw:
+			var value: Variant = raw[key]
+			if value is Object or key in ["water", "ponds", "rivers", "region"]:
+				continue
+			if bytes_to_var(var_to_bytes(value)) != value:
+				return result
+			saved[key] = value
+		var entry := {"raw": saved}
+		if result._shore_curves_ready and result.has_sources():
+			entry["curves"] = result._shore_curves
+		DISK_CACHE.store_entry(disk_key, entry)
 	return result
 
 func covers(point: Vector2) -> bool:
