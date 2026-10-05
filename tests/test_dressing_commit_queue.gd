@@ -33,6 +33,11 @@ func test_one_asset_piece_commits_one_coloured_multimesh_batch() -> void:
 	var instance := container.get_child(0) as MultiMeshInstance3D
 	assert_not_null(instance)
 	assert_eq(instance.multimesh.instance_count, 1)
+	var shadow := instance.get_node_or_null("CanopyShadow") as MultiMeshInstance3D
+	assert_not_null(shadow, "Production tree commits attach their porous shadow representation")
+	if shadow != null:
+		assert_same(shadow.multimesh, instance.multimesh)
+		assert_eq(shadow.transform, Transform3D.IDENTITY)
 
 func test_palette_piece_commits_material_without_instance_colour_channel() -> void:
 	var asset_id := &"lpfv.fabric.roof.compact.slate.03"

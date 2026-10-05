@@ -1,0 +1,70 @@
+{
+	"frames": [
+		{
+			"camera": "Transform3D(0.35040307, -0.4440416, 0.82464826, 0, 0.880471, 0.47410002, -0.936599, -0.1661261, 0.30851975, -635.64844, 32, 548.1105)",
+			"frame": 0,
+			"image": "/tmp/story-lighting/forest-canopy-orbit-orbit-000.png"
+		},
+		{
+			"camera": "Transform3D(0.22515409, -0.46192655, 0.85786337, 0, 0.88047105, 0.47409993, -0.9743232, -0.10674553, 0.19824165, -634.6676, 32, 544.854)",
+			"frame": 15,
+			"image": "/tmp/story-lighting/forest-canopy-orbit-orbit-015.png"
+		},
+		{
+			"camera": "Transform3D(0.09605294, -0.471908, 0.8763998, 0, 0.88047093, 0.47410014, -0.9953762, -0.045538712, 0.08457182, -634.12024, 32, 541.4974)",
+			"frame": 30,
+			"image": "/tmp/story-lighting/forest-canopy-orbit-orbit-030.png"
+		},
+		{
+			"camera": "Transform3D(-0.034691453, -0.47381496, 0.87994087, 0, 0.8804708, 0.47410035, -0.9993981, 0.01644723, -0.030544812, -634.0157, 32, 538.098)",
+			"frame": 45,
+			"image": "/tmp/story-lighting/forest-canopy-orbit-orbit-045.png"
+		},
+		{
+			"camera": "Transform3D(-0.16484214, -0.4676146, 0.86842597, 0, 0.8804709, 0.4741003, -0.98631996, 0.07815171, -0.1451387, -634.3557, 32, 534.7141)",
+			"frame": 60,
+			"image": "/tmp/story-lighting/forest-canopy-orbit-orbit-060.png"
+		},
+		{
+			"camera": "Transform3D(-0.29217315, -0.45341304, 0.842052, 0, 0.88047093, 0.4741002, -0.95636547, 0.13851933, -0.25724995, -635.1345, 32, 531.4035)",
+			"frame": 75,
+			"image": "/tmp/story-lighting/forest-canopy-orbit-orbit-075.png"
+		},
+		{
+			"camera": "Transform3D(-0.41450363, -0.43145323, 0.8012708, 0, 0.8804712, 0.4740996, -0.91004765, 0.196516, -0.36495852, -636.33875, 32, 528.2229)",
+			"frame": 90,
+			"image": "/tmp/story-lighting/forest-canopy-orbit-orbit-090.png"
+		},
+		{
+			"camera": "Transform3D(-0.52974266, -0.40211168, 0.746779, 0, 0.88047117, 0.4740997, -0.8481585, 0.25115082, -0.4664231, -637.9479, 32, 525.2267)",
+			"frame": 105,
+			"image": "/tmp/story-lighting/forest-canopy-orbit-orbit-105.png"
+		},
+		{
+			"camera": "Transform3D(-0.6359167, -0.3658906, 0.6795102, 0, 0.8804709, 0.47410035, -0.77175766, 0.30148834, -0.5599062, -639.9343, 32, 522.4662)",
+			"frame": 120,
+			"image": "/tmp/story-lighting/forest-canopy-orbit-orbit-120.png"
+		},
+		{
+			"camera": "Transform3D(-0.7312114, -0.32340795, 0.600614, 0, 0.8804709, 0.4741003, -0.6821509, 0.34666756, -0.64381033, -642.2641, 32, 519.9885)",
+			"frame": 135,
+			"image": "/tmp/story-lighting/forest-canopy-orbit-orbit-135.png"
+		},
+		{
+			"camera": "Transform3D(-0.8139945, -0.275392, 0.5114413, 0, 0.8804707, 0.47410056, -0.5808726, 0.38591525, -0.71669835, -644.89734, 32, 517.8362)",
+			"frame": 150,
+			"image": "/tmp/story-lighting/forest-canopy-orbit-orbit-150.png"
+		},
+		{
+			"camera": "Transform3D(-0.8828496, -0.2226637, 0.41351858, 0, 0.8804712, 0.4740996, -0.469656, 0.4185586, -0.7773236, -647.78894, 32, 516.0459)",
+			"frame": 165,
+			"image": "/tmp/story-lighting/forest-canopy-orbit-orbit-165.png"
+		},
+		{
+			"camera": "Transform3D(-0.936599, -0.16612609, 0.30851972, 0, 0.88047105, 0.4741, -0.35040304, 0.4440416, -0.82464826, -650.8895, 32, 514.64844)",
+			"frame": 180,
+			"image": "/tmp/story-lighting/forest-canopy-orbit-orbit-180.png"
+		}
+	],
+	"freeze_time": 12.0
+}

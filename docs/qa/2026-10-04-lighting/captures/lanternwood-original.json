@@ -1,0 +1,18 @@
+{
+	"adapter": "Apple M1 Pro (Apple7)",
+	"camera": "Transform3D(0.7719302, -0.25179815, 0.58371353, 0, 0.91821116, 0.39609134, -0.63570726, -0.30575487, 0.70879495, -452, 22.000322, 418)",
+	"cpu_render_median_ms": 0.361000001430511,
+	"cpu_render_p95_ms": 0.519999980926514,
+	"fog": true,
+	"fov": 52.0,
+	"gi": "quality",
+	"glow": true,
+	"gpu_median_ms": 0.0,
+	"gpu_p95_ms": 0.0,
+	"gpu_timing_available": false,
+	"position": "Vector3(-480, 30, 384)",
+	"quality": 1,
+	"resolution": "Vector2(1280, 720)",
+	"samples": 240,
+	"seed": 2697992464
+}

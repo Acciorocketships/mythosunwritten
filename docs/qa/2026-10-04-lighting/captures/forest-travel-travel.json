@@ -1,0 +1,296 @@
+{
+	"frames": [
+		{
+			"ambient_energy": 0.340000003576279,
+			"frame": 0,
+			"image": "/tmp/story-lighting/forest-travel-travel-0000.png",
+			"map_centre": "Vector2(-768, 768)",
+			"position": "Vector3(-480, 1.0003228, 384)",
+			"sun_energy": 1.04999995231628,
+			"weights": {
+				"amber_heath": 0.0,
+				"blossom_grove": 0.0,
+				"deep_forest": 1.0,
+				"highland": 0.0,
+				"jade_wetlands": 0.0,
+				"meadow": 0.0,
+				"twilight_marsh": 0.0
+			}
+		},
+		{
+			"ambient_energy": 0.340000003576279,
+			"frame": 180,
+			"image": "/tmp/story-lighting/forest-travel-travel-0180.png",
+			"map_centre": "Vector2(-768, 768)",
+			"position": "Vector3(-460.8, 1.0003228, 407.04)",
+			"sun_energy": 1.04999995231628,
+			"weights": {
+				"amber_heath": 0.0,
+				"blossom_grove": 0.0,
+				"deep_forest": 1.0,
+				"highland": 0.0,
+				"jade_wetlands": 0.0,
+				"meadow": 0.0,
+				"twilight_marsh": 0.0
+			}
+		},
+		{
+			"ambient_energy": 0.340000003576279,
+			"frame": 360,
+			"image": "/tmp/story-lighting/forest-travel-travel-0360.png",
+			"map_centre": "Vector2(-768, 768)",
+			"position": "Vector3(-441.6, 1.0003228, 430.08)",
+			"sun_energy": 1.04999995231628,
+			"weights": {
+				"amber_heath": 0.0,
+				"blossom_grove": 0.0,
+				"deep_forest": 1.0,
+				"highland": 0.0,
+				"jade_wetlands": 0.0,
+				"meadow": 0.0,
+				"twilight_marsh": 0.0
+			}
+		},
+		{
+			"ambient_energy": 0.340000003576279,
+			"frame": 540,
+			"image": "/tmp/story-lighting/forest-travel-travel-0540.png",
+			"map_centre": "Vector2(-768, 768)",
+			"position": "Vector3(-422.4, 1.0003228, 453.12)",
+			"sun_energy": 1.04999995231628,
+			"weights": {
+				"amber_heath": 0.0,
+				"blossom_grove": 0.0,
+				"deep_forest": 1.0,
+				"highland": 0.0,
+				"jade_wetlands": 0.0,
+				"meadow": 0.0,
+				"twilight_marsh": 0.0
+			}
+		},
+		{
+			"ambient_energy": 0.340000003576279,
+			"frame": 720,
+			"image": "/tmp/story-lighting/forest-travel-travel-0720.png",
+			"map_centre": "Vector2(-768, 768)",
+			"position": "Vector3(-403.2, 1.0003228, 476.16)",
+			"sun_energy": 1.04999995231628,
+			"weights": {
+				"amber_heath": 0.0,
+				"blossom_grove": 0.0,
+				"deep_forest": 1.0,
+				"highland": 0.0,
+				"jade_wetlands": 0.0,
+				"meadow": 0.0,
+				"twilight_marsh": 0.0
+			}
+		},
+		{
+			"ambient_energy": 0.340000003576279,
+			"frame": 900,
+			"image": "/tmp/story-lighting/forest-travel-travel-0900.png",
+			"map_centre": "Vector2(-768, 768)",
+			"position": "Vector3(-384, 1.0003228, 499.2)",
+			"sun_energy": 1.04999995231628,
+			"weights": {
+				"amber_heath": 0.0,
+				"blossom_grove": 0.0,
+				"deep_forest": 1.0,
+				"highland": 0.0,
+				"jade_wetlands": 0.0,
+				"meadow": 0.0,
+				"twilight_marsh": 0.0
+			}
+		},
+		{
+			"ambient_energy": 0.340000003576279,
+			"frame": 1080,
+			"image": "/tmp/story-lighting/forest-travel-travel-1080.png",
+			"map_centre": "Vector2(0, 768)",
+			"position": "Vector3(-364.8, 1.0003228, 522.24)",
+			"sun_energy": 1.04999995231628,
+			"weights": {
+				"amber_heath": 0.0,
+				"blossom_grove": 0.0,
+				"deep_forest": 1.0,
+				"highland": 0.0,
+				"jade_wetlands": 0.0,
+				"meadow": 0.0,
+				"twilight_marsh": 0.0
+			}
+		},
+		{
+			"ambient_energy": 0.340000003576279,
+			"frame": 1260,
+			"image": "/tmp/story-lighting/forest-travel-travel-1260.png",
+			"map_centre": "Vector2(0, 768)",
+			"position": "Vector3(-345.6, 1.0003228, 545.28)",
+			"sun_energy": 1.04999995231628,
+			"weights": {
+				"amber_heath": 0.0,
+				"blossom_grove": 0.0,
+				"deep_forest": 1.0,
+				"highland": 0.0,
+				"jade_wetlands": 0.0,
+				"meadow": 0.0,
+				"twilight_marsh": 0.0
+			}
+		},
+		{
+			"ambient_energy": 0.340000003576279,
+			"frame": 1440,
+			"image": "/tmp/story-lighting/forest-travel-travel-1440.png",
+			"map_centre": "Vector2(0, 768)",
+			"position": "Vector3(-326.40002, 1.0003228, 568.32)",
+			"sun_energy": 1.04999995231628,
+			"weights": {
+				"amber_heath": 0.0,
+				"blossom_grove": 0.0,
+				"deep_forest": 1.0,
+				"highland": 0.0,
+				"jade_wetlands": 0.0,
+				"meadow": 0.0,
+				"twilight_marsh": 0.0
+			}
+		},
+		{
+			"ambient_energy": 0.340888202190399,
+			"frame": 1620,
+			"image": "/tmp/story-lighting/forest-travel-travel-1620.png",
+			"map_centre": "Vector2(0, 768)",
+			"position": "Vector3(-307.2, 1.0003228, 591.36)",
+			"sun_energy": 1.05091428756714,
+			"weights": {
+				"amber_heath": 0.0,
+				"blossom_grove": 0.0,
+				"deep_forest": 0.997387625461649,
+				"highland": 0.0,
+				"jade_wetlands": 0.0,
+				"meadow": 0.00261237453835106,
+				"twilight_marsh": 0.0
+			}
+		},
+		{
+			"ambient_energy": 0.374724358320236,
+			"frame": 1800,
+			"image": "/tmp/story-lighting/forest-travel-travel-1800.png",
+			"map_centre": "Vector2(0, 768)",
+			"position": "Vector3(-288, 1.0003228, 614.4)",
+			"sun_energy": 1.08574569225311,
+			"weights": {
+				"amber_heath": 0.0,
+				"blossom_grove": 0.0,
+				"deep_forest": 0.897869512431151,
+				"highland": 0.0,
+				"jade_wetlands": 0.0,
+				"meadow": 0.102130487568849,
+				"twilight_marsh": 0.0
+			}
+		},
+		{
+			"ambient_energy": 0.46223446726799,
+			"frame": 1980,
+			"image": "/tmp/story-lighting/forest-travel-travel-1980.png",
+			"map_centre": "Vector2(0, 768)",
+			"position": "Vector3(-268.8, 1.0003228, 637.44)",
+			"sun_energy": 1.17582595348358,
+			"weights": {
+				"amber_heath": 0.0,
+				"blossom_grove": 0.0,
+				"deep_forest": 0.640481290922717,
+				"highland": 0.0,
+				"jade_wetlands": 0.0,
+				"meadow": 0.359513700295603,
+				"twilight_marsh": 0.00000500878167905742
+			}
+		},
+		{
+			"ambient_energy": 0.566091954708099,
+			"frame": 2160,
+			"image": "/tmp/story-lighting/forest-travel-travel-2160.png",
+			"map_centre": "Vector2(0, 768)",
+			"position": "Vector3(-249.6, 1.0003228, 660.48)",
+			"sun_energy": 1.28219521045685,
+			"weights": {
+				"amber_heath": 0.0,
+				"blossom_grove": 0.0,
+				"deep_forest": 0.33418541640666,
+				"highland": 0.0,
+				"jade_wetlands": 0.0,
+				"meadow": 0.665064628931791,
+				"twilight_marsh": 0.000749954661548743
+			}
+		},
+		{
+			"ambient_energy": 0.635006308555603,
+			"frame": 2340,
+			"image": "/tmp/story-lighting/forest-travel-travel-2340.png",
+			"map_centre": "Vector2(0, 768)",
+			"position": "Vector3(-240, 1.0003228, 672)",
+			"sun_energy": 1.3513947725296,
+			"weights": {
+				"amber_heath": 0.0,
+				"blossom_grove": 0.0,
+				"deep_forest": 0.128825333553939,
+				"highland": 0.0,
+				"jade_wetlands": 0.0,
+				"meadow": 0.868035011403515,
+				"twilight_marsh": 0.00313965504254625
+			}
+		},
+		{
+			"ambient_energy": 0.661748826503754,
+			"frame": 2520,
+			"image": "/tmp/story-lighting/forest-travel-travel-2520.png",
+			"map_centre": "Vector2(0, 768)",
+			"position": "Vector3(-240, 1.0003228, 672)",
+			"sun_energy": 1.37807011604309,
+			"weights": {
+				"amber_heath": 0.0,
+				"blossom_grove": 0.0,
+				"deep_forest": 0.0488617532210638,
+				"highland": 0.0,
+				"jade_wetlands": 0.0,
+				"meadow": 0.946827265591363,
+				"twilight_marsh": 0.00431098118757272
+			}
+		},
+		{
+			"ambient_energy": 0.671586871147156,
+			"frame": 2700,
+			"image": "/tmp/story-lighting/forest-travel-travel-2700.png",
+			"map_centre": "Vector2(0, 768)",
+			"position": "Vector3(-240, 1.0003228, 672)",
+			"sun_energy": 1.38788342475891,
+			"weights": {
+				"amber_heath": 0.0,
+				"blossom_grove": 0.0,
+				"deep_forest": 0.019444795974138,
+				"highland": 0.0,
+				"jade_wetlands": 0.0,
+				"meadow": 0.975813316030627,
+				"twilight_marsh": 0.00474188799523456
+			}
+		},
+		{
+			"ambient_energy": 0.673839688301086,
+			"frame": 2790,
+			"image": "/tmp/story-lighting/forest-travel-travel-2790.png",
+			"map_centre": "Vector2(0, 768)",
+			"position": "Vector3(-240, 1.0003228, 672)",
+			"sun_energy": 1.39013051986694,
+			"weights": {
+				"amber_heath": 0.0,
+				"blossom_grove": 0.0,
+				"deep_forest": 0.0127086072014325,
+				"highland": 0.0,
+				"jade_wetlands": 0.0,
+				"meadow": 0.982450831457361,
+				"twilight_marsh": 0.00484056134120603
+			}
+		}
+	],
+	"kind": "frozen geometry camera flight",
+	"speed_mps": 10.0,
+	"step_seconds": 0.0166666666666667
+}

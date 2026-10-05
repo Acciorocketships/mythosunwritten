@@ -9,6 +9,7 @@ const STEP := CHUNK / float(GRID - 1)
 static func compute(chunk: Vector2i, region, world_seed: int, water: WaterFieldContext = null) -> Dictionary:
 	var origin := Vector3(chunk.x * CHUNK, 0.0, chunk.y * CHUNK)
 	var fog := PackedColorArray()
+	var mist_shape := PackedColorArray()
 	var ground := PackedFloat32Array()
 	var lo := INF
 	var hi := -INF
@@ -16,7 +17,16 @@ static func compute(chunk: Vector2i, region, world_seed: int, water: WaterFieldC
 		for x in GRID:
 			var pos := origin + Vector3(x * STEP, 0, z * STEP)
 			var height := TerrainTileField.surface_y(region, pos.x, pos.z)
-			fog.append(BiomeRegistry.local_atmosphere(pos, world_seed))
+			var mood := BiomeRegistry.blend_atmosphere(Helper.biome_weights5(pos, world_seed))
+			var atmosphere: Color = mood[&"fog_color"]
+			atmosphere.a = mood[&"fog_density"]
+			fog.append(atmosphere)
+			mist_shape.append(mood[&"mist_shape"])
+			# Mist rests on the water surface rather than vanishing into the bed.
+			if water != null:
+				var surface := water.level_at(Vector2(pos.x, pos.z))
+				if is_finite(surface):
+					height = maxf(height, surface)
 			ground.append(height)
 			lo = minf(lo, height)
 			hi = maxf(hi, height)
@@ -60,5 +70,5 @@ static func compute(chunk: Vector2i, region, world_seed: int, water: WaterFieldC
 					if not points.has(recipe):
 						points[recipe] = PackedVector3Array()
 					points[recipe].append(local)
-	return {"origin": origin, "fog": fog, "ground": ground,
+	return {"origin": origin, "fog": fog, "mist_shape": mist_shape, "ground": ground,
 		"lo": lo, "hi": hi, "points": points, "orbs": orbs}

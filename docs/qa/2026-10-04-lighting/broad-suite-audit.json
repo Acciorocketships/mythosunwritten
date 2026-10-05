@@ -1,0 +1,15 @@
+{
+  "status": "partial, manually bounded after more than four hours",
+  "wrapper_exit": 143,
+  "summarized_files": 343,
+  "files_with_failures_or_script_errors": 71,
+  "reported_tests": 1832,
+  "reported_passes": 1686,
+  "reported_failures": 118,
+  "script_error_lines": 24,
+  "incomplete": [
+    "tests/test_water_plan.gd",
+    "tests/test_water_production_seams.gd"
+  ],
+  "note": "Missing pass fields may represent zero passes or headless pending tests. Counts are reported totals, not complete-suite coverage. Later-added fog, canopy and snapshot tests passed separate native focused runs."
+}

@@ -5,10 +5,15 @@
 // derives normals, refraction and caustics; there is no independent scrolling
 // streak/noise layer.
 shader_type spatial;
+#include "res://terrain/materials/visual_clock.gdshaderinc"
 render_mode specular_schlick_ggx, depth_draw_always, cull_disabled;
 
 #include "res://terrain/water/water_common.gdshaderinc"
 #include "res://terrain/water/water_waves.gdshaderinc"
+
+global uniform vec4 atmosphere_sky_top;
+global uniform vec4 atmosphere_sky_horizon;
+global uniform float atmosphere_water_gain;
 
 uniform sampler2D noise_tex : repeat_enable, filter_linear_mipmap;
 uniform sampler2D depth_texture : hint_depth_texture, repeat_disable, filter_nearest;
@@ -112,7 +117,7 @@ vec2 ripple_normal_gradient(vec2 world_xz) {
 
 // The single surface truth used in BOTH shader stages.
 float water_dynamic_height(vec2 world_xz) {
-	float ambient = water_wave_h(noise_tex, world_xz, TIME * wave_speed) * wave_height;
+	float ambient = water_wave_h(noise_tex, world_xz, visual_time() * wave_speed) * wave_height;
 	return ambient + packet_height_at(world_xz) + ripple_height_at(world_xz);
 }
 
@@ -200,23 +205,27 @@ void fragment() {
 
 	vec3 transmittance = exp(-absorption * depth);
 	vec3 body = scene * transmittance
-		+ mix(scatter_color, biome_water_tint, 0.55) * (vec3(1.0) - transmittance) * scatter_strength;
-	body = mix(body, biome_water_tint, (1.0 - exp(-depth * 0.045)) * 0.22);
+		+ mix(scatter_color, biome_water_tint, 0.55) * (vec3(1.0) - transmittance) * scatter_strength * atmosphere_water_gain;
+	body = mix(body, biome_water_tint * atmosphere_water_gain, (1.0 - exp(-depth * 0.045)) * 0.22);
 
 	// Broad sky reflection. Dynamic detail enters only through the physical
 	// surface normal, matching the reference's calm painterly sheen instead of
 	// high-frequency shimmer. A screen/depth ray march was actively rejected:
 	// its finite hit iterations became concentric bands at the far bank.
 	float fresnel = pow(1.0 - clamp(dot(water_view_normal, VIEW), 0.0, 1.0), 5.0);
+	vec3 reflected = (INV_VIEW_MATRIX * vec4(reflect(-VIEW, water_view_normal), 0.0)).xyz;
+	vec3 reflected_sky = mix(atmosphere_sky_horizon.rgb, atmosphere_sky_top.rgb,
+		smoothstep(0.0, 0.7, reflected.y));
+	reflected_sky = mix(sky_color, reflected_sky, atmosphere_sky_top.a);
 	float reflection_weight = (0.025 + fresnel * 0.975) * reflection_strength;
-	body = mix(body, sky_color, reflection_weight);
+	body = mix(body, reflected_sky, reflection_weight);
 	// The old swimmer ripple was readable because its narrow normal-gradient
 	// ring caught the sky. Restore that optical cue explicitly while keeping
 	// the height impulse colourless: the flat centre contributes nothing, so
 	// this can never become the filled white blur produced by ripple foam.
 	float interaction_reflection = smoothstep(0.008, 0.05,
 		length(interaction_gradient)) * 0.10;
-	body = mix(body, sky_color, interaction_reflection);
+	body = mix(body, reflected_sky, interaction_reflection);
 
 	// White exists only where persistent wavelets break or the continuous
 	// current compresses. Player swim/entry ripples stay entirely clear.
@@ -224,7 +233,7 @@ void fragment() {
 	float packet_breaking = texture(packet_tex, packet_uv).g * packet_fade(p);
 	float foam_amount = clamp(packet_breaking * 0.20
 		+ smoothstep(0.18, 0.65, flow_compression) * 0.04, 0.0, 0.30);
-	body = mix(body, vec3(0.93, 0.97, 0.94), foam_amount);
+	body = mix(body, vec3(0.93, 0.97, 0.94) * atmosphere_water_gain, foam_amount);
 	// A steep flowing face entrains air and scatters light before it reaches
 	// the bed. Use the undisplaced hydraulic mesh normal: calm shore curls,
 	// ambient waves and a swimmer's ripple must not become cloudy water.
@@ -235,7 +244,7 @@ void fragment() {
 	float aeration = smoothstep(0.45, 1.1, face_grade)
 		* smoothstep(2.0, 12.0, falling_power)
 		* smoothstep(2.0, 6.0, falling_shore_distance);
-	body = mix(body, mix(biome_water_tint, vec3(0.45, 0.72, 0.75), 0.65), aeration * 0.65);
+	body = mix(body, mix(biome_water_tint, vec3(0.45, 0.72, 0.75), 0.65) * atmosphere_water_gain, aeration * 0.65);
 
 	// Keep the refracted scene as emission so it is not lit a second time,
 	// while returning the old PBR specular response to the REAL displaced

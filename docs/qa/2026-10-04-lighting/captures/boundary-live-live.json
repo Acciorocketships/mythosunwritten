@@ -1,0 +1,288 @@
+{
+	"frames": [
+		{
+			"chunks": 9,
+			"frame": 0,
+			"grass": {
+				"batches": 25,
+				"buffer_bytes": 253920,
+				"commit_max_usec": 835,
+				"committed_instances": 3174,
+				"lod_update_max_usec": 50,
+				"tiles": 56,
+				"visible_instances": 1916,
+				"worker_average_usec": 146834.321428571,
+				"worker_max_usec": 238983,
+				"worker_results": 56
+			},
+			"image": "/tmp/story-lighting/boundary-live-live-0000.png",
+			"position": "Vector3(-320, 1.0003228, 576)",
+			"weights": {
+				"amber_heath": 0.0,
+				"blossom_grove": 0.0,
+				"deep_forest": 1.0,
+				"highland": 0.0,
+				"jade_wetlands": 0.0,
+				"meadow": 0.0,
+				"twilight_marsh": 0.0
+			}
+		},
+		{
+			"chunks": 9,
+			"frame": 120,
+			"grass": {
+				"batches": 27,
+				"buffer_bytes": 286880,
+				"commit_max_usec": 835,
+				"committed_instances": 3586,
+				"lod_update_max_usec": 640,
+				"tiles": 58,
+				"visible_instances": 2609,
+				"worker_average_usec": 147454.689655172,
+				"worker_max_usec": 238983,
+				"worker_results": 58
+			},
+			"image": "/tmp/story-lighting/boundary-live-live-0120.png",
+			"position": "Vector3(-303.51324, 1.0003228, 587.3052)",
+			"weights": {
+				"amber_heath": 0.0,
+				"blossom_grove": 0.0,
+				"deep_forest": 0.991179831285734,
+				"highland": 0.0,
+				"jade_wetlands": 0.0,
+				"meadow": 0.008820168714266,
+				"twilight_marsh": 0.0
+			}
+		},
+		{
+			"chunks": 9,
+			"frame": 240,
+			"grass": {
+				"batches": 36,
+				"buffer_bytes": 400400,
+				"commit_max_usec": 835,
+				"committed_instances": 5005,
+				"lod_update_max_usec": 640,
+				"tiles": 65,
+				"visible_instances": 3255,
+				"worker_average_usec": 145168.910447761,
+				"worker_max_usec": 238983,
+				"worker_results": 67
+			},
+			"image": "/tmp/story-lighting/boundary-live-live-0240.png",
+			"position": "Vector3(-287.0265, 1.9758537, 598.6104)",
+			"weights": {
+				"amber_heath": 0.0,
+				"blossom_grove": 0.0,
+				"deep_forest": 0.87778087253209,
+				"highland": 0.0,
+				"jade_wetlands": 0.0,
+				"meadow": 0.122217450666009,
+				"twilight_marsh": 0.00000167680190031689
+			}
+		},
+		{
+			"chunks": 9,
+			"frame": 360,
+			"grass": {
+				"batches": 40,
+				"buffer_bytes": 444240,
+				"commit_max_usec": 835,
+				"committed_instances": 5553,
+				"lod_update_max_usec": 640,
+				"tiles": 64,
+				"visible_instances": 4112,
+				"worker_average_usec": 145811.445945946,
+				"worker_max_usec": 238983,
+				"worker_results": 74
+			},
+			"image": "/tmp/story-lighting/boundary-live-live-0360.png",
+			"position": "Vector3(-270.53973, 1.5993291, 609.9156)",
+			"weights": {
+				"amber_heath": 0.0,
+				"blossom_grove": 0.0,
+				"deep_forest": 0.640872927200628,
+				"highland": 0.0,
+				"jade_wetlands": 0.0,
+				"meadow": 0.35810442331175,
+				"twilight_marsh": 0.00102264948762134
+			}
+		},
+		{
+			"chunks": 9,
+			"frame": 480,
+			"grass": {
+				"batches": 46,
+				"buffer_bytes": 486640,
+				"commit_max_usec": 835,
+				"committed_instances": 6083,
+				"lod_update_max_usec": 640,
+				"tiles": 63,
+				"visible_instances": 4736,
+				"worker_average_usec": 146320.75308642,
+				"worker_max_usec": 238983,
+				"worker_results": 81
+			},
+			"image": "/tmp/story-lighting/boundary-live-live-0480.png",
+			"position": "Vector3(-254.053, 0.15344071, 621.2208)",
+			"weights": {
+				"amber_heath": 0.0,
+				"blossom_grove": 0.0,
+				"deep_forest": 0.351077276266031,
+				"highland": 0.0,
+				"jade_wetlands": 0.0,
+				"meadow": 0.643581371975067,
+				"twilight_marsh": 0.00534135175890211
+			}
+		},
+		{
+			"chunks": 9,
+			"frame": 600,
+			"grass": {
+				"batches": 51,
+				"buffer_bytes": 542480,
+				"commit_max_usec": 1724,
+				"committed_instances": 6781,
+				"lod_update_max_usec": 1957,
+				"tiles": 64,
+				"visible_instances": 5071,
+				"worker_average_usec": 149222.954545455,
+				"worker_max_usec": 261748,
+				"worker_results": 88
+			},
+			"image": "/tmp/story-lighting/boundary-live-live-0600.png",
+			"position": "Vector3(-237.56624, 0.9557148, 632.526)",
+			"weights": {
+				"amber_heath": 0.0,
+				"blossom_grove": 0.0,
+				"deep_forest": 0.112853040294658,
+				"highland": 0.0,
+				"jade_wetlands": 0.0,
+				"meadow": 0.873444896758433,
+				"twilight_marsh": 0.013702062946909
+			}
+		},
+		{
+			"chunks": 9,
+			"frame": 720,
+			"grass": {
+				"batches": 58,
+				"buffer_bytes": 668720,
+				"commit_max_usec": 1724,
+				"committed_instances": 8359,
+				"lod_update_max_usec": 1957,
+				"tiles": 65,
+				"visible_instances": 5548,
+				"worker_average_usec": 148960.670103093,
+				"worker_max_usec": 261748,
+				"worker_results": 97
+			},
+			"image": "/tmp/story-lighting/boundary-live-live-0720.png",
+			"position": "Vector3(-221.07948, 0.9999678, 643.8312)",
+			"weights": {
+				"amber_heath": 0.0,
+				"blossom_grove": 0.0,
+				"deep_forest": 0.0190894581989472,
+				"highland": 0.0,
+				"jade_wetlands": 0.0,
+				"meadow": 0.955507452027893,
+				"twilight_marsh": 0.02540308977316
+			}
+		},
+		{
+			"chunks": 9,
+			"frame": 840,
+			"grass": {
+				"batches": 59,
+				"buffer_bytes": 696240,
+				"commit_max_usec": 1724,
+				"committed_instances": 8703,
+				"lod_update_max_usec": 1957,
+				"tiles": 62,
+				"visible_instances": 6156,
+				"worker_average_usec": 148454.93,
+				"worker_max_usec": 261748,
+				"worker_results": 100
+			},
+			"image": "/tmp/story-lighting/boundary-live-live-0840.png",
+			"position": "Vector3(-204.59274, 1.3820078, 655.1364)",
+			"weights": {
+				"amber_heath": 0.0,
+				"blossom_grove": 0.0,
+				"deep_forest": 0.00328973998143494,
+				"highland": 0.0,
+				"jade_wetlands": 0.0,
+				"meadow": 0.957437990566397,
+				"twilight_marsh": 0.0392722694521679
+			}
+		},
+		{
+			"chunks": 6,
+			"frame": 960,
+			"grass": {
+				"batches": 62,
+				"buffer_bytes": 806080,
+				"commit_max_usec": 1724,
+				"committed_instances": 10076,
+				"lod_update_max_usec": 1957,
+				"tiles": 65,
+				"visible_instances": 6463,
+				"worker_average_usec": 146240.318181818,
+				"worker_max_usec": 261748,
+				"worker_results": 110
+			},
+			"image": "/tmp/story-lighting/boundary-live-live-0960.png",
+			"position": "Vector3(-188.10599, 0.5682093, 666.4416)",
+			"weights": {
+				"amber_heath": 0.0,
+				"blossom_grove": 0.0,
+				"deep_forest": 0.000562568292113163,
+				"highland": 0.0,
+				"jade_wetlands": 0.0,
+				"meadow": 0.943826749695591,
+				"twilight_marsh": 0.0556106820122954
+			}
+		},
+		{
+			"chunks": 6,
+			"frame": 1019,
+			"grass": {
+				"batches": 60,
+				"buffer_bytes": 806720,
+				"commit_max_usec": 1724,
+				"committed_instances": 10084,
+				"lod_update_max_usec": 1957,
+				"tiles": 63,
+				"visible_instances": 6894,
+				"worker_average_usec": 146878.625,
+				"worker_max_usec": 261748,
+				"worker_results": 112
+			},
+			"image": "/tmp/story-lighting/boundary-live-live-1019.png",
+			"position": "Vector3(-180, 1.0009431, 672)",
+			"weights": {
+				"amber_heath": 0.0,
+				"blossom_grove": 0.0,
+				"deep_forest": 0.000244214591632948,
+				"highland": 0.0,
+				"jade_wetlands": 0.0,
+				"meadow": 0.935851844265462,
+				"twilight_marsh": 0.0639039411429056
+			}
+		}
+	],
+	"kind": "live scripted observer travel",
+	"settled_grass": {
+		"batches": 60,
+		"buffer_bytes": 806720,
+		"commit_max_usec": 1724,
+		"committed_instances": 10084,
+		"lod_update_max_usec": 1957,
+		"tiles": 63,
+		"visible_instances": 6894,
+		"worker_average_usec": 146878.625,
+		"worker_max_usec": 261748,
+		"worker_results": 112
+	},
+	"settled_image": "/tmp/story-lighting/boundary-live-live-settled.png"
+}

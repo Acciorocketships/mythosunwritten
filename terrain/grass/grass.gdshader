@@ -1,7 +1,10 @@
 shader_type spatial;
+#include "res://terrain/materials/visual_clock.gdshaderinc"
 render_mode cull_disabled;
 #include "res://terrain/materials/ground_style.gdshaderinc"
 varying vec2 ground_style_position;
+varying float support_normal_up;
+global uniform float grass_density_scale;
 #define TACTICAL_GRASS_ROOT
 varying vec3 tactical_grass_root;
 
@@ -71,8 +74,9 @@ vec2 world_to_local_tangent(vec2 direction, vec3 tangent_x, vec3 tangent_z) {
 
 void vertex() {
 	vec2 world_xz = MODEL_MATRIX[3].xz;
+	support_normal_up = normalize(MODEL_MATRIX[1].xyz).y;
 	float lod_distance = distance(world_xz, grass_lod_origin);
-	float density = density_at(lod_distance);
+	float density = density_at(lod_distance) * grass_density_scale;
 	float rank = INSTANCE_CUSTOM.y;
 	float dropout = 1.0 - step(density, rank);
 	// Population follows the player, but temporal detail follows the camera.
@@ -111,8 +115,8 @@ void vertex() {
 		float root_tone = mix(0.97, 1.03,
 			hash21(UV2 * 113.0 + vec2(phase, phase * 1.37)));
 		blade_tone = mix(1.0, root_tone, grass_detail);
-		float idle = sin(TIME * 1.05 + phase) + 0.22 * sin(TIME * 1.70 + phase * 1.73);
-		vec2 gust_uv = (world_xz - wind_world * TIME * wind_gust_speed)
+		float idle = sin(visual_time() * 1.05 + phase) + 0.22 * sin(visual_time() * 1.70 + phase * 1.73);
+		vec2 gust_uv = (world_xz - wind_world * visual_time() * wind_gust_speed)
 			/ max(wind_gust_scale, 1.0);
 		float gust_noise = textureLod(wind_gust_texture, gust_uv, 0.0).r;
 		float gust = smoothstep(0.38, 0.88, gust_noise);
@@ -219,6 +223,11 @@ void fragment() {
 	vec3 ground_base = textureLod(ground_palette_texture,
 		ground_palette_uv, 0.0).rgb;
 	ALBEDO = ground_style(ground_style_position, ground_base * COLOR.rgb) * height_tint * blade_value;
-	ROUGHNESS = 1.0;
-	SPECULAR = 0.0;
+	vec2 finish = substrate_finish(ground_style_position, support_normal_up);
+	ROUGHNESS = finish.x;
+	SPECULAR = finish.y * mix(1.0, 0.4, lower_gradient * grass_detail);
+	// Transmission belongs to the blade tips. Fade it with geometric detail
+	// so the finite grass ring still converges to its supporting lawn.
+	BACKLIGHT = ALBEDO * biome_surface(ground_style_position).g
+		* tip_gradient * grass_detail * (1.0 - root_match);
 }

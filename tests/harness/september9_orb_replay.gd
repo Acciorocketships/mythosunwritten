@@ -26,6 +26,7 @@ func _ready() -> void:
 		# comparison anchor; both versions rebuild from this identical datum.
 		var fog := PackedColorArray()
 		fog.resize(169)
+		fog.fill(Color(0, 0, 0, 0))
 		var ground := PackedFloat32Array()
 		ground.resize(169)
 		var fx := BiomeChunkFx.build_field({"origin":Vector3.ZERO, "fog":fog,

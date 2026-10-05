@@ -16,15 +16,46 @@ const GROUND_PATCH_WARMTH := 0.025
 # A fixed sun direction keeps shadow orientation coherent during transitions.
 const LIGHTING := {
 	&"meadow": ["8cbedb","ffecd3","c2d5e4",0.68,"ffe5bd",1.40,0.72],
-	&"deep_forest": ["354c68","84978e","759bad",0.38,"b3c6b5",0.55,0.92],
-	&"highland": ["97bedb","e7e3e7","b8cee1",0.70,"f0edff",1.45,0.68],
-	&"blossom_grove": ["977b9e","eac0c0","c7b2d2",0.52,"ffd5c1",0.95,0.85],
-	&"twilight_marsh": ["1d2647","6f718f","7b85b1",0.28,"9dacce",0.18,1.05],
-	&"amber_heath": ["af9588","f0c090","cab6a1",0.55,"ffd091",1.18,0.80],
+	&"deep_forest": ["354c68","84978e","91a4b0",0.34,"ffe4bb",1.05,0.92],
+	&"highland": ["97bedb","e7e3e7","b8cee1",0.48,"f0edff",1.15,0.68],
+	&"blossom_grove": ["977b9e","eac0c0","94aac7",0.42,"ffd5c1",0.95,0.85],
+	&"twilight_marsh": ["1d2647","6f718f","7b85b1",0.30,"9dacce",0.28,1.05],
+	&"amber_heath": ["af9588","f0c090","94a5bd",0.42,"ffd091",1.18,0.80],
 	&"jade_wetlands": ["558b96","bbd5c1","8dbbb2",0.48,"d8ead1",0.78,0.90],
 }
 
+# Lower mist scale, upper scale, upper contribution, emission, distant haze,
+# sunlight scattering. Spatial shapes blend on the canonical fog lattice.
+const MIST := {
+	&"meadow": [5.0, 24.0, 0.08, 0.10, 0.00018, 1.2],
+	&"deep_forest": [4.5, 30.0, 0.24, 0.12, 0.00040, 2.2],
+	&"highland": [3.0, 36.0, 0.08, 0.10, 0.00032, 1.0],
+	&"blossom_grove": [6.0, 24.0, 0.20, 0.48, 0.00032, 1.5],
+	&"twilight_marsh": [2.8, 14.0, 0.12, 0.42, 0.00055, 1.1],
+	&"amber_heath": [5.0, 28.0, 0.18, 0.16, 0.00036, 1.9],
+	&"jade_wetlands": [4.5, 22.0, 0.24, 0.20, 0.00045, 1.6],
+}
+
+const SURFACE := {
+	&"meadow": Vector2(0.05, 0.20),
+	&"deep_forest": Vector2(0.38, 0.24),
+	&"highland": Vector2(0.02, 0.12),
+	&"blossom_grove": Vector2(0.12, 0.28),
+	&"twilight_marsh": Vector2(0.70, 0.14),
+	&"amber_heath": Vector2(0.03, 0.24),
+	&"jade_wetlands": Vector2(0.60, 0.22),
+}
+
 static var _profiles: Dictionary = {}
+
+static func surface_response(weights: Dictionary) -> Color:
+	_ensure()
+	var response := Color(0, 0, 0, 1)
+	for id: StringName in weights:
+		var p: BiomeProfile = _profiles[id]
+		response.r += p.surface_dampness * float(weights[id])
+		response.g += p.foliage_transmission * float(weights[id])
+	return response
 
 static func biome_ids() -> Array[StringName]:
 	return Helper.BIOME_NAMES.duplicate()
@@ -51,6 +82,9 @@ static func blend_atmosphere(w: Dictionary) -> Dictionary:
 	var sunlight := Color(0,0,0,0)
 	var se := 0.0
 	var glow := 0.0
+	var shape := Color(0, 0, 0, 0)
+	var haze := 0.0
+	var scattering := 0.0
 	for name: StringName in w:
 		var p: BiomeProfile = _profiles[name]
 		var k: float = w[name]
@@ -63,9 +97,13 @@ static func blend_atmosphere(w: Dictionary) -> Dictionary:
 		sunlight += p.sun_color * k
 		se += p.sun_energy * k
 		glow += p.glow_intensity * k
+		shape += Color(p.mist_height, p.mist_upper_height, p.mist_upper_weight, p.mist_emission) * k
+		haze += p.haze_density * k
+		scattering += p.sun_scattering * k
 	return {&"fog_color": fog, &"fog_density": fd, &"sky_top": sky_t,
 			&"sky_horizon": sky_h, &"ambient_color": amb, &"ambient_energy": ae,
-			&"sun_color": sunlight, &"sun_energy": se, &"glow_intensity": glow}
+			&"sun_color": sunlight, &"sun_energy": se, &"glow_intensity": glow,
+			&"mist_shape": shape, &"haze_density": haze, &"sun_scattering": scattering}
 
 static func blended_density(w: Dictionary) -> float:
 	_ensure()
@@ -150,6 +188,15 @@ static func _art(id: StringName, title: String, ground: Color, tree: Color,
 	p.sun_color = Color(lighting[4])
 	p.sun_energy = lighting[5]
 	p.glow_intensity = lighting[6]
+	var mist: Array = MIST[id]
+	p.mist_height = mist[0]
+	p.mist_upper_height = mist[1]
+	p.mist_upper_weight = mist[2]
+	p.mist_emission = mist[3]
+	p.haze_density = mist[4]
+	p.sun_scattering = mist[5]
+	p.surface_dampness = SURFACE[id].x
+	p.foliage_transmission = SURFACE[id].y
 	p.foliage_density = foliage
 	p.water_tint = water
 	p.particles = particles
