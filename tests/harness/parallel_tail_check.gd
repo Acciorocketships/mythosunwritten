@@ -16,6 +16,7 @@ var _chunks: Array[Vector2i] = [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), 
 var _busy: Array[Vector2i] = [Vector2i(2, 0), Vector2i(2, 1), Vector2i(-2, 0), Vector2i(0, 2)]
 var _rounds := 2
 var _tasks := 4
+var _no_busy := false
 
 static func _parse(text: String) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
@@ -83,6 +84,7 @@ func _init() -> void:
 		elif arg.begins_with("--busy="): _busy = _parse(arg.trim_prefix("--busy="))
 		elif arg.begins_with("--rounds="): _rounds = int(arg.trim_prefix("--rounds="))
 		elif arg.begins_with("--tasks="): _tasks = int(arg.trim_prefix("--tasks="))
+		elif arg == "--no-busy": _no_busy = true
 	water = TerrainWorldTuning.make_water(_seed)
 	plan = TerrainWorldTuning.make_heightfield(_seed, water)
 	var catalog := EnvironmentCatalog.load_default()
@@ -108,11 +110,16 @@ func _init() -> void:
 				keys.append(chunk + Vector2i(dx, dz))
 		views[chunk] = keys
 	print("[tailcheck] planned %d chunks ms=%.0f" % [_chunks.size(), (Time.get_ticks_usec() - t) / 1000.0])
+	# Plan every view first so the timings below are tails only.
+	var serial_views: Dictionary = {}
+	for chunk: Vector2i in _chunks:
+		serial_views[chunk] = fields.frozen_view(views[chunk])
+	print("[tailcheck] planned views ms=%.0f" % ((Time.get_ticks_usec() - t) / 1000.0))
 	var serial_mesher := _make_mesher()
 	var reference: Dictionary = {}
 	t = Time.get_ticks_usec()
 	for chunk: Vector2i in _chunks:
-		reference[chunk] = _tail(chunk, serial_mesher, fields.frozen_view(views[chunk]))
+		reference[chunk] = _tail(chunk, serial_mesher, serial_views[chunk])
 	var serial_ms := (Time.get_ticks_usec() - t) / 1000.0
 	print("[tailcheck] serial tails ms=%.0f" % serial_ms)
 	var meshers: Array[TerrainChunkMesher] = []
@@ -132,7 +139,7 @@ func _init() -> void:
 			results[_chunks[i]] = r
 			lock.unlock(), _chunks.size(), _tasks, true)
 		# Meanwhile the "planning thread" keeps using the shared caches.
-		for chunk: Vector2i in _busy:
+		for chunk: Vector2i in ([] if _no_busy else _busy):
 			var c := chunk + Vector2i(round_index * 7, 0)
 			fields.region(c)
 			fields.water(c)

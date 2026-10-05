@@ -17,6 +17,13 @@ var _radius := 1
 var _chunks: Array[Vector2i] = []
 var _skip: PackedStringArray = []
 var _serial := false
+var _warmup := false
+var _shot := ""
+var _look_from := Vector3.ZERO
+var _look_at := Vector3.ZERO
+var _has_look := false
+var _warmup_node: Node3D
+var _warmup_frames := 0
 var _busy_frames: Array[float] = []
 var plan: HeightfieldPlan
 var water: WaterPlan
@@ -43,6 +50,14 @@ func _init() -> void:
 		if arg.begins_with("--seed="): _seed = int(arg.trim_prefix("--seed="))
 		elif arg.begins_with("--radius="): _radius = int(arg.trim_prefix("--radius="))
 		elif arg == "--serial": _serial = true
+		elif arg == "--warmup": _warmup = true
+		elif arg.begins_with("--shot="): _shot = arg.trim_prefix("--shot=")
+		elif arg.begins_with("--look="):
+			# --look=from_x,from_y,from_z,at_x,at_y,at_z (world metres)
+			var v := arg.trim_prefix("--look=").split(",")
+			_look_from = Vector3(float(v[0]), float(v[1]), float(v[2]))
+			_look_at = Vector3(float(v[3]), float(v[4]), float(v[5]))
+			_has_look = true
 		elif arg.begins_with("--skip="): _skip = arg.trim_prefix("--skip=").split(",")
 		elif arg.begins_with("--chunks="):
 			for pair: String in arg.trim_prefix("--chunks=").split(";"):
@@ -86,9 +101,19 @@ func _init() -> void:
 	_root.add_child(_camera)
 	var c := Vector3(_centre.x * 192.0 + 96.0, 0.0, _centre.y * 192.0 + 96.0)
 	_camera.look_at_from_position(c + Vector3(-180, 160, -180), c, Vector3.UP)
+	if _has_look:
+		_camera.look_at_from_position(_look_from, _look_at, Vector3.UP)
 	if not Helper.is_headless():
 		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 		RenderingServer.viewport_set_measure_render_time(root.get_viewport_rid(), true)
+	if _warmup:
+		# RenderWarmup: one instance of every prepared visual in front of the
+		# camera for a few frames before any chunk is committed.
+		_warmup_node = preload("res://scripts/terrain/environment/RenderWarmup.gd").build(
+			render_cache, render_cache.prepared_ids())
+		_camera.add_child(_warmup_node)
+		_warmup_node.position = Vector3(0, 0, -1.0)
+		_warmup_frames = 5
 	print("[commitprof] ready ms=%.0f" % ((Time.get_ticks_usec() - _t0) / 1000.0))
 	_thread = Thread.new()
 	_thread.start(_work)
@@ -125,6 +150,12 @@ func _process(_delta: float) -> bool:
 	var now := Time.get_ticks_usec()
 	var frame_ms := (now - _last_usec) / 1000.0
 	_last_usec = now
+	if _warmup_frames > 0:
+		print("[commitprof] warmup frame_ms=%.1f" % frame_ms)
+		_warmup_frames -= 1
+		if _warmup_frames == 0:
+			_warmup_node.queue_free()
+		return false
 	if _frames_after > 0:
 		_after_max = maxf(_after_max, frame_ms)
 		_frames_after -= 1
@@ -148,6 +179,9 @@ func _process(_delta: float) -> bool:
 			if _idle_frames.size() < 240:
 				return false
 			_thread.wait_to_finish()
+			if not _shot.is_empty():
+				root.get_texture().get_image().save_png(_shot)
+				print("[commitprof] shot ", _shot)
 			var sorted := _idle_frames.duplicate()
 			sorted.sort()
 			var rid := root.get_viewport_rid()

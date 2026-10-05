@@ -280,6 +280,8 @@ func _ready() -> void:
 	CliffDressing.shared_material()
 	WaterSurfaceBuilder.sheet_material()
 	_mesher.prepare_resources()
+	# C# grid kernels for the cliff sheet, when verified (no-op otherwise).
+	preload("res://scripts/native/NativeGridKernels.gd").setup()
 	for index in TAIL_THREADS:
 		var tail_mesher := TerrainChunkMesher.new()
 		tail_mesher.profile_enabled = PROFILE_STREAMING
@@ -389,6 +391,29 @@ func _emit_startup_loading_progress() -> void:
 		print("[terrain-streamer] startup_complete seed=%d elapsed_ms=%d chunks=%d" % [
 			world_seed, Time.get_ticks_msec() - _diagnostic_started_msec, total])
 		startup_loading_completed.emit()
+
+## While the loading screen is up, one instance of every prepared visual
+## (RenderWarmup) sits just in front of the camera so its pipelines compile
+## then, not in the first gameplay frame that shows each one.
+var _render_warmup: Node3D
+
+func _update_render_warmup() -> void:
+	if _headless:
+		return
+	if startup_loading_complete():
+		if _render_warmup != null:
+			_render_warmup.queue_free()
+			_render_warmup = null
+		return
+	if _render_warmup != null:
+		return
+	var camera := get_viewport().get_camera_3d()
+	if camera == null:
+		return
+	_render_warmup = preload("res://scripts/terrain/environment/RenderWarmup.gd").build(
+		_environment_cache, _environment_cache.prepared_ids())
+	camera.add_child(_render_warmup)
+	_render_warmup.position = Vector3(0.0, 0.0, -1.0)
 
 func _restore_startup_render_limit() -> void:
 	if _startup_previous_max_fps < 0: return
@@ -843,6 +868,7 @@ func _process(_delta: float) -> void:
 			_grass_root.add_child(item.node)
 	_telemetry.timing(&"main/commits", Time.get_ticks_usec() - commit_started)
 	_emit_startup_loading_progress()
+	_update_render_warmup()
 	_log_worker_diagnostics()
 	var focus := Vector2i((lod_origin / PRIORITY_FOCUS_STEP).floor())
 	if focus != _queue_focus or heading != _queue_heading:
@@ -1132,9 +1158,15 @@ func _integrate_pending_terrain(centre: Vector2i) -> void:
 			break
 		var step_started := Time.get_ticks_usec()
 		var steps: Array = _integrating.steps
-		(steps[int(_integrating.index)] as Callable).call()
+		var step: Callable = steps[int(_integrating.index)]
+		step.call()
 		_integrating.index = int(_integrating.index) + 1
-		_integrating.usec = int(_integrating.usec) + Time.get_ticks_usec() - step_started
+		var step_usec := Time.get_ticks_usec() - step_started
+		_integrating.usec = int(_integrating.usec) + step_usec
+		if step_usec >= 50000:
+			print("[terrain-streamer] slow_integrate_step seed=%d chunk=%s step=%d/%d %s ms=%.1f" % [
+				world_seed, c, int(_integrating.index), steps.size(),
+				step.get_method(), step_usec / 1000.0])
 		stepped = true
 		if int(_integrating.index) == steps.size():
 			_pending_terrain.remove_at(_pending_index_of(result))
