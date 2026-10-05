@@ -89,16 +89,27 @@ const RESERVE_BACK:=.3
 const RESERVE_CORE_MARGIN:=16.0
 
 static func build(data:Dictionary,seed_value:int)->Node3D:
+ var steps:=build_steps(data,seed_value)
+ for step:Callable in steps.steps:step.call()
+ return steps.root
+
+## build as separate main-thread steps (one per sheet placement, the slope
+## rocks, the skirts), so the streamer can spread a cliff-heavy chunk over
+## frames; running them in order builds exactly build()'s node.
+static func build_steps(data:Dictionary,seed_value:int)->Dictionary:
  assert(OS.get_thread_caller_id()==OS.get_main_thread_id())
  var root:=Node3D.new();root.name="CliffRockFormations"
+ var steps:Array[Callable]=[]
  for p:Dictionary in data.get("placements",[]):
-  var mm:=MultiMesh.new();mm.transform_format=MultiMesh.TRANSFORM_3D;mm.mesh=CRAGS.mesh(p);mm.use_colors=true;mm.instance_count=1
-  # The slope sheet carries its biome tint per vertex (as the terrain does);
-  # the instance colour multiplies COLOR, so it stays white.
-  mm.set_instance_transform(0,p.transform);mm.set_instance_color(0,Color.WHITE)
-  var node:=MultiMeshInstance3D.new();node.multimesh=mm;node.set_meta("cliff_asset",p.asset)
-  node.add_to_group("tactical_solid_earth",true);root.add_child(node)
- if not (data.get("slope_rocks",{}) as Dictionary).is_empty():root.add_child(SLOPE_ROCKS.build(data.slope_rocks,seed_value))
+  steps.append(func()->void:
+   var mm:=MultiMesh.new();mm.transform_format=MultiMesh.TRANSFORM_3D;mm.mesh=CRAGS.mesh(p);mm.use_colors=true;mm.instance_count=1
+   # The slope sheet carries its biome tint per vertex (as the terrain does);
+   # the instance colour multiplies COLOR, so it stays white.
+   mm.set_instance_transform(0,p.transform);mm.set_instance_color(0,Color.WHITE)
+   var node:=MultiMeshInstance3D.new();node.multimesh=mm;node.set_meta("cliff_asset",p.asset)
+   node.add_to_group("tactical_solid_earth",true);root.add_child(node))
+ if not (data.get("slope_rocks",{}) as Dictionary).is_empty():
+  steps.append(func()->void:root.add_child(SLOPE_ROCKS.build(data.slope_rocks,seed_value)))
  # Terrain-covering parts of the basal rocks' ground skirts.
- RockSkirt.commit(root,data.get("rock_skirts",[]))
- return root
+ steps.append(func()->void:RockSkirt.commit(root,data.get("rock_skirts",[])))
+ return {"root":root,"steps":steps}

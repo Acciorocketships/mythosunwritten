@@ -1020,39 +1020,106 @@ func _accept_feature_ready(event: Dictionary) -> void:
 		_feature_nodes[c] = block
 	_feature_ready[c] = generation
 
+## Integration of one chunk is a sequence of main-thread steps (the mesher's
+## commit_steps, then water, dressing collision, attach). They run across
+## frames: each frame continues the chunk in progress and stops once
+## INTEGRATE_BUDGET_USEC is spent (always at least one step). A chunk counts
+## as built only after its last step, so readiness and the player freeze are
+## unchanged; a whole-chunk commit had held single frames for 45-870 ms.
+const INTEGRATE_BUDGET_USEC := 6000
+var _integrating: Dictionary = {}
+var _integrating_node_ref: Dictionary = {}
+
 func _integrate_pending_terrain(centre: Vector2i) -> void:
+	var frame_started := Time.get_ticks_usec()
 	var integrated := 0
+	var stepped := false
+	while true:
+		if _integrating.is_empty():
+			if integrated >= MAX_BUILD_PER_FRAME:
+				break
+			var next := _next_integration(centre)
+			if next.is_empty():
+				break
+			_integrating = {"result": next, "steps": _integration_steps(next),
+				"index": 0, "usec": 0}
+		var result: Dictionary = _integrating.result
+		var c: Vector2i = result.chunk
+		var pending_index := _pending_index_of(result)
+		if pending_index < 0 \
+				or int(_terrain_generation.get(c, 0)) != int(result.terrain_generation) \
+				or maxi(absi(c.x - centre.x), absi(c.y - centre.y)) > KEEP_RADIUS:
+			_abandon_integration()
+			continue
+		if stepped and Time.get_ticks_usec() - frame_started >= INTEGRATE_BUDGET_USEC:
+			break
+		var step_started := Time.get_ticks_usec()
+		var steps: Array = _integrating.steps
+		(steps[int(_integrating.index)] as Callable).call()
+		_integrating.index = int(_integrating.index) + 1
+		_integrating.usec = int(_integrating.usec) + Time.get_ticks_usec() - step_started
+		stepped = true
+		if int(_integrating.index) == steps.size():
+			_pending_terrain.remove_at(_pending_index_of(result))
+			_telemetry.count(&"terrain_commits")
+			_telemetry.timing(&"main/terrain_commit", int(_integrating.usec))
+			_integrating = {}
+			integrated += 1
+	# Drop results that can no longer integrate (stale or out of range).
 	var remaining: Array[Dictionary] = []
 	for result: Dictionary in _pending_terrain:
 		var c: Vector2i = result.chunk
-		if int(_terrain_generation.get(c, 0)) != int(result.terrain_generation) \
-			or _built.has(c) \
-			or maxi(absi(c.x - centre.x), absi(c.y - centre.y)) > KEEP_RADIUS:
-			continue
-		if integrated >= MAX_BUILD_PER_FRAME or not _feature_square_ready(c):
+		if int(_terrain_generation.get(c, 0)) == int(result.terrain_generation) \
+				and not _built.has(c) \
+				and maxi(absi(c.x - centre.x), absi(c.y - centre.y)) <= KEEP_RADIUS:
 			remaining.append(result)
+	_pending_terrain = remaining
+	_telemetry.timing(&"main/integrate_frame", Time.get_ticks_usec() - frame_started)
+
+## Nearest pending result whose feature square is ready (_pending_terrain is
+## kept sorted nearest-first by _drain_results).
+func _next_integration(centre: Vector2i) -> Dictionary:
+	for result: Dictionary in _pending_terrain:
+		var c: Vector2i = result.chunk
+		if int(_terrain_generation.get(c, 0)) != int(result.terrain_generation) \
+				or _built.has(c) \
+				or maxi(absi(c.x - centre.x), absi(c.y - centre.y)) > KEEP_RADIUS:
 			continue
-		var integrate_started := Time.get_ticks_usec()
-		var node: Node3D = _mesher.commit_chunk(result.terrain)
-		var terrain_finished := Time.get_ticks_usec()
+		if _feature_square_ready(c):
+			return result
+	return {}
+
+## By identity: Array.has/erase would compare whole payload dictionaries.
+func _pending_index_of(result: Dictionary) -> int:
+	for index in _pending_terrain.size():
+		if is_same(_pending_terrain[index], result):
+			return index
+	return -1
+
+func _abandon_integration() -> void:
+	var node := _integrating_node_ref.get("node") as Node3D
+	if node != null and is_instance_valid(node) and node.get_parent() == null:
+		node.free()
+	_integrating = {}
+
+func _integration_steps(result: Dictionary) -> Array[Callable]:
+	var c: Vector2i = result.chunk
+	var commit := _mesher.commit_steps(result.terrain)
+	var node: Node3D = commit.root
+	var steps: Array[Callable] = []
+	steps.append_array(commit.steps)
+	steps.append(func() -> void:
 		var water_node: Node3D = _water_builder.commit_chunk(result.water)
 		if water_node != null:
-			node.add_child(water_node)
-		var water_finished := Time.get_ticks_usec()
+			node.add_child(water_node))
+	steps.append(func() -> void:
 		EnvironmentCollisionBuilder.commit(node, result.dressing, _environment_cache,
 			&"DressingCollision")
 		# Embedded rocks' ground skirts are ground: they commit with it.
-		RockSkirt.commit(node, result.dressing.ground_skirts)
-		var collision_finished := Time.get_ticks_usec()
+		RockSkirt.commit(node, result.dressing.ground_skirts))
+	steps.append(func() -> void:
 		terrain_parent.add_child(node)
 		_build_fx(node, result.fx)
-		var publish_finished := Time.get_ticks_usec()
-		if publish_finished-integrate_started>=50000:
-			print("[terrain-streamer] slow_commit seed=%d chunk=%s terrain_ms=%.2f water_ms=%.2f dressing_collision_ms=%.2f publish_fx_ms=%.2f" % [
-				world_seed,c,(terrain_finished-integrate_started)/1000.0,
-				(water_finished-terrain_finished)/1000.0,
-				(collision_finished-water_finished)/1000.0,
-				(publish_finished-collision_finished)/1000.0])
 		if _grass_runtime_enabled:
 			node.set_meta(&"grass_sampling", result.grass_sampling)
 		_built[c] = node
@@ -1062,11 +1129,9 @@ func _integrate_pending_terrain(centre: Vector2i) -> void:
 		_static_trample_dirty = true
 		var generation: int = result.terrain_generation
 		_dressing_queue.register_chunk(c, generation)
-		_dressing_queue.enqueue(c, generation, node, result.dressing)
-		_telemetry.count(&"terrain_commits")
-		_telemetry.timing(&"main/terrain_commit", Time.get_ticks_usec() - integrate_started)
-		integrated += 1
-	_pending_terrain = remaining
+		_dressing_queue.enqueue(c, generation, node, result.dressing))
+	_integrating_node_ref = {"node": node}
+	return steps
 
 ## Publish loaded structural dressing as a persistent layer, separate from the
 ## recovering player trail. Rebuilding only when chunks change avoids the old

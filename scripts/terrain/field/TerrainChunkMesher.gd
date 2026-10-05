@@ -515,19 +515,58 @@ func _canonical_water_blocks(region: HeightfieldRegion, water: WaterFieldContext
 ## Main-thread half of chunk generation. This is deliberately the only path
 ## below that creates render/physics resources and nodes.
 func commit_chunk(data: Dictionary) -> Node3D:
+	var steps := commit_steps(data)
+	for step: Callable in steps.steps:
+		step.call()
+	return steps.root
+
+
+## commit_chunk as separate main-thread steps (surface, cliff dressing,
+## collision, cliff faces) so the streamer can spread one chunk over several
+## frames under a time budget. Running every step in order builds exactly the
+## node commit_chunk returns.
+func commit_steps(data: Dictionary) -> Dictionary:
 	assert(not data.is_empty())
 	var chunk: Vector2i = data["chunk"]
 	var root := Node3D.new()
 	root.name = "Chunk_%d_%d" % [chunk.x, chunk.y]
+	var steps: Array[Callable] = [func() -> void: _commit_surface(root, data)]
+	var cliffs: Dictionary = CLIFF_ROCKS.build_steps(data.get("cliff_terraces", {}),
+		data["world_seed"])
+	steps.append(func() -> void: root.add_child(cliffs.root))
+	steps.append_array(cliffs.steps)
+	steps.append(func() -> void: _commit_arches(root, data))
+	steps.append(func() -> void: _commit_collision(root, data))
+	# The cliff sheet's own collision is often 10-50k triangles; it joins the
+	# body as several shapes (the same triangles) so no one step builds it all.
+	var rock_faces: PackedVector3Array = (data.get("cliff_terraces", {}) as Dictionary) \
+		.get("collision_faces", PackedVector3Array())
+	var piece_floats := ROCK_COLLISION_PIECE_TRIANGLES * 3
+	var piece_count := ceili(float(rock_faces.size()) / float(piece_floats))
+	for piece in piece_count:
+		steps.append(func() -> void:
+			var shape := ConcavePolygonShape3D.new()
+			shape.set_faces(rock_faces.slice(piece * piece_floats, (piece + 1) * piece_floats))
+			var rock_collision := CollisionShape3D.new()
+			rock_collision.name = "CliffRocks" if piece == 0 else "CliffRocks%d" % (piece + 1)
+			rock_collision.shape = shape
+			(root.get_node("Body") as StaticBody3D).add_child(rock_collision))
+	steps.append(func() -> void: _commit_wall_collision(root, data))
+	steps.append(func() -> void: _commit_cliff_faces(root, data))
+	return {"root": root, "steps": steps}
 
+const ROCK_COLLISION_PIECE_TRIANGLES := 12000
+
+
+func _commit_surface(root: Node3D, data: Dictionary) -> void:
 	var mi := MeshInstance3D.new()
 	mi.name = "Surface"
 	mi.add_to_group("tactical_solid_earth", true)
 	mi.mesh = _mesh_from_arrays(data["surface_arrays"], _ground_tinted_mat())
 	root.add_child(mi)
 
-	var rock_data: Dictionary = data.get("cliff_terraces", {})
-	root.add_child(CLIFF_ROCKS.build(rock_data, data["world_seed"]))
+
+func _commit_arches(root: Node3D, data: Dictionary) -> void:
 	var arch_data: Dictionary = data.get("natural_arches",{})
 	var arch_arrays: Array = arch_data.get("arrays",[])
 	if not arch_arrays.is_empty():
@@ -536,6 +575,9 @@ func commit_chunk(data: Dictionary) -> Node3D:
 		arch_mesh.mesh = _mesh_from_arrays(arch_arrays,_skirt_material)
 		root.add_child(arch_mesh)
 
+
+func _commit_collision(root: Node3D, data: Dictionary) -> void:
+	var arch_data: Dictionary = data.get("natural_arches",{})
 	# Collision: the full walkable sheet plus cliff-wall, arch and rock trimeshes.
 	var body := StaticBody3D.new()
 	body.name = "Body"
@@ -568,22 +610,11 @@ func commit_chunk(data: Dictionary) -> Node3D:
 		arch_collision.name = "NaturalArches"
 		arch_collision.shape = arch_shape
 		body.add_child(arch_collision)
-	var rock_faces: PackedVector3Array = rock_data.get("collision_faces",PackedVector3Array())
-	if not rock_faces.is_empty():
-		var rock_shape := ConcavePolygonShape3D.new()
-		rock_shape.set_faces(rock_faces)
-		var rock_collision := CollisionShape3D.new()
-		rock_collision.name = "CliffRocks"
-		rock_collision.shape = rock_shape
-		body.add_child(rock_collision)
+	root.add_child(body)
 
-	var wall_arrays: Array = data["wall_arrays"]
-	if not wall_arrays.is_empty():
-		var skirt_mesh := _mesh_from_arrays(wall_arrays, _skirt_material)
-		var sf := MeshInstance3D.new()
-		sf.name = "CliffFaces"
-		sf.mesh = skirt_mesh
-		root.add_child(sf)
+
+func _commit_wall_collision(root: Node3D, data: Dictionary) -> void:
+	var body := root.get_node("Body") as StaticBody3D
 	var wall_collision: Array = data["wall_collision_arrays"]
 	if not wall_collision.is_empty():
 		var wall_shape := ConcavePolygonShape3D.new()
@@ -592,8 +623,16 @@ func commit_chunk(data: Dictionary) -> Node3D:
 		cs2.name = "CollisionShape3D_walls"
 		cs2.shape = wall_shape
 		body.add_child(cs2)
-	root.add_child(body)
-	return root
+
+
+func _commit_cliff_faces(root: Node3D, data: Dictionary) -> void:
+	var wall_arrays: Array = data["wall_arrays"]
+	if not wall_arrays.is_empty():
+		var skirt_mesh := _mesh_from_arrays(wall_arrays, _skirt_material)
+		var sf := MeshInstance3D.new()
+		sf.name = "CliffFaces"
+		sf.mesh = skirt_mesh
+		root.add_child(sf)
 
 
 ## Main-thread compatibility wrapper used by unit tests and offline harnesses.
