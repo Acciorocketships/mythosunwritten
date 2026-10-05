@@ -329,6 +329,12 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 	col_faces.resize(GRID * GRID * 6)
 	var col_i := 0
 	var graded_collision: Array[Vector3] = []
+	# Per-quad collision corner heights (v00, v10, v11, v01) and graded flags,
+	# from which wall-free tiles become heightmap shapes (_collision_tiles).
+	var quad_heights := PackedFloat32Array()
+	quad_heights.resize(GRID * GRID * 4)
+	var quad_graded := PackedByteArray()
+	quad_graded.resize(GRID * GRID)
 	var baked_cache := {}          # per-point baked surface samplers
 	# Biome ground tint sampled at the coarse 24 m lattice (CELLS_PER_CHUNK+1
 	# per axis) then bilinearly expanded to the per-vertex lattice — the biome
@@ -379,6 +385,12 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 			var v11 := Vector3(x1, TerrainTileField.sample_baked(baked, owner, x1, z1, region), z1)
 			var v01 := Vector3(x0, TerrainTileField.sample_baked(baked, owner, x0, z1, region), z1)
 			var graded := region.has_grade_in(Rect2(Vector2(x0, z0), Vector2.ONE * STEP))
+			var quad_index := iz * GRID + ix
+			quad_heights[quad_index * 4] = v00.y
+			quad_heights[quad_index * 4 + 1] = v10.y
+			quad_heights[quad_index * 4 + 2] = v11.y
+			quad_heights[quad_index * 4 + 3] = v01.y
+			quad_graded[quad_index] = 1 if graded else 0
 			if not graded:
 				col_faces[col_i] = v00
 				col_faces[col_i + 1] = v10
@@ -413,6 +425,8 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 	var surface_finished := Time.get_ticks_usec() if profile_enabled else 0
 	col_faces.resize(col_i)
 	col_faces.append_array(PackedVector3Array(graded_collision))
+	var collision_tiles := _collision_tiles(o, quad_heights, quad_graded,
+		PackedVector3Array(graded_collision))
 	# Cliff FACES: a VERTICAL rock skirt on every wall this chunk owns (the
 	# walls whose HIGH owner is one of its lattice points), filling the gap the
 	# pinned sheet leaves between the two owners' surfaces. It doubles as the
@@ -464,7 +478,11 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 			"vertices": surface_vertices.size(), "collision_triangles": col_faces.size() / 3} if profile_enabled else {},
 		"chunk": chunk,
 		"surface_arrays": surface_arrays,
+		# The complete walkable sheet (tests and the camera's ground-depth pass
+		# read it); physics uses the heightmap tiles plus the residual trimesh.
 		"collision_faces": col_faces,
+		"collision_heightmaps": collision_tiles.heightmaps,
+		"collision_trimesh_faces": collision_tiles.residual,
 		"wall_arrays": wall_arrays,
 		"wall_collision_arrays": wall_collision_arrays,
 		# (The key keeps its historical name: the streamer reads the cliff
@@ -525,9 +543,23 @@ func commit_chunk(data: Dictionary) -> Node3D:
 	cs.name = "CollisionShape3D"
 	cs.add_to_group("tactical_terrain_volume", true)
 	var col_shape := ConcavePolygonShape3D.new()
-	col_shape.set_faces(data["collision_faces"])
+	col_shape.set_faces(data.get("collision_trimesh_faces", data["collision_faces"]))
 	cs.shape = col_shape
+	# The ground-depth pass draws the complete sheet, heightmap tiles included.
+	cs.set_meta(&"terrain_faces", data["collision_faces"])
 	body.add_child(cs)
+	var tile_index := 0
+	for tile: Dictionary in data.get("collision_heightmaps", []):
+		var heightmap := HeightMapShape3D.new()
+		heightmap.map_width = COLLISION_TILE_QUADS + 1
+		heightmap.map_depth = COLLISION_TILE_QUADS + 1
+		heightmap.map_data = tile.data
+		var tile_shape := CollisionShape3D.new()
+		tile_shape.name = "GroundTile%d" % tile_index
+		tile_shape.shape = heightmap
+		tile_shape.transform = Transform3D(COLLISION_TILE_BASIS, tile.centre)
+		body.add_child(tile_shape)
+		tile_index += 1
 	var arch_faces: PackedVector3Array = arch_data.get("collision_faces",PackedVector3Array())
 	if not arch_faces.is_empty():
 		var arch_shape := ConcavePolygonShape3D.new()
@@ -576,6 +608,83 @@ func build_chunk(plan, chunk: Vector2i, region = null,
 		else plan.compute_region(chunk.x * POINTS_PER_CHUNK + POINTS_PER_CHUNK / 2,
 			chunk.y * POINTS_PER_CHUNK + POINTS_PER_CHUNK / 2, POINTS_PER_CHUNK)
 	return commit_chunk(compute_chunk(chunk, block_region, water, features))
+
+
+## Collision for wall-free ground is a HeightMapShape3D per 24 m tile: its
+## build is ~300x cheaper than the trimesh BVH (0.06 vs 20-25 ms per chunk
+## sheet), which was the largest main-thread cost of integrating a chunk.
+## A tile qualifies when it has no graded quad and every lattice vertex is
+## shared by all its quads at one height (no wall line runs through it);
+## other quads stay in the residual trimesh, in their original order. Godot
+## splits a heightmap cell along its other diagonal, so the shape is turned
+## +90 degrees about Y: the split then matches the mesher's v00-v11 one and
+## both shapes contain exactly the same triangles. The basis is exact (0, +-2):
+## uniform scale 2 maps the unit cells to 2 m quads, so heights are halved.
+const COLLISION_TILE_QUADS := 12
+const COLLISION_TILE_BASIS := Basis(Vector3(0.0, 0.0, -STEP), Vector3(0.0, STEP, 0.0),
+	Vector3(STEP, 0.0, 0.0))
+
+static func _collision_tiles(origin: Vector2, quad_heights: PackedFloat32Array,
+		quad_graded: PackedByteArray, graded_faces: PackedVector3Array) -> Dictionary:
+	var n := COLLISION_TILE_QUADS + 1
+	var tiles_per_axis := GRID / COLLISION_TILE_QUADS
+	var tile_ok := PackedByteArray()
+	tile_ok.resize(tiles_per_axis * tiles_per_axis)
+	var heightmaps: Array[Dictionary] = []
+	for tz in tiles_per_axis:
+		for tx in tiles_per_axis:
+			var grid := PackedFloat32Array()
+			grid.resize(n * n)
+			grid.fill(NAN)
+			var ok := true
+			for lz in COLLISION_TILE_QUADS:
+				for lx in COLLISION_TILE_QUADS:
+					var q := (tz * COLLISION_TILE_QUADS + lz) * GRID + tx * COLLISION_TILE_QUADS + lx
+					if quad_graded[q] != 0:
+						ok = false
+						break
+					# Corners in quad_heights order: v00, v10, v11, v01.
+					for corner in 4:
+						var cx := lx + (1 if corner == 1 or corner == 2 else 0)
+						var cz := lz + (1 if corner >= 2 else 0)
+						var h := quad_heights[q * 4 + corner]
+						var existing := grid[cz * n + cx]
+						if is_nan(existing):
+							grid[cz * n + cx] = h
+						elif existing != h:
+							ok = false
+							break
+					if not ok: break
+				if not ok: break
+			if not ok:
+				continue
+			tile_ok[tz * tiles_per_axis + tx] = 1
+			# World vertex (a, b) of the tile lies at local (u, v) = (12 - b, a)
+			# of the turned shape; heights halve under the uniform scale.
+			var data := PackedFloat32Array()
+			data.resize(n * n)
+			for b in n:
+				for a in n:
+					data[a * n + (COLLISION_TILE_QUADS - b)] = grid[b * n + a] * 0.5
+			var half := COLLISION_TILE_QUADS * STEP * 0.5
+			heightmaps.append({"centre": Vector3(origin.x + tx * COLLISION_TILE_QUADS * STEP + half,
+				0.0, origin.y + tz * COLLISION_TILE_QUADS * STEP + half), "data": data})
+	var residual := PackedVector3Array()
+	for iz in GRID:
+		for ix in GRID:
+			var q := iz * GRID + ix
+			if quad_graded[q] != 0 \
+					or tile_ok[(iz / COLLISION_TILE_QUADS) * tiles_per_axis + ix / COLLISION_TILE_QUADS] != 0:
+				continue
+			var x0 := origin.x + ix * STEP
+			var z0 := origin.y + iz * STEP
+			var v00 := Vector3(x0, quad_heights[q * 4], z0)
+			var v10 := Vector3(x0 + STEP, quad_heights[q * 4 + 1], z0)
+			var v11 := Vector3(x0 + STEP, quad_heights[q * 4 + 2], z0 + STEP)
+			var v01 := Vector3(x0, quad_heights[q * 4 + 3], z0 + STEP)
+			residual.append_array([v00, v10, v11, v00, v11, v01])
+	residual.append_array(graded_faces)
+	return {"heightmaps": heightmaps, "residual": residual}
 
 
 func _mesh_from_arrays(arrays: Array, material: Material) -> ArrayMesh:

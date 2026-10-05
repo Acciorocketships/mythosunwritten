@@ -121,7 +121,12 @@ func _update_terrain_volume(source: Camera3D, feet: Vector3, radius: float) -> v
 	var terrain_low := feet.y
 	var terrain_high := feet.y
 	for shape: CollisionShape3D in get_tree().get_nodes_in_group("tactical_terrain_volume"):
-		if shape.disabled or not shape.shape is ConcavePolygonShape3D or shape.get_world_3d() != source.get_world_3d(): continue
+		# Terrain chunks attach their complete sheet as metadata (their physics
+		# uses heightmap tiles plus a residual trimesh); other owners keep the
+		# trimesh itself.
+		var meta_faces: Variant = shape.get_meta(&"terrain_faces", null)
+		if shape.disabled or (meta_faces == null and not shape.shape is ConcavePolygonShape3D) \
+				or shape.get_world_3d() != source.get_world_3d(): continue
 		var id := shape.get_instance_id()
 		wanted[id] = true
 		if not _terrain_owners.has(id):
@@ -129,7 +134,8 @@ func _update_terrain_volume(source: Camera3D, feet: Vector3, radius: float) -> v
 			arrays.resize(Mesh.ARRAY_MAX)
 			# CPU collision data is read once per committed owner, never from a GPU
 			# mesh and never per frame. Removal releases the private proof mesh.
-			arrays[Mesh.ARRAY_VERTEX] = (shape.shape as ConcavePolygonShape3D).get_faces()
+			arrays[Mesh.ARRAY_VERTEX] = meta_faces if meta_faces != null \
+				else (shape.shape as ConcavePolygonShape3D).get_faces()
 			var mesh := ArrayMesh.new()
 			mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
 			var copy := MeshInstance3D.new()
