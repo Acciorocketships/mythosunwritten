@@ -43,7 +43,8 @@ func test_channel_core_crosses_terrain_diagonals_with_finite_width() -> void:
 		for z in [42, 43]:
 			for x in [42, 43]:
 				buckets[Vector2i(x, z)] = [[t, 0], [t, 1]]
-		water._region_cache[Vector2i(1, 1)] = {"rivers": [t], "ponds": [], "buckets": buckets}
+		water._region_cache[Vector2i(1, 1)] = {"rivers": [t], "ponds": [], "buckets": buckets,
+			"segments": WaterPlan.segment_index(buckets)}
 		for cell: Vector2i in buckets:
 			var p := Vector2(cell) * WaterPlan.TILE
 			var height := water.noise_h(p) - water.carve_at(p.x, p.y)

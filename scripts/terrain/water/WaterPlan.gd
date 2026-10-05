@@ -829,7 +829,7 @@ func _nearby_neighbour_points(index: Dictionary, p: Vector2,
 # Carve field (hot path: called for every cell of every region window)
 # ---------------------------------------------------------------
 
-var _region_cache: Dictionary = {}   # Vector2i super_cell -> {"rivers": Array, "buckets": Dictionary}
+var _region_cache: Dictionary = {}   # Vector2i super_cell -> {"rivers", "buckets", "ponds", "segments"}
 
 ## Rivers (full depth) whose bounds overlap super-cell `rc`, plus a bucket
 ## index: tile cell -> Array of [RiverTrace, sample_index] for fast carve
@@ -889,7 +889,8 @@ func _region_for(rc: Vector2i) -> Dictionary:
 			ponds.append(t.source_pool)
 		if t.pond != null:
 			ponds.append(t.pond)
-	var out: Dictionary = {"rivers": rivers, "buckets": buckets, "ponds": ponds}
+	var out: Dictionary = {"rivers": rivers, "buckets": buckets, "ponds": ponds,
+		"segments": segment_index(buckets)}
 	_memo_insert(_region_cache, rc, out, CARVE_REGION_CACHE_LIMIT)
 	_report_planning_progress(1.0, true)
 	return out
@@ -1033,6 +1034,31 @@ func bank_strengths(trace: RiverTrace) -> PackedFloat64Array:
 	return weights
 
 
+## carve_at evaluates the two segments touching each bucketed sample, each
+## segment once. Precomputed per cell (flat [trace, segment, ...]) so carve_at,
+## called for every lattice sample near a river, allocates nothing. Every
+## carve region carries it as "segments".
+static func segment_index(buckets: Dictionary) -> Dictionary:
+	var segments: Dictionary = {}
+	for key: Vector2i in buckets:
+		var seen: Dictionary = {}
+		var flat: Array = []
+		for entry in buckets[key]:
+			var t: RiverTrace = entry[0]
+			var i: int = entry[1]
+			for si in [i - 1, i]:
+				if si < 0 or si + 1 >= t.points.size():
+					continue
+				var segment_key := Vector3i(t.source_cell.x, t.source_cell.y, si)
+				if seen.has(segment_key):
+					continue
+				seen[segment_key] = true
+				flat.append(t)
+				flat.append(si)
+		segments[key] = flat
+	return segments
+
+
 ## Metres to subtract from the raw noise height at world position (x, z).
 ## Max over every pond bowl and channel segment that reaches the point — pure
 ## function of (world_seed, position); the caches never change the value.
@@ -1066,59 +1092,49 @@ func carve_at(x: float, z: float) -> float:
 			ground = noise_h(p)
 		best = maxf(best, pond.carve_at(p, ground))
 	var key: Vector2i = Vector2i(cx, cz)
-	if region.buckets.has(key):
-		var seen_segments: Dictionary = {}
-		for entry in region.buckets[key]:
-			var t: RiverTrace = entry[0]
-			var i: int = entry[1]
-			# Buckets are populated from sample influence AABBs for the hot-path
-			# lookup, but carving is evaluated on the two SEGMENTS touching that
-			# sample.  A segment appears through both endpoints; the stable key
-			# makes the duplicate a no-op without relying on visit order.
-			for si in [i - 1, i]:
-				if si < 0 or si + 1 >= t.points.size():
-					continue
-				var segment_key := Vector3i(t.source_cell.x, t.source_cell.y, si)
-				if seen_segments.has(segment_key):
-					continue
-				seen_segments[segment_key] = true
-				var a: Vector2 = t.points[si]
-				var b: Vector2 = t.points[si + 1]
-				var ab: Vector2 = b - a
-				var len2: float = ab.length_squared()
-				var along: float = clampf((p - a).dot(ab) / len2, 0.0, 1.0) \
-					if len2 > 0.000001 else 0.0
-				var nearest: Vector2 = a + ab * along
-				var half_width: float = lerpf(t.widths[si], t.widths[si + 1], along)
-				var d: float = p.distance_to(nearest)
-				var infl: float = half_width + BANK_FEATHER
-				if d >= infl:
-					continue
-				if ground == -INF:
-					ground = noise_h(p)
-				# The channel keeps its complete hydraulic footprint. Beyond it,
-				# bank controls rise from dry shore toward natural ground. The
-				# ordinary terrain kernel reconstructs the actual walkable slopes.
-				var grade: float = absf(t.beds[si + 1] - t.beds[si]) \
-					/ maxf(sqrt(len2), 0.001)
-				var extra: float = CARVE_BED_EXTRA \
-					if grade < CARVE_EXTRA_MAX_GRADE else 0.0
-				var bed: float = lerpf(t.beds[si], t.beds[si + 1], along)
-				var carve_bed: float = maxf(bed - extra, BED_MIN)
-				var target := carve_bed
-				if d > half_width:
-					var shore := bed + WaterField.SURFACE_RIDE + 0.5
-					target = lerpf(shore, ground, (d - half_width) / BANK_FEATHER)
-				var weights := bank_strengths(t)
-				var strength := lerpf(weights[si], weights[si+1], along)
-				var original_weight := SlopeProfile.smootherstep(clampf((half_width+CARVE_FEATHER-d)/CARVE_FEATHER,0,1))
-				var original_carve := maxf(0.0,ground-carve_bed)*original_weight
-				var carve := lerpf(original_carve,maxf(0.0,ground-target),strength)
-				# The retained bar is a low depositional crest. It can lower
-				# the original bank, never raise it or import a higher source.
-				var crest := ceilf((bed+WaterField.SURFACE_RIDE+.75)/STOREY)*STOREY
-				var bar_carve := maxf(0.0,ground-crest)
-				best = maxf(best,lerpf(carve,minf(carve,bar_carve),t.retained_ground_weight(p)))
+	# Precomputed per cell by _region_for: each segment touching a bucketed
+	# sample, once (the max below is independent of order).
+	var flat: Array = region.segments.get(key, [])
+	for n in range(0, flat.size(), 2):
+		var t: RiverTrace = flat[n]
+		var si: int = flat[n + 1]
+		var a: Vector2 = t.points[si]
+		var b: Vector2 = t.points[si + 1]
+		var ab: Vector2 = b - a
+		var len2: float = ab.length_squared()
+		var along: float = clampf((p - a).dot(ab) / len2, 0.0, 1.0) \
+			if len2 > 0.000001 else 0.0
+		var nearest: Vector2 = a + ab * along
+		var half_width: float = lerpf(t.widths[si], t.widths[si + 1], along)
+		var d: float = p.distance_to(nearest)
+		var infl: float = half_width + BANK_FEATHER
+		if d >= infl:
+			continue
+		if ground == -INF:
+			ground = noise_h(p)
+		# The channel keeps its complete hydraulic footprint. Beyond it,
+		# bank controls rise from dry shore toward natural ground. The
+		# ordinary terrain kernel reconstructs the actual walkable slopes.
+		var grade: float = absf(t.beds[si + 1] - t.beds[si]) \
+			/ maxf(sqrt(len2), 0.001)
+		var extra: float = CARVE_BED_EXTRA \
+			if grade < CARVE_EXTRA_MAX_GRADE else 0.0
+		var bed: float = lerpf(t.beds[si], t.beds[si + 1], along)
+		var carve_bed: float = maxf(bed - extra, BED_MIN)
+		var target := carve_bed
+		if d > half_width:
+			var shore := bed + WaterField.SURFACE_RIDE + 0.5
+			target = lerpf(shore, ground, (d - half_width) / BANK_FEATHER)
+		var weights := bank_strengths(t)
+		var strength := lerpf(weights[si], weights[si+1], along)
+		var original_weight := SlopeProfile.smootherstep(clampf((half_width+CARVE_FEATHER-d)/CARVE_FEATHER,0,1))
+		var original_carve := maxf(0.0,ground-carve_bed)*original_weight
+		var carve := lerpf(original_carve,maxf(0.0,ground-target),strength)
+		# The retained bar is a low depositional crest. It can lower
+		# the original bank, never raise it or import a higher source.
+		var crest := ceilf((bed+WaterField.SURFACE_RIDE+.75)/STOREY)*STOREY
+		var bar_carve := maxf(0.0,ground-crest)
+		best = maxf(best,lerpf(carve,minf(carve,bar_carve),t.retained_ground_weight(p)))
 	return best
 
 ## Water bodies overlapping a cell window (for surface meshing + volumes).
