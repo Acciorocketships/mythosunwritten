@@ -24,7 +24,12 @@ const SITE_CHUNK := Vector2i(0, -6)
 ## (r = 26 m, surface 7.0) yields one closed curve of 133 points, 45 of them
 ## >= 18 m from any river -- the same "closed pond bowl with a calm window"
 ## precondition these tests state.
-const POND_CHUNK := Vector2i(-1, -6)
+## Re-pinned again (October 4): lakes no longer carve ground far above their
+## banks (PondStamp.carve_at), so the summit source pool at (-84,-1048) on a
+## steep peak no longer cuts a bowl and leaves no closed curve. A scan of
+## chunks (-6..6, -10..6) of the reported field finds chunk (3,-9): one closed
+## curve, 91 points, all >= 18 m from any river and none on a wall.
+const POND_CHUNK := Vector2i(3, -9)
 
 
 ## Actual surface waves need several render vertices per wavelength. The old

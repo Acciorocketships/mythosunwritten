@@ -17,17 +17,20 @@ func _water_fields() -> WorldFieldBlockCache:
 ## dry. tests/harness/september15_water_drop_scan.gd
 ## over chunks -6..6: SPILL at x = 1074 (z -372..-366, wall top 20 m, falling
 ## to -x, dry bank 12 m behind) and, 15 m away in the same chunk (5, -2), CROSS
-## at z = -378 (x 1080..1086, falling to -z). LIP_NORMAL points from the high
-## side to the low side.
-const LIP_A := Vector2(1074, -372)
-const LIP_B := Vector2(1074, -366)
+## at z = -378 (x 1080..1086, falling to -z). Re-pinned again (October 4
+## amplification): the same scan over chunks 2..7 x -4..2 pairs SPILL at
+## x = 894 (z 300..306, falling to -x, dry bank 12 m behind) with CROSS at
+## z = 306 (x 882..888, falling to +z), 9.5 m apart in chunk (4, 1).
+## LIP_NORMAL points from the high side to the low side.
+const LIP_A := Vector2(894, 300)
+const LIP_B := Vector2(894, 306)
 const LIP_NORMAL := Vector2(-1, 0)
-const LIP_BANK := Vector2(1086, -369)
-const LIP2_A := Vector2(1086, -378)
-const LIP2_B := Vector2(1080, -378)
-const LIP2_NORMAL := Vector2(0, -1)
+const LIP_BANK := Vector2(906, 303)
+const LIP2_A := Vector2(888, 306)
+const LIP2_B := Vector2(882, 306)
+const LIP2_NORMAL := Vector2(0, 1)
 ## The detached sampler's window (13 x 13 nodes, 3 m) spans both lips' lines.
-const SAMPLER_ORIGIN := Vector2(1063, -386)
+const SAMPLER_ORIGIN := Vector2(880, 290)
 
 func test_reported_connected_river_clears_the_upper_lip_before_falling() -> void:
 	var fields := _water_fields()

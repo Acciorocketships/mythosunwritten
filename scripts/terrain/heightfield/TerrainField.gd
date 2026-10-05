@@ -20,8 +20,8 @@ extends RefCounted
 
 const REF_AMPLITUDE := TerrainWorldTuning.HEIGHTFIELD_AMPLITUDE
 const SETPIECE_RELIEF_SUPPRESSION := 0.7
-const CONTINENTAL_M := 44.0
-const ELEVATION_M := 200.0
+const CONTINENTAL_M := 72.0
+const ELEVATION_M := 320.0
 ## Heights above SOFT_CEILING approach REF_AMPLITUDE asymptotically.
 const SOFT_CEILING := REF_AMPLITUDE - 16.0
 

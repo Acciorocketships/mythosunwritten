@@ -31,14 +31,22 @@ func test_every_river_leaves_its_summit() -> void:
 ## (district (0, 1) now holds an ordinary river). A scan of districts -6..6 for
 ## a summit spring rejected only by the leave-the-summit rule finds (-5, -6):
 ## a 59 m summit at (-3337.9, -3858.4) whose walk loops (11 steps, 43 m reach).
+## Re-pinned (October 4 amplification; on steep peaks a spring's first steps
+## now leave straight downhill, so loops are rare): of districts -12..12, five
+## are rejected by the leave-the-summit rule; the test uses (0, -2), a 138 m
+## summit at (650.3, -754.1) whose walk loops (11 steps, 45 m reach).
 func test_reported_mountain_is_not_excavated_by_a_flank_lake() -> void:
 	var water := TerrainWorldTuning.make_water(SEED)
-	assert_false(water.has_source(Vector2i(-5, -6)), "the looping summit spring feeds no river")
+	assert_false(water.has_source(Vector2i(0, -2)), "the looping summit spring feeds no river")
 	var plan := TerrainWorldTuning.make_heightfield(SEED, water)
 	var carved := 0
-	# 12 m terrain points within 60 m of the summit (x -3396..-3276, z -3924..-3804).
-	for cz in range(-327, -316):
-		for cx in range(-283, -272):
+	# 12 m terrain points within 48 m of the summit (a river's broad bank,
+	# BANK_FEATHER 96 m, may lower a mountain's foot further out by design;
+	# a lake beside it must not quarry the flank: PondStamp).
+	var summit := Vector2(650.3, -754.1)
+	for cz in range(-67, -58):
+		for cx in range(50, 59):
+			if Vector2(cx * 12, cz * 12).distance_to(summit) > 48.0: continue
 			if plan.raw_height(cx, cz) < plan.uncarved_height(cx, cz) - 0.01: carved += 1
 	assert_eq(carved, 0, "no water body excavates the summit's flanks")
 

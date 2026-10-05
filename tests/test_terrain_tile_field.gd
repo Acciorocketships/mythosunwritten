@@ -64,7 +64,7 @@ func test_pure_cliff_tiles_take_the_nearest_corner_height() -> void:
 		[0.52, 0.02, 1], [0.98, 0.52, 2], [0.48, 0.98, 3], [0.02, 0.48, 0],
 		[0.50002, 0.51, 2], [0.49998, 0.51, 3], [0.50002, 0.49, 1], [0.49998, 0.49, 0],
 		[0.51, 0.50002, 2], [0.51, 0.49998, 1], [0.49, 0.50002, 3], [0.49, 0.49998, 0]]
-	for mode in [Tile.CliffEnd.E1, Tile.CliffEnd.E2]:
+	for mode in [Tile.CliffEnd.E1, Tile.CliffEnd.E2, Tile.CliffEnd.E3]:
 		Tile.cliff_end = mode
 		for h: Array in [[8.0, 0.0, 0.0, 0.0], [8.0, 0.0, 0.0, 8.0], [8.0, 8.0, 0.0, 8.0],
 				[16.0, 8.0, 0.0, 8.0], [0.0, 8.0, 8.0, 8.0], [0.0, 0.0, 8.0, 0.0]]:
@@ -168,6 +168,35 @@ func test_e2_cliff_end_walls_to_the_tile_centre_then_shortens() -> void:
 		assert_lt(crease, 0.8, "a crease beside the wall's end at v = %.1f" % v)
 
 
+## Owner review, October 4 (second photo): the E2 end, a wall shortening over
+## a ramp, read as a dark dent beside every cliff's end. E3: up to its end face
+## on the centre line the tile is its corners with the cliff crossing stepped,
+## past it exactly the ordinary slope tile of the same corners.
+func test_e3_cliff_end_is_the_cliff_then_exactly_the_slope_tile() -> void:
+	Tile.cliff_end = Tile.CliffEnd.E3
+	# Bottom edge a-b is a cliff (8 vs 0), top edge d-c a slope (8 vs 4).
+	var h := [8.0, 0.0, 4.0, 8.0]
+	var region = Region.tile(h[0], h[1], h[2], h[3])
+	for iv in 21:
+		var v := float(iv) / 20.0
+		for iu in 21:
+			var u := float(iu) / 20.0
+			if is_equal_approx(u, 0.5) or is_equal_approx(v, 0.5):
+				continue
+			var y := Tile.tile_y(region, Vector2i.ZERO, u, v)
+			var pu := (1.0 if u > 0.5 else 0.0) if v < 0.5 else _s(u)
+			var expected: float = lerpf(lerpf(h[0], h[1], pu), lerpf(h[3], h[2], pu), _s(v))
+			assert_almost_eq(y, expected, EPS, "E3 tile at (%.2f, %.2f)" % [u, v])
+	# The end face is a wall on the centre line: wall_segments reports it.
+	var faces := 0
+	for seg: Dictionary in Tile.wall_segments(region, Rect2(0, 0, 12, 12)):
+		var a: Vector2 = seg.a
+		var b: Vector2 = seg.b
+		if absf(a.y - b.y) < 0.001 and absf(a.y - 6.0) < 0.001 and minf(a.x, b.x) >= 6.0 - 0.001:
+			faces += 1
+	assert_gt(faces, 0, "the end face on the centre line is a wall segment")
+
+
 func test_e1_cliff_end_shortens_the_wall_across_the_tile() -> void:
 	Tile.cliff_end = Tile.CliffEnd.E1
 	# Bottom edge a-b is a cliff, top edge d-c a one-storey slope.
@@ -183,7 +212,7 @@ func test_e1_cliff_end_shortens_the_wall_across_the_tile() -> void:
 
 func test_shared_edges_are_seamless_over_random_fields() -> void:
 	var rng := RandomNumberGenerator.new()
-	for mode in [Tile.CliffEnd.E1, Tile.CliffEnd.E2]:
+	for mode in [Tile.CliffEnd.E1, Tile.CliffEnd.E2, Tile.CliffEnd.E3]:
 		Tile.cliff_end = mode
 		rng.seed = 42
 		for trial in 40:
@@ -206,7 +235,7 @@ func test_shared_edges_are_seamless_over_random_fields() -> void:
 func test_tiles_stay_within_their_corner_bounds() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 7
-	for mode in [Tile.CliffEnd.E1, Tile.CliffEnd.E2]:
+	for mode in [Tile.CliffEnd.E1, Tile.CliffEnd.E2, Tile.CliffEnd.E3]:
 		Tile.cliff_end = mode
 		for trial in 60:
 			var h: Array[float] = []
@@ -235,7 +264,7 @@ func test_baked_sampler_matches_surface_y_on_side() -> void:
 		for i in range(-1, 4):
 			heights[Vector2i(i, j)] = float(rng.randi_range(0, 3)) * 4.0 + float(rng.randi_range(0, 2))
 	var region = Region.new(heights)
-	for mode in [Tile.CliffEnd.E1, Tile.CliffEnd.E2]:
+	for mode in [Tile.CliffEnd.E1, Tile.CliffEnd.E2, Tile.CliffEnd.E3]:
 		Tile.cliff_end = mode
 		for pj in range(0, 3):
 			for pi in range(0, 3):
@@ -250,7 +279,7 @@ func test_baked_sampler_matches_surface_y_on_side() -> void:
 
 func test_height_bounds_contain_dense_samples() -> void:
 	var rng := RandomNumberGenerator.new()
-	for mode in [Tile.CliffEnd.E1, Tile.CliffEnd.E2]:
+	for mode in [Tile.CliffEnd.E1, Tile.CliffEnd.E2, Tile.CliffEnd.E3]:
 		Tile.cliff_end = mode
 		rng.seed = 5
 		var heights := {}
@@ -272,7 +301,7 @@ func test_height_bounds_are_sound_on_pure_cliff_fields() -> void:
 	# Heights in multiples of 8 m: every crossing is a cliff. Small rects inside
 	# each quadrant, beside the tile centre, must bound the samples taken there.
 	var rng := RandomNumberGenerator.new()
-	for mode in [Tile.CliffEnd.E1, Tile.CliffEnd.E2]:
+	for mode in [Tile.CliffEnd.E1, Tile.CliffEnd.E2, Tile.CliffEnd.E3]:
 		Tile.cliff_end = mode
 		rng.seed = 9
 		var heights := {}
@@ -389,7 +418,7 @@ func test_height_bounds_on_side_exclude_the_neighbouring_top_of_a_wall() -> void
 
 func test_height_bounds_on_side_are_sound_over_random_fields() -> void:
 	var rng := RandomNumberGenerator.new()
-	for mode in [Tile.CliffEnd.E1, Tile.CliffEnd.E2]:
+	for mode in [Tile.CliffEnd.E1, Tile.CliffEnd.E2, Tile.CliffEnd.E3]:
 		Tile.cliff_end = mode
 		rng.seed = 21
 		var heights := {}
@@ -497,18 +526,44 @@ func test_every_tile_is_monotone_along_both_axes() -> void:
 		heights.append(4.0 * s)
 	var levels: Array[float] = [5.0, 6.0, 7.0]
 	var corners := heights + levels
-	var bad: Array[String] = []
+	for mode in [Tile.CliffEnd.E2, Tile.CliffEnd.E3]:
+		Tile.cliff_end = mode
+		var bad: Array[String] = []
+		for a in corners:
+			for b in corners:
+				for c in corners:
+					for d in corners:
+						if not _real_tile([a, b, c, d]):
+							continue
+						var region = Region.tile(a, b, c, d)
+						var worst := _worst_dip(region)
+						if worst > 0.02 and not _two_way_cliff_saddle([a, b, c, d]) \
+								and not (mode == Tile.CliffEnd.E3 and _cliff_end_tile([a, b, c, d])):
+							bad.append("%s dips %.2f m" % [[a, b, c, d], worst])
+		assert_eq(bad.size(), 0, "E%d tiles with a divot (first 8): %s" % [mode + 1, bad.slice(0, 8)])
+
+## E3: where the slope beyond a cliff's end rises back toward the plateau, the
+## bare ground at the foot of the end face lies up to a metre under that slope.
+## The cliff sheet's foot fillet fills it (rendered: test_cliff_sheet_ends::
+## test_e3_cliff_end_renders_without_a_dip); pinned so it cannot grow.
+func test_e3_end_face_feet_dip_at_most_a_metre() -> void:
+	Tile.cliff_end = Tile.CliffEnd.E3
+	var corners: Array[float] = [0.0, 4.0, 8.0, 12.0, 16.0]
+	var worst := 0.0
 	for a in corners:
 		for b in corners:
 			for c in corners:
 				for d in corners:
-					if not _real_tile([a, b, c, d]):
-						continue
-					var region = Region.tile(a, b, c, d)
-					var worst := _worst_dip(region)
-					if worst > 0.02 and not _two_way_cliff_saddle([a, b, c, d]):
-						bad.append("%s dips %.2f m" % [[a, b, c, d], worst])
-	assert_eq(bad.size(), 0, "tiles with a divot (first 8): %s" % [bad.slice(0, 8)])
+					if _real_tile([a, b, c, d]) and _cliff_end_tile([a, b, c, d]):
+						worst = maxf(worst, _worst_dip(Region.tile(a, b, c, d)))
+	assert_lte(worst, 1.0, "bare ground at an E3 end face's foot")
+
+## Exactly one cliff edge (and so a slope edge beside it): an E3 cliff end.
+func _cliff_end_tile(h: Array) -> bool:
+	var cliffs := 0
+	for i in 4:
+		cliffs += int(absi(floori(h[i] / 4.0) - floori(h[(i + 1) % 4] / 4.0)) >= 2)
+	return cliffs == 1
 
 ## Known residual: a saddle layer (high corners diagonal) whose cliffs cross
 ## the tile in both directions and that also has a slope edge. A dip-free

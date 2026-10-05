@@ -144,6 +144,11 @@ func test_wet_crest_spill_reaches_the_lip_in_every_orientation() -> void:
 ## is steep here (the drop falls from 5.9 to 2.3 m within 12 cm of z), so the
 ## bound is per millimetre: a threshold switch jumped 0.46 m at any step.
 func test_spill_surface_is_continuous_where_the_cliff_ends() -> void:
+	# A wall that dies away along itself: the E2 cliff end, kept where walls turn
+	# a corner beside slopes. (E3, the default since October 4, ends a lone
+	# cliff in an end face, a wall the water meets like any other.)
+	var saved_end := TerrainTileField.cliff_end
+	TerrainTileField.cliff_end = TerrainTileField.CliffEnd.E2
 	var storeys := {}
 	var levels_map := {}
 	for j in range(-6, 7):
@@ -171,6 +176,7 @@ func test_spill_surface_is_continuous_where_the_cliff_ends() -> void:
 			prev = l
 			z += 0.001
 		assert_lt(worst, 0.05, "no tear along z at x = %.1f (%.3f m within 1 mm at z = %.3f)" % [x, worst, at])
+	TerrainTileField.cliff_end = saved_end
 
 
 ## The 3 m rescue lattice keeps nodes on dual borders, so a fine cell's edge
@@ -184,6 +190,11 @@ func test_spill_surface_is_continuous_where_the_cliff_ends() -> void:
 ## Rescue water at 11.95 on the row z = 3, dry nodes on the wall line z = 6.
 ## Scanned along z = 3.625 across x = 6 at 1 cm.
 func test_rescue_shore_is_continuous_where_its_edge_wall_dies() -> void:
+	# A wall that dies away along itself: the E2 cliff end, kept where walls turn
+	# a corner beside slopes. (E3, the default since October 4, ends a lone
+	# cliff in an end face, a wall the water meets like any other.)
+	var saved_end := TerrainTileField.cliff_end
+	TerrainTileField.cliff_end = TerrainTileField.CliffEnd.E2
 	var storeys := {}
 	var levels_map := {}
 	for j in range(-6, 7):
@@ -226,6 +237,7 @@ func test_rescue_shore_is_continuous_where_its_edge_wall_dies() -> void:
 		prev = l
 	assert_eq(dry, 0, "the rescued row stays wet")
 	assert_lte(worst, 0.01, "no step along the rescued row (%.4f m at x = %.2f)" % [worst, at])
+	TerrainTileField.cliff_end = saved_end
 
 
 func test_water_code_has_no_native_cliff_piece_dependency() -> void:

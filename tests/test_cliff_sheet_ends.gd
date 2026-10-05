@@ -170,3 +170,74 @@ func test_wall_end_lip_is_lit_level() -> void:
 	var normals := TerrainChunkMesher.field_normals(vertices, region, {})
 	for i in vertices.size():
 		assert_gt(normals[i].y, 0.999, "the plateau at %s is lit level (normal %s)" % [vertices[i], normals[i]])
+
+## Owner photo 1 (October 4 judging pass, seed 2697992464, crosshair
+## (491.4, 18.6, 881.0)): a cliff that dies into a slope while its top climbs
+## along it. Points z <= 0 at storey 5 for x <= 0 and 6 for x >= 1; z >= 1 at
+## storey 4 for x <= 0 and 3 for x >= 1. The south wall (z = 6) of tile (0, 0)
+## is 4 m tall at x = 0 and 12 m at x = 12, its crest rising 4 m along it.
+static func _climbing_end() -> HeightfieldRegion:
+	var storeys: Dictionary = {}
+	var levels: Dictionary = {}
+	for z in range(-24, 41):
+		for x in range(-24, 41):
+			storeys[Vector2i(x, z)] = (5 if x <= 0 else 6) if z <= 0 else (4 if x <= 0 else 3)
+			levels[Vector2i(x, z)] = 0
+	return HeightfieldRegion.new(storeys, levels)
+
+## Largest height of the sheet within 3 m on the low side of the wall line
+## z = 6 over the sheet just across it (z = 5.5), over x -12 .. 24: a trough
+## along the lip, at the wall and on past its end.
+static func _worst_trough(env) -> Dictionary:
+	var worst := {"rise": 0.0, "at": Vector2.ZERO}
+	for xi in range(-24, 49):
+		var lip := Vector2(xi * H, 5.5)
+		for j in range(1, 7):
+			var rise: float = env.at(lip + Vector2(0.0, j * H)) - env.at(lip)
+			if rise > worst.rise:
+				worst = {"rise": rise, "at": lip}
+	return worst
+
+func test_the_rounding_never_stands_over_its_own_lip() -> void:
+	# The dark streak in owner photo 1 was a trough along the wall line: the
+	# foot fillet, an isotropic closing, carried the higher crest a metre or
+	# two along the wall onto the low side, so the sheet there stood up to
+	# 0.9 m over the plateau's edge across the line, which keeps its ground.
+	# The rounding of a wall falls away from its lip, also past its end.
+	for end in [TerrainTileField.CliffEnd.E2, TerrainTileField.CliffEnd.E1]:
+		TerrainTileField.cliff_end = end
+		for fixture: String in ["climbing_end", "ending_cliff"]:
+			var region := _climbing_end() if fixture == "climbing_end" else _ending_cliff()
+			var worst := _worst_trough(_envelope(region))
+			assert_lt(worst.rise, 0.05, "%s E%d: the sheet stands %.2f m over the lip at %s" \
+				% [fixture, end + 1, worst.rise, worst.at])
+
+
+## E3 (clean cliff ends): the bare ground at an end face's foot can lie under
+## a slope that rises back toward the plateau beyond it (a cliff 8 m over 0
+## for x <= 0, ending where the ground beside it is a 4 -> 8 slope). The
+## sheet's foot fillet fills it: along the wall, the rendered surface over the
+## end tile never dips.
+func test_e3_cliff_end_renders_without_a_dip() -> void:
+	TerrainTileField.cliff_end = TerrainTileField.CliffEnd.E3
+	var storeys: Dictionary = {}
+	var levels: Dictionary = {}
+	for z in range(-24, 25):
+		for x in range(-24, 25):
+			storeys[Vector2i(x, z)] = 2 if z >= 1 else (0 if x <= 0 else 1)
+			levels[Vector2i(x, z)] = 0
+	var env = _envelope(HeightfieldRegion.new(storeys, levels))
+	var worst := {"dip": 0.0, "at": Vector2.ZERO}
+	for zi in range(13, 25):          # z 6.5 .. 12: the end tile beyond the wall line
+		var row: Array[float] = []
+		for xi in 49:                 # x -6 .. 18
+			row.append(env.at(Vector2(-6.0 + xi * H, zi * H)))
+		for i in row.size():
+			var before := -INF
+			var after := -INF
+			for k in i: before = maxf(before, row[k])
+			for k in range(i + 1, row.size()): after = maxf(after, row[k])
+			var dip := minf(before, after) - row[i]
+			if dip > worst.dip:
+				worst = {"dip": dip, "at": Vector2(-6.0 + i * H, zi * H)}
+	assert_lt(worst.dip, 0.05, "the sheet dips %.2f m at %s beside the end face" % [worst.dip, worst.at])

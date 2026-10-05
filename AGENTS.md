@@ -1,3 +1,59 @@
+> October 4 follow-up (owner: "is this before or after? I still see the divot", plus a second
+> photo at (264.7, 3.8, 578.1)). CORRECTION: the dark streak in owner photo 1 IS a dent, in the
+> cliff sheet, not the kernel: where a cliff dies into a slope its crest climbs along the wall,
+> and the foot fillet (an isotropic closing of the sheet, opened only where the rounding lifts
+> the ground) carried the higher crest a metre or two along the wall onto the low side, so the
+> sheet there stood up to 0.9 m over the plateau edge across the line, which keeps its ground: a
+> trough along the wall line. `CliffSlopeEnvelope._lips`: the lip over each node is the high-side
+> ground of every wall line whose rounding reaches it, running on past the wall's ends by two
+> FOOT radii; the fillet stays under that lip falling away as the widest shoulder does (a level
+> cap left a terrace edge). Bedrock stays under the level lip (the shouldered one faceted the
+> benches of diagonal walls), released over a metre where the slope stands over every lip (a
+> corner's rounding). Rejected: fading the fillet's gate over FOOT (raised a nose on stepping
+> crests, dammed fitted channels, lipped rock treads). Test
+> `test_cliff_sheet_ends::test_the_rounding_never_stands_over_its_own_lip` (0.96 m red);
+> `test_p03_constrained_cliffs` ledge patches re-pinned 9 -> 8 (tread area unchanged, 33).
+> Lip valleys over a 380 x 350 m area of the old geography: 43 -> 30; the rest are gullies
+> between opposing banks. The owner still saw dark patches and warped geometry there: the E2
+> cliff END itself (a wall shortening over a ramp beside the slope; F9: bare kernel, no sheet)
+> was the rest. `TerrainTileField.CliffEnd.E3`, now the default (see the kernel paragraph):
+> past the end face a cliff-end tile is exactly the slope tile of its corners
+> (`test_e3_cliff_end_is_the_cliff_then_exactly_the_slope_tile`); renders of both owner photos
+> show no patch. Where the slope beyond rises back toward the plateau, the bare ground at the end
+> face's foot dips up to 1 m (pinned, `test_e3_end_face_feet_dip_at_most_a_metre`); the sheet's
+> foot fillet fills it (`test_e3_cliff_end_renders_without_a_dip`). F9's GPU port mirrors E3.
+> AMPLIFIED (owner: more medium-size features, more height variety with the
+> tallest taller, more hollows and mountains, more noticeable elevation): `LandformFeatures.CELL`
+> 256 m (was 320; `MAX_RADIUS` 294, `LINK_MAX_RADIUS` 240, footprints x0.8), densities ~1.0,
+> each feature's height scale drawn as lerp(lo, hi, u^`HEIGHT_SKEW` 2) over ranges up to
+> 0.6-2.0, taller `height_st` ranges, basins and peak clusters in most archetypes; a basin gives
+> way to a raised neighbour whose core it would overlap (it cut ridges into stranded stubs;
+> valleys still breach as passes). `ELEVATION_M` 320, `CONTINENTAL_M` 72, height range 480 m /
+> 120 storeys. 144 km^2 on two seeds: 8.6 -> 13.2 features per km^2, tallest 59-76 -> 138 m,
+> p90/median 1.4 -> 2.1, basins 12-14 -> 15-18%, peak clusters 0-2 -> 14%; 24 km map p50 85 ->
+> 129 m, p90 221 -> 346 m; 0.01% of ground over the soft ceiling. Cost: per-sample field
+> unchanged (69/77 us), a 16-point region 578 -> 896 ms (clamp margin 27 -> 40). Tests:
+> `test_landform_features::test_features_are_dense_varied_and_include_basins_and_mountains`,
+> `test_terrain_field` (front slope >= 0.21 m/m, layer spans >= 220 m). WATER with the taller
+> peaks: a spring's walk inside SUMMIT_REACH scores against the full fall on a steep summit
+> (`WaterPlan.SUMMIT_STEEP`, gradient 0.25-0.6); scored against the modest contour descent, the
+> straight-down step lost to sideways ones on steep peaks and the walk orbited (boxed walks
+> 7-11 -> 20-33 of 81 districts, river density under 30). Now 0-2 per 81 (5 per 625), 43-56
+> sources per 81; gentle hills keep the contour walk, so the frozen 32 m photo-16 geography keeps
+> its rivers. `PondStamp.carve_at` fades out between one and three storeys above the banks: a
+> lake fills its hollow and never quarries a mountainside (a terminal lake cut a 59 m notch into
+> a flank; `test_pond_stamp`). Re-pinned: `test_september15_water_drops` (x = 894 / z = 306,
+> chunk (4, 1)), `test_september13_water_corner` (x 55 z -797.375; dying wall x 1240.25
+> z -1100.375; 68 of 239 scan lines fail its limits, the open water issue),
+> `test_september13_water_turf` (chunk (-1, 2) at (-82, 454); its probe rays started at y = 30,
+> under the higher ground), `test_september27_mountain_water` (district (0, -2); summit window
+> 48 m: a river's broad bank may lower a mountain's foot further out by design),
+> `test_water_contour` / `test_water_skin` POND_CHUNK (3, -9) (the summit source pool at
+> (-84, -1048) no longer quarries a bowl into its steep peak, so it leaves no closed curve).
+> Isolated suite over the 94 affected files: every failing file and count matches the
+> September 30 baseline list (path_plan_nodes, river_generation, september23_cliff_directions,
+> september8 night/river_banks, september9 flat/retention, water_contour, water_skin).
+
 > October 4 judging pass (seed 2697992464): DIVOTS. The kernel's saddle rule (max of the two
 > high corners' bumps) sagged between the bumps, and a cliff weight varied across the whole tile
 > undercut the slope beside a wall's end: 3,841 of 176,400 real tiles dipped by more than 0.1 m
@@ -3466,11 +3522,13 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
   (products of the crossings' profiles; a slope saddle is the smooth bilinear saddle, a cliff
   saddle two 6 x 6 m squares meeting at the centre), so every tile is monotone along both axes
   (no divots, October 4). A straight layer mixing cliff and slope crossings is a cliff
-  END: `static var cliff_end` selects **E2 (default: a full wall to the tile centre, then the
-  wall shortens to nothing `CLIFF_END_CLEAR` (2.4 m) before the slope edge, E1's blend over that
-  stretch; October 1,
-  the former narrow fan cut a V-notch "divot" into the plateau)** or E1 (Coons-blended inside the
-  tile; selectable for the gallery). Non-crossing tile edges count as slope ends inside a mixed
+  END: `static var cliff_end` selects **E3 (default, October 4: in a tile whose ONE cliff edge
+  ends beside a slope, a full wall to the tile centre, a vertical end face on the centre line,
+  then exactly the all-slope tile of the same corners; tiles where walls turn a corner beside
+  slopes keep E2)**, E2 (a full wall to the tile centre, then the wall shortens to nothing
+  `CLIFF_END_CLEAR` (2.4 m) before the slope edge; its shortening wall over a ramp read as a dark
+  dent at every cliff end) or E1 (Coons-blended inside the tile; selectable for the gallery,
+  `tile_gallery --end E2|E3`). Non-crossing tile edges count as slope ends inside a mixed
   layer (ruling). Along any tile edge the surface depends only on that edge's two endpoints, so
   neighbouring tiles agree by construction; walls are the only double-valued places. Ownership:
   `point_of(v)` = `floori(v / spacing + 0.5)` (the midline belongs to the + side);

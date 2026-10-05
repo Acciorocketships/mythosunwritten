@@ -296,3 +296,37 @@ func test_features_link_into_ranges_and_chains() -> void:
 			linked += int(not (f.get("links", []) as Array).is_empty())
 	assert_gt(total, 20)
 	assert_gte(float(linked) / total, 0.6, "share of raised features linked to a neighbour")
+
+static func _raised_top(f: Dictionary) -> float:
+	var q: Dictionary = f.params
+	if f.kind in [&"butte_group", &"tower_cluster"]:
+		return float(q.plinth) * float(q.height_st) * ST
+	return float(q.get("height_st", q.get("rise_st", q.get("wall_st", 0.0)))) * ST
+
+## Owner review 2026-10-04 ("amplify the world"): more medium-size features,
+## more variety in their height with the tallest taller, and more hollows,
+## basins and mountains. Over 144 km² on two seeds: at least 12 features per
+## km² (was 8.6), the tallest raised feature over 110 m (was 59-76 m), the 90th
+## percentile at least 1.8 times the median (was 1.4-1.5), basins at least 15%
+## and peak clusters at least 10% of all features (were 12-14% and 0-2%).
+func test_features_are_dense_varied_and_include_basins_and_mountains() -> void:
+	for seed in [SEED, 42]:
+		var rect := Rect2(-6000, -6000, 12000, 12000)
+		var count := 0
+		var kinds := {}
+		var tops: Array[float] = []
+		for f: Dictionary in LandformFeatures.features_in_rect(seed, rect):
+			if not rect.has_point(f.pos):
+				continue
+			count += 1
+			kinds[f.kind] = int(kinds.get(f.kind, 0)) + 1
+			if not (f.kind in [&"valley", &"basin"]):
+				tops.append(_raised_top(f))
+		tops.sort()
+		var median := tops[tops.size() / 2]
+		var p90 := tops[tops.size() * 9 / 10]
+		assert_gt(count / 144.0, 12.0, "seed %d: features per km²" % seed)
+		assert_gt(tops.max(), 110.0, "seed %d: tallest raised feature (m)" % seed)
+		assert_gt(p90 / median, 1.8, "seed %d: p90 %.0f m over median %.0f m" % [seed, p90, median])
+		assert_gt(float(kinds.get(&"basin", 0)) / count, 0.15, "seed %d: basin share" % seed)
+		assert_gt(float(kinds.get(&"peak_cluster", 0)) / count, 0.10, "seed %d: peak cluster share" % seed)

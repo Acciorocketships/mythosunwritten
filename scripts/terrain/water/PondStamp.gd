@@ -90,4 +90,9 @@ func carve_at(p: Vector2, ground_y: float) -> float:
 		return 0.0
 	var w: float = SlopeProfile.smootherstep(clampf((1.0 - t) / RIM_FEATHER, 0.0, 1.0))
 	w *= island_excavation_weight(p)
+	# A lake fills its hollow; it never quarries a mountainside. Ground more
+	# than three storeys above the banks keeps its height (a lake beside a tall
+	# flank cut a 59 m notch into it, October 4); the carved surface still
+	# rises with the ground through the fade, so the shore stays continuous.
+	w *= 1.0 - smoothstep(STOREY, 3.0 * STOREY, ground_y - float(level) * STOREY)
 	return maxf(0.0, (ground_y - bed_y()) * w)

@@ -8,8 +8,8 @@ extends RefCounted
 ## 320 m / 80 storeys since the large-scale elevation layer (owner reviews
 ## 2026-10-03/04): highland interiors sit up to 200 m above lowland basins,
 ## with a 44 m undulation over that, before any landform.
-const HEIGHTFIELD_AMPLITUDE := 320.0
-const HEIGHTFIELD_MAX_STOREYS := 80
+const HEIGHTFIELD_AMPLITUDE := 480.0
+const HEIGHTFIELD_MAX_STOREYS := 120
 const MAX_CLIFF_STEP := 3
 
 

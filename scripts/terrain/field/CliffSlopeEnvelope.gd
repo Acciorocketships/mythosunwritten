@@ -103,6 +103,9 @@ var excluded:=PackedByteArray()
 var replacement_columns:Dictionary={}
 
 const STYLE=preload("res://scripts/terrain/field/CliffRockStyle.gd")
+## Native (C#) versions of _envelope_axis, _window and _blur under .NET Godot,
+## parity-checked against these GDScript kernels at startup (perf session).
+const NativeGridKernels := preload("res://scripts/native/NativeGridKernels.gd")
 
 ## Water (owner, September 28: spikes, sharp corners and cut-outs where the
 ## slope met water). The water never cuts the slope: planar cuts from a 2 m
@@ -249,11 +252,14 @@ static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:
  # the wall: up over its top or over to an opposing bank).
  # In a fitted channel never above the water: filleting the valley between
  # opposing banks dammed the channel they were fitted to leave open.
+ # The fillet never stands over the lip across a wall line (see _lips).
  mark.call("blend")
  var filleted:=_erode(_dilate(env.surface,env.w,env.h,FOOT),env.w,env.h,FOOT)
+ var lips:=_lips(walls,g,env.w,n)
  mark.call("fillet transform")
  for idx in n:
   var fill:=filleted[idx]
+  if lips[idx]>-INF:fill=minf(fill,maxf(lips[idx],env.surface[idx]))
   if channel[idx] and _deep(wet_level,env.ground,idx):fill=minf(fill,wet_level[idx]-.3)
   env.surface[idx]=lerpf(env.surface[idx],maxf(env.surface[idx],fill),smoothstep(0.0,.5,maxf(env.surface[idx]-g[idx],along[idx])))
  var uncut:=env.surface.duplicate()
@@ -267,6 +273,16 @@ static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:
  # Roads remain hard constraints. The rounded bank is a backing surface,
  # not a ceiling that flattens every rock ledge.
  var rock_caps:=caps.duplicate()
+ # Rock stands proud of the slope, never over the lip it hangs from: bounded
+ # only by the highest crest around, a bench stood 0.6 m over the lip at a
+ # dying wall's end, the trough of owner photo 1 again. A slope standing over
+ # every lip here falls from another rounding (a corner): it keeps its room,
+ # restored over a metre so the cap never steps.
+ # The level lip: a diagonal wall is a staircase of axis walls, and the
+ # shouldered bound's per-axis falloff faceted its benches.
+ var rock_lips:=_lips(walls,g,env.w,n,false)
+ for idx in n:
+  if rock_lips[idx]>-INF:rock_caps[idx]=minf(rock_caps[idx],maxf(rock_lips[idx],uncut[idx])+7.5*smoothstep(0.0,1.0,uncut[idx]-rock_lips[idx]))
  for idx in n:env.surface[idx]=minf(env.surface[idx],maxf(env.ground[idx],caps[idx]))
  mark.call("fillet and caps")
  if STYLE.sheet_study=="bedrock":
@@ -566,6 +582,49 @@ static func _close_walls(g:PackedFloat64Array,walls:Array,w:int,h:int,shoulder:f
   for k in h:out[k*w+i]=maxf(out[k*w+i],round[k*w+i])
  return out
 
+## The lip over each node: the ground on the high side of every wall line
+## whose rounding reaches the node across the line, falling away from the line
+## as the widest shoulder does unless `shouldered` is false (-INF where none). The line
+## runs on past the wall's ends by the fillet's reach, its lip there the
+## ground at the line, which the crest meets as the wall shrinks to nothing.
+## The foot fillet is an isotropic closing: where the top climbs along a wall
+## (a cliff dying into a slope) it carried the higher crest a metre or two
+## along the wall, and the low side stood up to 0.9 m over the plateau's own
+## edge beside it, which keeps its ground: a trough along the wall line (owner
+## photo 1, October 4). Under this lip the fillet still fills feet, inner
+## corners and the crease past a wall's end, all of which lie below it.
+static func _lips(walls:Array,g:PackedFloat64Array,w:int,n:int,shouldered:=true)->PackedFloat64Array:
+ var lips:=PackedFloat64Array();lips.resize(n);lips.fill(-INF)
+ var shoulder:=SHOULDER.y
+ var past:=ceili(2.0*FOOT/H)
+ for axis in 2:
+  var drop:PackedFloat64Array=walls[axis][1]
+  var toward:PackedInt32Array=walls[axis][2];var lead:PackedFloat64Array=walls[axis][4]
+  # Walls of axis 0 run along x (rows), of axis 1 along z (columns).
+  var step:=1 if axis==0 else w
+  # Each high-side node on a line: how far its stamp runs, per direction.
+  var runs:={}
+  for idx:int in walls[axis][6]:
+   var radius:=shoulder*clampf(LOW/drop[idx],1.0,WIDEN)+FOOT
+   var reach:=ceili((maxf(sqrt(2.0*(shoulder+FOOT)*(drop[idx]+1.0)),sqrt(2.0*radius*drop[idx]))+lead[idx])/H)+1
+   for k in range(-past,past+1):
+    var at:=idx+k*step
+    if at<0 or at>=n or (axis==0 and at/w!=idx/w):continue
+    var key:=Vector2i(at,toward[idx])
+    var run:Vector2=runs.get(key,Vector2.ZERO)
+    runs[key]=Vector2(maxf(run.x,reach),maxf(run.y,lead[idx]))
+  for key:Vector2i in runs:
+   var q:=key.x;var lip:=g[key.x];var run:Vector2=runs[key]
+   for j in int(run.x)+1:
+    if q<0 or q>=n:break
+    # Falling away from the lip as the widest shoulder does: held level,
+    # the bound left a terrace edge where the crest climbs along the wall.
+    var d:=maxf(0.0,j*H-run.y) if shouldered else 0.0
+    lips[q]=maxf(lips[q],lip-d*d/(2.0*(shoulder+FOOT)))
+    if axis==1 and (q%w==0 and key.y<0 or q%w==w-1 and key.y>0):break
+    q+=key.y
+ return lips
+
 ## Horizontal squeeze (area scale) of each crest's closed profile so its bank
 ## goes under the water a quarter core short of the middle of the corridor
 ## it faces (1 where no broad corridor). Limited along the wall so the bank
@@ -603,6 +662,7 @@ static func _channel_scale(wall:Array,w:int,n:int,axis:int,shoulder:float,foot:f
 ## `only`, when given (one flag per column or row): lines without a flag are
 ## left as they are.
 static func _envelope_axis(f:PackedFloat64Array,w:int,h:int,a:float,columns:bool,only:=PackedByteArray())->PackedFloat64Array:
+ if NativeGridKernels.enabled:return NativeGridKernels.envelope_axis(f,w,h,a,columns,only)
  var n:=maxi(w,h)
  var result:=PackedFloat64Array();result.resize(n)
  var v:=PackedInt32Array();v.resize(n)
@@ -629,6 +689,7 @@ static func _envelope_axis(f:PackedFloat64Array,w:int,h:int,a:float,columns:bool
 ## Separable square-window max (or min) over `reach` metres, in linear time
 ## (van Herk / Gil-Werman: block prefix and suffix extrema).
 static func _window(g:PackedFloat64Array,w:int,h:int,reach:float,highest:bool)->PackedFloat64Array:
+ if NativeGridKernels.enabled:return NativeGridKernels.window(g,w,h,reach,highest)
  var r:=ceili(reach/H)
  var rows:=g.duplicate()
  var line:=PackedFloat64Array()
@@ -855,6 +916,7 @@ static func _envelope1(f:PackedFloat64Array,n:int,a:float,out:PackedFloat64Array
 
 ## Box blur of radius r nodes, rows then columns.
 static func _blur(f:PackedFloat64Array,w:int,h:int,r:int)->PackedFloat64Array:
+ if NativeGridKernels.enabled:return NativeGridKernels.blur(f,w,h,r)
  var tmp:=f.duplicate()
  for k in h:
   var sum:=0.0;var count:=0

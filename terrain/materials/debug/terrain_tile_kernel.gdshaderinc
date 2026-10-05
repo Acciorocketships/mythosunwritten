@@ -16,7 +16,7 @@ uniform float spacing = 12.0;
 uniform float storey_height = 4.0;
 // TerrainTileField.CliffEnd: 0 = E1 (blend inside the tile), 1 = E2 (full wall
 // to the tile centre, then it shortens to nothing over the slope half).
-uniform int cliff_end = 1;
+uniform int cliff_end = 2;   // TerrainTileField.CliffEnd: 0 E1, 1 E2, 2 E3
 
 const float TILE_NO_DATA = -1e6;
 
@@ -61,10 +61,12 @@ float tile_step(float t, int side) {
 	return side < 0 ? 0.0 : 1.0;
 }
 
-float tile_profile(float t, float k0, float k1, float s, int side) {
+float tile_profile(float t, float k0, float k1, float s, int side, int side_s, bool ends) {
 	float k;
 	if (cliff_end == 0 || k0 == k1) {
 		k = mix(k0, k1, s);
+	} else if (ends) {   // E3: the wall ends on the centre line
+		k = tile_step(s, side_s) == 0.0 ? k0 : k1;
 	} else if (k0 > k1) {   // cliff at s = 0: full wall to the centre, then it shortens
 		k = tile_smootherstep(clamp((0.8 - s) / 0.3, 0.0, 1.0));   // TerrainTileField.CLIFF_END_CLEAR = 0.2
 	} else {
@@ -76,9 +78,10 @@ float tile_profile(float t, float k0, float k1, float s, int side) {
 }
 
 // A crossing's profile inside one corner shape (TerrainTileField._corner_profile).
-float tile_corner_profile(float t, float k, float s, float corner_t, bool mixed, int side) {
+float tile_corner_profile(float t, float k, float s, float corner_t, bool mixed, int side, int side_s, bool ends) {
 	if (k <= 0.0) return tile_smootherstep(t);
 	if (!mixed) return tile_step(t, side);
+	if (ends) return tile_step(s, side_s) == 0.0 ? tile_step(t, side) : tile_smootherstep(t);
 	float wall = cliff_end == 0 ? 1.0 - s : tile_smootherstep(clamp((0.8 - s) / 0.3, 0.0, 1.0));
 	float ramp = smoothstep(0.0, 1.0, clamp((t - 0.5 * corner_t) * 2.0, 0.0, 1.0));
 	return mix(ramp, tile_step(t, side), wall);
@@ -87,16 +90,18 @@ float tile_corner_profile(float t, float k, float s, float corner_t, bool mixed,
 // cl4 = cliff flags (bottom a-b, right b-c, top d-c, left a-d).
 float tile_layer(bool ba, bool bb, bool bc, bool bd, vec4 cl4, float u, float v, ivec2 side) {
 	int highs = int(ba) + int(bb) + int(bc) + int(bd);
+	// E3 only where the tile's one cliff edge ends (TerrainTileField._layer).
+	bool ends = cliff_end == 2 && int(cl4.x >= 1.0) + int(cl4.y >= 1.0) + int(cl4.z >= 1.0) + int(cl4.w >= 1.0) == 1;
 	if (highs != 2 || ba == bc) {
 		// Corner shapes (TerrainTileField._layer): one high corner is its shape,
 		// one low corner the complement, a saddle the plateau with both low
 		// corners carved out.
 		bool mixed = (ba != bb && cl4.x < 1.0) || (bd != bc && cl4.z < 1.0)
 			|| (ba != bd && cl4.w < 1.0) || (bb != bc && cl4.y < 1.0);
-		float c0 = (1.0 - tile_corner_profile(u, cl4.x, v, 0.0, mixed, side.x)) * (1.0 - tile_corner_profile(v, cl4.w, u, 0.0, mixed, side.y));
-		float c1 = tile_corner_profile(u, cl4.x, v, 1.0, mixed, side.x) * (1.0 - tile_corner_profile(v, cl4.y, 1.0 - u, 0.0, mixed, side.y));
-		float c2 = tile_corner_profile(u, cl4.z, 1.0 - v, 1.0, mixed, side.x) * tile_corner_profile(v, cl4.y, 1.0 - u, 1.0, mixed, side.y);
-		float c3 = (1.0 - tile_corner_profile(u, cl4.z, 1.0 - v, 0.0, mixed, side.x)) * tile_corner_profile(v, cl4.w, u, 1.0, mixed, side.y);
+		float c0 = (1.0 - tile_corner_profile(u, cl4.x, v, 0.0, mixed, side.x, side.y, ends)) * (1.0 - tile_corner_profile(v, cl4.w, u, 0.0, mixed, side.y, side.x, ends));
+		float c1 = tile_corner_profile(u, cl4.x, v, 1.0, mixed, side.x, side.y, ends) * (1.0 - tile_corner_profile(v, cl4.y, 1.0 - u, 0.0, mixed, side.y, -side.x, ends));
+		float c2 = tile_corner_profile(u, cl4.z, 1.0 - v, 1.0, mixed, side.x, -side.y, ends) * tile_corner_profile(v, cl4.y, 1.0 - u, 1.0, mixed, side.y, -side.x, ends);
+		float c3 = (1.0 - tile_corner_profile(u, cl4.z, 1.0 - v, 0.0, mixed, side.x, -side.y, ends)) * tile_corner_profile(v, cl4.w, u, 1.0, mixed, side.y, side.x, ends);
 		if (highs == 1) return ba ? c0 : (bb ? c1 : (bc ? c2 : c3));
 		float plateau = 1.0;
 		if (!ba) plateau *= 1.0 - c0;
@@ -116,8 +121,8 @@ float tile_layer(bool ba, bool bb, bool bc, bool bd, vec4 cl4, float u, float v,
 	float kt = xt ? cl4.z : idle;
 	float kl = xl ? cl4.w : idle;
 	float kr = xr ? cl4.y : idle;
-	float pu = tile_profile(u, kb, kt, v, side.x);
-	float pv = tile_profile(v, kl, kr, u, side.y);
+	float pu = tile_profile(u, kb, kt, v, side.x, side.y, ends);
+	float pv = tile_profile(v, kl, kr, u, side.y, side.x, ends);
 	float a = ba ? 1.0 : 0.0;
 	float b = bb ? 1.0 : 0.0;
 	float c = bc ? 1.0 : 0.0;

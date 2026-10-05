@@ -19,13 +19,16 @@ extends RefCounted
 ## and shoulders, so the summit climb of WaterPlan converges on them instead of
 ## stalling where its 6 m gradient straddles a cliff edge.
 
-const CELL := 320.0
-const MAX_RADIUS := 368.0
+## 256 m (owner review 2026-10-04: more medium-size features; was 320 m).
+const CELL := 256.0
+const MAX_RADIUS := 294.0
 const NORM := 6.0
 const ST := TerrainRegimeCatalog.STOREY
 ## No footprint comes closer than this to the world origin (spawn clearing).
 const SPAWN_CLEAR_M := 200.0
-const CACHE_LIMIT := 8192
+const CACHE_LIMIT := 16384
+## Exponent on the uniform draw of each feature's height scale.
+const HEIGHT_SKEW := 2.0
 
 static var _cache: Dictionary = {}   # seed -> {Vector3i(cell, table): value}
 static var _keys: Array = []
@@ -36,6 +39,7 @@ const _MAIN := 0
 const _CHOSEN := 1
 const _CANDIDATE := 2
 const _LINKS := 3
+const _DRAW := 4
 
 
 static func clear_caches() -> void:
@@ -106,7 +110,31 @@ static func _main(seed: int, cell: Vector2i) -> Dictionary:
 	return _memo(seed, cell, _MAIN, func() -> Dictionary: return _compute(seed, cell))
 
 
+## A basin gives way to a raised neighbour whose core it would overlap: cut
+## into a hill or ridge, it left only a stranded crest stub (owner review
+## 2026-10-04, with basins in most archetypes), so basins lie in the gaps
+## between raised landforms. Valleys still cross them as passes (net). Raised draws never depend on
+## neighbours, so this reads each neighbour's own draw without recursion.
 static func _compute(seed: int, cell: Vector2i) -> Dictionary:
+	var f := _draw(seed, cell)
+	if f.is_empty() or f.kind != &"basin":
+		return f
+	for dz in range(-2, 3):
+		for dx in range(-2, 3):
+			if dx == 0 and dz == 0:
+				continue
+			var g := _draw(seed, cell + Vector2i(dx, dz))
+			if not g.is_empty() and g.kind in _RAISED \
+					and f.pos.distance_to(g.pos) < 0.5 * (f.radius + g.radius):
+				return {}
+	return f
+
+
+static func _draw(seed: int, cell: Vector2i) -> Dictionary:
+	return _memo(seed, cell, _DRAW, func() -> Dictionary: return _draw_raw(seed, cell))
+
+
+static func _draw_raw(seed: int, cell: Vector2i) -> Dictionary:
 	var pos := (Vector2(cell) + Vector2(0.2 + 0.6 * _hash(seed, cell, 1601),
 		0.2 + 0.6 * _hash(seed, cell, 1602))) * CELL
 	var region := TerrainRegimeField.region_at(seed, pos)
@@ -123,7 +151,9 @@ static func _compute(seed: int, cell: Vector2i) -> Dictionary:
 			break
 	var params := TerrainRegimeCatalog.draw(seed, cell, 1610, TerrainRegimeCatalog.FEATURE_PARAMS[kind], 1.0)
 	var range_: Array = table.height_scale
-	var scale := lerpf(float(range_[0]), float(range_[1]), _hash(seed, cell, 1605))
+	# Skewed toward the low end: most features keep a moderate height and a
+	# few stand far taller (owner review 2026-10-04).
+	var scale := lerpf(float(range_[0]), float(range_[1]), pow(_hash(seed, cell, 1605), HEIGHT_SKEW))
 	for name: String in params:
 		if name.ends_with("_st"):
 			params[name] = float(params[name]) * scale
@@ -510,7 +540,7 @@ static func _scatter(q: Dictionary, local: Vector2, salt: int, count: float, eac
 # at most LINK_MAX_RADIUS (< one cell), so the 3x3 cells round a point still
 # hold every link that reaches it.
 
-const LINK_MAX_RADIUS := 300.0
+const LINK_MAX_RADIUS := 240.0
 const LINK_FIRST := 0.95
 const LINK_SECOND := 0.6
 const _RAISED := [&"hill", &"ridge", &"peak_cluster", &"mesa", &"butte_group", &"tower_cluster"]

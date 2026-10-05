@@ -28,8 +28,12 @@ func fields()->WorldFieldBlockCache:
 ## steps or pits up to 1.17 m beside walls; swapping in the previous kernel
 ## gives the same count: an open water issue, see
 ## docs/qa/2026-10-02-terrain-regimes.)
+## Re-pinned again (October 4 amplification): the scan over chunks (-6..6)^2
+## finds 239 lines (68 fail this test's limits, pits up to 0.53 m beside walls:
+## the same open water issue); x 55..61, z -797.375 passes with no wall on its
+## far edge.
 func test_photographed_bank_keeps_connected_water_above_its_lower_reach()->void:
-	_assert_connected_rising_line(Vector2(-64,-1109.375))
+	_assert_connected_rising_line(Vector2(55,-797.375))
 
 ## Regression (dual-grid water, 2026-10-01): the same scan over chunks
 ## (4..6,-1..1) also hits x 1191.75..1197.75, z 183.625. Its 3 m rescue cells
@@ -46,9 +50,10 @@ func test_photographed_bank_keeps_connected_water_above_its_lower_reach()->void:
 ## Re-pinned again (2026-10-04, 320 m range): the first passing line whose far
 ## rescue edge carries a wall that ends inside it is x 948.25..954.25,
 ## z -416.375 (tests/harness/september13_water_corner_scan.gd, then the
-## test's own measure).
+## test's own measure). Re-pinned again (October 4 amplification): x
+## 1240.25..1246.25, z -1100.375.
 func test_rescued_bank_beside_a_dying_wall_has_no_step()->void:
-	_assert_connected_rising_line(Vector2(948.25,-416.375))
+	_assert_connected_rising_line(Vector2(1240.25,-1100.375))
 
 ## PARKED (dual-grid water, 2026-10-01): the same scan also hits x
 ## 1225..1231, z -56.375. A 3 m rescue node on the wall corner (1230,-54) reads
@@ -94,10 +99,10 @@ func _assert_connected_rising_line(start:Vector2)->void:
 	assert_lte(m.jump,.01,"coarse/fine ownership cannot insert a step into the same water body")
 
 ## Same re-pinned corner as the photographed bank above: the window spans the
-## rising reach and its dry bank (x -66..-58, z -1112..-1107).
-const SURFACE_WINDOW := Vector2(-66,-1112)
+## rising reach and its dry bank (x 53..61, z -800..-795).
+const SURFACE_WINDOW := Vector2(53,-800)
 func test_photographed_swimming_surface_matches_the_visible_corner()->void:
-	var field:=fields().water_at(Vector2(-61,-1109.375))
+	var field:=fields().water_at(Vector2(58,-797.375))
 	var sampler:=WaterSampler.build(field.raw_context(),field._region,SURFACE_WINDOW,1,10,7)
 	var worst:=0.0
 	var checked:=0

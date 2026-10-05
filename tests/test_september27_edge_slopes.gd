@@ -131,8 +131,15 @@ func test_no_raised_nose_on_a_crest_that_steps_down() -> void:
 	assert_lt(worst, 0.05, "the rounding does not stand on the stepping crest (%.3f m)" % worst)
 
 func test_no_raised_nose_where_a_cliff_ends() -> void:
+	# The closing must not spill a crest ALONG its wall over the sloping top
+	# beside a wall that dies away (E2). Under E3 (the default since October 4)
+	# a lone cliff ends in an end face, a real wall whose own rounding may
+	# stand on the slope beside the plateau: that is not a spilled nose.
+	var saved_end := TerrainTileField.cliff_end
+	TerrainTileField.cliff_end = TerrainTileField.CliffEnd.E2
 	var worst := _top_lift(_dying_cliff(), func(q: Vector2) -> bool: return q.y < 5.5,
 		Rect2(-30.0, -16.0, 80.0, 40.0))
+	TerrainTileField.cliff_end = saved_end
 	assert_lt(worst, 0.05, "the ending cliff's top keeps its ground (%.3f m)" % worst)
 
 func test_an_ending_cliff_ends_in_a_rounded_blob_not_a_spike() -> void:

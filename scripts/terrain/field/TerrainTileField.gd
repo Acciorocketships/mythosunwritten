@@ -16,9 +16,10 @@
 # low) corner is the product of its two crossings' own edge profiles, and a
 # saddle is the sum of its two corner shapes (for slopes, the smooth bilinear
 # saddle), so every tile only rises or only falls along each axis: no divots
-# (owner review 2026-10-04). Where a straight layer mixes a cliff and a slope
-# crossing (a cliff end) the rule is `cliff_end` (E2 by default: a full wall
-# to the tile centre, then the wall shortens to nothing at the slope edge).
+# (owner review 2026-10-04). Where a tile's one cliff edge ends beside a slope
+# the rule is `cliff_end` (E3 by default: a full wall to the tile centre, a
+# vertical end face on the centre line, then exactly the slope tile; tiles
+# where walls turn a corner beside slopes keep E2).
 #
 # Along any tile edge the surface depends only on that edge's two endpoints,
 # so neighbouring tiles agree by construction; walls are the only
@@ -37,12 +38,17 @@ enum EdgeCategory { FLAT, LEVEL, SLOPE, CLIFF }
 ## centre, then shortens to nothing 2.4 m before the slope edge (the
 ## same blend as E1, confined to that stretch; owner review October 1: the former E2 fan,
 ## centimetres wide beside the wall's end, cut a V-notch into the plateau).
-enum CliffEnd { E1, E2 }
+## E3: the wall runs at full height to the tile centre and ends there in a
+## vertical end face on the centre line (a dual-cell border, like every wall);
+## beyond it the layer is the plain slope. No wall shortens over a ramp, so
+## there is no fan, crease or scoop at a cliff's end (owner review October 4,
+## second photo: the E2 ramp read as a dark dent).
+enum CliffEnd { E1, E2, E3 }
 ## Under E2 the last fifth of the tile (2.4 m) before the slope edge carries no
 ## wall at all: a road crossing that slope edge (4 m wide, on the lattice line)
 ## never meets a step (test_september13_world_paths).
 const CLIFF_END_CLEAR := 0.2
-static var cliff_end: int = CliffEnd.E2
+static var cliff_end: int = CliffEnd.E3
 
 const _CARDINALS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 
@@ -180,6 +186,10 @@ static func _layer(ba: bool, bb: bool, bc: bool, bd: bool,
 		cb: float, cr: float, ct: float, cl: float,
 		u: float, v: float, side: Vector2i) -> float:
 	var highs := int(ba) + int(bb) + int(bc) + int(bd)
+	# E3 ends a cliff cleanly only where it truly ends: the tile's one cliff
+	# edge. Where walls turn a corner beside slopes the tile keeps the E2 rule
+	# (a clean end there left a trough at the foot of the turning wall).
+	var ends := cliff_end == CliffEnd.E3 and int(cb >= 1.0) + int(cr >= 1.0) + int(ct >= 1.0) + int(cl >= 1.0) == 1
 	if highs != 2 or ba == bc:
 		# One high corner, one low corner or a saddle is built from CORNER
 		# shapes: a corner's shape is the product of its two crossings' profiles
@@ -193,10 +203,10 @@ static func _layer(ba: bool, bb: bool, bc: bool, bd: bool,
 		var mixed := ((ba != bb) and cb < 1.0) or ((bd != bc) and ct < 1.0) \
 			or ((ba != bd) and cl < 1.0) or ((bb != bc) and cr < 1.0)
 		var corners := [
-			(1.0 - _corner_profile(u, cb, v, 0.0, mixed, side.x)) * (1.0 - _corner_profile(v, cl, u, 0.0, mixed, side.y)),
-			_corner_profile(u, cb, v, 1.0, mixed, side.x) * (1.0 - _corner_profile(v, cr, 1.0 - u, 0.0, mixed, side.y)),
-			_corner_profile(u, ct, 1.0 - v, 1.0, mixed, side.x) * _corner_profile(v, cr, 1.0 - u, 1.0, mixed, side.y),
-			(1.0 - _corner_profile(u, ct, 1.0 - v, 0.0, mixed, side.x)) * _corner_profile(v, cl, u, 1.0, mixed, side.y)]
+			(1.0 - _corner_profile(u, cb, v, 0.0, mixed, side.x, side.y, ends)) * (1.0 - _corner_profile(v, cl, u, 0.0, mixed, side.y, side.x, ends)),
+			_corner_profile(u, cb, v, 1.0, mixed, side.x, side.y, ends) * (1.0 - _corner_profile(v, cr, 1.0 - u, 0.0, mixed, side.y, -side.x, ends)),
+			_corner_profile(u, ct, 1.0 - v, 1.0, mixed, side.x, -side.y, ends) * _corner_profile(v, cr, 1.0 - u, 1.0, mixed, side.y, -side.x, ends),
+			(1.0 - _corner_profile(u, ct, 1.0 - v, 0.0, mixed, side.x, -side.y, ends)) * _corner_profile(v, cl, u, 1.0, mixed, side.y, side.x, ends)]
 		var bits := [ba, bb, bc, bd]
 		if highs == 1:
 			return corners[bits.find(true)]
@@ -221,8 +231,8 @@ static func _layer(ba: bool, bb: bool, bc: bool, bd: bool,
 	var kt := ct if xt else idle
 	var kl := cl if xl else idle
 	var kr := cr if xr else idle
-	var pu := _profile(u, kb, kt, v, side.x)
-	var pv := _profile(v, kl, kr, u, side.y)
+	var pu := _profile(u, kb, kt, v, side.x, side.y, ends)
+	var pv := _profile(v, kl, kr, u, side.y, side.x, ends)
 	var a := 1.0 if ba else 0.0
 	var b := 1.0 if bb else 0.0
 	var c := 1.0 if bc else 0.0
@@ -238,11 +248,16 @@ static func _layer(ba: bool, bb: bool, bc: bool, bd: bool,
 ## edge to the tile centre (E2) that then gives way to a half-tile ramp on the
 ## corner's own side: the far side of the wall stays level (no notch), and
 ## the corner only deepens toward its corner along t.
-static func _corner_profile(t: float, k: float, s: float, corner_t: float, mixed: bool, side: int) -> float:
+static func _corner_profile(t: float, k: float, s: float, corner_t: float, mixed: bool, side: int, side_s: int, ends := false) -> float:
 	if k <= 0.0:
 		return SlopeProfile.smootherstep(t)
 	if not mixed:
 		return _step(t, side)
+	# E3 where the tile's one cliff ends: the full wall up to its end face on
+	# the centre line, beyond it the ordinary slope profile, exactly as every
+	# slope tile has it.
+	if ends:
+		return _step(t, side) if _step(s, side_s) == 0.0 else SlopeProfile.smootherstep(t)
 	var wall := 1.0 - s if cliff_end == CliffEnd.E1 else \
 		SlopeProfile.smootherstep(clampf((1.0 - CLIFF_END_CLEAR - s) / (0.5 - CLIFF_END_CLEAR), 0.0, 1.0))
 	# A cubic smoothstep: over half a tile a storey ramp peaks at 45 degrees,
@@ -254,10 +269,12 @@ static func _corner_profile(t: float, k: float, s: float, corner_t: float, mixed
 
 ## Profile of one direction's crossing at coordinate t, given the cliff weight
 ## k0 of the crossing edge at s = 0 and k1 at s = 1 (s = transverse coordinate).
-static func _profile(t: float, k0: float, k1: float, s: float, side: int) -> float:
+static func _profile(t: float, k0: float, k1: float, s: float, side: int, side_s: int, ends := false) -> float:
 	var k: float
 	if cliff_end == CliffEnd.E1 or k0 == k1:
 		k = lerpf(k0, k1, s)
+	elif ends:   # E3: the wall ends on the centre line
+		k = k0 if _step(s, side_s) == 0.0 else k1
 	elif k0 > k1:   # cliff at s = 0: full wall to the centre, then it shortens
 		k = SlopeProfile.smootherstep(clampf((1.0 - CLIFF_END_CLEAR - s) / (0.5 - CLIFF_END_CLEAR), 0.0, 1.0))
 	else:

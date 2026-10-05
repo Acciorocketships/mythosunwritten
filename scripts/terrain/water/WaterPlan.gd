@@ -43,6 +43,9 @@ const CONTOUR_DESCENT := 0.22
 const MEANDER_AMP := 0.25
 const MEANDER_SCALE := 180.0
 const STEEP_HI := 0.10
+## Summit flank gradient over which a spring's first steps leave straight
+## downhill instead of contouring (see _contour_step).
+const SUMMIT_STEEP := Vector2(0.25, 0.6)
 const SELF_AVOID_R := 76.0
 const SELF_AVOID_SKIP := 10
 const SUMMIT_REACH := TILE * 4.0  # the walk's free first loop; outward drift starts here
@@ -680,7 +683,15 @@ func _contour_step(t: RiverTrace, visited: Dictionary, p: Vector2,
 		if clearance < W_MAX * 2.0 + FEATHER:
 			continue
 		var change := smooth_h(q) - height
-		var desired_drop := g.length() * TRACE_STEP * CONTOUR_DESCENT
+		# Inside the summit's reach the walk leaves straight downhill, so on a
+		# steep peak it wants the full fall: scored against a modest contour
+		# descent there, the straight-down step lost to a sideways one and the
+		# walk orbited inside its reach (October 4, taller peaks: boxed walks
+		# 7-11 -> 20-33 of 81 districts). Hills gentler than SUMMIT_STEEP keep
+		# the contour descent (and their rivers' routes).
+		var desired_drop := g.length() * TRACE_STEP * (lerpf(CONTOUR_DESCENT, 1.0,
+			smoothstep(SUMMIT_STEEP.x, SUMMIT_STEEP.y, g.length())) \
+			if p.distance_to(source) < SUMMIT_REACH else CONTOUR_DESCENT)
 		var score := absf(change + desired_drop) * 2.0 \
 			+ maxf(change, 0.0) * 3.0 + (1.0 - heading.dot(preferred)) * 3.0 \
 			+ (1.0 - clearance / SELF_AVOID_R) * 3.0

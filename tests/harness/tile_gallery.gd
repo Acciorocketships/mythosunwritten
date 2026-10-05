@@ -56,6 +56,8 @@ const CASES := [
 
 var _output := "/tmp/tile_gallery"
 var _only: PackedStringArray = []
+## The cliff end of every chunk but the E1 island (--end E2|E3).
+var _end: int = E2
 var _region: HeightfieldRegion
 var _camera := Camera3D.new()
 var _terrain := Node3D.new()
@@ -71,6 +73,7 @@ func _ready() -> void:
 		match args[index]:
 			"--output": _output = next
 			"--only": _only = next.split(",", false)
+			"--end": _end = TerrainTileField.CliffEnd.E3 if next == "E3" else E2
 	get_window().size = Vector2i(1600, 900)
 	DirAccess.make_dir_recursive_absolute(_output)
 	_environment()
@@ -126,7 +129,7 @@ func _run() -> void:
 	for cz in range(CHUNKS_Z.x, CHUNKS_Z.y + 1):
 		for cx in range(CHUNKS_X.x, CHUNKS_X.y + 1):
 			var chunk := Vector2i(cx, cz)
-			TerrainTileField.cliff_end = E1 if E1_CHUNKS.has(chunk) else E2
+			TerrainTileField.cliff_end = E1 if E1_CHUNKS.has(chunk) else _end
 			var t := Time.get_ticks_msec()
 			var node := mesher.commit_chunk(mesher.compute_chunk(chunk, _region))
 			_terrain.add_child(node)

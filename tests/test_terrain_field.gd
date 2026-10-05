@@ -185,11 +185,14 @@ func test_upland_fronts_rise_within_about_700_m() -> void:
 			slopes.append(Vector2(gx, gz).length() / 20.0)
 	slopes.sort()
 	assert_gt(slopes.size(), 20, "the window crosses upland fronts")
-	assert_gt(slopes[slopes.size() / 2], 0.13, "median front slope")
+	# Owner review 2026-10-04: "amplify the change in elevation, it is not very
+	# noticeable in-game": the front climbs at least 0.21 m per metre (was 0.13).
+	assert_gt(slopes[slopes.size() / 2], 0.21, "median front slope")
 
 ## ...and highlands are not flat tables: their interiors swell toward broad
 ## high ground and lowlands dip into basins, so the large-scale layer varies
-## inside each. The whole layer spans at least 140 m.
+## inside each. The whole layer spans at least 220 m (140 m before the
+## October 4 amplification).
 func test_highlands_swell_and_lowlands_dip() -> void:
 	var high: Array[float] = []
 	var low: Array[float] = []
@@ -205,7 +208,7 @@ func test_highlands_swell_and_lowlands_dip() -> void:
 				low.append(TerrainField.elevation_m(SEED, p))
 	assert_gt(_std(high), 8.0, "highland interiors vary")
 	assert_gt(_std(low), 5.0, "lowlands vary")
-	assert_gt(high.max() - low.min(), 140.0, "the layer spans 140 m")
+	assert_gt(high.max() - low.min(), 220.0, "the layer spans 220 m")
 
 func _std(a: Array[float]) -> float:
 	var m := 0.0

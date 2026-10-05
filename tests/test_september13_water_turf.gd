@@ -13,15 +13,18 @@ func test_shallow_water_trough_keeps_the_actual_native_turf_covered()->void:
 	# lists the best 0.1-0.4 m deep window per chunk; of the top three, chunk
 	# (6,2) at (1194, 546) holds a rendered surface over the turf (chunk (4,1)'s
 	# shallow water shows no skin above the ground at all: see the water
-	# follow-up in docs/qa/2026-10-02-terrain-regimes).
-	var chunk:=Vector2i(6,2)
+	# follow-up in docs/qa/2026-10-02-terrain-regimes). Re-pinned again
+	# (October 4 amplification): the same scan's densest window is chunk (-1,2)
+	# at (-82, 454), 96 of 96 samples 0.1-0.4 m deep. (The probe rays started
+	# at y = 30, under the higher ground: see _height.)
+	var chunk:=Vector2i(-1,2)
 	var region:=fields.region(chunk)
 	var field:=fields.water(chunk)
 	var mesher:=TerrainChunkMesher.new();mesher.set_seed(2697992464);mesher.prepare_resources()
 	var terrain_data:=mesher.compute_chunk(chunk,region,field)
 	var ground:=mesher.commit_chunk(terrain_data);add_child_autofree(ground)
 	var skin:=WaterSkin.build(water,chunk,region,field)
-	var local:=Rect2(1194,546,12,8)
+	var local:=Rect2(-82,454,12,8)
 	var terrain:Array=[]
 	for node:MeshInstance3D in ground.find_children("*","MeshInstance3D",true,false):
 		for surface in node.mesh.get_surface_count():
@@ -64,9 +67,12 @@ func _triangles(arrays:Array,area:Rect2,transform:Transform3D,displacement:float
 		if bounds.intersects(area,true):out.append(tri)
 	return out
 
+## Rays start above the whole height range (October 4: from y = 30 they began
+## under ground standing higher than that and hit nothing).
 func _height(triangles:Array,p:Vector2)->float:
 	var height:=-INF
+	var top:=TerrainWorldTuning.HEIGHTFIELD_AMPLITUDE+100.0
 	for tri:PackedVector3Array in triangles:
-		var hit:Variant=Geometry3D.ray_intersects_triangle(Vector3(p.x,30,p.y),Vector3.DOWN,tri[0],tri[1],tri[2])
+		var hit:Variant=Geometry3D.ray_intersects_triangle(Vector3(p.x,top,p.y),Vector3.DOWN,tri[0],tri[1],tri[2])
 		if hit!=null:height=maxf(height,hit.y)
 	return height
