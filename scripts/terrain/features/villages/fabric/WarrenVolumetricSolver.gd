@@ -223,6 +223,7 @@ static func _solve_maze(world_seed: int, ground_bands: Dictionary,
 		last_advisory_shortfalls["frontage"] = frontage
 		last_advisory_shortfalls["frontage_target"] = \
 			WarrenMazeSourcePlan.FRONTAGE_FLOOR
+	_forward_aesthetic_shortfalls(maze.audit.get("aesthetic_shortfalls", {}))
 	var volume := WarrenMazeVolumeAdapter.to_volume_plan(maze, collect_diagnostics)
 	if volume == null:
 		last_failure = "maze volume adapter rejected: %s" \
@@ -273,6 +274,13 @@ static func _solve_maze(world_seed: int, ground_bands: Dictionary,
 	finalized.audit["advisory_shortfalls"] = last_advisory_shortfalls.duplicate()
 	finalized.audit["advisory_shortfall_count"] = last_advisory_shortfalls.size()
 	return finalized
+
+
+static func _forward_aesthetic_shortfalls(record: Dictionary) -> void:
+	## Source-seal look rules (loop join, straight runs) join the town's
+	## advisory shortfalls, each as {"limit", "found"}.
+	for key: Variant in record:
+		last_advisory_shortfalls[key] = record[key]
 
 
 static func _finalize_candidate(volume: WarrenVolumePlan,

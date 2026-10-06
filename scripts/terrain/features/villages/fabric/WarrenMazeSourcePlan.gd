@@ -178,6 +178,12 @@ func finish_construction(collect_diagnostics: bool = true) -> bool:
 	_rebuild_rock_shoulders()
 	if collect_diagnostics:
 		collect_construction_diagnostics()
+	# Unconditional (production runs without diagnostics): the look rules the
+	# seal no longer enforces, recorded for the sealed plan's advisory list.
+	audit["aesthetic_shortfalls"] = aesthetic_shortfalls({
+		"max_spine_straight_run": _max_straight_run(excavation.route),
+		"max_alley_straight_run": _max_alley_straight_run()},
+		excavation.loop_edges.size())
 	_sealed = true
 	return true
 
@@ -187,7 +193,6 @@ func collect_construction_diagnostics() -> void:
 	audit["street_floor_gaps"] = _street_floor_gaps()
 	audit["exterior_rock_ratio"] = exterior_rock_ratio()
 	audit["exterior_stone_band_profile"] = exterior_stone_band_profile()
-	audit["aesthetic_shortfalls"] = aesthetic_shortfalls(audit, excavation.loop_edges.size())
 
 
 func validate_construction() -> bool:

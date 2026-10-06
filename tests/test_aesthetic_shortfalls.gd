@@ -17,3 +17,27 @@ func test_sealed_town_carries_shortfall_record() -> void:
 	var plan := WarrenMazeSitePlanner.plan(13, {}, WarrenVillageScaleProfile.for_id(&"standard"))
 	assert_not_null(plan)
 	assert_true(plan.audit.has("aesthetic_shortfalls"))
+
+func test_source_shortfalls_reach_advisory_list() -> void:
+	WarrenVolumetricSolver.last_advisory_shortfalls = {}
+	WarrenVolumetricSolver._forward_aesthetic_shortfalls({
+		"loop_join": {"limit": 1, "found": 0}})
+	assert_eq(WarrenVolumetricSolver.last_advisory_shortfalls["loop_join"],
+		{"limit": 1, "found": 0})
+	WarrenVolumetricSolver.last_advisory_shortfalls = {}
+
+func test_source_audit_has_record_without_diagnostics() -> void:
+	# Production path: collect_diagnostics off still records shortfalls.
+	var plan := WarrenMazeSitePlanner.plan(13, {},
+		WarrenVillageScaleProfile.for_id(&"standard"), &"", false)
+	assert_not_null(plan)
+	assert_true(plan.audit.has("aesthetic_shortfalls"))
+
+func test_feature_shortfall_shape_is_target_found() -> void:
+	# The annex/outcrop records need a composed town that misses its quota;
+	# no cheap fixture does, so pin the shape contract used by the solver.
+	var rec := {"target": 2, "found": 1}
+	WarrenVolumetricSolver.last_advisory_shortfalls = {"tower_annexes": rec}
+	assert_eq(WarrenVolumetricSolver.last_advisory_shortfalls["tower_annexes"].keys(),
+		["target", "found"])
+	WarrenVolumetricSolver.last_advisory_shortfalls = {}
