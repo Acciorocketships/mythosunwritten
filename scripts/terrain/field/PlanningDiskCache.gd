@@ -2,9 +2,13 @@ extends RefCounted
 
 ## On-disk cache of pure planning results for one world seed, so a relaunch
 ## of the same (pinned) seed skips the minutes of cold hydraulic solves.
-## Entries live in user://plan_cache/<seed>/<code hash>/; the hash covers every
-## script under res://scripts, so any code change starts a fresh directory
-## (older ones for the seed are deleted). Values are plain data
+## Entries live in user://plan_cache/<seed>/<code hash>/; the hash covers the
+## scripts a cached value is computed from (KEY_SOURCES), so a change to them
+## starts a fresh directory (older ones for the seed are deleted). It once
+## covered every script, and any edit to towns, biomes or the streamer threw
+## away all solved water: a ~20 minute cold startup after nearly every change
+## (October 5). test_planning_cache_key keeps KEY_SOURCES closed over what
+## those scripts reference. Values are plain data
 ## (var_to_bytes, no objects) and round-trip exactly, so a cached result is
 ## the very result a fresh solve returns. No class_name: preload it.
 ##
@@ -13,6 +17,31 @@ extends RefCounted
 ## tests and harnesses always solve fresh.
 
 const ROOT := "user://plan_cache"
+## What the cached block water (WaterFieldContext over a natural heightfield
+## region) is a function of: directories (every .gd/.cs inside, recursively)
+## and single files. PathProgram and TerrainChunkMesher are read for constants.
+const KEY_SOURCES: Array[String] = [
+	"res://scripts/core/Helper.gd",
+	"res://scripts/core/PriorityQueue.gd",
+	"res://scripts/native",
+	"res://scripts/terrain/heightfield",
+	"res://scripts/terrain/water/WaterPlan.gd",
+	"res://scripts/terrain/water/WaterField.gd",
+	"res://scripts/terrain/water/WaterFieldContext.gd",
+	"res://scripts/terrain/water/WaterContour.gd",
+	"res://scripts/terrain/water/PondStamp.gd",
+	"res://scripts/terrain/water/RiverTrace.gd",
+	"res://scripts/terrain/water/WaterGroundSnapshot.gd",
+	"res://scripts/terrain/TerrainWorldTuning.gd",
+	"res://scripts/terrain/tools/SlopeProfile.gd",
+	"res://scripts/terrain/field/TerrainTileField.gd",
+	"res://scripts/terrain/field/TerrainGradePatch.gd",
+	"res://scripts/terrain/field/NativeTerrainGrade.gd",
+	"res://scripts/terrain/field/WorldFieldBlockCache.gd",
+	"res://scripts/terrain/field/PlanningDiskCache.gd",
+	"res://scripts/terrain/field/TerrainChunkMesher.gd",
+	"res://scripts/terrain/features/PathProgram.gd",
+]
 
 static var _seed := 0
 static var _dir := ""
@@ -71,17 +100,27 @@ static func store_entry(key: String, value: Variant) -> void:
 
 
 static func _code_hash() -> String:
-	var files: Array[String] = []
-	_collect("res://scripts", files)
+	var files := key_files()
 	if files.is_empty():
 		return ""
-	files.sort()
 	var ctx := HashingContext.new()
 	ctx.start(HashingContext.HASH_SHA256)
 	for path: String in files:
 		ctx.update(path.to_utf8_buffer())
 		ctx.update(FileAccess.get_file_as_bytes(path))
 	return ctx.finish().hex_encode().left(20)
+
+
+## Every script file KEY_SOURCES names, sorted.
+static func key_files() -> Array[String]:
+	var files: Array[String] = []
+	for source: String in KEY_SOURCES:
+		if source.ends_with(".gd") or source.ends_with(".cs"):
+			files.append(source)
+		else:
+			_collect(source, files)
+	files.sort()
+	return files
 
 
 static func _collect(dir: String, out: Array[String]) -> void:

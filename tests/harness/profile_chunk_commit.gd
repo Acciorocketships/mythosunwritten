@@ -7,7 +7,12 @@
 # the chunk is attached are timed (draw-time pipeline/upload work lands there).
 #
 #   Godot --path . -s res://tests/harness/profile_chunk_commit.gd -- \
-#     [--seed=N] [--centre=x,z] [--radius=N]
+#     [--seed=N] [--centre=x,z] [--radius=N] [--ground-view=wide|close|both --shot=PNG]
+#     [--dressing-index=res://...]
+#
+# --ground-view frames the centre chunk from its own ground height (wide =
+# overhead, close = person-scale; both saves <shot>_close and <shot>_wide) under flat review lighting, for dressing art
+# review without the streamed world's cold road planning.
 extends SceneTree
 
 const MESHER_ROCKS := preload("res://scripts/terrain/field/CliffRockDressing.gd")
@@ -22,6 +27,8 @@ var _shot := ""
 var _look_from := Vector3.ZERO
 var _look_at := Vector3.ZERO
 var _has_look := false
+var _ground_view := ""
+var _dressing_index := "res://terrain/dressing/index.tres"
 var _warmup_node: Node3D
 var _warmup_frames := 0
 var _busy_frames: Array[float] = []
@@ -58,6 +65,8 @@ func _init() -> void:
 			_look_from = Vector3(float(v[0]), float(v[1]), float(v[2]))
 			_look_at = Vector3(float(v[3]), float(v[4]), float(v[5]))
 			_has_look = true
+		elif arg.begins_with("--dressing-index="): _dressing_index = arg.trim_prefix("--dressing-index=")
+		elif arg.begins_with("--ground-view="): _ground_view = arg.trim_prefix("--ground-view=")
 		elif arg.begins_with("--skip="): _skip = arg.trim_prefix("--skip=").split(",")
 		elif arg.begins_with("--chunks="):
 			for pair: String in arg.trim_prefix("--chunks=").split(";"):
@@ -74,10 +83,8 @@ func _init() -> void:
 	water_builder = WaterSurfaceBuilder.new()
 	var catalog := EnvironmentCatalog.load_default()
 	render_cache = EnvironmentRenderCache.new(catalog)
-	var index := load("res://terrain/dressing/index.tres") as DressingCatalogIndex
+	var index := load(_dressing_index) as DressingCatalogIndex
 	var visuals := DressingCompiler.authored_asset_ids(index)
-	render_cache.prefetch(visuals)
-	preload("res://scripts/terrain/field/CliffSlopeRocks.gd").prefetch()
 	render_cache.prepare(visuals)
 	dressing_program = DressingCompiler.compile(index, catalog)
 	fields = WorldFieldBlockCache.new(plan, water, dressing_program.query_margin,
@@ -91,6 +98,13 @@ func _init() -> void:
 	root.add_child(_root)
 	var env := WorldEnvironment.new()
 	env.environment = Environment.new()
+	if not _ground_view.is_empty():
+		env.environment.background_mode = Environment.BG_COLOR
+		env.environment.background_color = Color("#9db8c2")
+		env.environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+		env.environment.ambient_light_color = Color("dce7dc")
+		env.environment.ambient_light_energy = 0.9
+		env.environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	_root.add_child(env)
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-50, 30, 0)
@@ -133,8 +147,13 @@ func _work() -> void:
 		var core := Rect2(Vector2(chunk) * 192.0, Vector2.ONE * 192.0)
 		var dressing := DressingField.compute(dressing_program, _seed, core, region,
 			water_ctx, null, terrain.cliff_terraces.ground_reservations)
-		print("[commitprof] computed chunk=%d,%d worker_ms=%.0f" % [chunk.x, chunk.y,
-			(Time.get_ticks_usec() - t) / 1000.0])
+		var trees := 0
+		for asset_id: StringName in dressing.batches:
+			if String(asset_id).contains("tree") or String(asset_id).contains(".oak") \
+					or String(asset_id).contains(".birch.") or String(asset_id).contains("sapling"):
+				trees += (dressing.batches[asset_id].transforms as Array).size()
+		print("[commitprof] computed chunk=%d,%d worker_ms=%.0f instances=%d trees=%d" % [
+			chunk.x, chunk.y, (Time.get_ticks_usec() - t) / 1000.0, dressing.instance_count, trees])
 		_mutex.lock()
 		_ready_items.append({"chunk": chunk, "terrain": terrain, "water": water_payload,
 			"dressing": dressing})
@@ -175,11 +194,13 @@ func _process(_delta: float) -> bool:
 		if done:
 			# Steady state with everything attached: separates a per-attach
 			# spike from the ordinary cost of drawing the chunks.
+			if not _ground_view.is_empty():
+				_ground_view_step(_idle_frames.size())
 			_idle_frames.append(frame_ms)
 			if _idle_frames.size() < 240:
 				return false
 			_thread.wait_to_finish()
-			if not _shot.is_empty():
+			if not _shot.is_empty() and _ground_view != "both":
 				root.get_texture().get_image().save_png(_shot)
 				print("[commitprof] shot ", _shot)
 			var sorted := _idle_frames.duplicate()
@@ -247,3 +268,34 @@ func _process(_delta: float) -> bool:
 	_after_max = 0.0
 	_frames_after = 3
 	return false
+
+## Re-aims the camera at the centre chunk's own ground for an art-review shot;
+## the frames after it settle before the capture.
+func _frame_ground_view(view: String = "") -> void:
+	if view.is_empty():
+		view = _ground_view
+	var c := Vector2(_centre.x * 192.0 + 96.0, _centre.y * 192.0 + 96.0)
+	var ground := plan.surface_height(roundi(c.x / HeightfieldPlan.POINT),
+		roundi(c.y / HeightfieldPlan.POINT))
+	var focus := Vector3(c.x, ground + 4.0, c.y)
+	var offset := Vector3(26.0, 9.0, 30.0) if view != "wide" \
+		else Vector3(130.0, 110.0, 150.0)
+	_camera.fov = 60.0
+	_camera.look_at_from_position(focus + offset, focus, Vector3.UP)
+
+## Idle-frame schedule for the art-review views. Single views frame once;
+## `both` saves the close view at frame 60 and the wide one at frame 120.
+func _ground_view_step(frame: int) -> void:
+	if _ground_view != "both":
+		if frame == 0:
+			_frame_ground_view()
+		return
+	if frame == 0:
+		_frame_ground_view("close")
+	elif frame == 60 or frame == 120:
+		var view := "close" if frame == 60 else "wide"
+		var path := "%s_%s.png" % [_shot.get_basename(), view]
+		root.get_texture().get_image().save_png(path)
+		print("[commitprof] shot ", path)
+		if frame == 60:
+			_frame_ground_view("wide")

@@ -91,7 +91,6 @@ func _init() -> void:
 	var render_cache := EnvironmentRenderCache.new(catalog)
 	var index := load("res://terrain/dressing/index.tres") as DressingCatalogIndex
 	var visuals := DressingCompiler.authored_asset_ids(index)
-	render_cache.prefetch(visuals)
 	render_cache.prepare(visuals)
 	dressing_program = DressingCompiler.compile(index, catalog)
 	fields = WorldFieldBlockCache.new(plan, water, dressing_program.query_margin,

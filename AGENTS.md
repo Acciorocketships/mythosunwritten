@@ -1,3 +1,53 @@
+> October 5 nature style (owner: try the Meadow and Farmlands packs; branch `meadow-nature`).
+> Ambient trees, bushes, flowers, plants, cliff tufts, toadstools, logs and stumps now come from
+> ANGRY MESH Meadow (`tools/environment_bake/manifests/angry_mesh_meadow_nature.json`, ids
+> `meadow.<kind>.<nn>.<season>`, bake scale 1.3; flowers/plants/grass/cover 1.0) with Polyart
+> Farmlands accents (`polyart_farmlands_nature.json`, `farm.*`, scale 0.8: generic trees incl. the
+> red C, saplings, small trees, and the red-spotted toadstools 01/05-10 only, the owner's pick).
+> SEASONS PER BIOME through `DressingChoice.biome_affinity` alone: Summer in Sunwash, Lanternwood,
+> Moonfen, Jade Estuary; Autumn in Amber Heath and Cherryveil (plus the Farmlands red tree);
+> Winter in Opal Highlands. Painted foliage takes the new `foliage` tint group
+> (`BiomeRegistry.FOLIAGE_CAST` 0.75: the biome canopy hue, normalized, 75% toward white); the
+> absolute `tree`/`bush` colours belong to the LPFV hue-replacement canopy shader and would stain
+> painted leaves. Meadow logs/stumps are Summer meshes recoloured by `material_tint` to the LPFV
+> dark brown (render-matched, owner request); LPFV keeps only the fallen branch and reeds, SFV
+> the lily pads. Old LPFV/KayKit nature stays baked (revert = the set files). Bake: manifest
+> `max_texture_size` (1024 here; sources are 2-4K) and alpha-tested surfaces count as foliage
+> when fitting trunk capsules (autumn/winter leaves are not green). Towns: plaza tree
+> `meadow.town_birch` (birch 05 at 0.9, half-extents 1.479/1.327 in the 2x2 block), hamlet focal
+> `meadow.oak.04.summer`, roof flowers `meadow.flower.*`, garden toadstools
+> `farm.toadstool.05/06/08` (`DECOR_PROBE_RISE` 1.076129); towns use Summer foliage everywhere.
+> STARTUP CRASH FIXED: `ResourcePrefetch` requested visuals with sub-threads, so every
+> mesh/material/texture was its own pool task and a waiting worker ran others inside its own
+> stack; ~190 new visuals overflowed it (SIGBUS in `realpath`). Superseded the same night:
+> `ResourcePrefetch` is GONE. Threaded visual loads build material RIDs on several threads and
+> Godot's material/shader owner bookkeeping is not thread-safe (all 2,497 visuals at once:
+> signal 11 in `material_set_shader`; otherwise stale owners made QUIT hang for an hour printing
+> tens of millions of `Parameter "material" is null`). Visuals load serially on the main thread;
+> with the 2048 BC7 textures that is faster anyway (whole catalogue 4.6 s). Never load
+> materials/meshes on loader threads. SPAWN: the streamer releases a held player onto the
+> committed ground (`FieldTerrainStreamer.release_height`): world.tscn's fixed y 24 lay 56 m under
+> the amplified hill. PLAN CACHE: `PlanningDiskCache` keys only on `KEY_SOURCES` (heightfield,
+> water, native, kernel files), not every script, so town/biome/streamer edits keep the solved
+> water (`test_planning_cache_key` keeps the list closed). October 6 FPS pass: the close
+> (over-the-shoulder) view is the default (`world.tscn` `tactical_view = false`; F7 still
+> toggles); it skips the visibility bubble. `WaterSampler` memoizes surface frames on a 0.25 m
+> lattice and `covers_wet` picks a packet's chunk (wave packets were ~3/4 of the main thread).
+> `FieldTerrainStreamer.PARALLEL_TAILS` is OFF: tails shared unlocked LRU caches with the
+> planner (heap corruption in `Dictionary::erase`). GEOMETRY: the cliff sheet renders as 48 m
+> tiles (`CliffRockCrags.split_tiles`, on the worker: welded by position, which is exact since
+> every attribute comes from `native_roots[point]`, plus importer LODs) and slope rocks as 32 m
+> per-piece batches (`CliffSlopeRocks.ROCK_TILE`; pebbles <= 1.3 m cast no shadow and fade
+> out at 70 m; the rebuilt face rocks regain LODs). Chunk-wide batches touched the player's
+> 3x3 chunks, so nothing could be culled or LOD-ed. Sun shadows end at 60 m
+> (`AtmosphereDirector.SUN_SHADOW_DISTANCE`). Close view at 1280x720: open ground ~13 ms,
+> the grassy spawn ~17.6 ms (grass ~7 ms there; was ~29 ms). A buried player is released
+> over the 3x3 tiles' highest point and snapped onto the first surface a frame later, when
+> the chunk's sheet collision has registered. Cost: alpha-card leaves carry no importer
+> LODs (bark does); Meadow oaks are 4-17k triangles vs a few hundred for LPFV trees.
+> `teleport_deco_harness` gained `--at X,Z` / `--close` (wide + person-scale views in one run),
+> a 900 s timeout for cold road planning, and primitive/draw-call counts.
+
 > October 4 follow-up (owner: "is this before or after? I still see the divot", plus a second
 > photo at (264.7, 3.8, 578.1)). CORRECTION: the dark streak in owner photo 1 IS a dent, in the
 > cliff sheet, not the kernel: where a cliff dies into a slope its crest climbs along the wall,

@@ -23,20 +23,7 @@ const PIECES := {
 "face_meadow_05": [ANGRY + "P_Rock_05_Summer.glb", Vector3(2.835713,1.6161067,2.6579242)],
 }
 static var _pieces: Dictionary = {}
-const PREFETCH := preload("res://scripts/core/ResourcePrefetch.gd")
 const STYLE = preload("res://scripts/terrain/field/CliffRockStyle.gd")
-
-
-## Starts the source scenes loading in parallel (ResourcePrefetch) so a later
-## prepare() only waits for them.
-static func prefetch() -> void:
-	if not _pieces.is_empty():
-		return
-	var paths: Array[String] = []
-	for name: String in PIECES:
-		if not paths.has(PIECES[name][0]):
-			paths.append(PIECES[name][0])
-	PREFETCH.request(paths)
 
 
 static func prepare() -> void:
@@ -45,7 +32,7 @@ static func prepare() -> void:
 	assert(OS.get_thread_caller_id() == OS.get_main_thread_id())
 
 	for name: String in PIECES:
-		var root := (PREFETCH.take(PIECES[name][0]) as PackedScene).instantiate()
+		var root := (load(PIECES[name][0]) as PackedScene).instantiate()
 		var instance := root.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
 		var local := Transform3D.IDENTITY
 		var node: Node = instance
@@ -59,13 +46,25 @@ static func prepare() -> void:
 		material.set_shader_parameter("slope_attachment",true)
 		var mesh:Mesh=instance.mesh
 		if name.begins_with("face_"):
-			mesh=_buried_ends(mesh,local,box.size);local=Transform3D.IDENTITY
+			mesh=_with_lods(_buried_ends(mesh,local,box.size));local=Transform3D.IDENTITY
 		_pieces[name] = [mesh, local, material]
 		root.free()
 
 
-## One MultiMesh per piece. Each entry carries its world transform, the slope
-## point and normal under it, the skirt's mound rise there, and that
+## Rocks are batched per piece AND per ROCK_TILE world square: one chunk-wide
+## batch always touched the player's 3x3 chunks, so the GPU drew every rock
+## of every chunk at full detail, behind the camera too (October 6: ~5 M
+## triangles a frame). Small tiles let the renderer cull them and pick each
+## tile's mesh LOD by distance.
+const ROCK_TILE := 32.0
+## Rocks no larger than this (the Meadow 06-12 pebbles) cast no shadow and fade
+## out past SMALL_ROCK_RANGE.
+const SMALL_ROCK_SIZE := 1.3
+const SMALL_ROCK_RANGE := 70.0
+const SMALL_ROCK_FADE := 10.0
+
+## One MultiMesh per piece and tile. Each entry carries its world transform,
+## the slope point and normal under it, the skirt's mound rise there, and that
 ## surface's rock exposure and moss grade.
 static func build(entries: Dictionary, seed_value: int) -> Node3D:
 	prepare()
@@ -75,36 +74,68 @@ static func build(entries: Dictionary, seed_value: int) -> Node3D:
 		# Study `stamp`: face rocks live in the slope solid, not as meshes.
 		if STYLE.sheet_study == "stamp" and name.begins_with("face_"):
 			continue
-		var rocks: Array = entries[name]
-		var piece: Array = _pieces[name]
-		var mm := MultiMesh.new()
-		mm.transform_format = MultiMesh.TRANSFORM_3D
-		mm.use_colors = true
-		mm.use_custom_data = true
-		mm.mesh = piece[0]
-		mm.instance_count = rocks.size()
-		for i in rocks.size():
-			var t: Transform3D = rocks[i].transform
-			mm.set_instance_transform(i, t * (piece[1] as Transform3D))
-			# The surface the rock is set into (meadow_rock.gdshader): its lawn
-			# tint and rock exposure, its plane and moss grade. The rock's
-			# base takes that surface's own colour, bare stone or lawn. The
-			# tint is clamped as the sheet's and terrain's 8-bit vertex tints are.
-			var tint := BiomeRegistry.ground_tint_at(t.origin, seed_value).clamp()
-			mm.set_instance_color(i, Color(tint.r, tint.g, tint.b, float(rocks[i].get("exposure", 0.0))))
-			# The contact plane: the surface under the rock, lifted to its
-			# skirt's mound top, where the rock actually meets the ground.
-			var normal: Vector3 = rocks[i].normal
-			var contact: float = normal.dot(rocks[i].point) + float(rocks[i].get("contact_rise", 0.0)) * normal.y
-			mm.set_instance_custom_data(i, Color(normal.x, normal.z, contact, float(rocks[i].get("grade", 1.0 - normal.y))))
-		var node := MultiMeshInstance3D.new()
-		node.name = name
-		node.multimesh = mm
-		node.material_override = piece[2]
-		node.add_to_group("tactical_solid_earth", true)
-		root.add_child(node)
+		var tiles: Dictionary = {}
+		for rock: Dictionary in entries[name]:
+			var origin: Vector3 = (rock.transform as Transform3D).origin
+			var key := Vector2i(floori(origin.x / ROCK_TILE), floori(origin.z / ROCK_TILE))
+			if not tiles.has(key):
+				tiles[key] = []
+			tiles[key].append(rock)
+		var keys: Array = tiles.keys()
+		keys.sort()
+		for key: Vector2i in keys:
+			root.add_child(_batch(name, tiles[key], seed_value))
 	_add_collision(root, entries)
 	return root
+
+
+static func _batch(name: String, rocks: Array, seed_value: int) -> MultiMeshInstance3D:
+	var piece: Array = _pieces[name]
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.use_colors = true
+	mm.use_custom_data = true
+	mm.mesh = piece[0]
+	mm.instance_count = rocks.size()
+	for i in rocks.size():
+		var t: Transform3D = rocks[i].transform
+		mm.set_instance_transform(i, t * (piece[1] as Transform3D))
+		# The surface the rock is set into (meadow_rock.gdshader): its lawn
+		# tint and rock exposure, its plane and moss grade. The rock's
+		# base takes that surface's own colour, bare stone or lawn. The
+		# tint is clamped as the sheet's and terrain's 8-bit vertex tints are.
+		var tint := BiomeRegistry.ground_tint_at(t.origin, seed_value).clamp()
+		mm.set_instance_color(i, Color(tint.r, tint.g, tint.b, float(rocks[i].get("exposure", 0.0))))
+		# The contact plane: the surface under the rock, lifted to its
+		# skirt's mound top, where the rock actually meets the ground.
+		var normal: Vector3 = rocks[i].normal
+		var contact: float = normal.dot(rocks[i].point) + float(rocks[i].get("contact_rise", 0.0)) * normal.y
+		mm.set_instance_custom_data(i, Color(normal.x, normal.z, contact, float(rocks[i].get("grade", 1.0 - normal.y))))
+	var node := MultiMeshInstance3D.new()
+	node.name = name
+	node.multimesh = mm
+	node.material_override = piece[2]
+	node.add_to_group("tactical_solid_earth", true)
+	var size: Vector3 = PIECES[name][1]
+	if maxf(size.x, maxf(size.y, size.z)) <= SMALL_ROCK_SIZE:
+		node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		node.visibility_range_end = SMALL_ROCK_RANGE
+		node.visibility_range_end_margin = SMALL_ROCK_FADE
+		node.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
+	return node
+
+
+## `mesh` with LODs. _buried_ends rebuilds the five largest rocks from their
+## arrays, which drops the importer's LODs, so they drew full detail at any
+## distance; Godot's own importer simplification restores them (the same
+## meshoptimizer pass and normal merge angle as the GLB import).
+static func _with_lods(mesh: ArrayMesh) -> ArrayMesh:
+	var importer := ImporterMesh.new()
+	for surface in mesh.get_surface_count():
+		importer.add_surface(Mesh.PRIMITIVE_TRIANGLES, mesh.surface_get_arrays(surface), [], {},
+			mesh.surface_get_material(surface))
+	importer.generate_lods(60.0, 25.0, [])
+	return importer.get_mesh()
 
 
 ## Ground rocks collide like the same Meadow rocks placed as ambient dressing

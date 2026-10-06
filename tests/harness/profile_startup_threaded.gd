@@ -60,16 +60,13 @@ func _init() -> void:
 	t = _mark("ready.environment_catalog", t)
 	render_cache = EnvironmentRenderCache.new(catalog)
 	var dressing_index := load("res://terrain/dressing/index.tres") as DressingCatalogIndex
-	if not OS.get_cmdline_user_args().has("--no-prefetch"):
+	if not OS.get_cmdline_user_args().has("--no-prepare"):
 		# Mirrors FieldTerrainStreamer._ready.
 		var startup_visuals: Array[StringName] = DressingCompiler.authored_asset_ids(dressing_index)
 		for asset_id: StringName in CliffDressing.ASSETS.values():
 			if not startup_visuals.has(asset_id): startup_visuals.append(asset_id)
-		render_cache.prefetch(startup_visuals)
-		preload("res://scripts/terrain/field/CliffSlopeRocks.gd").prefetch()
 		render_cache.prepare(startup_visuals)
-		preload("res://scripts/core/ResourcePrefetch.gd").wait_all()
-		t = _mark("ready.prefetch_prepare", t)
+		t = _mark("ready.prepare", t)
 	dressing_program = DressingCompiler.compile(dressing_index, catalog)
 	t = _mark("ready.dressing_compile", t)
 	feature_program = FeatureProgram.compile(catalog)

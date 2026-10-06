@@ -197,18 +197,16 @@ func _ready() -> void:
 	_environment_cache = EnvironmentRenderCache.new(_environment_catalog)
 	var dressing_index := load("res://terrain/dressing/index.tres") as DressingCatalogIndex
 	assert(dressing_index != null)
-	# Decode every visual startup needs in parallel on the loader threads and
-	# keep it (EnvironmentRenderCache) before the compilers read its geometry:
-	# each 4K Meadow rock texture then decodes once, not once per reader.
+	# Load every visual startup needs once and keep it (EnvironmentRenderCache)
+	# before the compilers read its geometry, so no texture loads twice. Loads
+	# stay on this thread: threaded visual loads raced Godot's material RIDs
+	# (October 5: crashes, and a quit that hung for an hour printing errors).
 	var startup_visuals := DressingCompiler.authored_asset_ids(dressing_index)
 	for asset_id: StringName in CliffDressing.ASSETS.values():
 		if not startup_visuals.has(asset_id):
 			startup_visuals.append(asset_id)
-	_environment_cache.prefetch(startup_visuals)
-	preload("res://scripts/terrain/field/CliffSlopeRocks.gd").prefetch()
 	var startup_prepared := _environment_cache.prepare(startup_visuals)
 	assert(startup_prepared)
-	preload("res://scripts/core/ResourcePrefetch.gd").wait_all()
 	_dressing_program = DressingCompiler.compile(dressing_index, _environment_catalog)
 	assert(_dressing_program != null)
 	_feature_program = FeatureProgram.compile(_environment_catalog)
@@ -480,7 +478,76 @@ func _freeze_player(on: bool) -> void:
 	if player == null or _player_frozen == on:
 		return
 	_player_frozen = on
+	if not on:
+		_release_onto_ground()
 	player.process_mode = Node.PROCESS_MODE_DISABLED if on else Node.PROCESS_MODE_INHERIT
+
+## A held player is released onto the committed ground, never inside it. The
+## spawn in world.tscn and recorded teleports carry a fixed height that goes
+## stale whenever the terrain field changes (the October 4 amplification put
+## the review spawn 56 m under its hill, and the player fell through the world
+## on release). A tile never rises above its highest corner, so a player whose
+## feet are under the tile's LOWEST corner is buried; it is then lifted over
+## the highest point of the 3x3 tiles around it (the cliff sheet's rounding
+## never stands over nearby ground) and, one frame later, once physics has
+## registered the chunk's newest collision (the sheet's arrives in the frame
+## the chunk completes), dropped onto the first surface below it.
+var _settle_after_release := false
+
+func _release_onto_ground() -> void:
+	var xz := Vector2(player.global_position.x, player.global_position.z)
+	var lift := release_height(player.global_position.y, _tile_corner_heights(xz, 1), NAN)
+	if is_nan(lift):
+		return
+	for h: float in _tile_corner_heights(xz, 2):
+		lift = maxf(lift, h)
+	player.global_position.y = lift + 0.1
+	if player is CharacterBody3D:
+		(player as CharacterBody3D).velocity = Vector3.ZERO
+	_settle_after_release = true
+
+## The deferred half of _release_onto_ground (from _process, a frame later).
+func _settle_released_player() -> void:
+	if not _settle_after_release or _player_frozen:
+		return
+	_settle_after_release = false
+	var top := player.global_position
+	var query := PhysicsRayQueryParameters3D.create(top + Vector3.UP * 0.1, top + Vector3.DOWN * 40.0)
+	if player is CollisionObject3D:
+		query.exclude = [(player as CollisionObject3D).get_rid()]
+	var hit := player.get_world_3d().direct_space_state.intersect_ray(query)
+	if not hit.is_empty():
+		player.global_position.y = hit.position.y
+		if player is CharacterBody3D:
+			(player as CharacterBody3D).velocity = Vector3.ZERO
+
+## Committed lattice-point heights around xz: the tile under it (reach 1) or
+## that tile and its eight neighbours (reach 2). Empty when any is not loaded.
+func _tile_corner_heights(xz: Vector2, reach: int) -> PackedFloat32Array:
+	var base := Vector2i(floori(xz.x / HeightfieldPlan.POINT), floori(xz.y / HeightfieldPlan.POINT))
+	var heights := PackedFloat32Array()
+	for dz in range(1 - reach, reach + 1):
+		for dx in range(1 - reach, reach + 1):
+			var point: Variant = loaded_point_at(base + Vector2i(dx, dz))
+			if point == null:
+				return PackedFloat32Array()
+			heights.append((point as Vector2).x)
+	return heights
+
+## Pure rule for _release_onto_ground: NAN when feet at feet_y are not under
+## the tile with these corner heights (or none are known); otherwise the
+## surface hit (when given) or the highest corner.
+static func release_height(feet_y: float, corners: PackedFloat32Array, hit_y: float) -> float:
+	if corners.is_empty():
+		return NAN
+	var low := corners[0]
+	var high := corners[0]
+	for h: float in corners:
+		low = minf(low, h)
+		high = maxf(high, h)
+	if feet_y >= low - 0.5:
+		return NAN
+	return hit_y if not is_nan(hit_y) else high
 
 ## A near chunk may need only a distant block's feature geometry. Publish that
 ## dependency before spending seconds meshing the distant block's terrain.
@@ -597,7 +664,14 @@ func _worker() -> void:
 ## serial ones while planning runs concurrently.
 const TAIL_THREADS := 3
 ## Off: the planning worker runs each tail itself (same code, serial).
-static var PARALLEL_TAILS := true
+## OFF since October 6: tails share the planning worker's region, water and
+## feature contexts, and through them unlocked LRU caches that evict with
+## erase (HeightfieldPlan._samples, WaterPlan's memo caches, FeatureContext
+## _graded, HeightfieldRegion grade views). A tail and the planner erasing one
+## Dictionary at once corrupted the heap (SIGABRT in Dictionary::erase on a
+## pool thread, crash report 2026-10-06 02:17). Re-enable only after those
+## caches are made thread-safe or the tails get private copies.
+static var PARALLEL_TAILS := false
 var _tail_meshers: Array[TerrainChunkMesher] = []
 var _tail_free: Array[int] = []
 var _tail_slots := Semaphore.new()
@@ -882,6 +956,7 @@ func _process(_delta: float) -> void:
 		_mutex.unlock()
 	var current_chunk_ready := _built.has(centre) and _feature_square_ready(centre)
 	var arrival_ready := _arrival_support_ready()
+	_settle_released_player()
 	_freeze_player(not current_chunk_ready or not startup_loading_complete() or not arrival_ready)
 	var startup_pending := not startup_loading_complete()
 	_request_neighborhood(centre, lod_origin, startup_pending)

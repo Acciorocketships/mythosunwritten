@@ -41,6 +41,7 @@ transform = Transform3D(0.85278606, -0.12692104, 0.5066034, 0, 0.97002065, 0.243
 script = ExtResource("1_4wyf3")
 camera = NodePath(".")
 target = NodePath("../Characters/Character")
+tactical_view = false
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, -0.94776845, 0.3189592, 0, -0.3189592, -0.94776845, 0, 0, 0)

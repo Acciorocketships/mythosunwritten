@@ -39,7 +39,7 @@ static func compute(region:HeightfieldRegion,chunk:Vector2i,seed_value:int,
  var collision:=PackedVector3Array()
  for p:Dictionary in placements:
   for vertex:Vector3 in p.faces:collision.append(p.transform*vertex)
-  p["render_arrays"]=CRAGS.mesh_arrays(p,region,seed_value)
+  p["render_tiles"]=CRAGS.split_tiles(CRAGS.mesh_arrays(p,region,seed_value)[0],p.transform)
  # Ambient rock and plant bases under the slope would be buried with their
  # tips poking through it; the chunk core is offset half a point from the
  # owned rectangle, so the reservation reaches past it.
@@ -101,13 +101,19 @@ static func build_steps(data:Dictionary,seed_value:int)->Dictionary:
  var root:=Node3D.new();root.name="CliffRockFormations"
  var steps:Array[Callable]=[]
  for p:Dictionary in data.get("placements",[]):
-  steps.append(func()->void:
-   var mm:=MultiMesh.new();mm.transform_format=MultiMesh.TRANSFORM_3D;mm.mesh=CRAGS.mesh(p);mm.use_colors=true;mm.instance_count=1
-   # The slope sheet carries its biome tint per vertex (as the terrain does);
-   # the instance colour multiplies COLOR, so it stays white.
-   mm.set_instance_transform(0,p.transform);mm.set_instance_color(0,Color.WHITE)
-   var node:=MultiMeshInstance3D.new();node.multimesh=mm;node.set_meta("cliff_asset",p.asset)
-   node.add_to_group("tactical_solid_earth",true);root.add_child(node))
+  # One node per sheet tile (CliffRockCrags.split_tiles), all sharing one
+  # material; a step per tile keeps each frame's integration short.
+  var tiles:Array=p.render_tiles if p.has("render_tiles") else [{"arrays":CRAGS.mesh_arrays(p)[0],"lods":{}}]
+  var material:=[null]
+  for tile:Dictionary in tiles:
+   steps.append(func()->void:
+    if material[0]==null:material[0]=CRAGS.sheet_material()
+    var mm:=MultiMesh.new();mm.transform_format=MultiMesh.TRANSFORM_3D;mm.mesh=CRAGS.mesh(p,[tile.arrays],material[0],tile.lods);mm.use_colors=true;mm.instance_count=1
+    # The slope sheet carries its biome tint per vertex (as the terrain does);
+    # the instance colour multiplies COLOR, so it stays white.
+    mm.set_instance_transform(0,p.transform);mm.set_instance_color(0,Color.WHITE)
+    var node:=MultiMeshInstance3D.new();node.multimesh=mm;node.set_meta("cliff_asset",p.asset)
+    node.add_to_group("tactical_solid_earth",true);root.add_child(node))
  if not (data.get("slope_rocks",{}) as Dictionary).is_empty():
   steps.append(func()->void:root.add_child(SLOPE_ROCKS.build(data.slope_rocks,seed_value)))
  # Terrain-covering parts of the basal rocks' ground skirts.

@@ -38,17 +38,81 @@ static func apply_moss(material:ShaderMaterial)->void:
  material.set_shader_parameter("exposure_rock",STYLE.sheet_study in ["bedrock","stamp"])
  material.set_shader_parameter("rock_albedo",load("res://terrain/environment/textures/meadow/T_Rock_02_A.res"))
 
-static func mesh(rock:Dictionary)->ArrayMesh:
+static func mesh(rock:Dictionary,surfaces:Array=[],material:ShaderMaterial=null,lods:Dictionary={})->ArrayMesh:
  assert(OS.get_thread_caller_id()==OS.get_main_thread_id())
- var surfaces:Array=rock.render_arrays if rock.has("render_arrays") else mesh_arrays(rock)
+ if surfaces.is_empty():surfaces=rock.render_arrays if rock.has("render_arrays") else mesh_arrays(rock)
  var result:=ArrayMesh.new()
  for surface in surfaces.size():
-  result.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,surfaces[surface])
-  var material:=ShaderMaterial.new();material.shader=load("res://terrain/materials/cliff_crag.gdshader")
-  material.set_shader_parameter("moss_upward",.45)
-  apply_moss(material)
-  result.surface_set_material(surface,material)
+  result.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,surfaces[surface],[],lods)
+  result.surface_set_material(surface,material if material!=null else sheet_material())
  return result
+
+static func sheet_material()->ShaderMaterial:
+ var material:=ShaderMaterial.new();material.shader=load("res://terrain/materials/cliff_crag.gdshader")
+ material.set_shader_parameter("moss_upward",.45)
+ apply_moss(material)
+ return material
+
+## The sheet split into SHEET_TILE world squares (by triangle centroid), each
+## one indexed surface with its own LODs. A chunk's sheet was one ~470k
+## triangle unindexed draw touching the player's 3x3 chunks, so the GPU could
+## neither cull what is behind the camera nor skip shadows past their distance,
+## and shaded three vertices per triangle at full detail (October 6).
+## Every attribute of a sheet vertex is a function of its position
+## (`native_roots[point]`), so welding by position is exact. Worker-pure:
+## returns [{"arrays": surface arrays with ARRAY_INDEX, "lods": {edge length:
+## PackedInt32Array}}], plain data for mesh() on the main thread.
+const SHEET_TILE:=48.0
+static func split_tiles(arrays:Array,pose:Transform3D,tile:float=SHEET_TILE,with_lods:=true)->Array:
+ var vertices:PackedVector3Array=arrays[Mesh.ARRAY_VERTEX]
+ var groups:Dictionary={}
+ for t in vertices.size()/3:
+  var centre:=pose*((vertices[3*t]+vertices[3*t+1]+vertices[3*t+2])/3.0)
+  var key:=Vector2i(floori(centre.x/tile),floori(centre.z/tile))
+  # Plain Arrays: a packed array read out of a Dictionary is a copy, and
+  # appending to it would leave every tile empty.
+  if not groups.has(key):groups[key]=[]
+  (groups[key] as Array).append(t)
+ var keys:Array=groups.keys()
+ keys.sort()
+ var tiles:Array=[]
+ for key:Vector2i in keys:
+  var triangles:Array=groups[key]
+  var slot:Dictionary={}
+  var sources:=PackedInt32Array()
+  var indices:=PackedInt32Array();indices.resize(triangles.size()*3)
+  var i:=0
+  for t:int in triangles:
+   for c in 3:
+    var v:=3*t+c
+    var at:int=slot.get(vertices[v],-1)
+    if at<0:
+     at=sources.size();slot[vertices[v]]=at;sources.append(v)
+    indices[i]=at;i+=1
+  var out:Array=[];out.resize(Mesh.ARRAY_MAX)
+  for a in Mesh.ARRAY_MAX:
+   if arrays[a]==null or a==Mesh.ARRAY_INDEX:continue
+   var source=arrays[a]
+   var copy=source.duplicate();copy.resize(sources.size())
+   for k in sources.size():copy[k]=source[sources[k]]
+   out[a]=copy
+  out[Mesh.ARRAY_INDEX]=indices
+  tiles.append({"arrays":out,"lods":_lods(out) if with_lods else {}})
+ return tiles
+
+## Godot's own importer simplification (the meshoptimizer pass the GLB import
+## runs), as plain index lists keyed by the LOD's edge length. The importer may
+## re-split vertices by normal, so its arrays replace the input's.
+static func _lods(arrays:Array)->Dictionary:
+ var importer:=ImporterMesh.new()
+ importer.add_surface(Mesh.PRIMITIVE_TRIANGLES,arrays)
+ importer.generate_lods(60.0,25.0,[])
+ var lods:Dictionary={}
+ for l in importer.get_surface_lod_count(0):
+  lods[importer.get_surface_lod_size(0,l)]=importer.get_surface_lod_indices(0,l)
+ var simplified:Array=importer.get_surface_arrays(0)
+ for a in Mesh.ARRAY_MAX:arrays[a]=simplified[a]
+ return lods
 
 ## Moss grade height per unit of (1 - normal.y) on the whole-wall slope: a
 ## 20 degree slope stays mostly lawn, 35 degrees is moss.

@@ -22,6 +22,7 @@ const MOOD_RESPONSE_SECONDS := 3.0
 const SUN_COLOR := Color("ffe3be")
 const SUN_ENERGY := 1.2
 const SUN_ANGLE_DEG := Vector3(-32.0, -110.0, 0.0)
+const SUN_SHADOW_DISTANCE := 60.0
 const SUN_SHADOW_OPACITY := 0.82
 const GLOW_BLOOM := 0.0
 const GLOW_HDR_THRESHOLD := 1.4
@@ -93,6 +94,11 @@ func _apply_grade() -> void:
 	sun.directional_shadow_split_1 = 0.08
 	sun.directional_shadow_split_2 = 0.22
 	sun.directional_shadow_split_3 = 0.5
+	# Shadows end at SUN_SHADOW_DISTANCE (Godot's default was 100 m). Every
+	# cascade redraws the casters in its slice; past ~60 m the close view's
+	# shadows are a few pixels, but the cliff sheets and rocks there cost
+	# millions of triangles a frame (October 6 frame-rate pass).
+	sun.directional_shadow_max_distance = SUN_SHADOW_DISTANCE
 	sun.light_volumetric_fog_energy = 1.1
 	# Leave the scene sharp until the camera redesign establishes a focus model.
 	camera.attributes = null

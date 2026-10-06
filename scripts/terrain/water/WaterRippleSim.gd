@@ -128,7 +128,7 @@ func _refresh_samplers() -> void:
 
 func _sampler_at(p: Vector2) -> WaterSampler:
 	for sampler: WaterSampler in _samplers:
-		if not is_nan(sampler.level_at(p)):
+		if sampler.covers_current(p):
 			return sampler
 	return null
 

@@ -58,6 +58,14 @@ var _wave_scale: PackedFloat32Array # nx*nz, GPU-matched depth-limited dynamic-h
 var _velocity: PackedVector2Array   # nx*nz, world-XZ current
 var _vorticity: PackedFloat32Array  # nx*nz, dv/dx-du/dz
 var _compression: PackedFloat32Array # nx*nz, max(0,-divergence)
+## Surface frames (gradient, inward bank) memoized per FRAME_CELL lattice
+## point. A frame takes nine exact native fill evaluations; wave packets and
+## the ripple flow texture asked for ~1,000-10,000 per frame (October 6: three
+## quarters of the main thread). The snapshot is frozen, so a lattice point's
+## frame never changes; each is evaluated exactly at the point itself.
+const FRAME_CELL := 0.25
+const FRAME_CACHE_CAP := 65536
+var _frames: Dictionary = {}
 
 
 ## Bakes a sampler from WaterField's own native fill arrays. The supplied
@@ -170,6 +178,18 @@ func _corners(xz: Vector2) -> Array:
 	]
 
 
+## Cheap ownership test: xz lies in this chunk's snapshot and a current
+## reaches it (a grid corner with nonzero velocity). Wave packets and the
+## ripple flow texture only ask which chunk's current to read, and calm or dry
+## points are dropped either way, so they use this instead of a full native
+## level evaluation per candidate chunk.
+func covers_current(xz: Vector2) -> bool:
+	for cnr: Array in _corners(xz):
+		if _velocity[cnr[1] * _nx + cnr[0]] != Vector2.ZERO:
+			return true
+	return false
+
+
 ## Water height at world (x,z); NAN when the field itself said dry here at
 ## bake time, or the point falls outside this chunk's own snapshot entirely.
 ## Mixed wet/dry cells use WaterField's signed-depth shoreline taper; a
@@ -242,10 +262,22 @@ func current_frame_at(xz: Vector2) -> PackedVector2Array:
 		velocity += _velocity[cnr[1] * _nx + cnr[0]] * cnr[2]
 	if velocity.length_squared() < .000001:
 		return PackedVector2Array([velocity,Vector2.ZERO,Vector2.ZERO])
-	var frame := WaterCurrentField.sample_surface_frame(xz, _current_surface_level_at)
+	var frame := _surface_frame(xz)
 	if frame.is_empty():
 		return PackedVector2Array([Vector2.ZERO,Vector2.ZERO,Vector2.ZERO])
 	return PackedVector2Array([WaterCurrentField.surface_current(velocity,frame[0],frame[1]),frame[0],frame[1]])
+
+
+## The surface frame at the FRAME_CELL lattice point nearest xz (memoized).
+func _surface_frame(xz: Vector2) -> PackedVector2Array:
+	var key := Vector2i((xz / FRAME_CELL).round())
+	var frame: Variant = _frames.get(key)
+	if frame == null:
+		if _frames.size() >= FRAME_CACHE_CAP:
+			_frames.clear()
+		frame = WaterCurrentField.sample_surface_frame(Vector2(key) * FRAME_CELL, _current_surface_level_at)
+		_frames[key] = frame
+	return frame
 
 
 ## Derivatives use the retained native halo, including across a chunk edge.
