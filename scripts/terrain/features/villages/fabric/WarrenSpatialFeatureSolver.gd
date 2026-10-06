@@ -356,11 +356,9 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 				"facade": String(annex.audit.annex_vertical_facade_key),
 				"recipe": StringName(annex.audit.annex_recipe_id),
 			})
-		last_failure = ("tower-breaking room annexes supply only %d of %d " \
-			+ "facade-relief units (%d assets): %s") % [
-			tower_annex_relief_units, required_tower_annexes,
-			tower_annexes.size(), annexes_by_source]
-		return [] as Array[WarrenFeatureReservation]
+		last_annex_diagnostic["shortfall_sources"] = annexes_by_source
+		WarrenVolumetricSolver.last_advisory_shortfalls["tower_annexes"] = {
+			"target": required_tower_annexes, "found": tower_annex_relief_units}
 	# A same-storey full-room bump-out is a diagonal union, not a small room
 	# attached beyond one facade. First satisfy the mandatory anti-shaft targets
 	# above, then search every eligible upper tower globally for the remaining
@@ -381,11 +379,8 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		tower_annexes.append_array(extra_diagonal_outcrops)
 	var room_outcropping_count := outcroppings.size() + tower_annexes.size()
 	if room_outcropping_count < minimum_outcroppings:
-		last_failure = ("only %d of %d full-scale room outcroppings exist; " \
-			+ "vertical=%d diagonal-overlap=%d: %s") % [
-			room_outcropping_count, minimum_outcroppings, outcroppings.size(),
-			tower_annexes.size(), JSON.stringify(extra_diagonal_diagnostic)]
-		return [] as Array[WarrenFeatureReservation]
+		WarrenVolumetricSolver.last_advisory_shortfalls["room_outcroppings"] = {
+			"target": minimum_outcroppings, "found": room_outcropping_count}
 	out.append_array(extra_diagonal_outcrops)
 	var diagonal_outcrop_sources: Dictionary = {}
 	for annex: WarrenFeatureReservation in tower_annexes:

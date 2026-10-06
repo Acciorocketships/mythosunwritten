@@ -26,6 +26,22 @@ const FRONTAGE_FLOOR := 0.90
 const MAX_SPINE_STRAIGHT_RUN := 6
 const MAX_ALLEY_STRAIGHT_RUN := 4
 
+
+static func aesthetic_shortfalls(audit_facts: Dictionary, loop_edge_count: int) -> Dictionary:
+	## Look rules the seal used to enforce. They describe what a town
+	## usually has, not what makes it broken, so they are recorded, never
+	## rejected (owner principle, October 7).
+	var out := {}
+	if loop_edge_count < 1:
+		out["loop_join"] = {"limit": 1, "found": loop_edge_count}
+	var spine := int(audit_facts.get("max_spine_straight_run", 0))
+	if spine > MAX_SPINE_STRAIGHT_RUN:
+		out["spine_straight_run"] = {"limit": MAX_SPINE_STRAIGHT_RUN, "found": spine}
+	var alley := int(audit_facts.get("max_alley_straight_run", 0))
+	if alley > MAX_ALLEY_STRAIGHT_RUN:
+		out["alley_straight_run"] = {"limit": MAX_ALLEY_STRAIGHT_RUN, "found": alley}
+	return out
+
 ## The four things a plot can be (2026-08-21 plot-model design). A deck is a
 ## plot with zero height, a bridge is a plot whose floor is a street's own
 ## headroom top, an asset is a plot with a catalog footprint, and a house is
@@ -171,6 +187,7 @@ func collect_construction_diagnostics() -> void:
 	audit["street_floor_gaps"] = _street_floor_gaps()
 	audit["exterior_rock_ratio"] = exterior_rock_ratio()
 	audit["exterior_stone_band_profile"] = exterior_stone_band_profile()
+	audit["aesthetic_shortfalls"] = aesthetic_shortfalls(audit, excavation.loop_edges.size())
 
 
 func validate_construction() -> bool:
@@ -223,8 +240,6 @@ func validate_construction() -> bool:
 		if cell.y > summit_cell.y:
 			return _reject("spine cell %s stands above the named summit %s" % [
 				cell, summit_cell])
-	if excavation.loop_edges.is_empty():
-		return _reject("public passage graph is a branch tree without a loop join")
 	for column: Vector2i in massif.columns:
 		if not block_thickness.has(column):
 			return _reject("column %s has no block-thickness classification" % column)
@@ -233,14 +248,7 @@ func validate_construction() -> bool:
 	# computed keys, it never destroys theirs.
 	var built := _build_audit()
 	audit.merge(built, true)
-	var spine_straight := int(audit.get("max_spine_straight_run", 0))
-	var alley_straight := int(audit.get("max_alley_straight_run", 0))
-	if spine_straight > MAX_SPINE_STRAIGHT_RUN \
-			or alley_straight > MAX_ALLEY_STRAIGHT_RUN:
-		return _reject(("a passage exceeds its straight-run cap " \
-			+ "(spine %d/%d, alley %d/%d)") % [spine_straight,
-				MAX_SPINE_STRAIGHT_RUN, alley_straight,
-				MAX_ALLEY_STRAIGHT_RUN])
+	audit["aesthetic_shortfalls"] = aesthetic_shortfalls(audit, excavation.loop_edges.size())
 	# The plot model's own invariants (2026-08-21 design): solids contiguous
 	# from terrain on every column, every plot still supported, no plot
 	# standing in a carved street's headroom, plots pairwise disjoint. A town
