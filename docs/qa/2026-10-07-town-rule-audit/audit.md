@@ -333,3 +333,39 @@ Removing these would make the odds layer easier to reason about; it is a separat
   moves one knob with a before/after on fixed seeds.
 - Seal-cost comments in the plot planner carry stale measurements; re-measure before
   widening any range.
+
+---
+
+## 10. Owner decisions (October 7, Q&A)
+
+- **Default**: every aesthetic rule in section 2 becomes a tunable knob whose default
+  reproduces today's towns; only the items below needed a taste call.
+- **Edge street (C1)**: sometimes, often partial — and not a hard-coded ring shape. Edge
+  streets are ordinary street growth with an edge-following pull: random start (gate or
+  at-grade street), random length, 1–3 rings in, may wander inward or stop. Knobs:
+  start odds, edge pull, run length.
+- **Silhouette (B1/B2)**: each town draws its rise steepness (≈0.5–2 storeys per ring) and
+  some towns drop the interior stepping rule entirely (flat-topped, tall-core, lopsided,
+  multi-peak towns). Only the outermost edge keeps a gentle step-down.
+- **Market square (D1)**: usually, more likely in bigger towns; size (2×2–3×3, irregular)
+  and location (gate, mid-town, terrace) vary. If none fits the town has no square —
+  never rejected.
+- **Upper floors (G2/G3)**: per-town calm↔jumbled dial; guardrails stay hard.
+- **Flat roofs (G1)**: some, varying by town, and situational — much more likely where the
+  roof can become a usable terrace joined to a street, square or skywalk at its level.
+  No tiny lids (guardrail).
+- **Town identity (section I)**: each town draws a palette (stone share, roof family,
+  timber finish, plaster) that biases per-house rolls; districts may shift it slightly.
+- **Tunnels (F1/F2)**: per-town covered share, AND investigate why few tunnels survive
+  even at chance 1.0; fix the attrition first so variability doesn't reduce the total.
+- **Courtyards (D2/D3/D12)**: any town size, more and larger in bigger towns; size and
+  shape vary. Delivered by the courtyard-clearing system.
+- **Gates (A3/A4/C2/C3)**: main gate faces where the world road arrives (random side if
+  none); 1–4 gates by size; extra gates spread by weighted chance; roads approach on a
+  natural curve.
+- **World placement (A1/A2/A6)**: later, separate task.
+- **Dead code (section 8)**: delete before building the odds layer, verified by tests and
+  identical town output; roof turrets deleted too.
+- Engineering items taken as given: town-rejecting aesthetic quotas become shortfalls
+  (section 4); dressing rolls receive the world seed and placement order is shuffled
+  (section 3); possibly-missing guardrails (section 7) get tests.
