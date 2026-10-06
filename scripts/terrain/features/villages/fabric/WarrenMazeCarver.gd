@@ -15,8 +15,6 @@ const COURT_ENTRANCE_ATTEMPTS := 21
 const COURT_ALTERNATIVE_VISITS := 1500
 ## Bridge candidates are evaluated before daylight cuts. Short grounded
 ## tunnels are retained afterwards without consuming the occupied-span quota.
-const MIN_LOOP_JOINS := 1
-const MAX_LOOP_JOINS := 2
 ## Per reference size; a town takes the value at its own continuous size.
 const LOOP_JOIN_TARGET := {&"compact": 3, &"standard": 4,
 	&"large": 5, &"grand": 6}

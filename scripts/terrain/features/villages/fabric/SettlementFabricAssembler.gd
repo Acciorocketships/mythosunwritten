@@ -1274,11 +1274,6 @@ const FACADE_JETTY_BRACE_BOUNDS := AABB(Vector3(-0.14068294,0,-0.2954271),
 ## cap would leave both return cheeks exposed and recreate the skinny, floating
 ## projection this contract replaced.
 const FACADE_OUTCROP_CAP := PLANK_GALLERY
-## The salt the seeded roll is drawn with, in the `_face_noise` idiom the garden
-## dressing uses. ONE, not two: a `FACADE_OUTCROP_TRIM_SALT` sat here unread
-## from the first landing and went with fix 1, minor 3 -- an unused salt is a
-## seeded decision a reader goes looking for and cannot find.
-const FACADE_OUTCROP_KIND_SALT := 41
 
 
 static func payload(plan: SettlementFabricPlan) -> EnvironmentInstancePayload:
@@ -1406,20 +1401,6 @@ static func structural_support_payload(plan: SettlementFabricPlan) \
 			segment_top -= 3.0
 			segment += 1
 	return out
-
-
-static func _is_structural_support_anchor(cell: Vector3i,
-		exposed_directions: Array[Vector3i]) -> bool:
-	## A structural deck reads as load-bearing only when every exposed corner has
-	## a post and each longer edge repeats that rhythm at the native 3 m module
-	## width. The former one-in-three hash left terminal courts and market decks
-	## with long apparently floating corners; this boundary rule is geometric and
-	## deterministic instead of decorative.
-	if exposed_directions.size() >= 2:
-		return true
-	var edge := exposed_directions[0]
-	return posmod(cell.z, 2) == 0 if edge.x != 0 \
-		else posmod(cell.x, 2) == 0
 
 
 static func structural_support_anchors(surface_cells: Dictionary) \

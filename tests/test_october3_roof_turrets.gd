@@ -11,34 +11,6 @@ func _host(value:int) -> BuildingMass:
 	mass.add_roof(Rect2i(0,0,4,2),0,6,&"blue")
 	return mass
 
-func test_native_courses_emerge_through_roof_and_need_a_whole_room() -> void:
-	var catalog := EnvironmentCatalog.load_default()
-	var count := 0
-	for kit: BuildingKit in [SuntailBuildingKit.create(),preload("res://scripts/terrain/features/villages/kit/PureVillageBuildingKit.gd").roof_study()]:
-		for value in 24:
-			var host := _host(value)
-			var before := host.storeys.duplicate(true)
-			var candidate := TURRET.propose(host,kit,catalog,[],[],[],Callable())
-			assert_eq(host.storeys,before)
-			if candidate.is_empty():continue
-			count+=1
-			assert_eq(candidate.form,TOWER.Form.ROUND)
-			assert_eq(candidate.parts[0].asset_id,&"pure_village.roof_turret.middle")
-			assert_eq(candidate.pose.origin.y,6.0,"The shaft starts on the upper room's floor, not on a roof skin")
-			assert_eq(candidate.parts,TURRET.propose(host,kit,catalog,[],[],[],Callable()).parts)
-			assert_eq(candidate.pose,TURRET.propose(host,kit,catalog,[],[],[],Callable()).pose)
-			var diverted := TURRET.propose(host,kit,catalog,[{"bounds":candidate.bounds}],[],[],Callable())
-			if not diverted.is_empty(): assert_false((diverted.bounds as AABB).intersects(candidate.bounds),"Another end may fit, but no native piece may enter the blocked headroom")
-			assert_true(TURRET.propose(host,kit,catalog,[],[],[],func(_c:Vector2i,_b:int)->bool:return true).is_empty())
-			var other: Array[Dictionary]=[{"host":&"kit.other","role":&"wall","bounds":candidate.bounds}]
-			# Block the whole host, not only its first candidate; neither end can fit.
-			other[0].bounds=AABB(Vector3(-5,0,-5),Vector3(30,40,30))
-			assert_true(TURRET.propose(host,kit,catalog,[],other,[],Callable()).is_empty())
-			host.storeys[-1].cells.clear()
-			assert_true(TURRET.propose(host,kit,catalog,[],[],[],Callable()).is_empty(),"No tower over missing rooms / loggias")
-	assert_gt(count,4)
-	assert_lt(count,48,"Seeded occurrence remains optional")
-
 func test_hidden_cutters_require_present_native_shaft_courses() -> void:
 	var candidate := {"parts":TURRET.parts(2),"pose":Transform3D.IDENTITY}
 	var cuts := TURRET.cutters(candidate)

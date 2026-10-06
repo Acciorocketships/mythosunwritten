@@ -3604,59 +3604,6 @@ static func _crown_cut_preserves_bearing(lineages: Dictionary,
 	return true
 
 
-static func _variant_stamp(allowed: Dictionary, previous: Dictionary,
-		y: int, block: int, world_seed: int, lineage_hash: int) -> Dictionary:
-	if allowed.is_empty():
-		return {}
-	var candidates: Array[Dictionary] = []
-	var minimum := Vector2i(2147483647, 2147483647)
-	var maximum := Vector2i(-2147483648, -2147483648)
-	for value: Variant in allowed.keys():
-		var column := value as Vector2i
-		minimum = minimum.min(column)
-		maximum = maximum.max(column)
-	var previous_columns := previous.columns as Dictionary
-	for kind: StringName in ROOM_KINDS:
-		for yaw in 4:
-			for x in range(minimum.x - 3, maximum.x + 4):
-				for z in range(minimum.y - 3, maximum.y + 4):
-					var origin := Vector3i(x, y, z)
-					var columns := _stamp_columns(kind, origin, yaw)
-					if columns.is_empty() or not _is_subset(columns, allowed):
-						continue
-					var overlap := _intersection_size(columns, previous_columns)
-					if overlap < maxi(MIN_BEARING_OVERLAP_COLUMNS,
-							ceili(float(mini(columns.size(),
-							previous_columns.size())) * 0.5)):
-						continue
-					if _same_set(columns, previous_columns):
-						continue
-					var difference := _symmetric_difference_size(columns,
-						previous_columns)
-					var kind_change := int(kind != StringName(previous.kind))
-					var target_ratio := 0.67 if posmod(block, 3) == 1 \
-						else 0.42 if posmod(block, 3) == 2 else 0.75
-					var area_ratio := float(columns.size()) \
-						/ float(maxi(allowed.size(), 1))
-					var score := kind_change * 1000 + difference * 80 \
-						- int(absf(area_ratio - target_ratio) * 300.0) \
-						+ columns.size() * 4
-					var tie := posmod(Helper._mix64(world_seed ^ lineage_hash \
-						^ block * 0x45d9f3b ^ kind.hash() * 31 \
-						^ x * 73856093 ^ z * 19349663 ^ yaw * 83492791),
-						1000003)
-					candidates.append({"kind": kind, "origin": origin,
-						"yaw_quarters": yaw, "columns": columns,
-						"score": score, "tie": tie})
-	if candidates.is_empty():
-		return {}
-	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		if int(a.score) != int(b.score):
-			return int(a.score) > int(b.score)
-		return int(a.tie) < int(b.tie))
-	return candidates[0]
-
-
 static func _exact_stamp_for_columns(columns: Dictionary, y: int) -> Dictionary:
 	if columns.is_empty():
 		return {}

@@ -305,18 +305,6 @@ func test_surface_audit_distinguishes_narrow_gallery_from_broad_plaza() -> void:
 		"a broad empty floor has an interior independent of its perimeter")
 
 
-func test_structural_support_rhythm_anchors_corners_and_native_edge_pitch() \
-		-> void:
-	assert_true(SettlementFabricAssembler._is_structural_support_anchor(
-		Vector3i(3, 4, 5), [Vector3i.LEFT, Vector3i.FORWARD] \
-			as Array[Vector3i]), "every exposed corner needs a post")
-	assert_true(SettlementFabricAssembler._is_structural_support_anchor(
-		Vector3i(3, 4, 6), [Vector3i.LEFT] as Array[Vector3i]),
-		"a north/south edge repeats supports every two fine cells")
-	assert_false(SettlementFabricAssembler._is_structural_support_anchor(
-		Vector3i(3, 4, 5), [Vector3i.LEFT] as Array[Vector3i]))
-
-
 func test_named_upper_courtyard_uses_distinct_collision_aligned_paving() \
 		-> void:
 	var surfaces := PublicRealmSurfacePlan.new(&"test.named.courtyard")
