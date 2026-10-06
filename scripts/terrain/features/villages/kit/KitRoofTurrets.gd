@@ -26,5 +26,3 @@ static func cutters(candidate: Dictionary) -> Array[Dictionary]:
 		if part.asset_id == StringName(PREFIX+"middle"):
 			out.append_array(TOWER.placed_cutters(core,candidate.pose*part.transform))
 	return out
-
-
