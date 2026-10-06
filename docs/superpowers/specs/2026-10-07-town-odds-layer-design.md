@@ -65,7 +65,7 @@ as text. Each `TownKnob` has:
   the value at a given size is a linear blend (an optional `size_curve: Curve` may
   replace the blend).
 - `spread` — how far one town's drawn value may deviate from the size-blended centre
-  (for `WEIGHTS`: a Dirichlet concentration; higher = towns closer to the centre mix).
+  (for `WEIGHTS`: each option's centre weight is jittered by ±spread, then the weights are normalised).
 - `clamp_min` / `clamp_max` — absolute bounds (e.g. a chance stays in [0, 1]).
 - `notes` — what the knob does and which audit ID it implements.
 
