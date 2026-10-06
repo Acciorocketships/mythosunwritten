@@ -37,6 +37,8 @@ static func compile(table: TownOddsTable) -> TownOddsProgram:
 	return program
 
 
+## First call loads the .tres; call once on the main thread
+## (SettlementFabricProgram.compile does) before worker use.
 static func builtin() -> TownOddsProgram:
 	if _builtin == null:
 		_builtin = compile(load(BUILTIN_PATH) as TownOddsTable)
@@ -49,7 +51,9 @@ func with_overrides(values: Dictionary) -> TownOddsProgram:
 	copy.errors = errors.duplicate()
 	copy.overrides = overrides.duplicate()
 	for name: StringName in values:
+		assert(copy.knobs.has(name), "unknown town knob %s" % name)
 		var knob: Dictionary = copy.knobs[name]
+		assert(int(knob.kind) != TownKnob.Kind.WEIGHTS, "knob %s is a weights knob; numeric overrides only" % name)
 		knob["small"] = float(values[name])
 		knob["large"] = float(values[name])
 		knob["spread"] = 0.0
@@ -68,6 +72,10 @@ static func parse_overrides(args: PackedStringArray, program: TownOddsProgram) -
 			var message := "unknown --odds knob '%s'; valid: %s" % [pair[0], ", ".join(program.knobs.keys())]
 			push_error(message)
 			return {"error": message}
+		if int(program.knobs[name].kind) == TownKnob.Kind.WEIGHTS:
+			var wmessage := "--odds %s is a weights knob; numeric overrides only" % pair[0]
+			push_error(wmessage)
+			return {"error": wmessage}
 		if not pair[1].is_valid_float():
 			var message := "--odds %s needs a number, got '%s'" % [pair[0], pair[1]]
 			push_error(message)

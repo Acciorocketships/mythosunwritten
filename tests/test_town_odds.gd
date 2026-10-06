@@ -107,3 +107,22 @@ func test_parse_overrides_rejects_unknown_and_non_numeric() -> void:
 
 func test_builtin_table_compiles_cleanly() -> void:
 	assert_eq(TownOddsProgram.builtin().errors.size(), 0)
+
+func test_parse_overrides_rejects_weights_knob() -> void:
+	var p := _program([_weights(&"w", PackedStringArray(["x", "y"]),
+		PackedFloat32Array([1.0, 1.0]), PackedFloat32Array([1.0, 1.0]))])
+	assert_true(TownOddsProgram.parse_overrides(PackedStringArray(["--odds", "w=1"]), p).has("error"))
+	assert_push_error("weights knob")
+
+func test_pick_follows_weights() -> void:
+	var only_y := _program([_weights(&"w", PackedStringArray(["x", "y"]),
+		PackedFloat32Array([0.0, 1.0]), PackedFloat32Array([0.0, 1.0]))])
+	var both := _program([_weights(&"w", PackedStringArray(["x", "y"]),
+		PackedFloat32Array([1.0, 1.0]), PackedFloat32Array([1.0, 1.0]))])
+	var c1 := TownCharacter.draw(only_y, 4, 0.5)
+	var c2 := TownCharacter.draw(both, 4, 0.5)
+	var seen := {}
+	for key in 200:
+		assert_eq(c1.pick(&"w", key), &"y")
+		seen[c2.pick(&"w", key)] = true
+	assert_eq(seen.size(), 2)
