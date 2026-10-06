@@ -62,15 +62,27 @@ func test_compiler_produces_resource_free_bounded_program() -> void:
 		WaterField.FILL_MARGIN * WaterField.FILL_STEP - WaterContour.MARGIN,
 		"compiled dressing is guaranteed to fit its canonical water context")
 	assert_gt(program.estimated_proposals_per_chunk, 0)
-	for index in 9:
-		assert_true(StringName("lpfv.tree.%02d" % (index + 1)) in program.referenced_asset_ids)
-	assert_false(&"lpfv.tree.10" in program.referenced_asset_ids)
-	assert_false(&"lpfv.tree.blossom_01" in program.referenced_asset_ids)
-	for asset_id: StringName in [&"lpfv.mushroom.01", &"lpfv.flower.01",
-			&"lpfv.reeds.01", &"lpfv.log.01", &"lpfv.big_rock.01",
-			&"sfv.lily_pad.01"]:
+	# October 5 nature style: Meadow base with seasonal variants per biome,
+	# Farmlands accents and red-spotted toadstools. LPFV keeps only the
+	# pieces neither pack replaces (fallen branch, reeds) and SFV lily pads.
+	for season: String in ["summer", "autumn", "winter"]:
+		for index in 7:
+			assert_true(StringName("meadow.oak.%02d.%s" % [index + 1, season])
+				in program.referenced_asset_ids)
+			assert_true(StringName("meadow.birch.%02d.%s" % [index + 1, season])
+				in program.referenced_asset_ids)
+		assert_true(StringName("meadow.birch_bush.01.%s" % season) in program.referenced_asset_ids)
+	for asset_id: StringName in [&"farm.tree.a_full", &"farm.tree.c_full_red",
+			&"farm.toadstool.05", &"meadow.flower.01_1", &"meadow.log.01",
+			&"meadow.stump.01", &"meadow.grass.01_1.summer", &"lpfv.branch.01",
+			&"lpfv.reeds.01", &"sfv.lily_pad.01", &"meadow.rock.01"]:
 		assert_true(asset_id in program.referenced_asset_ids,
-			"nature wave asset is active: %s" % asset_id)
+			"nature asset is active: %s" % asset_id)
+	for retired: StringName in [&"lpfv.tree.01", &"lpfv.mushroom.01", &"lpfv.flower.01",
+			&"lpfv.plant.01", &"lpfv.log.01", &"lpfv.stump.01", &"kaykit.bush.01",
+			&"kaykit.tree.01", &"kaykit.grass.04", &"farm.toadstool.02"]:
+		assert_false(retired in program.referenced_asset_ids,
+			"retired nature asset is no longer dressed: %s" % retired)
 	for set_data: Dictionary in program.sets:
 		assert_gte(float(set_data.feature_clearance), 0.0)
 		assert_false(_contains_resource(set_data), "compiled sets contain primitive worker data only")

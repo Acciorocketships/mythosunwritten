@@ -1,0 +1,14 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3]
+
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/angry_mesh_meadow/6ea40b64bde4f9feca8b.res" id="1_0s0nf"]
+
+[resource]
+resource_name = "M_Plants_01_Summer"
+transparency = 2
+alpha_scissor_threshold = 0.3
+alpha_antialiasing_mode = 0
+cull_mode = 2
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.90566045, 0.90566045, 0.90566045, 1)
+albedo_texture = ExtResource("1_0s0nf")
+roughness = 0.5

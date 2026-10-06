@@ -574,3 +574,42 @@ func _scan_text_tree_for_source_paths(root: String) -> void:
 func _assert_text_file_source_free(path: String) -> void:
 	assert_false(FileAccess.get_file_as_string(path).contains("res://assets/"),
 		"environment runtime is source-pack independent: %s" % path)
+
+func test_painted_nature_is_capped_and_collides_on_its_trunk_in_every_season() -> void:
+	## October 5 Meadow/Farmlands migration. Painted packs ship 2-4K textures;
+	## the bake caps them at 1024 px. Their leaves are alpha-tested cards whose
+	## autumn/winter colours are not green, so the trunk capsule must be fitted
+	## to wood alone in every season, never to a low canopy.
+	var catalog := EnvironmentCatalog.load_default()
+	var cache := EnvironmentRenderCache.new(catalog)
+	var ids: Array[StringName] = []
+	for season: String in ["summer", "autumn", "winter"]:
+		ids.append(StringName("meadow.oak.01.%s" % season))
+		ids.append(StringName("meadow.birch.06.%s" % season))
+	ids.append_array([&"farm.tree.c_full_red", &"meadow.flower.01_1", &"meadow.log.01"])
+	assert_true(cache.prepare(ids))
+	for asset_id: StringName in ids:
+		var visual := cache.visual(asset_id)
+		for piece: EnvironmentVisualPiece in visual.pieces:
+			for surface in piece.mesh.get_surface_count():
+				var material := piece.mesh.surface_get_material(surface) as BaseMaterial3D
+				if material == null or material.albedo_texture == null:
+					continue
+				var size := material.albedo_texture.get_size()
+				assert_lte(maxf(size.x, size.y), 1024.0,
+					"%s bakes a %s texture over the 1024 px cap" % [asset_id, size])
+	var summer_radius := 0.0
+	for season: String in ["summer", "autumn", "winter"]:
+		var asset_id := StringName("meadow.oak.01.%s" % season)
+		var visual := cache.visual(asset_id)
+		assert_eq(visual.collisions.size(), 1, "%s has one trunk capsule" % asset_id)
+		var capsule := visual.collisions[0].shape as CapsuleShape3D
+		assert_not_null(capsule, "%s collides on a capsule" % asset_id)
+		if capsule == null:
+			continue
+		assert_lt(capsule.radius, 1.5, "%s capsule hugs the trunk, not the canopy" % asset_id)
+		if season == "summer":
+			summer_radius = capsule.radius
+		else:
+			assert_almost_eq(capsule.radius, summer_radius, 0.01,
+				"%s fits the same wood as summer whatever its leaf colour" % asset_id)

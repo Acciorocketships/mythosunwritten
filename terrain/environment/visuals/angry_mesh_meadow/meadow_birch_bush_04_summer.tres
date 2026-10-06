@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_bigkd"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_bgyeh"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_04_summer_piece_00.res" id="3_a8wsh"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_ybxkk"]
+
+[sub_resource type="Resource" id="Resource_wre2j"]
+script = ExtResource("2_bgyeh")
+mesh = ExtResource("3_a8wsh")
+local_transform = Transform3D(1.3, 0, 0, 0, 1.3, 0, 0, 0, 1.3, 0, 0, 0)
+
+[resource]
+script = ExtResource("4_ybxkk")
+pieces = Array[ExtResource("2_bgyeh")]([SubResource("Resource_wre2j")])

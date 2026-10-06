@@ -11,10 +11,13 @@ const WORLD := preload("res://scenes/world.tscn")
 const REVIEW_POSITION := Vector3(48.0, 30.0, -1500.0)
 const SHORE_REVIEW_POSITION := Vector3(-672.0, 30.0, -3360.0)
 const REVIEW_SEED := 2697992464
-const TIMEOUT_SECONDS := 90.0
+## Cold road planning for a first visit takes minutes (see AGENTS.md).
+const TIMEOUT_SECONDS := 900.0
 
 var _capture_path := "/tmp/mythos-dressing-streamed.png"
 var _review_position := REVIEW_POSITION
+## `--close` frames the dressing from a person-scale vantage instead of overhead.
+var _close := false
 
 func _ready() -> void:
 	_read_args()
@@ -39,6 +42,11 @@ func _read_args() -> void:
 			_capture_path = args[index + 1]
 		elif args[index] == "--shore":
 			_review_position = SHORE_REVIEW_POSITION
+		elif args[index] == "--at" and index + 1 < args.size():
+			var xz := args[index + 1].split_floats(",")
+			_review_position = Vector3(xz[0], 30.0, xz[1])
+		elif args[index] == "--close":
+			_close = true
 
 func _run(world: Node3D, player: Node3D) -> void:
 	var streamer := world.get_node("FieldTerrain") as FieldTerrainStreamer
@@ -92,20 +100,29 @@ func _run(world: Node3D, player: Node3D) -> void:
 	camera.set_physics_process(false)
 	camera.fov = 60.0
 	var focus := player.global_position + Vector3.UP * 4.0
-	camera.global_position = focus + Vector3(58.0, 42.0, 68.0)
-	camera.look_at(focus, Vector3.UP)
-	for unused in 8:
+	# `--close` also saves a person-scale view beside the overhead one (same
+	# streamed world, so both views cost one cold start).
+	var views := {"": Vector3(58.0, 42.0, 68.0)}
+	if _close:
+		views["_close"] = Vector3(26.0, 9.0, 30.0)
+	for suffix: String in views:
+		camera.global_position = focus + (views[suffix] as Vector3)
+		camera.look_at(focus, Vector3.UP)
+		for unused in 8:
+			await get_tree().process_frame
+		await get_tree().create_timer(1.0).timeout
+		RenderingServer.force_draw()
 		await get_tree().process_frame
-	await get_tree().create_timer(1.0).timeout
-	RenderingServer.force_draw()
-	await get_tree().process_frame
-	var captured_image: Image = get_viewport().get_texture().get_image()
-	if captured_image == null or captured_image.save_png(_capture_path) != OK:
-		push_error("Could not capture streamed dressing review: %s" % _capture_path)
-		get_tree().quit(1)
-		return
-	print("[dressing_review] %d batches, %d instances, %d collision shapes -> %s" % [
-		batch_count, instance_count, collision_count, _capture_path])
+		var path := _capture_path.get_basename() + suffix + "." + _capture_path.get_extension()
+		var captured_image: Image = get_viewport().get_texture().get_image()
+		if captured_image == null or captured_image.save_png(path) != OK:
+			push_error("Could not capture streamed dressing review: %s" % path)
+			get_tree().quit(1)
+			return
+		print("[dressing_review] %d batches, %d instances, %d collision shapes, %d primitives, %d draw calls -> %s" % [
+			batch_count, instance_count, collision_count,
+			int(Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)),
+			int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)), path])
 	get_tree().quit()
 
 func _streaming_ready(streamer: FieldTerrainStreamer) -> bool:

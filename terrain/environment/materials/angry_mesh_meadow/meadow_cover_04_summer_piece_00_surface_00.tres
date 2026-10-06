@@ -1,0 +1,13 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3]
+
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/angry_mesh_meadow/e4af0861ced0828ad1d2.res" id="1_obxnx"]
+
+[resource]
+resource_name = "M_CoverPlants_01_Summer"
+transparency = 2
+alpha_scissor_threshold = 0.3
+alpha_antialiasing_mode = 0
+cull_mode = 2
+vertex_color_use_as_albedo = true
+albedo_texture = ExtResource("1_obxnx")
+roughness = 0.9

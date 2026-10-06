@@ -1,0 +1,293 @@
+{
+ "pack": "polyart_farmlands",
+ "license": "Polyart Studio Farmlands, Unity Asset Store EULA",
+ "default_scale": [
+  0.8,
+  0.8,
+  0.8
+ ],
+ "max_texture_size": 1024,
+ "assets": [
+  {
+   "id": "farm.sapling.01",
+   "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/PF_Farm_GenTree_Sapling_01.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "farm.sapling.02",
+   "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/PF_Farm_GenTree_Sapling_02.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "farm.small_tree.01",
+   "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/Bushes/PF_Farm_GenTree_Bush_01.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "farm.small_tree.02",
+   "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/Bushes/PF_Farm_GenTree_Bush_02.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "farm.small_tree.03",
+   "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/Bushes/PF_Farm_GenTree_Bush_03.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "farm.small_tree.04",
+   "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/Bushes/PF_Farm_GenTree_Bush_04.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "farm.toadstool.01",
+   "source": "res://assets/Polyart/Models/Farmlands/Props/LogsMushrooms/PF_Farm_Mushroom_01.glb",
+   "tags": [
+    "mushroom",
+    "nature"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "scale": [
+    2.0,
+    2.0,
+    2.0
+   ]
+  },
+  {
+   "id": "farm.toadstool.05",
+   "source": "res://assets/Polyart/Models/Farmlands/Props/LogsMushrooms/PF_Farm_Mushroom_05.glb",
+   "tags": [
+    "mushroom",
+    "nature"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "scale": [
+    5.0,
+    5.0,
+    5.0
+   ]
+  },
+  {
+   "id": "farm.toadstool.06",
+   "source": "res://assets/Polyart/Models/Farmlands/Props/LogsMushrooms/PF_Farm_Mushroom_06.glb",
+   "tags": [
+    "mushroom",
+    "nature"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "scale": [
+    5.0,
+    5.0,
+    5.0
+   ]
+  },
+  {
+   "id": "farm.toadstool.07",
+   "source": "res://assets/Polyart/Models/Farmlands/Props/LogsMushrooms/PF_Farm_Mushroom_07.glb",
+   "tags": [
+    "mushroom",
+    "nature"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "scale": [
+    9.0,
+    9.0,
+    9.0
+   ]
+  },
+  {
+   "id": "farm.toadstool.08",
+   "source": "res://assets/Polyart/Models/Farmlands/Props/LogsMushrooms/PF_Farm_Mushroom_08.glb",
+   "tags": [
+    "mushroom",
+    "nature"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "scale": [
+    5.0,
+    5.0,
+    5.0
+   ]
+  },
+  {
+   "id": "farm.toadstool.09",
+   "source": "res://assets/Polyart/Models/Farmlands/Props/LogsMushrooms/PF_Farm_Mushroom_09.glb",
+   "tags": [
+    "mushroom",
+    "nature"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "scale": [
+    5.0,
+    5.0,
+    5.0
+   ]
+  },
+  {
+   "id": "farm.toadstool.10",
+   "source": "res://assets/Polyart/Models/Farmlands/Props/LogsMushrooms/PF_Farm_Mushroom_10.glb",
+   "tags": [
+    "mushroom",
+    "nature"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "scale": [
+    7.5,
+    7.5,
+    7.5
+   ]
+  },
+  {
+   "id": "farm.tree.a_full",
+   "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/PF_Farm_GenTree_A_FullTree_01.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "farm.tree.a_young",
+   "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/PF_Farm_GenTree_A_Young_01.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "farm.tree.b_full",
+   "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/PF_Farm_GenTree_B_FullTree_01.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "farm.tree.b_young",
+   "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/PF_Farm_GenTree_B_Young_01.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "farm.tree.c_full",
+   "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/PF_Farm_GenTree_C_FullTree_01.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "farm.tree.c_full_red",
+   "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/PF_Farm_GenTree_C_FullTree_01_Red.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "farm.tree.c_young",
+   "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/PF_Farm_GenTree_C_Young_01.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "farm.tree.c_young_red",
+   "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/PF_Farm_GenTree_C_Young_01_Red.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "farm.tree.d_full",
+   "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/PF_Farm_GenTree_D_FullTree_01.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "farm.tree.d_young",
+   "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/PF_Farm_GenTree_D_Young_01.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  }
+ ]
+}

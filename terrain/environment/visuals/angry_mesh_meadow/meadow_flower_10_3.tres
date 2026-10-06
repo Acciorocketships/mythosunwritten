@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_i4pb0"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_34clw"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/angry_mesh_meadow/meadow_flower_10_3_piece_00.res" id="3_hfhix"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_lop0s"]
+
+[sub_resource type="Resource" id="Resource_l2653"]
+script = ExtResource("2_34clw")
+mesh = ExtResource("3_hfhix")
+
+[resource]
+script = ExtResource("4_lop0s")
+pieces = Array[ExtResource("2_34clw")]([SubResource("Resource_l2653")])

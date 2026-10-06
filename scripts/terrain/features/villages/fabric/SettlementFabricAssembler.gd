@@ -494,9 +494,9 @@ const GARDEN_PLANTING: Array[StringName] = [
 	SettlementFabricProgram.ROOF_FLOWER_SMALL,
 	SettlementFabricProgram.ROOF_FLOWER_TALL,
 	SettlementFabricProgram.ROOF_FLOWER_PALE,
-	&"lpfv.mushroom.01",
-	&"lpfv.mushroom.02",
-	&"lpfv.mushroom.03",
+	&"farm.toadstool.05",
+	&"farm.toadstool.06",
+	&"farm.toadstool.08",
 ]
 ## The BUILT pieces of the vocabulary, and the village green's own. A self-sown
 ## plant says "nobody comes here"; a made planter says somebody laid this square
@@ -602,16 +602,17 @@ const VILLAGE_GREEN_EDGE_ODDS := 0.5
 ##   1.955/1.652 against the 2.250 m half of a 3 x 3-cell block.
 ## * `sfm.stall.variant.001` -- 4.474 x 4.019 x 3.199, 7 colliders. Half-extents
 ##   2.237/1.599, which clears the same 2.250 m by 13 mm.
-## * `lpfv.tree.05`   -- 2.498 x 5.991 x 2.142, 1 collider. Half-extents
-##   1.249/1.071 against the 1.500 m half of a 2 x 2-cell block, so the tree is
-##   also the answer where only a 2 x 2 is clear.
+## * `meadow.town_birch` -- 2.745 x 4.246 x 2.575, 1 collider. Half-extents
+##   1.479/1.327 against the 1.500 m half of a 2 x 2-cell block, so the tree is
+##   also the answer where only a 2 x 2 is clear. (A Meadow birch baked at 0.9
+##   for exactly this block; it replaced `lpfv.tree.05` on October 5.)
 ##
 ## Quarter turns only for the reason the built planter takes them: on a free yaw
 ## the bound above is measured off the wrong axis, and a laid-out square is
 ## square to its own grid anyway.
 const PLAZA_WELL := &"sfv.well.001"
 const PLAZA_MARKET_STALL := &"sfm.stall.variant.001"
-const PLAZA_TREE := &"lpfv.tree.05"
+const PLAZA_TREE := &"meadow.town_birch"
 const PLAZA_WIDE_FEATURES: Array[StringName] = [PLAZA_WELL, PLAZA_MARKET_STALL,
 	PLAZA_TREE]
 const PLAZA_WIDE_BLOCK := 3
@@ -673,11 +674,13 @@ const DECOR_FACADE_INTRUSION := FACADE_CELL_DEPTH
 ##
 ## HOW TALL A PIECE THE PROBE HAS TO CLEAR, which is what makes the box a
 ## question about a BAND rather than about a column: the tallest module in the
-## two garden pools is `lpfv.mushroom.03` at 1.268610 m over its own footing.
+## two garden pools is `farm.toadstool.05` at 1.076129 m over its own footing
+## (October 5: the Meadow/Farmlands nature migration retired `lpfv.mushroom.03`,
+## 1.268610 m).
 ## A gallery board 1.339 m over a lawn is therefore not a wall the planting has
 ## to stand off -- it is a ceiling, and `maze_footprint_headroom` is the rule
 ## that reads it.
-const DECOR_PROBE_RISE := 1.268610
+const DECOR_PROBE_RISE := 1.076129
 ## The slack every footprint query allows itself before it calls two boxes
 ## touching. A tenth of a millimetre: below the tolerance any of these modules
 ## was authored to and far below anything an eye resolves at 1.5 m.
@@ -712,14 +715,14 @@ const DECOR_CLEARANCE := {
 	&"lpfv.fabric.prop.plant.mid.02": Vector2(0.463525, 0.455049),
 	&"lpfv.fabric.prop.plant.low.01": Vector2(0.493207, 0.437208),
 	&"lpfv.fabric.prop.plant.tall.04": Vector2(0.513118, 0.456085),
-	SettlementFabricProgram.ROOF_FLOWER_BLUE: Vector2(0.506855, 0.383075),
-	SettlementFabricProgram.ROOF_FLOWER_WARM: Vector2(0.528646, 0.367876),
-	SettlementFabricProgram.ROOF_FLOWER_SMALL: Vector2(0.329099, 0.222446),
-	SettlementFabricProgram.ROOF_FLOWER_TALL: Vector2(0.350779, 0.231889),
-	SettlementFabricProgram.ROOF_FLOWER_PALE: Vector2(0.565099, 0.433177),
-	&"lpfv.mushroom.01": Vector2(0.427022, 0.435514),
-	&"lpfv.mushroom.02": Vector2(0.421398, 0.399904),
-	&"lpfv.mushroom.03": Vector2(0.400689, 0.400689),
+	SettlementFabricProgram.ROOF_FLOWER_BLUE: Vector2(0.234135, 0.261381),
+	SettlementFabricProgram.ROOF_FLOWER_WARM: Vector2(0.216251, 0.211898),
+	SettlementFabricProgram.ROOF_FLOWER_SMALL: Vector2(0.241640, 0.267292),
+	SettlementFabricProgram.ROOF_FLOWER_TALL: Vector2(0.284979, 0.303203),
+	SettlementFabricProgram.ROOF_FLOWER_PALE: Vector2(0.263937, 0.267730),
+	&"farm.toadstool.05": Vector2(0.447523, 0.467958),
+	&"farm.toadstool.06": Vector2(0.499508, 0.467958),
+	&"farm.toadstool.08": Vector2(0.459844, 0.485602),
 	SettlementFabricProgram.TERRACE_BENCH: Vector2(1.030627, 0.207915),
 	SettlementFabricProgram.TERRACE_BENCH_ALT: Vector2(1.152981, 0.218718),
 	SettlementFabricProgram.TERRACE_LANTERN_POST: Vector2(1.233737, 0.276905),

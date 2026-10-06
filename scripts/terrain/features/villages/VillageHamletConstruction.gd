@@ -3,6 +3,10 @@ extends RefCounted
 
 ## A tiny settlement starts with its shared square, not an inhabited massif.
 ## Complete native houses use the ordinary measured frontage construction.
+
+## A green square's focal tree (a broad Meadow oak, 14 m).
+const FOCAL_TREE := &"meadow.oak.04.summer"
+
 static func solve(terrain: VillageTerrainView, city_seed: int,
 		settlement_id: StringName, centre: Vector2, axis: Vector2,
 		theme: StringName, program: VillageProgram,
@@ -11,7 +15,7 @@ static func solve(terrain: VillageTerrainView, city_seed: int,
 	urban.generation_kind = VillageUrbanFabricPlan.GenerationKind.GROUND_HAMLET
 	var count := 3 + posmod(Helper._mix64(city_seed ^ 0x48414D), 4)
 	var green := posmod(city_seed, 3) == 0
-	var focal_id := &"lpfv.tree.01" if green else &"sfv.well.001" if posmod(city_seed, 2) == 0 \
+	var focal_id := FOCAL_TREE if green else &"sfv.well.001" if posmod(city_seed, 2) == 0 \
 		else &"sfbp.campfire.001"
 	var clearing := focal_id == &"sfbp.campfire.001"
 	var radius := 9.0 if count <= 4 else 15.0

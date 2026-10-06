@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_ky8n4"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_jrt5a"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/polyart_farmlands/farm_toadstool_01_piece_00.res" id="3_63h5y"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_gxf56"]
+
+[sub_resource type="Resource" id="Resource_psic6"]
+script = ExtResource("2_jrt5a")
+mesh = ExtResource("3_63h5y")
+local_transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
+
+[resource]
+script = ExtResource("4_gxf56")
+pieces = Array[ExtResource("2_jrt5a")]([SubResource("Resource_psic6")])

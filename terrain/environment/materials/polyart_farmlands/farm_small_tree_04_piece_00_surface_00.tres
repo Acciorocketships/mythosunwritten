@@ -1,0 +1,14 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3]
+
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/polyart_farmlands/6a97231d314f76766630.res" id="1_tbpix"]
+
+[resource]
+resource_name = "MI_Farm_GenericTree_Leaves_Close"
+transparency = 2
+alpha_scissor_threshold = 0.538
+alpha_antialiasing_mode = 0
+cull_mode = 2
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.23163135, 0.6608029, 0.00082324864, 1)
+albedo_texture = ExtResource("1_tbpix")
+roughness = 0.905

@@ -11,6 +11,8 @@ const GROUND_PATCH_SCALE := 108.0
 const GROUND_PATCH_WARMTH_SCALE := 156.0
 const GROUND_PATCH_VALUE_RANGE := Vector2(0.96, 1.04)
 const GROUND_PATCH_WARMTH := 0.025
+## Share of white in the `foliage` tint group: 0 = full biome hue, 1 = none.
+const FOLIAGE_CAST := 0.75
 
 # Sky, horizon, ambient colour/energy, sun colour/energy, bloom strength.
 # A fixed sun direction keeps shadow orientation coherent during transitions.
@@ -175,8 +177,12 @@ static func _art(id: StringName, title: String, ground: Color, tree: Color,
 	# Bush hue replacement consumes an absolute colour, not the source-atlas
 	# multiplier used by ground_tint (which can exceed 1 and shift the hue).
 	var bush_ground: Color = SUBSTRATES[id]
+	# Painted foliage (Meadow/Farmlands) already carries its season's colour, so
+	# it takes only a light multiplicative cast of the biome's canopy hue.
+	var hue := tree / maxf(tree.r, maxf(tree.g, tree.b))
 	p.foliage_tints = {"tree": tree, "bush": tree.lerp(bush_ground, 0.35),
-		"grass": ground.lerp(Color.WHITE, 0.35), "rock": ground.lerp(Color.WHITE, 0.7)}
+		"grass": ground.lerp(Color.WHITE, 0.35), "rock": ground.lerp(Color.WHITE, 0.7),
+		"foliage": Color(hue.r, hue.g, hue.b).lerp(Color.WHITE, FOLIAGE_CAST)}
 	p.fog_color = fog
 	p.fog_density = density
 	p.pocket_fog_density = density

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_1lbya"]
+
+[resource]
+script = ExtResource("1_1lbya")
+id = &"farm.tree.a_full"
+visual_path = "res://terrain/environment/visuals/polyart_farmlands/farm_tree_a_full.tres"
+tags = Array[StringName]([&"nature", &"tree"])
+measured_aabb = AABB(-7.0452704, -0.7618197, -7.922081, 13.463359, 14.375924, 14.145321)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"foliage"
+supports_instance_color = true
+provenance_id = &"polyart_farmlands:farm.tree.a_full"

@@ -20,6 +20,9 @@ var _material_palette: Dictionary = {}
 var _material_roughness: Dictionary = {}
 ## Explicit source-texture replacement, keyed by vendor material name.
 var _material_textures: Dictionary = {}
+## Manifest-level cap on baked texture edges (0 = keep source size). Painted
+## packs ship 2-4K textures that a stylized prop never shows at that density.
+var _max_texture_size := 0
 var _failed := false
 var _provenance_by_pack: Dictionary = {}
 
@@ -75,6 +78,7 @@ func _bake_manifest(path: String) -> void:
 	_material_palette.clear()
 	_material_roughness.clear()
 	_material_textures = manifest.get("material_textures", {})
+	_max_texture_size = int(manifest.get("max_texture_size", 0))
 	var roughness: Dictionary = manifest.get("material_roughness", {})
 	for material_name: String in roughness:
 		_material_roughness[StringName(material_name)] = float(roughness[material_name])
@@ -1907,7 +1911,12 @@ func _extract_non_foliage_mesh(source: ArrayMesh, asset_id: String) -> ArrayMesh
 		var uvs := arrays[Mesh.ARRAY_TEX_UV] as PackedVector2Array
 		var indices: PackedInt32Array = arrays[Mesh.ARRAY_INDEX] \
 			if arrays[Mesh.ARRAY_INDEX] != null else PackedInt32Array()
-		var texture := _material_albedo_texture(source.surface_get_material(surface_index))
+		var surface_material := source.surface_get_material(surface_index)
+		# Alpha-tested cards are leaves whatever their season's colour.
+		if surface_material is BaseMaterial3D and (surface_material as BaseMaterial3D) \
+				.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED:
+			continue
+		var texture := _material_albedo_texture(surface_material)
 		var image: Image = null
 		if texture != null and uvs.size() == vertices.size():
 			image = texture.get_image()
@@ -2308,6 +2317,11 @@ func _bake_texture(source: Texture2D, pack: String, green_hue: float) -> Texture
 	if image.is_compressed():
 		image.decompress()
 	image.convert(Image.FORMAT_RGBA8)
+	var longest := maxi(image.get_width(), image.get_height())
+	if _max_texture_size > 0 and longest > _max_texture_size:
+		var shrink := float(_max_texture_size) / float(longest)
+		image.resize(maxi(1, roundi(image.get_width() * shrink)),
+			maxi(1, roundi(image.get_height() * shrink)), Image.INTERPOLATE_LANCZOS)
 	if green_hue >= 0.0:
 		for y in image.get_height():
 			for x in image.get_width():

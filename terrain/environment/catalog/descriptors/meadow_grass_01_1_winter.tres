@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_u0vtd"]
+
+[resource]
+script = ExtResource("1_u0vtd")
+id = &"meadow.grass.01_1.winter"
+visual_path = "res://terrain/environment/visuals/angry_mesh_meadow/meadow_grass_01_1_winter.tres"
+tags = Array[StringName]([&"grass", &"nature"])
+measured_aabb = AABB(-0.20749046, -0.0065584565, -0.2098936, 0.39845476, 0.3371094, 0.41780654)
+ground_contact_points = PackedVector2Array()
+tint_group = &"grass"
+supports_instance_color = true
+provenance_id = &"angry_mesh_meadow:meadow.grass.01_1.winter"

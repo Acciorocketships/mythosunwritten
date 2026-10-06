@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_j0etm"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/polyart_farmlands/farm_tree_c_young_red_piece_00.res" id="2_31nhn"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_6jmi5"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/polyart_farmlands/farm_tree_c_young_red_piece_00.res" id="4_quwfb"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_boqyi"]
+
+[sub_resource type="Resource" id="Resource_74slr"]
+script = ExtResource("1_j0etm")
+shape = ExtResource("2_31nhn")
+local_transform = Transform3D(0.3811847, -0.2724097, -0.64845294, 0, 0.7375616, -0.30984345, 0.7033479, 0.14763449, 0.35143393, -0.010783911, 0.87086785, 0.16104029)
+
+[sub_resource type="Resource" id="Resource_imvic"]
+script = ExtResource("3_6jmi5")
+mesh = ExtResource("4_quwfb")
+local_transform = Transform3D(0.8, 0, 0, 0, 0.8, 0, 0, 0, 0.8, 0, 0, 0)
+
+[resource]
+script = ExtResource("5_boqyi")
+pieces = Array[ExtResource("3_6jmi5")]([SubResource("Resource_imvic")])
+collisions = Array[ExtResource("1_j0etm")]([SubResource("Resource_74slr")])

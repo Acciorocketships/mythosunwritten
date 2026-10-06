@@ -45,6 +45,7 @@ const PROP_ROLE_FOR_PREFIX := {
 	"lpfv.fabric.prop.bag.": &"prop.bag",
 	"lpfv.fabric.prop.barrel.": &"prop.barrel",
 	"lpfv.mushroom.": &"prop.garden",
+	"farm.toadstool.": &"prop.garden",
 	"sfv.well.": &"prop.well",
 	"sfv.fabric.awning.": &"prop.shop",
 	"sfm.table.": &"prop.market_goods",
@@ -57,12 +58,12 @@ const PART_TAGS: Array[StringName] = [&"support"]
 ## with its canopy instead of floating in front of the kit piece.
 const DRESSING_OF_REDRAWN: Array[StringName] = [&"sfm.stall.veg_string.001"]
 const RIGID_PREFIXES: Array[String] = ["lpfv.fabric.prop.", "lpfv.flower.",
-	"lpfv.mushroom.", "sfm.", "sfv.fabric.planter.", "lpfv.nature.",
+	"lpfv.mushroom.", "meadow.flower.", "farm.toadstool.", "sfm.", "sfv.fabric.planter.", "lpfv.nature.",
 	"sfv.prop.", "lpfv.prop."]
 ## Rigid props sized for the player (see VillageWorldScale.HUMAN_PROP_*):
 ## they keep their pre-upscale world size instead of growing with the town.
 const HUMAN_PREFIXES: Array[String] = ["lpfv.fabric.prop.", "lpfv.flower.",
-	"lpfv.mushroom.", "lpfv.prop."]
+	"lpfv.mushroom.", "lpfv.prop.", "meadow.flower.", "farm.toadstool."]
 
 static var _fits: Dictionary = {}
 ## Props placed directly in world space (hamlet squares): uniform fit only.

@@ -697,7 +697,7 @@ static func compile(authored: Dictionary = {},
 			SettlementFabricAssembler.PLANK_SINGLE,
 			SettlementFabricAssembler.PLANK_RAILING,
 			SettlementFabricAssembler.TIMBER_SUPPORT,
-			&"lpfv.tree.01",
+			VillageHamletConstruction.FOCAL_TREE,
 		]:
 			if not fabric_asset_ids.has(adapter_id):
 				fabric_asset_ids.append(adapter_id)

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_a8v43"]
+
+[resource]
+script = ExtResource("1_a8v43")
+id = &"farm.sapling.01"
+visual_path = "res://terrain/environment/visuals/polyart_farmlands/farm_sapling_01.tres"
+tags = Array[StringName]([&"nature", &"tree"])
+measured_aabb = AABB(-2.8850362, -0.087005645, -3.682408, 6.0100584, 9.422409, 7.085889)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"foliage"
+supports_instance_color = true
+provenance_id = &"polyart_farmlands:farm.sapling.01"

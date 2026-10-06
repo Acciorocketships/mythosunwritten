@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_216tj"]
+
+[resource]
+script = ExtResource("1_216tj")
+id = &"meadow.flower.07_2"
+visual_path = "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_07_2.tres"
+tags = Array[StringName]([&"flower", &"nature"])
+measured_aabb = AABB(-0.21625079, -0.020607032, -0.15164967, 0.40032774, 0.58498913, 0.36354792)
+ground_contact_points = PackedVector2Array()
+tint_group = &"grass"
+supports_instance_color = true
+provenance_id = &"angry_mesh_meadow:meadow.flower.07_2"

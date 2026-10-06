@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_so1mv"]
+
+[resource]
+script = ExtResource("1_so1mv")
+id = &"meadow.birch_bush.04.summer"
+visual_path = "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_bush_04_summer.tres"
+tags = Array[StringName]([&"bush", &"nature"])
+measured_aabb = AABB(-2.348554, -0.46633726, -2.144142, 4.423809, 5.624087, 4.691882)
+ground_contact_points = PackedVector2Array()
+tint_group = &"foliage"
+supports_instance_color = true
+provenance_id = &"angry_mesh_meadow:meadow.birch_bush.04.summer"

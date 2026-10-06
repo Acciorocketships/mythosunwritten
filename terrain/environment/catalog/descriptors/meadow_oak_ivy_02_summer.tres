@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_77rl2"]
+
+[resource]
+script = ExtResource("1_77rl2")
+id = &"meadow.oak_ivy.02.summer"
+visual_path = "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_ivy_02_summer.tres"
+tags = Array[StringName]([&"nature", &"tree"])
+measured_aabb = AABB(-7.8743467, -0.7864246, -7.4807844, 15.996344, 21.565233, 14.619006)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"foliage"
+supports_instance_color = true
+provenance_id = &"angry_mesh_meadow:meadow.oak_ivy.02.summer"

@@ -1,22 +1,34 @@
-[gd_resource type="Resource" script_class="DressingSet" load_steps=8 format=3]
+[gd_resource type="Resource" script_class="DressingSet" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingChoice.gd" id="1_choice"]
+
 [ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingSet.gd" id="2_set"]
+
 [ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingHabitatLayer.gd" id="3_habitat"]
 
-[sub_resource type="Resource" id="C1"]
+[sub_resource type="Resource" id="Choice_1"]
 script = ExtResource("1_choice")
-asset_id = &"lpfv.mushroom.01"
+asset_id = &"farm.toadstool.01"
 biome_affinity = {&"meadow": 0.5, &"deep_forest": 1.2, &"highland": 0.2, &"blossom_grove": 1.0, &"twilight_marsh": 1.2, &"amber_heath": 0.5, &"jade_wetlands": 1.2}
 
-[sub_resource type="Resource" id="C4"]
+[sub_resource type="Resource" id="Choice_2"]
 script = ExtResource("1_choice")
-asset_id = &"lpfv.mushroom.04"
+asset_id = &"farm.toadstool.05"
 biome_affinity = {&"meadow": 0.5, &"deep_forest": 1.2, &"highland": 0.2, &"blossom_grove": 1.0, &"twilight_marsh": 1.2, &"amber_heath": 0.5, &"jade_wetlands": 1.2}
 
-[sub_resource type="Resource" id="C7"]
+[sub_resource type="Resource" id="Choice_3"]
 script = ExtResource("1_choice")
-asset_id = &"lpfv.mushroom.07"
+asset_id = &"farm.toadstool.06"
+biome_affinity = {&"meadow": 0.5, &"deep_forest": 1.2, &"highland": 0.2, &"blossom_grove": 1.0, &"twilight_marsh": 1.2, &"amber_heath": 0.5, &"jade_wetlands": 1.2}
+
+[sub_resource type="Resource" id="Choice_4"]
+script = ExtResource("1_choice")
+asset_id = &"farm.toadstool.08"
+biome_affinity = {&"meadow": 0.5, &"deep_forest": 1.2, &"highland": 0.2, &"blossom_grove": 1.0, &"twilight_marsh": 1.2, &"amber_heath": 0.5, &"jade_wetlands": 1.2}
+
+[sub_resource type="Resource" id="Choice_5"]
+script = ExtResource("1_choice")
+asset_id = &"farm.toadstool.09"
 biome_affinity = {&"meadow": 0.5, &"deep_forest": 1.2, &"highland": 0.2, &"blossom_grove": 1.0, &"twilight_marsh": 1.2, &"amber_heath": 0.5, &"jade_wetlands": 1.2}
 
 [sub_resource type="Resource" id="Canopy"]
@@ -38,7 +50,7 @@ edge_softness = 0.045
 script = ExtResource("2_set")
 id = &"ambient.mushroom.single"
 feature_clearance = 0.3
-choices = Array[ExtResource("1_choice")]([SubResource("C1"), SubResource("C4"), SubResource("C7")])
+choices = Array[ExtResource("1_choice")]([SubResource("Choice_1"), SubResource("Choice_2"), SubResource("Choice_3"), SubResource("Choice_4"), SubResource("Choice_5")])
 fill_per_cell = {&"meadow": 0.18, &"deep_forest": 0.45, &"highland": 0.12, &"blossom_grove": 0.35, &"twilight_marsh": 0.42, &"amber_heath": 0.18, &"jade_wetlands": 0.42}
 habitat_layers = Array[ExtResource("3_habitat")]([SubResource("Canopy"), SubResource("OutsideColony")])
 community_channel = &"mushroom_colony_species"

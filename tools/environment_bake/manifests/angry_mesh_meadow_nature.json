@@ -1,0 +1,2204 @@
+{
+ "pack": "angry_mesh_meadow",
+ "license": "ANGRY MESH Stylized Pack - Meadow Environment, Unity Asset Store EULA",
+ "default_scale": [
+  1.3,
+  1.3,
+  1.3
+ ],
+ "max_texture_size": 1024,
+ "assets": [
+  {
+   "id": "meadow.birch.01.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_BirchTree_01_Autumn.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.birch.01.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_BirchTree_01_Summer.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.birch.01.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_BirchTree_01_Winter.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.birch.02.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_BirchTree_02_Autumn.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.birch.02.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_BirchTree_02_Summer.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.birch.02.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_BirchTree_02_Winter.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.birch.03.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_BirchTree_03_Autumn.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.birch.03.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_BirchTree_03_Summer.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.birch.03.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_BirchTree_03_Winter.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.birch.04.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_BirchTree_04_Autumn.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.birch.04.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_BirchTree_04_Summer.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.birch.04.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_BirchTree_04_Winter.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.birch.05.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_BirchTree_05_Autumn.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.birch.05.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_BirchTree_05_Summer.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.birch.05.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_BirchTree_05_Winter.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.birch.06.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_BirchTree_06_Autumn.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.birch.06.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_BirchTree_06_Summer.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.birch.06.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_BirchTree_06_Winter.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.birch.07.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_BirchTree_07_Autumn.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.birch.07.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_BirchTree_07_Summer.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.birch.07.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_BirchTree_07_Winter.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.birch_bush.01.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_BirchBush_01_Autumn.glb",
+   "tags": [
+    "bush",
+    "nature"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true
+  },
+  {
+   "id": "meadow.birch_bush.01.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_BirchBush_01_Summer.glb",
+   "tags": [
+    "bush",
+    "nature"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true
+  },
+  {
+   "id": "meadow.birch_bush.01.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_BirchBush_01_Winter.glb",
+   "tags": [
+    "bush",
+    "nature"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true
+  },
+  {
+   "id": "meadow.birch_bush.02.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_BirchBush_02_Autumn.glb",
+   "tags": [
+    "bush",
+    "nature"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true
+  },
+  {
+   "id": "meadow.birch_bush.02.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_BirchBush_02_Summer.glb",
+   "tags": [
+    "bush",
+    "nature"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true
+  },
+  {
+   "id": "meadow.birch_bush.02.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_BirchBush_02_Winter.glb",
+   "tags": [
+    "bush",
+    "nature"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true
+  },
+  {
+   "id": "meadow.birch_bush.03.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_BirchBush_03_Autumn.glb",
+   "tags": [
+    "bush",
+    "nature"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true
+  },
+  {
+   "id": "meadow.birch_bush.03.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_BirchBush_03_Summer.glb",
+   "tags": [
+    "bush",
+    "nature"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true
+  },
+  {
+   "id": "meadow.birch_bush.03.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_BirchBush_03_Winter.glb",
+   "tags": [
+    "bush",
+    "nature"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true
+  },
+  {
+   "id": "meadow.birch_bush.04.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_BirchBush_04_Autumn.glb",
+   "tags": [
+    "bush",
+    "nature"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true
+  },
+  {
+   "id": "meadow.birch_bush.04.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_BirchBush_04_Summer.glb",
+   "tags": [
+    "bush",
+    "nature"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true
+  },
+  {
+   "id": "meadow.birch_bush.04.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_BirchBush_04_Winter.glb",
+   "tags": [
+    "bush",
+    "nature"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true
+  },
+  {
+   "id": "meadow.birch_bush.05.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_BirchBush_05_Autumn.glb",
+   "tags": [
+    "bush",
+    "nature"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true
+  },
+  {
+   "id": "meadow.birch_bush.05.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_BirchBush_05_Summer.glb",
+   "tags": [
+    "bush",
+    "nature"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true
+  },
+  {
+   "id": "meadow.birch_bush.05.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_BirchBush_05_Winter.glb",
+   "tags": [
+    "bush",
+    "nature"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true
+  },
+  {
+   "id": "meadow.cover.01.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Autumn/P_CoverPlant_01_Autumn.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.cover.01.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Summer/P_CoverPlant_01_Summer.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.cover.01.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Winter/P_CoverPlant_01_Winter.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.cover.02.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Autumn/P_CoverPlant_02_Autumn.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.cover.02.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Summer/P_CoverPlant_02_Summer.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.cover.02.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Winter/P_CoverPlant_02_Winter.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.cover.03.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Autumn/P_CoverPlant_03_Autumn.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.cover.03.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Summer/P_CoverPlant_03_Summer.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.cover.03.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Winter/P_CoverPlant_03_Winter.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.cover.04.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Autumn/P_CoverPlant_04_Autumn.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.cover.04.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Summer/P_CoverPlant_04_Summer.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.cover.04.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Winter/P_CoverPlant_04_Winter.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.cover.05.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Autumn/P_CoverPlant_05_Autumn.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.cover.05.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Summer/P_CoverPlant_05_Summer.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.cover.05.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Winter/P_CoverPlant_05_Winter.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.cover.06.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Autumn/P_CoverPlant_06_Autumn.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.cover.06.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Summer/P_CoverPlant_06_Summer.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.cover.06.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Winter/P_CoverPlant_06_Winter.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.01_1",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_01_01.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.01_2",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_01_02.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.01_3",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_01_03.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.02_1",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_02_01.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.02_2",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_02_02.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.02_3",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_02_03.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.03_1",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_03_01.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.03_2",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_03_02.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.03_3",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_03_03.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.04_1",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_04_01.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.04_2",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_04_02.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.04_3",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_04_03.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.05_1",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_05_01.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.05_2",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_05_02.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.05_3",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_05_03.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.06_1",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_06_01.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.06_2",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_06_02.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.06_3",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_06_03.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.07_1",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_07_01.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.07_2",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_07_02.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.07_3",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_07_03.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.08_1",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_08_01.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.08_2",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_08_02.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.08_3",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_08_03.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.09_1",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_09_01.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.09_2",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_09_02.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.09_3",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_09_03.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.10_1",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_10_01.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.10_2",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_10_02.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.flower.10_3",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_10_03.glb",
+   "tags": [
+    "flower",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.grass.01_1.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Autumn/P_Grass_01_Autumn_01.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.grass.01_1.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Summer/P_Grass_01_Summer_01.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.grass.01_1.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Winter/P_Grass_01_Winter_01.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.grass.01_2.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Autumn/P_Grass_01_Autumn_02.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.grass.01_2.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Summer/P_Grass_01_Summer_02.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.grass.01_2.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Winter/P_Grass_01_Winter_02.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.grass.01_3.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Autumn/P_Grass_01_Autumn_03.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.grass.01_3.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Summer/P_Grass_01_Summer_03.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.grass.01_3.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Winter/P_Grass_01_Winter_03.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.grass.02_1.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Autumn/P_Grass_02_Autumn_01.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.grass.02_1.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Summer/P_Grass_02_Summer_01.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.grass.02_1.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Winter/P_Grass_02_Winter_01.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.grass.02_2.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Autumn/P_Grass_02_Autumn_02.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.grass.02_2.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Summer/P_Grass_02_Summer_02.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.grass.02_2.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Winter/P_Grass_02_Winter_02.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.grass.02_3.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Autumn/P_Grass_02_Autumn_03.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.grass.02_3.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Summer/P_Grass_02_Summer_03.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.grass.02_3.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Winter/P_Grass_02_Winter_03.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.grass.03_1.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Autumn/P_Grass_03_Autumn_01.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.grass.03_1.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Summer/P_Grass_03_Summer_01.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.grass.03_1.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Winter/P_Grass_03_Winter_01.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.grass.03_2.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Autumn/P_Grass_03_Autumn_02.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.grass.03_2.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Summer/P_Grass_03_Summer_02.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.grass.03_2.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Winter/P_Grass_03_Winter_02.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.grass.03_3.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Autumn/P_Grass_03_Autumn_03.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.grass.03_3.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Summer/P_Grass_03_Summer_03.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.grass.03_3.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Winter/P_Grass_03_Winter_03.glb",
+   "tags": [
+    "grass",
+    "nature"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.log.01",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Props/Props_-_Summer/P_Log_01_Summer.glb",
+   "tags": [
+    "deadwood",
+    "nature"
+   ],
+   "tint_group": "tree",
+   "supports_instance_color": true,
+   "collision_profile": "oriented_cylinder",
+   "collision_radius_fraction": 0.42,
+   "material_tint": [
+    0.492,
+    0.498,
+    0.215,
+    1.0
+   ]
+  },
+  {
+   "id": "meadow.log.02",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Props/Props_-_Summer/P_Log_02_Summer.glb",
+   "tags": [
+    "deadwood",
+    "nature"
+   ],
+   "tint_group": "tree",
+   "supports_instance_color": true,
+   "collision_profile": "oriented_cylinder",
+   "collision_radius_fraction": 0.42,
+   "material_tint": [
+    0.492,
+    0.498,
+    0.215,
+    1.0
+   ]
+  },
+  {
+   "id": "meadow.oak.01.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_OakTree_01_Autumn.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak.01.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_OakTree_01_Summer.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak.01.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_OakTree_01_Winter.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak.02.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_OakTree_02_Autumn.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak.02.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_OakTree_02_Summer.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak.02.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_OakTree_02_Winter.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak.03.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_OakTree_03_Autumn.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak.03.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_OakTree_03_Summer.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak.03.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_OakTree_03_Winter.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak.04.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_OakTree_04_Autumn.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak.04.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_OakTree_04_Summer.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak.04.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_OakTree_04_Winter.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak.05.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_OakTree_05_Autumn.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak.05.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_OakTree_05_Summer.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak.05.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_OakTree_05_Winter.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak.06.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_OakTree_06_Autumn.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak.06.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_OakTree_06_Summer.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak.06.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_OakTree_06_Winter.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak.07.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_OakTree_07_Autumn.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak.07.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_OakTree_07_Summer.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak.07.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_OakTree_07_Winter.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak_ivy.01.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_OakTree_01_Autumn_Ivy.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak_ivy.01.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_OakTree_01_Summer_Ivy.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak_ivy.01.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_OakTree_01_Winter_Ivy.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak_ivy.02.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_OakTree_02_Autumn_Ivy.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak_ivy.02.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_OakTree_02_Summer_Ivy.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak_ivy.02.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_OakTree_02_Winter_Ivy.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak_ivy.04.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_OakTree_04_Autumn_Ivy.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak_ivy.04.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_OakTree_04_Summer_Ivy.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.oak_ivy.04.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_OakTree_04_Winter_Ivy.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule"
+  },
+  {
+   "id": "meadow.plant.01_1.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Autumn/P_Plant_01_Autumn_01.glb",
+   "tags": [
+    "nature",
+    "plant"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.plant.01_1.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Summer/P_Plant_01_Summer_01.glb",
+   "tags": [
+    "nature",
+    "plant"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.plant.01_1.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Winter/P_Plant_01_Winter_01.glb",
+   "tags": [
+    "nature",
+    "plant"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.plant.01_2.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Autumn/P_Plant_01_Autumn_02.glb",
+   "tags": [
+    "nature",
+    "plant"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.plant.01_2.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Summer/P_Plant_01_Summer_02.glb",
+   "tags": [
+    "nature",
+    "plant"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.plant.01_2.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Winter/P_Plant_01_Winter_02.glb",
+   "tags": [
+    "nature",
+    "plant"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.plant.01_3.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Autumn/P_Plant_01_Autumn_03.glb",
+   "tags": [
+    "nature",
+    "plant"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.plant.01_3.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Summer/P_Plant_01_Summer_03.glb",
+   "tags": [
+    "nature",
+    "plant"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.plant.01_3.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Winter/P_Plant_01_Winter_03.glb",
+   "tags": [
+    "nature",
+    "plant"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.plant.02_1.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Autumn/P_Plant_02_Autumn_01.glb",
+   "tags": [
+    "nature",
+    "plant"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.plant.02_1.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Summer/P_Plant_02_Summer_01.glb",
+   "tags": [
+    "nature",
+    "plant"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.plant.02_1.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Winter/P_Plant_02_Winter_01.glb",
+   "tags": [
+    "nature",
+    "plant"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.plant.02_2.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Autumn/P_Plant_02_Autumn_02.glb",
+   "tags": [
+    "nature",
+    "plant"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.plant.02_2.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Summer/P_Plant_02_Summer_02.glb",
+   "tags": [
+    "nature",
+    "plant"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.plant.02_2.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Winter/P_Plant_02_Winter_02.glb",
+   "tags": [
+    "nature",
+    "plant"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.plant.02_3.autumn",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Autumn/P_Plant_02_Autumn_03.glb",
+   "tags": [
+    "nature",
+    "plant"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.plant.02_3.summer",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Summer/P_Plant_02_Summer_03.glb",
+   "tags": [
+    "nature",
+    "plant"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.plant.02_3.winter",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Winter/P_Plant_02_Winter_03.glb",
+   "tags": [
+    "nature",
+    "plant"
+   ],
+   "tint_group": "grass",
+   "supports_instance_color": true,
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "meadow.stump.01",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Props/Props_-_Summer/P_Stump_01_Summer.glb",
+   "tags": [
+    "deadwood",
+    "nature"
+   ],
+   "tint_group": "tree",
+   "supports_instance_color": true,
+   "collision_profile": "stump_cylinder",
+   "material_tint": [
+    0.607,
+    0.664,
+    0.43,
+    1.0
+   ]
+  },
+  {
+   "id": "meadow.stump.02",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Props/Props_-_Summer/P_Stump_02_Summer.glb",
+   "tags": [
+    "deadwood",
+    "nature"
+   ],
+   "tint_group": "tree",
+   "supports_instance_color": true,
+   "collision_profile": "stump_cylinder",
+   "material_tint": [
+    0.607,
+    0.664,
+    0.43,
+    1.0
+   ]
+  },
+  {
+   "id": "meadow.town_birch",
+   "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_BirchTree_05_Summer.glb",
+   "tags": [
+    "nature",
+    "tree"
+   ],
+   "tint_group": "foliage",
+   "supports_instance_color": true,
+   "collision_profile": "trunk_capsule",
+   "scale": [
+    0.9,
+    0.9,
+    0.9
+   ]
+  }
+ ]
+}

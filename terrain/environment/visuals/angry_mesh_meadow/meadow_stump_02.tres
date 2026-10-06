@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_idl10"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/angry_mesh_meadow/meadow_stump_02_piece_00.res" id="2_ojvol"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_gp32d"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/angry_mesh_meadow/meadow_stump_02_piece_00.res" id="4_bdihs"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_6v0cy"]
+
+[sub_resource type="Resource" id="Resource_omttg"]
+script = ExtResource("1_idl10")
+shape = ExtResource("2_ojvol")
+local_transform = Transform3D(1.3, 0, 0, 0, 1.3, 0, 0, 0, 1.3, -0.04582431, 0.4938812, -0.14854379)
+
+[sub_resource type="Resource" id="Resource_pbp0o"]
+script = ExtResource("3_gp32d")
+mesh = ExtResource("4_bdihs")
+local_transform = Transform3D(1.3, 0, 0, 0, 1.3, 0, 0, 0, 1.3, 0, 0, 0)
+
+[resource]
+script = ExtResource("5_6v0cy")
+pieces = Array[ExtResource("3_gp32d")]([SubResource("Resource_pbp0o")])
+collisions = Array[ExtResource("1_idl10")]([SubResource("Resource_omttg")])

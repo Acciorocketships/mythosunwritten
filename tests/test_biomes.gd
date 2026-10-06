@@ -111,3 +111,15 @@ func test_pocket_census() -> void:
 				&"blossom_grove": blossom += 1
 	assert_between(float(marsh) / float(n), 0.04, 0.25, "Moonfen has substantial explorable cores")
 	assert_between(float(blossom) / float(n), 0.04, 0.20, "Cherryveil is discoverable rather than vanishingly rare")
+
+func test_painted_foliage_takes_only_a_light_cast_of_each_biome() -> void:
+	## Painted Meadow/Farmlands foliage carries its season's colour, so the
+	## `foliage` group never darkens it: the brightest channel stays 1 and every
+	## channel stays near white, while the cast still leans toward the biome hue.
+	for id: StringName in BiomeRegistry.biome_ids():
+		var tint := BiomeRegistry.blended_environment_tint({id: 1.0}, &"foliage")
+		assert_almost_eq(maxf(tint.r, maxf(tint.g, tint.b)), 1.0, 0.0001, "%s keeps full value" % id)
+		assert_gte(minf(tint.r, minf(tint.g, tint.b)), BiomeRegistry.FOLIAGE_CAST - 0.0001,
+			"%s is only a light cast" % id)
+	var cherry := BiomeRegistry.blended_environment_tint({&"blossom_grove": 1.0}, &"foliage")
+	assert_gt(cherry.r, cherry.g, "Cherryveil leans pink")

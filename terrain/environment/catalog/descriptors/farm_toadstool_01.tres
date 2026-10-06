@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_vdvkq"]
+
+[resource]
+script = ExtResource("1_vdvkq")
+id = &"farm.toadstool.01"
+visual_path = "res://terrain/environment/visuals/polyart_farmlands/farm_toadstool_01.tres"
+tags = Array[StringName]([&"mushroom", &"nature"])
+measured_aabb = AABB(-0.6068287, 0.00310938, -0.6186179, 1.236955, 1.02698, 1.1931322)
+ground_contact_points = PackedVector2Array()
+tint_group = &"foliage"
+supports_instance_color = true
+provenance_id = &"polyart_farmlands:farm.toadstool.01"

@@ -1,0 +1,18 @@
+[gd_resource type="StandardMaterial3D" load_steps=4 format=3]
+
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/angry_mesh_meadow/811dd46f0135f0e5acda.res" id="1_gmqaj"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/angry_mesh_meadow/0c3ad98755d092cd2f4c.res" id="2_pkdyp"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/angry_mesh_meadow/bb7630ee2a37ea96f7e7.res" id="3_bscdw"]
+
+[resource]
+resource_name = "M_BirchTree_Bark_01_Summer"
+vertex_color_use_as_albedo = true
+albedo_texture = ExtResource("1_gmqaj")
+metallic_texture = ExtResource("2_pkdyp")
+metallic_texture_channel = 2
+roughness_texture = ExtResource("2_pkdyp")
+roughness_texture_channel = 1
+normal_enabled = true
+normal_texture = ExtResource("3_bscdw")
+ao_enabled = true
+ao_texture = ExtResource("2_pkdyp")

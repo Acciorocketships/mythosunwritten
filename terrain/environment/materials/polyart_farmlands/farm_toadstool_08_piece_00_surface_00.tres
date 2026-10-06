@@ -1,0 +1,18 @@
+[gd_resource type="StandardMaterial3D" load_steps=4 format=3]
+
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/polyart_farmlands/31df81e116bc86e0bd92.res" id="1_8lpag"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/polyart_farmlands/e77f4feb2a26952f3160.res" id="2_brhmt"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/polyart_farmlands/8c27095ff52f390ca68e.res" id="3_xfkte"]
+
+[resource]
+resource_name = "M_Farm_Mushrooms"
+vertex_color_use_as_albedo = true
+albedo_texture = ExtResource("1_8lpag")
+metallic_texture = ExtResource("2_brhmt")
+metallic_texture_channel = 2
+roughness_texture = ExtResource("2_brhmt")
+roughness_texture_channel = 1
+normal_enabled = true
+normal_texture = ExtResource("3_xfkte")
+ao_enabled = true
+ao_texture = ExtResource("2_brhmt")

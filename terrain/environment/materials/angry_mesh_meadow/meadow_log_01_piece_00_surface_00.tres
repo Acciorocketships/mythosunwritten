@@ -1,0 +1,19 @@
+[gd_resource type="StandardMaterial3D" load_steps=4 format=3]
+
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/angry_mesh_meadow/defef59994b918c58916.res" id="1_fvn6d"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/angry_mesh_meadow/bd8b8d15b472a7e1f14a.res" id="2_er2xi"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/angry_mesh_meadow/bc927b69250454902fc7.res" id="3_juc0f"]
+
+[resource]
+resource_name = "M_Log_01_Summer"
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.492, 0.498, 0.215, 1)
+albedo_texture = ExtResource("1_fvn6d")
+metallic_texture = ExtResource("2_er2xi")
+metallic_texture_channel = 2
+roughness_texture = ExtResource("2_er2xi")
+roughness_texture_channel = 1
+normal_enabled = true
+normal_texture = ExtResource("3_juc0f")
+ao_enabled = true
+ao_texture = ExtResource("2_er2xi")

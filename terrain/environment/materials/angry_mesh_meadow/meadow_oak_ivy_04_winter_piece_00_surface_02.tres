@@ -1,0 +1,17 @@
+[gd_resource type="StandardMaterial3D" load_steps=3 format=3]
+
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/angry_mesh_meadow/78a7976bfbd44be474f5.res" id="1_cjgf6"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/angry_mesh_meadow/3ae53a9f7b54eb5486ef.res" id="2_ehm5b"]
+
+[resource]
+resource_name = "M_OakTree_IvyLeaf_01_Winter"
+transparency = 2
+alpha_scissor_threshold = 0.5
+alpha_antialiasing_mode = 0
+cull_mode = 2
+vertex_color_use_as_albedo = true
+albedo_color = Color(1, 0.83719885, 0.75382704, 1)
+albedo_texture = ExtResource("1_cjgf6")
+roughness = 0.9
+normal_enabled = true
+normal_texture = ExtResource("2_ehm5b")
