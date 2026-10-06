@@ -40,15 +40,22 @@ func _run() -> void:
 	var towns := _arg(args, "--towns", DEFAULT_TOWNS).split(",")
 	var out_path := _arg(args, "--out", "/tmp/town_fingerprint.json")
 	var compare_path := _arg(args, "--compare", "")
-	if args.has("--odds"):
-		push_warning("--odds is not supported yet; ignored")
 	var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
+	var overrides := TownOddsProgram.parse_overrides(args, program.town_odds)
+	if overrides.has("error"):
+		push_error(String(overrides.error))
+		quit(2)
+		return
+	if not overrides.is_empty():
+		program.town_odds = program.town_odds.with_overrides(overrides)
 	var results := {}
 	for town: String in towns:
 		var parts := town.split(":")
 		var started := Time.get_ticks_msec()
 		var profile := WarrenVillageScaleProfile.for_id(StringName(parts[1]))
 		var spatial := WarrenVolumetricSolver.generate(int(parts[0]), {}, program, profile)
+		if profile.character != null:
+			print("TOWN_CHARACTER ", town, " ", JSON.stringify(profile.character.values))
 		if spatial == null:
 			results[town] = {"error": "no town"}
 			print("FINGERPRINT_NO_TOWN ", town)

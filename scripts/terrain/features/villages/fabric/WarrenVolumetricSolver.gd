@@ -172,6 +172,10 @@ static func _generate(world_seed: int, ground_bands: Dictionary,
 		return null
 	var profile := scale_profile if scale_profile != null \
 		else WarrenVillageScaleProfile.review_fixture()
+	TownCharacter.attach(profile,
+		construction_program.town_odds if construction_program.town_odds != null \
+			else TownOddsProgram.builtin(),
+		world_seed)
 	return _solve_maze(world_seed, ground_bands, construction_program, profile, collect_diagnostics)
 
 

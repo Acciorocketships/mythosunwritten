@@ -75,6 +75,10 @@ var landmark_range: Vector2i
 var minimum_inhabited_overhead_ratio: float
 var requires_elevated_courtyard: bool
 var requires_covered_market: bool
+## The town's drawn odds (TownCharacter). Set per town by
+## WarrenVolumetricSolver._generate / TownCharacter.of; never part of the
+## size budgets above.
+var character: TownCharacter
 
 
 func _init(p_scale_id: StringName, p_radius_cells: int,
@@ -135,7 +139,7 @@ func validate() -> bool:
 
 
 func deterministic_signature() -> String:
-	return "%s@%.4f/r%d/core-floor%d/target%d-%d/route%d-%d/span%d-%d/lanes%d:%d/rooms%d-%d/residual%d:%d/sky%d-%d/bal%d-%d/cant%d-%d/land%d-%d/over%.3f/court%d/market%d" % [
+	var text := "%s@%.4f/r%d/core-floor%d/target%d-%d/route%d-%d/span%d-%d/lanes%d:%d/rooms%d-%d/residual%d:%d/sky%d-%d/bal%d-%d/cant%d-%d/land%d-%d/over%.3f/court%d/market%d" % [
 		String(scale_id), size, radius_cells, minimum_core_bands,
 		core_target_band_range.x, core_target_band_range.y,
 		route_cell_range.x, route_cell_range.y, route_span_range.x,
@@ -147,6 +151,7 @@ func deterministic_signature() -> String:
 		landmark_range.y, minimum_inhabited_overhead_ratio,
 		int(requires_elevated_courtyard),
 		int(requires_covered_market)]
+	return text + (character.signature_suffix() if character != null else "")
 
 
 static func select(city_seed: int) -> WarrenVillageScaleProfile:

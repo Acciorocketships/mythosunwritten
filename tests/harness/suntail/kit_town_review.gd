@@ -239,6 +239,13 @@ func _run() -> void:
 	var stage := _stage()
 	var catalog := EnvironmentCatalog.load_default()
 	var program := SettlementFabricProgram.compile(catalog)
+	var overrides := TownOddsProgram.parse_overrides(OS.get_cmdline_user_args(), program.town_odds)
+	if overrides.has("error"):
+		push_error(String(overrides.error))
+		quit(2)
+		return
+	if not overrides.is_empty():
+		program.town_odds = program.town_odds.with_overrides(overrides)
 	var cache := EnvironmentRenderCache.new(catalog)
 	# Match the streamer: native lawn lips share the terrain sheet material.
 	CliffDressing.prepare(cache)
@@ -249,6 +256,8 @@ func _run() -> void:
 		var scale: StringName = job[1]
 		var profile := WarrenVillageScaleProfile.select(seed_value) if _production_size \
 			else WarrenVillageScaleProfile.for_id(scale)
+		TownCharacter.attach(profile, program.town_odds, seed_value)
+		print("TOWN_CHARACTER ", seed_value, ":", scale, " ", JSON.stringify(profile.character.values))
 		var started := Time.get_ticks_msec()
 		var source := FROZEN.read(_frozen_source) if not _frozen_source.is_empty() \
 			else WarrenMazeSitePlanner.plan(seed_value, {}, profile, &"", false)

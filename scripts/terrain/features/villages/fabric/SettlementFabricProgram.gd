@@ -6,6 +6,9 @@ extends RefCounted
 ## but never place their own floors.
 const CELL := FabricRecipe.CELL_SIZE
 
+## Per-town odds table, compiled once with the program (main thread).
+var town_odds: TownOddsProgram
+
 const ROCK_PLAIN := &"sfv.fabric.wall.rock.plain.001"
 const ROCK_WINDOW := &"sfv.fabric.wall.rock.window.010"
 const WOOD_PLAIN := &"sfv.fabric.wall.wood.plain.001"
@@ -1337,6 +1340,7 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 	# The building kit redraws legacy public-realm pieces by measured bounds;
 	# the table must be resolved here, on the thread that owns the catalog.
 	KitSubstitution.prepare(catalog, SuntailBuildingKit.create())
+	program.town_odds = TownOddsProgram.builtin()
 	return program
 
 

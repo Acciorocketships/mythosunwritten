@@ -109,3 +109,15 @@ func signature_suffix() -> String:
 	if not overridden:
 		return ""
 	return "/odds:" + var_to_str(values).sha256_text().substr(0, 12)
+
+
+static func attach(profile: WarrenVillageScaleProfile, program: TownOddsProgram,
+		p_seed: int) -> TownCharacter:
+	profile.character = draw(program, p_seed, profile.size)
+	return profile.character
+
+
+static func of(profile: WarrenVillageScaleProfile, p_seed: int) -> TownCharacter:
+	if profile.character != null and profile.character.town_seed == p_seed:
+		return profile.character
+	return attach(profile, TownOddsProgram.builtin(), p_seed)
