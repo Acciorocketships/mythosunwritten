@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://assets/FantasyMarketFBX/FBX/Bakery Stall/Stall/SFM_Bakery_Stall_001.fbx" id="1"]
+[ext_resource type="PackedScene" path="res://assets/FantasyMarketFBX/FBX/Bakery Stall/Bakery Table/SFM_Bakery_Table_001.fbx" id="2"]
+
+[node name="Bakery" type="Node3D"]
+[node name="Canopy" parent="." instance=ExtResource("1")]
+[node name="Counter" parent="." instance=ExtResource("2")]
+position = Vector3(0, 0.046407, 0)

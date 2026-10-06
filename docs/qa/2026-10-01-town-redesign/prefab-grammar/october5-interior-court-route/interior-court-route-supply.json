@@ -1,0 +1,600 @@
+{
+	"103:grand": {
+		"rejections": {
+			"carved_headroom": 107,
+			"column_cut_depth": 99,
+			"missing_floor_support": 45,
+			"no_level_threshold": 3,
+			"outside_or_blocked": 709,
+			"total_cut_budget": 13
+		},
+		"sites": [],
+		"supported": 0
+	},
+	"13:grand": {
+		"rejections": {
+			"below_bearing": 21,
+			"carved_headroom": 214,
+			"column_cut_depth": 41,
+			"missing_floor_support": 144,
+			"no_level_threshold": 3,
+			"outside_or_blocked": 565,
+			"total_cut_budget": 15
+		},
+		"sites": [
+			{
+				"anchor": "(-4, -5)",
+				"cost": 16,
+				"floor": 2,
+				"minimum_ring": 2,
+				"shape": "(3, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"carved_headroom": 1,
+							"missing_floor_support": 2
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 3,
+						"fronts": 3,
+						"reasons": {
+
+						}
+					}
+				]
+			},
+			{
+				"anchor": "(-3, -5)",
+				"cost": 18,
+				"floor": 2,
+				"minimum_ring": 2,
+				"shape": "(3, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"carved_headroom": 2,
+							"missing_floor_support": 1
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 3,
+						"fronts": 3,
+						"reasons": {
+
+						}
+					}
+				]
+			},
+			{
+				"anchor": "(-2, -5)",
+				"cost": 20,
+				"floor": 2,
+				"minimum_ring": 3,
+				"shape": "(3, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"carved_headroom": 3
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 3,
+						"fronts": 3,
+						"reasons": {
+
+						}
+					}
+				]
+			},
+			{
+				"anchor": "(-1, -5)",
+				"cost": 22,
+				"floor": 2,
+				"minimum_ring": 2,
+				"shape": "(3, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"missing_floor_support": 2,
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"carved_headroom": 2,
+							"missing_floor_support": 1
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"missing_floor_support": 1
+						}
+					}
+				]
+			},
+			{
+				"anchor": "(-4, -6)",
+				"cost": 18,
+				"floor": 2,
+				"minimum_ring": 1,
+				"shape": "(3, 4)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 4,
+						"fronts": 3,
+						"reasons": {
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"carved_headroom": 1,
+							"missing_floor_support": 2
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 4,
+						"fronts": 2,
+						"reasons": {
+							"column already spoken for": 1,
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 3,
+						"fronts": 1,
+						"reasons": {
+							"column already spoken for": 2
+						}
+					}
+				]
+			},
+			{
+				"anchor": "(-3, -6)",
+				"cost": 22,
+				"floor": 2,
+				"minimum_ring": 1,
+				"shape": "(3, 4)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 4,
+						"fronts": 3,
+						"reasons": {
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"carved_headroom": 2,
+							"missing_floor_support": 1
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 4,
+						"fronts": 3,
+						"reasons": {
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"column already spoken for": 1
+						}
+					}
+				]
+			},
+			{
+				"anchor": "(-2, -6)",
+				"cost": 24,
+				"floor": 2,
+				"minimum_ring": 2,
+				"shape": "(3, 4)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 4,
+						"fronts": 2,
+						"reasons": {
+							"missing_floor_support": 1,
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"carved_headroom": 3
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 4,
+						"fronts": 3,
+						"reasons": {
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 3,
+						"fronts": 3,
+						"reasons": {
+
+						}
+					}
+				]
+			},
+			{
+				"anchor": "(-5, -5)",
+				"cost": 18,
+				"floor": 2,
+				"minimum_ring": 1,
+				"shape": "(4, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 4,
+						"fronts": 0,
+						"reasons": {
+							"carved_headroom": 1,
+							"missing_floor_support": 3
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 1,
+						"reasons": {
+							"column already spoken for": 1,
+							"missing_floor_support": 1
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 4,
+						"fronts": 3,
+						"reasons": {
+							"column already spoken for": 1
+						}
+					}
+				]
+			},
+			{
+				"anchor": "(-4, -5)",
+				"cost": 22,
+				"floor": 2,
+				"minimum_ring": 2,
+				"shape": "(4, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 4,
+						"fronts": 0,
+						"reasons": {
+							"carved_headroom": 2,
+							"missing_floor_support": 2
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 4,
+						"fronts": 4,
+						"reasons": {
+
+						}
+					}
+				]
+			},
+			{
+				"anchor": "(-3, -5)",
+				"cost": 26,
+				"floor": 2,
+				"minimum_ring": 2,
+				"shape": "(4, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 4,
+						"fronts": 0,
+						"reasons": {
+							"carved_headroom": 3,
+							"missing_floor_support": 1
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 4,
+						"fronts": 4,
+						"reasons": {
+
+						}
+					}
+				]
+			},
+			{
+				"anchor": "(-2, -5)",
+				"cost": 28,
+				"floor": 2,
+				"minimum_ring": 2,
+				"shape": "(4, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"missing_floor_support": 2,
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 4,
+						"fronts": 0,
+						"reasons": {
+							"carved_headroom": 3,
+							"missing_floor_support": 1
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 4,
+						"fronts": 3,
+						"reasons": {
+							"missing_floor_support": 1
+						}
+					}
+				]
+			}
+		],
+		"supported": 11
+	},
+	"43:grand": {
+		"rejections": {
+			"carved_headroom": 118,
+			"column_cut_depth": 391,
+			"missing_floor_support": 129,
+			"outside_or_blocked": 419,
+			"total_cut_budget": 4
+		},
+		"sites": [
+			{
+				"anchor": "(-5, -3)",
+				"cost": 27,
+				"floor": 7,
+				"minimum_ring": 4,
+				"shape": "(3, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"missing_floor_support": 1
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"missing_floor_support": 1
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"missing_floor_support": 3
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"missing_floor_support": 1
+						}
+					}
+				]
+			}
+		],
+		"supported": 1
+	},
+	"53:grand": {
+		"rejections": {
+			"carved_headroom": 103,
+			"column_cut_depth": 288,
+			"missing_floor_support": 130,
+			"no_level_threshold": 23,
+			"outside_or_blocked": 469,
+			"total_cut_budget": 2
+		},
+		"sites": [
+			{
+				"anchor": "(-3, 7)",
+				"cost": 27,
+				"floor": 1,
+				"minimum_ring": 1,
+				"shape": "(3, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"column already spoken for": 1
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"column already spoken for": 3
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"column already spoken for": 1
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"carved_headroom": 1
+						}
+					}
+				]
+			}
+		],
+		"supported": 1
+	}
+}

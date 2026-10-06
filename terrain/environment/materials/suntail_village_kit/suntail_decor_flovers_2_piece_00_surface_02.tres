@@ -1,6 +1,6 @@
 [gd_resource type="StandardMaterial3D" load_steps=2 format=3]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/63bad4cefbcd09192a9d.res" id="1_ncbwr"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/eaa23cb9037bff527755.res" id="1_ncbwr"]
 
 [resource]
 resource_name = "FlowerPot_Flowers_Blue"

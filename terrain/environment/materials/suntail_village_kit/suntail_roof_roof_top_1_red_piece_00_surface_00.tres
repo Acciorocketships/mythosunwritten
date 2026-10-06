@@ -1,7 +1,7 @@
 [gd_resource type="StandardMaterial3D" load_steps=3 format=3]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/173753758685fa88a5cb.res" id="1_wc4al"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/19c539ddc9e7ae32cf6b.res" id="2_1fbp7"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/6b0098c1ce293881a211.res" id="1_wc4al"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/d2099826100d8c3dce6d.res" id="2_1fbp7"]
 
 [resource]
 resource_name = "Roof_Red"

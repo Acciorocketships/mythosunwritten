@@ -1,0 +1,134 @@
+{
+  "31:large": {
+    "before": 34,
+    "after": 24,
+    "low_losses": [
+      {
+        "walk": "(-1, 0, 1)",
+        "quarter": 0,
+        "before": 4,
+        "after": -1
+      },
+      {
+        "walk": "(-1, 0, 1)",
+        "quarter": 2,
+        "before": 4,
+        "after": -1
+      },
+      {
+        "walk": "(-1, 0, 2)",
+        "quarter": 0,
+        "before": 4,
+        "after": -1
+      },
+      {
+        "walk": "(-1, 0, 2)",
+        "quarter": 2,
+        "before": 4,
+        "after": -1
+      },
+      {
+        "walk": "(-2, 0, 0)",
+        "quarter": 0,
+        "before": 2,
+        "after": -1
+      },
+      {
+        "walk": "(-2, 0, 0)",
+        "quarter": 1,
+        "before": 2,
+        "after": -1
+      },
+      {
+        "walk": "(-2, 0, 0)",
+        "quarter": 2,
+        "before": 2,
+        "after": -1
+      },
+      {
+        "walk": "(-2, 0, 0)",
+        "quarter": 3,
+        "before": 2,
+        "after": -1
+      },
+      {
+        "walk": "(0, 0, 2)",
+        "quarter": 0,
+        "before": 4,
+        "after": -1
+      },
+      {
+        "walk": "(0, 0, 2)",
+        "quarter": 2,
+        "before": 4,
+        "after": -1
+      }
+    ]
+  },
+  "53:grand": {
+    "before": 86,
+    "after": 80,
+    "low_losses": [
+      {
+        "walk": "(-1, 5, -2)",
+        "quarter": 1,
+        "before": 4,
+        "after": -1
+      },
+      {
+        "walk": "(-1, 5, -2)",
+        "quarter": 3,
+        "before": 4,
+        "after": -1
+      }
+    ]
+  },
+  "63:grand": {
+    "before": 48,
+    "after": 34,
+    "low_losses": [
+      {
+        "walk": "(0, 2, -4)",
+        "quarter": 2,
+        "before": 2,
+        "after": 4
+      },
+      {
+        "walk": "(0, 2, -4)",
+        "quarter": 3,
+        "before": 2,
+        "after": 4
+      }
+    ]
+  },
+  "7:standard": {
+    "before": 36,
+    "after": 36,
+    "low_losses": [
+      {
+        "walk": "(0, 0, -3)",
+        "quarter": 0,
+        "before": 4,
+        "after": -1
+      },
+      {
+        "walk": "(0, 0, -3)",
+        "quarter": 1,
+        "before": 4,
+        "after": -1
+      },
+      {
+        "walk": "(0, 0, -3)",
+        "quarter": 2,
+        "before": 4,
+        "after": -1
+      },
+      {
+        "walk": "(0, 0, -3)",
+        "quarter": 3,
+        "before": 4,
+        "after": -1
+      }
+    ]
+  }
+}

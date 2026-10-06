@@ -1,0 +1,78 @@
+--- a/scripts/terrain/features/villages/kit/KitRoomProjections.gd
++++ b/scripts/terrain/features/villages/kit/KitRoomProjections.gd
+@@ -1,5 +1,5 @@
+ extends RefCounted
+-## Shallow, inhabited upper fronts under a retained city cap. The source room
++## Shallow inhabited upper fronts in walls and multi-storey houses. The source room
+ ## remains the bearing; the extension has its own floor, ceiling and returns.
+ const DEPTH := 0.65
+ const CLEARANCE := preload("res://scripts/terrain/features/villages/kit/KitPublicClearance.gd")
+@@ -19,7 +19,7 @@
+ ) -> Array[Dictionary]:
+ 	var has_upper_front := false
+ 	for mass: BuildingMass in masses:
+-		if String(mass.stable_id).contains("wall-room") and mass.storeys.size() > 1:
++		if _eligible(mass, kits):
+ 			has_upper_front = true
+ 			break
+ 	if not has_upper_front:
+@@ -46,13 +46,25 @@
+ 		obstacles.append({"owner": &"", "bounds": tower.bounds})
+ 	var out: Array[Dictionary] = []
+ 	for mass: BuildingMass in masses:
+-		if not String(mass.stable_id).contains("wall-room"):
++		if not _eligible(mass, kits):
+ 			continue
+ 		var own := StringName(String(mass.stable_id).trim_prefix("kit."))
+ 		var kit: BuildingKit = kits.get(own, base)
+ 		if not kit.has_role(&"frontage.return"):
+ 			continue
++		var embedded := String(mass.stable_id).contains("wall-room")
++		var first_projection := out.size()
++		var levels: Array[int] = []
+ 		for index in range(1, mass.storeys.size()):
++			levels.append(index)
++		if not embedded:
++			var shift := posmod(hash([mass.seed, "front.level"]), levels.size())
++			levels = levels.slice(shift) + levels.slice(0, shift)
++		for index: int in levels:
++			# A single selected bay breaks a house's face. Repeating the same
++			# attachment on every floor would recreate the apartment grid.
++			if not embedded and out.size() > first_projection:
++				break
+ 			var storey: Dictionary = mass.storeys[index]
+ 			var band := int(storey.floor_band)
+ 			if (
+@@ -151,7 +163,7 @@
+ 					if tip.size.z > 0:
+ 						occupied.append(pose * tip)
+ 				for obstacle: Dictionary in obstacles:
+-					if obstacle.owner == mass.stable_id:
++					if obstacle.owner == mass.stable_id and not String(obstacle.get("role", "")).begins_with("roof."):
+ 						continue
+ 					for box: AABB in occupied:
+ 						if box.intersects(obstacle.bounds):
+@@ -172,6 +184,10 @@
+ 				# still goes through the ordinary roof/floor obstruction fitter.
+ 				var window: Vector3i = edges[posmod(hash([mass.seed, band, dir]), edges.size())]
+ 				storey.openings[window] = BuildingMass.OPENING_WINDOW
++				if not embedded:
++					for edge: Vector3i in edges:
++						storey.openings[edge] = BuildingMass.OPENING_WINDOW
++
+ 				for item: Dictionary in mass.decor:
+ 					if (
+ 						not item.has("dir")
+@@ -198,3 +214,12 @@
+ 				obstacles.append({"owner": &"", "bounds": pose * local})
+ 				break  # A single coherent projecting frontage per storey.
+ 	return out
++
++
++static func _eligible(mass: BuildingMass, kits: Dictionary) -> bool:
++	if String(mass.stable_id).contains("wall-room"):
++		return mass.storeys.size() > 1
++	var own := StringName(String(mass.stable_id).trim_prefix("kit."))
++	# Only inhabited house owners, never retaining walls or open skywalks.
++	# A middle storey supplies both a bearing room and an upper closure.
++	return kits.has(own) and mass.storeys.size() >= 3

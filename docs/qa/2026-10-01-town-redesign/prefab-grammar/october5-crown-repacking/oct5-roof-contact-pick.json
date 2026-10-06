@@ -1,0 +1,142 @@
+[
+	{
+		"hits": [
+			{
+				"distance": 33.0290985107422,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/kit_spatial_parcel_maze_house_034_k0303_union_0_0",
+				"point": "(-67.66649, 17.55996, -7.530208)"
+			},
+			{
+				"distance": 33.6202812194824,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/kit_spatial_parcel_maze_house_034_k0303_union_0_1",
+				"point": "(-67.44573, 17.2299, -7.092229)"
+			},
+			{
+				"distance": 33.8710784912109,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/kit_spatial_feature_landmark_00_k0221_union_0_0",
+				"point": "(-67.35208, 17.08988, -6.906425)"
+			},
+			{
+				"distance": 34.6464157104492,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/pure_village_gable_left_finish_walnut_00/5",
+				"point": "(-67.06256, 16.65701, -6.33201)"
+			},
+			{
+				"distance": 34.8707084655762,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/kit_spatial_feature_landmark_00_k0221_union_0_1",
+				"point": "(-66.97881, 16.53179, -6.165843)"
+			},
+			{
+				"distance": 36.9859962463379,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/suntail_frame_frame_wall_2_00/40",
+				"point": "(-66.18893, 15.35084, -4.598721)"
+			}
+		],
+		"pixel": "(970.0, 610.0)"
+	},
+	{
+		"hits": [
+			{
+				"distance": 33.2377166748047,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/kit_spatial_parcel_maze_house_034_k0303_union_0_0",
+				"point": "(-67.6925, 17.85737, -7.017683)"
+			},
+			{
+				"distance": 33.8173408508301,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/kit_spatial_parcel_maze_house_034_k0303_union_0_1",
+				"point": "(-67.47787, 17.54098, -6.582024)"
+			},
+			{
+				"distance": 34.3982925415039,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/kit_spatial_feature_landmark_00_k0221_union_0_0",
+				"point": "(-67.26276, 17.22387, -6.145366)"
+			},
+			{
+				"distance": 34.5916976928711,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/kit_spatial_feature_landmark_00_k0223_union_0_1",
+				"point": "(-67.19114, 17.11831, -5.999998)"
+			},
+			{
+				"distance": 34.6123199462891,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/pure_village_gable_left_finish_walnut_00/5",
+				"point": "(-67.1835, 17.10705, -5.984497)"
+			},
+			{
+				"distance": 37.2983627319336,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/suntail_frame_frame_wall_2_00/40",
+				"point": "(-66.1889, 15.64089, -3.965599)"
+			}
+		],
+		"pixel": "(979.0, 596.0)"
+	},
+	{
+		"hits": [
+			{
+				"distance": 32.7648391723633,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/kit_spatial_parcel_maze_house_034_k0303_union_0_2",
+				"point": "(-67.77254, 17.40044, -7.956703)"
+			},
+			{
+				"distance": 33.3251571655273,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/kit_spatial_parcel_maze_house_034_k0303_union_0_0",
+				"point": "(-67.56343, 17.08236, -7.545532)"
+			},
+			{
+				"distance": 33.4373626708984,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/kit_spatial_parcel_maze_house_034_k0303_union_0_1",
+				"point": "(-67.52156, 17.01867, -7.463196)"
+			},
+			{
+				"distance": 33.5996742248535,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/kit_spatial_feature_landmark_00_k0221_union_0_0",
+				"point": "(-67.46098, 16.92653, -7.344091)"
+			},
+			{
+				"distance": 34.5912895202637,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/kit_spatial_feature_landmark_00_k0221_union_0_1",
+				"point": "(-67.09093, 16.36362, -6.616427)"
+			},
+			{
+				"distance": 34.9694175720215,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/pure_village_gable_left_finish_walnut_00/5",
+				"point": "(-66.94981, 16.14897, -6.338953)"
+			}
+		],
+		"pixel": "(966.0, 621.0)"
+	},
+	{
+		"hits": [
+			{
+				"distance": 33.233829498291,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/suntail_decor_cornice_cover_2_00/89",
+				"point": "(-67.96672, 18.47438, -6.455132)"
+			},
+			{
+				"distance": 33.3534126281738,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/kit_spatial_parcel_maze_house_034_k0303_union_0_0",
+				"point": "(-67.92342, 18.41132, -6.363218)"
+			},
+			{
+				"distance": 33.9022636413574,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/kit_spatial_parcel_maze_house_034_k0303_union_0_1",
+				"point": "(-67.72469, 18.12188, -5.941348)"
+			},
+			{
+				"distance": 35.3801231384277,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/kit_spatial_feature_landmark_00_k0223_union_0_0",
+				"point": "(-67.18959, 17.34254, -4.805408)"
+			},
+			{
+				"distance": 38.14404296875,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/suntail_frame_frame_wall_2_00/40",
+				"point": "(-66.18884, 15.88501, -2.680946)"
+			},
+			{
+				"distance": 38.6402473449707,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/suntail_frame_frame_wall_2_w_00/103",
+				"point": "(-66.00917, 15.62334, -2.29954)"
+			}
+		],
+		"pixel": "(996.0, 576.0)"
+	}
+]

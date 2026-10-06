@@ -1,0 +1,38 @@
+--- scripts/terrain/features/villages/fabric/WarrenInteriorCourt.gd
++++ scripts/terrain/features/villages/fabric/WarrenInteriorCourt.gd
+@@ -5,10 +5,17 @@
+ ## the climb. The carver proves a level entrance or rolls back this proposal
+ ## completely. The ordinary court reservation owns the admitted deck.
+ static func propose(context: Dictionary) -> Dictionary:
++	var sites := candidates(context)
++	if sites.is_empty(): return {}
++	reserve(context, sites[0])
++	return sites[0]
++
++
++static func candidates(context: Dictionary) -> Array[Dictionary]:
+ 	var massif: WarrenMassif = context.massif
+ 	var profile: WarrenVillageScaleProfile = context.profile
+ 	if profile.scaled(WarrenPlotReservations.DECK_MAX) < 9:
+-		return {}
++		return []
+ 	var seed_value := int(context.world_seed)
+ 	var empty := WarrenMazeSourcePlan.new(
+ 		seed_value, profile, massif, WarrenExcavation.new(seed_value)
+@@ -95,12 +102,12 @@
+ 				return a.cost < b.cost
+ 			return a.tie < b.tie
+ 	)
+-	if candidates.is_empty():
+-		return {}
+-	var site: Dictionary = candidates[0]
++	return candidates
++
++
++static func reserve(context: Dictionary, site: Dictionary) -> void:
+ 	for c: Vector2i in (site.cells as Array) + site.houses.keys():
+ 		for band in range(
+ 			int(site.floor) - 1, int(site.floor) + WarrenMazeSourcePlan.MIN_HOUSE_BANDS
+ 		):
+ 			context.excavation.construction_reservations[Vector3i(c.x, band, c.y)] = true
+-	return site

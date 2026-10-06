@@ -1,0 +1,71 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_roof_eave_contact_precision.gd
+* test_retriangulation_does_not_retract_an_intact_eave
+* test_real_trim_loss_is_not_hidden_by_roundoff_or_another_material
+* test_native_photo_contact_distinguishes_intact_courses_from_the_obstructed_corner
+3/3 passed.
+
+
+res://tests/test_roof_clip_slivers.gd
+* test_sub_tolerance_clipping_strip_cannot_become_an_invisible_collision_fence
+* test_real_thin_roof_trim_survives_clipping
+* test_untouched_authored_detail_is_not_filtered_by_fragment_tolerance
+3/3 passed.
+
+
+res://tests/test_september27_roofs.gd
+* test_equal_depth_branch_is_buried_at_the_host_ridge
+* test_stepped_parallel_wing_runs_into_its_deeper_neighbour
+* test_crown_sliver_merges_into_a_neighbouring_roof
+* test_photo_towns_have_closed_roofs_without_tiny_wings
+    [Failed]:  [1] expected to equal [0]:  [85830433957479026, &"compact"] eaves cut open by walking clearance ["eave_cut kit.spatial.parcel.maze.house.000/k0062 at (-4.0, 3.0, 8.0)"]
+      at line 78
+* test_roof_over_free_air_stands_on_posts
+4/5 passed.
+
+
+res://tests/test_kit_roof_junctions.gd
+* test_neighbors_share_one_continuous_roof
+* test_join_respects_street_headroom_and_different_roof_datums
+* test_boring_retains_short_supported_tunnels_without_reducing_headroom
+* test_cross_house_wing_reaches_host_and_withdraws_buried_gable
+* test_triangle_subtraction_preserves_uv_and_removes_only_buried_geometry
+* test_native_cross_roof_triangles_are_trimmed_with_matching_collision
+* test_joined_native_roof_has_no_open_seam
+* test_stepped_parallel_roofs_have_no_open_seam
+* test_contained_triangle_removal_preserves_coplanar_and_tolerance_faces
+9/9 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_september27_roofs.gd
+- test_photo_towns_have_closed_roofs_without_tiny_wings
+    [Failed]:  [1] expected to equal [0]:  [85830433957479026, &"compact"] eaves cut open by walking clearance ["eave_cut kit.spatial.parcel.maze.house.000/k0062 at (-4.0, 3.0, 8.0)"]
+          at line 78
+
+Totals
+------
+Scripts               4
+Tests                20
+Passing Tests        19
+Failing Tests         1
+Asserts           12158/12159
+Time              163.323s
+
+
+---- 1 failing tests ----
+

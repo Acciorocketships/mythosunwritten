@@ -1,0 +1,58 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_interior_court_route.gd
+[0m* test_changed_route_keeps_exact_building_foundations
+FOUNDATION_ROOM spatial.parcel.maze.house.004.part00.room00 origin (-4, 7, -1) footprint { (-4, -2): true, (-3, -2): true, (-4, -1): true, (-3, -1): true } audit { "private_cell_count": 8, "addressed": true, "address_door_phase": 0, "terrain_bearing": true, "roof_feature": 1, "flat_roof": true, "roof_preference": &"pitched" }
+FOUNDATION_COLUMN (-4, -2) grid 2 owner public.route macro_mass true source_solid true
+FOUNDATION_AIR macro false
+FOUNDATION_TRANSITION volume.transition.12 from (-2, 4, -2) to (-2, 5, 1)
+FOUNDATION_PLOT { "id": &"house.004", "kind": &"house", "cells": [(-2, -1)], "floor": 7, "top": 17, "door_walk": (-3, 7, -1), "building_id": &"house.004" }
+FOUNDATION_COLUMN (-3, -2) grid 2 owner public.route macro_mass true source_solid true
+FOUNDATION_AIR macro false
+FOUNDATION_TRANSITION volume.transition.12 from (-2, 4, -2) to (-2, 5, 1)
+FOUNDATION_PLOT { "id": &"house.004", "kind": &"house", "cells": [(-2, -1)], "floor": 7, "top": 17, "door_walk": (-3, 7, -1), "building_id": &"house.004" }
+FOUNDATION_COLUMN (-4, -1) grid 2 owner public.route macro_mass true source_solid true
+FOUNDATION_AIR macro false
+FOUNDATION_TRANSITION volume.transition.12 from (-2, 4, -2) to (-2, 5, 1)
+FOUNDATION_PLOT { "id": &"house.004", "kind": &"house", "cells": [(-2, -1)], "floor": 7, "top": 17, "door_walk": (-3, 7, -1), "building_id": &"house.004" }
+FOUNDATION_COLUMN (-3, -1) grid 2 owner public.route macro_mass true source_solid true
+FOUNDATION_AIR macro false
+FOUNDATION_TRANSITION volume.transition.12 from (-2, 4, -2) to (-2, 5, 1)
+FOUNDATION_PLOT { "id": &"house.004", "kind": &"house", "cells": [(-2, -1)], "floor": 7, "top": 17, "door_walk": (-3, 7, -1), "building_id": &"house.004" }
+[31m    [Failed]:  [0mExpected [<null>] to be anything but NULL:  maze fabric gate failed: spatial terrain foundations failed: terrain-bearing room spatial.parcel.maze.house.004.part00.room00 has only 0/4 exact source-bearing columns and no grounded tunnel portal
+      at line 48
+[1m0/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_interior_court_route.gd
+[0m- test_changed_route_keeps_exact_building_foundations
+[31m    [Failed]:  [0mExpected [<null>] to be anything but NULL:  maze fabric gate failed: spatial terrain foundations failed: terrain-bearing room spatial.parcel.maze.house.004.part00.room00 has only 0/4 exact source-bearing columns and no grounded tunnel portal
+          at line 48
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts             0/1
+Time              18.797s
+
+
+Ran Tests matching "changed_route_keeps_exact_building_foundations"
+[31m---- 1 failing tests ----
+[0m

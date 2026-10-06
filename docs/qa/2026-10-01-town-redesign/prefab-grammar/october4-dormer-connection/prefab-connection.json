@@ -1,0 +1,49 @@
+{
+  "source": "assets/PureVillage/Models/Houses/House_11c.glb",
+  "matching_nodes": [
+    {
+      "name": "Roof_Base_30x30_1",
+      "translation": [
+        1.5,
+        9.125,
+        4.625
+      ],
+      "rotation": [
+        0,
+        -0.7071094512939453,
+        0,
+        -0.7071041464805603
+      ],
+      "scale": [
+        -1,
+        1,
+        1
+      ],
+      "children": [
+        78
+      ]
+    },
+    {
+      "name": "Window_Roof_1_3",
+      "translation": [
+        1.5,
+        9.125,
+        4.625
+      ],
+      "rotation": [
+        0,
+        -0.7071094512939453,
+        0,
+        -0.7071041464805603
+      ],
+      "scale": [
+        -1,
+        1,
+        1
+      ],
+      "children": [
+        264
+      ]
+    }
+  ]
+}

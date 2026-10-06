@@ -1,0 +1,9 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3]
+
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/town_corner_roofs/c68224c905fbad241e59.res" id="1_ns8li"]
+
+[resource]
+resource_name = "LP_Village_01"
+cull_mode = 2
+albedo_texture = ExtResource("1_ns8li")
+roughness = 0.8

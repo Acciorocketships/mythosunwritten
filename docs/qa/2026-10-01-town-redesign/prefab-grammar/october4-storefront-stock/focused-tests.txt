@@ -1,0 +1,34 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_native_prefab_reconstruction.gd
+* test_house16c_modular_derivation_reconstructs_every_authored_mesh_and_material
+* test_renamed_finial_preserves_the_complete_house11c
+* test_native_storefronts_keep_their_door_leaves_and_glazing
+3/3 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               1
+Tests                 3
+Passing Tests         3
+Asserts            7861
+Time              14.009s
+
+
+---- All tests passed! ----
+

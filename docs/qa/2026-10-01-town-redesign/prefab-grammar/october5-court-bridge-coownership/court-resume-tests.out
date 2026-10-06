@@ -1,0 +1,54 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_court_flight_reservations.gd
+[0m* test_climbing_stride_cannot_excavate_reserved_bearing_above_its_lower_tread
+* test_reserved_bridge_end_houses_count_as_court_frontages_at_their_room_height
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_interior_court_route.gd
+[0m* test_raised_square_is_inside_the_cluster_and_has_a_level_address
+COURT_SEARCH 10740 { "cells": [(-2, -5), (-1, -5), (0, -5), (-2, -4), (-1, -4), (0, -4), (-2, -3), (-1, -3), (0, -3)], "floor": 2, "entrance": (-1, 2, -2), "houses": { (-3, -5): true, (-2, -6): true, (-1, -6): true, (1, -5): true, (0, -6): true, (-3, -4): true, (1, -4): true }, "ring": 3, "cost": 20, "sides": 3, "tie": 1886013952 }
+* test_square_admission_survives_as_three_finished_room_frontages
+[31m    [Failed]:  [0mExpected [<null>] to be anything but NULL:  maze composition rejected: maze block partition: 1 of 56 plots did not translate (generator bug): bridge.01.end.0.lower: none of 1 rectangles sealed on either door phase (floor 7, top 10, flat_roof true); largest: 1 columns at (-2, -1): footprint has no mass, no bearing, or an illegal height here
+      at line 43
+* test_changed_route_keeps_exact_building_foundations
+[31m    [Failed]:  [0mExpected [<null>] to be anything but NULL:  maze composition rejected: maze block partition: 1 of 56 plots did not translate (generator bug): bridge.01.end.0.lower: none of 1 rectangles sealed on either door phase (floor 7, top 10, flat_roof true); largest: 1 columns at (-2, -1): footprint has no mass, no bearing, or an illegal height here
+      at line 49
+[1m1/3 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_interior_court_route.gd
+[0m- test_square_admission_survives_as_three_finished_room_frontages
+[31m    [Failed]:  [0mExpected [<null>] to be anything but NULL:  maze composition rejected: maze block partition: 1 of 56 plots did not translate (generator bug): bridge.01.end.0.lower: none of 1 rectangles sealed on either door phase (floor 7, top 10, flat_roof true); largest: 1 columns at (-2, -1): footprint has no mass, no bearing, or an illegal height here
+          at line 43
+- test_changed_route_keeps_exact_building_foundations
+[31m    [Failed]:  [0mExpected [<null>] to be anything but NULL:  maze composition rejected: maze block partition: 1 of 56 plots did not translate (generator bug): bridge.01.end.0.lower: none of 1 rectangles sealed on either door phase (floor 7, top 10, flat_roof true); largest: 1 columns at (-2, -1): footprint has no mass, no bearing, or an illegal height here
+          at line 49
+
+Totals
+------
+Scripts               2
+Tests                 5
+Passing Tests         3
+Failing Tests         2
+Asserts           25/27
+Time              104.464s
+
+
+[31m---- 2 failing tests ----
+[0m

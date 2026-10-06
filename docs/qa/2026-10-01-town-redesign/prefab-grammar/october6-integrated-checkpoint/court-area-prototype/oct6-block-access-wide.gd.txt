@@ -1,0 +1,159 @@
+extends RefCounted
+const Access=preload("res://scripts/terrain/features/villages/fabric/WarrenDistrictLandmarkAccess.gd")
+static func apply(plan:WarrenMazeSourcePlan)->WarrenMazeSourcePlan:
+ var streets:=WarrenPlotPlanner.street_bands(plan)
+ var blocked:=WarrenPlotPlanner.blocked_columns(plan)
+ var claims:={}
+ var slots:={}
+ var refusals:Array[Dictionary]=[]
+ var buildings:=WarrenPlotPlanner._seed_buildings(plan,streets,blocked,claims,slots,refusals)
+ WarrenPlotPlanner._grow_buildings(plan,buildings,streets,blocked,claims,slots)
+ WarrenPlotPlanner._orphan_sweep(plan,buildings,streets,blocked,claims,slots)
+ buildings.sort_custom(func(a:Dictionary,b:Dictionary)->bool:return a.cells.size()>b.cells.size())
+ var limit:=int(plan.scale_profile.scaled(WarrenPlotPlanner.BUILDING_CAP))
+ for building:Dictionary in buildings:
+  if building.retired or building.cells.size()<=limit*2:continue
+  print("BLOCK_CANDIDATE ",building.id," size=",building.cells.size()," floor=",building.floor)
+  var members:={}
+  var centre:=Vector2.ZERO
+  for cell:Vector2i in building.cells:
+   members[cell]=true
+   centre+=Vector2(cell)
+  centre/=building.cells.size()
+  var candidates:Array=building.cells.duplicate()
+  candidates.sort_custom(func(a:Vector2i,b:Vector2i)->bool:
+   var da:=Vector2(a).distance_squared_to(centre)
+   var db:=Vector2(b).distance_squared_to(centre)
+   return da<db if da!=db else WarrenPlotPlanner.column_less(a,b))
+  var public:Dictionary={}
+  for cell:Vector3i in plan.excavation.public_cells():public[cell]=true
+  public.merge(plan.court_addresses())
+  var walk:=public.duplicate()
+  for cell:Vector3i in plan.excavation.flight_cells():walk.erase(cell)
+  var trial:=Access.copy_excavation(plan.excavation)
+  for column:Vector2i in plan.massif.columns:
+   if members.has(column):continue
+   var at:=Vector3i(column.x,building.floor,column.y)
+   if public.has(at):continue
+   for band in range(at.y,at.y+WarrenPassageLatticeRules.HEADROOM_BANDS):
+    trial.construction_reservations[Vector3i(at.x,band,at.z)]=true
+  var nearest:=999999
+  var nearest_pair:=[]
+  for member:Vector2i in members:
+   for address:Vector3i in walk:
+    if address.y!=int(building.floor):continue
+    var distance:=absi(member.x-address.x)+absi(member.y-address.z)
+    if distance<nearest:
+     nearest=distance
+     nearest_pair=[member,address]
+  print("BLOCK_NEAREST ",nearest," ",nearest_pair," door=",building.get("door_walk"))
+  for member:Vector2i in candidates:
+   var at:=Vector3i(member.x,building.floor,member.y)
+   if WarrenPassageLatticeRules.slot_is_borable(plan.massif,plan.excavation,at,WarrenPassageLatticeRules.HEADROOM_BANDS):continue
+   var owners:=[]
+   for plot:Dictionary in plan.plots:
+    if plot.cells.has(member):owners.append({"id":plot.id,"kind":plot.kind,"floor":plot.floor,"top":plot.top})
+   var held:=[]
+   for plot:Dictionary in plan.audit.get("preselected_landmarks",[]):
+    if plot.cells.has(member):held.append(plot)
+   var reach:=[]
+   for record:Dictionary in WarrenPlotPlanner.outcomes(plan).get("asset_clearance_reservations",[]):
+    if record.get("columns",[]).has(member) or record.get("support_columns",[]).has(member):reach.append(record)
+   var proposed:=[]
+   for lane:Dictionary in plan.excavation.lanes:
+    if lane.has("landmark_site"):proposed.append(lane.landmark_site)
+   print("BLOCK_OWNERS ",member," current=",owners," held=",held," reach=",reach," proposed=",proposed)
+   var reservations:=[]
+   var carved:=[]
+   for band in range(at.y-1,at.y+WarrenPassageLatticeRules.HEADROOM_BANDS+1):
+    var cell:=Vector3i(at.x,band,at.z)
+    if plan.excavation.carved.has(cell):carved.append(cell)
+    if plan.excavation.construction_reservations.has(cell):reservations.append(cell)
+   print("BLOCK_FORBIDDEN ",member," column=",plan.massif.columns[member]," carved=",carved," reserved=",reservations," bridgefree=",WarrenPassageLatticeRules.bridge_slot_is_free(plan.excavation,at,WarrenPassageLatticeRules.HEADROOM_BANDS))
+  var unrestricted:=Access.copy_excavation(plan.excavation)
+  var unrestricted_found:=false
+  for member:Vector2i in candidates:
+   var linked:=_connection(plan.massif,unrestricted,public,walk,Vector3i(member.x,building.floor,member.y),true)
+   if linked.is_empty():continue
+   print("BLOCK_UNRESTRICTED ",linked)
+   unrestricted_found=true
+   break
+  print("BLOCK_UNRESTRICTED_FOUND ",unrestricted_found)
+  var diagnostics:={"candidates":candidates.size(),"borable":0,"connections":0}
+  for candidate:Vector2i in candidates:
+   if WarrenPassageLatticeRules.slot_is_borable(plan.massif,trial,Vector3i(candidate.x,building.floor,candidate.y),WarrenPassageLatticeRules.HEADROOM_BANDS):diagnostics.borable+=1
+   var connection:=_connection(plan.massif,trial,public,walk,Vector3i(candidate.x,building.floor,candidate.y),true)
+   if not connection.is_empty():
+    diagnostics.connections+=1
+    print("BLOCK_CONNECTION ",candidate," ",connection)
+   if connection.is_empty() or connection.cells.size()<2 or connection.cells.size()>4:continue
+   var excavation:=Access.copy_excavation(plan.excavation)
+   Access.append_connection(excavation,connection)
+   WarrenMazeCarver._finalize_excavation(plan.massif,excavation)
+   excavation.finish_construction()
+   var result:=WarrenMazeSourcePlan.new(plan.world_seed,plan.scale_profile,plan.massif,excavation)
+   result.audit=plan.audit.duplicate(true)
+   for cell:Vector3i in plan.passage_kinds:result.mark_passage(cell,plan.passage_kinds[cell])
+   for cell:Vector3i in connection.cells:result.mark_passage(cell,WarrenMazeSourcePlan.PASSAGE_ALLEY)
+   var valid:=true
+   for plot:Dictionary in plan.plots:
+    if not result.add_plot(plot.duplicate(true)):
+     valid=false
+     print('BLOCK_ACCESS_REFUSED ',result.last_rejection)
+     break
+   if not valid:continue
+   print('BLOCK_ACCESS ',building.id,' columns=',building.cells.size(),' connection=',connection)
+   return result
+  print("BLOCK_DIAGNOSTIC ",diagnostics)
+ return plan
+
+
+static func _connection(massif: WarrenMassif,
+  excavation: WarrenExcavation, public: Dictionary,
+  walk_nodes: Dictionary, candidate: Vector3i, direct := false) -> Dictionary:
+ # Search the legal route domain, including turn length and width. No
+ # completed connection is built and discarded by a later shape audit.
+ if not WarrenPassageLatticeRules.slot_is_borable(massif, excavation,
+   candidate, WarrenPassageLatticeRules.HEADROOM_BANDS):
+  return {}
+ if WarrenPassageLatticeRules.completes_public_square(public, candidate):
+  return {}
+ var queue: Array[Dictionary] = [{"cell": candidate, "path": [candidate], "dir": -1, "run": 0}]
+ var visited: Dictionary = {}
+ var cursor := 0
+ while cursor < queue.size():
+  var state := queue[cursor]
+  cursor += 1
+  var cell := state.cell as Vector3i
+  var path: Array = state.path
+  var occupied := public.duplicate()
+  for member: Vector3i in path:
+   occupied[member] = true
+  for direction_index in WarrenPassageLatticeRules.DIRECTIONS.size():
+   var direction := WarrenPassageLatticeRules.DIRECTIONS[direction_index]
+   var next := cell + Vector3i(direction.x, 0, direction.y)
+   var run := int(state.run) + 1 if direction_index == int(state.dir) else 1
+   if not direct and run > WarrenMazeSourcePlan.MAX_ALLEY_STRAIGHT_RUN:
+    continue
+   if public.has(next):
+    if not walk_nodes.has(next):
+     continue
+    var cells: Array[Vector3i] = []
+    cells.assign(path)
+    cells.reverse()
+    return {"anchor": next, "cells": cells}
+   if path.size() >= 4: continue
+   var key := Vector4i(next.x, next.z, direction_index, run)
+   if visited.has(key) or path.has(next) or not massif.has_column(Vector2i(next.x, next.z)):
+    continue
+   if massif.bearing_at(Vector2i(next.x, next.z)) > candidate.y \
+     or not WarrenPassageLatticeRules.slot_is_borable(massif, excavation, next,
+      WarrenPassageLatticeRules.HEADROOM_BANDS) \
+     or WarrenPassageLatticeRules.completes_public_square(occupied, next):
+    continue
+   visited[key] = true
+   var extended := path.duplicate()
+   extended.append(next)
+   queue.append({"cell": next, "path": extended, "dir": direction_index, "run": run})
+ return {}
+

@@ -1,0 +1,5 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+TURRET_SPACE { "seed": 31, "field": { "rectangles": 119, "ground_bearing": 27, "clear_body": 27, "fronted": 0, "fits": 0, "failures": {  } }, "carved": { "rectangles": 49, "ground_bearing": 27, "clear_body": 26, "fronted": 1, "fits": 0, "failures": { "bearing_outside_massif": 2, "envelope_outside_grid": 2 } } }
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)

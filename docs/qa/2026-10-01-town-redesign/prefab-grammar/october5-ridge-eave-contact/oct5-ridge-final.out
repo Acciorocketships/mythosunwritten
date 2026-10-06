@@ -1,0 +1,50 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_roof_ridge_eave_contacts.gd
+[0m* test_cap_ends_where_eave_covers_its_bearing
+* test_contact_fitting_only_changes_the_foreign_ridge
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_backed_shed_roofs.gd
+[0m* test_narrow_lower_crown_meets_tall_wall_as_shed
+* test_shed_cannot_close_an_upper_door
+* test_shed_keeps_public_headroom_and_needs_a_flush_wall
+* test_native_shed_parts_stop_at_the_backing_wall
+* test_wall_backed_shed_has_no_freestanding_ridge_caps
+* test_backing_and_clip_follow_mirrored_and_transposed_wings
+[1m6/6 passed.
+[0m[4m
+
+res://tests/test_roof_crown_repacking.gd
+[0m* test_offset_wing_reclaims_its_own_second_crown_row
+* test_repacking_never_overrides_reserved_roof_air
+* test_repacking_is_valid_on_both_axes_and_mirrored_wings
+[1m3/3 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               3
+Tests                11
+Passing Tests        11
+Asserts              98
+Time              0.652s
+
+
+[32m---- All tests passed! ----
+[0m

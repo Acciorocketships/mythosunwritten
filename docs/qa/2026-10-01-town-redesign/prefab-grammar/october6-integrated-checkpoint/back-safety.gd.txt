@@ -1,0 +1,26 @@
+extends SceneTree
+const Candidate = preload("/tmp/oct6-back-retry-solver.gd")
+const Roof = preload("res://tests/fixtures/kit_roof_audit.gd")
+const Air = preload("res://tests/fixtures/kit_roof_public_air_audit.gd")
+func _init():call_deferred("_run")
+func _run():
+ var args:=OS.get_cmdline_user_args()
+ var candidate:=args.has("--candidate")
+ var program:=SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
+ var kit:=SuntailBuildingKit.create()
+ var output:={}
+ for job:String in ["53:grand","31:large","43:grand","103:grand"]:
+  var fields:=job.split(":")
+  var profile:=WarrenVillageScaleProfile.for_id(StringName(fields[1]))
+  var spatial:WarrenSpatialPlan
+  if candidate:spatial=Candidate.generate(int(fields[0]),{},program,profile)
+  else:spatial=WarrenVolumetricSolver.generate(int(fields[0]),{},program,profile)
+  if spatial==null:
+   output[job]={"failure":Candidate.last_failure if candidate else WarrenVolumetricSolver.last_failure}
+  else:
+   var fabric:=spatial.compiled_fabric_cache()
+   var built:=KitVillageBuildings.build(spatial,fabric,kit)
+   output[job]={"roof":Roof.audit(built,kit),"floating":KitFloatingMassAudit.audit(spatial,fabric,built.masses).count,"air":Air.audit(built,kit).intrusions}
+  print("SAFETY ",job," ",JSON.stringify(output[job]))
+  FileAccess.open("/tmp/oct6-back-safety-%s.json" % ("candidate" if candidate else "baseline"),FileAccess.WRITE).store_string(JSON.stringify(output,"  "))
+ quit()

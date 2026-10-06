@@ -1,0 +1,12 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+NATIVE_ENTRY_WALK { "scale": 1.0, "seed": 31, "yaw": 0.0, "reverse": false, "passed": true, "end": "(42.00009, 4.564006, -29.33967)", "target": "(42.0, 4.5, -29.50846)" }
+NATIVE_ENTRY_WALK { "scale": 1.0, "seed": 31, "yaw": 0.0, "reverse": true, "passed": true, "end": "(42.00224, 3.000531, -27.18446)", "target": "(42.0, 3.0, -27.0)" }
+NATIVE_ENTRY_WALK { "scale": 2.0, "seed": 31, "yaw": 1.5707963267949, "reverse": false, "passed": true, "end": "(38.96001, 6.160121, -27.00001)", "target": "(38.83313, 6.0, -27.0)" }
+NATIVE_ENTRY_WALK { "scale": 2.0, "seed": 31, "yaw": 1.5707963267949, "reverse": true, "passed": true, "end": "(42.17592, 3.000798, -26.99986)", "target": "(42.0, 3.0, -27.0)" }
+NATIVE_ENTRY_WALK { "scale": 2.0, "seed": 7, "yaw": 3.14159265358979, "reverse": false, "passed": true, "end": "(41.99999, 6.159991, -23.96026)", "target": "(42.0, 6.0, -23.83312)" }
+NATIVE_ENTRY_WALK { "scale": 2.0, "seed": 7, "yaw": 3.14159265358979, "reverse": true, "passed": true, "end": "(42.00015, 3.000804, -27.17597)", "target": "(42.0, 3.0, -27.0)" }
+NATIVE_ENTRY_WALK { "scale": 2.0, "seed": 11, "yaw": 4.71238898038469, "reverse": false, "passed": true, "end": "(45.03999, 6.160124, -26.99999)", "target": "(45.16687, 6.0, -27.0)" }
+NATIVE_ENTRY_WALK { "scale": 2.0, "seed": 11, "yaw": 4.71238898038469, "reverse": true, "passed": true, "end": "(41.82408, 3.000798, -27.00014)", "target": "(42.0, 3.0, -27.0)" }

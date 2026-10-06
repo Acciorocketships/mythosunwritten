@@ -1,0 +1,6 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+window_openings.bin added=[&"pure_village.bay.frame_blue", &"pure_village.bay.frame_red"] removed=[] changed=[]
+window_frames.bin added=[&"pure_village.bay.frame_blue", &"pure_village.bay.frame_red"] removed=[] changed=[]
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)

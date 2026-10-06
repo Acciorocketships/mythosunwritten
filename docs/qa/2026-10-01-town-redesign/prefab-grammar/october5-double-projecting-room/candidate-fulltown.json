@@ -1,0 +1,74 @@
+[
+  {
+    "accepted": [
+      {
+        "entrance": "(-4, 0, -8)",
+        "id": "spatial.feature.landmark.00",
+        "recipe": "anchor.z_native.street_jetties.02.02"
+      },
+      {
+        "entrance": "(42, 0, 24)",
+        "id": "spatial.feature.landmark.01",
+        "recipe": "anchor.z_native.street.02.01"
+      }
+    ],
+    "city": "5:grand",
+    "generic_native_masses": 0,
+    "native_instances": 110,
+    "projecting_window_bays": 2,
+    "selected": [
+      "anchor.z_native.street_jetties.02.02",
+      "anchor.z_native.street.02.01"
+    ]
+  },
+  {
+    "accepted": [
+      {
+        "entrance": "(-5, 0, -7)",
+        "id": "spatial.feature.landmark.00",
+        "recipe": "anchor.z_native.street_jetties.02.02"
+      },
+      {
+        "entrance": "(8, 0, 0)",
+        "id": "spatial.feature.landmark.01",
+        "recipe": "anchor.z_native.street_jetties.03.00"
+      }
+    ],
+    "city": "7:grand",
+    "generic_native_masses": 0,
+    "native_instances": 127,
+    "projecting_window_bays": 2,
+    "selected": [
+      "anchor.z_native.street_jetties.02.02",
+      "anchor.z_native.street_jetties.03.00"
+    ]
+  },
+  {
+    "accepted": [
+      {
+        "entrance": "(-4, 0, -5)",
+        "id": "spatial.feature.landmark.00",
+        "recipe": "anchor.z_native.turret.01"
+      },
+      {
+        "entrance": "(4, 0, 4)",
+        "id": "spatial.feature.landmark.01",
+        "recipe": "anchor.z_native.street_jetties.02.03"
+      },
+      {
+        "entrance": "(-19, 0, -14)",
+        "id": "spatial.feature.landmark.02",
+        "recipe": "anchor.z_native.arcade.01.window_1_2"
+      }
+    ],
+    "city": "8:grand",
+    "generic_native_masses": 0,
+    "native_instances": 359,
+    "projecting_window_bays": 1,
+    "selected": [
+      "anchor.z_native.turret.01",
+      "anchor.z_native.street_jetties.02.03",
+      "anchor.z_native.arcade.01.window_1_2"
+    ]
+  }
+]

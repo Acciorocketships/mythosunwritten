@@ -1,0 +1,14 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="PackedScene" path="res://assets/PureVillage/Models/Architecture/StoneTowerHalf_Window_15x30.glb" id="2"]
+[ext_resource type="PackedScene" path="res://assets/PureVillage/Models/Architecture/StoneTowerHalf_Support_15x30.glb" id="3"]
+[ext_resource type="PackedScene" path="res://assets/PureVillage/Models/Architecture/Roof_Tower_2.glb" id="4"]
+
+[node name="Oriel" type="Node3D"]
+[node name="Body" parent="." instance=ExtResource("2")]
+scale = Vector3(0.75,0.75,0.75)
+[node name="Corbel" parent="." instance=ExtResource("3")]
+scale = Vector3(0.75,0.75,0.75)
+[node name="Spire" parent="." instance=ExtResource("4")]
+position = Vector3(0,2.25,0)
+scale = Vector3(0.75,0.75,0.75)

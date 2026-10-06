@@ -1,0 +1,9 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ASSET pure_village.wall.plaster.window_open
+Wood_1 [P: (-0.197317, 2.66888, -0.299097), S: (1.161332, 0.267605, 0.637176)]
+Wood_1 [P: (0.710065, 1.791068, -0.271203), S: (0.263161, 1.095229, 0.519308)]
+Wood_1 [P: (-0.167272, 1.778176, -0.179625), S: (0.234285, 1.104325, 0.344601)]
+Wood_1 [P: (-0.205845, 1.605971, -0.178439), S: (1.164084, 0.248866, 0.398018)]
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)

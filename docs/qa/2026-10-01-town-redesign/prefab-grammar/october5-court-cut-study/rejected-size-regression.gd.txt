@@ -1,0 +1,16 @@
+extends GutTest
+
+
+func test_broad_interior_square_can_cut_a_deeper_supported_corner():
+	var plan := WarrenMazeSitePlanner.plan(53, {}, WarrenVillageScaleProfile.for_id(&"grand"), &"", false)
+	assert_not_null(plan)
+	if plan == null: return
+	var found := false
+	for plot: Dictionary in plan.plots:
+		if plot.id != &"plaza.00": continue
+		found = true
+		var cells := {}
+		for column: Vector2i in plot.cells: cells[column] = true
+		var bounds := BuildingDesigner._bounds(cells)
+		assert_gte(mini(bounds.size.x, bounds.size.y), 3, "An available supported interior court should become a broad square")
+	assert_true(found)

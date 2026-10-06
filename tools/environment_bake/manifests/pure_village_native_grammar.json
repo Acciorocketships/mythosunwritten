@@ -1,0 +1,1840 @@
+{
+  "assets": [
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.door_3_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Door_3_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.door_4_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Door_4_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.door_9_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Door_9_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.floor_down_end_15x10_2",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Floor_Down_End_15x10_2.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.floor_down_start_15x10_2",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Floor_Down_Start_15x10_2.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.roof_base_30x30_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Base_30x30_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.roof_base_end_10x30_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Base_End_10x30_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.roof_base_end_15x30_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Base_End_15x30_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.roof_base_end_5x30_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Base_End_5x30_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.roof_base_incorner_15x15_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Base_InCorner_15x15_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.roof_base_start_10x30_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Base_Start_10x30_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.roof_base_start_15x30_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Base_Start_15x30_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.roof_base_start_5x30_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Base_Start_5x30_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.roof_bottomcurved_30x5_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_BottomCurved_30x5_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.roof_bottomcurved_end_10x5_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_BottomCurved_End_10x5_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.roof_bottomcurved_end_5x5_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_BottomCurved_End_5x5_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.roof_bottomcurved_start_10x5_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_BottomCurved_Start_10x5_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.roof_bottomcurved_start_5x5_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_BottomCurved_Start_5x5_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.roof_curved_30x30_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Curved_30x30_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.roof_curved_end_15x30_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Curved_End_15x30_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.roof_curved_end_5x30_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Curved_End_5x30_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.roof_curved_incorner_30x30x15_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Curved_InCorner_30x30x15_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.roof_curved_start_15x30_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Curved_Start_15x30_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.roof_curved_start_5x30_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Curved_Start_5x30_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.roof_top30_end_x10_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Top30_End_x10_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.roof_top30_end_x15_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Top30_End_x15_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.roof_top30_end_x5_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Top30_End_x5_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.roof_top30_start_x10",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Top30_Start_x10.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.roof_top30_start_x15_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Top30_Start_x15_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.roof_top30_start_x30_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Top30_Start_x30_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.roof_top30_start_x5_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Top30_Start_x5_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.stone_corner_end_x15",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Stone_Corner_End_x15.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.stone_corner_end_x30",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Stone_Corner_End_x30.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.stone_corner_end_x7",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Stone_Corner_End_x7.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.stone_corner_start_x15",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Stone_Corner_Start_x15.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.stone_stair_11",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Stone_Stair_11.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.stone_stair_2",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Stone_Stair_2.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.support_4",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Support_4.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wallstone_bottomentrance_middle_15x30",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/WallStone_BottomEntrance_Middle_15x30.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wallstone_bottom_end_15x15",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/WallStone_Bottom_End_15x15.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wallstone_bottom_middle_30x15",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/WallStone_Bottom_Middle_30x15.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wallstone_middle1_30x30_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/WallStone_Middle1_30x30_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wallstone_middle_30x10_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/WallStone_Middle_30x10_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wall_cutbenddown_end_30x30_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Wall_CutBendDown_End_30x30_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wall_cutbenddown_end_30x30_3",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Wall_CutBendDown_End_30x30_3.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wall_cutbenddown_start_30x30_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Wall_CutBendDown_Start_30x30_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wall_cutbenddown_start_30x30_3",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Wall_CutBendDown_Start_30x30_3.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wall_cut_end_15x30_3",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Wall_Cut_End_15x30_3.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wall_cut_start_15x30_3",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Wall_Cut_Start_15x30_3.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wall_end_10x30_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Wall_End_10x30_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wall_end_15x10_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Wall_End_15x10_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wall_end_15x30_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Wall_End_15x30_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wall_end_20x30_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Wall_End_20x30_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wall_end_30x10_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Wall_End_30x10_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wall_end_30x30_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Wall_End_30x30_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wall_middle1_30x10_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Wall_Middle1_30x10_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wall_middle1_30x30_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Wall_Middle1_30x30_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wall_peak_30x30_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Wall_Peak_30x30_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wall_start_15x10_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Wall_Start_15x10_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wall_start_15x30_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Wall_Start_15x30_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wall_start_30x10_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Wall_Start_30x10_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wall_start_30x30_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Wall_Start_30x30_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.windowsolo_6",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/WindowSolo_6.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.window_12_2",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Window_12_2.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.window_14_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Window_14_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.window_18_2",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Window_18_2.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.window_1_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Window_1_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.window_1_2",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Window_1_2.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.window_1_3",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Window_1_3.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.window_3_1",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Window_3_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.window_5_2",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Window_5_2.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wood_beam_3x30_2",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Wood_Beam_3x30_2.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.roof_base_30x30_1.mirror_x",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "mirror_axis": "x",
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Base_30x30_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wallstone_bottom_end_15x15.mirror_x",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "mirror_axis": "x",
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/WallStone_Bottom_End_15x15.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wall_end_20x30_1.mirror_x",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "mirror_axis": "x",
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Wall_End_20x30_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wall_end_30x30_1.mirror_x",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "mirror_axis": "x",
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Wall_End_30x30_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wall_peak_30x30_1.mirror_x",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "mirror_axis": "x",
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Wall_Peak_30x30_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.wall_start_15x10_1.mirror_x",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "mirror_axis": "x",
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Wall_Start_15x10_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    },
+    {
+      "collision_profile": "building_trimesh",
+      "id": "pure_village.native.window_1_1.mirror_x",
+      "max_collision_pieces": 1,
+      "max_collision_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 20,
+      "max_visual_triangles": 40000,
+      "merge_pieces": true,
+      "mirror_axis": "x",
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "source": "res://assets/PureVillage/Models/Architecture/Window_1_1.glb",
+      "supports_instance_color": true,
+      "tags": [
+        "village",
+        "pure_village_native_grammar",
+        "building"
+      ],
+      "tint_group": "identity"
+    }
+  ],
+  "default_scale": [
+    1,
+    1,
+    1
+  ],
+  "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+  "pack": "pure_village_native_grammar",
+  "texture_policy": {
+    "compression": "basis_universal",
+    "mipmaps": true,
+    "namespace": "pure_village_kit"
+  }
+}

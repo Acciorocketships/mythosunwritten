@@ -1,0 +1,50 @@
+{
+  "outcomes": [],
+  "planned": [],
+  "skywalks": [
+    {
+      "cell": "(0, 2, -7)",
+      "cross": "(1, 0, 0)",
+      "crosses_street": true,
+      "enclosed": true,
+      "gap": 2,
+      "private_connection": true,
+      "step": "(0, 0, 1)",
+      "walk_width": 2,
+      "width": 2
+    },
+    {
+      "cell": "(4, 2, -3)",
+      "cross": "(1, 0, 0)",
+      "crosses_street": true,
+      "enclosed": true,
+      "gap": 2,
+      "private_connection": true,
+      "step": "(0, 0, 1)",
+      "walk_width": 2,
+      "width": 2
+    },
+    {
+      "cell": "(-4, 10, -3)",
+      "cross": "(1, 0, 0)",
+      "crosses_street": true,
+      "enclosed": true,
+      "gap": 6,
+      "private_connection": true,
+      "step": "(0, 0, 1)",
+      "walk_width": 2,
+      "width": 2
+    },
+    {
+      "cell": "(-6, 12, -3)",
+      "cross": "(0, 0, 0)",
+      "crosses_street": true,
+      "enclosed": true,
+      "gap": 4,
+      "private_connection": true,
+      "step": "(0, 0, 1)",
+      "walk_width": 1,
+      "width": 1
+    }
+  ]
+}

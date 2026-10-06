@@ -1,0 +1,39 @@
+extends GutTest
+const Designer = preload("res://scripts/terrain/features/villages/kit/BuildingDesigner.gd")
+
+func _build(clearance_restored: bool) -> Dictionary:
+ var data: Dictionary = str_to_var(FileAccess.get_file_as_string("res://tests/fixtures/continuous-crown-cover.txt"))
+ var mass := BuildingMass.new()
+ mass.storeys.assign(data.storeys.duplicate(true))
+ var designer = Designer.new(SuntailBuildingKit.create())
+ designer.forbidden = func(cell: Vector2i, band: int): return not clearance_restored and data.blocked.has(Vector3i(cell.x,band,cell.y))
+ designer.covered = func(cell: Vector2i, band: int): return band == 8 and cell in [Vector2i(8,3),Vector2i(9,3)]
+ var rng := RandomNumberGenerator.new()
+ rng.seed = 53
+ designer._assign_roofs(mass,rng,&"red")
+ return {"mass":mass,"exposed":data.exposed}
+
+func test_obstructed_l_crown_is_closed_without_a_miniature_gable():
+ var result := _build(false)
+ var coverage := {}
+ for roof: Dictionary in result.mass.roofs:
+  assert_ne(int(roof.eave_band),8,"This obstructed crown cannot host a full-depth pitched wing")
+ for deck: Dictionary in result.mass.decks:
+  if int(deck.band) != 8: continue
+  if deck.cells.has(Vector2i(10,3)):
+   assert_false(deck.rails,"The replaced miniature gable is roof closure, not a new public terrace")
+  for cell: Vector2i in deck.cells:
+   assert_false(coverage.has(cell),"Coverings do not overlap")
+   coverage[cell] = true
+ assert_eq(coverage.size(),result.exposed.size(),"Every exposed cell is closed")
+ for cell: Vector2i in result.exposed: assert_has(coverage,cell)
+
+func test_restored_clearance_retains_full_depth_pitched_wings():
+ var result := _build(true)
+ var roofs := 0
+ for roof: Dictionary in result.mass.roofs:
+  if int(roof.eave_band) != 8: continue
+  roofs += 1
+  var rect: Rect2i = roof.rect
+  assert_gte(mini(rect.size.x,rect.size.y),2,"Clear crowns keep proper roof wings")
+ assert_gt(roofs,0,"The closure repair must not flatten a clear crown")

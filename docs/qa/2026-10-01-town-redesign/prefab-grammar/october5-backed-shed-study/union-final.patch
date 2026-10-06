@@ -1,0 +1,29 @@
+--- /tmp/oct5-before-shed-union.gd
++++ scripts/terrain/features/villages/kit/KitRoofMeshUnion.gd
+@@ -70,8 +70,9 @@
+ 	var out: Array[Dictionary] = []
+ 	var axis := int(wing.axis)
+ 	const FAR := 100000.0
+-	for key: String in ["clip_min", "clip_max", "verge_min", "verge_max"]:
++	for key: String in ["clip_min", "clip_max", "verge_min", "verge_max", "shed_min", "shed_max"]:
+ 		if not wing.has(key): continue
++		var cut_axis := 1-axis if key.begins_with("shed_") else axis
+ 		var at := float(wing[key]) * kit.module_width
+ 		if key.begins_with("verge_"):
+ 			var rect: Rect2i = wing.rect
+@@ -79,12 +80,12 @@
+ 				if key.ends_with("min") else float(rect.end[axis]) * kit.module_width + float(wing[key])
+ 		var lo := Vector3(-FAR, -FAR, -FAR)
+ 		var hi := Vector3(FAR, FAR, FAR)
+-		if key.ends_with("min"): hi[0 if axis == 0 else 2] = at
+-		else: lo[0 if axis == 0 else 2] = at
++		if key.ends_with("min"): hi[0 if cut_axis == 0 else 2] = at
++		else: lo[0 if cut_axis == 0 else 2] = at
+ 		var volume := box_volume(AABB(lo, hi - lo))
+ 		# Do not recover the local cut from FAR + size: float32 cancellation
+ 		# moves a 0.157 m verge to 0.15625 and slices a flush native cap.
+-		var plane_index := (0 if axis == 0 else 4) + (0 if key.ends_with("min") else 1)
++		var plane_index := (0 if cut_axis == 0 else 4) + (0 if key.ends_with("min") else 1)
+ 		var plane: Plane = volume.planes[plane_index]
+ 		plane.d = at if key.ends_with("min") else -at
+ 		volume.planes[plane_index] = plane

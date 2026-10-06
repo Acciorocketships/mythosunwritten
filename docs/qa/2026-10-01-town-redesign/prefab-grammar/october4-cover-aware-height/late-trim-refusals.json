@@ -1,0 +1,387 @@
+[
+	{
+		"crown_trim": {
+			"reason": "door or balcony",
+			"removed": 0
+		},
+		"field": [
+			{
+				"base": 0,
+				"bearing": 4,
+				"column": "(1, -3)",
+				"top": 10
+			},
+			{
+				"base": 0,
+				"bearing": 4,
+				"column": "(1, -3)",
+				"top": 10
+			},
+			{
+				"base": 0,
+				"bearing": 4,
+				"column": "(1, -3)",
+				"top": 10
+			},
+			{
+				"base": 0,
+				"bearing": 4,
+				"column": "(1, -3)",
+				"top": 10
+			},
+			{
+				"base": 0,
+				"bearing": 4,
+				"column": "(0, -3)",
+				"top": 12
+			},
+			{
+				"base": 0,
+				"bearing": 4,
+				"column": "(0, -3)",
+				"top": 12
+			},
+			{
+				"base": 0,
+				"bearing": 4,
+				"column": "(0, -3)",
+				"top": 12
+			},
+			{
+				"base": 0,
+				"bearing": 4,
+				"column": "(0, -3)",
+				"top": 12
+			},
+			{
+				"base": 0,
+				"bearing": 4,
+				"column": "(-1, -3)",
+				"top": 12
+			},
+			{
+				"base": 0,
+				"bearing": 4,
+				"column": "(-1, -3)",
+				"top": 12
+			},
+			{
+				"base": 0,
+				"bearing": 4,
+				"column": "(-1, -3)",
+				"top": 12
+			},
+			{
+				"base": 0,
+				"bearing": 4,
+				"column": "(-1, -3)",
+				"top": 12
+			}
+		],
+		"floors": [
+			{
+				"cells": [
+					"(2, -6)",
+					"(3, -6)",
+					"(2, -5)",
+					"(3, -5)",
+					"(0, -6)",
+					"(1, -6)",
+					"(0, -5)",
+					"(1, -5)",
+					"(-2, -6)",
+					"(-1, -6)",
+					"(-2, -5)",
+					"(-1, -5)"
+				],
+				"floor": 4,
+				"inset": false
+			},
+			{
+				"cells": [
+					"(2, -6)",
+					"(3, -6)",
+					"(3, -5)",
+					"(0, -6)",
+					"(1, -6)",
+					"(-2, -6)",
+					"(-1, -6)",
+					"(-2, -5)",
+					"(-1, -5)"
+				],
+				"floor": 6,
+				"inset": false
+			},
+			{
+				"cells": [
+					"(2, -6)",
+					"(3, -6)",
+					"(2, -5)",
+					"(3, -5)",
+					"(0, -6)",
+					"(1, -6)",
+					"(0, -5)",
+					"(1, -5)",
+					"(-2, -6)",
+					"(-1, -6)",
+					"(-2, -5)",
+					"(-1, -5)"
+				],
+				"floor": 8,
+				"inset": false
+			},
+			{
+				"cells": [
+					"(2, -6)",
+					"(3, -6)",
+					"(2, -5)",
+					"(3, -5)",
+					"(0, -6)",
+					"(1, -6)",
+					"(-2, -6)",
+					"(-1, -6)",
+					"(-2, -5)"
+				],
+				"floor": 10,
+				"inset": false
+			},
+			{
+				"cells": [
+					"(2, -6)",
+					"(3, -6)",
+					"(2, -5)",
+					"(3, -5)",
+					"(2, -4)",
+					"(3, -4)",
+					"(2, -3)",
+					"(3, -3)",
+					"(0, -6)",
+					"(1, -6)",
+					"(0, -5)",
+					"(1, -5)",
+					"(-4, -6)",
+					"(-3, -6)",
+					"(-2, -6)",
+					"(-1, -6)",
+					"(-4, -5)",
+					"(-3, -5)",
+					"(-2, -5)",
+					"(-1, -5)"
+				],
+				"floor": 12,
+				"inset": false
+			}
+		],
+		"id": "kit.spatial.parcel.maze.house.010",
+		"roofs": [
+			{
+				"axis": 1,
+				"chimney": true,
+				"chimney_end": 0,
+				"colour": "red",
+				"dormers": {
+
+				},
+				"eave_band": 14,
+				"extend_max": 0,
+				"extend_min": 0,
+				"open_max": false,
+				"open_min": false,
+				"rect": "[P: (-4, -6), S: (3, 2)]",
+				"ridge_peaks": false,
+				"union_index": 17
+			},
+			{
+				"axis": 0,
+				"colour": "red",
+				"dormers": {
+					"(1, 0)": true
+				},
+				"eave_band": 14,
+				"extend_max": 0,
+				"extend_min": 1,
+				"open_max": false,
+				"open_min": true,
+				"rect": "[P: (-1, -6), S: (5, 2)]",
+				"ridge_peaks": false,
+				"union_index": 18
+			},
+			{
+				"axis": 0,
+				"colour": "red",
+				"dormers": {
+
+				},
+				"eave_band": 14,
+				"extend_max": 0,
+				"extend_min": 0,
+				"open_max": false,
+				"open_min": false,
+				"rect": "[P: (2, -4), S: (2, 2)]",
+				"ridge_peaks": false,
+				"union_index": 19
+			}
+		]
+	},
+	{
+		"crown_trim": {
+			"reason": "protected neighbor or public air",
+			"removed": 0
+		},
+		"field": [
+			{
+				"base": 0,
+				"bearing": 4,
+				"column": "(0, -5)",
+				"top": 10
+			},
+			{
+				"base": 0,
+				"bearing": 4,
+				"column": "(0, -5)",
+				"top": 10
+			},
+			{
+				"base": 0,
+				"bearing": 4,
+				"column": "(1, -5)",
+				"top": 10
+			},
+			{
+				"base": 0,
+				"bearing": 4,
+				"column": "(1, -5)",
+				"top": 10
+			},
+			{
+				"base": 0,
+				"bearing": 4,
+				"column": "(0, -5)",
+				"top": 10
+			},
+			{
+				"base": 0,
+				"bearing": 4,
+				"column": "(0, -5)",
+				"top": 10
+			},
+			{
+				"base": 0,
+				"bearing": 4,
+				"column": "(1, -5)",
+				"top": 10
+			},
+			{
+				"base": 0,
+				"bearing": 4,
+				"column": "(1, -5)",
+				"top": 10
+			}
+		],
+		"floors": [
+			{
+				"cells": [
+					"(0, -10)",
+					"(1, -10)",
+					"(2, -10)",
+					"(3, -10)",
+					"(0, -9)",
+					"(1, -9)",
+					"(2, -9)",
+					"(3, -9)"
+				],
+				"floor": 4,
+				"inset": false
+			},
+			{
+				"cells": [
+					"(0, -10)",
+					"(1, -10)",
+					"(2, -10)",
+					"(3, -10)",
+					"(0, -9)",
+					"(3, -9)"
+				],
+				"floor": 6,
+				"inset": false
+			},
+			{
+				"cells": [
+					"(0, -10)",
+					"(1, -10)",
+					"(2, -10)",
+					"(3, -10)",
+					"(0, -9)",
+					"(1, -9)",
+					"(2, -9)",
+					"(3, -9)"
+				],
+				"floor": 8,
+				"inset": false
+			},
+			{
+				"cells": [
+					"(0, -10)",
+					"(3, -10)",
+					"(0, -9)",
+					"(1, -9)",
+					"(2, -9)",
+					"(3, -9)"
+				],
+				"floor": 10,
+				"inset": false
+			},
+			{
+				"cells": [
+					"(0, -9)",
+					"(1, -9)",
+					"(2, -9)",
+					"(3, -9)",
+					"(0, -8)",
+					"(1, -8)",
+					"(2, -8)",
+					"(3, -8)"
+				],
+				"floor": 12,
+				"inset": false
+			}
+		],
+		"id": "kit.spatial.parcel.maze.house.015",
+		"roofs": [
+			{
+				"axis": 1,
+				"chimney": false,
+				"chimney_end": 1,
+				"clip_max": -5.0,
+				"colour": "red",
+				"dormers": {
+
+				},
+				"eave_band": 14,
+				"extend_max": 2,
+				"extend_min": 0,
+				"open_max": true,
+				"open_min": false,
+				"rect": "[P: (0, -9), S: (2, 2)]",
+				"ridge_peaks": true,
+				"union_index": 22
+			},
+			{
+				"axis": 0,
+				"clip_min": 1.0,
+				"colour": "blue",
+				"dormers": {
+
+				},
+				"eave_band": 14,
+				"extend_max": 0,
+				"extend_min": 1,
+				"open_max": false,
+				"open_min": true,
+				"rect": "[P: (2, -9), S: (2, 2)]",
+				"ridge_peaks": false,
+				"union_index": 23
+			}
+		]
+	}
+]

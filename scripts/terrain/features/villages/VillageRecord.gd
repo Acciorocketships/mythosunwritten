@@ -21,6 +21,8 @@ var street_axis := Vector2.ZERO
 var urban_fabric: VillageUrbanFabricPlan
 var outskirts: VillageOutskirtsPlan
 var prop_results: Dictionary = {}
+## Conservative seeded source/adapter bound, independent of the final payload.
+var discovery_bound := Rect2()
 
 func _init(p_stable_id: StringName, p_centre: Vector2, p_bounds: Rect2,
 		p_payload: EnvironmentInstancePayload,
@@ -44,7 +46,7 @@ func _init(p_stable_id: StringName, p_centre: Vector2, p_bounds: Rect2,
 func validate(program: VillageProgram) -> bool:
 	if program == null or not payload.validate() or not bounds.has_area():
 		return false
-	var permitted := program.record_bound(centre).grow(TerrainGradePatch.NATIVE_CONTROL_MARGIN + 0.001)
+	var permitted := (discovery_bound if discovery_bound.has_area() else program.record_bound(centre)).grow(TerrainGradePatch.NATIVE_CONTROL_MARGIN + 0.001)
 	if not permitted.encloses(bounds):
 		return false
 	for shape: FeatureGroundShape in surface_shapes + clearance_shapes:

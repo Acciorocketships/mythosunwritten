@@ -1,0 +1,41 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_pure_village_native_roof.gd
+[0m* test_two_bay_derivation_reconstructs_authored_roof_and_gable_geometry
+* test_same_rule_reconstructs_longer_authored_house_without_retuning
+* test_native_shell_reconstructs_whole_house_four
+* test_length_changes_all_courses_ridges_and_end_closures_together
+[1m4/4 passed.
+[0m[4m
+
+res://tests/test_pure_village_native_house.gd
+[0m* test_seeded_openings_are_repeatable_and_replace_solid_bays
+* test_native_door_and_stone_window_match_authored_bay_interfaces
+[1m2/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               2
+Tests                 6
+Passing Tests         6
+Asserts            3843
+Time              12.154s
+
+
+[32m---- All tests passed! ----
+[0m

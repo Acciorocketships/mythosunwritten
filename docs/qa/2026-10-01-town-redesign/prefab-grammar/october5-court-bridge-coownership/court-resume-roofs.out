@@ -1,0 +1,16 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+TOWN 13:grand houses=36 gable_front=19/35 minority=0.47 pairs=4 twins=1 run=2 same_ridge=2 levels=7 compound=15 | tiny=0 open=0 holes=0 air=0 eaves=0
+TOWN 43:grand houses=33 gable_front=12/28 minority=0.42 pairs=12 twins=0 run=0 same_ridge=3 levels=10 compound=18 | tiny=0 open=0 holes=1 air=0 eaves=0
+TOWN 301:grand houses=26 gable_front=14/26 minority=0.46 pairs=8 twins=0 run=0 same_ridge=3 levels=10 compound=14 | tiny=0 open=0 holes=0 air=0 eaves=0
+TOWN 8:grand houses=23 gable_front=9/22 minority=0.39 pairs=4 twins=0 run=0 same_ridge=0 levels=12 compound=14 | tiny=1 open=0 holes=1 air=0 eaves=0
+TOWN 9:grand houses=19 gable_front=11/19 minority=0.42 pairs=1 twins=0 run=0 same_ridge=0 levels=10 compound=9 | tiny=0 open=0 holes=0 air=0 eaves=0
+TOWN 31:large houses=18 gable_front=8/14 minority=0.44 pairs=8 twins=0 run=0 same_ridge=4 levels=7 compound=11 | tiny=0 open=0 holes=0 air=0 eaves=0
+TOWN 53:grand houses=29 gable_front=13/24 minority=0.41 pairs=12 twins=0 run=0 same_ridge=4 levels=11 compound=11 | tiny=0 open=0 holes=0 air=0 eaves=0
+TOWN 63:grand houses=13 gable_front=8/13 minority=0.46 pairs=2 twins=0 run=0 same_ridge=2 levels=5 compound=9 | tiny=0 open=0 holes=0 air=0 eaves=0
+TOWN 83:grand houses=25 gable_front=11/23 minority=0.44 pairs=3 twins=0 run=0 same_ridge=1 levels=9 compound=15 | tiny=0 open=0 holes=0 air=0 eaves=0
+TOWN 103:grand houses=22 gable_front=13/18 minority=0.36 pairs=4 twins=0 run=0 same_ridge=4 levels=7 compound=10 | tiny=1 open=0 holes=0 air=0 eaves=0
+TOTAL { "houses": 244.0, "gable_front": 118.0, "fronted": 222.0, "axis_minority": 4.29377246047569, "pairs": 58.0, "twins": 1.0, "twin_run": 2.0, "same_ridge": 23.0, "ridge_levels": 88.0, "compound": 126.0, "audit_roofs": 492, "audit_tiny": 2, "audit_open_exposed": 0, "audit_gable_holes": 2, "audit_air_unsupported": 0, "audit_eaves_cut": 0, &"towns": 10 }
+SUMMARY gable_front=0.53 twin_share=0.02 same_ridge_share=0.40 compound=0.52 mean_twin_run=0.20 minority=0.43

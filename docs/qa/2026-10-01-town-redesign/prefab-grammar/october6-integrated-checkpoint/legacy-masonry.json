@@ -1,0 +1,82 @@
+[
+  {
+    "asset": "sfv.fabric.wall.rock.plain.002.miter3",
+    "id": "spatial.fabric.spatial.maze_bridge_end.00.00.room00/ground-masonry/wall.0.1.0",
+    "pose": "Transform3D(1, 0, 0, 0, 0.49999985, 0, 0, 0, 1, 3.75, 7.3389, 1.9180562)"
+  },
+  {
+    "asset": "sfv.fabric.wall.rock.plain.002.miter3",
+    "id": "spatial.fabric.spatial.maze_bridge_end.00.00.room00/ground-masonry/wall.0.-1.0",
+    "pose": "Transform3D(-1, 0, -8.742278e-08, 0, 0.49999985, 0, 8.742278e-08, 0, -1, 3.75, 7.3389, -0.418056)"
+  },
+  {
+    "asset": "sfv.fabric.wall.rock.plain.002.miter3",
+    "id": "spatial.fabric.spatial.maze_bridge_end.00.00.room00/ground-masonry/wall.-1.0.0",
+    "pose": "Transform3D(-4.371139e-08, 0, -1, 0, 0.49999985, 0, 1, 0, -4.371139e-08, 2.5819438, 7.3389, 0.75)"
+  },
+  {
+    "asset": "sfv.fabric.wall.rock.plain.002.miter3",
+    "id": "spatial.fabric.spatial.maze_bridge_end.00.00.room00/ground-masonry/wall.1.0.0",
+    "pose": "Transform3D(-4.371139e-08, 0, 1, 0, 0.49999985, 0, -1, 0, -4.371139e-08, 4.9180565, 7.3389, 0.75)"
+  },
+  {
+    "asset": "sfv.fabric.wall.rock.plain.002.miter3",
+    "id": "spatial.fabric.spatial.maze_bridge_end.00.01.room00/ground-masonry/wall.0.1.0",
+    "pose": "Transform3D(1, 0, 0, 0, 0.49999985, 0, 0, 0, 1, 9.75, 7.3389, 1.9180562)"
+  },
+  {
+    "asset": "sfv.fabric.wall.rock.plain.002.miter3",
+    "id": "spatial.fabric.spatial.maze_bridge_end.00.01.room00/ground-masonry/wall.0.-1.0",
+    "pose": "Transform3D(-1, 0, -8.742278e-08, 0, 0.49999985, 0, 8.742278e-08, 0, -1, 9.75, 7.3389, -0.418056)"
+  },
+  {
+    "asset": "sfv.fabric.wall.rock.plain.002.miter3",
+    "id": "spatial.fabric.spatial.maze_bridge_end.00.01.room00/ground-masonry/wall.-1.0.0",
+    "pose": "Transform3D(-4.371139e-08, 0, -1, 0, 0.49999985, 0, 1, 0, -4.371139e-08, 8.5819435, 7.3389, 0.75)"
+  },
+  {
+    "asset": "sfv.fabric.wall.rock.plain.002.miter3",
+    "id": "spatial.fabric.spatial.maze_bridge_end.00.01.room00/ground-masonry/wall.1.0.0",
+    "pose": "Transform3D(-4.371139e-08, 0, 1, 0, 0.49999985, 0, -1, 0, -4.371139e-08, 10.9180565, 7.3389, 0.75)"
+  },
+  {
+    "asset": "sfv.fabric.wall.rock.plain.002.miter3",
+    "id": "spatial.fabric.spatial.maze_bridge_end.02.00.room00/ground-masonry/wall.0.1.0",
+    "pose": "Transform3D(1, 0, 0, 0, 0.49999985, 0, 0, 0, 1, 3.75, 5.8389, 7.9180565)"
+  },
+  {
+    "asset": "sfv.fabric.wall.rock.plain.002.miter3",
+    "id": "spatial.fabric.spatial.maze_bridge_end.02.00.room00/ground-masonry/wall.0.-1.0",
+    "pose": "Transform3D(-1, 0, -8.742278e-08, 0, 0.49999985, 0, 8.742278e-08, 0, -1, 3.75, 5.8389, 5.581944)"
+  },
+  {
+    "asset": "sfv.fabric.wall.rock.plain.002.miter3",
+    "id": "spatial.fabric.spatial.maze_bridge_end.02.00.room00/ground-masonry/wall.-1.0.0",
+    "pose": "Transform3D(-4.371139e-08, 0, -1, 0, 0.49999985, 0, 1, 0, -4.371139e-08, 2.5819438, 5.8389, 6.75)"
+  },
+  {
+    "asset": "sfv.fabric.wall.rock.plain.002.miter3",
+    "id": "spatial.fabric.spatial.maze_bridge_end.02.00.room00/ground-masonry/wall.1.0.0",
+    "pose": "Transform3D(-4.371139e-08, 0, 1, 0, 0.49999985, 0, -1, 0, -4.371139e-08, 4.9180565, 5.8389, 6.75)"
+  },
+  {
+    "asset": "sfv.fabric.wall.rock.plain.002.miter3",
+    "id": "spatial.fabric.spatial.maze_bridge_end.02.01.room00/ground-masonry/wall.0.1.0",
+    "pose": "Transform3D(1, 0, 0, 0, 0.49999985, 0, 0, 0, 1, 9.75, 5.8389, 7.9180565)"
+  },
+  {
+    "asset": "sfv.fabric.wall.rock.plain.002.miter3",
+    "id": "spatial.fabric.spatial.maze_bridge_end.02.01.room00/ground-masonry/wall.0.-1.0",
+    "pose": "Transform3D(-1, 0, -8.742278e-08, 0, 0.49999985, 0, 8.742278e-08, 0, -1, 9.75, 5.8389, 5.581944)"
+  },
+  {
+    "asset": "sfv.fabric.wall.rock.plain.002.miter3",
+    "id": "spatial.fabric.spatial.maze_bridge_end.02.01.room00/ground-masonry/wall.-1.0.0",
+    "pose": "Transform3D(-4.371139e-08, 0, -1, 0, 0.49999985, 0, 1, 0, -4.371139e-08, 8.5819435, 5.8389, 6.75)"
+  },
+  {
+    "asset": "sfv.fabric.wall.rock.plain.002.miter3",
+    "id": "spatial.fabric.spatial.maze_bridge_end.02.01.room00/ground-masonry/wall.1.0.0",
+    "pose": "Transform3D(-4.371139e-08, 0, 1, 0, 0.49999985, 0, -1, 0, -4.371139e-08, 10.9180565, 5.8389, 6.75)"
+  }
+]

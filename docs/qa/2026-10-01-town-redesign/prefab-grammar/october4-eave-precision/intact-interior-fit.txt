@@ -1,0 +1,8 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+FIT 0 { "rect": [P: (-1, 4), S: (2, 2)], "axis": 0, "eave_band": 2, "colour": &"red", "open_min": true, "open_max": true, "extend_min": 0, "extend_max": 0, "dormers": { (0, -1): true }, "ridge_peaks": false, &"chimney": true, &"chimney_end": 0, &"union_index": 0, &"chimney_u": -1.0 }
+roof.red.eave (-2.0, 3.0, 8.0) raw 25.9851880942006 lost -0.00000084102612
+roof.red.eave (0.0, 3.0, 8.0) raw 25.9851880429778 lost 0.00000009923679
+roof.red.eave (2.0, 3.0, 8.0) raw 25.9851878054906 lost -0.00000014901161

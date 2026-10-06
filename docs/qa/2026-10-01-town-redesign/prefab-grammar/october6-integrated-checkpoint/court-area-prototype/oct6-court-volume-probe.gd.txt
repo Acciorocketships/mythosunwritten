@@ -1,0 +1,9 @@
+extends SceneTree
+func _init():
+ var source:=preload("/tmp/oct6-block-site.gd").plan(31,{},WarrenVillageScaleProfile.for_id(&"large"),&"",false)
+ var volume:=preload("/tmp/oct6-court-maze-adapter.gd").to_volume_plan(source)
+ print('VOLUME ',volume,' REASON ',preload("/tmp/oct6-court-maze-adapter.gd").last_failure)
+ print('SOURCE_SEALED ',source.is_sealed(),' REASON ',source.last_rejection)
+ for p:Dictionary in source.plots:
+  if p.cells.size()>6:print('WIDE_PLOT ',p)
+ quit()

@@ -1,0 +1,84 @@
+--- a/scripts/terrain/features/villages/fabric/WarrenPlotPlanner.gd
++++ b/scripts/terrain/features/villages/fabric/WarrenPlotPlanner.gd
+@@ -223,8 +223,8 @@
+ 	## each plus one step per column.
+ 	var limit: int = plan.scale_profile.scaled(BUILDING_CAP)
+ 	for index in buildings.size():
+-		buildings[index]["cap"] = roll(plan, FOOTPRINT_SALT,
+-			buildings[index]["door"] as Vector3i, index, Vector2i(2, limit))
++		buildings[index]["cap"] = _building_roll(plan, buildings[index],
++			FOOTPRINT_SALT, Vector2i(2, limit))
+ 		buildings[index]["stalled"] = false
+ 	while true:
+ 		var choice := -1
+@@ -439,7 +439,7 @@
+ 		if bool(building["retired"]):
+ 			continue
+ 		var floor_band := int(building["floor"])
+-		var roof := _building_top(plan, streets, claims, building, index,
++		var roof := _building_top(plan, streets, claims, building,
+ 			skyline_peaks.has(index))
+ 		var id := StringName(building["id"])
+ 		var cells := building["cells"] as Array[Vector2i]
+@@ -476,7 +476,7 @@
+ 
+ 
+ static func _building_top(plan: WarrenMazeSourcePlan, streets: Dictionary,
+-		claims: Dictionary, building: Dictionary, index: int,
++		claims: Dictionary, building: Dictionary,
+ 		skyline_peak: bool = false) -> Dictionary:
+ 	## A roof is, in preference order, the street through this footprint (the
+ 	## tier the whole model exists for), the lowest street past its one-column
+@@ -487,9 +487,9 @@
+ 	var minimum := floor_band + WarrenMazeSourcePlan.MIN_HOUSE_BANDS
+ 	var reach := floor_band + MAX_TIER_BANDS
+ 	# The parcel contract exactly -- whole storeys plus the roof reservation --
+-	# so the translator receives a legal envelope. `index` is in the hash, or
+-	# the four houses around one street cell would be clones.
+-	var rolled_seed_top := _rolled_seed_top(plan, building, index)
++	# so the translator receives a legal envelope. The seed column distinguishes
++	# houses around the same door without depending on other admitted seeds.
++	var rolled_seed_top := _rolled_seed_top(plan, building)
+ 	var cells := building["cells"] as Array[Vector2i]
+ 	var street_top := -1
+ 	var top := floor_band
+@@ -673,15 +673,27 @@
+ 	return out
+ 
+ 
++static func _building_roll(plan: WarrenMazeSourcePlan, building: Dictionary,
++		salt: int, bounds: Vector2i) -> int:
++	# A neighboring reservation may remove an earlier seed from the work list.
++	# The surviving house keeps its own draw, addressed by its seed and floor.
++	# The door still differentiates entrances without using a mutable array index.
++	var column := building["seed"] as Vector2i
++	var seed_cell := Vector3i(column.x, int(building["floor"]), column.y)
++	var door_key := WarrenPassageLatticeRules.hash_key(plan.world_seed,
++		0xadd2e55, building["door"] as Vector3i, 0)
++	return roll(plan, salt, seed_cell, door_key, bounds)
++
++
+ static func _rolled_seed_top(plan: WarrenMazeSourcePlan,
+-		building: Dictionary, index: int) -> int:
++		building: Dictionary) -> int:
+ 	var floor_band := int(building["floor"])
+ 	var budget: Vector2i = plan.scale_profile.scaled(STOREY_BUDGET)
+ 	if plan.massif.form_id == &"ridge":
+ 		budget = Vector2i(1, 2)
+ 	return floor_band + WarrenBuildingParcel.ROOF_RESERVATION_BANDS \
+-		+ WarrenBuildingParcel.STOREY_BANDS * roll(plan, STOREY_SALT,
+-			building["door"] as Vector3i, index, budget)
++		+ WarrenBuildingParcel.STOREY_BANDS * _building_roll(plan, building,
++			STOREY_SALT, budget)
+ 
+ 
+ static func _skyline_peak_indices(plan: WarrenMazeSourcePlan,
+@@ -711,7 +723,7 @@
+ 		if _edge_envelope_top(plan, cells) < 2147483647:
+ 			continue
+ 		var floor_band := int(building["floor"])
+-		var seeded_top := _rolled_seed_top(plan, building, index)
++		var seeded_top := _rolled_seed_top(plan, building)
+ 		if seeded_top <= _outer_terrace_top(plan, cells, floor_band):
+ 			continue
+ 		eligible[index] = seeded_top - floor_band

@@ -1,0 +1,8 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "SFT_GLOW_BLUE"
+vertex_color_use_as_albedo = true
+albedo_color = Color(0, 0.9351761, 1, 1)
+emission_enabled = true
+emission = Color(0, 0.8596343, 1, 1)

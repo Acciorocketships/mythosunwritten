@@ -8,9 +8,9 @@ const MODULE := 1.5
 const STOREY := 3.0
 const MAX_ANCHOR_RADIUS := 144.0
 const SETTLEMENT_INSET := 192.0
-## World reach of a volumetric town (plus its grade collar) from its site:
-## the whole settlement inset. Record discovery honours it.
-const WARREN_RECORD_REACH := SETTLEMENT_INSET
+## Legacy anchored-layout budget. Seeded warren discovery is derived separately
+## from its complete source field and adapter margins.
+const LEGACY_LAYOUT_REACH := SETTLEMENT_INSET
 const DECK_TIERS := Vector2(3.7, 4.8)
 const ALLEY_WIDTHS: Array[float] = [3.0, 4.5, 6.0]
 const THEMES: Array[StringName] = [&"blue", &"orange"]
@@ -23,6 +23,7 @@ const PRODUCTION_TIER_WEIGHTS: Array[float] = [0.50, 0.40, 0.10]
 var max_asset_reach: float
 var max_ground_shape_reach: float
 var max_record_radius: float
+var warren_discovery_radius: float
 var maximum_clearance: float
 var geometry_halo: int
 var referenced_asset_ids: Array[StringName] = []
@@ -698,6 +699,8 @@ static func compile(authored: Dictionary = {},
 			SettlementFabricAssembler.PLANK_RAILING,
 			SettlementFabricAssembler.TIMBER_SUPPORT,
 			&"lpfv.tree.01",
+			preload("res://scripts/terrain/features/villages/kit/KitRetainingRelief.gd").ASSET,
+			preload("res://scripts/terrain/features/villages/kit/KitRetainingWindows.gd").ASSET,
 		]:
 			if not fabric_asset_ids.has(adapter_id):
 				fabric_asset_ids.append(adapter_id)
@@ -705,6 +708,13 @@ static func compile(authored: Dictionary = {},
 		for kit_id: StringName in SuntailBuildingKit.create().all_asset_ids():
 			if not fabric_asset_ids.has(kit_id):
 				fabric_asset_ids.append(kit_id)
+		for extra_id: StringName in preload("res://scripts/terrain/features/villages/kit/PureVillageBuildingKit.gd").roof_study().all_asset_ids() \
+				+ preload("res://scripts/terrain/features/villages/kit/PureVillageBuildingKit.gd").roof_study(1).all_asset_ids() \
+				+ preload("res://scripts/terrain/features/villages/kit/KitTowerAssembly.gd").asset_ids() \
+				+ preload("res://scripts/terrain/features/villages/kit/TownRoofPalette.gd").asset_ids() \
+				+ preload("res://scripts/terrain/features/villages/kit/TownFramePalette.gd").asset_ids() \
+				+ preload("res://scripts/terrain/features/villages/TownGroundDressing.gd").asset_ids():
+			if not fabric_asset_ids.has(extra_id): fabric_asset_ids.append(extra_id)
 		for runtime_id: StringName in fabric_asset_ids:
 			var descriptor := catalog.descriptor(runtime_id)
 			if descriptor == null:
@@ -757,18 +767,17 @@ static func compile(authored: Dictionary = {},
 		if not is_finite(value) or value < 0.0:
 			push_error("VillageProgram reaches must be finite and non-negative")
 			return null
-	# Volumetric towns grow away from their entry (the site centre) across
-	# their whole massif, so discovery must reach the settlement's complete
-	# inset reservation, not only the legacy layout anchors. At the September
-	# 27 frame (8 m macro cells) the largest measured towns reach ~190 m.
+	# Preserve the legacy anchored-layout contract. Volumetric discovery below
+	# has its own source-derived limit; site spacing does not cap its query.
 	program.max_record_radius = maxf(MAX_ANCHOR_RADIUS + maxf(
 		program.max_asset_reach, program.max_ground_shape_reach),
-		WARREN_RECORD_REACH)
+		LEGACY_LAYOUT_REACH)
 	if program.max_record_radius > SETTLEMENT_INSET:
 		push_error("VillageProgram record radius exceeds settlement inset")
 		return null
 	program.geometry_halo = ceili(program.max_asset_reach \
 		/ TerrainChunkMesher.CHUNK_WORLD)
+	program.warren_discovery_radius = preload("res://scripts/terrain/features/villages/WarrenTownDiscovery.gd").maximum_radius(program.max_asset_reach)
 	var ids: Array = authored.get("referenced_asset_ids", [])
 	for value: Variant in ids:
 		var asset_id := StringName(value)
@@ -910,7 +919,7 @@ static func compile(authored: Dictionary = {},
 			program.layout_anchor_radius = maxf(program.layout_anchor_radius,
 				program.elevated_program.maximum_local_reach(tier))
 	program.layout_record_radius = maxf(program.layout_anchor_radius \
-		+ program.max_asset_reach, WARREN_RECORD_REACH)
+		+ program.max_asset_reach, LEGACY_LAYOUT_REACH)
 	return program
 
 func assets_for_tier(tier: StringName) -> Array[VillageAssetSpec]:

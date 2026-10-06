@@ -1,0 +1,40 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+PROFILE generate 1813
+KIT_PHASE masses 35
+KIT_PHASE roof joins/air 8
+KIT_PHASE towers 154
+KIT_PHASE projections 32
+KIT_PHASE bays 32
+KIT_PHASE contact preparation 3496
+KIT_PHASE assemble/contact fitting 644
+KIT_PHASE retaining dressing 33
+KIT_PHASE decor clearance 116
+KIT_PHASE mesh union 959
+PROFILE kit build 5518
+PROFILE public payload 95
+PROFILE frontage/support/substitution 28
+PROFILE world payload 169
+PROFILE materialize 5925
+PROFILE roads/dressing 269
+PROFILE total 8008 accepted true stages { &"parcels": 9, &"hero_beam": 19, &"room_composition": 123, &"bridge_stamping": 150, &"directed_back_rooms": 217, &"residual_rooms": 19, &"partition_rooms": 539, &"feature_solver": 82, &"room_gate": 67 }
+PROFILE generate 1898
+KIT_PHASE masses 36
+KIT_PHASE roof joins/air 9
+KIT_PHASE towers 155
+KIT_PHASE projections 36
+KIT_PHASE bays 34
+KIT_PHASE contact preparation 3334
+KIT_PHASE assemble/contact fitting 640
+KIT_PHASE retaining dressing 36
+KIT_PHASE decor clearance 119
+KIT_PHASE mesh union 935
+PROFILE kit build 5341
+PROFILE public payload 95
+PROFILE frontage/support/substitution 28
+PROFILE world payload 169
+PROFILE materialize 5750
+PROFILE roads/dressing 44
+PROFILE total 7706 accepted true stages { &"parcels": 9, &"hero_beam": 17, &"room_composition": 129, &"bridge_stamping": 137, &"directed_back_rooms": 224, &"residual_rooms": 18, &"partition_rooms": 536, &"feature_solver": 83, &"room_gate": 67 }

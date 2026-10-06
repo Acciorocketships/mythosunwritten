@@ -1,0 +1,219 @@
+[
+  {
+    "passages": 70,
+    "room_covered": [
+      {
+        "bored": true,
+        "cell": "(-1, 1, -1)",
+        "planned_cover": true,
+        "room_lifts": [
+          3,
+          3,
+          3,
+          3
+        ]
+      },
+      {
+        "bored": false,
+        "cell": "(-1, 4, 1)",
+        "planned_cover": true,
+        "room_lifts": [
+          3,
+          3,
+          3,
+          3
+        ]
+      },
+      {
+        "bored": true,
+        "cell": "(4, 0, 1)",
+        "planned_cover": true,
+        "room_lifts": [
+          6,
+          6,
+          6,
+          6
+        ]
+      },
+      {
+        "bored": false,
+        "cell": "(0, 0, 6)",
+        "planned_cover": true,
+        "room_lifts": [
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      {
+        "bored": true,
+        "cell": "(-2, 0, 5)",
+        "planned_cover": true,
+        "room_lifts": [
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      {
+        "bored": true,
+        "cell": "(-3, 0, 4)",
+        "planned_cover": true,
+        "room_lifts": [
+          4,
+          4,
+          4,
+          4
+        ]
+      }
+    ],
+    "seed": 13,
+    "tunnel_outcomes": [
+      {
+        "reason": "passage walls do not bear on two jambs",
+        "walk": "(-1, 0, -4)"
+      },
+      {
+        "reason": "passage walls do not bear on two jambs",
+        "walk": "(4, 0, -1)"
+      },
+      {
+        "reason": "crown already carries a plot",
+        "walk": "(3, 0, 0)"
+      },
+      {
+        "reason": "crown already carries a plot",
+        "walk": "(4, 0, 0)"
+      },
+      {
+        "reason": "crown already carries a plot",
+        "walk": "(4, 0, 1)"
+      },
+      {
+        "reason": "crown already carries a plot",
+        "walk": "(-3, 0, 4)"
+      },
+      {
+        "reason": "plot over.07 breaks support rule 2 at column (-2, 4): carved air stands inside its clearance [4, 8)",
+        "walk": "(-2, 0, 4)"
+      },
+      {
+        "reason": "crown already carries a plot",
+        "walk": "(-2, 0, 5)"
+      },
+      {
+        "reason": "no adjacent house storey over the crown",
+        "walk": "(4, 0, 6)"
+      },
+      {
+        "reason": "crown already carries a plot",
+        "walk": "(-1, 1, -1)"
+      },
+      {
+        "reason": "no crown",
+        "walk": "(-2, 4, 3)"
+      },
+      {
+        "reason": "no crown",
+        "walk": "(-2, 4, 4)"
+      }
+    ]
+  },
+  {
+    "passages": 44,
+    "room_covered": [
+      {
+        "bored": false,
+        "cell": "(4, 4, -1)",
+        "planned_cover": true,
+        "room_lifts": [
+          3,
+          3,
+          3,
+          3
+        ]
+      },
+      {
+        "bored": true,
+        "cell": "(2, 4, 0)",
+        "planned_cover": true,
+        "room_lifts": [
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      {
+        "bored": true,
+        "cell": "(2, 4, 1)",
+        "planned_cover": true,
+        "room_lifts": [
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      {
+        "bored": false,
+        "cell": "(3, 4, 2)",
+        "planned_cover": true,
+        "room_lifts": [
+          3,
+          3,
+          3,
+          3
+        ]
+      },
+      {
+        "bored": false,
+        "cell": "(3, 4, 3)",
+        "planned_cover": true,
+        "room_lifts": [
+          3,
+          3,
+          3,
+          3
+        ]
+      }
+    ],
+    "seed": 31,
+    "tunnel_outcomes": [
+      {
+        "reason": "passage walls do not bear on two jambs",
+        "walk": "(-3, 0, 1)"
+      },
+      {
+        "reason": "would overtop the citadel's plinth",
+        "walk": "(-1, 0, 1)"
+      },
+      {
+        "reason": "would overtop the citadel's plinth",
+        "walk": "(-1, 0, 2)"
+      },
+      {
+        "reason": "no adjacent house storey over the crown",
+        "walk": "(0, 0, 2)"
+      },
+      {
+        "reason": "passage walls do not bear on two jambs",
+        "walk": "(0, 0, 5)"
+      },
+      {
+        "floor": 8,
+        "host": "house.011",
+        "reason": "",
+        "walk": "(2, 4, 0)"
+      },
+      {
+        "floor": 8,
+        "host": "house.011",
+        "reason": "",
+        "walk": "(2, 4, 1)"
+      }
+    ]
+  }
+]

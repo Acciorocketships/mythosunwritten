@@ -11084,6 +11084,10 @@ func test_the_production_site_builds_a_maze_town_on_real_terrain() -> void:
 	assert_true(urban.validate(site.program as VillageProgram, &"village"),
 		("the production town failed the sealed materialization contract " \
 			+ "the streamed payload is built from"))
+	assert_false(urban.ground_dressing_audit.is_empty(),
+		"the production ground dressing pass must publish its disposition")
+	assert_true(urban._fabric_audit_matches_plan(),
+		"world-ground dressing must preserve the sealed local construction audit")
 	assert_lt(int(outcome.ms), scaled_ceiling(PRODUCTION_SOLVE_MS_CEILING),
 		("the production solve has fallen back into a search: the whole " \
 			+ "one-pass path is seconds, the searched pipeline it replaced " \

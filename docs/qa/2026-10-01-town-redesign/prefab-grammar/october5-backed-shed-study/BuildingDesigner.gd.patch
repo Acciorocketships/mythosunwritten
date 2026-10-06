@@ -1,0 +1,113 @@
+--- scripts/terrain/features/villages/kit/BuildingDesigner.gd
++++ scripts/terrain/features/villages/kit/BuildingDesigner.gd
+@@ -185,6 +185,7 @@
+ 		var phases := {}
+ 		var selected_runs := {}
+ 		for slot: Dictionary in slots:
++			if storey.get("roof_backing",{}).has(slot.edge): continue
+ 			var dir := int(slot.dir)
+ 			if not phases.has(dir): phases[dir] = rng.randi_range(0, 2)
+ 			var position := int(slot.index)
+@@ -367,6 +368,10 @@
+ 					or _slivers(parted) < _slivers(rects):
+ 				rects = parted
+ 		for rect: Rect2i in rects:
++			var shed := _backed_shed(mass, rect, top_band)
++			if not shed.is_empty():
++				wings.append(shed)
++				continue
+ 			# A strip that could not join the larger wing beside it becomes a
+ 			# flat boarded roof rather than a tiny pitched roof perched at its
+ 			# edge. No storey reaches it, so it is not a (railed) terrace.
+@@ -385,6 +390,9 @@
+ 		if ridge_axis < 0:
+ 			var articulated: Array = []
+ 			for spec: Dictionary in wings:
++				if spec.get("backed_shed",false):
++					articulated.append(spec)
++					continue
+ 				var range_rect: Rect2i = spec.rect
+ 				var range_axis := int(spec.get("axis", _natural_axis(range_rect, square_axis)))
+ 				var range_rng := _rng(hash([mass.seed, range_rect, top_band, "range.end_bay"]))
+@@ -400,20 +408,21 @@
+ 			var rect := spec.rect as Rect2i
+ 			var axis := int(spec.get("axis", _natural_axis(rect, square_axis)))
+ 			var cross := bool(spec.get("cross", false))
+-			if have_main and not cross:
++			var shed := bool(spec.get("backed_shed",false))
++			if have_main and not cross and not shed:
+ 				axis = _wing_axis(rect, axis, main_rect, main_axis)
+ 			# A square crown's ridge is a free choice: never point a gable
+ 			# into another building standing above the eave (its taller wall
+ 			# half-buries the gable triangle and the union leaves holes).
+-			if not cross and rect.size.x == rect.size.y \
++			if not cross and not shed and rect.size.x == rect.size.y \
+ 					and _gable_abuts(mass, rect, axis, top_band) \
+ 					and not _gable_abuts(mass, rect, 1 - axis, top_band):
+ 				axis = 1 - axis
+ 			var fits := _roof_fits(mass, rect, axis, top_band)
+-			if not fits and not cross:
++			if not fits and not cross and not shed:
+ 				axis = 1 - axis
+ 				fits = _roof_fits(mass, rect, axis, top_band)
+-			if not fits and not cross:
++			if not fits and not cross and not shed:
+ 				# A deep crown (a merged range) whose tall roof would enter
+ 				# kept-clear space above: a double pile of shallower parallel
+ 				# roofs, eaves to the street, before a flat terrace.
+@@ -427,6 +436,15 @@
+ 					"band": top_band, "rails": true})
+ 				continue
+ 			var wing := mass.add_roof(rect, axis, top_band, colour)
++			if shed:
++				wing["backed_shed"] = true
++				wing[spec.cut_key] = spec.cut_at
++				for backing: Dictionary in spec.backing:
++					var wall: Dictionary = mass.storeys[backing.storey]
++					if not wall.has("roof_backing"): wall.roof_backing = {}
++					wall.roof_backing[backing.edge] = true
++					wall.openings[backing.edge] = BuildingMass.OPENING_PLAIN
++				continue
+ 			if not have_main:
+ 				main_rect = rect
+ 				main_axis = axis
+@@ -813,6 +831,39 @@
+ ## the rectangle it shares an edge with, or grows across its short side, when
+ ## the grown rectangle only adds crown cells or free air the roof may shelter.
+ ## Largest crown coverage wins, then fewest sheltered air cells.
++## A one-module lower wing can use half a complete native roof, with its
++## uphill half enclosed by an existing upper room. The ordinary wall/roof
++## union closes that join. Never borrow public air or close an addressed door.
++func _backed_shed(mass: BuildingMass, strip: Rect2i, band: int) -> Dictionary:
++	if mini(strip.size.x,strip.size.y)!=1 or maxi(strip.size.x,strip.size.y)<2: return {}
++	var across := 0 if strip.size.x==1 else 1
++	for sign_value in [-1,1]:
++		var grown := strip
++		grown.size[across]+=1
++		if sign_value<0: grown.position[across]-=1
++		var backing: Array[Dictionary] = []
++		var complete := true
++		for cell: Vector2i in BuildingMass.rect_cells(grown):
++			if strip.has_point(cell): continue
++			var step := Vector2i.ZERO
++			step[across]=-sign_value
++			var edge := BuildingMass.edge_key(cell,BuildingMass.DIRS.find(step))
++			var found := false
++			for i in mass.storeys.size():
++				var storey: Dictionary = mass.storeys[i]
++				if int(storey.floor_band)!=band or not storey.cells.has(cell): continue
++				if storey.openings.get(edge,&"")==BuildingMass.OPENING_DOOR: continue
++				if storey.get("inset",false): continue
++				found=true
++				backing.append({"storey":i,"edge":edge})
++			if not found: complete=false
++		if complete and _roof_fits(mass,grown,1-across,band):
++			return {"rect":grown,"axis":1-across,"backed_shed":true,"backing":backing,
++				"cut_key":"shed_min" if sign_value<0 else "shed_max",
++				"cut_at":strip.position[across] if sign_value<0 else strip.end[across]}
++	return {}
++
++
+ func _absorb_slivers(mass: BuildingMass, rects: Array[Rect2i], exposed: Dictionary,
+ 		footprint: Dictionary, band: int) -> Array[Rect2i]:
+ 	var out := rects.duplicate()

@@ -1,0 +1,52 @@
+--- a/scripts/terrain/features/villages/kit/KitRoofMeshUnion.gd
++++ b/scripts/terrain/features/villages/kit/KitRoofMeshUnion.gd
+@@ -175,8 +175,7 @@
+ 	var bounds := AABB()
+ 	var first := true
+ 	for surface: Dictionary in surfaces:
+-		for v: Vector3 in surface.vertices:
+-			var p := transform * v
++		for p: Vector3 in transform * (surface.vertices as PackedVector3Array):
+ 			bounds = AABB(p, Vector3.ZERO) if first else bounds.expand(p)
+ 			first = false
+ 	var cutters: Array[Dictionary] = []
+@@ -326,12 +325,17 @@
+ 		"collision_faces": PackedVector3Array(), "changed": false}
+ 	var normal_map := transform.basis.inverse().transposed()
+ 	var ids: PackedInt32Array = surface.indices
++	# Indexed triangles share corners. Transform each source corner once;
++	# clipping only creates new dictionaries and never mutates these records.
++	var transformed: Array[Dictionary] = []
++	var positions: PackedVector3Array = transform * (surface.vertices as PackedVector3Array)
++	for i in positions.size():
++		transformed.append({"p":positions[i],
++			"n":(normal_map * surface.normals[i]).normalized(),"uv":surface.uvs[i]})
+ 	for t in range(0, ids.size(), 3):
+ 		var polygon: Array = []
+ 		for k in 3:
+-			var i := ids[t + k]
+-			polygon.append({"p": transform * surface.vertices[i],
+-				"n": (normal_map * surface.normals[i]).normalized(), "uv": surface.uvs[i]})
++			polygon.append(transformed[ids[t+k]])
+ 		var pieces: Array = [polygon]
+ 		for cutter: Dictionary in cutters:
+ 			var remaining: Array = []
+@@ -354,11 +358,17 @@
+ 
+ ## Disjoint outside fragments of a polygon minus one convex volume.
+ static func subtract(polygon: Array, planes: Array) -> Array:
++	var entirely_inside := true
+ 	for plane: Plane in planes:
+ 		var entirely_outside := true
+ 		for vertex: Dictionary in polygon:
+-			if plane.distance_to(vertex.p) < -EPS: entirely_outside = false
++			var distance := plane.distance_to(vertex.p)
++			if distance < -EPS: entirely_outside = false
++			if distance > 0.0: entirely_inside = false
+ 		if entirely_outside: return [polygon]
++	# All vertices inside a convex volume imply the whole polygon is inside.
++	# Keep the outside/tolerance checks first, including coplanar faces.
++	if entirely_inside: return []
+ 	var outside: Array = []
+ 	var inside := polygon
+ 	for plane: Plane in planes:

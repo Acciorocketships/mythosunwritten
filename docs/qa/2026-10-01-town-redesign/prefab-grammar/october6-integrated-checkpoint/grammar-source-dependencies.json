@@ -1,0 +1,331 @@
+[
+  {
+    "file": "terrain/environment/grammar/materials/rooftransition.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/RoofTransition_dst/RoofTransition_a.png",
+      "res://assets/PureVillage/Textures/RoofTransition_dst/RoofTransition_mask_MOS_100_100.png",
+      "res://assets/PureVillage/Textures/RoofTransition_dst/RoofTransition_n.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/window_1.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/Window/Window_a_1001.png",
+      "res://assets/PureVillage/Textures/Window/Window_mask_1001_MOS_100_50.png",
+      "res://assets/PureVillage/Textures/Window/Window_n_1001.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/metal_1.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/Metal/Metal_a.png",
+      "res://assets/PureVillage/Textures/Metal/Metal_mask_MOS_100_50.png",
+      "res://assets/PureVillage/Textures/Metal/Metal_n.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/stone_1.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/Stone/Stone_a_1001.png",
+      "res://assets/PureVillage/Textures/Stone/Stone_mask_1001_MOS_0_30.png",
+      "res://assets/PureVillage/Textures/Stone/Stone_n_1001.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/planks.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/Planks/Planks_a.png",
+      "res://assets/PureVillage/Textures/Planks/Planks_mask_MOS_100_50.png",
+      "res://assets/PureVillage/Textures/Planks/Planks_n.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/wood_3.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/Wood/Wood_a_1003.png",
+      "res://assets/PureVillage/Textures/Wood/Wood_mask_1003_MOS_100_50.png",
+      "res://assets/PureVillage/Textures/Wood/Wood_n_1003.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/doorshutter_1.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/DoorShutter/DoorShutter_a.png",
+      "res://assets/PureVillage/Textures/DoorShutter/DoorShutter_mask_MOS_100_50.png",
+      "res://assets/PureVillage/Textures/DoorShutter/DoorShutter_n.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/glass_in.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/Glass/Window_a_1001.png",
+      "res://assets/PureVillage/Textures/Glass/Window_mask_1001_MOS_100_50.png",
+      "res://assets/PureVillage/Textures/Glass/Window_e_1001.png",
+      "res://assets/PureVillage/Textures/Glass/Window_n_1001.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/wood_2.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/Wood/Wood_a_1002.png",
+      "res://assets/PureVillage/Textures/Wood/Wood_mask_1002_MOS_100_50.png",
+      "res://assets/PureVillage/Textures/Wood/Wood_n_1002.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/wood_1.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/Wood/Wood_a_1001.png",
+      "res://assets/PureVillage/Textures/Wood/Wood_mask_1001_MOS_100_50.png",
+      "res://assets/PureVillage/Textures/Wood/Wood_n_1001.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/chimney_1.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/Chimney/Chimney_a.png",
+      "res://assets/PureVillage/Textures/Chimney/Chimney_mask_MOS_100_100.png",
+      "res://assets/PureVillage/Textures/Chimney/Chimney_n.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/plaster.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/Plaster/Plaster_a.png",
+      "res://assets/PureVillage/Textures/Plaster/Plaster_mask_MOS_0_0.png",
+      "res://assets/PureVillage/Textures/Plaster/Plaster_n.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/glass_out.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/Window/Window_a_1001.png",
+      "res://assets/PureVillage/Textures/Window/Window_mask_1001_MOS_84_50.png",
+      "res://assets/PureVillage/Textures/Window/Window_n_1001.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/stones.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/StoneTexture/StoneTexture_a.png",
+      "res://assets/PureVillage/Textures/StoneTexture/StoneTexture_mask_MOS_0_30.png",
+      "res://assets/PureVillage/Textures/StoneTexture/StoneTexture_n.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/planks_full.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/Planks_Full/Planks_Full_a.png",
+      "res://assets/PureVillage/Textures/Planks_Full/Planks_Full_mask_MOS_100_50.png",
+      "res://assets/PureVillage/Textures/Planks_Full/Planks_Full_n.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/stone_2.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/Stone/Stone_a_1002.png",
+      "res://assets/PureVillage/Textures/Stone/Stone_mask_1002_MOS_0_30.png",
+      "res://assets/PureVillage/Textures/Stone/Stone_n_1002.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/roofstreet_1.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/RoofStreet/RoofStreet_a_1001.png",
+      "res://assets/PureVillage/Textures/RoofStreet/RoofStreet_mask_1001_MOS_100_50.png",
+      "res://assets/PureVillage/Textures/RoofStreet/RoofStreet_n_1001.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/rooftransition_1.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/RoofTransition/RoofTransition_a.png",
+      "res://assets/PureVillage/Textures/RoofTransition/RoofTransition_mask_MOS_100_100.png",
+      "res://assets/PureVillage/Textures/RoofTransition/RoofTransition_n.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/rooftiles.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/RoofTiles/Roof_a.png",
+      "res://assets/PureVillage/Textures/RoofTiles/Roof_mask_MOS_100_50.png",
+      "res://assets/PureVillage/Textures/RoofTiles/Roof_n.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/rooftoptiles.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/RoofTopTiles/Roof_Top_Tiles_a_.png",
+      "res://assets/PureVillage/Textures/RoofTopTiles/Roof_Top_Tiles_mask__MOS_100_0.png",
+      "res://assets/PureVillage/Textures/RoofTopTiles/Roof_Top_Tiles_n_.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/stone_3.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/Stone/Stone_a_1003.png",
+      "res://assets/PureVillage/Textures/Stone/Stone_mask_1003_MOS_0_30.png",
+      "res://assets/PureVillage/Textures/Stone/Stone_n_1003.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/arcade/window_1.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/Window/Window_a_1001.png",
+      "res://assets/PureVillage/Textures/Window/Window_mask_1001_MOS_100_50.png",
+      "res://assets/PureVillage/Textures/Window/Window_n_1001.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/arcade/wood_4.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/Wood/Wood_a_1004.png",
+      "res://assets/PureVillage/Textures/Wood/Wood_mask_1004_MOS_100_50.png",
+      "res://assets/PureVillage/Textures/Wood/Wood_n_1004.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/arcade/metal_1.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/Metal/Metal_a.png",
+      "res://assets/PureVillage/Textures/Metal/Metal_mask_MOS_100_50.png",
+      "res://assets/PureVillage/Textures/Metal/Metal_n.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/arcade/stone_1.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/Stone/Stone_a_1001.png",
+      "res://assets/PureVillage/Textures/Stone/Stone_mask_1001_MOS_0_30.png",
+      "res://assets/PureVillage/Textures/Stone/Stone_n_1001.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/arcade/planks.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/Planks/Planks_a.png",
+      "res://assets/PureVillage/Textures/Planks/Planks_mask_MOS_100_50.png",
+      "res://assets/PureVillage/Textures/Planks/Planks_n.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/arcade/glass.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/Shops/Glass_a.png",
+      "res://assets/PureVillage/Textures/Shops/Glass_m_MOS_100_0.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/arcade/wood_3.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/Wood/Wood_a_1003.png",
+      "res://assets/PureVillage/Textures/Wood/Wood_mask_1003_MOS_100_50.png",
+      "res://assets/PureVillage/Textures/Wood/Wood_n_1003.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/arcade/doorshutter_1.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/DoorShutter/DoorShutter_a.png",
+      "res://assets/PureVillage/Textures/DoorShutter/DoorShutter_mask_MOS_100_50.png",
+      "res://assets/PureVillage/Textures/DoorShutter/DoorShutter_n.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/arcade/glass_in.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/Glass/Window_a_1001.png",
+      "res://assets/PureVillage/Textures/Glass/Window_mask_1001_MOS_100_50.png",
+      "res://assets/PureVillage/Textures/Glass/Window_e_1001.png",
+      "res://assets/PureVillage/Textures/Glass/Window_n_1001.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/arcade/wood_2.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/Wood/Wood_a_1002.png",
+      "res://assets/PureVillage/Textures/Wood/Wood_mask_1002_MOS_100_50.png",
+      "res://assets/PureVillage/Textures/Wood/Wood_n_1002.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/arcade/wood_1.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/Wood/Wood_a_1001.png",
+      "res://assets/PureVillage/Textures/Wood/Wood_mask_1001_MOS_100_50.png",
+      "res://assets/PureVillage/Textures/Wood/Wood_n_1001.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/arcade/plaster.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/Plaster/Plaster_a.png",
+      "res://assets/PureVillage/Textures/Plaster/Plaster_mask_MOS_0_0.png",
+      "res://assets/PureVillage/Textures/Plaster/Plaster_n.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/arcade/glass_out.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/Window/Window_a_1001.png",
+      "res://assets/PureVillage/Textures/Window/Window_mask_1001_MOS_84_50.png",
+      "res://assets/PureVillage/Textures/Window/Window_n_1001.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/arcade/stones.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/StoneTexture/StoneTexture_a.png",
+      "res://assets/PureVillage/Textures/StoneTexture/StoneTexture_mask_MOS_0_30.png",
+      "res://assets/PureVillage/Textures/StoneTexture/StoneTexture_n.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/arcade/planks_full.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/Planks_Full/Planks_Full_a.png",
+      "res://assets/PureVillage/Textures/Planks_Full/Planks_Full_mask_MOS_100_50.png",
+      "res://assets/PureVillage/Textures/Planks_Full/Planks_Full_n.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/arcade/stone_2.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/Stone/Stone_a_1002.png",
+      "res://assets/PureVillage/Textures/Stone/Stone_mask_1002_MOS_0_30.png",
+      "res://assets/PureVillage/Textures/Stone/Stone_n_1002.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/arcade/roofstreet_1.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/RoofStreet/RoofStreet_a_1001.png",
+      "res://assets/PureVillage/Textures/RoofStreet/RoofStreet_mask_1001_MOS_100_50.png",
+      "res://assets/PureVillage/Textures/RoofStreet/RoofStreet_n_1001.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/arcade/rooftransition_1.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/RoofTransition/RoofTransition_a.png",
+      "res://assets/PureVillage/Textures/RoofTransition/RoofTransition_mask_MOS_100_100.png",
+      "res://assets/PureVillage/Textures/RoofTransition/RoofTransition_n.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/arcade/rooftiles.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/RoofTiles/Roof_a.png",
+      "res://assets/PureVillage/Textures/RoofTiles/Roof_mask_MOS_100_50.png",
+      "res://assets/PureVillage/Textures/RoofTiles/Roof_n.png"
+    ]
+  },
+  {
+    "file": "terrain/environment/grammar/materials/arcade/rooftoptiles.tres",
+    "source_dependencies": [
+      "res://assets/PureVillage/Textures/RoofTopTiles/Roof_Top_Tiles_a_.png",
+      "res://assets/PureVillage/Textures/RoofTopTiles/Roof_Top_Tiles_mask__MOS_100_0.png",
+      "res://assets/PureVillage/Textures/RoofTopTiles/Roof_Top_Tiles_n_.png"
+    ]
+  }
+]

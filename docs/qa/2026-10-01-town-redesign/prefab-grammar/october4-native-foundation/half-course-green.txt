@@ -1,0 +1,38 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_pure_village_half_course.gd
+[0m* test_short_house_course_uses_native_matching_masonry
+[1m1/1 passed.
+[0m[4m
+
+res://tests/test_october4_retained_materials.gd
+[0m* test_half_and_full_support_courses_share_native_masonry
+* test_reported_tunnel_supports_do_not_switch_to_plaster_or_framed_blue_stone
+[1m2/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               2
+Tests                 3
+Passing Tests         3
+Asserts              70
+Time              19.194s
+
+
+[32m---- All tests passed! ----
+[0m

@@ -1,8 +1,8 @@
 [gd_resource type="StandardMaterial3D" load_steps=4 format=3]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/8cfb099af30360d8e7b9.res" id="1_22qgi"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/8caf561e8bdacae1e293.res" id="2_ewmex"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/2f56f9e994accdcbedba.res" id="3_us7fx"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/49b13c145f6024b9c2e6.res" id="1_22qgi"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/518d0e6d3f8a29ca9019.res" id="2_ewmex"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/e15e0e494e9901a080f6.res" id="3_us7fx"]
 
 [resource]
 resource_name = "Shop_2"

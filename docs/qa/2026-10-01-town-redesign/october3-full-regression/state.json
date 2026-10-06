@@ -1,0 +1,2750 @@
+{
+  "runner_pid": 75428,
+  "status": "complete",
+  "completed": [
+    {
+      "test": "test_september10_city_form",
+      "passed": false,
+      "exit": 1,
+      "seconds": 42.25,
+      "summary": "Totals\n------\nScripts               1\nTests                10\nPassing Tests         7\nFailing Tests         3\nAsserts           9186/9236\nTime              38.044s\n\n\n---- 3 failing tests ----\n\nWARNING: ObjectDB instances leaked at exit (run with --verbose for details).\n     at: cleanup (core/object/object.cpp:2514)\nERROR: 2 resources still in use at exit (run with --verbose for details).\n   at: clear (core/io/resource.cpp:795)"
+    },
+    {
+      "test": "test_warren_maze_carver",
+      "passed": false,
+      "exit": 1,
+      "seconds": 25.74,
+      "summary": "Totals\n------\nScripts               1\nTests                13\nPassing Tests        11\nFailing Tests         2\nAsserts           1202/1208\nTime              21.578s\n\n\n---- 2 failing tests ----"
+    },
+    {
+      "test": "test_warren_maze_plots",
+      "passed": false,
+      "exit": 1,
+      "seconds": 32.58,
+      "summary": "Totals\n------\nScripts               1\nTests                42\nPassing Tests        37\nFailing Tests         5\nAsserts           3140/3155\nTime              28.276s\n\n\n---- 5 failing tests ----"
+    },
+    {
+      "test": "test_atmosphere_director",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.74,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              16\nTime              0.388s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_atmosphere_field",
+      "passed": true,
+      "exit": 0,
+      "seconds": 2.45,
+      "summary": "Totals\n------\nScripts               1\nTests                10\nPassing Tests        10\nAsserts            1162\nTime              0.989s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_biome_chunk_fx",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.11,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         6\nAsserts              22\nTime              0.439s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_biome_registry",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.14,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         6\nAsserts              60\nTime              0.434s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_biomes",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.14,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         6\nAsserts             489\nTime              0.468s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_building_kit",
+      "passed": true,
+      "exit": 0,
+      "seconds": 12.71,
+      "summary": "Totals\n------\nScripts               1\nTests                 8\nPassing Tests         8\nAsserts             507\nTime              8.356s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_camera_obstruction",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.94,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         6\nAsserts              19\nTime              4.144s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_cantilever_construction",
+      "passed": true,
+      "exit": 0,
+      "seconds": 13.85,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              56\nTime              9.734s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_cliff_envelope_shortcuts",
+      "passed": true,
+      "exit": 0,
+      "seconds": 19.56,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts              41\nTime              18.169s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_cliff_rock_foot_lines",
+      "passed": true,
+      "exit": 0,
+      "seconds": 39.64,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts             341\nTime              37.963s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_cliff_sheet_ends",
+      "passed": true,
+      "exit": 0,
+      "seconds": 9.11,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         6\nAsserts              13\nTime              7.692s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_cliff_sheet_normals",
+      "passed": true,
+      "exit": 0,
+      "seconds": 6.19,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts               4\nTime              4.766s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_compact_roof_junction_admission",
+      "passed": true,
+      "exit": 0,
+      "seconds": 14.51,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts             263\nTime              10.206s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_directional_locomotion",
+      "passed": true,
+      "exit": 0,
+      "seconds": 2.24,
+      "summary": "Totals\n------\nScripts               1\nTests                10\nPassing Tests        10\nAsserts             147\nTime              0.747s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_dressing_collision_builder",
+      "passed": true,
+      "exit": 0,
+      "seconds": 3.54,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              16\nTime              2.769s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_dressing_commit_queue",
+      "passed": true,
+      "exit": 0,
+      "seconds": 5.07,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts              25\nTime              4.344s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_dressing_ecology",
+      "passed": true,
+      "exit": 0,
+      "seconds": 33.7,
+      "summary": "Totals\n------\nScripts               1\nTests                 7\nPassing Tests         7\nAsserts              23\nTime              32.27s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_dressing_field",
+      "passed": false,
+      "exit": 1,
+      "seconds": 125.81,
+      "summary": "Totals\n------\nScripts               1\nTests                 7\nPassing Tests         6\nFailing Tests         1\nAsserts           645/646\nTime              124.377s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_environment_bake_geometry",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.14,
+      "summary": "Totals\n------\nScripts               1\nTests                14\nPassing Tests        14\nAsserts             126\nTime              0.417s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_environment_catalog",
+      "passed": true,
+      "exit": 0,
+      "seconds": 67.54,
+      "summary": "Totals\n------\nScripts               1\nTests                21\nPassing Tests        21\nAsserts           115135\nTime              63.167s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_excavation_construction",
+      "passed": true,
+      "exit": 0,
+      "seconds": 19.0,
+      "summary": "Totals\n------\nScripts               1\nTests                 7\nPassing Tests         7\nAsserts              74\nTime              14.849s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_fabric_roof_topology",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.45,
+      "summary": "Totals\n------\nScripts               1\nTests                 9\nPassing Tests         9\nAsserts              82\nTime              0.379s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_fabric_surface_ownership",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.11,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts              60\nTime              0.435s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_facade_corner_closure",
+      "passed": true,
+      "exit": 0,
+      "seconds": 9.81,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts               6\nTime              5.727s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_feature_commit_queue",
+      "passed": true,
+      "exit": 0,
+      "seconds": 10.05,
+      "summary": "Totals\n------\nScripts               1\nTests                 7\nPassing Tests         7\nAsserts              31\nTime              5.837s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_feature_context",
+      "passed": true,
+      "exit": 0,
+      "seconds": 45.75,
+      "summary": "Totals\n------\nScripts               1\nTests                11\nPassing Tests        11\nAsserts              45\nTime              41.513s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_feature_program",
+      "passed": false,
+      "exit": 1,
+      "seconds": 6.09,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         1\nFailing Tests         1\nAsserts           10/11\nTime              1.924s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_field_streamer",
+      "passed": false,
+      "exit": 1,
+      "seconds": 191.37,
+      "summary": "Totals\n------\nScripts               1\nTests                17\nPassing Tests        16\nFailing Tests         1\nAsserts           63/66\nTime              186.914s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_foundation_solver",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.84,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts             771\nTime              0.416s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_grass_field",
+      "passed": true,
+      "exit": 0,
+      "seconds": 13.32,
+      "summary": "Totals\n------\nScripts               1\nTests                25\nPassing Tests        25\nAsserts             678\nTime              11.839s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_grass_streamer",
+      "passed": true,
+      "exit": 0,
+      "seconds": 5.19,
+      "summary": "Totals\n------\nScripts               1\nTests                 7\nPassing Tests         7\nAsserts              47\nTime              3.74s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_heightfield_clamp_step",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.75,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts            2408\nTime              0.422s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_heightfield_lowpass",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.72,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts             108\nTime              0.392s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_heightfield_plan",
+      "passed": true,
+      "exit": 0,
+      "seconds": 5.79,
+      "summary": "Totals\n------\nScripts               1\nTests                47\nPassing Tests        47\nAsserts             554\nTime              4.391s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_heightfield_region",
+      "passed": true,
+      "exit": 0,
+      "seconds": 2.83,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         6\nAsserts             466\nTime              1.42s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_helper",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.13,
+      "summary": "Totals\n------\nScripts               1\nTests                 7\nPassing Tests         7\nAsserts              13\nTime              0.447s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_kit_roof_junctions",
+      "passed": true,
+      "exit": 0,
+      "seconds": 7.18,
+      "summary": "Totals\n------\nScripts               1\nTests                 9\nPassing Tests         9\nAsserts           12002\nTime              3.062s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_meadow_rocks",
+      "passed": true,
+      "exit": 0,
+      "seconds": 14.99,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts             146\nTime              13.461s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_mythos_loading_screen",
+      "passed": false,
+      "exit": 1,
+      "seconds": 5.07,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         3\nFailing Tests         1\nAsserts           46/48\nTime              0.514s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_october1_bridge_envelopes",
+      "passed": true,
+      "exit": 0,
+      "seconds": 20.91,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              53\nTime              16.739s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_campfires",
+      "passed": true,
+      "exit": 0,
+      "seconds": 3.66,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              32\nTime              2.98s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_facade_prop_clearance",
+      "passed": true,
+      "exit": 0,
+      "seconds": 19.59,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts             147\nTime              15.523s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_facade_roof_contacts",
+      "passed": true,
+      "exit": 0,
+      "seconds": 29.01,
+      "summary": "Totals\n------\nScripts               1\nTests                14\nPassing Tests        14\nAsserts             272\nTime              24.805s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_finished_roof_clearance",
+      "passed": true,
+      "exit": 0,
+      "seconds": 106.18,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts              19\nTime              102.076s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_fortified_rings",
+      "passed": true,
+      "exit": 0,
+      "seconds": 43.9,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts              91\nTime              39.808s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_gatehouse_fit",
+      "passed": true,
+      "exit": 0,
+      "seconds": 5.26,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              75\nTime              1.126s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_landmark_reservations",
+      "passed": true,
+      "exit": 0,
+      "seconds": 7.25,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         6\nAsserts              42\nTime              3.085s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_native_town_roofs",
+      "passed": true,
+      "exit": 0,
+      "seconds": 114.46,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts            8527\nTime              110.181s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_public_clearance",
+      "passed": true,
+      "exit": 0,
+      "seconds": 19.43,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts               8\nTime              15.338s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_pure_roofs",
+      "passed": true,
+      "exit": 0,
+      "seconds": 48.46,
+      "summary": "Totals\n------\nScripts               1\nTests                13\nPassing Tests        13\nAsserts             316\nTime              44.285s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_pure_texture_budget",
+      "passed": true,
+      "exit": 0,
+      "seconds": 7.88,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts             380\nTime              3.71s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_pure_village",
+      "passed": true,
+      "exit": 0,
+      "seconds": 14.05,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts             512\nTime              9.757s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_released_bridge_sites",
+      "passed": true,
+      "exit": 0,
+      "seconds": 12.67,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              63\nTime              8.499s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_roof_details",
+      "passed": true,
+      "exit": 0,
+      "seconds": 33.1,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              88\nTime              28.991s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_roof_dormer_fits",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.47,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts             103\nTime              0.376s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_roof_eave_fits",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.63,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              82\nTime              0.483s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_suntail_texture_budget",
+      "passed": true,
+      "exit": 0,
+      "seconds": 8.67,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts             402\nTime              4.491s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_town_dressing",
+      "passed": true,
+      "exit": 0,
+      "seconds": 37.19,
+      "summary": "Totals\n------\nScripts               1\nTests                15\nPassing Tests        15\nAsserts           25912\nTime              32.893s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_town_ground",
+      "passed": true,
+      "exit": 0,
+      "seconds": 29.82,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts              31\nTime              25.673s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_town_lobes",
+      "passed": true,
+      "exit": 0,
+      "seconds": 14.57,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts             452\nTime              10.406s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_town_open_spaces",
+      "passed": true,
+      "exit": 0,
+      "seconds": 23.08,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         6\nAsserts           14097\nTime              19.025s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_town_roof_verges",
+      "passed": true,
+      "exit": 0,
+      "seconds": 13.39,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts             381\nTime              9.224s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_tunnel_hosts",
+      "passed": true,
+      "exit": 0,
+      "seconds": 202.7,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              87\nTime              198.486s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_central_green_access",
+      "passed": true,
+      "exit": 0,
+      "seconds": 77.4,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts            5853\nTime              73.064s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_courtyard_planting",
+      "passed": true,
+      "exit": 0,
+      "seconds": 21.06,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts             156\nTime              16.641s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_courtyard_seating",
+      "passed": true,
+      "exit": 0,
+      "seconds": 15.97,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts             367\nTime              11.84s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_courtyard_underplanting",
+      "passed": true,
+      "exit": 0,
+      "seconds": 16.05,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts            2550\nTime              11.929s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_elevated_courtyards",
+      "passed": true,
+      "exit": 0,
+      "seconds": 71.22,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts             111\nTime              66.907s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_garden_grass",
+      "passed": true,
+      "exit": 0,
+      "seconds": 20.68,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts              95\nTime              16.374s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_inhabited_walls",
+      "passed": true,
+      "exit": 0,
+      "seconds": 76.63,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts             312\nTime              72.425s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_joined_town_ranges",
+      "passed": true,
+      "exit": 0,
+      "seconds": 22.96,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              83\nTime              18.833s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_landmark_shapes",
+      "passed": true,
+      "exit": 0,
+      "seconds": 52.24,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts            1120\nTime              48.062s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_native_gate_arch",
+      "passed": true,
+      "exit": 0,
+      "seconds": 5.35,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts               6\nTime              1.154s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_native_ramparts",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.58,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts              98\nTime              0.372s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_oriel_spires",
+      "passed": true,
+      "exit": 0,
+      "seconds": 37.29,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts            4429\nTime              33.022s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_platform_wall_relief",
+      "passed": true,
+      "exit": 0,
+      "seconds": 41.62,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts             426\nTime              37.494s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_range_roofs",
+      "passed": true,
+      "exit": 0,
+      "seconds": 26.48,
+      "summary": "Totals\n------\nScripts               1\nTests                10\nPassing Tests        10\nAsserts            4539\nTime              22.216s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_retained_wall_rooms",
+      "passed": true,
+      "exit": 0,
+      "seconds": 43.64,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts              68\nTime              39.56s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_retaining_relief",
+      "passed": true,
+      "exit": 0,
+      "seconds": 25.95,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts              58\nTime              21.644s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_tower_assemblies",
+      "passed": true,
+      "exit": 0,
+      "seconds": 11.98,
+      "summary": "Totals\n------\nScripts               1\nTests                10\nPassing Tests        10\nAsserts            1104\nTime              7.732s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_tower_host_fit",
+      "passed": true,
+      "exit": 0,
+      "seconds": 8.54,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts              61\nTime              4.254s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_town_direct_access",
+      "passed": true,
+      "exit": 0,
+      "seconds": 13.05,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts              92\nTime              8.93s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_town_facade_bays",
+      "passed": true,
+      "exit": 0,
+      "seconds": 6.15,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              17\nTime              1.947s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_town_street_paint",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.56,
+      "summary": "Totals\n------\nScripts               1\nTests                 7\nPassing Tests         7\nAsserts            1421\nTime              0.388s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_town_towers",
+      "passed": true,
+      "exit": 0,
+      "seconds": 37.74,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts            1989\nTime              33.599s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_wall_tunnels",
+      "passed": true,
+      "exit": 0,
+      "seconds": 68.39,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts              56\nTime              64.152s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october3_retaining_windows",
+      "passed": true,
+      "exit": 0,
+      "seconds": 15.23,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts            1379\nTime              11.021s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_p03_cliff_followup",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.89,
+      "summary": "Totals\n------\nScripts               1\nTests                10\nPassing Tests        10\nAsserts             196\nTime              3.53s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_p03_constrained_cliffs",
+      "passed": true,
+      "exit": 0,
+      "seconds": 47.81,
+      "summary": "Totals\n------\nScripts               1\nTests                13\nPassing Tests        13\nAsserts              79\nTime              46.393s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_path_bridge_sites",
+      "passed": true,
+      "exit": 0,
+      "seconds": 9.92,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              22\nTime              8.456s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_path_features",
+      "passed": true,
+      "exit": 0,
+      "seconds": 6.58,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         6\nAsserts              22\nTime              5.144s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_path_plan_nodes",
+      "passed": false,
+      "exit": 1,
+      "seconds": 8.09,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         5\nFailing Tests         1\nAsserts           58/59\nTime              6.615s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_path_program",
+      "passed": true,
+      "exit": 0,
+      "seconds": 12.19,
+      "summary": "Totals\n------\nScripts               1\nTests                 9\nPassing Tests         9\nAsserts             101\nTime              10.821s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_path_route_solver",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.12,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts             696\nTime              0.431s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_pond_stamp",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.15,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts              38\nTime              0.44s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_priority_queue",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.14,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              11\nTime              0.453s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_reported_facade_floor_caps",
+      "passed": true,
+      "exit": 0,
+      "seconds": 11.4,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts              19\nTime               7.2s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_river_generation",
+      "passed": false,
+      "exit": 1,
+      "seconds": 22.36,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         4\nFailing Tests         1\nAsserts           37808/37810\nTime              20.942s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_roof_construction_reservations",
+      "passed": false,
+      "exit": 1,
+      "seconds": 71.59,
+      "summary": "Totals\n------\nScripts               1\nTests                13\nPassing Tests        12\nFailing Tests         1\nAsserts           41/42\nTime              67.403s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_roof_frame_junction",
+      "passed": true,
+      "exit": 0,
+      "seconds": 9.36,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts               7\nTime              5.109s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_room_band_construction",
+      "passed": false,
+      "exit": 1,
+      "seconds": 26.17,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         2\nFailing Tests         1\nAsserts             8/9\nTime              21.543s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_room_composition_diagnostics",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.77,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         6\nAsserts              18\nTime              0.402s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september10_bench_collision",
+      "passed": true,
+      "exit": 0,
+      "seconds": 7.41,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              18\nTime              3.247s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september10_ceiling_courses",
+      "passed": false,
+      "exit": 1,
+      "seconds": 15.19,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         2\nFailing Tests         1\nAsserts           52/53\nTime              10.982s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september10_grass_latency",
+      "passed": true,
+      "exit": 0,
+      "seconds": 7.58,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              14\nTime              3.119s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september10_grass_sampling",
+      "passed": false,
+      "exit": 1,
+      "seconds": 2.03,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         1\nFailing Tests         1\nAsserts             8/9\nTime              0.644s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september10_hamlets",
+      "passed": false,
+      "exit": 1,
+      "seconds": 75.51,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         1\nFailing Tests         4\nAsserts           46/116\nTime              71.399s\n\n\n---- 4 failing tests ----\n\nWARNING: ObjectDB instances leaked at exit (run with --verbose for details).\n     at: cleanup (core/object/object.cpp:2514)\nERROR: 2 resources still in use at exit (run with --verbose for details).\n   at: clear (core/io/resource.cpp:795)"
+    },
+    {
+      "test": "test_september10_orbs",
+      "passed": false,
+      "exit": 0,
+      "seconds": 1.14,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         3\nRisky/Pending         1\nAsserts             770\nTime              0.434s\n\n\n---- 1 pending/risky tests. ----"
+    },
+    {
+      "test": "test_september10_overhang",
+      "passed": true,
+      "exit": 0,
+      "seconds": 10.08,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              65\nTime              5.879s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september10_path_decision_work",
+      "passed": true,
+      "exit": 0,
+      "seconds": 211.32,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              64\nTime              209.897s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september10_platform_guards",
+      "passed": true,
+      "exit": 0,
+      "seconds": 16.19,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              24\nTime              11.897s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september10_prefab_floor",
+      "passed": false,
+      "exit": 1,
+      "seconds": 43.19,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         3\nFailing Tests         1\nAsserts           164/165\nTime              38.702s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september10_rail_shading",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.55,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts             144\nTime              0.374s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september10_roof_alignment",
+      "passed": true,
+      "exit": 0,
+      "seconds": 12.17,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              91\nTime              7.97s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september10_roof_valley",
+      "passed": true,
+      "exit": 0,
+      "seconds": 29.59,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts              12\nTime              25.505s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september10_roofability_work",
+      "passed": true,
+      "exit": 0,
+      "seconds": 12.88,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts             278\nTime              8.656s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september10_skywalk_bearing",
+      "passed": true,
+      "exit": 0,
+      "seconds": 14.84,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts              15\nTime              10.71s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september10_stream_cancellation",
+      "passed": true,
+      "exit": 0,
+      "seconds": 37.49,
+      "summary": "Totals\n------\nScripts               1\nTests                13\nPassing Tests        13\nAsserts              38\nTime              33.065s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september10_turf_depth",
+      "passed": false,
+      "exit": 1,
+      "seconds": 21.76,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         1\nFailing Tests         1\nAsserts           27/33\nTime              17.248s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september10_wall_returns",
+      "passed": false,
+      "exit": 1,
+      "seconds": 15.53,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         3\nFailing Tests         1\nAsserts           140/141\nTime              11.385s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september10_water_relaxation_work",
+      "passed": true,
+      "exit": 0,
+      "seconds": 2.33,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              98\nTime              0.904s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september10_water_shore",
+      "passed": true,
+      "exit": 0,
+      "seconds": 59.82,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts               2\nTime              58.15s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september10_water_surface",
+      "passed": true,
+      "exit": 0,
+      "seconds": 74.89,
+      "summary": "Totals\n------\nScripts               1\nTests                 9\nPassing Tests         9\nAsserts             455\nTime              73.261s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september11_alluvium",
+      "passed": true,
+      "exit": 0,
+      "seconds": 2.86,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts              20\nTime              1.493s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september11_architectural_variety",
+      "passed": false,
+      "exit": 1,
+      "seconds": 20.47,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         2\nFailing Tests         1\nAsserts           115/116\nTime              16.292s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september11_bubble_shape",
+      "passed": false,
+      "exit": 0,
+      "seconds": 1.13,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         1\nRisky/Pending         1\nAsserts               6\nTime              0.402s\n\n\n---- 1 pending/risky tests. ----"
+    },
+    {
+      "test": "test_september11_camera_roles",
+      "passed": false,
+      "exit": 1,
+      "seconds": 1.39,
+      "summary": "Totals\n------\nScripts               1\nTests                 9\nPassing Tests         6\nFailing Tests         3\nAsserts           43/51\nTime              0.553s\n\n\n---- 3 failing tests ----"
+    },
+    {
+      "test": "test_september11_floating_support",
+      "passed": false,
+      "exit": 1,
+      "seconds": 10.16,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests      none\nFailing Tests         1\nAsserts             2/3\nTime              5.941s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september11_height_dependency",
+      "passed": true,
+      "exit": 0,
+      "seconds": 2.64,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts            2593\nTime              1.262s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september11_lake_land",
+      "passed": true,
+      "exit": 0,
+      "seconds": 2.94,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              29\nTime              1.578s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september11_landforms",
+      "passed": true,
+      "exit": 0,
+      "seconds": 22.13,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts            4057\nTime              20.79s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september11_natural_arches",
+      "passed": true,
+      "exit": 0,
+      "seconds": 50.1,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              29\nTime              48.641s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september11_prefab_integration",
+      "passed": false,
+      "exit": 1,
+      "seconds": 10.16,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         1\nFailing Tests         1\nAsserts           130/132\nTime              5.677s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september11_prefab_only_settlement",
+      "passed": false,
+      "exit": 1,
+      "seconds": 9.69,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         1\nFailing Tests         1\nAsserts           32/33\nTime              5.598s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september11_retained_earth_support",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.49,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              18\nTime              0.373s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september11_roof_domain",
+      "passed": true,
+      "exit": 0,
+      "seconds": 22.72,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts               8\nTime              18.65s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september11_roofless_cells",
+      "passed": false,
+      "exit": 1,
+      "seconds": 16.99,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         1\nFailing Tests         1\nAsserts           42/46\nTime              12.588s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september11_room_projection",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.49,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts               3\nTime              0.386s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september11_skywalk_integration",
+      "passed": false,
+      "exit": 1,
+      "seconds": 29.05,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         2\nFailing Tests         1\nAsserts           90/91\nTime              24.787s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september11_skywalk_neighborhood",
+      "passed": false,
+      "exit": 1,
+      "seconds": 44.41,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests      none\nFailing Tests         2\nAsserts           167/169\nTime              40.178s\n\n\n---- 2 failing tests ----"
+    },
+    {
+      "test": "test_september11_unified_city",
+      "passed": false,
+      "exit": 1,
+      "seconds": 4.8,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         3\nFailing Tests         1\nAsserts           111/113\nTime              0.624s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september11_visibility_render",
+      "passed": false,
+      "exit": 0,
+      "seconds": 1.13,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests      none\nRisky/Pending         1\nAsserts            none\nTime              0.398s\n\n\n---- 1 pending/risky tests. ----"
+    },
+    {
+      "test": "test_september11_visibility_work",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.65,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         6\nAsserts             107\nTime              0.908s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september11_water_rounding",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.74,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts               2\nTime              0.37s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september11_water_trigger_depth",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.9,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts               3\nTime              0.423s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september12_ground_visibility",
+      "passed": false,
+      "exit": 0,
+      "seconds": 1.22,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         1\nRisky/Pending         5\nAsserts              13\nTime              0.41s\n\n\n---- 5 pending/risky tests. ----"
+    },
+    {
+      "test": "test_september13_background_visibility",
+      "passed": false,
+      "exit": 0,
+      "seconds": 4.67,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         3\nRisky/Pending         1\nAsserts              12\nTime              0.386s\n\n\n---- 1 pending/risky tests. ----"
+    },
+    {
+      "test": "test_september13_bay_backing",
+      "passed": true,
+      "exit": 0,
+      "seconds": 18.75,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              60\nTime              14.38s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september13_bay_spacing",
+      "passed": true,
+      "exit": 0,
+      "seconds": 35.08,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts             219\nTime              30.919s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september13_capture_readiness",
+      "passed": true,
+      "exit": 0,
+      "seconds": 5.53,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts               9\nTime              1.192s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september13_civic",
+      "passed": false,
+      "exit": 1,
+      "seconds": 19.47,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests      none\nFailing Tests         3\nAsserts           21/44\nTime              15.296s\n\n\n---- 3 failing tests ----\n\nWARNING: ObjectDB instances leaked at exit (run with --verbose for details).\n     at: cleanup (core/object/object.cpp:2514)\nERROR: 2 resources still in use at exit (run with --verbose for details).\n   at: clear (core/io/resource.cpp:795)"
+    },
+    {
+      "test": "test_september13_compact_roof_join",
+      "passed": true,
+      "exit": 0,
+      "seconds": 21.69,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              15\nTime              17.449s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september13_deck_purpose",
+      "passed": false,
+      "exit": 1,
+      "seconds": 4.57,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         2\nFailing Tests         2\nAsserts           21/24\nTime              0.398s\n\n\n---- 2 failing tests ----"
+    },
+    {
+      "test": "test_september13_door_panels",
+      "passed": false,
+      "exit": 1,
+      "seconds": 9.24,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests      none\nFailing Tests         2\nAsserts             1/3\nTime              5.106s\n\n\n---- 2 failing tests ----"
+    },
+    {
+      "test": "test_september13_dormer_fit",
+      "passed": true,
+      "exit": 0,
+      "seconds": 16.68,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts           12018\nTime              12.477s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september13_facade_props",
+      "passed": true,
+      "exit": 0,
+      "seconds": 16.67,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts               5\nTime              12.24s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september13_floating_lawn",
+      "passed": true,
+      "exit": 0,
+      "seconds": 9.81,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              37\nTime              5.566s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september13_foliage_cutaway",
+      "passed": false,
+      "exit": 0,
+      "seconds": 1.11,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests      none\nRisky/Pending         3\nAsserts            none\nTime              0.385s\n\n\n---- 3 pending/risky tests. ----"
+    },
+    {
+      "test": "test_september13_frontage_surfaces",
+      "passed": true,
+      "exit": 0,
+      "seconds": 12.0,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts              19\nTime              7.627s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september13_lawn_strips",
+      "passed": true,
+      "exit": 0,
+      "seconds": 16.86,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              38\nTime              12.437s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september13_loose_rails",
+      "passed": true,
+      "exit": 0,
+      "seconds": 16.18,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              22\nTime              11.982s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september13_low_wall",
+      "passed": true,
+      "exit": 0,
+      "seconds": 16.74,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              17\nTime              12.52s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september13_near_visibility",
+      "passed": false,
+      "exit": 0,
+      "seconds": 1.12,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests      none\nRisky/Pending         1\nAsserts            none\nTime              0.456s\n\n\n---- 1 pending/risky tests. ----"
+    },
+    {
+      "test": "test_september13_path_clearance",
+      "passed": true,
+      "exit": 0,
+      "seconds": 23.74,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              38\nTime              19.587s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september13_rail_ends",
+      "passed": true,
+      "exit": 0,
+      "seconds": 11.6,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              19\nTime              7.281s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september13_roof_intersection",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.13,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         6\nAsserts              57\nTime              0.401s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september13_roof_party_ends",
+      "passed": true,
+      "exit": 0,
+      "seconds": 26.5,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts             223\nTime              22.017s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september13_shared_stair_landing",
+      "passed": true,
+      "exit": 0,
+      "seconds": 29.86,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts              77\nTime              25.554s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september13_stone_path",
+      "passed": true,
+      "exit": 0,
+      "seconds": 18.29,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts               2\nTime              13.964s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september13_street_handoffs",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.76,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              55\nTime              0.38s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september13_street_infill",
+      "passed": false,
+      "exit": 1,
+      "seconds": 10.27,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         2\nFailing Tests         2\nAsserts            9/14\nTime              5.97s\n\n\n---- 2 failing tests ----"
+    },
+    {
+      "test": "test_september13_terrain_occlusion",
+      "passed": false,
+      "exit": 0,
+      "seconds": 1.22,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests      none\nRisky/Pending         2\nAsserts            none\nTime              0.398s\n\n\n---- 2 pending/risky tests. ----"
+    },
+    {
+      "test": "test_september13_transition_material",
+      "passed": false,
+      "exit": 1,
+      "seconds": 5.5,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         2\nFailing Tests         2\nRisky/Pending         1\nAsserts           13/15\nTime              1.151s\n\n\n---- 2 failing tests ----"
+    },
+    {
+      "test": "test_september13_village_grade",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.92,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              55\nTime               0.5s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september13_water_corner",
+      "passed": false,
+      "exit": 0,
+      "seconds": 126.9,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         3\nRisky/Pending         1\nAsserts               7\nTime              125.089s\n\n\n---- 1 pending/risky tests. ----"
+    },
+    {
+      "test": "test_september13_water_origin",
+      "passed": true,
+      "exit": 0,
+      "seconds": 121.04,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts             339\nTime              119.615s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september13_water_turf",
+      "passed": true,
+      "exit": 0,
+      "seconds": 177.84,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts               3\nTime              176.2s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september13_water_visibility",
+      "passed": false,
+      "exit": 0,
+      "seconds": 1.95,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests      none\nRisky/Pending         1\nAsserts            none\nTime              0.398s\n\n\n---- 1 pending/risky tests. ----"
+    },
+    {
+      "test": "test_september13_world_paths",
+      "passed": true,
+      "exit": 0,
+      "seconds": 7.72,
+      "summary": "Totals\n------\nScripts               1\nTests                10\nPassing Tests        10\nAsserts            3536\nTime              6.252s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september15_grade_topology",
+      "passed": true,
+      "exit": 0,
+      "seconds": 9.71,
+      "summary": "Totals\n------\nScripts               1\nTests                 9\nPassing Tests         9\nAsserts              36\nTime              5.347s\n\n\n---- All tests passed! ----\n\nWARNING: ObjectDB instances leaked at exit (run with --verbose for details).\n     at: cleanup (core/object/object.cpp:2514)\nERROR: 2 resources still in use at exit (run with --verbose for details).\n   at: clear (core/io/resource.cpp:795)"
+    },
+    {
+      "test": "test_september15_landform_cache",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.12,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts               8\nTime              0.444s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september15_mountain_assets",
+      "passed": false,
+      "exit": 1,
+      "seconds": 2.93,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         1\nFailing Tests         1\nAsserts           152/154\nTime              2.187s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september15_mountain_grounding",
+      "passed": true,
+      "exit": 0,
+      "seconds": 5.26,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts              31\nTime              4.513s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september15_rectangular_regions",
+      "passed": true,
+      "exit": 0,
+      "seconds": 2.51,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts               9\nTime              1.083s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september15_streaming_yield",
+      "passed": true,
+      "exit": 0,
+      "seconds": 14.58,
+      "summary": "Totals\n------\nScripts               1\nTests                 7\nPassing Tests         7\nAsserts              16\nTime              10.098s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september15_water_drops",
+      "passed": true,
+      "exit": 0,
+      "seconds": 65.19,
+      "summary": "Totals\n------\nScripts               1\nTests                 8\nPassing Tests         8\nAsserts             263\nTime              63.757s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september15_water_motion",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.92,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts              64\nTime              0.39s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september15_water_profile_work",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.84,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts               8\nTime              0.456s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september15_water_sample_work",
+      "passed": true,
+      "exit": 0,
+      "seconds": 3.34,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              23\nTime              1.954s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september15_water_source_connectivity",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.85,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts              11\nTime              0.394s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september16_downhill_current",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.95,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts              12\nTime              0.437s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september16_immersion",
+      "passed": false,
+      "exit": 1,
+      "seconds": 1.84,
+      "summary": "Totals\n------\nWarnings              1\n\nScripts               1\nTests                 2\nPassing Tests         1\nFailing Tests         1\nAsserts             6/7\nTime              0.382s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september16_ripple_bias_gpu",
+      "passed": false,
+      "exit": 0,
+      "seconds": 1.92,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests      none\nRisky/Pending         1\nAsserts            none\nTime              0.388s\n\n\n---- 1 pending/risky tests. ----"
+    },
+    {
+      "test": "test_september16_skywalk_guards",
+      "passed": true,
+      "exit": 0,
+      "seconds": 16.1,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              38\nTime              11.772s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september17_bridge_overlap",
+      "passed": true,
+      "exit": 0,
+      "seconds": 16.07,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts               2\nTime              11.756s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september17_cliff_body_crags",
+      "passed": true,
+      "exit": 0,
+      "seconds": 3.95,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts              16\nTime              2.487s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september17_cliff_shoulder_relief",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.64,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              21\nTime              3.136s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september17_crag_weathering_gpu",
+      "passed": false,
+      "exit": 0,
+      "seconds": 1.13,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests      none\nRisky/Pending         2\nAsserts            none\nTime              0.454s\n\n\n---- 2 pending/risky tests. ----"
+    },
+    {
+      "test": "test_september17_rail_fragments",
+      "passed": true,
+      "exit": 0,
+      "seconds": 16.14,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts              14\nTime              11.824s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september17_stone_colour_gpu",
+      "passed": false,
+      "exit": 0,
+      "seconds": 1.13,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests      none\nRisky/Pending         1\nAsserts            none\nTime              0.45s\n\n\n---- 1 pending/risky tests. ----"
+    },
+    {
+      "test": "test_september17_support_refinement",
+      "passed": true,
+      "exit": 0,
+      "seconds": 2.9,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts              25\nTime              1.351s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september17_water_transport",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.86,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts               3\nTime              0.397s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september18_buried_soffits",
+      "passed": true,
+      "exit": 0,
+      "seconds": 10.22,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts              12\nTime              6.011s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september19_bank_grass_water",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.82,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         6\nAsserts               8\nTime              0.394s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september19_loaded_boundary",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.13,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts               9\nTime              0.447s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september19_masonry_joints",
+      "passed": true,
+      "exit": 0,
+      "seconds": 5.3,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts              27\nTime              1.134s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september19_path_colour",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.57,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts               7\nTime              0.422s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september19_prefab_stair_guards",
+      "passed": true,
+      "exit": 0,
+      "seconds": 15.92,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              21\nTime              11.598s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september19_rail_floor_joint",
+      "passed": true,
+      "exit": 0,
+      "seconds": 15.89,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              19\nTime              11.638s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september19_retained_road_bounds",
+      "passed": false,
+      "exit": 0,
+      "seconds": 39.15,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              12\nTime              35.004s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september19_road_bend_ownership",
+      "passed": false,
+      "exit": 1,
+      "seconds": 4.58,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         1\nFailing Tests         1\nAsserts           40/41\nTime              0.404s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september19_stream_observers",
+      "passed": true,
+      "exit": 0,
+      "seconds": 27.14,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts               6\nTime              22.71s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september19_terminal_landing",
+      "passed": false,
+      "exit": 1,
+      "seconds": 4.65,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         1\nFailing Tests         1\nAsserts             8/9\nTime              0.37s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september22_raised_platform",
+      "passed": false,
+      "exit": 1,
+      "seconds": 4.89,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         1\nFailing Tests         1\nAsserts             2/4\nTime               0.7s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september22_roof_gables",
+      "passed": true,
+      "exit": 0,
+      "seconds": 10.62,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts              40\nTime              6.452s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september22_roof_joins",
+      "passed": true,
+      "exit": 0,
+      "seconds": 10.2,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts             356\nTime              5.585s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september22_wall_corners",
+      "passed": true,
+      "exit": 0,
+      "seconds": 10.13,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              78\nTime              6.051s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september23_cliff_directions",
+      "passed": false,
+      "exit": 1,
+      "seconds": 64.38,
+      "summary": "Totals\n------\nScripts               1\nTests                18\nPassing Tests        16\nFailing Tests         2\nAsserts           1200/1202\nTime              62.748s\n\n\n---- 2 failing tests ----"
+    },
+    {
+      "test": "test_september26_bedrock",
+      "passed": true,
+      "exit": 0,
+      "seconds": 6.68,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts              19\nTime              5.222s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september26_manual_cliffs",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.94,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts             310\nTime              0.515s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september27_edge_slopes",
+      "passed": true,
+      "exit": 0,
+      "seconds": 29.35,
+      "summary": "Totals\n------\nScripts               1\nTests                 7\nPassing Tests         7\nAsserts           16016\nTime              27.794s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september27_mountain_water",
+      "passed": true,
+      "exit": 0,
+      "seconds": 51.78,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              56\nTime              50.314s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september27_road_grade",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.91,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         6\nAsserts            2583\nTime              0.49s\n\n\n---- All tests passed! ----\n\nWARNING: ObjectDB instances leaked at exit (run with --verbose for details).\n     at: cleanup (core/object/object.cpp:2514)\nERROR: 2 resources still in use at exit (run with --verbose for details).\n   at: clear (core/io/resource.cpp:795)"
+    },
+    {
+      "test": "test_september27_rock_placement",
+      "passed": true,
+      "exit": 0,
+      "seconds": 96.39,
+      "summary": "Totals\n------\nWarnings              1\n\nScripts               1\nTests                10\nPassing Tests        10\nAsserts           23772\nTime              94.915s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september27_rock_substrate_gpu",
+      "passed": false,
+      "exit": 0,
+      "seconds": 1.84,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests      none\nRisky/Pending         3\nAsserts            none\nTime              0.378s\n\n\n---- 3 pending/risky tests. ----"
+    },
+    {
+      "test": "test_september27_roofs",
+      "passed": false,
+      "exit": 1,
+      "seconds": 20.91,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         4\nFailing Tests         1\nAsserts           167/168\nTime              16.571s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september27_slope_ledges",
+      "passed": true,
+      "exit": 0,
+      "seconds": 30.68,
+      "summary": "Totals\n------\nScripts               1\nTests                 7\nPassing Tests         7\nAsserts              16\nTime              29.34s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september27_town_details",
+      "passed": false,
+      "exit": 1,
+      "seconds": 54.92,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         3\nFailing Tests         1\nAsserts           17/18\nTime              50.583s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september28_category_overlay",
+      "passed": false,
+      "exit": 0,
+      "seconds": 4.99,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         5\nRisky/Pending         1\nAsserts            1566\nTime              0.602s\n\n\n---- 1 pending/risky tests. ----"
+    },
+    {
+      "test": "test_september28_ground_seams",
+      "passed": true,
+      "exit": 0,
+      "seconds": 21.97,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts             292\nTime              20.539s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september29_floating_masses",
+      "passed": true,
+      "exit": 0,
+      "seconds": 83.46,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts              65\nTime              79.069s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september29_roofline_variety",
+      "passed": true,
+      "exit": 0,
+      "seconds": 60.39,
+      "summary": "Totals\n------\nScripts               1\nTests                 8\nPassing Tests         8\nAsserts            3464\nTime              56.067s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september29_skywalks",
+      "passed": true,
+      "exit": 0,
+      "seconds": 36.58,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts               6\nTime              31.846s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september29_terrain_review",
+      "passed": true,
+      "exit": 0,
+      "seconds": 31.08,
+      "summary": "Totals\n------\nScripts               1\nTests                 7\nPassing Tests         7\nAsserts            4089\nTime              26.566s\n\n\n---- All tests passed! ----\n\nWARNING: ObjectDB instances leaked at exit (run with --verbose for details).\n     at: cleanup (core/object/object.cpp:2514)\nERROR: 2 resources still in use at exit (run with --verbose for details).\n   at: clear (core/io/resource.cpp:795)"
+    },
+    {
+      "test": "test_september29_town_build_order",
+      "passed": true,
+      "exit": 0,
+      "seconds": 24.27,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts               3\nTime              20.096s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september29_town_edges",
+      "passed": true,
+      "exit": 0,
+      "seconds": 25.6,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         6\nAsserts              80\nTime              21.493s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september29_town_materials",
+      "passed": false,
+      "exit": 1,
+      "seconds": 39.07,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         4\nFailing Tests         1\nAsserts           3483/3487\nTime              34.082s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september29_town_platform",
+      "passed": false,
+      "exit": 1,
+      "seconds": 27.03,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         3\nFailing Tests         3\nAsserts           1868/2496\nTime              22.374s\n\n\n---- 3 failing tests ----"
+    },
+    {
+      "test": "test_september7_continuous_street_grade",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.81,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts            7276\nTime              0.619s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september7_floor_ownership",
+      "passed": true,
+      "exit": 0,
+      "seconds": 11.0,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts             870\nTime              6.787s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september7_garden_wall",
+      "passed": false,
+      "exit": 1,
+      "seconds": 11.27,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         1\nFailing Tests         1\nAsserts           25/27\nTime              6.99s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september7_stair_walk",
+      "passed": true,
+      "exit": 0,
+      "seconds": 6.34,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              92\nTime              2.171s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september7_street_ownership",
+      "passed": true,
+      "exit": 0,
+      "seconds": 14.04,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts             284\nTime              9.773s\n\n\n---- All tests passed! ----\n\nWARNING: ObjectDB instances leaked at exit (run with --verbose for details).\n     at: cleanup (core/object/object.cpp:2514)\nERROR: 2 resources still in use at exit (run with --verbose for details).\n   at: clear (core/io/resource.cpp:795)"
+    },
+    {
+      "test": "test_september7_wall_enclosure",
+      "passed": true,
+      "exit": 0,
+      "seconds": 49.71,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts              62\nTime              45.381s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september8_baked_exteriors",
+      "passed": false,
+      "exit": 1,
+      "seconds": 5.29,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         2\nFailing Tests         1\nAsserts           104/105\nOrphans               1\nTime              1.176s\n\n\n---- 1 failing tests ----\n\nWARNING: ObjectDB instances leaked at exit (run with --verbose for details).\n     at: cleanup (core/object/object.cpp:2514)"
+    },
+    {
+      "test": "test_september8_door_alignment",
+      "passed": true,
+      "exit": 0,
+      "seconds": 14.88,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              63\nTime              10.685s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september8_facade_ends",
+      "passed": false,
+      "exit": 1,
+      "seconds": 15.1,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         2\nFailing Tests         1\nAsserts           12/13\nTime              10.892s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september8_garden_outcroppings",
+      "passed": true,
+      "exit": 0,
+      "seconds": 5.47,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              37\nTime              1.177s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september8_gate_ground",
+      "passed": true,
+      "exit": 0,
+      "seconds": 10.46,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts            1049\nTime              6.213s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september8_gate_paint",
+      "passed": false,
+      "exit": 1,
+      "seconds": 4.54,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests      none\nFailing Tests         1\nAsserts             0/1\nTime              0.38s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september8_ledge_caps",
+      "passed": false,
+      "exit": 1,
+      "seconds": 10.64,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests      none\nFailing Tests         1\nAsserts             0/1\nTime              6.337s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september8_night_bridge",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.95,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts               5\nTime              1.195s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september8_night_bushes",
+      "passed": true,
+      "exit": 0,
+      "seconds": 36.71,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts             162\nTime              35.301s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september8_night_corners",
+      "passed": false,
+      "exit": 1,
+      "seconds": 20.33,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         4\nFailing Tests         2\nAsserts           53/55\nTime              16.063s\n\n\n---- 2 failing tests ----"
+    },
+    {
+      "test": "test_september8_night_destinations",
+      "passed": false,
+      "exit": 1,
+      "seconds": 9.71,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         3\nFailing Tests         1\nAsserts           59/62\nTime              5.616s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september8_night_door_leaf",
+      "passed": true,
+      "exit": 0,
+      "seconds": 2.04,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts              10\nTime              1.357s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september8_night_door_path",
+      "passed": true,
+      "exit": 0,
+      "seconds": 19.26,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts             144\nTime              14.981s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september8_night_flowers",
+      "passed": true,
+      "exit": 0,
+      "seconds": 15.09,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              78\nTime              10.789s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september8_night_ground_crease",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.85,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts            6134\nTime              0.453s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september8_night_lamp",
+      "passed": false,
+      "exit": 1,
+      "seconds": 236.34,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         1\nFailing Tests         1\nAsserts           49/50\nTime              232.042s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september8_night_outcrop",
+      "passed": true,
+      "exit": 0,
+      "seconds": 10.54,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts               1\nTime              6.275s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september8_night_overlap",
+      "passed": true,
+      "exit": 0,
+      "seconds": 20.26,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              19\nTime              16.034s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september8_night_path_broadphase",
+      "passed": true,
+      "exit": 0,
+      "seconds": 2.63,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts               6\nTime              1.308s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september8_night_posts",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.44,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              33\nTime              0.376s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september8_night_rails",
+      "passed": true,
+      "exit": 0,
+      "seconds": 18.84,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              20\nTime              14.567s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september8_night_stair_clearance",
+      "passed": false,
+      "exit": 1,
+      "seconds": 16.77,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         2\nFailing Tests         1\nAsserts           20/24\nTime              12.578s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september8_night_stream_priority",
+      "passed": true,
+      "exit": 0,
+      "seconds": 18.8,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         6\nAsserts              39\nTime              14.393s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september8_night_swim_pose",
+      "passed": true,
+      "exit": 0,
+      "seconds": 2.06,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts               9\nTime              1.311s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september8_night_water_boundaries",
+      "passed": false,
+      "exit": 1,
+      "seconds": 119.38,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests      none\nFailing Tests         1\nAsserts           14/16\nTime              117.938s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september8_night_water_divot",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.97,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts              39\nTime              0.526s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september8_night_window_return",
+      "passed": true,
+      "exit": 0,
+      "seconds": 3.5,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts              49\nTime              2.778s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september8_plank_placement",
+      "passed": true,
+      "exit": 0,
+      "seconds": 17.27,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts               8\nTime              12.901s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september8_porch_path",
+      "passed": true,
+      "exit": 0,
+      "seconds": 9.7,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts              48\nTime              5.43s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september8_river_banks",
+      "passed": false,
+      "exit": 1,
+      "seconds": 131.51,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         1\nFailing Tests         2\nAsserts           639/641\nTime              130.091s\n\n\n---- 2 failing tests ----"
+    },
+    {
+      "test": "test_september8_stair_motion",
+      "passed": true,
+      "exit": 0,
+      "seconds": 24.73,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts             130\nTime              20.452s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september8_walkway_destination",
+      "passed": false,
+      "exit": 1,
+      "seconds": 4.54,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         1\nFailing Tests         1\nAsserts           143/144\nTime              0.468s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september8_wall_seam",
+      "passed": true,
+      "exit": 0,
+      "seconds": 9.27,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts              36\nTime              5.204s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september8_water_trigger_seams",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.93,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts              12\nTime              0.471s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september9_biome_mood",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.14,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts               4\nTime              0.44s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september9_city_lanterns",
+      "passed": false,
+      "exit": 1,
+      "seconds": 18.61,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         2\nFailing Tests         1\nAsserts           169/206\nTime              14.383s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september9_city_props",
+      "passed": false,
+      "exit": 1,
+      "seconds": 13.54,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         3\nFailing Tests         1\nAsserts           368/369\nTime              9.29s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september9_covered_crown",
+      "passed": true,
+      "exit": 0,
+      "seconds": 10.44,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              50\nTime              6.333s\n\n\n---- All tests passed! ----\n\nERROR: 2 RID allocations of type 'PN13RendererDummy14TextureStorage12DummyTextureE' were leaked at exit.\nERROR: 3 RID allocations of type 'PN18TextServerAdvanced12FontAdvancedE' were leaked at exit.\nWARNING: ObjectDB instances leaked at exit (run with --verbose for details).\n     at: cleanup (core/object/object.cpp:2514)\nERROR: 77 resources still in use at exit (run with --verbose for details).\n   at: clear (core/io/resource.cpp:795)\nERROR: Pages in use exist at exit in PagedAllocator: N7Variant5Pools12BucketMediumE\n   at: ~PagedAllocator (./core/templates/paged_allocator.h:169)\nERROR: Pages in use exist at exit in PagedAllocator: N7Variant5Pools11BucketSmallE\n   at: ~PagedAllocator (./core/templates/paged_allocator.h:169)"
+    },
+    {
+      "test": "test_september9_dense_region",
+      "passed": false,
+      "exit": 1,
+      "seconds": 2.96,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests      none\nFailing Tests         2\nAsserts           17/22\nTime              1.565s\n\n\n---- 2 failing tests ----"
+    },
+    {
+      "test": "test_september9_door_ownership",
+      "passed": false,
+      "exit": 1,
+      "seconds": 10.44,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         2\nFailing Tests         2\nAsserts           347/361\nTime              6.287s\n\n\n---- 2 failing tests ----"
+    },
+    {
+      "test": "test_september9_door_return_cap",
+      "passed": true,
+      "exit": 0,
+      "seconds": 21.07,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts            1131\nTime              20.297s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september9_fern_habitat",
+      "passed": true,
+      "exit": 0,
+      "seconds": 3.36,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts               9\nTime              2.001s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september9_flat_collision",
+      "passed": false,
+      "exit": 1,
+      "seconds": 1.83,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests      none\nFailing Tests         2\nAsserts             0/4\nTime              0.461s\n\n\n---- 2 failing tests ----"
+    },
+    {
+      "test": "test_september9_flat_water_profile",
+      "passed": false,
+      "exit": 1,
+      "seconds": 1.75,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         2\nFailing Tests         1\nAsserts             5/6\nTime              0.387s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september9_grass_lip",
+      "passed": false,
+      "exit": 1,
+      "seconds": 10.64,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests      none\nFailing Tests         2\nAsserts           7/1016\nTime              6.264s\n\n\n---- 2 failing tests ----"
+    },
+    {
+      "test": "test_september9_height_sample_eviction",
+      "passed": true,
+      "exit": 0,
+      "seconds": 42.84,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              14\nTime              41.44s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september9_lantern_lights",
+      "passed": true,
+      "exit": 0,
+      "seconds": 2.81,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              59\nTime              2.009s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september9_noise_corners",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.34,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts             344\nTime              0.65s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september9_offset_support",
+      "passed": true,
+      "exit": 0,
+      "seconds": 11.85,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              67\nTime              7.62s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september9_pond_seed_queries",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.74,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts               4\nTime              0.372s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september9_rail_attachment",
+      "passed": true,
+      "exit": 0,
+      "seconds": 5.32,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts             142\nTime              1.172s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september9_road_exit",
+      "passed": false,
+      "exit": 1,
+      "seconds": 34.31,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         1\nFailing Tests         1\nAsserts           115/116\nTime              30.087s\n\n\n---- 1 failing tests ----\n\nWARNING: ObjectDB instances leaked at exit (run with --verbose for details).\n     at: cleanup (core/object/object.cpp:2514)\nERROR: 2 resources still in use at exit (run with --verbose for details).\n   at: clear (core/io/resource.cpp:795)"
+    },
+    {
+      "test": "test_september9_roof_end",
+      "passed": false,
+      "exit": 1,
+      "seconds": 3.09,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         1\nFailing Tests         1\nAsserts           55044/55048\nTime              2.311s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september9_source_domain_cache",
+      "passed": false,
+      "exit": 1,
+      "seconds": 1.97,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests      none\nFailing Tests         1\nAsserts             4/6\nTime              0.54s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_september9_spirit_orbs",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.13,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts               6\nTime              0.435s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september9_startup_runway",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.77,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts              54\nTime              0.374s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september9_stream_requests",
+      "passed": true,
+      "exit": 0,
+      "seconds": 19.13,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts               8\nTime              14.752s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september9_travel_deadlines",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.73,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts               7\nTime              0.364s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september9_travel_intent",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.85,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts               5\nTime              1.082s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september9_turf_depth",
+      "passed": true,
+      "exit": 0,
+      "seconds": 10.69,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts            4107\nTime              6.464s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september9_water_buckets",
+      "passed": true,
+      "exit": 0,
+      "seconds": 2.41,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts           12904\nTime              1.021s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september9_water_containment",
+      "passed": true,
+      "exit": 0,
+      "seconds": 129.41,
+      "summary": "Totals\n------\nScripts               1\nTests                18\nPassing Tests        18\nAsserts             823\nTime              127.92s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september9_water_plan_retention",
+      "passed": true,
+      "exit": 0,
+      "seconds": 3.25,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              10\nTime              1.834s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_september9_water_profile_retention",
+      "passed": false,
+      "exit": 1,
+      "seconds": 1.81,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         1\nFailing Tests         1\nAsserts             3/5\nTime              0.392s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_settlement_fabric",
+      "passed": false,
+      "exit": 1,
+      "seconds": 86.73,
+      "summary": "Totals\n------\nScripts               1\nTests                53\nPassing Tests        51\nFailing Tests         2\nAsserts           99154/99158\nTime              82.165s\n\n\n---- 2 failing tests ----"
+    },
+    {
+      "test": "test_settlement_plan",
+      "passed": true,
+      "exit": 0,
+      "seconds": 2.16,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              11\nTime              0.697s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_settlement_september6",
+      "passed": true,
+      "exit": 0,
+      "seconds": 31.58,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts              34\nTime              27.203s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_shallow_roof_contract",
+      "passed": true,
+      "exit": 0,
+      "seconds": 9.49,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts              96\nTime              5.255s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_slope_atlas",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.13,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts              27\nTime              0.458s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_slope_face_inclusions",
+      "passed": true,
+      "exit": 0,
+      "seconds": 21.54,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              61\nTime              19.99s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_slope_profile",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.13,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         6\nAsserts              23\nTime              0.44s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_slope_profile_stacked",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.22,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts              19\nTime              0.447s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_streaming_queue",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.99,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         6\nAsserts              21\nTime              0.373s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_support_solver",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.85,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts              23\nTime              0.403s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_tactical_controls",
+      "passed": true,
+      "exit": 0,
+      "seconds": 3.63,
+      "summary": "Totals\n------\nScripts               1\nTests                 9\nPassing Tests         9\nAsserts              94\nTime              2.803s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_terrain_chunk_mesher",
+      "passed": true,
+      "exit": 0,
+      "seconds": 264.02,
+      "summary": "Totals\n------\nScripts               1\nTests                31\nPassing Tests        31\nAsserts            5894\nTime              259.353s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_terrain_grade_patch",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.94,
+      "summary": "Totals\n------\nScripts               1\nTests                 7\nPassing Tests         7\nAsserts            7209\nTime              0.513s\n\n\n---- All tests passed! ----\n\nWARNING: ObjectDB instances leaked at exit (run with --verbose for details).\n     at: cleanup (core/object/object.cpp:2514)\nERROR: 2 resources still in use at exit (run with --verbose for details).\n   at: clear (core/io/resource.cpp:795)"
+    },
+    {
+      "test": "test_terrain_tile_field",
+      "passed": true,
+      "exit": 0,
+      "seconds": 2.36,
+      "summary": "Totals\n------\nScripts               1\nTests                29\nPassing Tests        29\nAsserts           26428\nTime              0.928s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_terrain_tinting",
+      "passed": true,
+      "exit": 0,
+      "seconds": 16.37,
+      "summary": "Totals\n------\nScripts               1\nTests                 9\nPassing Tests         9\nAsserts             430\nTime              14.805s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_town_architecture",
+      "passed": true,
+      "exit": 0,
+      "seconds": 9.25,
+      "summary": "Totals\n------\nScripts               1\nTests                11\nPassing Tests        11\nAsserts            1653\nTime              4.759s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_town_canopies",
+      "passed": false,
+      "exit": 1,
+      "seconds": 38.91,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         1\nFailing Tests         1\nAsserts           99/104\nTime              33.911s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_town_closures",
+      "passed": false,
+      "exit": 1,
+      "seconds": 21.55,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         2\nFailing Tests         2\nAsserts           65/78\nTime              16.062s\n\n\n---- 2 failing tests ----"
+    },
+    {
+      "test": "test_town_court_enclosure",
+      "passed": true,
+      "exit": 0,
+      "seconds": 24.14,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              39\nTime              18.166s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_town_depth",
+      "passed": true,
+      "exit": 0,
+      "seconds": 7.72,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts             202\nTime              3.354s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_town_destination_agreement",
+      "passed": true,
+      "exit": 0,
+      "seconds": 47.27,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              38\nTime              43.008s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_town_layout_field",
+      "passed": true,
+      "exit": 0,
+      "seconds": 26.66,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         6\nAsserts              80\nTime              22.433s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_town_public_walk_dead_ends",
+      "passed": false,
+      "exit": 1,
+      "seconds": 81.78,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         2\nFailing Tests         1\nAsserts           29/30\nTime              77.445s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_trample_field",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.11,
+      "summary": "Totals\n------\nScripts               1\nTests                11\nPassing Tests        11\nAsserts              73\nTime              0.434s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_traversal_envelope",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.95,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              13\nTime              0.45s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_village_building_support_solver",
+      "passed": true,
+      "exit": 0,
+      "seconds": 30.97,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts             206\nTime              26.756s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_village_capture_views",
+      "passed": true,
+      "exit": 0,
+      "seconds": 18.91,
+      "summary": "Totals\n------\nScripts               1\nTests                 8\nPassing Tests         8\nAsserts              70\nTime              14.321s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_village_circulation_solver",
+      "passed": true,
+      "exit": 0,
+      "seconds": 29.41,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts              50\nTime              25.245s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_village_evening_facades",
+      "passed": true,
+      "exit": 0,
+      "seconds": 23.38,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts              16\nTime              19.203s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_village_frame",
+      "passed": false,
+      "exit": 0,
+      "seconds": 1.12,
+      "summary": ""
+    },
+    {
+      "test": "test_village_frontage_domain",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.85,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts              60\nTime              0.395s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_village_gate_handoffs",
+      "passed": true,
+      "exit": 0,
+      "seconds": 91.89,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts              29\nTime              87.712s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_village_market_solver",
+      "passed": true,
+      "exit": 0,
+      "seconds": 14.07,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              69\nTime              9.853s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_village_massing_solver",
+      "passed": true,
+      "exit": 0,
+      "seconds": 157.5,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts              54\nTime              153.351s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_village_occupancy",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.72,
+      "summary": "Totals\n------\nScripts               1\nTests                12\nPassing Tests        12\nAsserts              36\nTime              0.372s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_village_outskirts_construction",
+      "passed": false,
+      "exit": 1,
+      "seconds": 91.45,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         1\nFailing Tests         1\nAsserts           10667/10669\nTime              87.309s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_village_outskirts_solver",
+      "passed": false,
+      "exit": 1,
+      "seconds": 118.2,
+      "summary": "Totals\n------\nScripts               1\nTests                12\nPassing Tests        11\nFailing Tests         1\nAsserts           699/702\nTime              114.083s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_village_plan",
+      "passed": false,
+      "exit": 1,
+      "seconds": 337.77,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         2\nFailing Tests         1\nAsserts           4511/4512\nTime              333.481s\n\n\n---- 1 failing tests ----\n\nWARNING: ObjectDB instances leaked at exit (run with --verbose for details).\n     at: cleanup (core/object/object.cpp:2514)\nERROR: 2 resources still in use at exit (run with --verbose for details).\n   at: clear (core/io/resource.cpp:795)"
+    },
+    {
+      "test": "test_village_program",
+      "passed": false,
+      "exit": 1,
+      "seconds": 10.58,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         1\nFailing Tests         1\nAsserts           284/287\nTime              6.514s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_village_reported_ground",
+      "passed": false,
+      "exit": 1,
+      "seconds": 97.53,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         2\nFailing Tests         2\nAsserts           83/85\nTime              93.355s\n\n\n---- 2 failing tests ----"
+    },
+    {
+      "test": "test_village_rock_core_solver",
+      "passed": true,
+      "exit": 0,
+      "seconds": 30.6,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts             210\nTime              26.443s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_village_september5_joints",
+      "passed": true,
+      "exit": 0,
+      "seconds": 20.81,
+      "summary": "Totals\n------\nScripts               1\nTests                 8\nPassing Tests         8\nAsserts              54\nTime              16.666s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_village_street_junctions",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.49,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts            4476\nTime              0.388s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_village_terrain_survey",
+      "passed": true,
+      "exit": 0,
+      "seconds": 10.35,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         6\nAsserts             752\nTime              6.231s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_village_turf_seams",
+      "passed": true,
+      "exit": 0,
+      "seconds": 9.21,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         6\nAsserts             461\nTime              5.075s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_village_visual_review_gate",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.13,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts              10\nTime              0.44s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_village_walkway_dressing",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.55,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              15\nTime              0.379s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_visibility_bubble",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.32,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         6\nAsserts              29\nTime              0.571s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_visibility_projection",
+      "passed": false,
+      "exit": 0,
+      "seconds": 1.13,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests      none\nRisky/Pending         1\nAsserts            none\nTime              0.453s\n\n\n---- 1 pending/risky tests. ----"
+    },
+    {
+      "test": "test_warren_architectural_districts",
+      "passed": true,
+      "exit": 0,
+      "seconds": 9.3,
+      "summary": "Totals\n------\nScripts               1\nTests                14\nPassing Tests        14\nAsserts            1604\nTime              4.637s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_warren_facade_variety",
+      "passed": true,
+      "exit": 0,
+      "seconds": 9.48,
+      "summary": "Totals\n------\nScripts               1\nTests                22\nPassing Tests        22\nAsserts           49686\nTime              4.859s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_warren_inhabited_massif",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.5,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts             166\nTime              0.417s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_warren_interstitial_joins",
+      "passed": true,
+      "exit": 0,
+      "seconds": 9.17,
+      "summary": "Totals\n------\nScripts               1\nTests                 7\nPassing Tests         7\nAsserts              99\nTime              5.058s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_warren_massif",
+      "passed": false,
+      "exit": 1,
+      "seconds": 10.09,
+      "summary": "Totals\n------\nScripts               1\nTests                17\nPassing Tests        16\nFailing Tests         1\nAsserts           10018/10019\nTime              5.952s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_warren_maze_composition",
+      "passed": false,
+      "exit": 1,
+      "seconds": 116.64,
+      "summary": "Totals\n------\nScripts               1\nTests                88\nPassing Tests        69\nFailing Tests        18\nRisky/Pending         1\nAsserts           5517/5596\nTime              111.136s\n\n\n---- 18 failing tests ----"
+    },
+    {
+      "test": "test_warren_outcrops",
+      "passed": false,
+      "exit": 1,
+      "seconds": 20.28,
+      "summary": "Totals\n------\nScripts               1\nTests                10\nPassing Tests         9\nFailing Tests         1\nAsserts           394/395\nTime              15.601s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_warren_production_surfaces",
+      "passed": true,
+      "exit": 0,
+      "seconds": 15.17,
+      "summary": "Totals\n------\nScripts               1\nTests                23\nPassing Tests        23\nAsserts             891\nTime              10.884s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_warren_roof_profiles",
+      "passed": true,
+      "exit": 0,
+      "seconds": 13.22,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              68\nTime              9.105s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_warren_spatial_fabric_compiler",
+      "passed": false,
+      "exit": 1,
+      "seconds": 26.14,
+      "summary": "Totals\n------\nScripts               1\nTests                16\nPassing Tests        15\nFailing Tests         1\nAsserts           7681/7683\nTime              21.996s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_warren_spatial_grid",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.13,
+      "summary": "Totals\n------\nScripts               1\nTests                 7\nPassing Tests         7\nAsserts              47\nTime              0.417s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_warren_spatial_plan",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.57,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts             115\nTime              0.378s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_warren_village_scale_profile",
+      "passed": true,
+      "exit": 0,
+      "seconds": 5.2,
+      "summary": "Totals\n------\nScripts               1\nTests                10\nPassing Tests        10\nAsserts             620\nTime              1.049s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_warren_volumetric_solver",
+      "passed": true,
+      "exit": 0,
+      "seconds": 9.89,
+      "summary": "Totals\n------\nScripts               1\nTests                41\nPassing Tests        41\nAsserts             269\nTime              5.232s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_water_classification",
+      "passed": true,
+      "exit": 0,
+      "seconds": 21.08,
+      "summary": "Totals\n------\nScripts               1\nTests                 7\nPassing Tests         7\nAsserts              23\nTime              19.602s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_water_contour",
+      "passed": false,
+      "exit": 1,
+      "seconds": 6.77,
+      "summary": "Totals\n------\nScripts               1\nTests                 7\nPassing Tests         5\nFailing Tests         2\nAsserts           42/45\nTime              5.417s\n\n\n---- 2 failing tests ----"
+    },
+    {
+      "test": "test_water_current_field",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.11,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts               6\nTime              0.447s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_water_dual_grid",
+      "passed": true,
+      "exit": 0,
+      "seconds": 13.75,
+      "summary": "Totals\n------\nScripts               1\nTests                17\nPassing Tests        17\nAsserts            2402\nTime              12.224s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_water_field",
+      "passed": true,
+      "exit": 0,
+      "seconds": 152.86,
+      "summary": "Totals\n------\nScripts               1\nTests                25\nPassing Tests        25\nAsserts             850\nTime              151.39s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_water_field_context",
+      "passed": true,
+      "exit": 0,
+      "seconds": 18.56,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts            1428\nTime              17.177s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_water_forces",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.13,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts              12\nTime              0.455s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_water_full_basin",
+      "passed": true,
+      "exit": 0,
+      "seconds": 3.91,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              10\nTime              2.386s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_water_path_queries",
+      "passed": true,
+      "exit": 0,
+      "seconds": 2.65,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         6\nAsserts              43\nTime              1.262s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_water_plan",
+      "passed": false,
+      "exit": 1,
+      "seconds": 38.27,
+      "summary": "Totals\n------\nScripts               1\nTests                29\nPassing Tests        27\nFailing Tests         1\nRisky/Pending         1\nAsserts           95583/95584\nTime              36.67s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_water_production_seams",
+      "passed": true,
+      "exit": 0,
+      "seconds": 208.6,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts               5\nTime              207.236s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_water_shader",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.89,
+      "summary": "Totals\n------\nScripts               1\nTests                 7\nPassing Tests         7\nAsserts              47\nTime              0.399s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_water_skin",
+      "passed": false,
+      "exit": 1,
+      "seconds": 95.68,
+      "summary": "Totals\n------\nScripts               1\nTests                34\nPassing Tests        29\nFailing Tests         2\nRisky/Pending         3\nAsserts           23031/23037\nTime              94.163s\n\n\n---- 2 failing tests ----"
+    },
+    {
+      "test": "test_water_swim_volumes",
+      "passed": true,
+      "exit": 0,
+      "seconds": 21.12,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         6\nAsserts             415\nTime              19.6s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_water_terminal_datum",
+      "passed": true,
+      "exit": 0,
+      "seconds": 2.24,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts             788\nTime              0.81s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_water_wave_clearance",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.87,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts               7\nTime              0.384s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_world_field_block_cache",
+      "passed": true,
+      "exit": 0,
+      "seconds": 1.93,
+      "summary": "Totals\n------\nScripts               1\nTests                 7\nPassing Tests         7\nAsserts              54\nTime              0.514s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_world_lighting",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.99,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts               3\nTime              4.274s\n\n\n---- All tests passed! ----"
+    }
+  ]
+}

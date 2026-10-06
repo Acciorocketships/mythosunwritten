@@ -1,0 +1,149 @@
+static func cover_tunnels(plan: WarrenMazeSourcePlan) -> Array[Dictionary]:
+	var records: Array[Dictionary] = []
+	if plan == null or plan.is_sealed() or plan.excavation == null:
+		return records
+	var walks: Array[Vector3i] = []
+	walks.assign(plan.excavation.tunnel_cells.keys())
+	walks.sort_custom(WarrenMazeSourcePlan._cell_less)
+	var pending := walks.duplicate()
+	var by_walk := {}
+	var added := true
+	# Resolve outward from real houses, independent of the spatial scan order.
+	# Each successful pass consumes at least one finite tunnel column.
+	while added:
+		added = false
+		var retry: Array[Vector3i] = []
+		for walk: Vector3i in pending:
+			plan.derive_rock_shoulders()
+			var roof := plan.passage_headroom_top(walk)
+			var column := Vector2i(walk.x, walk.z)
+			var record: Dictionary = by_walk.get(walk, {})
+			if record.is_empty():
+				record = {"walk": walk, "reason": ""}
+				by_walk[walk] = record
+				records.append(record)
+			record["reason"] = ""
+			if not plan.passage_kinds.has(walk):
+				record["reason"] = "passage withdrawn"
+				continue
+			if not plan.solid_at(Vector3i(column.x, roof, column.y)):
+				record["reason"] = "no crown"
+				continue
+			if not plan.plots_at(column).is_empty():
+				record["reason"] = "crown already carries a plot"
+				continue
+			var jambs := _tunnel_jambs(plan, walk, roof)
+			if jambs.is_empty():
+				record["reason"] = "passage walls do not bear on two jambs"
+				continue
+			var host := _tunnel_host(plan, column, roof)
+			if host.x < 0:
+				record["reason"] = "no adjacent house storey over the crown"
+				retry.append(walk)
+				continue
+			var host_plot := plan.plots[host.x] as Dictionary
+			if int(host_plot["top"]) > WarrenTownPlatform.huddle_top(plan.massif, column):
+				record["reason"] = "would overtop the citadel's plinth"
+				continue
+			# The town's edge-ring profile holds a cover as it holds any house.
+			if int(host_plot["top"]) > _edge_limit(plan, column, host.y,
+					WarrenBuildingParcel.ROOF_RESERVATION_BANDS):
+				record["reason"] = "would overtop the edge-ring profile"
+				continue
+			if not plan.add_plot({"id": StringName("over.%02d" % (walks.find(walk) + 1)),
+					"kind": WarrenMazeSourcePlan.PLOT_OVER, "cells": [column],
+					"floor": host.y, "top": int(host_plot["top"]),
+					"door_walk": host_plot["door_walk"],
+					"building_id": host_plot["building_id"]}):
+				record["reason"] = plan.last_rejection
+				continue
+			var over := plan.plots.back() as Dictionary
+			over["host"] = StringName(host_plot["id"])
+			over["crown"] = roof
+			over["jambs"] = jambs
+			record["host"] = host_plot["id"]
+			record["floor"] = host.y
+			added = true
+		pending = retry
+	outcomes(plan)["tunnel_roofs"] = records
+	return records
+
+
+static func _tunnel_jambs(plan: WarrenMazeSourcePlan, walk: Vector3i,
+		roof: int) -> Array[Vector2i]:
+	## The two walls the crown of bored cell `walk` bears on -- two opposing
+	## jambs across the bore on one axis (through the other lane of a two-lane
+	## bore), or both outer walls of a turn -- each solid over the whole
+	## headroom [walk.y, roof); [] when there is no such pair.
+	var column := Vector2i(walk.x, walk.z)
+	var passage := func(c: Vector2i) -> bool:
+		return plan.passage_kinds.has(Vector3i(c.x, walk.y, c.y))
+	var wall := func(c: Vector2i) -> bool:
+		for band in range(walk.y, roof):
+			if not plan.solid_at(Vector3i(c.x, band, c.y)):
+				return false
+		return true
+	for axis: Vector2i in [Vector2i.RIGHT, Vector2i.DOWN]:
+		var ends: Array[Vector2i] = []
+		for sign_value: int in [-1, 1]:
+			var probe := column + axis * sign_value
+			var steps := 0
+			while steps < 2 and plan.excavation.tunnel_cells.has(
+					Vector3i(probe.x, walk.y, probe.y)):
+				probe += axis * sign_value
+				steps += 1
+			if not passage.call(probe) and wall.call(probe):
+				ends.append(probe)
+		if ends.size() == 2:
+			return ends
+	var sides: Array[Vector2i] = []
+	for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+		if not passage.call(column + direction):
+			sides.append(column + direction)
+	if sides.size() == 2 and (sides[0] - column) != (column - sides[1]) \
+			and wall.call(sides[0]) and wall.call(sides[1]):
+		return sides
+	return [] as Array[Vector2i]
+
+
+static func _tunnel_host(plan: WarrenMazeSourcePlan, column: Vector2i,
+		roof: int) -> Vector2i:
+	## Vector2i(plot index, storey floor) of the adjacent house plot whose
+	## storey floor is lowest in (roof, roof + TUNNEL_OVER_MAX_LIFT] and still
+	## fits a whole storey under its roof reservation; x = -1 when none. The
+	## house's height is its own (the storey roll, ring terrace and edge
+	## envelope decided it); the passage never grows it.
+	var best := Vector2i(-1, 1 << 20)
+	for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+		for neighbor_index: int in plan.plots_at(column + direction):
+			var neighbor := plan.plots[neighbor_index] as Dictionary
+			var index := neighbor_index
+			if StringName(neighbor["kind"]) == WarrenMazeSourcePlan.PLOT_OVER:
+				# A previously supported back room continues its original house.
+				# Never give the extension a new parcel or grow the host's height.
+				index = -1
+				for candidate in plan.plots.size():
+					if plan.plots[candidate].get("id", &"") == neighbor.get("host", &""):
+						index = candidate
+						break
+				if index < 0:
+					continue
+			var plot := plan.plots[index] as Dictionary
+			if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_HOUSE:
+				continue
+			var storey := int(plot["floor"])
+			while storey <= roof:
+				storey += WarrenBuildingParcel.STOREY_BANDS
+			if storey > roof + TUNNEL_OVER_MAX_LIFT \
+					or storey + WarrenBuildingParcel.STOREY_BANDS \
+						+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS \
+						> int(plot["top"]):
+				continue
+			# The intervening room must actually contain this storey, not
+			# merely share a column above or below it.
+			if storey < int(neighbor["floor"]) or storey + WarrenBuildingParcel.STOREY_BANDS \
+					+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS > int(neighbor["top"]):
+				continue
+			if storey < best.y or storey == best.y and index < best.x:
+				best = Vector2i(index, storey)
+	return best if best.x >= 0 else Vector2i(-1, 0)

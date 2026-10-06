@@ -1,0 +1,23 @@
+{
+  "ROOF_AUDIT": {
+    "same": false,
+    "before_count": 2,
+    "after_count": 2,
+    "difference": "43/grand canonical dormer checks omit two obstructed dormers; all other fields match. 13/large matches all fields."
+  },
+  "TUNNELS": {
+    "same": true,
+    "before_count": 2,
+    "after_count": 2
+  },
+  "STEPPED_HOUSES": {
+    "same": true,
+    "before_count": 2,
+    "after_count": 2
+  },
+  "BOUNDS": {
+    "same": true,
+    "before_count": 2,
+    "after_count": 2
+  }
+}

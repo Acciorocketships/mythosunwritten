@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_bei45"]
+
+[resource]
+script = ExtResource("1_bei45")
+id = &"pure_village.roof.top.start.wood_red"
+visual_path = "res://terrain/environment/visuals/pure_village_tower_wood_red/pure_village_roof_top_start_wood_red.tres"
+tags = Array[StringName]([&"building", &"pure_village_kit", &"village"])
+measured_aabb = AABB(-0.7192212, 0, -1.298138, 1.4065112, 1.5941031, 2.5962758)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"pure_village_tower_wood_red:pure_village.roof.top.start.wood_red"

@@ -3,7 +3,7 @@ extends SceneTree
 
 ## Deterministic editor-side importer for source-pack visuals. Runtime code is
 ## intentionally unaware of every source path named by the manifests.
-const TOOL_VERSION := 38
+const TOOL_VERSION := 41
 const RoofEnvelope = preload("res://tools/environment_bake/EnvironmentRoofEnvelope.gd")
 const DESCRIPTOR_DIR := "res://terrain/environment/catalog/descriptors"
 const INDEX_PATH := "res://terrain/environment/catalog/index.tres"
@@ -20,6 +20,8 @@ var _material_palette: Dictionary = {}
 var _material_roughness: Dictionary = {}
 ## Explicit source-texture replacement, keyed by vendor material name.
 var _material_textures: Dictionary = {}
+## Optional pack texture policy; legacy manifests retain lossless pixels.
+var _texture_policy: Dictionary = {}
 var _failed := false
 var _provenance_by_pack: Dictionary = {}
 
@@ -75,6 +77,10 @@ func _bake_manifest(path: String) -> void:
 	_material_palette.clear()
 	_material_roughness.clear()
 	_material_textures = manifest.get("material_textures", {})
+	_texture_policy = manifest.get("texture_policy", {})
+	if String(_texture_policy.get("compression","lossless")) not in ["lossless","basis_universal"]:
+		_fail("Unsupported texture compression in %s" % path)
+		return
 	var roughness: Dictionary = manifest.get("material_roughness", {})
 	for material_name: String in roughness:
 		_material_roughness[StringName(material_name)] = float(roughness[material_name])
@@ -109,6 +115,7 @@ func _bake_manifest(path: String) -> void:
 		if _failed:
 			return
 		record["tool_version"] = TOOL_VERSION
+		record["texture_policy"] = _texture_policy.duplicate(true)
 		provenance = provenance.filter(func(old: Dictionary) -> bool: return old.id != record.id)
 		provenance.append(record)
 	provenance.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return String(a.id) < String(b.id))
@@ -333,6 +340,12 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 		_fail("Asset %s cannot combine merge_pieces with ribbon simplifiers" % asset_id)
 		root.free()
 		return {}
+	if entry.has("material_bindings"):
+		if not entry.material_bindings is Array \
+				or not EnvironmentBakeGeometry.bind_materials(visual_root, entry.material_bindings):
+			_fail("Invalid authored material bindings: %s" % asset_id)
+			root.free()
+			return {}
 	if entry.has("masonry_depth"):
 		if not entry.masonry_depth is Dictionary \
 				or not EnvironmentBakeGeometry.deepen_masonry(visual_root, entry.masonry_depth):
@@ -2267,7 +2280,7 @@ func _bake_material(source: Material, pack: String, asset_id: String, piece_inde
 			continue
 		# Palette variants are evaluated in the material so green foliage can
 		# change hue without recolouring bark that shares the same atlas.
-		var baked_texture := _bake_texture(texture, pack, -1.0)
+		var baked_texture := _bake_texture(texture, pack, -1.0, property_name == &"normal_texture")
 		if baked_texture == null:
 			return null
 		material.set(property_name, baked_texture)
@@ -2299,7 +2312,7 @@ func _bake_material(source: Material, pack: String, asset_id: String, piece_inde
 		return null
 	return load(material_path) as Material
 
-func _bake_texture(source: Texture2D, pack: String, green_hue: float) -> Texture2D:
+func _bake_texture(source: Texture2D, pack: String, green_hue: float, normal_map := false) -> Texture2D:
 	var image := source.get_image()
 	if image == null or image.is_empty():
 		_fail("Cannot read texture pixels: %s" % source.resource_path)
@@ -2315,8 +2328,19 @@ func _bake_texture(source: Texture2D, pack: String, green_hue: float) -> Texture
 				# Palette variants remap foliage-like greens only. Bark, rock,
 				# flowers, and neutral texels retain their authored hue.
 				image.set_pixel(x, y, _remap_green(color, green_hue))
+	var compressed := String(_texture_policy.get("compression","lossless")) == "basis_universal"
+	var mipmaps := bool(_texture_policy.get("mipmaps",false))
+	if mipmaps:
+		image.generate_mipmaps(normal_map)
 	var hash: String = image.get_data().hex_encode().sha256_text()
-	var key := "%s:%s:%.5f" % [pack, hash, green_hue]
+	# Encoding and normal-map hints affect the resource as well as its pixels.
+	# Preserve existing paths for manifests with the legacy default policy.
+	if compressed or mipmaps:
+		hash = (hash+":basis=%s:mips=%s:normal=%s" % [compressed,mipmaps,normal_map]).sha256_text()
+	# Related modular manifests can share the same content-addressed maps.
+	# Pixel data, mipmaps and encoding hints are already part of the hash.
+	var texture_pack := _slug(String(_texture_policy.get("namespace", pack)))
+	var key := "%s:%s:%.5f" % [texture_pack, hash, green_hue]
 	var cached := _texture_cache.get(key) as Texture2D
 	if cached != null:
 		return cached
@@ -2325,9 +2349,14 @@ func _bake_texture(source: Texture2D, pack: String, green_hue: float) -> Texture
 	# new pixels. PortableCompressedTexture2D serializes the actual image and
 	# therefore makes palette variants and source-pack-free exports reliable.
 	var texture := PortableCompressedTexture2D.new()
-	texture.keep_compressed_buffer = true
-	texture.create_from_image(image, PortableCompressedTexture2D.COMPRESSION_MODE_LOSSLESS)
-	var texture_path := "res://terrain/environment/textures/%s/%s.res" % [_slug(pack), hash.left(20)]
+	# Keep encoder buffers in the bake process so resources can be saved,
+	# without serializing a per-texture request to retain them at runtime.
+	PortableCompressedTexture2D.set_keep_all_compressed_buffers(true)
+	if compressed:
+		texture.set_basisu_compressor_params(2,0.0)
+	texture.create_from_image(image, PortableCompressedTexture2D.COMPRESSION_MODE_BASIS_UNIVERSAL \
+		if compressed else PortableCompressedTexture2D.COMPRESSION_MODE_LOSSLESS,normal_map)
+	var texture_path := "res://terrain/environment/textures/%s/%s.res" % [texture_pack, hash.left(20)]
 	_ensure_parent(texture_path)
 	if ResourceSaver.save(texture, texture_path) != OK:
 		_fail("Cannot save texture: %s" % texture_path)
@@ -2378,6 +2407,14 @@ func _prune_unmanifested_descriptors() -> void:
 	while not filename.is_empty():
 		if not descriptor_directory.current_is_dir() and filename.ends_with(".tres"):
 			var path := DESCRIPTOR_DIR.path_join(filename)
+			# Native frame finishes are lightweight derived descriptors. Keep
+			# them only while their canonical source remains manifested;
+			# bake_town_frame_variants refreshes their source measurements.
+			if not active_paths.has(path) and filename.contains("_finish_"):
+				var source_filename := filename.get_slice("_finish_", 0) + ".tres"
+				if active_paths.has(DESCRIPTOR_DIR.path_join(source_filename)):
+					var variant := load(path) as EnvironmentAssetDescriptor
+					if variant != null and not variant.material_tints.is_empty(): active_paths[path] = true
 			if not active_paths.has(path):
 				print("Pruning unmanifested environment descriptor: ", path)
 				DirAccess.remove_absolute(ProjectSettings.globalize_path(path))

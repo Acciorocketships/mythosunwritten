@@ -1,0 +1,9 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+LINEAGE_PREFLIGHT 9 candidate has no exact roof envelope that clears existing rooms
+LINEAGE_PREFLIGHT 11 
+LINEAGE_PREFLIGHT 13 
+LINEAGE_PREFLIGHT 15 
+GENERATED true 

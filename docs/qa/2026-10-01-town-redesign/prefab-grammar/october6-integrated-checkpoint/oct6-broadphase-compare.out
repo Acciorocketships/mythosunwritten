@@ -1,0 +1,7 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+BROADPHASE { "ms": 5463, "bytes": 31452952 }
+BROADPHASE { "ms": 4721, "bytes": 31435864 }
+COMPARISON { "rows": [{ "ms": 5463, "bytes": 31452952 }, { "ms": 4721, "bytes": 31435864 }], "identical": false }

@@ -205,6 +205,9 @@ static func from_volume(source: WarrenVolumePlan,
 			realm.require_classification(cell)
 	for cell: Vector3i in infill.daylight_voids as Array[Vector3i]:
 		realm.add_daylight_void(cell)
+	# Preserve planted voids through the later borne-corner floor closure.
+	for cell: Vector3i in WarrenVolumetricSolver._maze_court_planting_cells(source):
+		realm.add_daylight_void(cell)
 	for cell: Vector3i in supplemental_air:
 		if not realm.add_supplemental_air(cell):
 			last_failure = "supplemental exterior air could not be projected"

@@ -32,7 +32,7 @@ static func compile(catalog: EnvironmentCatalog,
 	program.shore_distance_limit = path_program.shore_distance_limit
 	program.maximum_clearance = maxf(path_program.maximum_clearance,
 		village_program.maximum_clearance)
-	program.record_discovery_radius = village_program.max_record_radius \
+	program.record_discovery_radius = maxf(village_program.max_record_radius, village_program.warren_discovery_radius) \
 		+ program.maximum_clearance
 	program.geometry_halo = maxi(path_program.feature_halo,
 		village_program.geometry_halo)

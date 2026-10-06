@@ -53,6 +53,14 @@ static func solve(terrain: VillageTerrainView, city_seed: int,
 	if result.terrain_grade != null:
 		result.terrain_grade.road_masks = road_masks
 	_connect_world_roads(result, terrain, stable_id, centre, street_axis, canonical_ground)
+	if result.accepted:
+		var ground := terrain.with_terrain_grades([result.terrain_grade]) \
+			if result.terrain_grade != null else terrain
+		result.ground_dressing_audit = preload(
+			"res://scripts/terrain/features/villages/TownGroundDressing.gd").dress(result,
+			preview.source_volume.mass_context.get(&"maze_source_plan"),
+			program.runtime_aabbs, ground, city_seed, world_seed)
+
 	return result
 
 
@@ -125,7 +133,9 @@ static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 		fabric.planned_plaza_cells))
 	local_payload.append_from(SettlementFabricAssembler.low_retaining_payload(fabric))
 	local_payload.append_from(KitVillageBuildings.without_prefixes(
-		SettlementFabricAssembler.terrace_retaining_payload(fabric, false),
+		SettlementFabricAssembler.terrace_retaining_payload(fabric, false,
+			preload("res://scripts/terrain/features/villages/TownCourtTrees.gd").native_obstacles(
+				local_payload, EnvironmentCatalog.load_default()) if not fabric.planned_plaza_planting_cells.is_empty() else {}),
 		KitVillageBuildings.REPLACED_TERRACE_PREFIXES))
 	var frontage := _terrain_qualified_frontage(terrain, fabric, world_frame)
 	result.frontage_sites = frontage.records
@@ -140,38 +150,14 @@ static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 			var world_transform := world_frame * local_transform
 			var local_instance_id := StringName(batch.ids[index]) \
 				if not batch.ids.is_empty() else StringName("anonymous.%d" % index)
-			# TASK I2. THE COLOUR CHANNEL SURVIVES THE CROSSING. `entries` carried
-			# asset, transform and id and nothing else, and both consumers
-			# (`VillagePlan._materialize_urban_fabric` and the review harness's
-			# production commit) then wrote `Color.WHITE` -- so the payload's own
-			# instance colour was dropped between the assembler and the renderer,
-			# and every tint the fabric asks for reached the game as white.
-			#
-			# The garden turf is the casualty that FOUND this: rendered raw, the
-			# KayKit grass swatch is the pale "lime plate" the direction retired,
-			# and the tint that fixes it is the payload's. But it is not the
-			# only casualty and not the oldest one -- `_append_courtyard_paving`
-			# (SettlementFabricAssembler.gd:2617, colours at :2631) has always
-			# passed real colours, the weathered-board checker
-			# (`Color("b9c1b8")` against `Color("c8b79d")`), on both adapters,
-			# and `test_settlement_fabric.gd`'s "courtyard paving must differ
-			# visibly" has pinned the two-tone the whole time. This crossing
-			# flattened THAT to white in-game too, for the pipeline's entire
-			# life, so the fix below RESTORES a designed, tested feature; it
-			# does not only switch one on for the first time. Defaulted to
-			# WHITE on read, so the timber, stair and outskirts channels that
-			# set no colour are byte-identical.
-			#
-			# Nothing in today's corpus exercises that restoration: every
-			# planner town's `source_courtyard_macro_cell_count` is 0 and both
-			# big scale groups audit `elevated_courtyards: 0`, so no sealed
-			# town builds an elevated court and the checker has not rendered in
-			# a single reviewed frame. The first seed that grows one ships a
-			# two-tone deck nobody has looked at -- I4's watch list, not closed
-			# here.
+			# Preserve the payload's surface/instance tint through the world
+			# transform, including the turf and paving of elevated courtyards.
 			var color := batch.colors[index] as Color
 			if CliffDressing.is_terrain_skin_asset(asset_id):
 				color = CliffDressing.tint_at(world_transform, world_seed)
+			elif asset_id in SettlementFabricAssembler.PLAZA_COURT_TREES:
+				color = BiomeRegistry.blended_environment_tint(
+					Helper.biome_weights5(world_transform.origin, world_seed), &"tree")
 			result.entries.append({
 				"asset_id": asset_id,
 				"visibility_owner": world_frame * (batch.visibility_owners[index] as AABB) \
@@ -208,22 +194,17 @@ static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 	var district_id := StringName("%s.warren" % stable_id)
 	var district_centre := Vector2(world_centre3.x, world_centre3.z)
 	_append_typed_occupancy(result, fabric, world_frame, district_id, yaw)
+	_append_physical_ground_clearance(result, district_id)
 	var envelope := FeatureGroundShape.oriented_rect(
 		district_centre, horizontal_size * 0.5 \
 			+ Vector2.ONE * CLEARANCE_MARGIN * world_scale,
 		yaw, 0, 0, StringName("%s.clearance" % district_id))
 	envelope.envelope = true
 	result.clearances.append(envelope)
-	# Ground-level cells retain the canonical path paint beneath their plank
-	# modules.  Upper cells are deliberately absent from the 2D ground field.
-	for cell: Vector3i in fabric.surface_plan.cells_for_kind(
-			PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET):
-		var world3 := world_frame * (Vector3(cell) * FabricRecipe.CELL_SIZE)
-		result.surfaces.append(FeatureGroundShape.oriented_rect(
-			Vector2(world3.x, world3.z),
-			Vector2.ONE * VillageWorldScale.WORLD_FINE_CELL_M * 0.5, yaw,
-			FeatureGroundField.WORN_PATH, VillagePlan.SURFACE_PRIORITY,
-			StringName("%s.ground.%d.%d" % [district_id, cell.x, cell.z])))
+	# Paint only the ground-level public union, with rounded exterior corners.
+	result.surfaces.append_array(preload("res://scripts/terrain/features/villages/TownStreetPaint.gd").shapes(
+		fabric.surface_plan.cells_for_kind(PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET),
+		world_frame,district_id))
 	_append_terrain_handoffs(result, contact_specs, district_id)
 	var top_y := (world_frame * Vector3(local_centre.x,
 		local_bounds.end.y, local_centre.z)).y
@@ -393,6 +374,8 @@ static func _world_surface_mesh(mesh: Dictionary, world_frame: Transform3D,
 	## payload needs no per-mesh transform channel. Uniform scale preserves normal
 	## directions, so the transformed basis only needs normalization here.
 	var out := mesh.duplicate(true)
+	if mesh.has("garden_grass_regions"):
+		out["garden_grass_regions"] = TownGardenGrass.world_regions(mesh.garden_grass_regions,world_frame,stable_id)
 	if mesh.has("visibility_owner"):
 		out["visibility_owner"] = world_frame * (mesh.visibility_owner as AABB)
 	var vertices := PackedVector3Array()
@@ -422,13 +405,14 @@ static func _world_surface_mesh(mesh: Dictionary, world_frame: Transform3D,
 	out["collision_faces"] = collision
 	if bool(mesh.get("terrain_ground", false)):
 		var colors := PackedColorArray()
+		var tint_cache := {}
 		colors.resize(vertices.size())
 		var earth := bool(mesh.get("terrain_path", false)) \
 			or bool(mesh.get("terrain_path_spot", false))
 		for index in vertices.size():
 			# Match native paths at town handoffs while turf keeps its biome tint.
 			colors[index] = SlopeAtlas.path_tint(bool(mesh.get("terrain_path_spot", false))) \
-				if earth else BiomeRegistry.ground_tint_at(vertices[index], world_seed) \
+				if earth else BiomeRegistry.terrain_tint_at(vertices[index], world_seed, tint_cache) \
 				if world_seed != 0 else Color.WHITE
 		out["colors"] = colors
 	elif CliffDressing.is_terrain_skin_asset(StringName(mesh.get("material_asset_id", ""))):
@@ -703,6 +687,20 @@ static func terrain_contact_local_geometry(spec: Dictionary) -> Dictionary:
 	}
 
 
+
+
+static func _append_physical_ground_clearance(result: VillageUrbanFabricPlan,
+		district_id: StringName) -> void:
+	# The district envelope excludes unrelated ambient placement, but is not
+	# physical pavement. Project the finished construction separately so
+	# grass can occupy natural gaps without growing through buildings/walks.
+	for volume: VillageOccupancyVolume in result.volumes:
+		if volume.role not in [VillageOccupancy.Role.SOLID,
+				VillageOccupancy.Role.WALK_SURFACE, VillageOccupancy.Role.WALK_GUARD]:
+			continue
+		result.clearances.append(FeatureGroundShape.oriented_rect(volume.centre,
+			volume.half_extents, volume.angle, FeatureGroundField.NATURAL, 0,
+			StringName("%s.physical.%s" % [district_id, volume.stable_id])))
 
 
 static func _append_typed_occupancy(result: VillageUrbanFabricPlan,

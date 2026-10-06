@@ -1,0 +1,10 @@
+{
+  "scripts/terrain/features/villages/WarrenTownDiscovery.gd": "47d072bba00950fea589668a67ef1f24f60c3e2413b24320c8cf75e7954c5a3b",
+  "scripts/terrain/features/villages/fabric/WarrenTownField.gd": "e5895d3a4c66aedb8b54cde051cee745db131f8ed3e3da25878e19f13cd44c00",
+  "scripts/terrain/features/villages/VillageProgram.gd": "d8f09632a17155c03cf9849e94218ab834c149919ee0f96aabf636d6e3bee13e",
+  "scripts/terrain/features/villages/VillagePlan.gd": "697d2b74a3901e686434c31d7286faf72abb16104e7f989ee1c7da349d146ea3",
+  "scripts/terrain/features/villages/VillageRecord.gd": "e608e218fc7e0f2d27ea65bb2cf7b80f67adb809a0e027d13b9f78fbb9df902c",
+  "scripts/terrain/features/WorldFeaturePlan.gd": "75130d8a1023ef8a7b0ebb2f17b621c26a98344d12a0df72e52fc7a2f8a252dd",
+  "scripts/terrain/features/FeatureProgram.gd": "f1bfd5d491f43bd7052ec35ff27080557a46d5cedc11af3eb4cce4eb4c4ea0b7",
+  "tests/test_october3_town_discovery.gd": "e77b7faa8b609e28e747dc52aa5d29e51b9595866f74b653d77a27d77cb11477"
+}

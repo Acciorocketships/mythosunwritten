@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_tlqjb"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/town_props/alchemy_cauldron_001_piece_00.res" id="2_7i4ro"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_tcdi1"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/town_props/alchemy_cauldron_001_piece_00.res" id="4_nq51l"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_gj0jg"]
+
+[sub_resource type="Resource" id="Resource_yaoh2"]
+script = ExtResource("1_tlqjb")
+shape = ExtResource("2_7i4ro")
+
+[sub_resource type="Resource" id="Resource_rm8fq"]
+script = ExtResource("3_tcdi1")
+mesh = ExtResource("4_nq51l")
+
+[resource]
+script = ExtResource("5_gj0jg")
+pieces = Array[ExtResource("3_tcdi1")]([SubResource("Resource_rm8fq")])
+collisions = Array[ExtResource("1_tlqjb")]([SubResource("Resource_yaoh2")])

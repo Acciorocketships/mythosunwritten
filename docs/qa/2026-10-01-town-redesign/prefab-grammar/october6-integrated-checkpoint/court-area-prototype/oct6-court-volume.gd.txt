@@ -1,0 +1,55 @@
+extends WarrenVolumePlan
+var court_links:Dictionary={}
+func has_walk(cell:Vector3i)->bool:
+ return super.has_walk(cell) or court_links.has(cell)
+func register_court_anchor(anchor:Vector3i,frontages:Array[Vector3i])->bool:
+ if has_walk(anchor):return true
+ var allowed:={}
+ for cell:Vector3i in frontages:allowed[cell]=true
+ if not allowed.has(anchor):return false
+ var queue:Array[Vector3i]=[anchor]
+ var visited:={anchor:true}
+ var cursor:=0
+ while cursor<queue.size():
+  var cell:=queue[cursor]
+  cursor+=1
+  for step:Vector3i in [Vector3i.LEFT,Vector3i.RIGHT,Vector3i.FORWARD,Vector3i.BACK]:
+   var next:=cell+step
+   if super.has_walk(next):
+    court_links[anchor]=next
+    super.add_walk_cell(anchor,false)
+    mass_context[&"court_links"]=court_links
+    return true
+   if allowed.has(next) and not visited.has(next):
+    visited[next]=true
+    queue.append(next)
+ return false
+func add_transition(value:WarrenVolumeTransition)->bool:
+ var filtered:Array[Vector3i]=[]
+ for cell:Vector3i in value.swept_air_cells:
+  var borrowed:=false
+  for anchor:Vector3i in court_links:
+   if cell.x==anchor.x and cell.z==anchor.z and cell.y>=anchor.y and cell.y<anchor.y+HEADROOM_BANDS:borrowed=true
+  if not borrowed:filtered.append(cell)
+ value.swept_air_cells=filtered
+ return super.add_transition(value)
+func _all_walk_connected()->bool:
+ var adjacency:={}
+ for cell:Vector3i in walk_cells:adjacency[cell]=[]
+ for anchor:Vector3i in court_links:
+  adjacency[anchor]=[]
+ for anchor:Vector3i in court_links:
+  adjacency[anchor].append(court_links[anchor])
+  adjacency[court_links[anchor]].append(anchor)
+ for transition:WarrenVolumeTransition in transitions:
+  if not adjacency.has(transition.from_cell) or not adjacency.has(transition.to_cell):return false
+  adjacency[transition.from_cell].append(transition.to_cell)
+  adjacency[transition.to_cell].append(transition.from_cell)
+ var reached:={}
+ var pending:Array[Vector3i]=[entry_cell]
+ while not pending.is_empty():
+  var cell:Vector3i=pending.pop_back()
+  if reached.has(cell):continue
+  reached[cell]=true
+  for next:Vector3i in adjacency[cell]:pending.append(next)
+ return reached.size()==adjacency.size()

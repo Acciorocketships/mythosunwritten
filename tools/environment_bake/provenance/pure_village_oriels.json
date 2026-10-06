@@ -1,0 +1,71 @@
+{
+  "assets": [
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_bay_spire.tres",
+      "id": "pure_village.bay.spire",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 6089,
+        "measured_aabb": {
+          "position": [
+            -0.994755625724792,
+            -0.678831458091736,
+            -0.0500000007450581
+          ],
+          "size": [
+            1.99572908878326,
+            5.39671802520752,
+            1.06009113788605
+          ]
+        },
+        "mesh_bytes": 212886,
+        "surface_count": 10,
+        "visual_piece_count": 1,
+        "visual_triangles": 6089
+      },
+      "pack": "pure_village_oriels",
+      "parameters": {
+        "clip_ranges": {
+          "z": [
+            -0.05,
+            10.0
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.bay.spire",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://tools/environment_bake/assembly_sources/pure_village/oriel_spire.tscn",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_oriels",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://tools/environment_bake/assembly_sources/pure_village/oriel_spire.tscn",
+      "source_sha256": "bafc095abac22a352f287e1679d7ac65a3ca50ebc9bb1f08f86a9c7529ee46f1",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true,
+        "namespace": "pure_village_kit"
+      },
+      "tool_version": 40,
+      "visual": "res://terrain/environment/visuals/pure_village_oriels/pure_village_bay_spire.tres"
+    }
+  ],
+  "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+  "pack": "pure_village_oriels",
+  "tool_version": 40
+}

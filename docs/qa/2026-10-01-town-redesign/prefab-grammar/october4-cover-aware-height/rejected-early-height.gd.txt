@@ -1,0 +1,38 @@
+static func _rolled_seed_top(plan: WarrenMazeSourcePlan,
+		building: Dictionary) -> int:
+	var floor_band := int(building["floor"])
+	var budget: Vector2i = plan.scale_profile.scaled(STOREY_BUDGET)
+	if plan.massif.form_id == &"ridge":
+		budget = Vector2i(1, 2)
+	var rolled := floor_band + WarrenBuildingParcel.ROOF_RESERVATION_BANDS \
+		+ WarrenBuildingParcel.STOREY_BANDS * _building_roll(plan, building,
+			STOREY_SALT, budget)
+	var field_top := 2147483647
+	var frontage := {}
+	for column: Vector2i in building.get("cells", []):
+		if plan.massif.has_column(column):
+			field_top = mini(field_top,plan.massif.top_at(column))
+		frontage[column] = true
+		for step: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+			frontage[column+step] = true
+	if field_top == 2147483647: return rolled
+	var capped := floor_band + WarrenBuildingParcel.ROOF_RESERVATION_BANDS \
+		+ WarrenBuildingParcel.STOREY_BANDS * maxi(1,floori(float(field_top-floor_band) \
+			/ WarrenBuildingParcel.STOREY_BANDS))
+	if capped >= rolled: return rolled
+	# Street carving owns the silhouette, but a neighboring passage needs a
+	# complete room above its headroom to become an inhabited underpass. Keep
+	# that room budget before composition, rather than cap heights and remove
+	# the very low ceilings the town is meant to produce. Never exceed the
+	# original roll; required upper floors still have _building_top's authority.
+	for walk: Vector3i in plan.passage_kinds:
+		if not frontage.has(Vector2i(walk.x,walk.z)): continue
+		var room_floor := floor_band + WarrenBuildingParcel.STOREY_BANDS * maxi(0,
+			ceili(float(walk.y+WarrenExcavation.HEADROOM_BANDS-floor_band) \
+				/ WarrenBuildingParcel.STOREY_BANDS))
+		capped = maxi(capped,room_floor+2*WarrenBuildingParcel.STOREY_BANDS \
+			+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS)
+	return mini(rolled,capped)
+
+
+

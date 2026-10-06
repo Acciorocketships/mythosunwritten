@@ -1,0 +1,18 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+STEPPED_HOUSES [{ "id": &"kit.spatial.parcel.maze.bridge.01.end.0.lower", "at": (-2.25, 9.0, -6.75), "reach": 24.0 }, { "id": &"kit.spatial.parcel.maze.house.009", "at": (32.25, 3.0, 20.25), "reach": 16.0 }, { "id": &"kit.spatial.parcel.maze.house.018", "at": (-11.25, 10.5, -5.25), "reach": 24.0 }]
+ROOF_AUDIT { "clipped": 333, "removed": 73, "chimneys": { "moved": 0, "omitted": 0, "checked": 3 }, "towers": { "corner_attempts": 48, "corner_bearing_rejected": 13, "corner_bearing_example": "kit.spatial.parcel.maze.house.018 / (-11, 3, -1) / base 4", "corner_no_bearing_or_space": 41, "corner_reservation_rejected": 18, "corner_reservation_example": "kit.spatial.parcel.maze.house.018 / (-4, 4, -3) / base 4", "attempts": 108, "corner_join_quadrants": 6, "corner_quadrant_counts": { 2: 2, 4: 2, 3: 2 }, "corner_quadrant_examples": [{ "host": &"kit.spatial.parcel.maze.house.000", "corner": (8, 4), "base": 0, "top": 6, "band": 2, "occupied": [(0, -1), (0, 0)] }, { "host": &"kit.spatial.parcel.maze.house.000", "corner": (10, 4), "base": 0, "top": 6, "band": 2, "occupied": [(-1, -1), (-1, 0)] }, { "host": &"kit.spatial.parcel.maze.house.009", "corner": (22, 14), "base": 0, "top": 2, "band": 0, "occupied": [(-1, -1), (-1, 0), (0, -1), (0, 0)] }, { "host": &"kit.spatial.parcel.maze.house.009", "corner": (22, 14), "base": 0, "top": 4, "band": 0, "occupied": [(-1, -1), (-1, 0), (0, -1), (0, 0)] }, { "host": &"kit.spatial.parcel.maze.house.018", "corner": (-8, -2), "base": 4, "top": 6, "band": 4, "occupied": [(-1, -1), (-1, 0), (0, -1)] }, { "host": &"kit.spatial.parcel.maze.house.018", "corner": (-8, -2), "base": 4, "top": 10, "band": 4, "occupied": [(-1, -1), (-1, 0), (0, -1)] }], "corner_no_host_join": 6, "corner_supported": 1, "corbel_corner_accepted": 1, "corner_accepted": 1, "accepted": 1 }, "facade_bays": 1, "room_projections": 1, "retaining_relief": 0, "retaining_flight_joints": 0, "retaining_windows": 1, "fortified_windows": 26, "retaining_recesses": 26, "decor_clearance": { &"fort.block": 148, &"window_box": 31, &"prop.doorstep": 25 }, "fitted_window_boxes": 32, "joins": 4, "parallel_joins": 1, "fitted_eaves": 0, "dormers": { "moved": 0, "omitted": 0, "checked": 5 }, "seated_balcony_brackets": 5, "roof_blocked_windows": 81, "roof_fitted_windows": 24 }
+WALK_SURFACE skywalk.0 expected=(20.0, 0.0, 32.0) floor=(20.0, 0.25544, 32.0)
+WALK_SURFACE skywalk.0 expected=(40.0, 0.0, 32.0) floor=(40.0, 0.25544, 32.0)
+TOWN_ROUTE_WALK skywalk.0 reverse=false passed=true end=(39.74978, 0.255615, 32.0)
+TOWN_ROUTE_WALK skywalk.0 reverse=true passed=true end=(20.25016, 0.255638, 32.0)
+WALK_SURFACE source_bridge.00 expected=(-30.0, 21.0, 2.0) floor=(-30.0, 21.25544, 2.0)
+WALK_SURFACE source_bridge.00 expected=(-14.0, 21.0, 2.0) floor=(-14.0, 21.25544, 2.0)
+TOWN_ROUTE_WALK source_bridge.00 reverse=false passed=true end=(-14.25002, 21.25583, 2.0)
+TOWN_ROUTE_WALK source_bridge.00 reverse=true passed=true end=(-29.75001, 21.2564, 2.0)
+WALK_SURFACE source_bridge.01 expected=(-6.0, 21.0, -14.0) floor=(-6.0, 21.25544, -14.0)
+WALK_SURFACE source_bridge.01 expected=(10.0, 21.0, -14.0) floor=missing
+TOWN_ROUTE_WALK source_bridge.01 reverse=false passed=true end=(9.749981, 21.25583, -14.0)
+TOWN_ROUTE_WALK source_bridge.01 reverse=true passed=true end=(-5.750025, 21.25517, -14.0)

@@ -1,0 +1,6 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+JAMB_STATE 13 { "covered": { "lost": [], "gained": [], "equal": true }, "passages": { "lost": [], "gained": [], "equal": true }, "rooms": { "lost": [], "gained": [], "equal": true }, "tunnels": { "lost": [], "gained": [], "equal": true } }
+JAMB_STATE 31 { "covered": { "lost": [], "gained": [], "equal": true }, "passages": { "lost": [], "gained": [], "equal": true }, "rooms": { "lost": [], "gained": [], "equal": true }, "tunnels": { "lost": [], "gained": [], "equal": true } }
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)

@@ -1,0 +1,82 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+SCRIPT ERROR: Parse Error: Identifier "PureVillageBuildingKit" not declared in the current scope.
+          at: GDScript::reload (res://tests/test_gable_eave_junction.gd:40)
+          GDScript backtrace (most recent call first):
+              [0] load_script_using_custom_warnings (res://addons/gut/warnings_manager.gd:159)
+              [1] _parse_script (res://addons/gut/test_collector.gd:76)
+              [2] add_script (res://addons/gut/test_collector.gd:127)
+              [3] add_script (res://addons/gut/gut.gd:1050)
+              [4] _apply_options (res://addons/gut/gut_config.gd:139)
+              [5] apply_options (res://addons/gut/gut_config.gd:207)
+              [6] run_tests (res://addons/gut/gui/GutRunner.gd:191)
+              [7] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+              [8] main (res://addons/gut/cli/gut_cli.gd:284)
+              [9] _init (res://addons/gut/gut_cmdln.gd:39)
+ERROR: Failed to load script "res://tests/test_gable_eave_junction.gd" with error "Parse error".
+   at: load (modules/gdscript/gdscript.cpp:3041)
+   GDScript backtrace (most recent call first):
+       [0] load_script_using_custom_warnings (res://addons/gut/warnings_manager.gd:159)
+       [1] _parse_script (res://addons/gut/test_collector.gd:76)
+       [2] add_script (res://addons/gut/test_collector.gd:127)
+       [3] add_script (res://addons/gut/gut.gd:1050)
+       [4] _apply_options (res://addons/gut/gut_config.gd:139)
+       [5] apply_options (res://addons/gut/gut_config.gd:207)
+       [6] run_tests (res://addons/gut/gui/GutRunner.gd:191)
+       [7] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+       [8] main (res://addons/gut/cli/gut_cli.gd:284)
+       [9] _init (res://addons/gut/gut_cmdln.gd:39)
+[33m[WARNING]:  [0mIgnoring script res://tests/test_gable_eave_junction.gd because it does not extend GutTest
+[4m
+
+res://tests/test_october1_pure_roofs.gd
+[0m* test_native_end_courses_face_outward_on_both_axes
+* test_native_roof_roles_have_measured_mesh_and_collision
+* test_native_caps_supplement_full_bays_without_roof_holes
+* test_mixed_roof_union_cuts_both_families_and_keeps_collision
+* test_native_peak_has_no_narrow_slots
+* test_tight_eaves_keep_full_roof_courses_closed_on_both_axes
+* test_native_dormers_keep_windows_and_close_their_roof_bays
+* test_short_verges_keep_whole_ridge_caps_and_closed_course_seams
+* test_native_and_mixed_junctions_remain_closed
+* test_native_ridge_contact_closes_oblique_sightlines
+* test_public_verge_fit_keeps_the_native_gable_face
+* test_shortened_verges_keep_complete_native_end_caps_on_both_axes
+* test_full_gable_bays_have_native_windows_and_close_when_obstructed
+[1m13/13 passed.
+[0m[4m
+
+res://tests/test_october1_town_roof_verges.gd
+[0m* test_photo_roof_ends_do_not_project_into_the_raised_walkway
+* test_photo_gables_remain_closed
+* test_verge_fitting_rotates_and_keeps_ground_level_overhangs
+* test_open_branch_keeps_its_host_overlap
+* test_trimmed_roof_collision_matches_rendered_faces
+[1m5/5 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Warnings              1
+
+Scripts               2
+Tests                18
+Passing Tests        18
+Asserts             918
+Time              82.499s
+
+
+[32m---- All tests passed! ----
+[0m

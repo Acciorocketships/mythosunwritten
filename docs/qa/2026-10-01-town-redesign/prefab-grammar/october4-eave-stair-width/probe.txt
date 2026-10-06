@@ -1,0 +1,11 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+INSET 0.0 altered 16 blocked [[&"roof.red.eave_tight", (-3.0, 3.0, 8.0)], [&"roof.red.eave_tight.end", (-3.277032, 3.0, 8.0)]]
+INSET 0.05 altered 16 blocked [[&"roof.red.eave_tight", (-3.0, 3.0, 8.0)], [&"roof.red.eave_tight.end", (-3.277032, 3.0, 8.0)]]
+INSET 0.1 altered 16 blocked [[&"roof.red.eave_tight", (-3.0, 3.0, 8.0)], [&"roof.red.eave_tight.end", (-3.277032, 3.0, 8.0)]]
+INSET 0.2 altered 16 blocked [[&"roof.red.eave_tight", (-3.0, 3.0, 8.0)], [&"roof.red.eave_tight.end", (-3.277032, 3.0, 8.0)]]
+INSET 0.3 altered 16 blocked []
+INSET 0.5 altered 16 blocked []
+ROOF_STAIR_WIDTH_TRIAL_PASS [{ "native_inset": 0.0, "world_inset": 0.0, "blocked": 2 }, { "native_inset": 0.05, "world_inset": 0.1, "blocked": 2 }, { "native_inset": 0.1, "world_inset": 0.2, "blocked": 2 }, { "native_inset": 0.2, "world_inset": 0.4, "blocked": 2 }, { "native_inset": 0.3, "world_inset": 0.6, "blocked": 0 }, { "native_inset": 0.5, "world_inset": 1.0, "blocked": 0 }]

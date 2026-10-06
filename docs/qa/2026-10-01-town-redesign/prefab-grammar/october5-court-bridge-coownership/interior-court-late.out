@@ -1,0 +1,50 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+EARLY_FRONTS 3
+EARLY_CELL (-5, -3) deck=true support=true streets=<null>
+EARLY_CELL (-4, -3) deck=true support=true streets=<null>
+EARLY_CELL (-3, -3) deck=true support=true streets=<null>
+EARLY_CELL (-5, -2) deck=true support=true streets=<null>
+EARLY_CELL (-4, -2) deck=true support=true streets=<null>
+EARLY_CELL (-3, -2) deck=true support=true streets=<null>
+EARLY_CELL (-5, -1) deck=true support=true streets=<null>
+EARLY_CELL (-4, -1) deck=true support=true streets=<null>
+EARLY_CELL (-3, -1) deck=true support=true streets=<null>
+EARLY_HOUSE (-4, -4) { "tier": -1, "reason": "" }
+EARLY_HOUSE (-2, -3) { "tier": -1, "reason": "" }
+EARLY_HOUSE (-3, -4) { "tier": -1, "reason": "" }
+EARLY_HOUSE (-4, 0) { "tier": -1, "reason": "" }
+EARLY_HOUSE (-2, -1) { "tier": -1, "reason": "" }
+EARLY_HOUSE (-3, 0) { "tier": -1, "reason": "" }
+FINAL_FRONTS 2
+FINAL_CELL (-5, -3) deck=true support=true streets=<null>
+FINAL_CELL (-4, -3) deck=true support=true streets=<null>
+FINAL_CELL (-3, -3) deck=true support=true streets=[2]
+FINAL_CELL (-5, -2) deck=true support=true streets=<null>
+FINAL_CELL (-4, -2) deck=true support=true streets=<null>
+FINAL_CELL (-3, -2) deck=true support=true streets=[3]
+FINAL_CELL (-5, -1) deck=true support=true streets=<null>
+FINAL_CELL (-4, -1) deck=true support=true streets=[3]
+FINAL_CELL (-3, -1) deck=true support=true streets=[3]
+FINAL_HOUSE (-4, -4) { "tier": -1, "reason": "" }
+FINAL_HOUSE (-2, -3) { "tier": -1, "reason": "column already spoken for" }
+FINAL_HOUSE (-3, -4) { "tier": -1, "reason": "" }
+FINAL_HOUSE (-4, 0) { "tier": -1, "reason": "" }
+FINAL_HOUSE (-2, -1) { "tier": -1, "reason": "column already spoken for" }
+FINAL_HOUSE (-3, 0) { "tier": -1, "reason": "" }
+PROPOSAL { "cells": [(-5, -3), (-4, -3), (-3, -3), (-5, -2), (-4, -2), (-3, -2), (-5, -1), (-4, -1), (-3, -1)], "floor": 7, "entrance": (-2, 7, -2), "houses": { (-4, -4): true, (-2, -3): true, (-3, -4): true, (-4, 0): true, (-2, -1): true, (-3, 0): true }, "ring": 4, "cost": 27, "sides": 3, "tie": 1630150584 }
+PRESELECTED { "id": &"plaza.00", "kind": &"deck", "cells": [(-5, -3), (-4, -3), (-3, -3), (-5, -2), (-4, -2), (-3, -2), (-5, -1), (-4, -1), (-3, -1)], "floor": 7, "top": 7, "door_walk": (-2, 7, -2), "building_id": &"plaza.00" }
+FINAL { "id": &"plaza.00", "kind": &"deck", "cells": [(-1, 2), (0, 2), (-1, 3), (0, 3)], "floor": 6, "top": 6, "door_walk": (0, 6, 1), "building_id": &"plaza.00" }
+DOORS { 0: (-6, 0, -3), 2: (-3, 2, -4), 1: (-2, 1, -2), 4: (-2, 4, -2), 7: (-2, 7, -2) }
+FRONTS 2
+CELL (-5, -3) blocked=true street=<null> top=8 bearing=0 deck=false
+CELL (-4, -3) blocked=true street=<null> top=10 bearing=0 deck=false
+CELL (-3, -3) blocked=true street=[2] top=12 bearing=0 deck=false
+CELL (-5, -2) blocked=true street=<null> top=8 bearing=0 deck=false
+CELL (-4, -2) blocked=true street=<null> top=10 bearing=0 deck=false
+CELL (-3, -2) blocked=true street=[3] top=12 bearing=0 deck=false
+CELL (-5, -1) blocked=true street=<null> top=8 bearing=0 deck=false
+CELL (-4, -1) blocked=true street=[3] top=10 bearing=0 deck=false
+CELL (-3, -1) blocked=true street=[3] top=12 bearing=0 deck=false
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)

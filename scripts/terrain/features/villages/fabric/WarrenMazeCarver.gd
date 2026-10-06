@@ -3,14 +3,16 @@ extends RefCounted
 
 ## Deterministic, single-transaction front end for the solid-first maze town.
 ## One DFS carves the entrance-to-summit spine; coverage-driven alley walks
-## then extend that same connected public graph. There is no attempt index,
-## survivor ranking, or complete-plan alternative.
+## then extend that same connected public graph. Local court entrances share
+## a bounded search allowance; there is no complete-plan alternative ranking.
 const MIN_HOUSE_BANDS := WarrenMazeSourcePlan.MIN_HOUSE_BANDS
 const MAX_SPINE_STRAIGHT_RUN := WarrenMazeSourcePlan.MAX_SPINE_STRAIGHT_RUN
 const MAX_ALLEY_STRAIGHT_RUN := WarrenMazeSourcePlan.MAX_ALLEY_STRAIGHT_RUN
 const MIN_ALLEY_CELLS := 3
 const MAX_ALLEY_CELLS := 8
 const SPINE_VISIT_BUDGET := 40000
+const COURT_ENTRANCE_ATTEMPTS := 21
+const COURT_ALTERNATIVE_VISITS := 1500
 ## Bridge candidates are evaluated before daylight cuts. Short grounded
 ## tunnels are retained afterwards without consuming the occupied-span quota.
 const MIN_LOOP_JOINS := 1
@@ -129,26 +131,48 @@ static func carve(world_seed: int, massif: WarrenMassif,
 		"route_floor": profile.route_cell_range.x \
 			if not massif.is_platform(massif.crown_column) else market_cells + 1,
 	}
-	if not _search_spine(context, portal, -1, 0, 0):
+	var court_rules := preload("res://scripts/terrain/features/villages/fabric/WarrenInteriorCourt.gd")
+	var court_sites := court_rules.candidates(context)
+	var original_reservations := excavation.construction_reservations.duplicate()
+	var proposed_court: Dictionary = {}
+	var found_spine := false
+	var court_visits := 0
+	var court_attempts: Array[Dictionary] = []
+	# Preserve the complete preferred-entrance search. Only a failed
+	# preference spends the bounded additional allowance on alternatives.
+	var attempted_entrances := {}
+	for site: Dictionary in court_sites:
+		if attempted_entrances.has(site.entrance): continue
+		if court_attempts.size() >= COURT_ENTRANCE_ATTEMPTS: break
+		attempted_entrances[site.entrance] = true
+		context.visits = 0
+		context["visit_budget"] = SPINE_VISIT_BUDGET if court_attempts.is_empty() else COURT_ALTERNATIVE_VISITS
+		context["court_target"] = site.entrance
+		court_rules.reserve(context, site)
+		found_spine = _search_spine(context, portal, -1, 0, 0)
+		court_visits += int(context.visits)
+		court_attempts.append({"entrance":site.entrance,"visits":context.visits,"accepted":found_spine})
+		if found_spine:
+			proposed_court = site
+			break
+		assert(excavation.route.size()==1 and excavation.transitions.is_empty())
+		excavation.construction_reservations = original_reservations.duplicate()
+	context.erase("visit_budget")
+	if not found_spine:
+		context.erase("court_target")
+		context.visits = 0
+		found_spine = _search_spine(context, portal, -1, 0, 0)
+
+	if not found_spine:
 		last_failure = "single spine DFS exhausted %d visits" \
 			% int(context.visits)
 		last_diagnostic = {"stage": &"spine", "visits": context.visits,
 			"portal": portal, "route_cells": excavation.route.size()}
 		return null
-	# TASK E2. The climb DFS has produced a legal town; the descent may only
-	# ADD to it. It runs here, before anything else touches the excavation, so
-	# the market stamp, the alleys and the loop joins all see one complete
-	# spine rather than a spine that grows a tail behind their backs.
+	# The climb establishes frontage. Mandatory district gates come next;
+	# then select complete landmark sites before the optional descent spends
+	# their body or footing. Later streets share those same reservations.
 	var summit := context.summit_cell as Vector3i
-	var descent := _extend_spine_descent(context)
-	# A raised district's gate flight, off the spine's summit at the wall's
-	# foot (so the main street leads into the citadel), and its lanes.
-	WarrenPlatformStreets.carve_gate(world_seed, massif, excavation, occupied,
-		summit)
-	WarrenPlatformStreets.carve(world_seed, massif, excavation, occupied)
-	# ...and the lane round the plinth's foot, off the ground streets.
-	WarrenPlatformStreets.carve_wall_street(world_seed, massif, excavation,
-		occupied)
 	# The block-thickness field is a distance ramp away from the town's HIGH
 	# POINT, and stays anchored there now that the spine's last cell is out on
 	# the rim instead.
@@ -164,12 +188,63 @@ static func carve(world_seed: int, massif: WarrenMassif,
 			"frontage": _frontage_audit(massif, excavation),
 			"market_approach": excavation.route.slice(0, market_cells)}
 		return null
-	# The perimeter lane is laid before loops and alleys can spend the second
-	# ring, around the landmarks and plaza the plot reservation would site on
-	# the streets laid so far.
+	# A raised district's gate flight, off the spine's summit at the wall's
+	# foot, must remain possible before any optional building site is held.
+	WarrenPlatformStreets.carve_gate(world_seed, massif, excavation, occupied,
+		summit)
+	WarrenPlatformStreets.carve_nested_gates(world_seed, massif, excavation, occupied)
+	_carve_district_access(massif, excavation, occupied, profile)
+	# Gate access is a prerequisite, not leftover space after buildings.
+	# Reserve it before landmark and bridge envelopes can strand the mouth.
+	var early_gates := _carve_secondary_gate_lanes(world_seed, massif,
+		excavation, portal, profile)
+	for cell: Vector3i in excavation.public_cells(): occupied[cell] = true
+	_carve_house_site_access(massif, excavation, occupied)
+	# A second preview replaces the first. Keep the earlier gate/court owners
+	# separate from the provisional landmark masks so an obsolete site cannot
+	# permanently block later alleys. Bridge bearings use their own map.
+	var prepreview_construction := excavation.construction_reservations.duplicate()
+	var prepreview_frontages := excavation.frontage_reservations.duplicate()
 	var held := _preview_reserved_columns(world_seed, massif, excavation,
-		profile, market_cells, market_square, summit, thickness)
-	_lay_perimeter_lanes(world_seed, massif, excavation, held.sites)
+		profile, market_cells, market_square, summit, thickness, proposed_court)
+	# Co-plan load paths with the spine; later optional streets keep these
+	# supports instead of making the final bridge selector rediscover them.
+	var early_market: Dictionary = {}
+	for cell: Vector3i in excavation.route.slice(0, market_cells) + market_square:
+		early_market[cell] = true
+	# The at-grade perimeter street has not been laid yet. Early compounds
+	# keep the outermost ring free; later spans use the completed street shape.
+	var interior_held: Dictionary = held.envelopes.duplicate()
+	for column: Vector2i in massif.columns:
+		if massif.ring_depth(column) == 1:
+			interior_held[column] = true
+	_select_bridge_spans(world_seed, massif, excavation, early_market,
+		profile, interior_held)
+	_reserve_early_bridge_bearings(massif, excavation)
+	# Preserve selected bridge bearings and the held square before adding a tower address.
+	var before_tower_lanes := excavation.lanes.size()
+	var tower_claims := {"construction": {}, "frontages": {}}
+	_lay_tower_house_address(massif, excavation, occupied, profile,
+		held.plaza, tower_claims)
+	if excavation.lanes.size() > before_tower_lanes:
+		excavation.construction_reservations = prepreview_construction
+		excavation.construction_reservations.merge(tower_claims.construction)
+		excavation.frontage_reservations = prepreview_frontages
+		excavation.frontage_reservations.merge(tower_claims.frontages)
+		held = _preview_reserved_columns(world_seed,massif,excavation,profile,market_cells,market_square,summit,thickness,proposed_court)
+	var descent := _extend_spine_descent(context)
+	WarrenPlatformStreets.carve(world_seed, massif, excavation, occupied)
+	# ...and the lane round the plinth's foot, off the ground streets.
+	WarrenPlatformStreets.carve_wall_street(world_seed, massif, excavation,
+		occupied)
+	WarrenPlatformStreets.carve_tunnel(world_seed,massif,excavation,occupied)
+	# Later district streets can offer additional spans within the same quota.
+	_select_bridge_spans(world_seed, massif, excavation, early_market,
+		profile, held.envelopes)
+	_reserve_early_bridge_bearings(massif, excavation)
+	var perimeter_sites: Dictionary = held.sites.duplicate()
+	perimeter_sites.merge(excavation.bridge_bearing_columns)
+	_lay_perimeter_lanes(world_seed, massif, excavation, perimeter_sites)
 	var before_frontage := _frontage_audit(massif, excavation) \
 		if collect_diagnostics else {}
 	# Loops are reserved before alleys and frontage claim the massif: a
@@ -192,6 +267,7 @@ static func carve(world_seed: int, massif: WarrenMassif,
 	# not facade holes inferred by the renderer.
 	var secondary_gates := _carve_secondary_gate_lanes(world_seed, massif,
 		excavation, portal, profile)
+	secondary_gates.append_array(early_gates)
 	var terminal_lookout := _stamp_terminal_lookout(massif, excavation)
 	var after_frontage := _frontage_audit(massif, excavation) \
 		if collect_diagnostics else {}
@@ -244,6 +320,11 @@ static func carve(world_seed: int, massif: WarrenMassif,
 	# the crown — the landmark and deck quotas key their rolls off it.
 	plan.summit_cell = summit
 	plan.block_thickness = thickness
+	plan.audit["preselected_landmarks"] = held.landmarks
+	plan.audit["preselected_plaza"] = held.plaza
+	plan.audit["interior_court"] = proposed_court
+	plan.audit["interior_court_visits"] = court_visits
+	plan.audit["interior_court_attempts"] = court_attempts
 	if seal_plan:
 		plan.finish_construction(collect_diagnostics)
 	if seal_plan and collect_diagnostics:
@@ -399,8 +480,13 @@ static func _terminal_lookout_slot(massif: WarrenMassif,
 		excavation: WarrenExcavation, cell: Vector3i) -> bool:
 	var column := Vector2i(cell.x, cell.z)
 	if not massif.has_column(column) or cell.y < massif.base_at(column): return false
+	if not WarrenPassageLatticeRules.bridge_slot_is_free(excavation, cell,
+			maxi(WarrenExcavation.HEADROOM_BANDS, massif.top_at(column) - cell.y)):
+		return false
 	# A terrace may stand one band above an existing shoulder. Unlike a tunnel,
 	# its open headroom need not fit below the unbuilt mountain's old ceiling.
+	for band in range(cell.y - 1, maxi(cell.y + WarrenExcavation.HEADROOM_BANDS, massif.top_at(column))):
+		if excavation.construction_reservations.has(Vector3i(cell.x, band, cell.z)): return false
 	if massif.top_at(column) < cell.y - 1: return false
 	# A plank terrace may bridge a lower street. The bore reserves an extra
 	# band for rock roofs, but that is not the standing clearance required by
@@ -638,7 +724,7 @@ static func _search_spine(context: Dictionary, current: Vector3i,
 		previous_direction_index: int, straight_run: int,
 		previous_rise: int) -> bool:
 	context.visits = int(context.visits) + 1
-	if int(context.visits) > SPINE_VISIT_BUDGET:
+	if int(context.visits) > int(context.get("visit_budget", SPINE_VISIT_BUDGET)):
 		return false
 	var excavation := context.excavation as WarrenExcavation
 	var profile := context.profile as WarrenVillageScaleProfile
@@ -647,6 +733,7 @@ static func _search_spine(context: Dictionary, current: Vector3i,
 	if excavation.route.size() >= int(context.route_floor) \
 			and excavation.route.size() >= int(context.market_cells) \
 			and current.y - portal.y >= int(context.span_goal) \
+			and (not context.has("court_target") or (current==context.court_target and previous_rise==0)) \
 			and _summit_reaches_crown(context.massif, current, radius,
 				float(context.inner_radius)):
 		# The chosen spine must leave room for its required square. Seal that
@@ -765,6 +852,13 @@ static func _spine_candidates(context: Dictionary, current: Vector3i,
 			# straight run 55 a cell and pay 45 for a turn.
 			score += _momentum_bonus(direction_index,
 				previous_direction_index, int(action.rise), previous_rise)
+			if context.has("court_target") and not market_incomplete:
+				var target: Vector3i = context.court_target
+				if endpoint.y > target.y: continue
+				var remaining := profile.route_cell_range.y-excavation.route.size()-run
+				var distance := absi(endpoint.x-target.x)+absi(endpoint.z-target.z)
+				if maxi(distance,2*(target.y-endpoint.y))>remaining: continue
+				score += float(distance)*1000.0 + float(target.y-endpoint.y)*1400.0
 			var tie := WarrenPassageLatticeRules.hash_key(
 				int(context.world_seed), 0x51A7, endpoint,
 				int(context.visits) * 17 + action_index)
@@ -1203,6 +1297,10 @@ static func _climbing_loop_candidates(world_seed: int,
 					strides.append(step)
 					var cells: Array[Vector3i] = path.duplicate()
 					cells.append_array(stride)
+					var walk: Array[Vector3i] = [anchor]
+					walk.append_array(cells)
+					if WarrenMazeSourcePlan._max_straight_run(walk) > MAX_ALLEY_STRAIGHT_RUN:
+						continue
 					if _alley_stride_is_legal(massif, excavation, public_set,
 							local, thickness, anchor, current, stride):
 						var reserved := false
@@ -1687,6 +1785,12 @@ static func _open_passages_to_air(world_seed: int, massif: WarrenMassif,
 			var cap := int(carve_cap[column])
 			if cell.y < cap:
 				ceiling = mini(ceiling, cap)
+		# Selected upper construction owns its footing as well as its body.
+		# Opening the street below it must stop at that bearing, like a skywalk.
+		for band in range(cell.y + WarrenPassageLatticeRules.HEADROOM_BANDS, ceiling):
+			if excavation.construction_reservations.has(Vector3i(cell.x, band, cell.z)):
+				ceiling = band
+				break
 		for band in range(cell.y, ceiling):
 			excavation.carved[Vector3i(cell.x, band, cell.z)] = true
 
@@ -1707,14 +1811,31 @@ static func _natural_tunnel_caps(seed_value: int, massif: WarrenMassif,
 		excavation: WarrenExcavation, excluded: Dictionary, bridged: Dictionary) -> Dictionary:
 	var caps := {}
 	excavation.tunnel_cells.clear()
-	# A flight's treads are never bored: its swept rise needs the open slot.
+	for lane: Dictionary in excavation.lanes:
+		for cell: Vector3i in lane.get("gate_covers", {}):
+			if not lane.cells.has(cell): continue
+			excavation.tunnel_cells[cell] = true
+			_tighten_carve_cap(caps,Vector2i(cell.x,cell.z),int(lane.gate_covers[cell]))
+	# Authored district through-routes keep their ceiling and lateral piers.
+	for lane: Dictionary in excavation.lanes:
+		if lane.get("feature_kind",&"")!=&"wall_tunnel": continue
+		for cell: Vector3i in lane.cells:
+			var column := Vector2i(cell.x,cell.z)
+			excavation.tunnel_cells[cell] = true
+			_tighten_carve_cap(caps,column,cell.y+WarrenExcavation.HEADROOM_BANDS)
+		for flank: Vector2i in lane.support_columns:
+			_tighten_carve_cap(caps,flank,int(lane.support_columns[flank]))
+
+	# Natural bores exclude flights. Explicit gate covers above were already
+	# proved against their complete swept stair slots.
 	excluded = excluded.merged(excavation.flight_cells())
-	# A raised district's lanes stay open to the sky: the citadel is a
-	# daylight quarter on its plinth, and its plinth is never bored.
+	# Protect the district foundations, not the entire neighbourhood. Upper
+	# streets and the lower huddle may be bored through inhabited mass just
+	# like any other street; the ordinary roof and jamb proof still applies.
+	# Below the bearing datum only explicit wall through-routes own openings.
 	for cell: Vector3i in excavation.public_cells():
 		var column := Vector2i(cell.x, cell.z)
-		if massif.is_platform(column) or WarrenTownPlatform.huddle_top(massif,
-				column) != 2147483647:
+		if massif.is_platform(column) and cell.y < massif.bearing_at(column):
 			excluded[cell] = true
 	var public_set: Dictionary = {}
 	for cell: Vector3i in excavation.public_cells():
@@ -1888,7 +2009,7 @@ static func _select_bridge_spans(world_seed: int, massif: WarrenMassif,
 	## first window boundary. A span itself can never cross a run boundary
 	## (each candidate still only reaches within its own physical run), but
 	## two candidates from different runs can now share one window index.
-	var accepted: Dictionary = {}
+	var accepted: Dictionary = excavation.bridge_directions.duplicate()
 	# Landmark sites and their measured envelopes held for the plot
 	# reservation (`_preview_reserved_columns`): no bridge endpoint house
 	# takes them.
@@ -1896,8 +2017,11 @@ static func _select_bridge_spans(world_seed: int, massif: WarrenMassif,
 	# Opened here rather than on first use, so an empty ledger means "no
 	# candidate run offered a span" and a missing one means the seed-time
 	# proof never ran at all (TASK E3 ruling 3).
-	excavation.bridge_span_audit = {"seeded": [] as Array[Dictionary],
-		"refused": [] as Array[Dictionary]}
+	if excavation.bridge_span_audit.is_empty():
+		excavation.bridge_span_audit = {"seeded": [] as Array[Dictionary],
+			"refused": [] as Array[Dictionary]}
+	for proof: Dictionary in excavation.bridge_span_audit.seeded:
+		_reserve_bridge_proof(proof, reserved_columns)
 	var quota := profile.skywalk_range.y
 	if quota <= 0 or excavation.route.is_empty():
 		return accepted
@@ -1949,7 +2073,45 @@ static func _select_bridge_spans(world_seed: int, massif: WarrenMassif,
 	# only varies ties. The accepted feature still owns its complete envelope.
 	_select_spans_from_candidates(world_seed, massif, excavation, candidates,
 		accepted, reserved_columns, quota)
+	excavation.bridge_directions = accepted.duplicate()
 	return accepted
+
+
+static func _reserve_early_bridge_bearings(massif: WarrenMassif,
+		excavation: WarrenExcavation) -> void:
+	var public_columns: Dictionary = {}
+	for cell: Vector3i in excavation.public_cells():
+		public_columns[Vector2i(cell.x, cell.z)] = true
+	for proof: Dictionary in excavation.bridge_span_audit.get("seeded", []):
+		var own := _bridge_proof_columns(proof)
+		var span_columns: Dictionary = {}
+		for span_cell: Vector3i in proof.cells:
+			span_columns[Vector2i(span_cell.x, span_cell.z)] = true
+		for column: Vector2i in own:
+			if not span_columns.has(column):
+				excavation.bridge_bearing_columns[column] = true
+		# Preserve one actual adjoining storey per endpoint, the same fact
+		# required by _bridge_has_upper_neighborhood, before another street
+		# turns it into air. Stable cardinal order chooses the smallest hold.
+		for group: Array in proof.endpoint_foundation_groups:
+			var found := false
+			for column: Vector2i in group:
+				for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+					var neighbor := column + direction
+					if own.has(neighbor) or public_columns.has(neighbor):
+						continue
+					var complete := true
+					for band in range(int(proof.floor) - WarrenBuildingParcel.STOREY_BANDS,
+							int(proof.floor)):
+						complete = complete and _column_is_solid_at(
+							massif, excavation, neighbor, band)
+					if not complete:
+						continue
+					excavation.bridge_bearing_columns[neighbor] = true
+					found = true
+					break
+				if found:
+					break
 
 
 static func _append_run_candidates(candidates: Array[Dictionary],
@@ -2157,10 +2319,8 @@ static func _bridge_span_is_legal(massif: WarrenMassif,
 	## town: it confused the material being replaced with the building being
 	## planned. This proof instead states the finished load path by construction.
 	##
-	## FIX 1, MINOR 5 -- the roof band is `slot_bands` where that is deeper
-	## than HEADROOM_BANDS. A span cell is always a LEVEL stride, whose bore is
-	## exactly HEADROOM_BANDS, so on this corpus the two are the same number
-	## and the `maxi` is inert -- but `slot_bands` is what
+	## The roof band is `slot_bands` where that is deeper than HEADROOM_BANDS.
+	## A one-cell span may cross a rising stride with a taller bore. This is what
 	## `_bridge_room_storey` and `WarrenPlotPlanner._span_bridges` both read,
 	## and a wall proved one band short of the void it walls is a hole waiting
 	## for the first stride kind that carves deeper. Stated by construction
@@ -2198,15 +2358,14 @@ static func _bridge_span_is_legal(massif: WarrenMassif,
 	record["endpoint_foundation_floor"] = span[0].y
 	record["endpoint_support_modes"] = [] as Array[StringName]
 	record["reason"] = ""
-	# A raised district (WarrenTownPlatform) is the upper town's own ground:
-	# a bridge compound near it would reserve its columns before any house
-	# is seeded there, so no span lies over, beside or on it.
+	# A bridge outside the platform cannot excavate its foundation. Protect
+	# the actual platform column; endpoint occupancy and complete foundations
+	# below still prove both sides of every nearby climbing-street span.
 	for cell: Vector3i in span:
-		for dz in range(-2, 3):
-			for dx in range(-2, 3):
-				if massif.is_platform(Vector2i(cell.x + dx, cell.z + dz)):
-					record["reason"] = "span %s crowds the raised district" % cell
-					return false
+		var column := Vector2i(cell.x, cell.z)
+		if massif.is_platform(column) and cell.y < massif.bearing_at(column):
+			record["reason"] = "span %s enters the raised district foundation" % cell
+			return false
 	for cell: Vector3i in span:
 		var direction := directions.get(cell, Vector2i.ZERO) as Vector2i
 		if direction == Vector2i.ZERO:
@@ -2373,10 +2532,30 @@ static func _bridge_has_upper_neighborhood(massif: WarrenMassif,
 static func _bridge_foundation_is_direct(massif: WarrenMassif,
 		excavation: WarrenExcavation, public_floors: Dictionary,
 		columns: Array, foundation_floor: int, top_band: int) -> bool:
+	# The fine-grid stair pass reserves the whole swept flight envelope. Its
+	# upper clearance can consume a source-solid bearing course, so prove the
+	# lower house and its bearing against that same geometry before admitting it.
+	var transitions: Array[Dictionary] = excavation.transitions.duplicate()
+	for lane: Dictionary in excavation.lanes:
+		transitions.append_array(lane.transitions)
+	transitions.append_array(excavation.loop_edges)
+	for spec: Dictionary in transitions:
+		var flight := WarrenVolumeTransition.new(&"bridge.foundation",
+			spec.from, spec.to, WarrenVolumeTransition.Kind.STAIR,
+			[] as Array[Vector3i])
+		for cell: Vector3i in flight.clearance_air_cells():
+			if cell.y < foundation_floor - 1 or cell.y >= top_band:
+				continue
+			var column := Vector2i(floori(float(cell.x) / 2.0),
+				floori(float(cell.z) / 2.0))
+			if columns.has(column):
+				return false
+	# Solid plinth below bearing_at is foundation, not a lower house room.
+	# A broad footprint straddling it must try the narrower endpoint instead.
 	for column_value: Variant in columns:
 		var column := column_value as Vector2i
 		if not massif.has_column(column) \
-				or foundation_floor < massif.base_at(column) \
+				or foundation_floor < massif.bearing_at(column) \
 				or not _column_is_solid_at(massif, excavation, column,
 					foundation_floor - 1):
 			return false
@@ -2407,7 +2586,7 @@ static func _bridge_room_storey(excavation: WarrenExcavation,
 
 static func _column_is_solid_at(massif: WarrenMassif,
 		excavation: WarrenExcavation, column: Vector2i, band: int) -> bool:
-	if not massif.has_column(column):
+	if not massif.has_column(column) or massif.is_reserved_ground(column):
 		return false
 	if band < massif.base_at(column) or band >= massif.top_at(column):
 		return false
@@ -2489,7 +2668,7 @@ static func _finished_public_portals(massif: WarrenMassif,
 
 
 static func _carve_secondary_gate_lanes(world_seed: int, massif: WarrenMassif,
-		excavation: WarrenExcavation, primary: Vector3i,
+		excavation: WarrenExcavation, _primary: Vector3i,
 		profile: WarrenVillageScaleProfile) -> Array[Vector3i]:
 	## Connect the existing public graph to separated perimeter cells on its
 	## ground band. Compact towns receive two total gates; larger towns receive
@@ -2502,7 +2681,9 @@ static func _carve_secondary_gate_lanes(world_seed: int, massif: WarrenMassif,
 	var walk_nodes: Dictionary = {}
 	for cell: Vector3i in _walk_nodes(excavation):
 		walk_nodes[cell] = true
-	var accepted: Array[Vector3i] = [primary]
+	var accepted := _finished_public_portals(massif, excavation)
+	var existing_count := accepted.size()
+	if existing_count >= target_count: return []
 	var candidates := _portal_cells(massif, 2, world_seed)
 	for candidate: Vector3i in candidates:
 		if accepted.size() >= target_count:
@@ -2534,7 +2715,7 @@ static func _carve_secondary_gate_lanes(world_seed: int, massif: WarrenMassif,
 					cell.y + WarrenPassageLatticeRules.HEADROOM_BANDS):
 				excavation.carved[Vector3i(cell.x, band, cell.z)] = true
 		accepted.append(candidate)
-	return accepted.slice(1)
+	return accepted.slice(existing_count)
 
 
 ## September 29 town review (owner: "the outside of the towns ... is just a
@@ -2563,7 +2744,7 @@ static func massif_ring_depths(massif: WarrenMassif) -> Dictionary:
 static func _preview_reserved_columns(world_seed: int, massif: WarrenMassif,
 		excavation: WarrenExcavation, profile: WarrenVillageScaleProfile,
 		market_cells: int, market_square: Array[Vector3i], summit: Vector3i,
-		thickness: Dictionary) -> Dictionary:
+		thickness: Dictionary, proposed_court: Dictionary = {}) -> Dictionary:
 	## The town square and the landmark prefabs compete with the perimeter lane
 	## for the same flat, at-grade edge band. Ask the plot reservation itself
 	## (`WarrenPlotPlanner.reserve`) where it would put the landmarks and the
@@ -2587,7 +2768,8 @@ static func _preview_reserved_columns(world_seed: int, massif: WarrenMassif,
 	var streets := WarrenExcavation.new(world_seed)
 	for key: String in ["route", "transitions", "lanes", "loop_edges", "carved",
 			"covered", "portals", "bridge_spans", "bridge_span_audit",
-			"frontage_reservations", "tunnel_cells"]:
+			"frontage_reservations", "tunnel_cells", "bridge_bearing_columns", "construction_reservations",
+			"bridge_directions"]:
 		streets.set(key, excavation.get(key).duplicate(true))
 	_finalize_excavation(massif, streets)
 	streets.finish_construction()
@@ -2602,19 +2784,30 @@ static func _preview_reserved_columns(world_seed: int, massif: WarrenMassif,
 	preview.market_square_cells.assign(market_square)
 	preview.summit_cell = summit
 	preview.block_thickness = thickness
-	WarrenPlotPlanner.reserve(preview, profile)
+	# This is a proposal used to route the perimeter; house frontage claims
+	# belong to the committed court after that route exists.
+	if not proposed_court.is_empty(): preview.audit["preselected_plaza"] = proposed_court
+	for lane: Dictionary in excavation.lanes:
+		if lane.has("landmark_site"):
+			var selected: Array = preview.audit.get("preselected_landmarks", [])
+			selected.append(lane.landmark_site)
+			preview.audit["preselected_landmarks"] = selected
+
+	WarrenPlotPlanner.reserve(preview, profile, false)
 	var reach: Dictionary = {}
 	for record: Dictionary in WarrenPlotPlanner.outcomes(preview).get(
 			"asset_clearance_reservations", []) as Array:
 		reach[StringName(record.get("id", &""))] = \
 			(record.get("columns", []) as Array) \
 			+ (record.get("support_columns", []) as Array)
+	var selected_landmarks: Array[Dictionary] = []
+	var selected_plaza: Dictionary = {}
 	var sites: Dictionary = {}
 	var envelopes: Dictionary = {}
 	var depths := massif_ring_depths(massif)
 	var landmarks := profile.landmark_range.x
-	# `reserve` places the landmarks before the plaza, and they are held in
-	# that order.
+	# Keep the reservation order, including a broad court admitted before
+	# landmarks; the preview does not yet claim its surrounding house sites.
 	for plot: Dictionary in preview.plots:
 		if StringName(plot.id) == WarrenPlotReservations.PLAZA_PLOT_ID:
 			var trial := sites.duplicate()
@@ -2626,11 +2819,28 @@ static func _preview_reserved_columns(world_seed: int, massif: WarrenMassif,
 					trial) < _perimeter_ring_cover(world_seed, massif,
 						excavation, depths, sites) - own:
 				continue
+			selected_plaza = plot.duplicate(true)
 		elif StringName(plot.kind) != WarrenMazeSourcePlan.PLOT_ASSET \
 				or landmarks <= 0 or not _stands_at_grade(massif, plot):
 			continue
 		else:
 			landmarks -= 1
+		if StringName(plot.kind) == WarrenMazeSourcePlan.PLOT_ASSET:
+			selected_landmarks.append(plot.duplicate(true))
+		# Courts need their bearing just as buildings do. Reserving only the
+		# empty storey above a court let a lower street open through its floor.
+		for column: Vector2i in plot.cells:
+			for band in range(int(plot.floor)-1,maxi(int(plot.top),int(plot.floor)+MIN_HOUSE_BANDS)):
+				excavation.construction_reservations[Vector3i(column.x,band,column.y)] = true
+		if StringName(plot.kind) == WarrenMazeSourcePlan.PLOT_ASSET:
+			# A fixed-height landmark cannot carry a later street above its
+			# roof. Keep the legal roof-level walking envelope, but reserve the
+			# space above it: a higher bore would leave its floor unsupported
+			# when this column's residual massif becomes the landmark.
+			for column: Vector2i in plot.cells:
+				for band in range(int(plot.top) + WarrenPassageLatticeRules.HEADROOM_BANDS,
+						massif.top_at(column) + WarrenPassageLatticeRules.HEADROOM_BANDS):
+					excavation.construction_reservations[Vector3i(column.x,band,column.y)] = true
 		for column: Vector2i in plot.cells:
 			sites[column] = true
 			envelopes[column] = true
@@ -2641,7 +2851,7 @@ static func _preview_reserved_columns(world_seed: int, massif: WarrenMassif,
 					Vector3i(column.x, band, column.y)] = true
 		for column: Vector2i in reach.get(StringName(plot.id), []) as Array:
 			envelopes[column] = true
-	return {"sites": sites, "envelopes": envelopes}
+	return {"sites": sites, "envelopes": envelopes, "landmarks": selected_landmarks, "plaza": selected_plaza}
 
 
 static func _perimeter_anchors(massif: WarrenMassif,
@@ -2663,7 +2873,8 @@ static func _perimeter_ring_cover(world_seed: int, massif: WarrenMassif,
 	## throwaway copy of the streets so far.
 	var copy := WarrenExcavation.new(world_seed)
 	for key: String in ["route", "transitions", "lanes", "loop_edges", "carved",
-			"covered", "portals", "frontage_reservations", "tunnel_cells"]:
+			"covered", "portals", "frontage_reservations", "tunnel_cells", "bridge_bearing_columns", "construction_reservations",
+			"bridge_directions"]:
 		copy.set(key, excavation.get(key).duplicate(true))
 	_lay_perimeter_lanes(world_seed, massif, copy, blocked)
 	var count := 0
@@ -2779,6 +2990,7 @@ static func _perimeter_lane_from(world_seed: int, massif: WarrenMassif,
 						or pass_index == 1 and absi(depth - PERIMETER_RING) != 1:
 					continue
 				if trial.has(next) or blocked.has(column) \
+						or massif.is_reserved_ground(column) \
 						or massif.base_at(column) != current.y \
 						or not WarrenPassageLatticeRules.slot_is_borable(massif,
 							excavation, next, WarrenPassageLatticeRules.HEADROOM_BANDS) \
@@ -2890,6 +3102,7 @@ static func _perimeter_detour(massif: WarrenMassif, excavation: WarrenExcavation
 			var column := Vector2i(next.x, next.z)
 			var depth := int(depths.get(column, 0))
 			if parent.has(next) or trial.has(next) or blocked.has(column) \
+					or massif.is_reserved_ground(column) \
 					or depth < 1 or depth > PERIMETER_RING + 3 \
 					or massif.base_at(column) != start.y \
 					or not WarrenPassageLatticeRules.slot_is_borable(massif,
@@ -2937,9 +3150,12 @@ static func _perimeter_connector_rejoins(massif: WarrenMassif,
 
 static func _level_gate_connection(massif: WarrenMassif,
 		excavation: WarrenExcavation, public: Dictionary,
-		walk_nodes: Dictionary, candidate: Vector3i) -> Dictionary:
+		walk_nodes: Dictionary, candidate: Vector3i, direct := false) -> Dictionary:
 	# Search the legal route domain, including turn length and width. No
 	# completed connection is built and discarded by a later shape audit.
+	if not WarrenPassageLatticeRules.slot_is_borable(massif, excavation,
+			candidate, WarrenPassageLatticeRules.HEADROOM_BANDS):
+		return {}
 	if WarrenPassageLatticeRules.completes_public_square(public, candidate):
 		return {}
 	var queue: Array[Dictionary] = [{"cell": candidate, "path": [candidate], "dir": -1, "run": 0}]
@@ -2957,7 +3173,7 @@ static func _level_gate_connection(massif: WarrenMassif,
 			var direction := WarrenPassageLatticeRules.DIRECTIONS[direction_index]
 			var next := cell + Vector3i(direction.x, 0, direction.y)
 			var run := int(state.run) + 1 if direction_index == int(state.dir) else 1
-			if run > WarrenMazeSourcePlan.MAX_ALLEY_STRAIGHT_RUN:
+			if not direct and run > WarrenMazeSourcePlan.MAX_ALLEY_STRAIGHT_RUN:
 				continue
 			if public.has(next):
 				if not walk_nodes.has(next):
@@ -3173,3 +3389,156 @@ static func _cell_less(a: Vector3i, b: Vector3i) -> bool:
 	if a.z != b.z:
 		return a.z < b.z
 	return a.x < b.x
+
+
+## Central greens need inhabited edges. Establish a legal ground connection
+## to each sampled district before optional streets and asset reservations.
+static func _carve_district_access(massif: WarrenMassif,
+		excavation: WarrenExcavation, occupied: Dictionary, profile: WarrenVillageScaleProfile = null) -> void:
+	var districts := {}
+	for column: Vector2i in massif.columns:
+		var record: Dictionary = massif.columns[column]
+		if not record.has("district_lobe"): continue
+		var id := int(record.district_lobe)
+		if not districts.has(id): districts[id] = []
+		var base := massif.base_at(column)
+		var candidate := Vector3i(column.x,base,column.y)
+		if massif.bearing_at(column) != base: continue
+		if _addressable_sides(massif,excavation,candidate) < 1: continue
+		districts[id].append(candidate)
+	var ids := districts.keys()
+	ids.sort()
+	for id: int in ids:
+		var public := {}
+		var walk_nodes := {}
+		for cell: Vector3i in excavation.public_cells(): public[cell] = true
+		for cell: Vector3i in _walk_nodes(excavation): walk_nodes[cell] = true
+		var candidates: Array = districts[id]
+		var pair := preload("res://scripts/terrain/features/villages/fabric/WarrenDistrictLandmarkAccess.gd").propose(
+			massif, excavation, profile if profile != null else WarrenVillageScaleProfile.select(excavation.world_seed),
+			candidates, public, walk_nodes)
+		if not pair.is_empty():
+			preload("res://scripts/terrain/features/villages/fabric/WarrenDistrictLandmarkAccess.gd").append_connection(excavation,pair.connection)
+			excavation.lanes[-1]["landmark_site"] = pair.plot
+			# Keep the inhabited street edge promised alongside this landmark.
+			# Optional loops must not spend that neighbouring room frontage.
+			for column: Vector2i in pair.companions:
+				for band in range(int(pair.plot.floor),int(pair.plot.floor)+MIN_HOUSE_BANDS):
+					excavation.frontage_reservations[Vector3i(column.x,band,column.y)] = true
+			for cell: Vector3i in pair.connection.cells: occupied[cell] = true
+			var columns: Array = pair.plot.cells.duplicate()
+			columns.append_array(pair.realisation.get("reserved_columns",[]))
+			columns.append_array(pair.realisation.get("support_columns",[]))
+			for column: Vector2i in columns:
+				for band in range(int(pair.plot.floor)-1,int(pair.plot.top)):
+					excavation.construction_reservations[Vector3i(column.x,band,column.y)] = true
+			continue
+		candidates.sort_custom(func(a: Vector3i,b: Vector3i) -> bool:
+			var centre: Vector2 = massif.columns[Vector2i(a.x,a.z)].district_centre
+			var da := Vector2(a.x,a.z).distance_squared_to(centre)
+			var db := Vector2(b.x,b.z).distance_squared_to(centre)
+			return da < db if not is_equal_approx(da,db) else _cell_less(a,b))
+		for candidate: Vector3i in candidates.slice(0,8):
+			if walk_nodes.has(candidate): break
+			# An access street is a shortest legal connection, not an alley
+			# whose character depends on frequent turns through building mass.
+			var connection := _level_gate_connection(massif,excavation,public,walk_nodes,candidate,true)
+			if connection.is_empty(): continue
+			var cells: Array[Vector3i] = connection.cells
+			var previous: Vector3i = connection.anchor
+			var transitions: Array[Dictionary] = []
+			for cell: Vector3i in cells:
+				transitions.append({"from":previous,"to":cell,"kind":WarrenVolumeTransition.Kind.LEVEL})
+				occupied[cell] = true
+				for band in range(cell.y,cell.y+WarrenPassageLatticeRules.HEADROOM_BANDS):
+					excavation.carved[Vector3i(cell.x,band,cell.z)] = true
+				previous = cell
+			excavation.lanes.append({"anchor":connection.anchor,"cells":cells,
+				"transitions":transitions,"feature_kind":&"district_access"})
+			break
+
+
+## A reserved cottage needs one addressed entrance, not a ring around its
+## garden. Join the closest legal frontage to the existing ground network.
+static func _carve_house_site_access(massif: WarrenMassif,
+		excavation: WarrenExcavation, occupied: Dictionary) -> void:
+	var sites := {}
+	for column: Vector2i in massif.columns:
+		var record: Dictionary = massif.columns[column]
+		if not record.has("house_site"): continue
+		var id := int(record.house_site)
+		if not sites.has(id): sites[id] = {}
+		sites[id][column] = true
+	var ids := sites.keys()
+	ids.sort()
+	for id: int in ids:
+		var public := {}
+		var walk_nodes := {}
+		for cell: Vector3i in excavation.public_cells(): public[cell] = true
+		for cell: Vector3i in _walk_nodes(excavation): walk_nodes[cell] = true
+		var candidates := {}
+		var served := false
+		for column: Vector2i in sites[id]:
+			for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+				var next := column+direction
+				if sites[id].has(next) or not massif.has_column(next): continue
+				var candidate := Vector3i(next.x,massif.base_at(column),next.y)
+				if walk_nodes.has(candidate): served = true
+				candidates[candidate] = true
+		if served: continue
+		var ordered := candidates.keys()
+		ordered.sort_custom(_cell_less)
+		var best := {}
+		for candidate: Vector3i in ordered:
+			var connection := _level_gate_connection(massif,excavation,public,
+				walk_nodes,candidate,true)
+			if connection.is_empty(): continue
+			if best.is_empty() or connection.cells.size() < best.cells.size():
+				best = connection
+		if best.is_empty(): continue
+		var cells: Array[Vector3i] = best.cells
+		var previous: Vector3i = best.anchor
+		var transitions: Array[Dictionary] = []
+		for cell: Vector3i in cells:
+			transitions.append({"from":previous,"to":cell,"kind":WarrenVolumeTransition.Kind.LEVEL})
+			occupied[cell] = true
+			for band in range(cell.y,cell.y+WarrenPassageLatticeRules.HEADROOM_BANDS):
+				excavation.carved[Vector3i(cell.x,band,cell.z)] = true
+			previous = cell
+		excavation.lanes.append({"anchor":best.anchor,"cells":cells,
+			"transitions":transitions,"feature_kind":&"house_site_access"})
+
+static func _lay_tower_house_address(massif: WarrenMassif,
+		excavation: WarrenExcavation, occupied: Dictionary,
+		profile: WarrenVillageScaleProfile, court: Dictionary,
+		reservation_claims: Dictionary = {}) -> void:
+	var candidates := []
+	var public := {}
+	var walks := {}
+	for column: Vector2i in massif.columns:
+		var base := massif.base_at(column)
+		if massif.bearing_at(column)==base: candidates.append(Vector3i(column.x,base,column.y))
+	for cell: Vector3i in excavation.public_cells(): public[cell]=true
+	for cell: Vector3i in _walk_nodes(excavation): walks[cell]=true
+	var protected_columns := excavation.bridge_bearing_columns.duplicate()
+	for column: Vector2i in court.get("cells",[]): protected_columns[column]=true
+	var pair := preload("res://scripts/terrain/features/villages/fabric/WarrenDistrictLandmarkAccess.gd").propose(massif,excavation,profile,candidates,public,walks,protected_columns,true)
+	if pair.is_empty(): return
+	preload("res://scripts/terrain/features/villages/fabric/WarrenDistrictLandmarkAccess.gd").append_connection(excavation,pair.connection)
+	excavation.lanes[-1]["landmark_site"] = pair.plot
+	# Keep the inhabited street edge promised alongside this landmark.
+	# Optional loops must not spend that neighbouring room frontage.
+	for column: Vector2i in pair.companions:
+		for band in range(int(pair.plot.floor),int(pair.plot.floor)+MIN_HOUSE_BANDS):
+			excavation.frontage_reservations[Vector3i(column.x,band,column.y)] = true
+			if reservation_claims.has("frontages"):
+				reservation_claims.frontages[Vector3i(column.x,band,column.y)] = true
+	for cell: Vector3i in pair.connection.cells: occupied[cell] = true
+	var columns: Array = pair.plot.cells.duplicate()
+	columns.append_array(pair.realisation.get("reserved_columns",[]))
+	columns.append_array(pair.realisation.get("support_columns",[]))
+	for column: Vector2i in columns:
+		for band in range(int(pair.plot.floor)-1,int(pair.plot.top)):
+			excavation.construction_reservations[Vector3i(column.x,band,column.y)] = true
+			if reservation_claims.has("construction"):
+				reservation_claims.construction[Vector3i(column.x,band,column.y)] = true

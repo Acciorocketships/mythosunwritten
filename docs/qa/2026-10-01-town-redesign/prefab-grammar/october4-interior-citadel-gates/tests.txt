@@ -1,0 +1,41 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_interior_citadel_gate.gd
+[0m* test_interior_gate_enters_below_grade_then_climbs_to_upper_street
+* test_admitted_interior_gate_has_finished_roof_and_clear_headroom
+* test_nested_climb_does_not_bore_through_the_next_higher_district
+* test_parapet_clearance_never_leaves_merlons_without_their_base
+[1m4/4 passed.
+[0m[4m
+
+res://tests/test_october1_facade_prop_clearance.gd
+[0m* test_rotated_prop_bounds_clear_sloping_walking_air
+* test_nested_town_keeps_only_clear_window_boxes_and_doorstep_props
+[1m2/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               2
+Tests                 6
+Passing Tests         6
+Asserts             940
+Time              90.613s
+
+
+[32m---- All tests passed! ----
+[0m

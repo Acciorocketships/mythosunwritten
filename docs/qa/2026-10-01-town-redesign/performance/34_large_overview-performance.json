@@ -1,0 +1,11 @@
+{
+  "draw_calls": 1343.0,
+  "gpu_median_ms": 0.0,
+  "gpu_p95_ms": 0.0,
+  "median_ms": 5.461,
+  "p95_ms": 5.72,
+  "primitives": 4028951.0,
+  "render_cpu_median_ms": 0.919000029563904,
+  "samples": 120,
+  "view": "34_large_overview"
+}

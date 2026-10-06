@@ -1,8 +1,8 @@
 [gd_resource type="StandardMaterial3D" load_steps=4 format=3]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/106503d58f61c402822e.res" id="1_xhx6w"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/6d707dd903562cb6ddb1.res" id="2_w0t0i"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/46a3c39270dc7db8f749.res" id="3_ywja8"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/b45866d0bce53352e20f.res" id="1_xhx6w"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/e1ae3d8db9c7e2a6fbc1.res" id="2_w0t0i"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/d5a9149a92103bb1900a.res" id="3_ywja8"]
 
 [resource]
 resource_name = "Anvil"

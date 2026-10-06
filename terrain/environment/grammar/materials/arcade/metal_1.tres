@@ -1,0 +1,18 @@
+[gd_resource type="StandardMaterial3D" load_steps=4 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/PureVillage/Textures/Metal/Metal_a.png" id="1_uh7d4"]
+[ext_resource type="Texture2D" path="res://assets/PureVillage/Textures/Metal/Metal_mask_MOS_100_50.png" id="2_p0xfp"]
+[ext_resource type="Texture2D" path="res://assets/PureVillage/Textures/Metal/Metal_n.png" id="3_16dxu"]
+
+[resource]
+resource_name = "Metal_1"
+albedo_texture = ExtResource("1_uh7d4")
+metallic = 1.0
+metallic_texture = ExtResource("2_p0xfp")
+metallic_texture_channel = 2
+roughness_texture = ExtResource("2_p0xfp")
+roughness_texture_channel = 1
+normal_enabled = true
+normal_texture = ExtResource("3_16dxu")
+ao_enabled = true
+ao_texture = ExtResource("2_p0xfp")

@@ -1,0 +1,18 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+TUNNELS 29 grand [(-1, 1, -4), (-3, 0, 2), (-4, 0, 2), (1, 0, 1), (3, 0, 1), (4, 0, 0)]
+STEPPED_HOUSES [{ "id": &"kit.spatial.parcel.maze.bridge.00.end.1.lower", "at": (0.75, 9.0, 0.75), "reach": 24.0 }, { "id": &"kit.spatial.parcel.maze.house.000", "at": (14.25, 10.5, 2.25), "reach": 16.0 }, { "id": &"kit.spatial.parcel.maze.house.009", "at": (-8.25, 9.0, 3.75), "reach": 8.0 }, { "id": &"kit.spatial.parcel.maze.house.013", "at": (5.25, 10.5, -12.75), "reach": 32.0 }]
+ROOF_AUDIT { "clipped": 229, "removed": 32, "chimneys": { "moved": 0, "omitted": 0, "checked": 3 }, "towers": { "corner_attempts": 43, "corner_bearing_rejected": 28, "corner_bearing_example": "kit.spatial.parcel.maze.house.013 / (5, 3, -13) / base 4", "corner_no_bearing_or_space": 38, "corner_supported": 4, "corbel_corner_accepted": 3, "corner_accepted": 3, "corner_public_blocked": 1, "corner_join_shifted": 1, "corner_no_host_join": 1, "corner_reservation_rejected": 7, "corner_reservation_example": "kit.spatial.parcel.maze.house.011 / (-7, 4, 3) / base 5", "attempts": 12, "accepted": 3 }, "facade_bays": 1, "room_projections": 1, "retaining_relief": 12, "retaining_flight_joints": 4, "retaining_windows": 14, "fortified_windows": 22, "retaining_recesses": 23, "decor_clearance": { &"fort.block": 72, &"prop.doorstep": 28, &"window_box": 38 }, "fitted_window_boxes": 19, "joins": 5, "parallel_joins": 0, "fitted_eaves": 1, "dormers": { "moved": 0, "omitted": 1, "checked": 5 }, "seated_balcony_brackets": 0, "roof_blocked_windows": 82, "roof_fitted_windows": 14 }
+TOWN 29 grand buildings=69 instances=4115 ms=32835
+GARDEN_GRASS 29 grand instances=235 tiles=4
+BOUNDS cells=[P: (-32.0, 0.0, -72.0), S: (92.0, 27.0, 116.0)] payload=[P: (-50.70597, -2.0, -74.68001), S: (113.106, 38.6, 121.02)]
+REVIEW_CAMERA {"eye":"(24.0, 13.7, 4.0)","fov":80.0,"target":"(13.0, 14.5, 2.0)","view":"29_grand_court_plaza.00_0"}
+REVIEW_CAMERA {"eye":"(16.0, 13.7, 12.0)","fov":80.0,"target":"(18.0, 14.5, -3.0)","view":"29_grand_court_plaza.00_1"}
+REVIEW_CAMERA {"eye":"(8.0, 13.7, 0.0)","fov":80.0,"target":"(23.0, 14.5, 2.0)","view":"29_grand_court_plaza.00_2"}
+REVIEW_CAMERA {"eye":"(20.0, 13.7, -8.0)","fov":80.0,"target":"(18.0, 14.5, 7.0)","view":"29_grand_court_plaza.00_3"}
+REVIEW_CAMERA {"eye":"(-36.0, 13.7, -32.0)","fov":80.0,"target":"(-47.0, 14.5, -34.0)","view":"29_grand_court_deck.00_0"}
+REVIEW_CAMERA {"eye":"(-40.0, 13.7, -28.0)","fov":80.0,"target":"(-42.0, 14.5, -39.0)","view":"29_grand_court_deck.00_1"}
+REVIEW_CAMERA {"eye":"(-48.0, 13.7, -36.0)","fov":80.0,"target":"(-37.0, 14.5, -34.0)","view":"29_grand_court_deck.00_2"}
+REVIEW_CAMERA {"eye":"(-44.0, 13.7, -40.0)","fov":80.0,"target":"(-42.0, 14.5, -29.0)","view":"29_grand_court_deck.00_3"}
+REVIEW_DONE /tmp/oct5-court29-view

@@ -1,0 +1,42 @@
+--- restored/BuildingDesigner.gd
++++ rejected/BuildingDesigner.gd
+@@ -340,7 +340,7 @@
+ 			if exposed.is_empty():
+ 				continue
+ 		var wings: Array = []
+-		var rects := _absorb_slivers(mass, decompose(exposed, ridge_axis),
++		var rects := _absorb_slivers(mass, decompose(exposed, ridge_axis, true),
+ 			exposed, storey.cells, top_band)
+ 		# A compound's notched crown can leave strips the whole-crown
+ 		# packing cannot absorb; its members' own crowns may pack cleanly.
+@@ -354,7 +354,7 @@
+ 				for cell: Vector2i in part:
+ 					if exposed.has(cell): own[cell] = true
+ 				if not own.is_empty():
+-					parted.append_array(decompose(own, ridge_axis))
++					parted.append_array(decompose(own, ridge_axis, true))
+ 			parted = _absorb_slivers(mass, parted, exposed, storey.cells, top_band)
+ 			if _slivers(parted) <= _slivers(rects) \
+ 					and _abutting(mass, parted, top_band) < _abutting(mass, rects, top_band) \
+@@ -1149,7 +1149,7 @@
+ 
+ ## Greedy rectangle decomposition: largest area by default; with a ridge
+ ## axis, longest along that axis first, then largest area.
+-static func decompose(cells: Dictionary, ridge_axis := -1) -> Array[Rect2i]:
++static func decompose(cells: Dictionary, ridge_axis := -1, crown := false) -> Array[Rect2i]:
+ 	var remaining := cells.duplicate()
+ 	var out: Array[Rect2i] = []
+ 	while not remaining.is_empty():
+@@ -1178,7 +1178,11 @@
+ 				# before the wider rear hall, whose shallower roof cannot bury
+ 				# that wing's ridge. Other callers retain largest-area packing.
+ 				var span := (w_limit if ridge_axis == 0 else h) if ridge_axis >= 0 else 0
+-				if span > best_span or (span == best_span and area > best_area):
++				# Equal-area crown choices prefer a real two-sided roof wing.
++				# General wall/occupancy packing retains its existing order.
++				var deeper_tie := crown and span == best_span and area == best_area \
++					and mini(w_limit,h) >= 2 and mini(best.size.x,best.size.y) < 2
++				if span > best_span or (span == best_span and area > best_area) or deeper_tie:
+ 					best_span = span
+ 					best_area = area
+ 					best = Rect2i(start, Vector2i(w_limit, h))

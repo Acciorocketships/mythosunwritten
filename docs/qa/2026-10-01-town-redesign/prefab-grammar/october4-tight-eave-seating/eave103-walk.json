@@ -1,0 +1,86 @@
+[
+  {
+    "gate": "flight.volume.lane01.01",
+    "passed": true,
+    "reverse": false,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(10.0, 3.050214, -14.125)",
+        "target": "(10.0, 6.05, -30.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(10.0, 3.35705, -17.875)",
+        "target": "(10.0, 6.05, -30.0)",
+        "tick": 30,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(10.0, 4.611563, -21.625)",
+        "target": "(10.0, 6.05, -30.0)",
+        "tick": 60,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(10.0, 5.999971, -25.375)",
+        "target": "(10.0, 6.05, -30.0)",
+        "tick": 90,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(10.0, 6.050616, -29.125)",
+        "target": "(10.0, 6.05, -30.0)",
+        "tick": 120,
+        "waypoint": 1
+      }
+    ]
+  },
+  {
+    "gate": "flight.volume.lane01.01",
+    "passed": true,
+    "reverse": true,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(10.0, 6.050391, -29.875)",
+        "target": "(10.0, 3.05, -14.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(10.0, 6.050391, -26.125)",
+        "target": "(10.0, 3.05, -14.0)",
+        "tick": 30,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(10.0, 4.875315, -22.37489)",
+        "target": "(10.0, 3.05, -14.0)",
+        "tick": 60,
+        "waypoint": 1
+      },
+      {
+        "floor": false,
+        "position": "(10.0, 3.662885, -18.62489)",
+        "target": "(10.0, 3.05, -14.0)",
+        "tick": 90,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(10.0, 3.050373, -14.87484)",
+        "target": "(10.0, 3.05, -14.0)",
+        "tick": 120,
+        "waypoint": 1
+      }
+    ]
+  }
+]

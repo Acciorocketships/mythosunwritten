@@ -1,0 +1,10 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+PREFERENCE 31 true
+PREFERENCE 13 true
+PREFERENCE 43 false
+PREFERENCE 83 true
+PREFERENCE 53 true
+PREFERENCE 103 true
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)

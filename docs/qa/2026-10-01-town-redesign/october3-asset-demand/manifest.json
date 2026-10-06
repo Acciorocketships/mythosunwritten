@@ -1,0 +1,5 @@
+{
+  "scripts/terrain/features/villages/VillageProgram.gd": "b31046ebb1caab2e850bd0b31bfd92ae25496f18f5cdfde0f8c2bb19abc751aa",
+  "scripts/terrain/features/villages/kit/KitTowerAssembly.gd": "5b4e3676ecd7dc489f2557c9ccf63ef1e5ff9f92eacd6b3a516c27dc69411f49",
+  "tests/test_october2_tower_assemblies.gd": "1b8fed55d379a5e02773ac712ff013435a3442c1c6b5d9d9a071bba34ccc7900"
+}

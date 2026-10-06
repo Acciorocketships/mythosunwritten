@@ -36,6 +36,8 @@ var ground_band := 0
 ##                                 footprint (the storey above then reads as
 ##                                 a jetty carried on brackets)
 ##   plinth: bool               -- stone course below the floor
+##   ceiling: bool              -- close an inhabited passage's attic with
+##                                 native boards at the room's upper band
 ##   openings: Dictionary       -- Vector3i(x, z, dir) -> OPENING_* override
 ##   default_opening: StringName
 ##   plain_every: int           -- 0 = never; n = every n-th wall plain
@@ -52,6 +54,8 @@ var storeys: Array[Dictionary] = []
 ##   ridge_peaks: bool
 ## }
 var roofs: Array[Dictionary] = []
+## Measured roof articulation attempts, retained for generation diagnostics.
+var roof_design_trace: Array[Dictionary] = []
 ## Flat decks on exposed crowns: {cells: Dictionary, band: int, rails: bool}
 var decks: Array[Dictionary] = []
 ## Dressing: {kind: StringName, storey: int, edge: Vector3i, ...}

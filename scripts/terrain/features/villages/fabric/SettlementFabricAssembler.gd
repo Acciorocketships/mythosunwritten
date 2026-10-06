@@ -611,9 +611,14 @@ const VILLAGE_GREEN_EDGE_ODDS := 0.5
 ## square to its own grid anyway.
 const PLAZA_WELL := &"sfv.well.001"
 const PLAZA_MARKET_STALL := &"sfm.stall.variant.001"
+const PLAZA_UNDERPLANTS: Array[StringName] = [&"kaykit.grass.01", &"kaykit.grass.02",
+	&"lpfv.flower.01", &"lpfv.flower.03", &"lpfv.flower.05"]
+const PLAZA_SEAT := &"interior.bench.001"
 const PLAZA_TREE := &"lpfv.tree.05"
+const PLAZA_COURT_TREES: Array[StringName] = [&"lpfv.tree.01", &"lpfv.tree.02"]
 const PLAZA_WIDE_FEATURES: Array[StringName] = [PLAZA_WELL, PLAZA_MARKET_STALL,
 	PLAZA_TREE]
+const PLAZA_CANOPY_AREA_SHARE := 1.0 / 3.0
 const PLAZA_WIDE_BLOCK := 3
 const PLAZA_NARROW_BLOCK := 2
 const PLAZA_FEATURE_SALT := 53
@@ -1611,7 +1616,7 @@ static func maze_ground_skin_transaction(plan: SettlementFabricPlan,
 	garden = close_borne_turf_corners(garden, retained, solids, paved, walked,
 		classification_shell, footprints)
 	var capped_ground := garden.duplicate()
-	for plaza_cell_value: Variant in plan.planned_plaza_cells.keys():
+	for plaza_cell_value: Variant in plan.planned_plaza_planting_cells.keys():
 		capped_ground[plaza_cell_value as Vector3i] = true
 	var final_cap_owners := initial_cap_owners.duplicate()
 	for ground_cell_value: Variant in capped_ground.keys():
@@ -1772,7 +1777,7 @@ static func _rebuild_maze_skin_shell(shell: Dictionary,
 
 
 static func terrace_retaining_payload(plan: SettlementFabricPlan,
-		include_perimeter_frontage: bool = true) \
+		include_perimeter_frontage: bool = true, native_dressing: Dictionary = {}) \
 		-> EnvironmentInstancePayload:
 	## Stone appears in exactly ONE role, and only under a building: the house
 	## PLINTH -- the authored foundation piece, one course, where a house stopped
@@ -1885,9 +1890,31 @@ static func terrace_retaining_payload(plan: SettlementFabricPlan,
 		plan.asset_wall_interfaces,transaction.suspended_plaza))
 	# TASK I2. What grows on those benches once they are yards rather than lime
 	# plates, and the village green among them.
+	var dressing_footprints := footprints.duplicate()
+	var dressing_boxes: Array[AABB] = []
+	dressing_boxes.assign(footprints.get("boxes",[]))
+	dressing_boxes.append_array(native_dressing.get("boxes",[]))
+	dressing_footprints["boxes"] = dressing_boxes
+	dressing_footprints["native_surfaces"] = native_dressing.get("native_surfaces",[])
 	out.append_from(maze_garden_dressing(retained, solids, paved, plinths,
-		walked, shell, footprints, plan.planned_plaza_cells, skin_boxes,
+		walked, shell, dressing_footprints, plan.planned_plaza_cells, skin_boxes,
 		capped_ground_cells))
+	if not plan.planned_plaza_planting_cells.is_empty():
+		var garden_obstacles: Array[AABB] = []
+		garden_obstacles.assign(footprints.get("boxes",[]))
+		garden_obstacles.append_array(skin_boxes)
+		for asset: StringName in out.batches:
+			var batch: Dictionary = out.batches[asset]
+			if not footprints.asset_bounds.has(asset): continue
+			for index in batch.ids.size():
+				var id := String(batch.ids[index])
+				if id.begins_with("maze-plaza-seat/") or id.begins_with("maze-plaza-centre/"):
+					garden_obstacles.append_array(TownGardenGrass.asset_obstacles(asset,
+						batch.transforms[index],footprints.asset_bounds[asset]))
+		for mesh: Dictionary in out.surface_meshes:
+			if String(mesh.get("stable_id","")) == "maze-ground-turf":
+				mesh["garden_grass_regions"] = TownGardenGrass.local_regions(
+					plan.planned_plaza_planting_cells,garden_obstacles)
 	# TASK I4, ANNOTATION 3. The corbels under the public floor plates that have
 	# nothing beneath them -- the "random planks on the sides of these buildings"
 	# turned into the galleries they were always meant to read as.
@@ -4858,7 +4885,8 @@ static func optional_dressing_is_clear(asset_id: StringName,
 	for panel: AABB in skin:
 		if _boxes_share_volume(candidate, panel):
 			return false
-	return _box_clears_public_surfaces(candidate, footprints)
+	return _box_clears_public_surfaces(candidate, footprints) and _box_clears_public_surfaces(
+		candidate,{"public_surfaces":footprints.get("native_surfaces",[])})
 
 
 static func _frontage_window_is_free(window: Array[Vector3i],
@@ -5523,6 +5551,14 @@ static func maze_plaza_threshold_openings(plan: SettlementFabricPlan,
 	var plaza := maze_plaza_cells_for(plan, garden, walked)
 	if plaza.is_empty():
 		return out
+	# A planted island has the same supported datum as its surrounding court.
+	# Its perimeter is a change of use, not a drop; retain only the square's
+	# exterior fall guards. The island's exact reservation owns this exemption.
+	for support: Vector3i in plan.planned_plaza_planting_cells:
+		for step: Vector3i in FACE_DIRECTIONS:
+			var floor := support+Vector3i.UP+step
+			if walked.has(floor):
+				out.append({"cell":floor,"direction":-step})
 	var mouths: Array[Vector3i] = []
 	mouths.assign(maze_plaza_entries(plaza, walked).keys())
 	mouths.sort_custom(_cell_before)
@@ -5640,7 +5676,7 @@ static func maze_plaza_cells_for(plan: SettlementFabricPlan,
 static func maze_plaza_centre_feature(plaza: Dictionary,
 		entries: Dictionary, footprints: Dictionary = {},
 		skin: Array[AABB] = [] as Array[AABB],
-		walked: Dictionary = {}) -> Dictionary:
+		walked: Dictionary = {}, planted_island := false) -> Dictionary:
 	## TASK I3 -- WHAT STANDS IN THE MIDDLE OF THE SQUARE, as
 	## `{asset, cell, origin, quarter, cells}`, or empty when the green has no
 	## room for one.
@@ -5712,22 +5748,168 @@ static func maze_plaza_centre_feature(plaza: Dictionary,
 			var feature := {"asset": PLAZA_WIDE_FEATURES[
 				posmod(pick + offset, PLAZA_WIDE_FEATURES.size())], "cell": cell,
 				"origin": origin, "quarter": quarter, "cells": wide.cells}
+			if planted_island and STALL_CANOPIES.has(feature.asset) and not _plaza_canopy_proportional(feature, plaza, occupied, footprints):
+				continue
+			if planted_island and feature.asset == PLAZA_TREE:
+				# Large beds use the same complete leafy crown/root proof as
+				# small and notched beds. The old bare tree is not a canopy.
+				var canopy := preload("res://scripts/terrain/features/villages/TownCourtTrees.gd").fit_island(
+					wide.cells, footprints, skin, quarter)
+				if not canopy.is_empty(): return canopy
+				continue
 			if _maze_plaza_feature_is_clear(feature, footprints, skin):
 				return feature
 	var narrow := _maze_plaza_block_nearest_centroid(plaza, occupied, cells,
 		centroid, PLAZA_NARROW_BLOCK, Vector3(0.5, 0.0, 0.5))
+	if narrow.is_empty() and planted_island:
+		var available := plaza.duplicate()
+		for cell: Vector3i in occupied: available.erase(cell)
+		var first: Vector3i = cells.front()
+		var quarter := int(_face_noise(Vector4i(first.x,first.y,first.z,1),PLAZA_FEATURE_SALT+1)*4.0)%4
+		return preload("res://scripts/terrain/features/villages/TownCourtTrees.gd").fit_island(available,footprints,skin,quarter)
 	if not narrow.is_empty():
 		var cell := narrow.cell as Vector3i
 		var key := Vector4i(cell.x, cell.y, cell.z, 1)
 		var origin := Vector3(cell) * FabricRecipe.CELL_SIZE \
 			+ Vector3(FabricRecipe.CELL_SIZE, 0.0, FabricRecipe.CELL_SIZE) * 0.5
 		origin.y = float(cell.y + 1) * FabricRecipe.CELL_SIZE + GREEN_CAP_LIFT
-		var feature := {"asset": PLAZA_TREE, "cell": cell, "origin": origin,
+		var tree := PLAZA_TREE
+		var scale_value := 1.0
+		var bounds: Dictionary = footprints.get("asset_bounds",{})
+		if planted_island:
+			var first := int(_face_noise(key,PLAZA_FEATURE_SALT+2)*PLAZA_COURT_TREES.size()) % PLAZA_COURT_TREES.size()
+			# Mature crowns can overhang the walk ring. Try both measured tree
+			# forms before falling back to a small tree confined to the bed.
+			for target_height: float in [7.5,6.0,4.5,0.0]:
+				for offset in PLAZA_COURT_TREES.size():
+					tree = PLAZA_COURT_TREES[(first+offset)%PLAZA_COURT_TREES.size()]
+					if not bounds.has(tree): continue
+					var box: AABB = bounds[tree]
+					var reach := maxf(maxf(absf(box.position.x),absf(box.end.x)),maxf(absf(box.position.z),absf(box.end.z)))
+					scale_value = target_height/box.size.y if target_height>0 else (float(PLAZA_NARROW_BLOCK)*FabricRecipe.CELL_SIZE*0.5-0.1)/reach
+					var candidate := {"asset":tree,"cell":cell,
+						"origin":origin-Vector3.UP*minf(0.0,box.position.y)*scale_value,
+						"quarter":int(_face_noise(key,PLAZA_FEATURE_SALT+1)*4.0)%4,
+						"cells":narrow.cells,"scale":scale_value,"street_canopy":true}
+					var fitted := preload("res://scripts/terrain/features/villages/TownCourtTrees.gd").fit_rotation(candidate,footprints,skin)
+					if not fitted.is_empty(): return fitted
+			return {}
+
+		var feature := {"asset": tree, "cell": cell, "origin": origin,
 			"quarter": int(_face_noise(key, PLAZA_FEATURE_SALT + 1) * 4.0) % 4,
-			"cells": narrow.cells}
+			"cells": narrow.cells,"scale":scale_value}
+		# Trees have authored roots slightly below their origin. Stand their
+		# measured foot on the garden datum rather than rejecting those roots
+		# as an intersection with the very masonry that supports the bed.
+		if bounds.has(tree):
+			feature.origin.y -= minf(0.0,(bounds[tree] as AABB).position.y)*scale_value
 		if _maze_plaza_feature_is_clear(feature, footprints, skin):
 			return feature
 	return {}
+
+
+## Collision-free furniture can still consume a whole small garden. Compare a
+## canopy against its own connected, unreserved bed, never other nearby courts.
+static func _plaza_canopy_proportional(feature: Dictionary, plaza: Dictionary,
+		occupied: Dictionary, footprints: Dictionary) -> bool:
+	var bounds: Dictionary = footprints.get("asset_bounds", {})
+	if not bounds.has(feature.asset): return false
+	var first: Vector3i = feature.cell
+	var connected := {first: true}
+	var pending: Array[Vector3i] = [first]
+	while not pending.is_empty():
+		var cell: Vector3i = pending.pop_back()
+		for step: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT, Vector3i.FORWARD, Vector3i.BACK]:
+			var next := cell + step
+			if not plaza.has(next) or occupied.has(next) or connected.has(next): continue
+			connected[next] = true
+			pending.append(next)
+	var box: AABB = bounds[feature.asset]
+	var scale_value := float(feature.get("scale", 1.0))
+	var canopy_area := box.size.x * box.size.z * scale_value * scale_value
+	var bed_area := connected.size() * FabricRecipe.CELL_SIZE * FabricRecipe.CELL_SIZE
+	return canopy_area <= bed_area * PLAZA_CANOPY_AREA_SHARE
+
+
+## Small seats occupy only the reserved planting island, never public floor.
+## Test the complete tree envelope too; a canopy is not permission to overlap
+## its trunk or branches. Narrow trees leave room on one or two island sides.
+static func maze_plaza_seats(feature: Dictionary, footprints: Dictionary,
+		skin: Array[AABB]) -> Array[Transform3D]:
+	var seats: Array[Transform3D] = []
+	var bounds: Dictionary = footprints.get("asset_bounds",{})
+	if feature.is_empty() or not StringName(feature.asset) in PLAZA_COURT_TREES \
+		or not bounds.has(PLAZA_SEAT) or not bounds.has(feature.asset): return seats
+	var tree_pose := Transform3D(Basis(Vector3.UP,float(feature.quarter)*PI*0.5)
+		.scaled(Vector3.ONE*float(feature.get("scale",1.0))),feature.origin)
+	var tree_boxes: Array[AABB] = [tree_pose*bounds[feature.asset]]
+	if feature.get("street_canopy",false):
+		tree_boxes = preload("res://scripts/terrain/features/villages/TownCourtTrees.gd").bands(feature)
+	var island: Dictionary = feature.cells
+	var centre: Vector3 = feature.origin
+	var floor_y := float((feature.cell as Vector3i).y+1)*FabricRecipe.CELL_SIZE+GREEN_CAP_LIFT
+	var seat_boxes: Array[AABB] = []
+	for index in 4:
+		var quarter := posmod(int(feature.quarter)+index,4)
+		var basis := Basis(Vector3.UP,float(quarter)*PI*0.5)*Basis.from_scale(
+			Vector3.ONE*VillageWorldScale.KIT_HUMAN_PROP_WORLD_SCALE/VillageWorldScale.frame_scale())
+		var outward := Basis(Vector3.UP,float(quarter)*PI*0.5)*Vector3.BACK
+		var pose := Transform3D(basis,Vector3(centre.x,floor_y,centre.z)+outward*1.05)
+		var box: AABB = pose*bounds[PLAZA_SEAT]
+		pose.origin.y += floor_y-box.position.y
+		box = pose*bounds[PLAZA_SEAT]
+		var hits_tree := false
+		for tree_box: AABB in tree_boxes: hits_tree = hits_tree or box.intersects(tree_box)
+		if hits_tree or not _box_clears_public_surfaces(box.grow(0.25),footprints): continue
+		var supported := true
+		for x in range(floori((box.position.x+0.75)/1.5),ceili((box.end.x+0.75)/1.5)):
+			for z in range(floori((box.position.z+0.75)/1.5),ceili((box.end.z+0.75)/1.5)):
+				supported = supported and island.has(Vector3i(x,(feature.cell as Vector3i).y,z))
+		for prior: AABB in seat_boxes:
+			if box.grow(0.1).intersects(prior): supported = false
+		if not supported or not optional_dressing_is_clear(PLAZA_SEAT,pose,footprints,skin): continue
+		seats.append(pose)
+		seat_boxes.append(box)
+		if seats.size()==2: break
+	return seats
+
+
+static func maze_plaza_underplants(feature: Dictionary, footprints: Dictionary,
+		skin: Array[AABB], seats: Array[Transform3D]) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if feature.is_empty() or not StringName(feature.asset) in PLAZA_COURT_TREES: return out
+	var bounds: Dictionary = footprints.get("asset_bounds",{})
+	var centre: Vector3 = feature.origin
+	var floor_y := float((feature.cell as Vector3i).y+1)*FabricRecipe.CELL_SIZE+GREEN_CAP_LIFT
+	var island: Dictionary = feature.cells
+	var occupied: Array[AABB] = []
+	for seat: Transform3D in seats: occupied.append(seat*(bounds[PLAZA_SEAT] as AABB))
+	if feature.get("street_canopy",false):
+		occupied.append_array(preload("res://scripts/terrain/features/villages/TownCourtTrees.gd").bands(feature))
+	# Small irregular groups fit beneath the canopy, outside its root flare.
+	# Full asset envelopes, rather than point anchors, prove support and access.
+	for slot in 12:
+		var roll := Helper._cell_hash01(int(feature.quarter)+911,(feature.cell as Vector3i).x+slot,(feature.cell as Vector3i).z)
+		var angle := (float(slot)+roll*.35)*TAU/12.0
+		var offset := Vector3(cos(angle),0,sin(angle))*(.95+roll*.18)
+		var asset := PLAZA_UNDERPLANTS[int(roll*float(PLAZA_UNDERPLANTS.size()))%PLAZA_UNDERPLANTS.size()]
+		if not bounds.has(asset): continue
+		var pose := Transform3D(Basis(Vector3.UP,angle).scaled(Vector3.ONE*(.45+roll*.15)),
+			Vector3(centre.x,floor_y,centre.z)+offset)
+		var box: AABB = pose*(bounds[asset] as AABB)
+		pose.origin.y += floor_y-box.position.y
+		box = pose*(bounds[asset] as AABB)
+		if not _box_clears_public_surfaces(box.grow(.12),footprints): continue
+		var clear := true
+		for x in range(floori((box.position.x+.75)/1.5),ceili((box.end.x+.75)/1.5)):
+			for z in range(floori((box.position.z+.75)/1.5),ceili((box.end.z+.75)/1.5)):
+				clear = clear and island.has(Vector3i(x,(feature.cell as Vector3i).y,z))
+		for other: AABB in occupied:
+			if box.grow(.1).intersects(other): clear = false
+		if not clear or not optional_dressing_is_clear(asset,pose,footprints,skin): continue
+		out.append({"asset":asset,"transform":pose,"slot":slot})
+		occupied.append(box)
+	return out
 
 
 static func _maze_plaza_feature_is_clear(feature: Dictionary,
@@ -5738,7 +5920,7 @@ static func _maze_plaza_feature_is_clear(feature: Dictionary,
 	var origin := feature.origin as Vector3
 	var yaw := float(int(feature.quarter)) * PI * 0.5
 	if not optional_dressing_is_clear(asset,
-			Transform3D(Basis(Vector3.UP, yaw), origin), footprints, skin):
+			Transform3D(Basis(Vector3.UP, yaw).scaled(Vector3.ONE*float(feature.get("scale",1.0))), origin), footprints, skin):
 		return false
 	if not STALL_CANOPIES.has(asset):
 		return true
@@ -6280,7 +6462,7 @@ static func maze_garden_dressing(retained: Dictionary, solids: Dictionary,
 		else maze_village_green_cells(garden, walked)
 	var entries := maze_plaza_entries(plaza, walked)
 	var feature := maze_plaza_centre_feature(plaza, entries, footprints, skin,
-		walked)
+		walked,not planned_plaza.is_empty())
 	var reserved: Dictionary = {}
 	for cell_value: Variant in (feature.get("cells", {}) as Dictionary).keys():
 		reserved[cell_value as Vector3i] = true
@@ -6294,10 +6476,23 @@ static func maze_garden_dressing(retained: Dictionary, solids: Dictionary,
 		var anchor := feature.origin as Vector3
 		var feature_cell := feature.cell as Vector3i
 		var feature_yaw := float(int(feature.quarter)) * PI * 0.5
+		# Canopy materials use instance colour. Local studies use the meadow
+		# palette; world materialization replaces this with the site's biome.
+		var feature_tint := BiomeRegistry.blended_environment_tint({&"meadow":1.0}, &"tree") \
+			if StringName(feature.asset) in PLAZA_COURT_TREES else Color.WHITE
 		out.add(StringName(feature.asset), Transform3D(Basis(Vector3.UP,
-			feature_yaw), anchor), Color.WHITE,
+			feature_yaw).scaled(Vector3.ONE*float(feature.get("scale",1.0))), anchor), feature_tint,
 			StringName("maze-plaza-centre/%d/%d/%d" % [feature_cell.x,
 				feature_cell.y, feature_cell.z]))
+		if not planned_plaza.is_empty():
+			var seats := maze_plaza_seats(feature,footprints,skin)
+			for index in seats.size():
+				out.add(PLAZA_SEAT,seats[index],Color.WHITE,
+					StringName("maze-plaza-seat/%d/%d/%d/%d" % [feature_cell.x,feature_cell.y,feature_cell.z,index]))
+			for plant: Dictionary in maze_plaza_underplants(feature,footprints,skin,seats):
+				out.add(plant.asset,plant.transform,
+					BiomeRegistry.blended_environment_tint({&"meadow":1.0},&"grass"),
+					StringName("maze-plaza-plant/%d/%d/%d/%d" % [feature_cell.x,feature_cell.y,feature_cell.z,plant.slot]))
 		# TASK I4 ROUND 5, ITEM 2. The square's own stall is stocked -- the
 		# counter, the goods along its front and the hanging string, measured off
 		# the canopy's posts. A well or a tree in the middle takes nothing.
@@ -6918,7 +7113,13 @@ static func maze_terrace_edges(plan: SettlementFabricPlan,
 	##
 	## Everything else is a fall, including the swept headroom of a street
 	## many bands below: that is the edge a railing exists for.
-	var deck := maze_terrace_deck_cells(plan, crown_unit_ids)
+	var network := maze_exterior_network(plan, crown_unit_ids)
+	var deck: Dictionary = network.terrace_cells
+	var bridge_walks := {}
+	for span: Dictionary in network.spans:
+		for lane: Vector3i in _skywalk_candidate_walk_lanes(span):
+			for index in range(1, int(span.gap) + 1):
+				bridge_walks[lane + (span.step as Vector3i) * index] = true
 	var out: Dictionary = {}
 	if deck.is_empty():
 		return out
@@ -6929,7 +7130,7 @@ static func maze_terrace_edges(plan: SettlementFabricPlan,
 		var cell := cell_value as Vector3i
 		for index in FACE_DIRECTIONS.size():
 			var neighbor := cell + FACE_DIRECTIONS[index]
-			if deck.has(neighbor) or solids.has(neighbor) \
+			if deck.has(neighbor) or bridge_walks.has(neighbor) or solids.has(neighbor) \
 					or retained.has(neighbor) or paved.has(neighbor):
 				continue
 			out[Vector4i(cell.x, cell.y, cell.z, index)] = true
@@ -7075,6 +7276,14 @@ static func _maze_skywalk_network_from(plan: SettlementFabricPlan,
 	var component_by_cell := _maze_crown_component_lookup(construction)
 	var solids := plan.transformed_cells(&"solid")
 	var occluders := plan.transformed_cells(&"occluder")
+	occluders.merge(plan.passage_crown_cells)
+	# The garden is supported daylight air, not an unclaimed gap. Preserve
+	# the same reservation used by the spatial solver when selecting late
+	# open bridges and passage houses; otherwise they bridge its walking ring
+	# straight through the planted centre.
+	for support: Vector3i in plan.planned_plaza_planting_cells:
+		for band in WarrenVolumePlan.HEADROOM_BANDS:
+			occluders[support + Vector3i.UP * (band + 1)] = true
 	var retained := plan.retained_terrace_cells
 	var paved := public_floor_cells(plan.surface_plan)
 	# The street datum: the lowest band anybody walks in this town.
@@ -7095,9 +7304,17 @@ static func _maze_skywalk_network_from(plan: SettlementFabricPlan,
 	for cell: Vector3i in cells:
 		if cell.y <= ground:
 			continue
+		# A swept stair cell names a volume, not a flat floor at cell.y.
+		# Connecting at its side produces a rail/height discontinuity even
+		# though the coarse walked set includes it. End landings have their
+		# own flat claims and remain eligible.
+		if plan.surface_plan.has_transition_geometry(cell):
+			continue
 		for index in SKYWALK_STEPS.size():
 			var step := SKYWALK_STEPS[index]
 			for gap in range(1, SKYWALK_MAX_GAP + 1):
+				if plan.surface_plan.has_transition_geometry(cell + step * (gap + 1)):
+					continue
 				if not _skywalk_site_holds(cell, step, gap, stand, solids,
 						retained, occluders, paved, walked_bands, false):
 					continue
@@ -7192,8 +7409,12 @@ static func _maze_skywalk_network_from(plan: SettlementFabricPlan,
 	# air. This is the connectivity stage; its endpoint/component facts, not a
 	# seed exception, decide which otherwise isolated masses become one city.
 	for candidate: Dictionary in passage_candidates:
-		if out.size() >= MIN_CITY_SKYWALK_CONNECTIONS:
-			break
+		# A complete supported street crossing supplies enclosure in its own
+		# location. Another bridge elsewhere cannot spend that opportunity.
+		# Only supplementary upper-air links use the city connection minimum.
+		if not bool(candidate.crosses_street) \
+				and out.size() >= MIN_CITY_SKYWALK_CONNECTIONS:
+			continue
 		_maze_accept_private_skywalk(candidate, claimed, out)
 	out.sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
 		var a := left.cell as Vector3i
@@ -7311,16 +7532,37 @@ static func _maze_passage_house_candidates(inhabited: Dictionary,
 		if _skywalk_enclosure_clear(cell, step, gap, stand, solids, retained,
 				occluders, paved, walked_bands):
 			out.append(record)
-	# Street crossings first, then the complete 3 m house, then the seed.
+	for candidate: Dictionary in out:
+		candidate["street_distance"] = _skywalk_street_distance(candidate, walked_bands)
+	# Street crossings first, then a complete 3 m house. Among equal-width
+	# alternatives, keep the closer street ceiling before using seeded variety.
 	out.sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
 		if bool(left.crosses_street) != bool(right.crosses_street):
 			return bool(left.crosses_street)
 		if int(left.width) != int(right.width):
 			return int(left.width) > int(right.width)
+		if int(left.street_distance) != int(right.street_distance):
+			return int(left.street_distance) < int(right.street_distance)
 		if not is_equal_approx(float(left.order), float(right.order)):
 			return float(left.order) < float(right.order)
 		return _cell_before(left.cell as Vector3i, right.cell as Vector3i))
 	return out
+
+
+## Greatest separation from the nearest public floor beneath each crossed
+## street column. Empty upper-air links sort after actual street ceilings.
+static func _skywalk_street_distance(candidate: Dictionary, walked_bands: Dictionary) -> int:
+	var distance := -1
+	for lane: Vector3i in _skywalk_candidate_lanes(candidate):
+		for offset in range(1, int(candidate.gap) + 1):
+			var mid := lane + (candidate.step as Vector3i) * offset
+			var nearest := 2147483647
+			for band: int in walked_bands.get(Vector2i(mid.x, mid.z), []):
+				if band < mid.y:
+					nearest = mini(nearest, mid.y - band)
+			if nearest != 2147483647:
+				distance = maxi(distance, nearest)
+	return distance if distance >= 0 else 2147483647
 
 
 static func _passage_house_gap(cell: Vector3i, step: Vector3i,
@@ -8533,7 +8775,7 @@ static func surface_visual_payload(plan: PublicRealmSurfacePlan,
 		return out
 	var courtyard_cells := plan.cells_owned_by_prefix("volume.courtyard.")
 	var courtyard_set := _cell_set(courtyard_cells)
-	var ground_finish_cells := _surface_cells_above(ground_finish_supports)
+	var ground_finish_cells := _surface_cells_above(ground_finish_supports, plan)
 	courtyard_cells = _without_cells(courtyard_cells, ground_finish_cells)
 	for kind in [PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,
 			PublicRealmSurfacePlan.SurfaceKind.BRIDGE]:
@@ -8563,7 +8805,7 @@ static func production_surface_payload(plan: PublicRealmSurfacePlan,
 		return out
 	var courtyard_cells := plan.cells_owned_by_prefix("volume.courtyard.")
 	var courtyard_set := _cell_set(courtyard_cells)
-	var ground_finish_cells := _surface_cells_above(ground_finish_supports)
+	var ground_finish_cells := _surface_cells_above(ground_finish_supports, plan)
 	courtyard_cells = _without_cells(courtyard_cells, ground_finish_cells)
 	for kind in [PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,
 			PublicRealmSurfacePlan.SurfaceKind.INTERIOR_PASSAGE,
@@ -8643,7 +8885,7 @@ static func production_surface_bundle(plan: PublicRealmSurfacePlan,
 		ground_finish_supports)
 	if plan == null or not plan.is_sealed():
 		return out
-	var ground_finish_cells := _surface_cells_above(ground_finish_supports)
+	var ground_finish_cells := _surface_cells_above(ground_finish_supports, plan)
 	for mesh: Dictionary in plan.mesh_payloads:
 		if int(mesh.get("kind", -1)) \
 				== PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET:
@@ -8651,6 +8893,7 @@ static func production_surface_bundle(plan: PublicRealmSurfacePlan,
 			var street_cells := plan.cells_for_kind(
 				PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET)
 			assert(not street_cells.is_empty())
+			street.merge(preload("res://scripts/terrain/features/villages/TownStreetPaint.gd").mesh(street_cells),true)
 			street["logical_cells"] = street_cells
 			street["anchor"] = Vector3(street_cells[0]) \
 				* FabricRecipe.CELL_SIZE
@@ -8958,15 +9201,22 @@ static func _without_cells(cells: Array[Vector3i], excluded: Dictionary) \
 	return out
 
 
-static func _surface_cells_above(supports: Dictionary) -> Dictionary:
+static func _surface_cells_above(supports: Dictionary,
+		public_plan: PublicRealmSurfacePlan = null) -> Dictionary:
 	## A ground-finished public feature names the solid cells that carry it,
 	## while PublicRealmSurfacePlan names the walk cells one band above. Convert
 	## once at the visual adapter boundary so topology, collision, guards, and
 	## traversal keep their canonical public-surface cells and only the finish
-	## changes from plank to terrain.
+	## selects terrain only for unwalked planting; public court cells keep planks.
 	var out: Dictionary = {}
 	for cell_value: Variant in supports.keys():
-		out[(cell_value as Vector3i) + Vector3i.UP] = true
+		var cell := (cell_value as Vector3i) + Vector3i.UP
+		# A town square's walked ring is a deck. Only its deliberately unwalked
+		# planting island receives lawn; callers may still pass the whole plot.
+		if public_plan != null and public_plan.kind_at(cell) \
+				== PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT:
+			continue
+		out[cell] = true
 	return out
 
 
@@ -9003,7 +9253,7 @@ static func _commit_surfaces(parent: Node3D, plan: PublicRealmSurfacePlan,
 	var triangle_count := 0
 	var collision_piece_count := 0
 	var payloads: Array[Dictionary] = []
-	var ground_finish_cells := _surface_cells_above(ground_finish_supports)
+	var ground_finish_cells := _surface_cells_above(ground_finish_supports, plan)
 	for source: Dictionary in plan.mesh_payloads:
 		var kind := int(source.get("kind", -1))
 		if not bool(source.get("is_transition", false)) \

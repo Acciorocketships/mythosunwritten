@@ -1,8 +1,8 @@
 [gd_resource type="StandardMaterial3D" load_steps=4 format=3]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/ea5794d55246b176de84.res" id="1_ncmo5"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/6394580f1008aa70b5fd.res" id="2_q7ftq"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/06dc9a3e3d9913a70bd1.res" id="3_ap0in"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/a23e039a449a20ac4e90.res" id="1_ncmo5"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/fbd67bd1d38b3dac9819.res" id="2_q7ftq"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/a6c6a747bc189af1e41b.res" id="3_ap0in"]
 
 [resource]
 resource_name = "Boiler"

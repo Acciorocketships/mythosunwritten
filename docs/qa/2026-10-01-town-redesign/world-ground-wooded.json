@@ -1,0 +1,319 @@
+{
+  "centre": "(-240.0, 408.0)",
+  "dressing": {
+    "groups": 2,
+    "natural_pocket_trees": 4,
+    "props": 4,
+    "trees": 9,
+    "woodland": 0.996048946313386
+  },
+  "grass": 1212,
+  "grass_in_greens": 256,
+  "grass_on_paths": 0,
+  "natural_grass": 1786,
+  "samples": [
+    {
+      "clearance": -1.99999976158142,
+      "column": "(0, 4)",
+      "ecology": {
+        "coverage": 0.357475019777325,
+        "land_occupancy": 1.0,
+        "tint": "(0.6027, 0.5886, 1.0356, 1.0)"
+      },
+      "gradient": "(0.0, 0.0)",
+      "point": "(-254.0, 404.0)",
+      "qualified": false,
+      "shore": 0.3,
+      "town_surface": 1,
+      "world_surface": 1
+    },
+    {
+      "clearance": 2.0,
+      "column": "(1, 4)",
+      "ecology": {
+        "coverage": 0.312258478229512,
+        "land_occupancy": 1.0,
+        "tint": "(0.5659, 0.5718, 0.9982, 1.0)"
+      },
+      "gradient": "(0.0, 0.0)",
+      "point": "(-262.0, 404.0)",
+      "qualified": true,
+      "shore": 0.3,
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": 2.0,
+      "column": "(2, 4)",
+      "ecology": {
+        "coverage": 0.307575106527837,
+        "land_occupancy": 1.0,
+        "tint": "(0.5233, 0.5521, 0.9565, 1.0)"
+      },
+      "gradient": "(0.0, 0.0)",
+      "point": "(-270.0, 404.0)",
+      "qualified": true,
+      "shore": 0.3,
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": -0.127047538757324,
+      "column": "(-1, 5)",
+      "ecology": {
+        "coverage": 0.476403048342324,
+        "land_occupancy": 1.0,
+        "tint": "(0.6321, 0.6031, 1.0841, 1.0)"
+      },
+      "gradient": "(0.0, 0.0)",
+      "point": "(-246.0, 396.0)",
+      "qualified": false,
+      "shore": 0.3,
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": 1.99999952316284,
+      "column": "(2, 5)",
+      "ecology": {
+        "coverage": 0.307599119720991,
+        "land_occupancy": 1.0,
+        "tint": "(0.5342, 0.5589, 0.9798, 1.0)"
+      },
+      "gradient": "(0.0, 0.0)",
+      "point": "(-270.0, 396.0)",
+      "qualified": true,
+      "shore": 0.3,
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": 2.0,
+      "column": "(-1, 6)",
+      "ecology": {
+        "coverage": 0.495094489231148,
+        "land_occupancy": 1.0,
+        "tint": "(0.6335, 0.6054, 1.1021, 1.0)"
+      },
+      "gradient": "(0.0, 0.0)",
+      "point": "(-246.0, 388.0)",
+      "qualified": true,
+      "shore": 0.3,
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": 2.0,
+      "column": "(2, 6)",
+      "ecology": {
+        "coverage": 0.307630377297838,
+        "land_occupancy": 1.0,
+        "tint": "(0.5457, 0.5663, 1.0043, 1.0)"
+      },
+      "gradient": "(0.0, 0.0)",
+      "point": "(-270.0, 388.0)",
+      "qualified": true,
+      "shore": 0.3,
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": 2.0,
+      "column": "(0, 7)",
+      "ecology": {
+        "coverage": 0.405623427473444,
+        "land_occupancy": 1.0,
+        "tint": "(0.6175, 0.6008, 1.0963, 1.0)"
+      },
+      "gradient": "(0.0, 0.0)",
+      "point": "(-254.0, 380.0)",
+      "qualified": true,
+      "shore": 0.3,
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": 2.0,
+      "column": "(1, 7)",
+      "ecology": {
+        "coverage": 0.324365246442555,
+        "land_occupancy": 1.0,
+        "tint": "(0.5912, 0.5892, 1.0657, 1.0)"
+      },
+      "gradient": "(0.0, 0.0)",
+      "point": "(-262.0, 380.0)",
+      "qualified": true,
+      "shore": 0.3,
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": 2.0,
+      "column": "(2, 7)",
+      "ecology": {
+        "coverage": 0.307636588684452,
+        "land_occupancy": 1.0,
+        "tint": "(0.5574, 0.5738, 1.0295, 1.0)"
+      },
+      "gradient": "(0.0, 0.0)",
+      "point": "(-270.0, 380.0)",
+      "qualified": true,
+      "shore": 0.3,
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": 2.0,
+      "column": "(3, -3)",
+      "ecology": {
+        "coverage": 0.359525626709081,
+        "land_occupancy": 0.914766390191224,
+        "tint": "(0.4288, 0.5076, 0.8066, 1.0)"
+      },
+      "gradient": "(0.0, 0.0)",
+      "point": "(-278.0, 460.0)",
+      "qualified": true,
+      "shore": 0.3,
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": 2.0,
+      "column": "(4, -3)",
+      "ecology": {
+        "coverage": 0.302016162059481,
+        "land_occupancy": 0.0848854203516428,
+        "tint": "(0.3847, 0.4869, 0.7666, 1.0)"
+      },
+      "gradient": "(0.0, 0.0)",
+      "point": "(-286.0, 460.0)",
+      "qualified": true,
+      "shore": 0.3,
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": 2.0,
+      "column": "(5, -3)",
+      "ecology": {
+        "coverage": 0.294671378724887,
+        "land_occupancy": 0.998903738704167,
+        "tint": "(0.3541, 0.4728, 0.7363, 1.0)"
+      },
+      "gradient": "(0.0, 0.0)",
+      "point": "(-294.0, 460.0)",
+      "qualified": true,
+      "shore": 0.3,
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": 2.0,
+      "column": "(6, -3)",
+      "ecology": {
+        "coverage": 0.29431265973121,
+        "land_occupancy": 1.0,
+        "tint": "(0.3426, 0.468, 0.7198, 1.0)"
+      },
+      "gradient": "(0.0, 0.0)",
+      "point": "(-302.0, 460.0)",
+      "qualified": true,
+      "shore": 0.3,
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": 1.34250569343567,
+      "column": "(3, -2)",
+      "ecology": {
+        "coverage": 0.311266523438397,
+        "land_occupancy": 0.247299131068617,
+        "tint": "(0.4314, 0.5077, 0.8151, 1.0)"
+      },
+      "gradient": "(0.0, 0.0)",
+      "point": "(-278.0, 452.0)",
+      "qualified": true,
+      "shore": 0.3,
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": 2.0,
+      "column": "(6, -2)",
+      "ecology": {
+        "coverage": 0.293484408259311,
+        "land_occupancy": 1.0,
+        "tint": "(0.3425, 0.467, 0.7253, 1.0)"
+      },
+      "gradient": "(0.0, 0.0)",
+      "point": "(-302.0, 452.0)",
+      "qualified": true,
+      "shore": 0.3,
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": 2.0,
+      "column": "(6, -1)",
+      "ecology": {
+        "coverage": 0.292645102145922,
+        "land_occupancy": 1.0,
+        "tint": "(0.3428, 0.4663, 0.7322, 1.0)"
+      },
+      "gradient": "(0.0, 0.0)",
+      "point": "(-302.0, 444.0)",
+      "qualified": true,
+      "shore": 0.3,
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": 1.99999976158142,
+      "column": "(4, 0)",
+      "ecology": {
+        "coverage": 0.296826967168227,
+        "land_occupancy": 1.0,
+        "tint": "(0.3965, 0.49, 0.797, 1.0)"
+      },
+      "gradient": "(0.0, 0.0)",
+      "point": "(-286.0, 436.0)",
+      "qualified": true,
+      "shore": 0.3,
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": 2.0,
+      "column": "(5, 0)",
+      "ecology": {
+        "coverage": 0.293153799972779,
+        "land_occupancy": 1.0,
+        "tint": "(0.3624, 0.4743, 0.7632, 1.0)"
+      },
+      "gradient": "(0.0, 0.0)",
+      "point": "(-294.0, 436.0)",
+      "qualified": true,
+      "shore": 0.3,
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": 2.0,
+      "column": "(6, 0)",
+      "ecology": {
+        "coverage": 0.291861308982674,
+        "land_occupancy": 1.0,
+        "tint": "(0.3439, 0.4662, 0.7406, 1.0)"
+      },
+      "gradient": "(0.0, 0.0)",
+      "point": "(-302.0, 436.0)",
+      "qualified": true,
+      "shore": 0.3,
+      "town_surface": 0,
+      "world_surface": 0
+    }
+  ],
+  "seed": 2697992464,
+  "site": "(-1, 0)",
+  "tiles": 8
+}

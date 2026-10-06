@@ -1,0 +1,688 @@
+[
+  {
+    "admitted": 1,
+    "assets": [
+      {
+        "kind_id": "anchor.prefab.11",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 2,
+          "candidate_refusals": {
+            "carved_minimum_body": 266,
+            "footprint_unavailable": 2872,
+            "missing_footing": 250
+          },
+          "lane_refusals": {
+            "body_in_public_air": 2,
+            "envelope_outside_grid": 3
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 3,
+          "street_over_top": 0,
+          "tested": 5
+        },
+        "realisable": true,
+        "reason": "",
+        "site": {
+          "anchor": "(-4, 0)",
+          "clearance_column_count": 10,
+          "cost": 56,
+          "datum": 0,
+          "id": "asset.00",
+          "orientation": 1
+        }
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "candidate_refusals": {
+            "carved_minimum_body": 87,
+            "footprint_unavailable": 3063,
+            "missing_footing": 50
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 0
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "candidate_refusals": {
+            "carved_minimum_body": 87,
+            "footprint_unavailable": 3063,
+            "missing_footing": 50
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 0
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "candidate_refusals": {
+            "carved_minimum_body": 87,
+            "footprint_unavailable": 3063,
+            "missing_footing": 50
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 0
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "candidate_refusals": {
+            "carved_minimum_body": 87,
+            "footprint_unavailable": 3063,
+            "missing_footing": 50
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 0
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "candidate_refusals": {
+            "carved_minimum_body": 87,
+            "footprint_unavailable": 3063,
+            "missing_footing": 50
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 0
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      }
+    ],
+    "preselected": 1,
+    "profile": "compact",
+    "quota": 6,
+    "seed": 1260018864828801968
+  },
+  {
+    "admitted": 2,
+    "assets": [
+      {
+        "kind_id": "anchor.prefab.11",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 1,
+          "candidate_refusals": {
+            "below_bearing": 68,
+            "carved_minimum_body": 428,
+            "footprint_unavailable": 3651,
+            "huddle_height": 387,
+            "missing_footing": 104
+          },
+          "lane_refusals": {
+            "bearing_outside_massif": 1,
+            "envelope_outside_grid": 2
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 3,
+          "street_over_top": 0,
+          "tested": 4
+        },
+        "realisable": true,
+        "reason": "",
+        "site": {
+          "anchor": "(-6, -1)",
+          "clearance_column_count": 13,
+          "cost": 44,
+          "datum": 0,
+          "id": "asset.00",
+          "orientation": 0
+        }
+      },
+      {
+        "kind_id": "anchor.prefab.10",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "candidate_refusals": {
+            "below_bearing": 33,
+            "carved_minimum_body": 162,
+            "footprint_unavailable": 4023,
+            "huddle_height": 79,
+            "missing_footing": 7
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 1,
+          "street_over_top": 0,
+          "tested": 1
+        },
+        "realisable": true,
+        "reason": "",
+        "site": {
+          "anchor": "(0, -2)",
+          "clearance_column_count": 15,
+          "cost": 48,
+          "datum": 0,
+          "id": "asset.01",
+          "orientation": 0
+        }
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "candidate_refusals": {
+            "below_bearing": 7,
+            "carved_minimum_body": 17,
+            "footprint_unavailable": 4199,
+            "huddle_height": 4
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 0
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "candidate_refusals": {
+            "below_bearing": 7,
+            "carved_minimum_body": 17,
+            "footprint_unavailable": 4199,
+            "huddle_height": 4
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 0
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "candidate_refusals": {
+            "below_bearing": 7,
+            "carved_minimum_body": 17,
+            "footprint_unavailable": 4199,
+            "huddle_height": 4
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 0
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      }
+    ],
+    "preselected": 1,
+    "profile": "compact",
+    "quota": 5,
+    "seed": 1998423929946073270
+  },
+  {
+    "admitted": 1,
+    "assets": [
+      {
+        "kind_id": "anchor.prefab.11",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 2,
+          "candidate_refusals": {
+            "below_bearing": 196,
+            "carved_minimum_body": 289,
+            "footprint_unavailable": 6212,
+            "huddle_height": 674,
+            "missing_footing": 109
+          },
+          "lane_refusals": {
+            "body_in_public_air": 5
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 2,
+          "street_over_top": 0,
+          "tested": 4
+        },
+        "realisable": true,
+        "reason": "",
+        "site": {
+          "anchor": "(2, -1)",
+          "clearance_column_count": 13,
+          "cost": 50,
+          "datum": 0,
+          "id": "asset.00",
+          "orientation": 1
+        }
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "candidate_refusals": {
+            "below_bearing": 47,
+            "carved_minimum_body": 108,
+            "footprint_unavailable": 6591,
+            "huddle_height": 201,
+            "missing_footing": 21
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 0
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "candidate_refusals": {
+            "below_bearing": 47,
+            "carved_minimum_body": 108,
+            "footprint_unavailable": 6591,
+            "huddle_height": 201,
+            "missing_footing": 21
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 0
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "candidate_refusals": {
+            "below_bearing": 47,
+            "carved_minimum_body": 108,
+            "footprint_unavailable": 6591,
+            "huddle_height": 201,
+            "missing_footing": 21
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 0
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "candidate_refusals": {
+            "below_bearing": 47,
+            "carved_minimum_body": 108,
+            "footprint_unavailable": 6591,
+            "huddle_height": 201,
+            "missing_footing": 21
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 0
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "candidate_refusals": {
+            "below_bearing": 47,
+            "carved_minimum_body": 108,
+            "footprint_unavailable": 6591,
+            "huddle_height": 201,
+            "missing_footing": 21
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 0
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "candidate_refusals": {
+            "below_bearing": 47,
+            "carved_minimum_body": 108,
+            "footprint_unavailable": 6591,
+            "huddle_height": 201,
+            "missing_footing": 21
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 0
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "candidate_refusals": {
+            "below_bearing": 47,
+            "carved_minimum_body": 108,
+            "footprint_unavailable": 6591,
+            "huddle_height": 201,
+            "missing_footing": 21
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 0
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      }
+    ],
+    "preselected": 1,
+    "profile": "standard",
+    "quota": 8,
+    "seed": 3
+  },
+  {
+    "admitted": 2,
+    "assets": [
+      {
+        "kind_id": "anchor.prefab.11",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 1,
+          "candidate_refusals": {
+            "below_bearing": 270,
+            "carved_minimum_body": 498,
+            "footprint_unavailable": 5574,
+            "huddle_height": 1204,
+            "missing_footing": 114
+          },
+          "lane_refusals": {
+            "envelope_outside_grid": 3
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 2,
+          "street_over_top": 0,
+          "tested": 3
+        },
+        "realisable": true,
+        "reason": "",
+        "site": {
+          "anchor": "(-4, -3)",
+          "clearance_column_count": 9,
+          "cost": 60,
+          "datum": 0,
+          "id": "asset.00",
+          "orientation": 0
+        }
+      },
+      {
+        "kind_id": "anchor.prefab.10",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "candidate_refusals": {
+            "below_bearing": 270,
+            "carved_minimum_body": 338,
+            "footprint_unavailable": 5955,
+            "huddle_height": 634,
+            "missing_footing": 46
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 1,
+          "street_over_top": 0,
+          "tested": 1
+        },
+        "realisable": true,
+        "reason": "",
+        "site": {
+          "anchor": "(2, 1)",
+          "clearance_column_count": 15,
+          "cost": 82,
+          "datum": 4,
+          "id": "asset.01",
+          "orientation": 0
+        }
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "candidate_refusals": {
+            "carved_minimum_body": 53,
+            "footprint_unavailable": 6468,
+            "huddle_height": 61,
+            "missing_footing": 18
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 0
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "candidate_refusals": {
+            "carved_minimum_body": 53,
+            "footprint_unavailable": 6468,
+            "huddle_height": 61,
+            "missing_footing": 18
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 0
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "candidate_refusals": {
+            "carved_minimum_body": 53,
+            "footprint_unavailable": 6468,
+            "huddle_height": 61,
+            "missing_footing": 18
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 0
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "candidate_refusals": {
+            "carved_minimum_body": 53,
+            "footprint_unavailable": 6468,
+            "huddle_height": 61,
+            "missing_footing": 18
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 0
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "candidate_refusals": {
+            "carved_minimum_body": 53,
+            "footprint_unavailable": 6468,
+            "huddle_height": 61,
+            "missing_footing": 18
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 0
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "candidate_refusals": {
+            "carved_minimum_body": 53,
+            "footprint_unavailable": 6468,
+            "huddle_height": 61,
+            "missing_footing": 18
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 0
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "candidate_refusals": {
+            "carved_minimum_body": 53,
+            "footprint_unavailable": 6468,
+            "huddle_height": 61,
+            "missing_footing": 18
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 0
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      }
+    ],
+    "preselected": 1,
+    "profile": "large",
+    "quota": 9,
+    "seed": 6
+  }
+]

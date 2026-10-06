@@ -1,0 +1,1160 @@
+{
+	"103:grand": {
+		"rejections": {
+			"column_cut_depth": 148,
+			"missing_floor_support": 45,
+			"no_level_threshold": 3,
+			"outside_or_blocked": 709,
+			"total_cut_budget": 71
+		},
+		"sites": [],
+		"supported": 0
+	},
+	"13:grand": {
+		"rejections": {
+			"below_bearing": 29,
+			"column_cut_depth": 146,
+			"flight": 11,
+			"missing_floor_support": 110,
+			"no_level_threshold": 5,
+			"outside_or_blocked": 557,
+			"total_cut_budget": 101
+		},
+		"sites": [
+			{
+				"anchor": "(4, 4)",
+				"cost": 26,
+				"floor": 0,
+				"shape": "(3, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"column already spoken for": 3
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"support rule refuses this floor": 1
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"support rule refuses this floor": 3
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 3,
+						"fronts": 1,
+						"reasons": {
+							"support rule refuses this floor": 2
+						}
+					}
+				]
+			},
+			{
+				"anchor": "(4, 5)",
+				"cost": 24,
+				"floor": 0,
+				"shape": "(3, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"column already spoken for": 3
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"column already spoken for": 1,
+							"support rule refuses this floor": 2
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"support rule refuses this floor": 3
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 3,
+						"fronts": 1,
+						"reasons": {
+							"support rule refuses this floor": 2
+						}
+					}
+				]
+			},
+			{
+				"anchor": "(3, 6)",
+				"cost": 26,
+				"floor": 0,
+				"shape": "(3, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"column already spoken for": 1
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 3,
+						"fronts": 1,
+						"reasons": {
+							"column already spoken for": 2
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 1,
+						"reasons": {
+							"column already spoken for": 1,
+							"support rule refuses this floor": 1
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 3,
+						"fronts": 1,
+						"reasons": {
+							"support rule refuses this floor": 2
+						}
+					}
+				]
+			},
+			{
+				"anchor": "(4, 3)",
+				"cost": 36,
+				"floor": 0,
+				"shape": "(3, 4)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 4,
+						"fronts": 0,
+						"reasons": {
+							"column already spoken for": 4
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"support rule refuses this floor": 1
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 4,
+						"fronts": 0,
+						"reasons": {
+							"support rule refuses this floor": 4
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 3,
+						"fronts": 1,
+						"reasons": {
+							"support rule refuses this floor": 2
+						}
+					}
+				]
+			},
+			{
+				"anchor": "(4, 4)",
+				"cost": 34,
+				"floor": 0,
+				"shape": "(3, 4)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 4,
+						"fronts": 0,
+						"reasons": {
+							"column already spoken for": 4
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"column already spoken for": 1,
+							"support rule refuses this floor": 2
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 4,
+						"fronts": 0,
+						"reasons": {
+							"support rule refuses this floor": 4
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 3,
+						"fronts": 1,
+						"reasons": {
+							"support rule refuses this floor": 2
+						}
+					}
+				]
+			}
+		],
+		"supported": 5
+	},
+	"301:grand": {
+		"rejections": {
+			"column_cut_depth": 199,
+			"flight": 2,
+			"missing_floor_support": 79,
+			"no_level_threshold": 65,
+			"outside_or_blocked": 635,
+			"total_cut_budget": 4,
+			"unaddressed_air": 1,
+			"upper_street_bearing": 19
+		},
+		"sites": [],
+		"supported": 0
+	},
+	"31:large": {
+		"rejections": {
+			"column_cut_depth": 14,
+			"flight": 5,
+			"missing_floor_support": 20,
+			"no_level_threshold": 51,
+			"outside_or_blocked": 135,
+			"total_cut_budget": 10,
+			"unaddressed_air": 10
+		},
+		"sites": [
+			{
+				"anchor": "(2, -6)",
+				"cost": 24,
+				"floor": 2,
+				"shape": "(3, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"support rule refuses this floor": 3
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 3,
+						"fronts": 3,
+						"reasons": {
+
+						}
+					}
+				]
+			},
+			{
+				"anchor": "(-3, 3)",
+				"cost": 26,
+				"floor": 0,
+				"shape": "(3, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 1,
+						"reasons": {
+							"support rule refuses this floor": 2
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 3,
+						"fronts": 1,
+						"reasons": {
+							"column already spoken for": 2
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 3,
+						"reasons": {
+
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"support rule refuses this floor": 1
+						}
+					}
+				]
+			},
+			{
+				"anchor": "(-2, 3)",
+				"cost": 26,
+				"floor": 0,
+				"shape": "(3, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 1,
+						"reasons": {
+							"column already spoken for": 1,
+							"support rule refuses this floor": 1
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 3,
+						"fronts": 1,
+						"reasons": {
+							"column already spoken for": 1,
+							"support rule refuses this floor": 1
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 3,
+						"reasons": {
+
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 3,
+						"fronts": 1,
+						"reasons": {
+							"support rule refuses this floor": 2
+						}
+					}
+				]
+			},
+			{
+				"anchor": "(2, 6)",
+				"cost": 26,
+				"floor": 0,
+				"shape": "(3, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"column already spoken for": 1
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"column already spoken for": 3
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"column already spoken for": 2,
+							"support rule refuses this floor": 1
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 3,
+						"fronts": 3,
+						"reasons": {
+
+						}
+					}
+				]
+			}
+		],
+		"supported": 4
+	},
+	"43:grand": {
+		"rejections": {
+			"column_cut_depth": 311,
+			"flight": 5,
+			"missing_floor_support": 51,
+			"no_level_threshold": 15,
+			"outside_or_blocked": 488,
+			"total_cut_budget": 25,
+			"upper_street_bearing": 3
+		},
+		"sites": [],
+		"supported": 0
+	},
+	"53:grand": {
+		"rejections": {
+			"column_cut_depth": 353,
+			"flight": 11,
+			"missing_floor_support": 139,
+			"no_level_threshold": 23,
+			"outside_or_blocked": 469,
+			"total_cut_budget": 2,
+			"unaddressed_air": 2,
+			"upper_street_bearing": 16
+		},
+		"sites": [
+			{
+				"anchor": "(-3, 7)",
+				"cost": 27,
+				"floor": 1,
+				"shape": "(3, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"column already spoken for": 1
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"column already spoken for": 3
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"column already spoken for": 1
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"support rule refuses this floor": 1
+						}
+					}
+				]
+			}
+		],
+		"supported": 1
+	},
+	"63:grand": {
+		"rejections": {
+			"column_cut_depth": 379,
+			"missing_floor_support": 170,
+			"no_level_threshold": 128,
+			"outside_or_blocked": 437,
+			"total_cut_budget": 17
+		},
+		"sites": [
+			{
+				"anchor": "(-5, -2)",
+				"cost": 4,
+				"floor": 4,
+				"shape": "(3, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"support rule refuses this floor": 1,
+							"would overtop the citadel's plinth": 2
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 3,
+						"fronts": 3,
+						"reasons": {
+
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 3,
+						"reasons": {
+
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"support rule refuses this floor": 2,
+							"would overtop the citadel's plinth": 1
+						}
+					}
+				]
+			},
+			{
+				"anchor": "(-4, -1)",
+				"cost": 12,
+				"floor": 4,
+				"shape": "(3, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"support rule refuses this floor": 1,
+							"would overtop the citadel's plinth": 2
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 3,
+						"fronts": 3,
+						"reasons": {
+
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"support rule refuses this floor": 1,
+							"would overtop the citadel's plinth": 2
+						}
+					}
+				]
+			},
+			{
+				"anchor": "(-5, -2)",
+				"cost": 14,
+				"floor": 4,
+				"shape": "(3, 4)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 4,
+						"fronts": 1,
+						"reasons": {
+							"support rule refuses this floor": 1,
+							"would overtop the citadel's plinth": 2
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 3,
+						"fronts": 3,
+						"reasons": {
+
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 4,
+						"fronts": 4,
+						"reasons": {
+
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"support rule refuses this floor": 2,
+							"would overtop the citadel's plinth": 1
+						}
+					}
+				]
+			},
+			{
+				"anchor": "(-4, -1)",
+				"cost": 30,
+				"floor": 4,
+				"shape": "(3, 4)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 4,
+						"fronts": 1,
+						"reasons": {
+							"support rule refuses this floor": 1,
+							"would overtop the citadel's plinth": 2
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 3,
+						"fronts": 3,
+						"reasons": {
+
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 4,
+						"fronts": 3,
+						"reasons": {
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"support rule refuses this floor": 1,
+							"would overtop the citadel's plinth": 2
+						}
+					}
+				]
+			},
+			{
+				"anchor": "(-6, -2)",
+				"cost": 4,
+				"floor": 4,
+				"shape": "(4, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"support rule refuses this floor": 1,
+							"would overtop the citadel's plinth": 2
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 4,
+						"fronts": 4,
+						"reasons": {
+
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"support rule refuses this floor": 3
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 4,
+						"fronts": 0,
+						"reasons": {
+							"support rule refuses this floor": 3,
+							"would overtop the citadel's plinth": 1
+						}
+					}
+				]
+			},
+			{
+				"anchor": "(-5, -1)",
+				"cost": 18,
+				"floor": 4,
+				"shape": "(4, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"support rule refuses this floor": 1,
+							"would overtop the citadel's plinth": 2
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 4,
+						"fronts": 4,
+						"reasons": {
+
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 3,
+						"reasons": {
+
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 4,
+						"fronts": 0,
+						"reasons": {
+							"support rule refuses this floor": 1,
+							"would overtop the citadel's plinth": 3
+						}
+					}
+				]
+			}
+		],
+		"supported": 6
+	},
+	"83:grand": {
+		"rejections": {
+			"column_cut_depth": 227,
+			"missing_floor_support": 79,
+			"no_level_threshold": 5,
+			"outside_or_blocked": 1212,
+			"total_cut_budget": 22,
+			"unaddressed_air": 1
+		},
+		"sites": [
+			{
+				"anchor": "(0, -3)",
+				"cost": 12,
+				"floor": 4,
+				"shape": "(3, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 1,
+						"reasons": {
+							"would overtop the citadel's plinth": 2
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 3,
+						"fronts": 1,
+						"reasons": {
+							"support rule refuses this floor": 1,
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 1,
+						"reasons": {
+							"support rule refuses this floor": 1,
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 3,
+						"fronts": 3,
+						"reasons": {
+
+						}
+					}
+				]
+			},
+			{
+				"anchor": "(0, -4)",
+				"cost": 24,
+				"floor": 4,
+				"shape": "(3, 4)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 4,
+						"fronts": 2,
+						"reasons": {
+							"would overtop the citadel's plinth": 2
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 3,
+						"fronts": 1,
+						"reasons": {
+							"support rule refuses this floor": 1,
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 4,
+						"fronts": 2,
+						"reasons": {
+							"support rule refuses this floor": 1,
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 3,
+						"fronts": 3,
+						"reasons": {
+
+						}
+					}
+				]
+			},
+			{
+				"anchor": "(0, -3)",
+				"cost": 12,
+				"floor": 4,
+				"shape": "(4, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"column already spoken for": 3
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 4,
+						"fronts": 1,
+						"reasons": {
+							"support rule refuses this floor": 1,
+							"would overtop the citadel's plinth": 2
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 1,
+						"reasons": {
+							"support rule refuses this floor": 1,
+							"would overtop the citadel's plinth": 1
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 4,
+						"fronts": 4,
+						"reasons": {
+
+						}
+					}
+				]
+			}
+		],
+		"supported": 3
+	},
+	"8:grand": {
+		"rejections": {
+			"column_cut_depth": 375,
+			"flight": 17,
+			"missing_floor_support": 32,
+			"outside_or_blocked": 728,
+			"total_cut_budget": 9,
+			"unaddressed_air": 16
+		},
+		"sites": [
+			{
+				"anchor": "(-4, -5)",
+				"cost": 24,
+				"floor": 6,
+				"shape": "(3, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"edge envelope cannot host a room": 1
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 3,
+						"fronts": 1,
+						"reasons": {
+							"support rule refuses this floor": 2
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 3,
+						"reasons": {
+
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 3,
+						"fronts": 1,
+						"reasons": {
+							"support rule refuses this floor": 2
+						}
+					}
+				]
+			},
+			{
+				"anchor": "(-3, -5)",
+				"cost": 16,
+				"floor": 6,
+				"shape": "(3, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"edge envelope cannot host a room": 1
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"support rule refuses this floor": 3
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 3,
+						"reasons": {
+
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"support rule refuses this floor": 3
+						}
+					}
+				]
+			},
+			{
+				"anchor": "(-2, -5)",
+				"cost": 12,
+				"floor": 6,
+				"shape": "(3, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 1,
+						"reasons": {
+							"support rule refuses this floor": 2
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"support rule refuses this floor": 3
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 3,
+						"reasons": {
+
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"support rule refuses this floor": 3
+						}
+					}
+				]
+			},
+			{
+				"anchor": "(-4, -5)",
+				"cost": 28,
+				"floor": 6,
+				"shape": "(4, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 2,
+						"reasons": {
+							"edge envelope cannot host a room": 1
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 4,
+						"fronts": 1,
+						"reasons": {
+							"support rule refuses this floor": 3
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 3,
+						"reasons": {
+
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 4,
+						"fronts": 1,
+						"reasons": {
+							"support rule refuses this floor": 3
+						}
+					}
+				]
+			},
+			{
+				"anchor": "(-3, -5)",
+				"cost": 20,
+				"floor": 6,
+				"shape": "(4, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 1,
+						"reasons": {
+							"support rule refuses this floor": 2
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 4,
+						"fronts": 0,
+						"reasons": {
+							"support rule refuses this floor": 4
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 3,
+						"reasons": {
+
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 4,
+						"fronts": 0,
+						"reasons": {
+							"support rule refuses this floor": 4
+						}
+					}
+				]
+			}
+		],
+		"supported": 5
+	},
+	"9:grand": {
+		"rejections": {
+			"column_cut_depth": 282,
+			"flight": 3,
+			"missing_floor_support": 132,
+			"no_level_threshold": 10,
+			"outside_or_blocked": 429,
+			"total_cut_budget": 1,
+			"unaddressed_air": 3,
+			"upper_street_bearing": 6
+		},
+		"sites": [
+			{
+				"anchor": "(1, 4)",
+				"cost": 32,
+				"floor": 4,
+				"shape": "(4, 3)",
+				"sides": [
+					{
+						"direction": "(1, 0)",
+						"edge": 3,
+						"fronts": 1,
+						"reasons": {
+							"column already spoken for": 2
+						}
+					},
+					{
+						"direction": "(0, 1)",
+						"edge": 4,
+						"fronts": 3,
+						"reasons": {
+							"support rule refuses this floor": 1
+						}
+					},
+					{
+						"direction": "(-1, 0)",
+						"edge": 3,
+						"fronts": 0,
+						"reasons": {
+							"support rule refuses this floor": 3
+						}
+					},
+					{
+						"direction": "(0, -1)",
+						"edge": 4,
+						"fronts": 4,
+						"reasons": {
+
+						}
+					}
+				]
+			}
+		],
+		"supported": 1
+	}
+}

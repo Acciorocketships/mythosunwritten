@@ -134,14 +134,17 @@ func test_cross_gable_ridges_fit_below_their_host_roof() -> void:
 
 func test_roof_finishes_use_wood_colour_and_board_normals() -> void:
 	var shades := {}
+	var boards := load("res://terrain/environment/materials/suntail_village_kit/suntail_floor_floor_1_piece_00_surface_00.tres") as StandardMaterial3D
 	for colour: String in ["red", "blue"]:
 		var path := "res://terrain/environment/materials/suntail_village_kit/suntail_roof_roof_1_%s_piece_00_surface_00.tres" % colour
 		var material := load(path) as StandardMaterial3D
 		assert_not_null(material)
 		assert_eq(material.albedo_texture.resource_path,
-			"res://terrain/environment/textures/suntail_village_kit/173753758685fa88a5cb.res")
+			boards.albedo_texture.resource_path, "roofs use the native board colour map")
 		assert_eq(material.normal_texture.resource_path,
-			"res://terrain/environment/textures/suntail_village_kit/19c539ddc9e7ae32cf6b.res")
+			boards.normal_texture.resource_path, "roofs use the native board normal map")
+		assert_true(material.albedo_texture.get_image().has_mipmaps())
+		assert_true(material.normal_texture.get_image().has_mipmaps())
 		assert_gt(material.albedo_color.r, material.albedo_color.g)
 		assert_gt(material.albedo_color.g, material.albedo_color.b)
 		assert_gte(material.roughness, 0.8)
@@ -149,7 +152,7 @@ func test_roof_finishes_use_wood_colour_and_board_normals() -> void:
 	assert_eq(shades.size(), 2, "houses retain distinct warm/weathered wood finishes")
 
 
-func test_narrow_lots_keep_a_low_roof_along_the_long_axis() -> void:
+func test_narrow_lots_keep_low_halls_with_bounded_cross_pavilions() -> void:
 	var kit := SuntailBuildingKit.create()
 	for dir in 4:
 		for size: Vector2i in [Vector2i(2, 5), Vector2i(6, 2)]:
@@ -157,7 +160,18 @@ func test_narrow_lots_keep_a_low_roof_along_the_long_axis() -> void:
 			for roof: Dictionary in mass.roofs:
 				var rect: Rect2i = roof.rect
 				var depth := rect.size.y if roof.axis == 0 else rect.size.x
-				assert_lte(depth, 2, "narrow lots must not acquire oversized roof walls")
+				if depth <= 2: continue
+				assert_eq(depth,3,"Only a small native cross pavilion may rise above a narrow hall.")
+				assert_lte(rect.size[roof.axis],2,"A taller pavilion crosses the narrow lot; it cannot become another long range.")
+				var joined := false
+				for hall: Dictionary in mass.roofs:
+					if hall.axis == roof.axis or hall.eave_band != roof.eave_band: continue
+					var h: Rect2i = hall.rect
+					var touches := h.end.x == rect.position.x or rect.end.x == h.position.x
+					if roof.axis == 0: touches = h.end.y == rect.position.y or rect.end.y == h.position.y
+					var overlaps := mini(h.end[roof.axis],rect.end[roof.axis]) > maxi(h.position[roof.axis],rect.position[roof.axis])
+					if touches and overlaps and (hall.open_min or hall.open_max): joined = true
+				assert_true(joined,"The small pavilion must terminate a connected lower hall.")
 
 
 func test_each_balcony_component_has_its_own_house_door() -> void:

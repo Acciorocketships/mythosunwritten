@@ -1,0 +1,15 @@
+--- /tmp/oct5-before-shed-ridge-assembler.gd
++++ scripts/terrain/features/villages/kit/BuildingKitAssembler.gd
+@@ -920,8 +920,10 @@
+ 				var end_role := _roof_end_role(StringName("roof.%s.top" % colour),end,p_min,p_max,along)
+ 				var at := _roof_cap_at(wing,end_role,end,p_min,along)
+ 				_emit(ctx, end_role, _uv(axis,at,mid),top_y,0.0 if axis == 0 else PI * 0.5)
+-	_assemble_ridge(ctx, wing, axis, float(v0 + v1) * 0.5, eave_y, profile,
+-		p_min, p_max)
++	# A wall-backed mono-pitch ends in the host wall, not a free ridge.
++	if not wing.get("backed_shed",false):
++		_assemble_ridge(ctx, wing, axis, float(v0 + v1) * 0.5, eave_y, profile,
++			p_min, p_max)
+ 	if bool(wing.get("chimney", false)) and u1 - u0 >= 3:
+ 		# A rubble stack straddling the ridge one module in from a gable:
+ 		# blocks rise from inside the roof to clear the ridge, then the top.

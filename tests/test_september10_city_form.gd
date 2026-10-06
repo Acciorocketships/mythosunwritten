@@ -14,9 +14,14 @@ func test_town_rims_step_down_to_one_storey_and_admit_open_ground_streets() -> v
 					continue
 				assert_lte(mass.layer_at(column), WarrenBuildingParcel.STOREY_BANDS)
 				var floor := Vector3i(column.x, mass.base_at(column), column.y)
-				assert_true(WarrenPassageLatticeRules.slot_is_borable(mass,
+				# October 1 reserves detached cottage footprints before boring.
+				# Streets may cross surrounding greens at grade, but may not
+				# carve through the cottage itself or a reserved planting core.
+				assert_eq(WarrenPassageLatticeRules.slot_is_borable(mass,
 					WarrenExcavation.new(seed_value), floor,
-					WarrenPassageLatticeRules.HEADROOM_BANDS))
+					WarrenPassageLatticeRules.HEADROOM_BANDS),
+					not mass.columns[column].has("house_site") and not bool(mass.columns[column].get("planting_core",false)),
+					"rim street access preserves cottage and planting footprints at %s" % column)
 				assert_false(WarrenPassageLatticeRules.slot_is_borable(mass,
 					WarrenExcavation.new(seed_value), floor - Vector3i.UP,
 					WarrenPassageLatticeRules.HEADROOM_BANDS))

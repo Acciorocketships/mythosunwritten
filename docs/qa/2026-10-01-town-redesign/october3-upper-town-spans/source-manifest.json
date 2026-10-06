@@ -1,0 +1,8 @@
+{
+  "scripts/terrain/features/villages/kit/BuildingDesigner.gd": "90bf2acd4a9159bbfc9f84500f9d7a1cb21b22039151ec9f716438fade0990a9",
+  "scripts/terrain/features/villages/kit/KitLoggias.gd": "6b2700528ec1b2b629d2942d02ebd3534428ef22cefd01eef468ea33d65683d8",
+  "scripts/terrain/features/villages/kit/KitVillageBuildings.gd": "a277ebf71406a7b722641e87987182be9ff7272692f865d9f35a4770af75615b",
+  "scripts/terrain/features/villages/kit/KitTownTowers.gd": "82f88f4791763b3d2a42ab2b6825c33a1ab7b7763cda1815b15620f26c1aaea0",
+  "scripts/terrain/features/villages/fabric/WarrenMazeCarver.gd": "66340034bd2d0db17d54c5d08385d0c59f2c69af0054ecf58a51444c7ade8b29",
+  "scripts/terrain/features/villages/fabric/WarrenSpatialFeatureSolver.gd": "590220e3b3893ca792fd97277e5c32c1077e503618386ded0ac1455f62fa4bf4"
+}

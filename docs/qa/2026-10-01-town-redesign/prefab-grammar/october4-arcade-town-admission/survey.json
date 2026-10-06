@@ -1,0 +1,140 @@
+[
+  {
+    "accepted": [
+      {
+        "entrance": "(-5, 0, -5)",
+        "id": "spatial.feature.landmark.00",
+        "recipe": "anchor.z_native.arcade.02.window_5_2"
+      },
+      {
+        "entrance": "(2, 0, 9)",
+        "id": "spatial.feature.landmark.01",
+        "recipe": "anchor.z_native.street.03.00"
+      }
+    ],
+    "city": "7:standard",
+    "generic_native_masses": 0,
+    "native_instances": 176,
+    "projecting_window_bays": 1,
+    "selected": [
+      "anchor.z_native.arcade.02.window_5_2",
+      "anchor.z_native.street.03.00"
+    ]
+  },
+  {
+    "accepted": [
+      {
+        "entrance": "(-5, 0, 8)",
+        "id": "spatial.feature.landmark.01",
+        "recipe": "anchor.z_native.arcade.01.window_1_2"
+      }
+    ],
+    "city": "31:large",
+    "generic_native_masses": 0,
+    "native_instances": 102,
+    "projecting_window_bays": 0,
+    "selected": [
+      "anchor.z_native.arcade.01.window_1_2"
+    ]
+  },
+  {
+    "accepted": [
+      {
+        "entrance": "(10, 0, -3)",
+        "id": "spatial.feature.landmark.00",
+        "recipe": "anchor.z_native.street.02.00"
+      }
+    ],
+    "city": "13:large",
+    "generic_native_masses": 0,
+    "native_instances": 52,
+    "projecting_window_bays": 1,
+    "selected": [
+      "anchor.z_native.street.02.00"
+    ]
+  },
+  {
+    "accepted": [
+      {
+        "entrance": "(-10, 0, 5)",
+        "id": "spatial.feature.landmark.01",
+        "recipe": "anchor.z_native.cross.01x01.06"
+      },
+      {
+        "entrance": "(3, 0, -1)",
+        "id": "spatial.feature.landmark.02",
+        "recipe": "anchor.z_native.arcade.02.window_5_2"
+      }
+    ],
+    "city": "43:grand",
+    "generic_native_masses": 0,
+    "native_instances": 223,
+    "projecting_window_bays": 0,
+    "selected": [
+      "anchor.z_native.cross.01x01.06",
+      "anchor.z_native.arcade.02.window_5_2"
+    ]
+  },
+  {
+    "accepted": [
+      {
+        "entrance": "(1, 0, -10)",
+        "id": "spatial.feature.landmark.01",
+        "recipe": "anchor.z_native.street.03.03"
+      },
+      {
+        "entrance": "(-7, 0, 40)",
+        "id": "spatial.feature.landmark.02",
+        "recipe": "anchor.z_native.street.02.04"
+      }
+    ],
+    "city": "58:large",
+    "generic_native_masses": 0,
+    "native_instances": 115,
+    "projecting_window_bays": 2,
+    "selected": [
+      "anchor.z_native.street.03.03",
+      "anchor.z_native.street.02.04"
+    ]
+  },
+  {
+    "accepted": [],
+    "city": "101:large",
+    "native_instances": 0,
+    "projecting_window_bays": 0,
+    "selected": []
+  },
+  {
+    "accepted": [
+      {
+        "entrance": "(11, 0, -5)",
+        "id": "spatial.feature.landmark.00",
+        "recipe": "anchor.z_native.arcade.02.window_5_2"
+      }
+    ],
+    "city": "103:grand",
+    "generic_native_masses": 0,
+    "native_instances": 113,
+    "projecting_window_bays": 0,
+    "selected": [
+      "anchor.z_native.arcade.02.window_5_2"
+    ]
+  },
+  {
+    "accepted": [
+      {
+        "entrance": "(-2, 0, 8)",
+        "id": "spatial.feature.landmark.01",
+        "recipe": "anchor.z_native.cross.01x01.04"
+      }
+    ],
+    "city": "211:grand",
+    "generic_native_masses": 0,
+    "native_instances": 110,
+    "projecting_window_bays": 0,
+    "selected": [
+      "anchor.z_native.cross.01x01.04",
+      "anchor.z_native.arcade.02.window_1_2"
+    ]
+  }
+]

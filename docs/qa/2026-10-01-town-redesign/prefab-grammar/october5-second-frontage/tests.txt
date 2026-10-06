@@ -1,0 +1,40 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_october3_room_projections.gd
+[0m* test_upper_front_is_a_closed_supported_room_extension
+* test_new_front_yields_whole_to_an_upper_route
+* test_long_front_keeps_recessed_shoulders
+* test_neighboring_upper_room_rejects_the_extension_without_cutting_it
+* test_generated_fronts_preserve_room_bearing_and_public_air
+* test_ordinary_tall_house_gets_one_closed_middle_storey_bay
+* test_projecting_room_respects_its_own_lower_wing_roof
+* test_frontage_can_use_clear_bays_beside_a_door
+* test_tall_house_relief_reaches_two_distinct_faces_without_repeated_stacks
+[1m9/9 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               1
+Tests                 9
+Passing Tests         9
+Asserts              77
+Time              82.27s
+
+
+[32m---- All tests passed! ----
+[0m

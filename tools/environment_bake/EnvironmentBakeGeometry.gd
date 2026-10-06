@@ -6,6 +6,31 @@ extends RefCounted
 ## runner makes material grouping and collision fitting directly testable on
 ## synthetic meshes without importing or writing an environment pack.
 
+static func bind_materials(source_root: Node, bindings: Array) -> bool:
+	# Resolve the complete declaration before mutating an instance. Overrides
+	# never edit the shared imported mesh or another instance of that mesh.
+	var resolved: Array[Dictionary] = []
+	var seen := {}
+	for value: Variant in bindings:
+		if not value is Dictionary: return false
+		var path := String(value.get("path", ""))
+		var surface := int(value.get("surface", -1))
+		var resource := String(value.get("material", ""))
+		var key := "%s:%d" % [path, surface]
+		var mesh := source_root.get_node_or_null(NodePath(path)) as MeshInstance3D
+		if seen.has(key) or mesh == null or mesh.mesh == null or surface < 0 \
+				or surface >= mesh.mesh.get_surface_count() or not resource.begins_with("res://"):
+			return false
+		if not ResourceLoader.exists(resource): return false
+		var material := load(resource) as Material
+		if material == null: return false
+		seen[key] = true
+		resolved.append({"mesh": mesh, "surface": surface, "material": material})
+	for item in resolved:
+		item.mesh.set_surface_override_material(item.surface, item.material)
+	return true
+
+
 static func pose_meshes(source_root: Node, poses: Array) -> bool:
 	## Authored source-space hinges, applied before both visual and collision bake.
 	## Resolve every declaration first so an invalid manifest cannot partly pose a source.

@@ -1,0 +1,40 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_kit_roof_junctions.gd
+[0m* test_neighbors_share_one_continuous_roof
+* test_join_respects_street_headroom_and_different_roof_datums
+* test_boring_retains_short_supported_tunnels_without_reducing_headroom
+* test_cross_house_wing_reaches_host_and_withdraws_buried_gable
+* test_triangle_subtraction_preserves_uv_and_removes_only_buried_geometry
+* test_native_cross_roof_triangles_are_trimmed_with_matching_collision
+* test_joined_native_roof_has_no_open_seam
+* test_stepped_parallel_roofs_have_no_open_seam
+* test_contained_triangle_removal_preserves_coplanar_and_tolerance_faces
+[1m9/9 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               1
+Tests                 9
+Passing Tests         9
+Asserts           11975
+Time              4.953s
+
+
+[32m---- All tests passed! ----
+[0m

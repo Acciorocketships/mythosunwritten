@@ -63,13 +63,28 @@ static func stride_slot_bands(rise: int, run: int, offset: int) -> int:
 static func stride_cells(massif: WarrenMassif,
 		excavation: WarrenExcavation, occupied: Dictionary,
 		current: Vector3i, direction: Vector2i, rise: int, run: int,
-		open_foot: bool = false, upper_town: bool = false) -> Array[Vector3i]:
+		open_foot: bool = false, upper_town: bool = false,
+		platform_stair: bool = false) -> Array[Vector3i]:
 	## Returns the complete physical stride, or an empty array when any part
 	## leaves the solid, collides with previous excavation, revisits public
 	## ground, or closes an accidental same-datum 2x2 public square.
 	## `open_foot` lets the flight run open to the sky over the low huddle at
 	## a raised district's foot; `upper_town` lets it step onto the
-	## district's grade (both see `slot_is_borable`).
+	## district's grade (both see `slot_is_borable`). `platform_stair` is
+	## reserved for the district gate planner, which proves the whole ascent
+	## and any retained ceiling before committing it.
+	# Rounded tread addresses are narrower than the compiler's complete
+	# flight envelope. Prove reserved court floors and house bearings against
+	# that same envelope before the route commits to this climb.
+	if rise != 0 and not excavation.construction_reservations.is_empty():
+		var end := current + Vector3i(direction.x * run, rise, direction.y * run)
+		var flight := WarrenVolumeTransition.new(&"reservation-check", current, end,
+			WarrenVolumeTransition.Kind.STAIR, [] as Array[Vector3i])
+		for fine: Vector3i in flight.clearance_air_cells():
+			var macro := Vector3i(floori(float(fine.x) / 2.0), fine.y,
+				floori(float(fine.z) / 2.0))
+			if excavation.construction_reservations.has(macro):
+				return [] as Array[Vector3i]
 	var out: Array[Vector3i] = []
 	var trial := occupied.duplicate()
 	for offset in range(1, run + 1):
@@ -78,7 +93,7 @@ static func stride_cells(massif: WarrenMassif,
 			current.y + span.x, current.z + direction.y * offset)
 		var bands := span.y - span.x + HEADROOM_BANDS
 		if trial.has(cell) or not slot_is_borable(massif, excavation, cell,
-				bands, open_foot, upper_town) \
+				bands, open_foot, upper_town, false, platform_stair) \
 				or completes_public_square(trial, cell):
 			return [] as Array[Vector3i]
 		trial[cell] = true
@@ -86,11 +101,39 @@ static func stride_cells(massif: WarrenMassif,
 	return out
 
 
+static func bridge_slot_is_free(excavation: WarrenExcavation,
+		cell: Vector3i, bands: int) -> bool:
+	var column := Vector2i(cell.x, cell.z)
+	if excavation.bridge_bearing_columns.has(column):
+		return false
+	for proof: Dictionary in excavation.bridge_span_audit.get("seeded", []):
+		if cell.y >= int(proof.top) + WarrenBuildingParcel.ROOF_RESERVATION_BANDS \
+				or cell.y + bands <= int(proof.floor):
+			continue
+		for span_cell: Vector3i in proof.cells:
+			if column == Vector2i(span_cell.x, span_cell.z):
+				return false
+	return true
+
+
 static func slot_is_borable(massif: WarrenMassif,
 		excavation: WarrenExcavation, cell: Vector3i, bands: int,
-		open_foot: bool = false, upper_town: bool = false) -> bool:
+		open_foot: bool = false, upper_town: bool = false,
+		platform_bore: bool = false, platform_stair: bool = false) -> bool:
 	var column := Vector2i(cell.x, cell.z)
 	if massif == null or excavation == null or not massif.has_column(column):
+		return false
+	# A clearing's planted core is reserved before circulation, just like a
+	# house site. Walks may skirt it through the rest of the open reservation.
+	if bool(massif.columns[column].get("planting_core",false)): return false
+	for band in range(cell.y, cell.y + bands):
+		if excavation.construction_reservations.has(Vector3i(cell.x, band, cell.z)): return false
+	if not bridge_slot_is_free(excavation, cell, bands):
+		return false
+	if (massif.is_reserved_ground(column) or massif.columns[column].has("house_lobe")) \
+			and cell.y != massif.base_at(column):
+		return false
+	if massif.columns[column].has("house_site"):
 		return false
 	# Ground streets have open sky even when the low edge has less masonry
 	# than a complete bore. Elevated passages still need the full solid slot.
@@ -111,10 +154,11 @@ static func slot_is_borable(massif: WarrenMassif,
 		var bearing := massif.bearing_at(column)
 		if cell.y > bearing or cell.y == bearing and not upper_town:
 			return false
-		# The plinth is never bored: the way up is an open flight climbing
-		# along its wall through the low huddle at its foot, entering the
-		# district at a gate on its rim.
-		if cell.y < bearing:
+		# Explicit level through-routes retain a complete ceiling band. A gate
+		# stair may emerge through grade; its planner proves the whole ascent
+		# and separately reserves supported entrance ceilings. Alleys stay out.
+		if cell.y < bearing and not platform_stair \
+				and (not platform_bore or cell.y + bands >= bearing):
 			return false
 	# Keep a full solid separator between vertically crossing passages.
 	for band in range(cell.y - 1, cell.y + bands + 1):

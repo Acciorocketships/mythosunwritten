@@ -1,0 +1,17 @@
+extends GutTest
+
+
+func test_equal_area_crown_prefers_compact_wing_over_ridge_strip():
+	var cells = BuildingMass.rect_cells(Rect2i(0, 1, 4, 1))
+	cells.merge(BuildingMass.rect_cells(Rect2i(2, 0, 2, 1)))
+	var packed = BuildingDesigner.decompose(cells, -1, true)
+	assert_eq(packed[0], Rect2i(2, 0, 2, 2))
+	var covered = {}
+	for r in packed:
+		for c in BuildingMass.rect_cells(r):
+			assert_false(covered.has(c), "No overlapping ownership")
+			assert_true(cells.has(c), "Never fill a covered bridge room or public void")
+			covered[c] = true
+	assert_eq(covered.size(), cells.size())
+	var ordinary = BuildingDesigner.decompose(cells)
+	assert_eq(ordinary[0], Rect2i(0, 1, 4, 1), "Non-roof callers retain their decomposition")

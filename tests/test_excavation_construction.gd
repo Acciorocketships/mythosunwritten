@@ -59,6 +59,19 @@ func test_volume_projection_preserves_the_bore_with_diagnostics_disabled() -> vo
 	assert_eq(generated.mass_cells, inspected.mass_cells)
 	assert_eq(generated.exact_route_surface_cells(), inspected.exact_route_surface_cells())
 	assert_true(generated.validate_construction(), generated.last_rejection)
+	var crown_landings := 0
+	for cell: Vector3i in generated.walk_cells:
+		var column := Vector2i(cell.x, cell.z)
+		if cell.y < source.column_ceiling(column):
+			continue
+		crown_landings += 1
+		for band in WarrenVolumePlan.HEADROOM_BANDS:
+			var air := cell + Vector3i.UP * band
+			assert_true(generated.envelope.contains_air_column(air, 1),
+				"a crown landing keeps its full headroom in the envelope")
+			assert_false(generated.mass_cells.has(air),
+				"extending the gate envelope must not create a stone ceiling")
+	assert_gt(crown_landings, 0, "exercise a gate landing above the original crown")
 	var before := generated.deterministic_signature()
 	var headroom := generated.walk_cells[0] + Vector3i.UP
 	generated._air_set.erase(headroom)

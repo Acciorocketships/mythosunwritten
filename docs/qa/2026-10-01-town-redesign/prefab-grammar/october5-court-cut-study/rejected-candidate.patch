@@ -1,0 +1,38 @@
+--- /tmp/deep-court-before.gd	2026-10-05 12:42:11
++++ scripts/terrain/features/villages/fabric/WarrenPlotReservations.gd	2026-10-05 12:42:11
+@@ -270,6 +270,9 @@
+ ## looser bound would cut. (The budget below then spends fewer of those sites
+ ## than this table offers; the two bounds are different questions.)
+ const PLAZA_LEVEL_BANDS := 4
++## An inhabited broad square may cut one deeper corner while the same mean
++## excavation budget, complete support and upper-street bearings still apply.
++const INHABITED_PLAZA_LEVEL_BANDS := 6
+ ## And how much hill the square may take ALTOGETHER, as bands per column.
+ ## PLAZA_LEVEL_BANDS bounds the WORST column; this bounds the mean, so the site
+ ## is a levelled terrace rather than a quarry with one shallow corner. Two is
+@@ -1152,11 +1155,14 @@
+ 			var bands: Array = doors.keys()
+ 			bands.sort()
+ 			for datum: int in bands:
++				var frontage_sides := _plaza_buildable_frontages(
++					plan, cells, datum, streets, blocked) if mini(shape.x, shape.y) >= 3 else 0
++				var cut_limit := INHABITED_PLAZA_LEVEL_BANDS if frontage_sides >= 3 else PLAZA_LEVEL_BANDS
+ 				var cost := 0
+ 				var fits := true
+ 				for member: Vector2i in cells:
+ 					if not _deck_column_ok(plan, member, datum, streets,
+-							blocked, PLAZA_LEVEL_BANDS):
++							blocked, cut_limit):
+ 						fits = false
+ 						break
+ 					cost += absi(plan.massif.top_at(member) - datum)
+@@ -1173,8 +1179,7 @@
+ 					"short": mini(shape.x, shape.y),
+ 					"heart": offset.x * offset.x + offset.y * offset.y,
+ 					"cells": cells, "door": doors[datum]}
+-				site["frontage_sides"] = _plaza_buildable_frontages(
+-					plan, cells, datum, streets, blocked) if mini(shape.x, shape.y) >= 3 else 0
++				site["frontage_sides"] = frontage_sides
+ 				if refused.has(_plaza_site_key(site)):
+ 					continue
+ 				# Prefer the protected square within its class. A later broad

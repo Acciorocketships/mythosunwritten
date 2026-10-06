@@ -1,0 +1,202 @@
+{
+  "211:grand": [
+    {
+      "id": "plaza.00",
+      "macro_cells": 9,
+      "floor": 7,
+      "sides": [
+        {
+          "adjacent_inhabited": 4,
+          "edge_samples": 6
+        },
+        {
+          "adjacent_inhabited": 4,
+          "edge_samples": 6
+        },
+        {
+          "adjacent_inhabited": 0,
+          "edge_samples": 6
+        },
+        {
+          "adjacent_inhabited": 4,
+          "edge_samples": 6
+        }
+      ],
+      "majority_inhabited_sides": 3
+    }
+  ],
+  "257:grand": [
+    {
+      "id": "plaza.00",
+      "macro_cells": 6,
+      "floor": 4,
+      "sides": [
+        {
+          "adjacent_inhabited": 4,
+          "edge_samples": 6
+        },
+        {
+          "adjacent_inhabited": 0,
+          "edge_samples": 4
+        },
+        {
+          "adjacent_inhabited": 0,
+          "edge_samples": 6
+        },
+        {
+          "adjacent_inhabited": 0,
+          "edge_samples": 4
+        }
+      ],
+      "majority_inhabited_sides": 1
+    },
+    {
+      "id": "deck.00",
+      "macro_cells": 4,
+      "floor": 4,
+      "sides": [
+        {
+          "adjacent_inhabited": 4,
+          "edge_samples": 4
+        },
+        {
+          "adjacent_inhabited": 0,
+          "edge_samples": 4
+        },
+        {
+          "adjacent_inhabited": 2,
+          "edge_samples": 4
+        },
+        {
+          "adjacent_inhabited": 0,
+          "edge_samples": 4
+        }
+      ],
+      "majority_inhabited_sides": 1
+    },
+    {
+      "id": "deck.01",
+      "macro_cells": 4,
+      "floor": 0,
+      "sides": [
+        {
+          "adjacent_inhabited": 0,
+          "edge_samples": 4
+        },
+        {
+          "adjacent_inhabited": 0,
+          "edge_samples": 4
+        },
+        {
+          "adjacent_inhabited": 2,
+          "edge_samples": 4
+        },
+        {
+          "adjacent_inhabited": 2,
+          "edge_samples": 4
+        }
+      ],
+      "majority_inhabited_sides": 0
+    },
+    {
+      "id": "deck.02",
+      "macro_cells": 4,
+      "floor": 0,
+      "sides": [
+        {
+          "adjacent_inhabited": 0,
+          "edge_samples": 4
+        },
+        {
+          "adjacent_inhabited": 2,
+          "edge_samples": 4
+        },
+        {
+          "adjacent_inhabited": 2,
+          "edge_samples": 4
+        },
+        {
+          "adjacent_inhabited": 2,
+          "edge_samples": 4
+        }
+      ],
+      "majority_inhabited_sides": 0
+    }
+  ],
+  "43:grand": [
+    {
+      "id": "plaza.00",
+      "macro_cells": 9,
+      "floor": 7,
+      "sides": [
+        {
+          "adjacent_inhabited": 4,
+          "edge_samples": 6
+        },
+        {
+          "adjacent_inhabited": 4,
+          "edge_samples": 6
+        },
+        {
+          "adjacent_inhabited": 0,
+          "edge_samples": 6
+        },
+        {
+          "adjacent_inhabited": 4,
+          "edge_samples": 6
+        }
+      ],
+      "majority_inhabited_sides": 3
+    },
+    {
+      "id": "deck.00",
+      "macro_cells": 4,
+      "floor": 6,
+      "sides": [
+        {
+          "adjacent_inhabited": 0,
+          "edge_samples": 4
+        },
+        {
+          "adjacent_inhabited": 0,
+          "edge_samples": 4
+        },
+        {
+          "adjacent_inhabited": 2,
+          "edge_samples": 4
+        },
+        {
+          "adjacent_inhabited": 0,
+          "edge_samples": 4
+        }
+      ],
+      "majority_inhabited_sides": 0
+    }
+  ],
+  "83:grand": [
+    {
+      "id": "plaza.00",
+      "macro_cells": 9,
+      "floor": 3,
+      "sides": [
+        {
+          "adjacent_inhabited": 4,
+          "edge_samples": 6
+        },
+        {
+          "adjacent_inhabited": 0,
+          "edge_samples": 6
+        },
+        {
+          "adjacent_inhabited": 4,
+          "edge_samples": 6
+        },
+        {
+          "adjacent_inhabited": 6,
+          "edge_samples": 6
+        }
+      ],
+      "majority_inhabited_sides": 3
+    }
+  ]
+}

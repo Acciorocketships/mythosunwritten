@@ -1,0 +1,42 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_october3_retaining_windows.gd
+[0m* test_closed_native_panels_keep_structural_backing_and_clearance
+* test_real_retaining_panels_keep_original_native_geometry
+* test_two_module_pier_can_carry_a_whole_backed_native_panel
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_october2_retaining_relief.gd
+[0m* test_native_corbels_keep_whole_geometry_and_clear_finished_air
+* test_real_holdout_keeps_public_air_and_masonry_supports
+* test_tall_retained_faces_have_relief_below_the_crown
+* test_corbel_seats_under_a_floor_instead_of_losing_the_whole_course
+[1m4/4 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               2
+Tests                 7
+Passing Tests         7
+Asserts            5559
+Time              45.45s
+
+
+[32m---- All tests passed! ----
+[0m

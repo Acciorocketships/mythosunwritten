@@ -1,0 +1,120 @@
+--- scripts/terrain/features/villages/kit/KitRoofMeshUnion.gd
++++ scripts/terrain/features/villages/kit/KitRoofMeshUnion.gd
+@@ -225,6 +225,7 @@
+ static func append_prepared(placements: Array[Dictionary], ctx: Dictionary,
+ 		map: Transform3D, payload: EnvironmentInstancePayload) -> Dictionary:
+ 	var details := fit_chimneys(placements, ctx)
++	fit_ridge_contacts(placements, ctx)
+ 	var clipped := 0
+ 	var removed := 0
+ 	for placement: Dictionary in placements:
+@@ -256,6 +257,109 @@
+ 			mesh.material_surface = surface.surface
+ 			payload.add_surface_mesh(mesh)
+ 	return {"clipped": clipped, "removed": removed, "chimneys": details}
++
++
++static func fit_ridge_contacts(placements: Array[Dictionary], ctx: Dictionary) -> void:
++	# A curved native eave can cover a cap's bearing below the analytic roof
++	# plane. End the ornament there, instead of leaving its tip through the eave.
++	var eaves: Array[Dictionary] = []
++	for part: Dictionary in placements:
++		var role := String(part.get("role", ""))
++		if role.begins_with("roof.") and role.contains(".eave") and ctx.data.has(part.asset_id):
++			eaves.append({"part": part, "bounds": _part_bounds(part, ctx.data)})
++	for part: Dictionary in placements:
++		if not String(part.get("role", "")).begins_with("trim.ridge") or not ctx.data.has(part.asset_id): continue
++		var bounds := _part_bounds(part, ctx.data)
++		var cuts: Array[Dictionary] = []
++		for eave: Dictionary in eaves:
++			if eave.part.roof_index == part.roof_index or not bounds.intersects(eave.bounds): continue
++			if not eave.has("meshes"):
++				var fitted := realize(eave.part, ctx)
++				eave.meshes = fitted.meshes if not fitted.is_empty() else []
++				if fitted.is_empty():
++					for surface: Dictionary in ctx.data[eave.part.asset_id]:
++						eave.meshes.append(trim_surface(surface, eave.part.transform, []))
++			for mesh: Dictionary in eave.meshes:
++				var eave_kit: BuildingKit = ctx.roof_kits.get(eave.part.roof_index, ctx.kit)
++				var rim_top := float(ctx.roofs[eave.part.roof_index].eave_band) * eave_kit.band_height() + 0.2
++				cuts.append_array(_ridge_eave_cutters(mesh, bounds, int(ctx.roofs[part.roof_index].axis), rim_top))
++		if not cuts.is_empty():
++			var existing: Array = part.get("clip_volumes", []).duplicate()
++			existing.append_array(cuts)
++			part.clip_volumes = existing
++
++
++static func _part_bounds(part: Dictionary, data: Dictionary) -> AABB:
++	var bounds := AABB()
++	var first := true
++	for surface: Dictionary in data[part.asset_id]:
++		for point: Vector3 in part.transform * (surface.vertices as PackedVector3Array):
++			bounds = AABB(point, Vector3.ZERO) if first else bounds.expand(point)
++			first = false
++	return bounds
++
++
++static func _ridge_eave_cutters(mesh: Dictionary, cap: AABB, ridge_axis: int = -1,
++		rim_top: float = INF) -> Array[Dictionary]:
++	var cuts: Array[Dictionary] = []
++	# Higher roof junctions are handled by the ordinary solid union. A cap
++	# admitted at the low rim must still end through the entire covering pitch.
++	if cap.position.y > rim_top: return cuts
++	for t in range(0, mesh.indices.size(), 3):
++		var polygon: Array = []
++		var normal := Vector3.ZERO
++		for k in 3:
++			var i: int = mesh.indices[t+k]
++			normal += mesh.normals[i]
++			polygon.append({"p": mesh.vertices[i], "n": mesh.normals[i], "uv": mesh.uvs[i]})
++		if normal.y <= EPS: continue
++		polygon = split(polygon, Plane(Vector3.UP, cap.position.y + EPS), false)
++		# Only the contact over this ornament contributes to its termination.
++		for axis in [0, 2]:
++			var direction := Vector3.ZERO
++			direction[axis] = 1.0
++			polygon = split(polygon, Plane(direction, cap.end[axis]), true)
++			polygon = split(polygon, Plane(-direction, -cap.position[axis]), true)
++		if polygon.size() < 3: continue
++		var projected_area := 0.0
++		for i in polygon.size():
++			var a: Vector3 = polygon[i].p
++			var b: Vector3 = polygon[(i+1)%polygon.size()].p
++			projected_area += a.x*b.z - b.x*a.z
++		if absf(projected_area) < EPS * EPS: continue
++		var center := Vector3.ZERO
++		for vertex: Dictionary in polygon: center += vertex.p
++		center /= polygon.size()
++		var planes: Array[Plane] = [Plane(Vector3.UP, cap.end.y + EPS * 4.0),
++			Plane(Vector3.DOWN, -cap.position.y + EPS * 4.0)]
++		var bounds := AABB(Vector3(center.x, cap.position.y, center.z), Vector3(0, cap.size.y, 0))
++		for i in polygon.size():
++			var a: Vector3 = polygon[i].p
++			var b: Vector3 = polygon[(i+1)%polygon.size()].p
++			var n := Vector3(b.z-a.z, 0, a.x-b.x)
++			if n.length_squared() < EPS * EPS: continue
++			n = n.normalized()
++			var plane := Plane(n, n.dot(a))
++			if plane.distance_to(center) > 0: plane = Plane(-n, -n.dot(a))
++			planes.append(plane)
++			bounds = bounds.expand(Vector3(a.x, cap.position.y, a.z))
++			bounds = bounds.expand(Vector3(a.x, cap.end.y, a.z))
++		if planes.size() >= 5 and bounds.size.x > EPS and bounds.size.z > EPS and bounds.intersects(cap):
++			if ridge_axis >= 0:
++				# The cap is one ornament across its width. Cutting each flute
++				# separately leaves detached tips beside the covering eave.
++				var cross_axis := 2 if ridge_axis == 0 else 0
++				bounds.position[cross_axis] = cap.position[cross_axis]
++				bounds.size[cross_axis] = cap.size[cross_axis]
++				bounds = bounds.grow(EPS * 4.0)
++				planes.clear()
++				for axis in 3:
++					var direction := Vector3.ZERO
++					direction[axis] = 1.0
++					planes.append(Plane(direction, bounds.end[axis]))
++					planes.append(Plane(-direction, -bounds.position[axis]))
++			cuts.append({"planes": planes, "bounds": bounds.grow(EPS * 4.0)})
++	return cuts
+ 
+ 
+ static func fit_chimneys(placements: Array[Dictionary], ctx: Dictionary) -> Dictionary:

@@ -1,0 +1,124 @@
+{
+  "pack": "town_corner_roofs",
+  "license": "LowPolyFantasyVillage source-pack license",
+  "default_scale": [
+    1,
+    1,
+    1
+  ],
+  "assets": [
+    {
+      "id": "lpfv.fabric.roof.corner.orange.gable",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0,
+        2.672677,
+        0
+      ],
+      "merge_pieces": true,
+      "clip_ranges": {
+        "x": [
+          -1.5,
+          1.5
+        ],
+        "z": [
+          -1.5,
+          1.5
+        ]
+      },
+      "collision_profile": "building_trimesh",
+      "tags": [
+        "building",
+        "fabric_roof",
+        "corner_gable",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "use_instance_color": false,
+      "max_mesh_bytes": 2097152,
+      "max_visual_triangles": 3000,
+      "max_collision_triangles": 3000,
+      "max_surfaces": 2,
+      "max_collision_pieces": 1,
+      "fit_axis_profile": {
+        "axis": "z",
+        "knots": [
+          [
+            -1.5,
+            -1.5
+          ],
+          [
+            -1.22379875,
+            -1.48
+          ],
+          [
+            1.22379875,
+            1.48
+          ],
+          [
+            1.5,
+            1.5
+          ]
+        ]
+      }
+    },
+    {
+      "id": "lpfv.fabric.roof.corner.slate.gable",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0,
+        2.672677,
+        0
+      ],
+      "merge_pieces": true,
+      "clip_ranges": {
+        "x": [
+          -1.5,
+          1.5
+        ],
+        "z": [
+          -1.5,
+          1.5
+        ]
+      },
+      "collision_profile": "building_trimesh",
+      "tags": [
+        "building",
+        "fabric_roof",
+        "corner_gable",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "use_instance_color": false,
+      "max_mesh_bytes": 2097152,
+      "max_visual_triangles": 3000,
+      "max_collision_triangles": 3000,
+      "max_surfaces": 2,
+      "max_collision_pieces": 1,
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "fit_axis_profile": {
+        "axis": "z",
+        "knots": [
+          [
+            -1.5,
+            -1.5
+          ],
+          [
+            -1.22379875,
+            -1.48
+          ],
+          [
+            1.22379875,
+            1.48
+          ],
+          [
+            1.5,
+            1.5
+          ]
+        ]
+      }
+    }
+  ]
+}

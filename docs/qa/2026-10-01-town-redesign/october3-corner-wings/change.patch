@@ -1,0 +1,70 @@
+--- /tmp/corner-wings-before.gd
++++ scripts/terrain/features/villages/kit/KitSteppedWings.gd
+@@ -1,5 +1,5 @@
+ extends RefCounted
+-## Lower one end of a repeated rectangular stack into an inhabited roofed wing.
++## Lower an end or corner of a repeated stack into an inhabited roofed wing.
+ ## All construction stays inside the original reservation. Door rooms, carried
+ ## external construction and walked surfaces are immutable.
+ static func shape(mass: BuildingMass, covered: Callable, walked: Callable) -> bool:
+@@ -16,10 +16,22 @@
+ 	if rng.randf()>=0.5: sides.reverse()
+ 	# The lower wing always retains at least one inhabited storey.
+ 	var cut_levels := mini(2,mass.storeys.size()-1) if rng.randf()<0.5 else 1
++	var candidates: Array[Rect2i] = []
++	# Broad stacks can retain an L-shaped upper house around a lower corner
++	# pavilion. Both arms remain at least two modules wide for native roofs.
++	if mini(rect.size.x,rect.size.y)>=4:
++		var corner_size := Vector2i(mini(3,rect.size.x-2),mini(3,rect.size.y-2))
++		var corners: Array[Vector2i] = [Vector2i(0,0),Vector2i(1,0),Vector2i(1,1),Vector2i(0,1)]
++		var start := rng.randi_range(0,3)
++		for offset in 4:
++			var corner := corners[(start+offset)%4]
++			candidates.append(Rect2i(rect.position+corner*(rect.size-corner_size),corner_size))
+ 	for side: int in sides:
+-		var wing := rect
+-		wing.size[axis]=width
+-		if side==1: wing.position[axis]=rect.end[axis]-width
++		var end := rect
++		end.size[axis]=width
++		if side==1: end.position[axis]=rect.end[axis]-width
++		candidates.append(end)
++	for wing: Rect2i in candidates:
+ 		var cut := BuildingMass.rect_cells(wing)
+ 		var first := mass.storeys.size()-cut_levels
+ 		var lower: Dictionary = mass.storeys[first-1]
+--- /tmp/corner-wings-buildings-before.gd
++++ scripts/terrain/features/villages/kit/KitVillageBuildings.gd
+@@ -1430,10 +1430,19 @@
+ 	designer.flight = func(cell: Vector2i, band: int) -> bool:
+ 		return crosses_flight(flights, cell, band)
+ 	designer.canopy_claims = canopy_claims
++	# Decide the primary silhouette before a small loggia notch disqualifies
++	# a broad rectangular crown. Narrow houses retain their existing order.
++	var shaped := false
++	if not mass.storeys.is_empty():
++		var crown_bounds := BuildingDesigner._bounds(mass.storeys[-1].cells)
++		if mini(crown_bounds.size.x,crown_bounds.size.y)>=4:
++			shaped = preload("res://scripts/terrain/features/villages/kit/KitSteppedWings.gd").shape(
++				mass, designer.covered, designer.walked)
+ 	preload("res://scripts/terrain/features/villages/kit/KitLoggias.gd").recess(
+ 		mass, designer.forbidden, designer.walked, designer.public_air)
+-	preload("res://scripts/terrain/features/villages/kit/KitSteppedWings.gd").shape(
+-		mass, designer.covered, designer.walked)
++	if not shaped:
++		preload("res://scripts/terrain/features/villages/kit/KitSteppedWings.gd").shape(
++			mass, designer.covered, designer.walked)
+ 	var context := {"terrain_storey": terrain_storey, "terraced": true,
+ 		"colour": _district_colour(world_seed, house.cells)}
+ 	# A house standing on the retained podium already has its masonry base:
+--- /tmp/corner-wings-loggias-before.gd
++++ scripts/terrain/features/villages/kit/KitLoggias.gd
+@@ -13,6 +13,8 @@
+ 		# Alternating covered loggias and an open upper terrace, on changing faces.
+ 		if index % 2 == 0 and index != mass.storeys.size() - 1: continue
+ 		var storey: Dictionary = mass.storeys[index]
++		# Keep the two-module arms of a primary roofed wing intact.
++		if bool(storey.get("stepped_wing",false)): continue
+ 		var band := int(storey.floor_band)
+ 		var lower := mass.cells_at_band(band - 1)
+ 		if lower.is_empty(): continue

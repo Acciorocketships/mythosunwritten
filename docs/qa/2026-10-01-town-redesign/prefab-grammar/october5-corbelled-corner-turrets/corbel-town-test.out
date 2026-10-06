@@ -1,0 +1,35 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_corbelled_corner_towers.gd
+[0m* test_native_corbel_joins_continuous_corner_without_ground_footing
+* test_corbel_cannot_float_bridge_a_missing_floor_or_enter_public_air
+* test_corbel_does_not_cover_lower_doorway_or_appear_on_short_house
+* test_generated_town_gains_a_supported_corner_spire
+[1m4/4 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               1
+Tests                 4
+Passing Tests         4
+Asserts              14
+Time              21.613s
+
+
+[32m---- All tests passed! ----
+[0m

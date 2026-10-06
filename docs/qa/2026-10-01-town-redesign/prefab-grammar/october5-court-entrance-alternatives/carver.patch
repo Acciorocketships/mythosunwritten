@@ -1,0 +1,83 @@
+--- scripts/terrain/features/villages/fabric/WarrenMazeCarver.gd
++++ scripts/terrain/features/villages/fabric/WarrenMazeCarver.gd
+@@ -3,14 +3,16 @@
+ 
+ ## Deterministic, single-transaction front end for the solid-first maze town.
+ ## One DFS carves the entrance-to-summit spine; coverage-driven alley walks
+-## then extend that same connected public graph. There is no attempt index,
+-## survivor ranking, or complete-plan alternative.
++## then extend that same connected public graph. Local court entrances share
++## a bounded search allowance; there is no complete-plan alternative ranking.
+ const MIN_HOUSE_BANDS := WarrenMazeSourcePlan.MIN_HOUSE_BANDS
+ const MAX_SPINE_STRAIGHT_RUN := WarrenMazeSourcePlan.MAX_SPINE_STRAIGHT_RUN
+ const MAX_ALLEY_STRAIGHT_RUN := WarrenMazeSourcePlan.MAX_ALLEY_STRAIGHT_RUN
+ const MIN_ALLEY_CELLS := 3
+ const MAX_ALLEY_CELLS := 8
+ const SPINE_VISIT_BUDGET := 40000
++const COURT_ENTRANCE_ATTEMPTS := 21
++const COURT_ALTERNATIVE_VISITS := 1500
+ ## Bridge candidates are evaluated before daylight cuts. Short grounded
+ ## tunnels are retained afterwards without consuming the occupied-span quota.
+ const MIN_LOOP_JOINS := 1
+@@ -129,17 +131,36 @@
+ 		"route_floor": profile.route_cell_range.x \
+ 			if not massif.is_platform(massif.crown_column) else market_cells + 1,
+ 	}
+-	var proposed_court: Dictionary = preload("res://scripts/terrain/features/villages/fabric/WarrenInteriorCourt.gd").propose(context)
+-	if not proposed_court.is_empty(): context["court_target"] = proposed_court.entrance
+-	var found_spine := _search_spine(context, portal, -1, 0, 0)
+-	var court_visits := int(context.visits) if not proposed_court.is_empty() else 0
+-	if not found_spine and not proposed_court.is_empty():
+-		# A refused proposal leaves exactly the original portal and no reservations.
++	var court_rules := preload("res://scripts/terrain/features/villages/fabric/WarrenInteriorCourt.gd")
++	var court_sites := court_rules.candidates(context)
++	var original_reservations := excavation.construction_reservations.duplicate()
++	var proposed_court: Dictionary = {}
++	var found_spine := false
++	var court_visits := 0
++	var court_attempts: Array[Dictionary] = []
++	# Preserve the complete preferred-entrance search. Only a failed
++	# preference spends the bounded additional allowance on alternatives.
++	var attempted_entrances := {}
++	for site: Dictionary in court_sites:
++		if attempted_entrances.has(site.entrance): continue
++		if court_attempts.size() >= COURT_ENTRANCE_ATTEMPTS: break
++		attempted_entrances[site.entrance] = true
++		context.visits = 0
++		context["visit_budget"] = SPINE_VISIT_BUDGET if court_attempts.is_empty() else COURT_ALTERNATIVE_VISITS
++		context["court_target"] = site.entrance
++		court_rules.reserve(context, site)
++		found_spine = _search_spine(context, portal, -1, 0, 0)
++		court_visits += int(context.visits)
++		court_attempts.append({"entrance":site.entrance,"visits":context.visits,"accepted":found_spine})
++		if found_spine:
++			proposed_court = site
++			break
+ 		assert(excavation.route.size()==1 and excavation.transitions.is_empty())
+-		excavation.construction_reservations.clear()
++		excavation.construction_reservations = original_reservations.duplicate()
++	context.erase("visit_budget")
++	if not found_spine:
+ 		context.erase("court_target")
+ 		context.visits = 0
+-		proposed_court = {}
+ 		found_spine = _search_spine(context, portal, -1, 0, 0)
+ 
+ 	if not found_spine:
+@@ -287,6 +308,7 @@
+ 	plan.audit["preselected_plaza"] = held.plaza
+ 	plan.audit["interior_court"] = proposed_court
+ 	plan.audit["interior_court_visits"] = court_visits
++	plan.audit["interior_court_attempts"] = court_attempts
+ 	if seal_plan:
+ 		plan.finish_construction(collect_diagnostics)
+ 	if seal_plan and collect_diagnostics:
+@@ -686,7 +708,7 @@
+ 		previous_direction_index: int, straight_run: int,
+ 		previous_rise: int) -> bool:
+ 	context.visits = int(context.visits) + 1
+-	if int(context.visits) > SPINE_VISIT_BUDGET:
++	if int(context.visits) > int(context.get("visit_budget", SPINE_VISIT_BUDGET)):
+ 		return false
+ 	var excavation := context.excavation as WarrenExcavation
+ 	var profile := context.profile as WarrenVillageScaleProfile

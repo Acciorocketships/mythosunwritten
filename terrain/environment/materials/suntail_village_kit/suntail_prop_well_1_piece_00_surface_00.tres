@@ -1,8 +1,8 @@
 [gd_resource type="StandardMaterial3D" load_steps=4 format=3]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/f3cc525e6340c02f2f54.res" id="1_b2qe3"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/962f55f218a41ed046aa.res" id="2_xmno2"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/94db37627a1019826a30.res" id="3_x6e7e"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/72a87be3e2dbd5a0eca6.res" id="1_b2qe3"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/ecc46bed301678a48b2a.res" id="2_xmno2"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/6e7cffe2bfa323ccf178.res" id="3_x6e7e"]
 
 [resource]
 resource_name = "Well_1"

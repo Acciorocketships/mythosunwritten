@@ -1,0 +1,17 @@
+{
+  "103:grand": {
+    "candidate_ms": 24983,
+    "previous_ms": 24607,
+    "same_layout": true
+  },
+  "31:large": {
+    "candidate_ms": 27159,
+    "previous_ms": 27794,
+    "same_layout": true
+  },
+  "53:grand": {
+    "candidate_ms": 53192,
+    "previous_ms": 66363,
+    "same_layout": true
+  }
+}

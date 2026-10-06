@@ -1,0 +1,5 @@
+{
+  "scripts/terrain/features/villages/kit/KitRoofEaveFits.gd": "326268b6628ccf3b0ebf55ed1ab724c025c1a0f691388c48fea172ee112a2796",
+  "tests/test_october1_roof_eave_fits.gd": "6187e7942674ceaa8263a970720278170bb7f6d9c534689c9e2a084720f58c69",
+  "tests/test_september27_roofs.gd": "615c3babf60507a251fa37607dc9c4ea12d8f71ab7fb0640093c67d267cf59b4"
+}

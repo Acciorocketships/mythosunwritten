@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_xxiga"]
+
+[resource]
+script = ExtResource("1_xxiga")
+id = &"suntail.decor.crossbar_2.finish_oak"
+visual_path = "res://terrain/environment/visuals/suntail_village_kit/suntail_decor_crossbar_2.tres"
+tags = Array[StringName]([&"decor", &"suntail_kit", &"village"])
+measured_aabb = AABB(-1, -0.14243457, -0.08387263, 2, 0.2867291, 0.28113642)
+ground_contact_points = PackedVector2Array()
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"suntail_village_kit:suntail.decor.crossbar_2/frame/oak"
+material_tints = {
+"DoorShutter": Color(0.9, 0.74, 0.53, 1),
+"DoorShutters": Color(0.9, 0.74, 0.53, 1),
+"Planks": Color(0.9, 0.74, 0.53, 1),
+"Planks_Full": Color(0.9, 0.74, 0.53, 1),
+"Wood": Color(0.9, 0.74, 0.53, 1),
+"Wood_1": Color(0.9, 0.74, 0.53, 1),
+"Wood_2": Color(0.9, 0.74, 0.53, 1),
+"Wood_3": Color(0.9, 0.74, 0.53, 1),
+"Wooden_Planks": Color(0.9, 0.74, 0.53, 1)
+}

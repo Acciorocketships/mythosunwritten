@@ -1,0 +1,40 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_corner_tower_terrace_datums.gd
+[0m* test_corner_tower_stands_at_its_wings_real_terrace_datum
+* test_a_higher_floor_is_not_itself_evidence_of_bearing
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_october3_corner_towers.gd
+[0m* test_full_native_shaft_joins_both_faces_of_an_actual_corner
+* test_corner_tower_cannot_float_or_enter_public_air
+* test_lower_wing_gets_a_complete_window_course_not_a_roof_ornament
+[1m3/3 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               2
+Tests                 5
+Passing Tests         5
+Asserts              50
+Time              20.238s
+
+
+[32m---- All tests passed! ----
+[0m

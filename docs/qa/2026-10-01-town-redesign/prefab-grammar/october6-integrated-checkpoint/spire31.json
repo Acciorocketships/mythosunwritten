@@ -1,0 +1,333 @@
+{
+	"31:large": {
+		"asset_outcomes": [
+			{
+				"kind_id": "anchor.prefab.10",
+				"mirror": {
+					"bearing_off_ground": 0,
+					"body_outside_plot": 0,
+					"candidate_refusals": {
+						"below_bearing": 18,
+						"carved_minimum_body": 259,
+						"footprint_unavailable": 11819,
+						"huddle_height": 291,
+						"missing_footing": 71,
+						"no_fronting_street": 511
+					},
+					"lone_raised_level": 0,
+					"no_frontage": 0,
+					"realisable": 3,
+					"street_over_top": 0,
+					"tested": 3
+				},
+				"realisable": true,
+				"reason": "",
+				"site": {
+					"anchor": "(2, 6)",
+					"clearance_column_count": 9,
+					"cost": 26,
+					"datum": 0,
+					"id": "asset.00",
+					"orientation": 0
+				}
+			},
+			{
+				"kind_id": "anchor.z_native.arcade.01.window_1_2",
+				"mirror": {
+					"bearing_off_ground": 2,
+					"body_outside_plot": 2,
+					"candidate_refusals": {
+						"carved_minimum_body": 222,
+						"footprint_unavailable": 11901,
+						"huddle_height": 223,
+						"missing_footing": 71,
+						"no_fronting_street": 511
+					},
+					"lane_refusals": {
+						"bearing_outside_massif": 4,
+						"envelope_outside_grid": 4
+					},
+					"lone_raised_level": 0,
+					"no_frontage": 0,
+					"realisable": 4,
+					"street_over_top": 0,
+					"tested": 8
+				},
+				"realisable": true,
+				"reason": "",
+				"site": {
+					"anchor": "(-5, 2)",
+					"clearance_column_count": 13,
+					"cost": 68,
+					"datum": 0,
+					"id": "asset.01",
+					"orientation": 1
+				}
+			},
+			{
+				"kind_id": "",
+				"mirror": {
+					"bearing_off_ground": 0,
+					"body_outside_plot": 0,
+					"candidate_refusals": {
+						"carved_minimum_body": 111,
+						"footprint_unavailable": 12361,
+						"huddle_height": 169,
+						"missing_footing": 64,
+						"no_fronting_street": 253
+					},
+					"lone_raised_level": 0,
+					"no_frontage": 0,
+					"realisable": 0,
+					"street_over_top": 0,
+					"tested": 0
+				},
+				"realisable": false,
+				"reason": "no street-fronting supportable site remains",
+				"site": null
+			},
+			{
+				"kind_id": "",
+				"mirror": {
+					"bearing_off_ground": 0,
+					"body_outside_plot": 0,
+					"candidate_refusals": {
+						"carved_minimum_body": 111,
+						"footprint_unavailable": 12361,
+						"huddle_height": 169,
+						"missing_footing": 64,
+						"no_fronting_street": 253
+					},
+					"lone_raised_level": 0,
+					"no_frontage": 0,
+					"realisable": 0,
+					"street_over_top": 0,
+					"tested": 0
+				},
+				"realisable": false,
+				"reason": "no street-fronting supportable site remains",
+				"site": null
+			},
+			{
+				"kind_id": "",
+				"mirror": {
+					"bearing_off_ground": 0,
+					"body_outside_plot": 0,
+					"candidate_refusals": {
+						"carved_minimum_body": 111,
+						"footprint_unavailable": 12361,
+						"huddle_height": 169,
+						"missing_footing": 64,
+						"no_fronting_street": 253
+					},
+					"lone_raised_level": 0,
+					"no_frontage": 0,
+					"realisable": 0,
+					"street_over_top": 0,
+					"tested": 0
+				},
+				"realisable": false,
+				"reason": "no street-fronting supportable site remains",
+				"site": null
+			},
+			{
+				"kind_id": "",
+				"mirror": {
+					"bearing_off_ground": 0,
+					"body_outside_plot": 0,
+					"candidate_refusals": {
+						"carved_minimum_body": 111,
+						"footprint_unavailable": 12361,
+						"huddle_height": 169,
+						"missing_footing": 64,
+						"no_fronting_street": 253
+					},
+					"lone_raised_level": 0,
+					"no_frontage": 0,
+					"realisable": 0,
+					"street_over_top": 0,
+					"tested": 0
+				},
+				"realisable": false,
+				"reason": "no street-fronting supportable site remains",
+				"site": null
+			},
+			{
+				"kind_id": "",
+				"mirror": {
+					"bearing_off_ground": 0,
+					"body_outside_plot": 0,
+					"candidate_refusals": {
+						"carved_minimum_body": 111,
+						"footprint_unavailable": 12361,
+						"huddle_height": 169,
+						"missing_footing": 64,
+						"no_fronting_street": 253
+					},
+					"lone_raised_level": 0,
+					"no_frontage": 0,
+					"realisable": 0,
+					"street_over_top": 0,
+					"tested": 0
+				},
+				"realisable": false,
+				"reason": "no street-fronting supportable site remains",
+				"site": null
+			},
+			{
+				"kind_id": "",
+				"mirror": {
+					"bearing_off_ground": 0,
+					"body_outside_plot": 0,
+					"candidate_refusals": {
+						"carved_minimum_body": 111,
+						"footprint_unavailable": 12361,
+						"huddle_height": 169,
+						"missing_footing": 64,
+						"no_fronting_street": 253
+					},
+					"lone_raised_level": 0,
+					"no_frontage": 0,
+					"realisable": 0,
+					"street_over_top": 0,
+					"tested": 0
+				},
+				"realisable": false,
+				"reason": "no street-fronting supportable site remains",
+				"site": null
+			},
+			{
+				"kind_id": "",
+				"mirror": {
+					"bearing_off_ground": 0,
+					"body_outside_plot": 0,
+					"candidate_refusals": {
+						"carved_minimum_body": 111,
+						"footprint_unavailable": 12361,
+						"huddle_height": 169,
+						"missing_footing": 64,
+						"no_fronting_street": 253
+					},
+					"lone_raised_level": 0,
+					"no_frontage": 0,
+					"realisable": 0,
+					"street_over_top": 0,
+					"tested": 0
+				},
+				"realisable": false,
+				"reason": "no street-fronting supportable site remains",
+				"site": null
+			}
+		],
+		"attached_towers": 0,
+		"caps": [],
+		"opaque_prefabs": [
+			{
+				"id": "spatial.fabric.spatial.feature.landmark.00.component.00",
+				"recipe": "anchor.prefab.10"
+			}
+		],
+		"tower_audit": {
+			"accepted": 0,
+			"attempts": 140,
+			"corner_asset_blocked": 1,
+			"corner_attempts": 68,
+			"corner_bearing_example": "kit.spatial.parcel.maze.house.019 / (3, 1, -8) / base 2",
+			"corner_bearing_rejected": 17,
+			"corner_join_quadrants": 7,
+			"corner_no_bearing_or_space": 60,
+			"corner_no_host_join": 7,
+			"corner_quadrant_counts": {
+				"2": 4,
+				"3": 2,
+				"4": 1
+			},
+			"corner_quadrant_examples": [
+				{
+					"band": 4,
+					"base": 4,
+					"corner": "(6, -2)",
+					"host": "kit.spatial.parcel.maze.bridge.00.end.1.lower",
+					"occupied": [
+						"(-1, -1)",
+						"(0, -1)"
+					],
+					"top": 12
+				},
+				{
+					"band": 0,
+					"base": 0,
+					"corner": "(-6, 4)",
+					"host": "kit.spatial.parcel.maze.house.003",
+					"occupied": [
+						"(-1, -1)",
+						"(0, -1)"
+					],
+					"top": 6
+				},
+				{
+					"band": 0,
+					"base": 0,
+					"corner": "(-4, 2)",
+					"host": "kit.spatial.parcel.maze.house.003",
+					"occupied": [
+						"(-1, -1)",
+						"(-1, 0)",
+						"(0, 0)"
+					],
+					"top": 6
+				},
+				{
+					"band": 0,
+					"base": 0,
+					"corner": "(-4, 4)",
+					"host": "kit.spatial.parcel.maze.house.003",
+					"occupied": [
+						"(-1, -1)",
+						"(0, -1)",
+						"(0, 0)"
+					],
+					"top": 8
+				},
+				{
+					"band": 0,
+					"base": 0,
+					"corner": "(-2, 4)",
+					"host": "kit.spatial.parcel.maze.house.003",
+					"occupied": [
+						"(-1, -1)",
+						"(-1, 0)"
+					],
+					"top": 8
+				},
+				{
+					"band": 2,
+					"base": 2,
+					"corner": "(2, -9)",
+					"host": "kit.spatial.parcel.maze.house.019",
+					"occupied": [
+						"(-1, -1)",
+						"(-1, 0)",
+						"(0, -1)",
+						"(0, 0)"
+					],
+					"top": 6
+				},
+				{
+					"band": 2,
+					"base": 2,
+					"corner": "(4, -9)",
+					"host": "kit.spatial.parcel.maze.house.019",
+					"occupied": [
+						"(-1, -1)",
+						"(-1, 0)"
+					],
+					"top": 6
+				}
+			],
+			"corner_reservation_example": "kit.spatial.parcel.maze.house.009 / (2, 10, -3) / base 8",
+			"corner_reservation_rejected": 26,
+			"corner_supported": 1
+		}
+	}
+}

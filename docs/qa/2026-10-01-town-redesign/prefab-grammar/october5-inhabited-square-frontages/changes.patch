@@ -1,0 +1,215 @@
+--- a/scripts/terrain/features/villages/fabric/WarrenPlotReservations.gd
++++ b/scripts/terrain/features/villages/fabric/WarrenPlotReservations.gd
+@@ -303,10 +303,10 @@
+ const PLAZA_SITE_ATTEMPTS := 4
+ 
+ 
+-## P3: assets first, then the town's one plaza, then ordinary decks on what is
+-## left. All three write their outcomes into `plan.audit["plot_outcomes"]`.
++## P3: reserve admitted broad courts and their house frontages, then assets
++## and fallback decks. Outcomes live in `plan.audit["plot_outcomes"]`.
+ static func reserve(plan: WarrenMazeSourcePlan,
+-		profile: WarrenVillageScaleProfile) -> void:
++		profile: WarrenVillageScaleProfile, protect_court_frontages: bool = true) -> void:
+ 	var outcomes := WarrenPlotPlanner.outcomes(plan)
+ 	var streets := WarrenPlotPlanner.street_bands(plan)
+ 	var blocked := WarrenPlotPlanner.blocked_columns(plan)
+@@ -317,9 +317,17 @@
+ 	# Reserve a broad, supportable internal court before landmark envelopes
+ 	# consume its house frontages. Small fallback courts keep the old order.
+ 	var plaza := 0
++	var court_frontages: Dictionary = {}
+ 	var broad_site := _best_plaza_site(plan, streets, blocked, {})
+ 	if int(broad_site.get("frontage_sides", 0)) >= 3:
+ 		plaza = _place_plaza(plan, streets, blocked, outcomes)
++		if plaza > 0 and protect_court_frontages:
++			for plot: Dictionary in plan.plots:
++				if plot.id == PLAZA_PLOT_ID:
++					court_frontages = _plaza_house_columns(plan, plot.cells,
++						int(plot.floor), streets, blocked)
++			blocked.merge(court_frontages)
++	outcomes["court_house_columns"] = court_frontages.keys()
+ 	_place_assets(plan, profile, streets, blocked, outcomes)
+ 	# The extra measured prefab reach is a height-bounded construction
+ 	# reservation, not ownership of every band in a column. Rebuild the ordinary
+@@ -334,6 +342,9 @@
+ 		if plan.massif.columns[column].has("house_site"): blocked[column] = true
+ 	if plaza == 0:
+ 		plaza = _place_plaza(plan, streets, blocked, outcomes)
++	# Optional decks also leave the admitted square's house frontages intact.
++	# This temporary mask is not a plot: P4 may still allocate the rooms.
++	blocked.merge(court_frontages)
+ 	_grow_decks(plan, streets, blocked, outcomes, plaza)
+ 	_reserve_deck_access(plan)
+ 
+@@ -1204,6 +1215,25 @@
+ 	return _footprint(plan, anchor, shape.x, shape.y, blocked)
+ 
+ 
++static func _plaza_house_columns(plan: WarrenMazeSourcePlan,
++		cells: Array[Vector2i], datum: int, streets: Dictionary,
++		blocked: Dictionary) -> Dictionary:
++	# Protect the real room sites used to admit an interior square from later
++	# landmark envelopes and optional decks. Keep the complete support/tier rule.
++	var columns: Dictionary = {}
++	for member: Vector2i in cells:
++		for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
++			var column := member + direction
++			if cells.has(column) or columns.has(column):
++				continue
++			var join := WarrenPlotPlanner._join(plan, column, datum, streets,
++				blocked, {}, -1, false)
++			if String(join.reason).is_empty() and WarrenPlotPlanner._edge_envelope_top(
++					plan, column) >= datum + WarrenMazeSourcePlan.MIN_HOUSE_BANDS:
++				columns[column] = true
++	return columns
++
++
+ static func _plaza_buildable_frontages(plan: WarrenMazeSourcePlan,
+ 		cells: Array[Vector2i], datum: int, streets: Dictionary,
+ 		blocked: Dictionary) -> int:
+--- a/scripts/terrain/features/villages/fabric/WarrenPlotPlanner.gd
++++ b/scripts/terrain/features/villages/fabric/WarrenPlotPlanner.gd
+@@ -100,10 +100,10 @@
+ ## P3: catalog assets at their minimum-modification sites, then flat decks
+ ## grown off the streets.
+ static func reserve(plan: WarrenMazeSourcePlan,
+-		profile: WarrenVillageScaleProfile) -> void:
++		profile: WarrenVillageScaleProfile, protect_court_frontages: bool = true) -> void:
+ 	if plan == null or profile == null or plan.is_sealed():
+ 		return
+-	WarrenPlotReservations.reserve(plan, profile)
++	WarrenPlotReservations.reserve(plan, profile, protect_court_frontages)
+ 
+ 
+ ## P4: seed a house at every street-fronting column, grow the partition
+--- a/scripts/terrain/features/villages/fabric/WarrenMazeCarver.gd
++++ b/scripts/terrain/features/villages/fabric/WarrenMazeCarver.gd
+@@ -2723,7 +2723,9 @@
+ 	preview.market_square_cells.assign(market_square)
+ 	preview.summit_cell = summit
+ 	preview.block_thickness = thickness
+-	WarrenPlotPlanner.reserve(preview, profile)
++	# This is a proposal used to route the perimeter; house frontage claims
++	# belong to the committed court after that route exists.
++	WarrenPlotPlanner.reserve(preview, profile, false)
+ 	var reach: Dictionary = {}
+ 	for record: Dictionary in WarrenPlotPlanner.outcomes(preview).get(
+ 			"asset_clearance_reservations", []) as Array:
+@@ -2736,8 +2738,8 @@
+ 	var envelopes: Dictionary = {}
+ 	var depths := massif_ring_depths(massif)
+ 	var landmarks := profile.landmark_range.x
+-	# `reserve` places the landmarks before the plaza, and they are held in
+-	# that order.
++	# Keep the reservation order, including a broad court admitted before
++	# landmarks; the preview does not yet claim its surrounding house sites.
+ 	for plot: Dictionary in preview.plots:
+ 		if StringName(plot.id) == WarrenPlotReservations.PLAZA_PLOT_ID:
+ 			var trial := sites.duplicate()
+--- a/scripts/terrain/features/villages/fabric/SettlementFabricAssembler.gd
++++ b/scripts/terrain/features/villages/fabric/SettlementFabricAssembler.gd
+@@ -5747,6 +5747,13 @@
+ 			var feature := {"asset": PLAZA_WIDE_FEATURES[
+ 				posmod(pick + offset, PLAZA_WIDE_FEATURES.size())], "cell": cell,
+ 				"origin": origin, "quarter": quarter, "cells": wide.cells}
++			if planted_island and feature.asset == PLAZA_TREE:
++				# Large beds use the same complete leafy crown/root proof as
++				# small and notched beds. The old bare tree is not a canopy.
++				var canopy := preload("res://scripts/terrain/features/villages/TownCourtTrees.gd").fit_island(
++					wide.cells, footprints, skin, quarter)
++				if not canopy.is_empty(): return canopy
++				continue
+ 			if _maze_plaza_feature_is_clear(feature, footprints, skin):
+ 				return feature
+ 	var narrow := _maze_plaza_block_nearest_centroid(plaza, occupied, cells,
+--- a/tests/test_broad_court_frontages.gd
++++ b/tests/test_broad_court_frontages.gd
+@@ -52,3 +52,51 @@
+ 		else:
+ 			assert_true(ground.capped_ground.has(support), "The unwalked planting bed keeps turf")
+ 	assert_gt(walking, 0)
++
++
++func test_broad_court_keeps_three_same_level_inhabited_sides():
++	var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
++	var spatial := WarrenVolumetricSolver.generate(
++		31, {}, program, WarrenVillageScaleProfile.for_id(&"large")
++	)
++	assert_not_null(spatial, WarrenVolumetricSolver.last_failure)
++	if spatial == null:
++		return
++	var fabric := spatial.compiled_fabric_cache()
++	var built := KitVillageBuildings.build(spatial, fabric, SuntailBuildingKit.create())
++	var source: WarrenMazeSourcePlan = spatial.source_volume.mass_context[&"maze_source_plan"]
++	var court: Dictionary = {}
++	for plot: Dictionary in source.plots:
++		if plot.id == &"plaza.00":
++			court = plot
++	assert_false(court.is_empty())
++	if court.is_empty():
++		return
++	var footprint := {}
++	for column: Vector2i in court.cells:
++		for dx in 2:
++			for dz in 2:
++				footprint[column * 2 + Vector2i(dx, dz)] = true
++	var inhabited := {}
++	for house: BuildingMass in built.houses:
++		for storey: Dictionary in house.storeys:
++			if (
++				int(storey.floor_band) <= int(court.floor)
++				and int(storey.floor_band) + 2 > int(court.floor)
++			):
++				for column: Vector2i in storey.cells:
++					inhabited[column] = true
++	var enclosed_sides := 0
++	for direction: Vector2i in BuildingMass.DIRS:
++		var edge := 0
++		var fronts := 0
++		for column: Vector2i in footprint:
++			if footprint.has(column + direction):
++				continue
++			edge += 1
++			fronts += int(inhabited.has(column + direction))
++		if fronts * 2 > edge:
++			enclosed_sides += 1
++	assert_gte(
++		enclosed_sides, 3, "A broad interior square must keep the house frontages used to admit it"
++	)
+--- a/tests/test_irregular_court_planting.gd
++++ b/tests/test_irregular_court_planting.gd
+@@ -52,3 +52,33 @@
+ 		),
+ 		"Public entrances own their cells even when the remaining planting has no tree"
+ 	)
++
++
++func test_large_planted_islands_use_living_canopies_instead_of_the_bare_centre_tree():
++	var catalog := EnvironmentCatalog.load_default()
++	var bounds := {}
++	for asset: StringName in (
++		SettlementFabricAssembler.PLAZA_COURT_TREES + SettlementFabricAssembler.PLAZA_WIDE_FEATURES
++	):
++		bounds[asset] = catalog.descriptor(asset).measured_aabb
++	var trees := 0
++	for offset in 12:
++		var bed := {}
++		for x in 3:
++			for z in 3:
++				bed[Vector3i(x + offset * 4, 0, z)] = true
++		var feature := SettlementFabricAssembler.maze_plaza_centre_feature(
++			bed, {}, {"asset_bounds": bounds}, [], {}, true
++		)
++		assert_false(feature.is_empty())
++		if feature.is_empty():
++			continue
++		assert_ne(
++			feature.asset,
++			SettlementFabricAssembler.PLAZA_TREE,
++			"A large planted court must not bypass the leafy canopy grammar"
++		)
++		if feature.asset in SettlementFabricAssembler.PLAZA_COURT_TREES:
++			trees += 1
++			assert_true(COURT.clear(feature, {"asset_bounds": bounds}, []))
++	assert_gt(trees, 0, "Seeded large courts retain tree choices alongside wells and market stalls")

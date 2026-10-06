@@ -391,8 +391,8 @@ func test_seal_requires_single_connected_component_and_no_holes() -> void:
 	assert_true(built.is_sealed())
 	assert_true(built._is_single_component(),
 		"a solid massif must not be a scattered archipelago of columns")
-	assert_eq(built._find_interior_hole(), null,
-		"a solid massif must not have a puncture through its middle")
+	assert_eq(built._find_interior_hole(true), null,
+		"only declared pre-bore courts may puncture the massif")
 
 
 func test_seal_rejects_a_hand_built_disjoint_massif() -> void:

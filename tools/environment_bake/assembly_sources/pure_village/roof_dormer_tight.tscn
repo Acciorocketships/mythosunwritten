@@ -1,0 +1,12 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://assets/PureVillage/Models/Architecture/Window_Roof_1_3.glb" id="1"]
+[ext_resource type="PackedScene" path="res://assets/PureVillage/Models/Architecture/Roof_Base_30x30_1.glb" id="2"]
+
+[node name="Assembly" type="Node3D"]
+
+[node name="Dormer" parent="." instance=ExtResource("1")]
+transform = Transform3D(0.6666666666666666, 0, 0, 0, 1, 0, 0, 0, 1.3333333333333333, 0, 0, 0)
+
+[node name="HostRoof" parent="." instance=ExtResource("2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1.3333333333333333, 0, 0, 0)

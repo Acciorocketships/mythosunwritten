@@ -1,0 +1,75 @@
+{
+	"63:grand": [
+		{
+			"bands": [
+				4,
+				6,
+				8,
+				10
+			],
+			"doors": [],
+			"features": [
+				{
+					"audit": {
+						"annex_backing_phase": 4,
+						"annex_breaks_tower_lineage": false,
+						"annex_building_id": "spatial.parcel.maze.house.012.part03",
+						"annex_embedded_depth_m": 0.03,
+						"annex_endpoint_facing": "(0, 0, -1)",
+						"annex_is_embedded_partial_extrusion": true,
+						"annex_is_full_scale_diagonal_overlap": false,
+						"annex_matches_parent_palette": true,
+						"annex_projected_depth_m": 0.87,
+						"annex_recipe_id": "outcrop.embedded.orange",
+						"annex_relief_profile_key": "parcel.maze.house.012/outcrop.embedded.orange",
+						"annex_reserved_cell_count": 4,
+						"annex_room_id": "spatial.parcel.maze.house.012.part03.room00",
+						"annex_source_parcel_id": "parcel.maze.house.012",
+						"annex_source_storey_index": 3,
+						"annex_uses_compound_union_shell": false,
+						"annex_vertical_facade_key": "parcel.maze.house.012/-1,-6/0,-1",
+						"construction_record_count": 1,
+						"endpoint_count": 1,
+						"endpoint_owner_count": 1,
+						"public_cell_count": 0,
+						"reserved_cell_count": 4,
+						"terrain_bearing_cell_count": 0
+					},
+					"endpoints": [
+						{
+							"cell": "(-1, 10, -6)",
+							"owner_id": "spatial.parcel.maze.house.012.part03"
+						}
+					],
+					"id": "spatial.feature.facade-bay.00",
+					"kind": "facade_bay"
+				}
+			],
+			"id": "spatial.parcel.maze.house.012",
+			"over_walks": [],
+			"plinth_columns": {
+				"(-1, -3)": 4
+			},
+			"public_contacts": [
+				"(-3, 10, -6)",
+				"(-3, 10, -5)",
+				"(-2, 10, -4)",
+				"(-1, 10, -4)",
+				"(-3, 11, -6)",
+				"(-3, 11, -5)",
+				"(-2, 11, -4)",
+				"(-1, 11, -4)"
+			],
+			"upper_cells": [
+				"(-2, 10, -6)",
+				"(-1, 10, -6)",
+				"(-2, 10, -5)",
+				"(-1, 10, -5)",
+				"(-2, 11, -6)",
+				"(-1, 11, -6)",
+				"(-2, 11, -5)",
+				"(-1, 11, -5)"
+			]
+		}
+	]
+}

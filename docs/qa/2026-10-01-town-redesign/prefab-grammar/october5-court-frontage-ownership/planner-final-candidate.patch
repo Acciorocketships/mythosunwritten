@@ -1,0 +1,62 @@
+--- scripts/terrain/features/villages/fabric/WarrenPlotPlanner.gd
++++ scripts/terrain/features/villages/fabric/WarrenPlotPlanner.gd
+@@ -215,7 +215,33 @@
+ 	# A flight's treads are not a doorstep: construction closes a door there,
+ 	# so a house seeded from one would stand with no entrance at all.
+ 	var flights := plan.excavation.flight_cells()
+-	for street: Vector3i in walk_order(plan):
++	var doors := walk_order(plan)
++	var court_frontages: Array = outcomes(plan).get("court_house_columns", [])
++	var priority: Dictionary = {}
++	var proposed: Dictionary = plan.audit.get("interior_court", {})
++	if not court_frontages.is_empty() and not proposed.is_empty():
++		var court_doors := plan.court_addresses()
++		var admitted_doors := {}
++		for plot: Dictionary in plan.plots:
++			if plot.id != WarrenPlotReservations.PLAZA_PLOT_ID \
++					or plot.cells != proposed.cells or int(plot.floor) != int(proposed.floor):
++				continue
++			for column: Vector2i in WarrenMazeSourcePlan.deck_flat_columns(plot):
++				admitted_doors[Vector3i(column.x,int(plot.floor),column.y)] = true
++		for street: Vector3i in doors:
++			if not court_doors.has(street) or not admitted_doors.has(street): continue
++			for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
++				if court_frontages.has(Vector2i(street.x,street.z)+direction):
++					priority[street] = true
++		# Stable partition: court rooms own their promised datum before a
++		# lower street can claim the same column with a roof at court level.
++		var ordered: Array[Vector3i] = []
++		for street: Vector3i in doors:
++			if priority.has(street): ordered.append(street)
++		for street: Vector3i in doors:
++			if not priority.has(street): ordered.append(street)
++		doors = ordered
++	for street: Vector3i in doors:
+ 		if flights.has(street):
+ 			continue
+ 		for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+@@ -235,7 +261,9 @@
+ 			out.append({"id": StringName("house.%03d" % out.size()),
+ 				"seed": column, "cells": [column] as Array[Vector2i],
+ 				"floor": street.y, "door": street, "tier": int(join["tier"]),
+-				"retired": false})
++				"retired": false,
++				"court_frontage": priority.has(street) and court_frontages.has(column),
++				"court_facing": -direction})
+ 	return out
+ 
+ 
+@@ -309,6 +337,13 @@
+ 			var absorb := owner >= 0 and owner != self_index \
+ 				and not bool(buildings[owner]["retired"]) \
+ 				and (buildings[owner]["cells"] as Array).size() == 1
++			# Preserve each inhabited side of a court. A corner doorway can
++			# address two sides; absorbing across that corner lets rectangle
++			# packing move the house to one side and discard the other front.
++			if absorb and bool(buildings[owner].get("court_frontage", false)):
++				if not bool(building.get("court_frontage", false)) \
++						or building.court_facing != buildings[owner].court_facing:
++					continue
+ 			if owner >= 0 and not absorb:
+ 				continue
+ 			var join := _join(plan, next, floor_band, streets, blocked, claims,

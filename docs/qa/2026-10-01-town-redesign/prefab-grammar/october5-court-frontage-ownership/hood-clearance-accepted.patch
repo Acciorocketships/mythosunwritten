@@ -1,0 +1,33 @@
+--- scripts/terrain/features/villages/kit/KitPublicClearance.gd
++++ scripts/terrain/features/villages/kit/KitPublicClearance.gd
+@@ -22,6 +22,30 @@
+ 		var box := AABB(center - Vector3(.5, 0, .5) * FabricRecipe.CELL_SIZE,
+ 			Vector3(FabricRecipe.CELL_SIZE, height, FabricRecipe.CELL_SIZE))
+ 		var volume := union_script.box_volume(map * box)
++		volume["open"] = true
++		out.append(volume)
++	return out
++
++
++## Late skywalks are not in the earlier public-floor mesh. Their whole
++## crossing, including each landing, must still stay free of optional wall
++## hoods and other facade ornaments. Keep these volumes out of roof/wall
++## cutting: enclosed spans intentionally have an inhabited shell.
++static func skywalk_ornament_air(spans: Array[Dictionary], kit: BuildingKit) -> Array[Dictionary]:
++	var out: Array[Dictionary] = []
++	var union_script := preload("res://scripts/terrain/features/villages/kit/KitRoofMeshUnion.gd")
++	var height := TraversalEnvelope.MIN_HEADROOM / VillageWorldScale.VERTICAL_SCALE
++	var occupied := {}
++	for span: Dictionary in spans:
++		var step: Vector3i = span.step
++		var cross: Vector3i = span.get("cross", Vector3i(step.z, 0, step.x))
++		for k in range(int(span.gap) + 2):
++			for lane in int(span.get("width", 1)):
++				occupied[span.cell + step * k + cross * lane] = true
++	for cell: Vector3i in occupied:
++		var volume := union_script.box_volume(AABB(Vector3(cell.x * kit.module_width,
++			cell.y * kit.band_height(), cell.z * kit.module_width),
++			Vector3(kit.module_width, height, kit.module_width)))
+ 		volume["open"] = true
+ 		out.append(volume)
+ 	return out

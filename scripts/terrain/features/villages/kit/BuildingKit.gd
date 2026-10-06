@@ -25,15 +25,38 @@ var plinth_height := 0.0
 var roof_row_rise := 3.0
 ## Native rise of the central ridge-top row used by odd-depth roofs.
 var roof_top_rise := 1.5
+## Ridge pivot lift above the even/odd nominal roof peak.
+var roof_ridge_lift := Vector2(0.3, 0.19)
+## Measured ridge cap top above its authored pivot, after kit anchors.
+## Clearance includes this ornament; slope height alone is not the roof top.
+var roof_ridge_head := 0.0
+## A retracted complete eave course stops at its original upper row joint.
+## Otherwise its shifted backing can emerge through the opposite ridge slope.
+var tight_eave_joint_clip := false
+## Native strips occupy whole bays; separate caps sit on the end walls.
+## False retains kits whose regular strips are centred on bay boundaries.
+var roof_edge_caps := false
+## Native X bounds of separate authored roof end caps. When a verge is
+## shortened, move the complete closure inward rather than slicing it off.
+var roof_cap_x_bounds: Dictionary = {}
+## Outward reach of complete native ridge Start/End caps, in metres.
+var ridge_cap_reach := Vector2.ZERO
 ## Native outward projection of a jetty (upper storey beyond the one below).
 var jetty_depth := 0.0
 ## Native outward distance from a wall piece's pivot line to its outer face.
 var wall_face := 0.0
+## Half thickness of the barge board across its roof-end plane.
+var barge_half_depth := 0.0
 ## Extra native thickness the storey masonry (`wall.stone.plain/window/door`)
 ## carries in front of the timber wall plane: its openings sit that much
 ## deeper and the stone storey stands that much proud of timber above.
 ## Retaining courses (`wall.stone.retaining`, `wall.stone.course`) stay flush.
 var masonry_depth := 0.0
+## Measured bottom-centred native gate header and crown overlap under its cap.
+var gate_arch_size := Vector3.ZERO
+var gate_arch_cap_lap := 0.0
+## Complete supported bay/spire envelope, relative to its window placement.
+var oriel_bounds := AABB()
 ## The `awning` role's canonical size after its anchor: exactly
 ## `awning_width` modules wide, centred on x = 0, its back posts at z = 0 and
 ## `awning_depth` / `awning_height` native metres deep / tall before fitting.
@@ -44,6 +67,14 @@ var awning_width := 1.0
 var awning_depth := 0.0
 var awning_height := 0.0
 var kit_id: StringName = &""
+## Worker-readable baked roof triangles. The kit owns its geometry authority;
+## roof union never loads source scenes or assumes an asset-pack path.
+var roof_geometry_path := ""
+## Native Pure Village roof family; chosen once per merged building.
+var roof_palette: StringName = &"blue"
+var frame_palette: StringName = &"native"
+## Material-only variants share these canonical worker triangles.
+var geometry_aliases: Dictionary = {}
 ## role (StringName) -> Array[StringName] of interchangeable asset ids.
 var roles: Dictionary = {}
 ## role -> Transform3D correction applied in native piece space.
@@ -101,3 +132,9 @@ func roof_profile(depth: int) -> Dictionary:
 	var top := depth % 2 == 1
 	var height := float(rows) * roof_row_rise + (roof_top_rise if top else 0.0)
 	return {"rows": rows, "top": top, "height": height}
+
+
+func roof_clearance_height(depth: int) -> float:
+	var profile := roof_profile(depth)
+	var lift := roof_ridge_lift.y if bool(profile.top) else roof_ridge_lift.x
+	return float(profile.height) + maxf(0.0, lift + roof_ridge_head)

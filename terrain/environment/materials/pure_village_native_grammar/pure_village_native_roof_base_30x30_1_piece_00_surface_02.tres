@@ -1,0 +1,19 @@
+[gd_resource type="StandardMaterial3D" load_steps=4 format=3]
+
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/pure_village_kit/cf243aca428479077639.res" id="1_5xlr7"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/pure_village_kit/2e3d7d32450bde8b0102.res" id="2_s2njc"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/pure_village_kit/36d50729850d879736d6.res" id="3_pkckf"]
+
+[resource]
+resource_name = "Wood_2"
+vertex_color_use_as_albedo = true
+albedo_texture = ExtResource("1_5xlr7")
+metallic = 1.0
+metallic_texture = ExtResource("2_s2njc")
+metallic_texture_channel = 2
+roughness_texture = ExtResource("2_s2njc")
+roughness_texture_channel = 1
+normal_enabled = true
+normal_texture = ExtResource("3_pkckf")
+ao_enabled = true
+ao_texture = ExtResource("2_s2njc")

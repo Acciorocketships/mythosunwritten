@@ -1,0 +1,2566 @@
+[
+  {
+    "ground": 0,
+    "id": "kit.spatial.feature.landmark.01",
+    "roofs": [
+      {
+        "axis": 0,
+        "band": 2,
+        "rect": "[P: (4, 11), S: (4, 4)]"
+      },
+      {
+        "axis": 0,
+        "band": 2,
+        "rect": "[P: (8, 13), S: (2, 2)]"
+      }
+    ],
+    "storeys": [
+      {
+        "bay_colour": "red",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "cells": {
+          "(4, 11)": true,
+          "(4, 12)": true,
+          "(4, 13)": true,
+          "(4, 14)": true,
+          "(5, 11)": true,
+          "(5, 12)": true,
+          "(5, 13)": true,
+          "(5, 14)": true,
+          "(6, 11)": true,
+          "(6, 12)": true,
+          "(6, 13)": true,
+          "(6, 14)": true,
+          "(7, 11)": true,
+          "(7, 12)": true,
+          "(7, 13)": true,
+          "(7, 14)": true,
+          "(8, 13)": true,
+          "(8, 14)": true,
+          "(9, 13)": true,
+          "(9, 14)": true
+        },
+        "covered_crown": {
+
+        },
+        "default_opening": "window",
+        "floor_band": 0,
+        "inset": false,
+        "material": "timber",
+        "openings": {
+          "(4, 12, 2)": "door",
+          "(4, 14, 2)": "plain",
+          "(5, 14, 1)": "plain",
+          "(7, 14, 1)": "plain",
+          "(8, 13, 3)": "plain",
+          "(9, 13, 3)": "plain"
+        },
+        "plain_every": 0,
+        "plinth": true,
+        "tint": "(1.0, 0.96, 0.88, 1.0)"
+      }
+    ],
+    "trace": []
+  },
+  {
+    "ground": 7,
+    "id": "kit.spatial.maze_bridge.00",
+    "roofs": [
+      {
+        "axis": 1,
+        "band": 9,
+        "rect": "[P: (8, -4), S: (2, 6)]"
+      }
+    ],
+    "storeys": [
+      {
+        "bay_colour": "red",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "cells": {
+          "(8, -2)": true,
+          "(8, -1)": true,
+          "(9, -2)": true,
+          "(9, -1)": true
+        },
+        "covered_crown": {
+
+        },
+        "default_opening": "window",
+        "floor_band": 7,
+        "inset": false,
+        "material": "timber",
+        "openings": {
+          "(8, -2, 3)": "plain",
+          "(8, -1, 1)": "plain",
+          "(9, -2, 3)": "plain",
+          "(9, -1, 1)": "plain"
+        },
+        "plain_every": 0,
+        "plinth": false,
+        "soffit": true,
+        "soffit_cells": {
+          "(8, -2)": true,
+          "(8, -1)": true,
+          "(9, -2)": true,
+          "(9, -1)": true
+        },
+        "tint": "(1.0, 0.93, 0.82, 1.0)"
+      }
+    ],
+    "trace": []
+  },
+  {
+    "ground": 7,
+    "id": "kit.spatial.maze_bridge.01",
+    "roofs": [
+      {
+        "axis": 0,
+        "band": 9,
+        "rect": "[P: (4, 6), S: (6, 2)]"
+      },
+      {
+        "axis": 1,
+        "band": 9,
+        "rect": "[P: (6, 4), S: (2, 2)]"
+      }
+    ],
+    "storeys": [
+      {
+        "bay_colour": "red",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "cells": {
+          "(6, 4)": true,
+          "(6, 5)": true,
+          "(6, 6)": true,
+          "(6, 7)": true,
+          "(7, 4)": true,
+          "(7, 5)": true,
+          "(7, 6)": true,
+          "(7, 7)": true
+        },
+        "covered_crown": {
+
+        },
+        "default_opening": "window",
+        "floor_band": 7,
+        "inset": false,
+        "material": "timber",
+        "openings": {
+          "(6, 4, 2)": "plain",
+          "(6, 4, 3)": "plain",
+          "(6, 5, 2)": "plain",
+          "(6, 6, 2)": "plain",
+          "(6, 7, 2)": "plain",
+          "(7, 4, 0)": "plain",
+          "(7, 5, 0)": "plain",
+          "(7, 6, 0)": "plain",
+          "(7, 7, 0)": "plain",
+          "(7, 7, 1)": "plain"
+        },
+        "plain_every": 0,
+        "plinth": false,
+        "soffit": true,
+        "soffit_cells": {
+          "(6, 4)": true,
+          "(6, 5)": true,
+          "(6, 6)": true,
+          "(6, 7)": true,
+          "(7, 4)": true,
+          "(7, 5)": true,
+          "(7, 6)": true,
+          "(7, 7)": true
+        },
+        "tint": "(1.0, 0.93, 0.82, 1.0)"
+      }
+    ],
+    "trace": [
+      {
+        "axis": 1,
+        "band": 9,
+        "bay": "[P: (6, 6), S: (2, 2)]",
+        "gable_rejections": 0,
+        "outcome": "cross_gable",
+        "rect": "[P: (6, 4), S: (2, 4)]",
+        "roof_rejections": 0
+      }
+    ]
+  },
+  {
+    "ground": 7,
+    "id": "kit.spatial.maze_bridge_end.01.00",
+    "roofs": [
+      {
+        "axis": 1,
+        "band": 9,
+        "rect": "[P: (8, 4), S: (2, 2)]"
+      }
+    ],
+    "storeys": [
+      {
+        "bay_colour": "red",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "cells": {
+          "(8, 4)": true,
+          "(8, 5)": true,
+          "(8, 6)": true,
+          "(8, 7)": true,
+          "(9, 4)": true,
+          "(9, 5)": true,
+          "(9, 6)": true,
+          "(9, 7)": true
+        },
+        "covered_crown": {
+
+        },
+        "default_opening": "window",
+        "floor_band": 7,
+        "inset": false,
+        "material": "timber",
+        "openings": {
+          "(8, 4, 2)": "plain",
+          "(8, 4, 3)": "plain",
+          "(8, 5, 2)": "plain",
+          "(8, 6, 2)": "plain",
+          "(8, 7, 2)": "plain",
+          "(9, 6, 0)": "plain",
+          "(9, 7, 0)": "plain"
+        },
+        "plain_every": 0,
+        "plinth": true,
+        "tint": "(0.97, 0.97, 0.93, 1.0)"
+      }
+    ],
+    "trace": [
+      {
+        "axis": 1,
+        "band": 9,
+        "bay": "[P: (8, 6), S: (2, 2)]",
+        "gable_rejections": 0,
+        "outcome": "cross_gable",
+        "rect": "[P: (8, 4), S: (2, 4)]",
+        "roof_rejections": 0
+      }
+    ]
+  },
+  {
+    "ground": 7,
+    "id": "kit.spatial.maze_bridge_end.01.01",
+    "roofs": [
+      {
+        "axis": 1,
+        "band": 9,
+        "rect": "[P: (4, 4), S: (2, 2)]"
+      }
+    ],
+    "storeys": [
+      {
+        "bay_colour": "red",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "cells": {
+          "(4, 4)": true,
+          "(4, 5)": true,
+          "(4, 6)": true,
+          "(4, 7)": true,
+          "(5, 4)": true,
+          "(5, 5)": true,
+          "(5, 6)": true,
+          "(5, 7)": true
+        },
+        "covered_crown": {
+
+        },
+        "default_opening": "window",
+        "floor_band": 7,
+        "inset": false,
+        "material": "timber",
+        "openings": {
+          "(4, 4, 2)": "plain",
+          "(4, 4, 3)": "plain",
+          "(4, 5, 2)": "plain",
+          "(4, 6, 2)": "plain",
+          "(4, 7, 1)": "plain",
+          "(4, 7, 2)": "plain",
+          "(5, 4, 0)": "plain",
+          "(5, 4, 3)": "plain",
+          "(5, 5, 0)": "plain",
+          "(5, 6, 0)": "plain",
+          "(5, 7, 0)": "plain",
+          "(5, 7, 1)": "plain"
+        },
+        "plain_every": 0,
+        "plinth": true,
+        "tint": "(0.93, 0.96, 1.0, 1.0)"
+      }
+    ],
+    "trace": [
+      {
+        "axis": 1,
+        "band": 9,
+        "bay": "[P: (4, 6), S: (2, 2)]",
+        "gable_rejections": 0,
+        "outcome": "cross_gable",
+        "rect": "[P: (4, 4), S: (2, 4)]",
+        "roof_rejections": 0
+      }
+    ]
+  },
+  {
+    "ground": 4,
+    "id": "kit.spatial.parcel.maze.bridge.00.end.0.lower",
+    "roofs": [
+      {
+        "axis": 0,
+        "band": 6,
+        "rect": "[P: (10, 4), S: (2, 2)]"
+      },
+      {
+        "axis": 1,
+        "band": 6,
+        "rect": "[P: (10, 6), S: (2, 2)]"
+      }
+    ],
+    "storeys": [
+      {
+        "bay_colour": "blue",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "cells": {
+          "(8, 0)": true,
+          "(8, 1)": true,
+          "(8, 2)": true,
+          "(8, 3)": true,
+          "(8, 4)": true,
+          "(8, 5)": true,
+          "(8, 6)": true,
+          "(8, 7)": true,
+          "(9, 0)": true,
+          "(9, 1)": true,
+          "(9, 2)": true,
+          "(9, 3)": true,
+          "(9, 4)": true,
+          "(9, 5)": true,
+          "(9, 6)": true,
+          "(9, 7)": true,
+          "(10, 4)": true,
+          "(10, 5)": true,
+          "(10, 6)": true,
+          "(10, 7)": true,
+          "(11, 4)": true,
+          "(11, 5)": true,
+          "(11, 6)": true,
+          "(11, 7)": true
+        },
+        "covered_crown": {
+          "(8, 4)": true,
+          "(8, 5)": true,
+          "(8, 6)": true,
+          "(8, 7)": true,
+          "(9, 4)": true,
+          "(9, 5)": true,
+          "(9, 6)": true,
+          "(9, 7)": true
+        },
+        "crown_parts": [
+          {
+            "(8, 0)": true,
+            "(8, 1)": true,
+            "(8, 2)": true,
+            "(8, 3)": true,
+            "(9, 0)": true,
+            "(9, 1)": true,
+            "(9, 2)": true,
+            "(9, 3)": true
+          },
+          {
+            "(8, 4)": true,
+            "(8, 5)": true,
+            "(8, 6)": true,
+            "(8, 7)": true,
+            "(9, 4)": true,
+            "(9, 5)": true,
+            "(9, 6)": true,
+            "(9, 7)": true,
+            "(10, 4)": true,
+            "(10, 5)": true,
+            "(10, 6)": true,
+            "(10, 7)": true,
+            "(11, 4)": true,
+            "(11, 5)": true,
+            "(11, 6)": true,
+            "(11, 7)": true
+          }
+        ],
+        "default_opening": "window",
+        "floor_band": 4,
+        "inset": false,
+        "material": "timber",
+        "openings": {
+          "(8, 0, 2)": "plain",
+          "(8, 0, 3)": "door",
+          "(8, 1, 2)": "plain",
+          "(8, 2, 2)": "plain",
+          "(8, 5, 2)": "door",
+          "(8, 6, 2)": "plain",
+          "(9, 1, 0)": "plain",
+          "(11, 7, 1)": "plain"
+        },
+        "plain_every": 0,
+        "plinth": true,
+        "roofed": {
+          "(8, 0)": true,
+          "(8, 1)": true,
+          "(8, 2)": true,
+          "(8, 3)": true,
+          "(8, 4)": true,
+          "(8, 5)": true,
+          "(8, 6)": true,
+          "(8, 7)": true,
+          "(9, 0)": true,
+          "(9, 1)": true,
+          "(9, 2)": true,
+          "(9, 3)": true,
+          "(9, 4)": true,
+          "(9, 5)": true,
+          "(9, 6)": true,
+          "(9, 7)": true,
+          "(10, 4)": true,
+          "(10, 5)": true,
+          "(10, 6)": true,
+          "(10, 7)": true,
+          "(11, 4)": true,
+          "(11, 5)": true,
+          "(11, 6)": true,
+          "(11, 7)": true
+        },
+        "tint": "(0.97, 0.97, 0.93, 1.0)"
+      }
+    ],
+    "trace": [
+      {
+        "axis": 1,
+        "band": 6,
+        "gable_rejections": 0,
+        "outcome": "blocked",
+        "rect": "[P: (8, 0), S: (2, 4)]",
+        "roof_rejections": 2
+      },
+      {
+        "axis": 1,
+        "band": 6,
+        "bay": "[P: (10, 4), S: (2, 2)]",
+        "gable_rejections": 0,
+        "outcome": "cross_gable",
+        "rect": "[P: (10, 4), S: (2, 4)]",
+        "roof_rejections": 0
+      }
+    ]
+  },
+  {
+    "ground": 4,
+    "id": "kit.spatial.parcel.maze.bridge.00.end.1.lower",
+    "roofs": [
+      {
+        "axis": 1,
+        "band": 12,
+        "rect": "[P: (4, -4), S: (2, 2)]"
+      }
+    ],
+    "storeys": [
+      {
+        "bay_colour": "red",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "cells": {
+          "(4, -4)": true,
+          "(4, -3)": true,
+          "(5, -4)": true,
+          "(5, -3)": true,
+          "(6, -4)": true,
+          "(6, -3)": true,
+          "(7, -4)": true,
+          "(7, -3)": true,
+          "(8, -4)": true,
+          "(8, -3)": true,
+          "(9, -4)": true,
+          "(9, -3)": true
+        },
+        "covered_crown": {
+          "(9, -4)": true
+        },
+        "crown_parts": [
+          {
+            "(8, -4)": true,
+            "(8, -3)": true,
+            "(9, -4)": true,
+            "(9, -3)": true
+          },
+          {
+            "(6, -4)": true,
+            "(6, -3)": true,
+            "(7, -4)": true,
+            "(7, -3)": true
+          },
+          {
+            "(4, -4)": true,
+            "(4, -3)": true,
+            "(5, -4)": true,
+            "(5, -3)": true
+          }
+        ],
+        "default_opening": "window",
+        "floor_band": 4,
+        "inset": false,
+        "material": "timber",
+        "openings": {
+          "(4, -3, 1)": "plain",
+          "(5, -4, 3)": "plain",
+          "(5, -3, 1)": "door",
+          "(6, -4, 3)": "plain",
+          "(7, -3, 1)": "door",
+          "(9, -4, 0)": "plain",
+          "(9, -3, 1)": "door"
+        },
+        "plain_every": 0,
+        "plinth": true,
+        "roofed": {
+          "(6, -4)": true,
+          "(6, -3)": true,
+          "(7, -4)": true,
+          "(7, -3)": true,
+          "(8, -4)": true,
+          "(8, -3)": true,
+          "(9, -4)": true,
+          "(9, -3)": true
+        },
+        "tint": "(0.97, 0.97, 0.93, 1.0)"
+      },
+      {
+        "bay_colour": "red",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "cells": {
+          "(4, -4)": true,
+          "(4, -3)": true,
+          "(5, -4)": true,
+          "(5, -3)": true
+        },
+        "covered_crown": {
+
+        },
+        "crown_parts": [
+          {
+            "(4, -4)": true,
+            "(4, -3)": true,
+            "(5, -4)": true,
+            "(5, -3)": true
+          }
+        ],
+        "default_opening": "window",
+        "floor_band": 6,
+        "inset": false,
+        "material": "timber",
+        "openings": {
+          "(5, -4, 0)": "window",
+          "(5, -4, 3)": "bay",
+          "(5, -3, 0)": "window"
+        },
+        "plain_every": 0,
+        "plinth": false,
+        "projections": [
+          {
+            "band": 6,
+            "centres": [
+              "(6.0, -2.5)",
+              "(6.0, -3.5)"
+            ],
+            "depth": 0.65,
+            "dir": 0,
+            "edges": [
+              "(5, -4, 0)",
+              "(5, -3, 0)"
+            ]
+          }
+        ],
+        "roofed": {
+
+        },
+        "tint": "(0.97, 0.97, 0.93, 1.0)",
+        "wall_offsets": {
+          "(5, -4, 0)": 0.325,
+          "(5, -3, 0)": 0.325
+        }
+      },
+      {
+        "abutted": true,
+        "bay_colour": "red",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "cells": {
+          "(4, -4)": true,
+          "(4, -3)": true,
+          "(5, -4)": true,
+          "(5, -3)": true
+        },
+        "covered_crown": {
+
+        },
+        "crown_parts": [
+          {
+            "(4, -4)": true,
+            "(4, -3)": true,
+            "(5, -4)": true,
+            "(5, -3)": true
+          }
+        ],
+        "default_opening": "window",
+        "floor_band": 8,
+        "inset": false,
+        "material": "timber",
+        "opening_assets": {
+          "(4, -3, 2)": "suntail.frame.frame_wall_1_w"
+        },
+        "openings": {
+          "(4, -4, 3)": "bay",
+          "(4, -3, 1)": "door",
+          "(4, -3, 2)": "window",
+          "(5, -4, 0)": "bay",
+          "(5, -3, 0)": "plain"
+        },
+        "passage_edges": {
+          "(4, -3, 1)": true
+        },
+        "plain_every": 0,
+        "plinth": false,
+        "roofed": {
+
+        },
+        "tint": "(0.97, 0.97, 0.93, 1.0)"
+      },
+      {
+        "bay_colour": "red",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "cells": {
+          "(4, -4)": true,
+          "(4, -3)": true,
+          "(5, -4)": true,
+          "(5, -3)": true
+        },
+        "covered_crown": {
+
+        },
+        "crown_parts": [
+          {
+            "(4, -4)": true,
+            "(4, -3)": true,
+            "(5, -4)": true,
+            "(5, -3)": true
+          }
+        ],
+        "default_opening": "window",
+        "floor_band": 10,
+        "inset": false,
+        "material": "timber",
+        "opening_assets": {
+          "(4, -4, 2)": "suntail.frame.frame_wall_1_w",
+          "(5, -4, 0)": "suntail.frame.frame_wall_1_w"
+        },
+        "openings": {
+          "(4, -4, 2)": "window",
+          "(4, -4, 3)": "plain",
+          "(4, -3, 1)": "plain",
+          "(5, -4, 0)": "window",
+          "(5, -4, 3)": "plain",
+          "(5, -3, 1)": "plain"
+        },
+        "plain_every": 0,
+        "plinth": false,
+        "roofed": {
+          "(4, -4)": true,
+          "(4, -3)": true,
+          "(5, -4)": true,
+          "(5, -3)": true
+        },
+        "tint": "(0.97, 0.97, 0.93, 1.0)"
+      }
+    ],
+    "trace": []
+  },
+  {
+    "ground": 4,
+    "id": "kit.spatial.parcel.maze.bridge.01.end.1.lower",
+    "roofs": [
+      {
+        "axis": 1,
+        "band": 8,
+        "rect": "[P: (2, 8), S: (2, 2)]"
+      }
+    ],
+    "storeys": [
+      {
+        "abutted": true,
+        "bay_colour": "red",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "cells": {
+          "(2, 4)": true,
+          "(2, 5)": true,
+          "(2, 6)": true,
+          "(2, 7)": true,
+          "(2, 8)": true,
+          "(2, 9)": true,
+          "(3, 4)": true,
+          "(3, 5)": true,
+          "(3, 6)": true,
+          "(3, 7)": true,
+          "(3, 8)": true,
+          "(3, 9)": true,
+          "(4, 4)": true,
+          "(4, 5)": true,
+          "(4, 6)": true,
+          "(4, 7)": true,
+          "(5, 4)": true,
+          "(5, 5)": true,
+          "(5, 6)": true,
+          "(5, 7)": true
+        },
+        "covered_crown": {
+          "(2, 4)": true,
+          "(2, 5)": true,
+          "(2, 6)": true,
+          "(2, 7)": true,
+          "(3, 4)": true,
+          "(3, 5)": true,
+          "(3, 6)": true,
+          "(3, 7)": true,
+          "(4, 4)": true,
+          "(4, 5)": true,
+          "(4, 6)": true,
+          "(4, 7)": true,
+          "(5, 4)": true,
+          "(5, 5)": true,
+          "(5, 6)": true,
+          "(5, 7)": true
+        },
+        "crown_parts": [
+          {
+            "(2, 4)": true,
+            "(2, 5)": true,
+            "(2, 6)": true,
+            "(2, 7)": true,
+            "(3, 4)": true,
+            "(3, 5)": true,
+            "(3, 6)": true,
+            "(3, 7)": true,
+            "(4, 4)": true,
+            "(4, 5)": true,
+            "(4, 6)": true,
+            "(4, 7)": true,
+            "(5, 4)": true,
+            "(5, 5)": true,
+            "(5, 6)": true,
+            "(5, 7)": true
+          },
+          {
+            "(2, 8)": true,
+            "(2, 9)": true,
+            "(3, 8)": true,
+            "(3, 9)": true
+          }
+        ],
+        "default_opening": "window",
+        "floor_band": 4,
+        "inset": false,
+        "material": "timber",
+        "openings": {
+          "(2, 4, 3)": "plain",
+          "(2, 5, 2)": "plain",
+          "(2, 6, 2)": "door",
+          "(2, 7, 2)": "plain",
+          "(2, 9, 1)": "plain",
+          "(3, 4, 3)": "plain",
+          "(3, 8, 0)": "door",
+          "(4, 4, 3)": "plain",
+          "(5, 4, 0)": "door",
+          "(5, 6, 0)": "door"
+        },
+        "passage_edges": {
+          "(2, 6, 2)": true
+        },
+        "plain_every": 0,
+        "plinth": true,
+        "roofed": {
+          "(2, 4)": true,
+          "(2, 5)": true,
+          "(2, 6)": true,
+          "(2, 7)": true,
+          "(3, 4)": true,
+          "(3, 5)": true,
+          "(3, 6)": true,
+          "(3, 7)": true,
+          "(4, 4)": true,
+          "(4, 5)": true,
+          "(4, 6)": true,
+          "(4, 7)": true,
+          "(5, 4)": true,
+          "(5, 5)": true,
+          "(5, 6)": true,
+          "(5, 7)": true
+        },
+        "tint": "(1.0, 0.93, 0.82, 1.0)"
+      },
+      {
+        "bay_colour": "red",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "cells": {
+          "(2, 8)": true,
+          "(2, 9)": true,
+          "(3, 8)": true,
+          "(3, 9)": true
+        },
+        "covered_crown": {
+
+        },
+        "crown_parts": [
+          {
+            "(2, 8)": true,
+            "(2, 9)": true,
+            "(3, 8)": true,
+            "(3, 9)": true
+          }
+        ],
+        "default_opening": "window",
+        "floor_band": 6,
+        "inset": false,
+        "material": "timber",
+        "opening_assets": {
+          "(2, 9, 2)": "suntail.frame.frame_wall_1_w",
+          "(3, 8, 3)": "pure_village.wall.plaster.window_open"
+        },
+        "opening_min_y": {
+          "(2, 8, 3)": 10.55,
+          "(3, 8, 3)": 10.55
+        },
+        "openings": {
+          "(2, 8, 3)": "plain",
+          "(2, 9, 2)": "window",
+          "(3, 8, 3)": "window"
+        },
+        "plain_every": 0,
+        "plinth": false,
+        "roofed": {
+          "(2, 8)": true,
+          "(2, 9)": true,
+          "(3, 8)": true,
+          "(3, 9)": true
+        },
+        "tint": "(1.0, 0.93, 0.82, 1.0)"
+      }
+    ],
+    "trace": []
+  },
+  {
+    "ground": 0,
+    "id": "kit.spatial.parcel.maze.house.000",
+    "roofs": [
+      {
+        "axis": 0,
+        "band": 2,
+        "rect": "[P: (-6, -4), S: (2, 2)]"
+      },
+      {
+        "axis": 1,
+        "band": 2,
+        "rect": "[P: (-6, -2), S: (2, 2)]"
+      }
+    ],
+    "storeys": [
+      {
+        "bay_colour": "blue",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "cells": {
+          "(-6, -4)": true,
+          "(-6, -3)": true,
+          "(-6, -2)": true,
+          "(-6, -1)": true,
+          "(-5, -4)": true,
+          "(-5, -3)": true,
+          "(-5, -2)": true,
+          "(-5, -1)": true
+        },
+        "covered_crown": {
+
+        },
+        "default_opening": "window",
+        "floor_band": 0,
+        "inset": false,
+        "material": "stone",
+        "openings": {
+          "(-6, -4, 3)": "plain",
+          "(-6, -3, 2)": "plain",
+          "(-6, -2, 2)": "plain",
+          "(-6, -1, 2)": "plain",
+          "(-5, -4, 0)": "door",
+          "(-5, -4, 3)": "plain",
+          "(-5, -3, 0)": "plain",
+          "(-5, -2, 0)": "door",
+          "(-5, -1, 0)": "plain"
+        },
+        "plain_every": 0,
+        "plinth": true,
+        "tint": "(0.97, 0.98, 1.0, 1.0)"
+      }
+    ],
+    "trace": [
+      {
+        "axis": 1,
+        "band": 2,
+        "bay": "[P: (-6, -4), S: (2, 2)]",
+        "gable_rejections": 0,
+        "outcome": "cross_gable",
+        "rect": "[P: (-6, -4), S: (2, 4)]",
+        "roof_rejections": 0
+      }
+    ]
+  },
+  {
+    "ground": 0,
+    "id": "kit.spatial.parcel.maze.house.001",
+    "roofs": [
+      {
+        "axis": 1,
+        "band": 2,
+        "rect": "[P: (-2, -2), S: (2, 2)]"
+      }
+    ],
+    "storeys": [
+      {
+        "bay_colour": "blue",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "cells": {
+          "(-2, -2)": true,
+          "(-2, -1)": true,
+          "(-1, -2)": true,
+          "(-1, -1)": true
+        },
+        "covered_crown": {
+
+        },
+        "default_opening": "window",
+        "floor_band": 0,
+        "inset": false,
+        "material": "timber",
+        "opening_assets": {
+          "(-1, -1, 1)": "pure_village.wall.plaster.window.finish_oak"
+        },
+        "openings": {
+          "(-2, -2, 2)": "plain",
+          "(-2, -2, 3)": "plain",
+          "(-2, -1, 1)": "plain",
+          "(-2, -1, 2)": "door",
+          "(-1, -2, 0)": "plain",
+          "(-1, -2, 3)": "plain",
+          "(-1, -1, 0)": "plain",
+          "(-1, -1, 1)": "window"
+        },
+        "plain_every": 0,
+        "plinth": true,
+        "tint": "(1.0, 1.0, 1.0, 1.0)"
+      }
+    ],
+    "trace": []
+  },
+  {
+    "ground": 0,
+    "id": "kit.spatial.parcel.maze.house.003",
+    "roofs": [
+      {
+        "axis": 0,
+        "band": 6,
+        "rect": "[P: (-4, 5), S: (2, 3)]"
+      },
+      {
+        "axis": 1,
+        "band": 6,
+        "rect": "[P: (-4, 2), S: (2, 3)]"
+      }
+    ],
+    "storeys": [
+      {
+        "bay_colour": "blue",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "cells": {
+          "(-4, 2)": true,
+          "(-4, 3)": true,
+          "(-4, 4)": true,
+          "(-4, 5)": true,
+          "(-4, 6)": true,
+          "(-4, 7)": true,
+          "(-3, 2)": true,
+          "(-3, 3)": true,
+          "(-3, 4)": true,
+          "(-3, 5)": true,
+          "(-3, 6)": true,
+          "(-3, 7)": true
+        },
+        "covered_crown": {
+
+        },
+        "default_opening": "window",
+        "floor_band": 0,
+        "inset": false,
+        "material": "stone",
+        "openings": {
+          "(-4, 2, 3)": "door",
+          "(-4, 6, 2)": "plain",
+          "(-4, 7, 1)": "plain",
+          "(-4, 7, 2)": "plain",
+          "(-3, 2, 0)": "plain",
+          "(-3, 2, 3)": "plain",
+          "(-3, 6, 0)": "plain",
+          "(-3, 7, 1)": "door"
+        },
+        "plain_every": 0,
+        "plinth": true,
+        "tint": "(0.97, 0.98, 1.0, 1.0)"
+      },
+      {
+        "bay_colour": "blue",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "cells": {
+          "(-4, 2)": true,
+          "(-4, 3)": true,
+          "(-4, 7)": true,
+          "(-3, 2)": true,
+          "(-3, 3)": true,
+          "(-3, 4)": true,
+          "(-3, 5)": true,
+          "(-3, 6)": true,
+          "(-3, 7)": true
+        },
+        "covered_crown": {
+
+        },
+        "default_opening": "window",
+        "floor_band": 2,
+        "inset": false,
+        "loggia": true,
+        "material": "timber",
+        "openings": {
+          "(-4, 2, 2)": "bay",
+          "(-4, 2, 3)": "bay",
+          "(-4, 3, 2)": "plain",
+          "(-4, 7, 1)": "plain",
+          "(-4, 7, 2)": "plain",
+          "(-3, 4, 2)": "door",
+          "(-3, 5, 0)": "bay",
+          "(-3, 5, 2)": "window",
+          "(-3, 6, 2)": "window",
+          "(-3, 7, 1)": "bay"
+        },
+        "plain_every": 0,
+        "plinth": false,
+        "projections": [
+          {
+            "band": 2,
+            "centres": [
+              "(-3.0, 5.5)",
+              "(-3.0, 6.5)"
+            ],
+            "depth": 0.65,
+            "dir": 2,
+            "edges": [
+              "(-3, 5, 2)",
+              "(-3, 6, 2)"
+            ]
+          }
+        ],
+        "tint": "(0.93, 0.96, 1.0, 1.0)",
+        "wall_offsets": {
+          "(-3, 5, 2)": 0.325,
+          "(-3, 6, 2)": 0.325
+        }
+      },
+      {
+        "abutted": true,
+        "bay_colour": "blue",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "bears_balcony": true,
+        "cells": {
+          "(-4, 2)": true,
+          "(-4, 3)": true,
+          "(-4, 4)": true,
+          "(-4, 5)": true,
+          "(-4, 6)": true,
+          "(-4, 7)": true,
+          "(-3, 2)": true,
+          "(-3, 3)": true,
+          "(-3, 4)": true,
+          "(-3, 5)": true,
+          "(-3, 6)": true,
+          "(-3, 7)": true
+        },
+        "covered_crown": {
+
+        },
+        "default_opening": "window",
+        "floor_band": 4,
+        "inset": false,
+        "material": "timber",
+        "opening_assets": {
+          "(-4, 2, 3)": "pure_village.wall.plaster.window_open.finish_walnut",
+          "(-3, 7, 0)": "pure_village.wall.plaster.window.finish_walnut"
+        },
+        "openings": {
+          "(-4, 2, 2)": "plain",
+          "(-4, 2, 3)": "window",
+          "(-4, 3, 2)": "plain",
+          "(-4, 4, 2)": "plain",
+          "(-4, 5, 2)": "plain",
+          "(-4, 6, 2)": "plain",
+          "(-4, 7, 1)": "plain",
+          "(-4, 7, 2)": "plain",
+          "(-3, 2, 0)": "plain",
+          "(-3, 2, 3)": "plain",
+          "(-3, 3, 0)": "door",
+          "(-3, 4, 0)": "plain",
+          "(-3, 5, 0)": "plain",
+          "(-3, 6, 0)": "door",
+          "(-3, 7, 0)": "window",
+          "(-3, 7, 1)": "plain"
+        },
+        "passage_edges": {
+          "(-3, 6, 0)": true
+        },
+        "plain_every": 0,
+        "plinth": false,
+        "tint": "(0.93, 0.96, 1.0, 1.0)"
+      }
+    ],
+    "trace": [
+      {
+        "axis": 1,
+        "band": 6,
+        "bay": "[P: (-4, 5), S: (2, 3)]",
+        "gable_rejections": 0,
+        "outcome": "cross_gable",
+        "rect": "[P: (-4, 2), S: (2, 6)]",
+        "roof_rejections": 0
+      }
+    ]
+  },
+  {
+    "ground": 0,
+    "id": "kit.spatial.parcel.maze.house.004",
+    "roofs": [
+      {
+        "axis": 1,
+        "band": 2,
+        "rect": "[P: (0, 2), S: (2, 2)]"
+      }
+    ],
+    "storeys": [
+      {
+        "bay_colour": "red",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "cells": {
+          "(0, 2)": true,
+          "(0, 3)": true,
+          "(1, 2)": true,
+          "(1, 3)": true
+        },
+        "covered_crown": {
+
+        },
+        "default_opening": "window",
+        "floor_band": 0,
+        "inset": false,
+        "material": "timber",
+        "opening_assets": {
+          "(0, 3, 1)": "pure_village.wall.plaster.window",
+          "(1, 3, 1)": "pure_village.wall.plaster.window"
+        },
+        "opening_min_y": {
+          "(1, 2, 0)": 1.55,
+          "(1, 3, 0)": 1.55
+        },
+        "openings": {
+          "(0, 2, 2)": "plain",
+          "(0, 2, 3)": "door",
+          "(0, 3, 1)": "window",
+          "(0, 3, 2)": "plain",
+          "(1, 2, 0)": "plain",
+          "(1, 2, 3)": "plain",
+          "(1, 3, 0)": "plain",
+          "(1, 3, 1)": "window"
+        },
+        "plain_every": 0,
+        "plinth": true,
+        "tint": "(1.0, 1.0, 1.0, 1.0)"
+      }
+    ],
+    "trace": []
+  },
+  {
+    "ground": 0,
+    "id": "kit.spatial.parcel.maze.house.005",
+    "roofs": [
+      {
+        "axis": 0,
+        "band": 2,
+        "rect": "[P: (-2, -20), S: (2, 2)]"
+      },
+      {
+        "axis": 0,
+        "band": 2,
+        "rect": "[P: (-2, -8), S: (2, 2)]"
+      },
+      {
+        "axis": 0,
+        "band": 2,
+        "rect": "[P: (-2, -14), S: (2, 2)]"
+      },
+      {
+        "axis": 1,
+        "band": 2,
+        "rect": "[P: (-2, -18), S: (2, 4)]"
+      },
+      {
+        "axis": 1,
+        "band": 2,
+        "rect": "[P: (-2, -12), S: (2, 4)]"
+      },
+      {
+        "axis": 0,
+        "band": 2,
+        "rect": "[P: (-4, -15), S: (2, 3)]"
+      },
+      {
+        "axis": 1,
+        "band": 2,
+        "rect": "[P: (-4, -18), S: (2, 3)]"
+      }
+    ],
+    "storeys": [
+      {
+        "bay_colour": "red",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "cells": {
+          "(-4, -18)": true,
+          "(-4, -17)": true,
+          "(-4, -16)": true,
+          "(-4, -15)": true,
+          "(-4, -14)": true,
+          "(-4, -13)": true,
+          "(-3, -18)": true,
+          "(-3, -17)": true,
+          "(-3, -16)": true,
+          "(-3, -15)": true,
+          "(-3, -14)": true,
+          "(-3, -13)": true,
+          "(-2, -20)": true,
+          "(-2, -19)": true,
+          "(-2, -18)": true,
+          "(-2, -17)": true,
+          "(-2, -16)": true,
+          "(-2, -15)": true,
+          "(-2, -14)": true,
+          "(-2, -13)": true,
+          "(-2, -12)": true,
+          "(-2, -11)": true,
+          "(-2, -10)": true,
+          "(-2, -9)": true,
+          "(-2, -8)": true,
+          "(-2, -7)": true,
+          "(-1, -20)": true,
+          "(-1, -19)": true,
+          "(-1, -18)": true,
+          "(-1, -17)": true,
+          "(-1, -16)": true,
+          "(-1, -15)": true,
+          "(-1, -14)": true,
+          "(-1, -13)": true,
+          "(-1, -12)": true,
+          "(-1, -11)": true,
+          "(-1, -10)": true,
+          "(-1, -9)": true,
+          "(-1, -8)": true,
+          "(-1, -7)": true,
+          "(0, -8)": true,
+          "(0, -7)": true,
+          "(1, -8)": true,
+          "(1, -7)": true,
+          "(2, -8)": true,
+          "(2, -7)": true,
+          "(3, -8)": true,
+          "(3, -7)": true
+        },
+        "covered_crown": {
+
+        },
+        "default_opening": "window",
+        "floor_band": 0,
+        "inset": false,
+        "material": "timber",
+        "opening_assets": {
+          "(-2, -7, 1)": "pure_village.wall.plaster.window.finish_oak",
+          "(1, -7, 1)": "pure_village.wall.plaster.window_open.finish_oak",
+          "(2, -8, 3)": "pure_village.wall.plaster.window_open.finish_oak"
+        },
+        "opening_min_y": {
+          "(-1, -13, 0)": 1.55,
+          "(-1, -12, 0)": 1.55,
+          "(-1, -11, 0)": 1.55,
+          "(-1, -10, 0)": 1.55,
+          "(-1, -9, 0)": 1.55,
+          "(0, -8, 3)": 1.55,
+          "(0, -7, 1)": 1.55,
+          "(1, -8, 3)": 1.55,
+          "(1, -7, 1)": 1.55,
+          "(2, -8, 3)": 1.55,
+          "(2, -7, 1)": 1.55,
+          "(3, -8, 3)": 1.55,
+          "(3, -7, 1)": 1.55
+        },
+        "openings": {
+          "(-4, -18, 2)": "plain",
+          "(-4, -17, 2)": "plain",
+          "(-4, -16, 2)": "plain",
+          "(-4, -15, 2)": "plain",
+          "(-4, -13, 1)": "plain",
+          "(-4, -13, 2)": "plain",
+          "(-3, -18, 3)": "plain",
+          "(-3, -13, 1)": "plain",
+          "(-2, -20, 3)": "plain",
+          "(-2, -19, 2)": "plain",
+          "(-2, -12, 2)": "plain",
+          "(-2, -11, 2)": "plain",
+          "(-2, -10, 2)": "plain",
+          "(-2, -9, 2)": "plain",
+          "(-2, -8, 2)": "plain",
+          "(-2, -7, 1)": "window",
+          "(-1, -20, 0)": "plain",
+          "(-1, -20, 3)": "plain",
+          "(-1, -19, 0)": "plain",
+          "(-1, -18, 0)": "plain",
+          "(-1, -17, 0)": "plain",
+          "(-1, -16, 0)": "plain",
+          "(-1, -15, 0)": "plain",
+          "(-1, -14, 0)": "plain",
+          "(-1, -13, 0)": "plain",
+          "(-1, -12, 0)": "plain",
+          "(-1, -11, 0)": "plain",
+          "(-1, -10, 0)": "plain",
+          "(-1, -9, 0)": "plain",
+          "(-1, -7, 1)": "door",
+          "(0, -8, 3)": "plain",
+          "(0, -7, 1)": "plain",
+          "(1, -8, 3)": "plain",
+          "(1, -7, 1)": "window",
+          "(2, -8, 3)": "window",
+          "(2, -7, 1)": "plain",
+          "(3, -8, 0)": "plain",
+          "(3, -8, 3)": "plain",
+          "(3, -7, 0)": "plain",
+          "(3, -7, 1)": "plain"
+        },
+        "plain_every": 0,
+        "plinth": true,
+        "tint": "(1.0, 0.96, 0.88, 1.0)"
+      }
+    ],
+    "trace": [
+      {
+        "axis": 1,
+        "band": 2,
+        "bay": "[P: (-2, -20), S: (2, 2)]",
+        "gable_rejections": 10,
+        "outcome": "cross_gable",
+        "rect": "[P: (-2, -20), S: (2, 14)]",
+        "roof_rejections": 0
+      },
+      {
+        "axis": 1,
+        "band": 2,
+        "bay": "[P: (-2, -8), S: (2, 2)]",
+        "gable_rejections": 7,
+        "outcome": "cross_gable",
+        "rect": "[P: (-2, -18), S: (2, 12)]",
+        "roof_rejections": 0
+      },
+      {
+        "axis": 1,
+        "band": 2,
+        "bay": "[P: (-2, -14), S: (2, 2)]",
+        "gable_rejections": 4,
+        "outcome": "cross_gable",
+        "rect": "[P: (-2, -18), S: (2, 10)]",
+        "roof_rejections": 0
+      },
+      {
+        "axis": 1,
+        "band": 2,
+        "gable_rejections": 0,
+        "outcome": "blocked",
+        "rect": "[P: (-2, -18), S: (2, 4)]",
+        "roof_rejections": 0
+      },
+      {
+        "axis": 1,
+        "band": 2,
+        "gable_rejections": 0,
+        "outcome": "blocked",
+        "rect": "[P: (-2, -12), S: (2, 4)]",
+        "roof_rejections": 0
+      },
+      {
+        "axis": 1,
+        "band": 2,
+        "bay": "[P: (-4, -15), S: (2, 3)]",
+        "gable_rejections": 0,
+        "outcome": "cross_gable",
+        "rect": "[P: (-4, -18), S: (2, 6)]",
+        "roof_rejections": 0
+      },
+      {
+        "axis": 0,
+        "band": 2,
+        "gable_rejections": 0,
+        "outcome": "blocked",
+        "rect": "[P: (0, -8), S: (4, 2)]",
+        "roof_rejections": 2
+      }
+    ]
+  },
+  {
+    "ground": 0,
+    "id": "kit.spatial.parcel.maze.house.009",
+    "roofs": [
+      {
+        "axis": 0,
+        "band": 2,
+        "rect": "[P: (-2, 10), S: (2, 2)]"
+      },
+      {
+        "axis": 1,
+        "band": 2,
+        "rect": "[P: (-2, 12), S: (2, 2)]"
+      }
+    ],
+    "storeys": [
+      {
+        "bay_colour": "blue",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "cells": {
+          "(-2, 10)": true,
+          "(-2, 11)": true,
+          "(-2, 12)": true,
+          "(-2, 13)": true,
+          "(-1, 10)": true,
+          "(-1, 11)": true,
+          "(-1, 12)": true,
+          "(-1, 13)": true
+        },
+        "covered_crown": {
+
+        },
+        "default_opening": "window",
+        "floor_band": 0,
+        "inset": false,
+        "material": "timber",
+        "openings": {
+          "(-2, 10, 3)": "door",
+          "(-2, 13, 2)": "plain",
+          "(-1, 11, 0)": "plain"
+        },
+        "plain_every": 0,
+        "plinth": true,
+        "tint": "(0.97, 0.97, 0.93, 1.0)"
+      }
+    ],
+    "trace": [
+      {
+        "axis": 1,
+        "band": 2,
+        "bay": "[P: (-2, 10), S: (2, 2)]",
+        "gable_rejections": 0,
+        "outcome": "cross_gable",
+        "rect": "[P: (-2, 10), S: (2, 4)]",
+        "roof_rejections": 0
+      }
+    ]
+  },
+  {
+    "ground": 4,
+    "id": "kit.spatial.parcel.maze.house.011",
+    "roofs": [
+      {
+        "axis": 1,
+        "band": 8,
+        "rect": "[P: (2, 1), S: (2, 3)]"
+      },
+      {
+        "axis": 0,
+        "band": 12,
+        "rect": "[P: (4, 0), S: (2, 2)]"
+      },
+      {
+        "axis": 1,
+        "band": 12,
+        "rect": "[P: (4, 2), S: (2, 2)]"
+      },
+      {
+        "axis": 1,
+        "band": 12,
+        "rect": "[P: (2, -2), S: (2, 3)]"
+      }
+    ],
+    "storeys": [
+      {
+        "abutted": true,
+        "bay_colour": "red",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "cells": {
+          "(2, -2)": true,
+          "(2, -1)": true,
+          "(2, 0)": true,
+          "(2, 1)": true,
+          "(2, 2)": true,
+          "(2, 3)": true,
+          "(3, -2)": true,
+          "(3, -1)": true,
+          "(3, 0)": true,
+          "(3, 1)": true,
+          "(3, 2)": true,
+          "(3, 3)": true
+        },
+        "covered_crown": {
+
+        },
+        "default_opening": "window",
+        "floor_band": 4,
+        "inset": false,
+        "material": "timber",
+        "openings": {
+          "(2, -2, 3)": "door",
+          "(2, -1, 2)": "plain",
+          "(2, 1, 2)": "plain",
+          "(2, 3, 1)": "plain",
+          "(3, -2, 0)": "door",
+          "(3, -2, 3)": "plain",
+          "(3, 2, 0)": "door",
+          "(3, 3, 1)": "plain"
+        },
+        "passage_edges": {
+          "(2, -2, 3)": true
+        },
+        "plain_every": 0,
+        "plinth": true,
+        "tint": "(1.0, 0.93, 0.82, 1.0)"
+      },
+      {
+        "bay_colour": "red",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "cells": {
+          "(2, -2)": true,
+          "(2, -1)": true,
+          "(2, 0)": true,
+          "(2, 1)": true,
+          "(2, 2)": true,
+          "(2, 3)": true,
+          "(3, -2)": true,
+          "(3, -1)": true,
+          "(3, 0)": true,
+          "(3, 1)": true,
+          "(3, 2)": true,
+          "(3, 3)": true
+        },
+        "covered_crown": {
+
+        },
+        "crown_parts": [
+          {
+            "(2, 1)": true,
+            "(2, 2)": true,
+            "(2, 3)": true,
+            "(3, 1)": true,
+            "(3, 2)": true,
+            "(3, 3)": true
+          }
+        ],
+        "default_opening": "window",
+        "floor_band": 6,
+        "inset": false,
+        "material": "timber",
+        "opening_assets": {
+          "(2, 0, 2)": "suntail.frame.frame_wall_1_w"
+        },
+        "opening_min_y": {
+          "(2, 3, 1)": 10.55,
+          "(3, 3, 1)": 10.55
+        },
+        "openings": {
+          "(2, -2, 2)": "plain",
+          "(2, -2, 3)": "plain",
+          "(2, 0, 2)": "window",
+          "(2, 3, 1)": "plain",
+          "(3, -2, 0)": "plain",
+          "(3, -2, 3)": "plain",
+          "(3, 0, 0)": "plain",
+          "(3, 1, 0)": "plain",
+          "(3, 2, 0)": "plain",
+          "(3, 3, 0)": "plain",
+          "(3, 3, 1)": "plain"
+        },
+        "plain_every": 0,
+        "plinth": false,
+        "roofed": {
+          "(2, 1)": true,
+          "(2, 2)": true,
+          "(2, 3)": true,
+          "(3, 1)": true,
+          "(3, 2)": true,
+          "(3, 3)": true
+        },
+        "tint": "(1.0, 0.93, 0.82, 1.0)"
+      },
+      {
+        "abutted": true,
+        "bay_colour": "red",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "cells": {
+          "(2, -2)": true,
+          "(2, -1)": true,
+          "(2, 0)": true,
+          "(3, -2)": true,
+          "(3, -1)": true,
+          "(3, 0)": true,
+          "(4, 0)": true,
+          "(4, 1)": true,
+          "(4, 2)": true,
+          "(4, 3)": true,
+          "(5, 0)": true,
+          "(5, 1)": true,
+          "(5, 2)": true,
+          "(5, 3)": true
+        },
+        "covered_crown": {
+
+        },
+        "default_opening": "window",
+        "floor_band": 8,
+        "grounded": {
+          "(4, 0)": true,
+          "(4, 1)": true,
+          "(4, 2)": true,
+          "(4, 3)": true,
+          "(5, 0)": true,
+          "(5, 1)": true,
+          "(5, 2)": true,
+          "(5, 3)": true
+        },
+        "inset": false,
+        "material": "timber",
+        "opening_assets": {
+          "(2, -2, 3)": "suntail.frame.frame_wall_1_w"
+        },
+        "opening_min_y": {
+          "(4, 3, 1)": 13.55,
+          "(5, 3, 1)": 13.55
+        },
+        "openings": {
+          "(2, -2, 2)": "plain",
+          "(2, -2, 3)": "window",
+          "(2, -1, 2)": "bay",
+          "(2, 0, 1)": "plain",
+          "(3, 0, 1)": "plain",
+          "(4, 0, 3)": "door",
+          "(4, 1, 2)": "plain",
+          "(4, 2, 2)": "plain",
+          "(4, 3, 1)": "plain",
+          "(4, 3, 2)": "plain",
+          "(5, 0, 0)": "plain",
+          "(5, 1, 0)": "bay",
+          "(5, 3, 0)": "plain",
+          "(5, 3, 1)": "plain"
+        },
+        "passage_edges": {
+          "(4, 0, 3)": true
+        },
+        "plain_every": 0,
+        "plinth": true,
+        "stepped_wing": true,
+        "tint": "(1.0, 0.93, 0.82, 1.0)"
+      },
+      {
+        "bay_colour": "red",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "cells": {
+          "(2, -2)": true,
+          "(2, -1)": true,
+          "(2, 0)": true,
+          "(3, -2)": true,
+          "(3, -1)": true,
+          "(3, 0)": true,
+          "(4, 0)": true,
+          "(4, 1)": true,
+          "(4, 2)": true,
+          "(4, 3)": true,
+          "(5, 0)": true,
+          "(5, 1)": true,
+          "(5, 2)": true,
+          "(5, 3)": true
+        },
+        "covered_crown": {
+
+        },
+        "default_opening": "window",
+        "floor_band": 10,
+        "inset": false,
+        "material": "timber",
+        "opening_assets": {
+          "(2, -1, 2)": "suntail.frame.frame_wall_1_w",
+          "(2, 0, 1)": "suntail.frame.frame_wall_1_w",
+          "(4, 2, 2)": "suntail.frame.frame_wall_1_w",
+          "(5, 1, 0)": "suntail.frame.frame_wall_1_w"
+        },
+        "openings": {
+          "(2, -2, 3)": "plain",
+          "(2, -1, 2)": "window",
+          "(2, 0, 1)": "window",
+          "(2, 0, 2)": "plain",
+          "(3, -2, 0)": "plain",
+          "(4, 0, 3)": "plain",
+          "(4, 2, 2)": "window",
+          "(4, 3, 1)": "plain",
+          "(5, 0, 3)": "plain",
+          "(5, 1, 0)": "window",
+          "(5, 3, 1)": "plain"
+        },
+        "plain_every": 0,
+        "plinth": false,
+        "stepped_wing": true,
+        "tint": "(1.0, 0.93, 0.82, 1.0)"
+      }
+    ],
+    "trace": [
+      {
+        "axis": 1,
+        "band": 12,
+        "bay": "[P: (4, 0), S: (2, 2)]",
+        "gable_rejections": 0,
+        "outcome": "cross_gable",
+        "rect": "[P: (4, 0), S: (2, 4)]",
+        "roof_rejections": 0
+      }
+    ]
+  },
+  {
+    "ground": 2,
+    "id": "kit.spatial.parcel.maze.house.016",
+    "roofs": [
+      {
+        "axis": 0,
+        "band": 4,
+        "rect": "[P: (0, -22), S: (4, 4)]"
+      },
+      {
+        "axis": 0,
+        "band": 4,
+        "rect": "[P: (0, -14), S: (4, 4)]"
+      },
+      {
+        "axis": 1,
+        "band": 4,
+        "rect": "[P: (0, -18), S: (4, 4)]"
+      }
+    ],
+    "storeys": [
+      {
+        "bay_colour": "blue",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "cells": {
+          "(0, -22)": true,
+          "(0, -21)": true,
+          "(0, -20)": true,
+          "(0, -19)": true,
+          "(0, -18)": true,
+          "(0, -17)": true,
+          "(0, -16)": true,
+          "(0, -15)": true,
+          "(0, -14)": true,
+          "(0, -13)": true,
+          "(0, -12)": true,
+          "(0, -11)": true,
+          "(1, -22)": true,
+          "(1, -21)": true,
+          "(1, -20)": true,
+          "(1, -19)": true,
+          "(1, -18)": true,
+          "(1, -17)": true,
+          "(1, -16)": true,
+          "(1, -15)": true,
+          "(1, -14)": true,
+          "(1, -13)": true,
+          "(1, -12)": true,
+          "(1, -11)": true,
+          "(2, -22)": true,
+          "(2, -21)": true,
+          "(2, -20)": true,
+          "(2, -19)": true,
+          "(2, -18)": true,
+          "(2, -17)": true,
+          "(2, -16)": true,
+          "(2, -15)": true,
+          "(2, -14)": true,
+          "(2, -13)": true,
+          "(2, -12)": true,
+          "(2, -11)": true,
+          "(3, -22)": true,
+          "(3, -21)": true,
+          "(3, -20)": true,
+          "(3, -19)": true,
+          "(3, -18)": true,
+          "(3, -17)": true,
+          "(3, -16)": true,
+          "(3, -15)": true,
+          "(3, -14)": true,
+          "(3, -13)": true,
+          "(3, -12)": true,
+          "(3, -11)": true
+        },
+        "covered_crown": {
+
+        },
+        "default_opening": "window",
+        "floor_band": 2,
+        "inset": false,
+        "material": "timber",
+        "openings": {
+          "(0, -20, 2)": "plain",
+          "(0, -19, 2)": "plain",
+          "(0, -18, 2)": "plain",
+          "(0, -17, 2)": "plain",
+          "(0, -14, 2)": "plain",
+          "(0, -13, 2)": "plain",
+          "(0, -11, 1)": "plain",
+          "(1, -11, 1)": "plain",
+          "(2, -11, 1)": "plain",
+          "(3, -22, 0)": "plain",
+          "(3, -21, 0)": "plain",
+          "(3, -20, 0)": "plain",
+          "(3, -19, 0)": "plain",
+          "(3, -18, 0)": "plain",
+          "(3, -17, 0)": "plain",
+          "(3, -16, 0)": "plain",
+          "(3, -15, 0)": "plain",
+          "(3, -14, 0)": "plain",
+          "(3, -13, 0)": "plain",
+          "(3, -12, 0)": "door",
+          "(3, -11, 1)": "plain"
+        },
+        "plain_every": 0,
+        "plinth": true,
+        "tint": "(0.97, 0.97, 0.93, 1.0)"
+      }
+    ],
+    "trace": [
+      {
+        "axis": 1,
+        "band": 4,
+        "bay": "[P: (0, -22), S: (4, 4)]",
+        "gable_rejections": 0,
+        "outcome": "cross_gable",
+        "rect": "[P: (0, -22), S: (4, 12)]",
+        "roof_rejections": 0
+      },
+      {
+        "axis": 1,
+        "band": 4,
+        "bay": "[P: (0, -14), S: (4, 4)]",
+        "gable_rejections": 0,
+        "outcome": "cross_gable",
+        "rect": "[P: (0, -18), S: (4, 8)]",
+        "roof_rejections": 0
+      }
+    ]
+  },
+  {
+    "ground": 2,
+    "id": "kit.spatial.parcel.maze.house.017",
+    "roofs": [
+      {
+        "axis": 1,
+        "band": 4,
+        "rect": "[P: (10, -22), S: (4, 4)]"
+      },
+      {
+        "axis": 1,
+        "band": 4,
+        "rect": "[P: (4, -22), S: (4, 4)]"
+      },
+      {
+        "axis": 0,
+        "band": 4,
+        "rect": "[P: (8, -22), S: (2, 4)]"
+      },
+      {
+        "axis": 1,
+        "band": 4,
+        "rect": "[P: (7, -18), S: (4, 4)]"
+      },
+      {
+        "axis": 0,
+        "band": 4,
+        "rect": "[P: (4, -18), S: (3, 4)]"
+      },
+      {
+        "axis": 0,
+        "band": 4,
+        "rect": "[P: (11, -18), S: (3, 4)]"
+      },
+      {
+        "axis": 1,
+        "band": 4,
+        "rect": "[P: (4, -14), S: (3, 2)]"
+      },
+      {
+        "axis": 1,
+        "band": 4,
+        "rect": "[P: (7, -14), S: (3, 2)]"
+      },
+      {
+        "axis": 1,
+        "band": 4,
+        "rect": "[P: (10, -14), S: (2, 4)]"
+      },
+      {
+        "axis": 1,
+        "band": 4,
+        "rect": "[P: (12, -14), S: (2, 2)]"
+      },
+      {
+        "axis": 1,
+        "band": 4,
+        "rect": "[P: (4, -24), S: (3, 2)]"
+      },
+      {
+        "axis": 1,
+        "band": 4,
+        "rect": "[P: (9, -24), S: (3, 2)]"
+      },
+      {
+        "axis": 0,
+        "band": 4,
+        "rect": "[P: (7, -24), S: (2, 2)]"
+      }
+    ],
+    "storeys": [
+      {
+        "bay_colour": "red",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "cells": {
+          "(4, -24)": true,
+          "(4, -23)": true,
+          "(4, -22)": true,
+          "(4, -21)": true,
+          "(4, -20)": true,
+          "(4, -19)": true,
+          "(4, -18)": true,
+          "(4, -17)": true,
+          "(4, -16)": true,
+          "(4, -15)": true,
+          "(4, -14)": true,
+          "(4, -13)": true,
+          "(5, -24)": true,
+          "(5, -23)": true,
+          "(5, -22)": true,
+          "(5, -21)": true,
+          "(5, -20)": true,
+          "(5, -19)": true,
+          "(5, -18)": true,
+          "(5, -17)": true,
+          "(5, -16)": true,
+          "(5, -15)": true,
+          "(5, -14)": true,
+          "(5, -13)": true,
+          "(6, -24)": true,
+          "(6, -23)": true,
+          "(6, -22)": true,
+          "(6, -21)": true,
+          "(6, -20)": true,
+          "(6, -19)": true,
+          "(6, -18)": true,
+          "(6, -17)": true,
+          "(6, -16)": true,
+          "(6, -15)": true,
+          "(6, -14)": true,
+          "(6, -13)": true,
+          "(7, -24)": true,
+          "(7, -23)": true,
+          "(7, -22)": true,
+          "(7, -21)": true,
+          "(7, -20)": true,
+          "(7, -19)": true,
+          "(7, -18)": true,
+          "(7, -17)": true,
+          "(7, -16)": true,
+          "(7, -15)": true,
+          "(7, -14)": true,
+          "(7, -13)": true,
+          "(8, -24)": true,
+          "(8, -23)": true,
+          "(8, -22)": true,
+          "(8, -21)": true,
+          "(8, -20)": true,
+          "(8, -19)": true,
+          "(8, -18)": true,
+          "(8, -17)": true,
+          "(8, -16)": true,
+          "(8, -15)": true,
+          "(8, -14)": true,
+          "(8, -13)": true,
+          "(9, -24)": true,
+          "(9, -23)": true,
+          "(9, -22)": true,
+          "(9, -21)": true,
+          "(9, -20)": true,
+          "(9, -19)": true,
+          "(9, -18)": true,
+          "(9, -17)": true,
+          "(9, -16)": true,
+          "(9, -15)": true,
+          "(9, -14)": true,
+          "(9, -13)": true,
+          "(10, -24)": true,
+          "(10, -23)": true,
+          "(10, -22)": true,
+          "(10, -21)": true,
+          "(10, -20)": true,
+          "(10, -19)": true,
+          "(10, -18)": true,
+          "(10, -17)": true,
+          "(10, -16)": true,
+          "(10, -15)": true,
+          "(10, -14)": true,
+          "(10, -13)": true,
+          "(11, -24)": true,
+          "(11, -23)": true,
+          "(11, -22)": true,
+          "(11, -21)": true,
+          "(11, -20)": true,
+          "(11, -19)": true,
+          "(11, -18)": true,
+          "(11, -17)": true,
+          "(11, -16)": true,
+          "(11, -15)": true,
+          "(11, -14)": true,
+          "(11, -13)": true,
+          "(12, -22)": true,
+          "(12, -21)": true,
+          "(12, -20)": true,
+          "(12, -19)": true,
+          "(12, -18)": true,
+          "(12, -17)": true,
+          "(12, -16)": true,
+          "(12, -15)": true,
+          "(12, -14)": true,
+          "(12, -13)": true,
+          "(13, -22)": true,
+          "(13, -21)": true,
+          "(13, -20)": true,
+          "(13, -19)": true,
+          "(13, -18)": true,
+          "(13, -17)": true,
+          "(13, -16)": true,
+          "(13, -15)": true,
+          "(13, -14)": true,
+          "(13, -13)": true
+        },
+        "covered_crown": {
+
+        },
+        "default_opening": "window",
+        "floor_band": 2,
+        "inset": false,
+        "material": "timber",
+        "openings": {
+          "(4, -23, 2)": "plain",
+          "(4, -22, 2)": "plain",
+          "(4, -21, 2)": "plain",
+          "(4, -20, 2)": "plain",
+          "(4, -19, 2)": "plain",
+          "(4, -18, 2)": "plain",
+          "(4, -17, 2)": "plain",
+          "(4, -16, 2)": "plain",
+          "(4, -15, 2)": "plain",
+          "(4, -14, 2)": "plain",
+          "(4, -13, 1)": "plain",
+          "(4, -13, 2)": "plain",
+          "(5, -13, 1)": "door",
+          "(9, -13, 1)": "door",
+          "(10, -24, 3)": "plain",
+          "(10, -13, 1)": "plain",
+          "(11, -24, 0)": "plain",
+          "(11, -23, 0)": "plain",
+          "(11, -13, 1)": "plain",
+          "(12, -22, 3)": "plain",
+          "(13, -21, 0)": "plain",
+          "(13, -18, 0)": "plain",
+          "(13, -17, 0)": "plain"
+        },
+        "plain_every": 0,
+        "plinth": true,
+        "tint": "(0.97, 0.97, 0.93, 1.0)"
+      }
+    ],
+    "trace": [
+      {
+        "axis": 0,
+        "band": 4,
+        "bay": "[P: (10, -22), S: (4, 4)]",
+        "gable_rejections": 0,
+        "outcome": "cross_gable",
+        "rect": "[P: (4, -22), S: (10, 4)]",
+        "roof_rejections": 0
+      },
+      {
+        "axis": 0,
+        "band": 4,
+        "bay": "[P: (4, -22), S: (4, 4)]",
+        "gable_rejections": 0,
+        "outcome": "cross_gable",
+        "rect": "[P: (4, -22), S: (6, 4)]",
+        "roof_rejections": 0
+      },
+      {
+        "axis": 0,
+        "band": 4,
+        "bay": "[P: (7, -18), S: (4, 4)]",
+        "gable_rejections": 0,
+        "outcome": "cross_gable",
+        "rect": "[P: (4, -18), S: (10, 4)]",
+        "roof_rejections": 0
+      },
+      {
+        "axis": 0,
+        "band": 4,
+        "bay": "[P: (4, -24), S: (3, 2)]",
+        "gable_rejections": 0,
+        "outcome": "cross_gable",
+        "rect": "[P: (4, -24), S: (8, 2)]",
+        "roof_rejections": 0
+      },
+      {
+        "axis": 0,
+        "band": 4,
+        "bay": "[P: (9, -24), S: (3, 2)]",
+        "gable_rejections": 0,
+        "outcome": "cross_gable",
+        "rect": "[P: (7, -24), S: (5, 2)]",
+        "roof_rejections": 0
+      }
+    ]
+  },
+  {
+    "ground": 2,
+    "id": "kit.spatial.parcel.maze.house.019",
+    "roofs": [
+      {
+        "axis": 0,
+        "band": 4,
+        "rect": "[P: (10, -10), S: (2, 2)]"
+      }
+    ],
+    "storeys": [
+      {
+        "bay_colour": "red",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "cells": {
+          "(10, -12)": true,
+          "(10, -11)": true,
+          "(10, -10)": true,
+          "(10, -9)": true,
+          "(11, -12)": true,
+          "(11, -11)": true,
+          "(11, -10)": true,
+          "(11, -9)": true
+        },
+        "covered_crown": {
+
+        },
+        "default_opening": "window",
+        "floor_band": 2,
+        "inset": false,
+        "material": "timber",
+        "openings": {
+          "(10, -12, 3)": "plain",
+          "(10, -11, 2)": "door",
+          "(10, -10, 2)": "plain",
+          "(11, -12, 3)": "plain",
+          "(11, -9, 1)": "plain"
+        },
+        "plain_every": 0,
+        "plinth": true,
+        "tint": "(0.97, 0.97, 0.93, 1.0)"
+      }
+    ],
+    "trace": [
+      {
+        "axis": 1,
+        "band": 4,
+        "bay": "[P: (10, -10), S: (2, 2)]",
+        "gable_rejections": 0,
+        "outcome": "cross_gable",
+        "rect": "[P: (10, -12), S: (2, 4)]",
+        "roof_rejections": 0
+      }
+    ]
+  },
+  {
+    "ground": 2,
+    "id": "kit.spatial.parcel.maze.house.021",
+    "roofs": [
+      {
+        "axis": 1,
+        "band": 6,
+        "rect": "[P: (0, -9), S: (2, 2)]"
+      },
+      {
+        "axis": 0,
+        "band": 6,
+        "rect": "[P: (2, -9), S: (2, 2)]"
+      }
+    ],
+    "storeys": [
+      {
+        "bay_colour": "red",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "cells": {
+          "(0, -10)": true,
+          "(0, -9)": true,
+          "(1, -10)": true,
+          "(1, -9)": true,
+          "(2, -10)": true,
+          "(2, -9)": true,
+          "(3, -10)": true,
+          "(3, -9)": true
+        },
+        "covered_crown": {
+
+        },
+        "default_opening": "window",
+        "floor_band": 2,
+        "inset": false,
+        "material": "timber",
+        "openings": {
+          "(0, -10, 3)": "plain",
+          "(0, -9, 2)": "plain",
+          "(1, -10, 3)": "plain",
+          "(2, -10, 3)": "plain",
+          "(3, -10, 0)": "door",
+          "(3, -10, 3)": "plain",
+          "(3, -9, 1)": "plain"
+        },
+        "plain_every": 0,
+        "plinth": true,
+        "tint": "(0.97, 0.97, 0.93, 1.0)"
+      },
+      {
+        "bay_colour": "red",
+        "bay_offsets": {
+
+        },
+        "bay_roles": {
+
+        },
+        "bears_balcony": true,
+        "cells": {
+          "(0, -9)": true,
+          "(0, -8)": true,
+          "(1, -9)": true,
+          "(1, -8)": true,
+          "(2, -9)": true,
+          "(2, -8)": true,
+          "(3, -9)": true,
+          "(3, -8)": true
+        },
+        "covered_crown": {
+
+        },
+        "default_opening": "window",
+        "floor_band": 4,
+        "inset": false,
+        "material": "timber",
+        "opening_assets": {
+          "(0, -9, 2)": "suntail.frame.frame_wall_1_w",
+          "(3, -9, 0)": "suntail.frame.frame_wall_1_w"
+        },
+        "openings": {
+          "(0, -9, 2)": "window",
+          "(0, -9, 3)": "door",
+          "(1, -8, 1)": "plain",
+          "(2, -8, 1)": "door",
+          "(3, -9, 0)": "window",
+          "(3, -9, 3)": "plain"
+        },
+        "plain_every": 0,
+        "plinth": false,
+        "tint": "(0.97, 0.97, 0.93, 1.0)"
+      }
+    ],
+    "trace": [
+      {
+        "axis": 0,
+        "band": 6,
+        "bay": "[P: (0, -9), S: (2, 2)]",
+        "gable_rejections": 0,
+        "outcome": "cross_gable",
+        "rect": "[P: (0, -9), S: (4, 2)]",
+        "roof_rejections": 0
+      }
+    ]
+  },
+  {
+    "ground": -96,
+    "id": "kit.skywalk.2.4.-7.0.1",
+    "roofs": [
+      {
+        "axis": 1,
+        "band": 6,
+        "rect": "[P: (2, -6), S: (2, 4)]"
+      }
+    ],
+    "storeys": [
+      {
+        "ceiling": true,
+        "cells": {
+          "(2, -6)": true,
+          "(2, -5)": true,
+          "(2, -4)": true,
+          "(2, -3)": true,
+          "(3, -6)": true,
+          "(3, -5)": true,
+          "(3, -4)": true,
+          "(3, -3)": true
+        },
+        "default_opening": "window",
+        "floor_band": 4,
+        "inset": false,
+        "material": "timber",
+        "openings": {
+          "(2, -6, 3)": "none",
+          "(2, -3, 1)": "none",
+          "(3, -6, 3)": "none",
+          "(3, -3, 1)": "none"
+        },
+        "plain_every": 0,
+        "plinth": false
+      }
+    ],
+    "trace": []
+  },
+  {
+    "ground": -96,
+    "id": "kit.skywalk.-3.4.6.1.0",
+    "roofs": [
+      {
+        "axis": 1,
+        "band": 6,
+        "rect": "[P: (-2, 6), S: (4, 1)]"
+      }
+    ],
+    "storeys": [
+      {
+        "ceiling": true,
+        "cells": {
+          "(-2, 6)": true,
+          "(-1, 6)": true,
+          "(0, 6)": true,
+          "(1, 6)": true
+        },
+        "default_opening": "window",
+        "floor_band": 4,
+        "inset": false,
+        "material": "timber",
+        "openings": {
+          "(-2, 6, 2)": "none",
+          "(-2, 6, 3)": "plain",
+          "(1, 6, 0)": "none"
+        },
+        "plain_every": 0,
+        "plinth": false
+      }
+    ],
+    "trace": []
+  },
+  {
+    "ground": -92,
+    "id": "kit.skywalk.4.8.-3.0.1",
+    "roofs": [
+      {
+        "axis": 1,
+        "band": 10,
+        "rect": "[P: (4, -2), S: (2, 2)]"
+      }
+    ],
+    "storeys": [
+      {
+        "ceiling": true,
+        "cells": {
+          "(4, -2)": true,
+          "(4, -1)": true,
+          "(5, -2)": true,
+          "(5, -1)": true
+        },
+        "default_opening": "window",
+        "floor_band": 8,
+        "inset": false,
+        "material": "timber",
+        "openings": {
+          "(4, -2, 3)": "none",
+          "(4, -1, 1)": "none",
+          "(5, -2, 3)": "none",
+          "(5, -1, 1)": "none"
+        },
+        "plain_every": 0,
+        "plinth": false
+      }
+    ],
+    "trace": []
+  }
+]

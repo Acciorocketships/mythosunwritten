@@ -1,0 +1,12 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://assets/PureVillage/Models/Architecture/Roof_Base_30x30_1.glb" id="1"]
+[ext_resource type="PackedScene" path="res://assets/PureVillage/Models/Architecture/Roof_BottomCurved_30x5_1.glb" id="2"]
+
+[node name="Assembly" type="Node3D"]
+
+[node name="Part0" parent="." instance=ExtResource("1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1.3333333333333333, 0, 0, 0)
+
+[node name="Part1" parent="." instance=ExtResource("2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)

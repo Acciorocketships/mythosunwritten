@@ -1,0 +1,123 @@
+{
+  "assets": [
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_stone_block_4.tres",
+      "id": "pure_village.stone.block.4",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 114,
+        "measured_aabb": {
+          "position": [
+            -0.499713897705078,
+            0.000000181142240762711,
+            -0.260664463043213
+          ],
+          "size": [
+            0.999426603317261,
+            0.463352084159851,
+            0.521328091621399
+          ]
+        },
+        "mesh_bytes": 5243,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 114
+      },
+      "pack": "pure_village_masonry",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.stone.block.4",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0314885,
+          -0.007538,
+          0.003184
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/Stone_Block_4.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_masonry",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/Stone_Block_4.glb",
+      "source_sha256": "9fa57ea6f33ad402148c01235049b059763cd70c7401236e35c981e39cd7dccb",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true,
+        "namespace": "pure_village_kit"
+      },
+      "tool_version": 40,
+      "visual": "res://terrain/environment/visuals/pure_village_masonry/pure_village_stone_block_4.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_stone_block_5.tres",
+      "id": "pure_village.stone.block.5",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 130,
+        "measured_aabb": {
+          "position": [
+            -0.388723641633987,
+            0.000000344589352607727,
+            -0.386220544576645
+          ],
+          "size": [
+            0.777446925640106,
+            0.51490992307663,
+            0.772441387176514
+          ]
+        },
+        "mesh_bytes": 5367,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 130
+      },
+      "pack": "pure_village_masonry",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.stone.block.5",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0392685,
+          -0.010464,
+          0.0118065
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/Stone_Block_5.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_masonry",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/Stone_Block_5.glb",
+      "source_sha256": "eed2806cc62fc16a444be35d894a20fcbda7329746d9ba172dce59c7cacafbfb",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true,
+        "namespace": "pure_village_kit"
+      },
+      "tool_version": 40,
+      "visual": "res://terrain/environment/visuals/pure_village_masonry/pure_village_stone_block_5.tres"
+    }
+  ],
+  "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+  "pack": "pure_village_masonry",
+  "tool_version": 40
+}

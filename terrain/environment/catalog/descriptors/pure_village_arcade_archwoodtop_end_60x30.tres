@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_8f83g"]
+
+[resource]
+script = ExtResource("1_8f83g")
+id = &"pure_village.arcade.archwoodtop_end_60x30"
+visual_path = "res://terrain/environment/visuals/pure_village_arcade_grammar/pure_village_arcade_archwoodtop_end_60x30.tres"
+tags = Array[StringName]([&"building", &"pure_village_native_grammar", &"village"])
+measured_aabb = AABB(-3.1112158, 0.012678527, -0.19851562, 3.3056617, 2.9838765, 0.39857423)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"pure_village_arcade_grammar:pure_village.arcade.archwoodtop_end_60x30"

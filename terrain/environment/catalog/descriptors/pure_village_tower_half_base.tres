@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_345ye"]
+
+[resource]
+script = ExtResource("1_345ye")
+id = &"pure_village.tower.half_base"
+visual_path = "res://terrain/environment/visuals/pure_village_towers/pure_village_tower_half_base.tres"
+tags = Array[StringName]([&"building", &"pure_village_towers", &"village"])
+measured_aabb = AABB(-1.6859368, -0.125, -0.003552246, 3.393231, 3.4154193, 1.7249095)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"pure_village_towers:pure_village.tower.half_base"

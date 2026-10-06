@@ -1,0 +1,5 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+POST_FIT_PASS old=[P: (-0.140683, -0.0, -0.295427), S: (0.281366, 3.0, 0.590854)] new=[P: (-0.09696, -0.0, -0.09696), S: (0.19392, 3.0, 0.19392)] world_width=0.51711916923523
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)

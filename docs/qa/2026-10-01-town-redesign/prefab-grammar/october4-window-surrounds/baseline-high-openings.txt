@@ -1,0 +1,16 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+HIGH_BACKED kit.spatial.feature.landmark.01 (1, 4, 0) pure_village.wall.plaster.window_open
+HIGH_BACKED kit.spatial.feature.landmark.01 (1, 5, 0) pure_village.wall.plaster.window_open
+ANY HIGH WINDOW kit.spatial.feature.landmark.01/k0027
+ANY HIGH WINDOW kit.spatial.feature.landmark.01/k0032
+ANY HIGH WINDOW kit.spatial.parcel.maze.house.007/k0008
+ANY HIGH WINDOW kit.spatial.parcel.maze.house.007/k0012
+ANY HIGH WINDOW kit.spatial.parcel.maze.house.007/k0016
+ANY HIGH WINDOW kit.spatial.parcel.maze.house.007/k0020
+ANY HIGH WINDOW kit.spatial.parcel.maze.house.019/k0036
+ANY HIGH WINDOW kit.spatial.parcel.maze.house.019/k0056
+ANY HIGH WINDOW kit.spatial.parcel.maze.house.032/k0012
+ANY HIGH WINDOW kit.spatial.parcel.maze.house.032/k0028

@@ -1,0 +1,14 @@
+
+func test_roof_crossing_native_arch_head_preserves_no_intersected_trim() -> void:
+	var ctx := CONTACTS.prepare([],PURE.create(),{})
+	var vertices := PackedVector3Array([Vector3(-0.2,2.22,-0.1),Vector3(0.2,2.22,-0.1),Vector3(0.2,2.22,0.2),Vector3(-0.2,2.22,0.2)])
+	ctx.skins = [{"vertices":vertices,"indices":PackedInt32Array([0,1,2,0,2,3]),"bounds":AABB(Vector3(-0.2,2.219,-0.1),Vector3(0.4,0.002,0.3))}]
+	assert_true(CONTACTS.obstructed(&"pure_village.wall.plaster.window_arch",Transform3D.IDENTITY,ctx), "Roof above clear glazing still crosses the authored arch head")
+	assert_true(CONTACTS.obstructed(&"pure_village.wall.plaster.window_arch.finish_walnut",Transform3D.IDENTITY,ctx), "Material variants retain the same surround")
+	var clear := Transform3D(Basis.IDENTITY,Vector3(2,0,0))
+	assert_false(CONTACTS.obstructed(&"pure_village.wall.plaster.window_arch",clear,ctx), "Roof beside the complete frame is allowed")
+
+func test_floor_above_clear_glass_sill_still_cannot_cut_timber_sill() -> void:
+	var ctx := CONTACTS.prepare([],PURE.create(),{})
+	CONTACTS.add_floor(ctx,_floor(0.6),Transform3D.IDENTITY)
+	assert_true(CONTACTS.obstructed(&"pure_village.wall.plaster.window",Transform3D.IDENTITY,ctx), "Floor crosses native sill timber even though glazing is above it")

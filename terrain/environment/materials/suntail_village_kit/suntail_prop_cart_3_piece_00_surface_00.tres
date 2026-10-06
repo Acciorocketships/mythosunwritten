@@ -1,8 +1,8 @@
 [gd_resource type="StandardMaterial3D" load_steps=4 format=3]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/62d91b016415392c426c.res" id="1_740xu"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/8d11a00e8d7bb74ecc25.res" id="2_twgg7"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/86b2c1ab14c0276a4f23.res" id="3_b41vi"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/e80ab14002c7bf2f1d18.res" id="1_740xu"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/ea5f7d98c5d5446fa796.res" id="2_twgg7"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/97a030da05b6a352c3cb.res" id="3_b41vi"]
 
 [resource]
 resource_name = "Cart_3"

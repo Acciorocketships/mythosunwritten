@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_jieuy"]
+
+[resource]
+script = ExtResource("1_jieuy")
+id = &"pure_village.roof.top.sage"
+visual_path = "res://terrain/environment/visuals/pure_village_roof_sage/pure_village_roof_top_sage.tres"
+tags = Array[StringName]([&"building", &"pure_village_kit", &"village"])
+measured_aabb = AABB(-1, -0.054907177, -1.298138, 2, 1.6669761, 2.596276)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"pure_village_roof_sage:pure_village.roof.top.sage"

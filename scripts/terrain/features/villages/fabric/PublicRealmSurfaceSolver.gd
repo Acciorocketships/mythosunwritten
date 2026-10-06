@@ -95,6 +95,16 @@ static func solve(stable_id: StringName, realm: SectionalPublicRealmPlan,
 	if volume != null:
 		if not volume.is_sealed() or realm == null:
 			return null
+		# A court assembled from adjacent modules may leave the fourth cell of a
+		# borne 2 x 2 corner unclaimed where it meets a structural wall. Seal that
+		# exact orthogonal union before support datums and guard boundaries are
+		# derived. The source claims are snapshotted, so closure cannot grow or
+		# cascade across unrelated empty space.
+		if not _close_borne_court_corners(result, structural_solids,
+				daylight_void_set, fabric_plan.retained_terrace_cells, inhabited):
+			return null
+		var edge_profiles := preload("res://scripts/terrain/features/villages/fabric/WarrenStairEdgeProfiles.gd")
+		var roof_boxes := edge_profiles.roof_bounds(fabric_plan)
 		for transition_index in volume.transitions.size():
 			var transition := volume.transitions[transition_index]
 			if not transition.is_vertical():
@@ -106,18 +116,11 @@ static func solve(stable_id: StringName, realm: SectionalPublicRealmPlan,
 				return null
 			var payload := WarrenTransitionSurfaceBuilder.build(
 				StringName("%s.mesh" % node_id), transition,
-				transition_node.surface_cells, [], true)
+				transition_node.surface_cells, [], true,
+				edge_profiles.choose(transition,roof_boxes,result))
 			if payload.is_empty() \
 					or not result.add_transition_mesh_payload(payload):
 				return null
-		# A court assembled from adjacent modules may leave the fourth cell of a
-		# borne 2 x 2 corner unclaimed where it meets a structural wall. Seal that
-		# exact orthogonal union before support datums and guard boundaries are
-		# derived. The source claims are snapshotted, so closure cannot grow or
-		# cascade across unrelated empty space.
-		if not _close_borne_court_corners(result, structural_solids,
-				daylight_void_set, fabric_plan.retained_terrace_cells, inhabited):
-			return null
 		# Structural platforms descend to the terrain below their own fine-grid
 		# column, never to an implicit global band zero.  The renderer formerly
 		# received no datums here, so `support_base_at()` silently returned zero;

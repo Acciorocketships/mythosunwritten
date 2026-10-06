@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_35fyb"]
+
+[resource]
+script = ExtResource("1_35fyb")
+id = &"pure_village.wall_hood.middle_half"
+visual_path = "res://terrain/environment/visuals/pure_village_wall_hoods/pure_village_wall_hood_middle_half.tres"
+tags = Array[StringName]([&"building", &"pure_village_wall_hoods", &"village"])
+measured_aabb = AABB(-0.25, -1.2462782, -0.16119629, 0.5, 1.3580813, 1.0770655)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"pure_village_wall_hoods:pure_village.wall_hood.middle_half"

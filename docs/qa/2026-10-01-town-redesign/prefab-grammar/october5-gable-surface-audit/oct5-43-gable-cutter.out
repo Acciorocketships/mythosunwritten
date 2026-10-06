@@ -1,0 +1,25 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+TARGET 40 ROOF { "rect": [P: (2, -16), S: (6, 4)], "axis": 0, "eave_band": 6, "colour": &"blue", "open_min": false, "open_max": false, "extend_min": 0, "extend_max": 0, "dormers": { (0, 3): true, (0, 5): true, (1, 3): true, (1, 5): true }, "ridge_peaks": false, &"chimney": true, &"chimney_end": 1, &"union_index": 40, &"chimney_u": 7.0 }
+TARGETKIT [&"pure_village.gable.left.finish_walnut"]
+GABLE { "asset_id": &"pure_village.gable.left.finish_walnut", "transform": [X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (3.968, 9.0, -31.0)], "role": &"gable.left", "stable_id": &"kit.spatial.parcel.maze.house.027/k0416", "color": (1.0, 1.0, 1.0, 1.0), "roof_index": 40 }
+GABLE { "asset_id": &"pure_village.wall.plaster.window_arch.finish_walnut", "transform": [X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (3.968, 9.0, -29.0)], "role": &"gable.wall", "stable_id": &"kit.spatial.parcel.maze.house.027/k0417", "color": (1.0, 1.0, 1.0, 1.0), "roof_index": 40 }
+GABLE { "asset_id": &"pure_village.wall.plaster.window_arch.finish_walnut", "transform": [X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (3.968, 9.0, -27.0)], "role": &"gable.wall", "stable_id": &"kit.spatial.parcel.maze.house.027/k0418", "color": (1.0, 1.0, 1.0, 1.0), "roof_index": 40 }
+GABLE { "asset_id": &"pure_village.gable.right.finish_walnut", "transform": [X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (3.968, 9.0, -25.0)], "role": &"gable.right", "stable_id": &"kit.spatial.parcel.maze.house.027/k0419", "color": (1.0, 1.0, 1.0, 1.0), "roof_index": 40 }
+GABLE { "asset_id": &"pure_village.gable.left.finish_walnut", "transform": [X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (3.968, 12.0, -29.0)], "role": &"gable.left", "stable_id": &"kit.spatial.parcel.maze.house.027/k0420", "color": (1.0, 1.0, 1.0, 1.0), "roof_index": 40 }
+GABLE { "asset_id": &"pure_village.gable.right.finish_walnut", "transform": [X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (3.968, 12.0, -27.0)], "role": &"gable.right", "stable_id": &"kit.spatial.parcel.maze.house.027/k0421", "color": (1.0, 1.0, 1.0, 1.0), "roof_side": 1, "roof_index": 40 }
+GABLE { "asset_id": &"pure_village.gable.right.finish_walnut", "transform": [X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (16.032, 9.0, -31.0)], "role": &"gable.right", "stable_id": &"kit.spatial.parcel.maze.house.027/k0422", "color": (1.0, 1.0, 1.0, 1.0), "roof_index": 40 }
+GABLE { "asset_id": &"pure_village.wall.plaster.window_arch.finish_walnut", "transform": [X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (16.032, 9.0, -29.0)], "role": &"gable.wall", "stable_id": &"kit.spatial.parcel.maze.house.027/k0423", "color": (1.0, 1.0, 1.0, 1.0), "roof_index": 40 }
+GABLE { "asset_id": &"pure_village.wall.plaster.plain.finish_walnut", "transform": [X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (16.032, 9.0, -27.0)], "role": &"gable.wall", "stable_id": &"kit.spatial.parcel.maze.house.027/k0424", "color": (1.0, 1.0, 1.0, 1.0), "roof_index": 40 }
+GABLE { "asset_id": &"pure_village.gable.left.finish_walnut", "transform": [X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (16.032, 9.0, -25.0)], "role": &"gable.left", "stable_id": &"kit.spatial.parcel.maze.house.027/k0425", "color": (1.0, 1.0, 1.0, 1.0), "roof_index": 40 }
+GABLE { "asset_id": &"pure_village.gable.right.finish_walnut", "transform": [X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (16.032, 12.0, -29.0)], "role": &"gable.right", "stable_id": &"kit.spatial.parcel.maze.house.027/k0426", "color": (1.0, 1.0, 1.0, 1.0), "roof_index": 40 }
+GABLE { "asset_id": &"pure_village.gable.left.finish_walnut", "transform": [X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (16.032, 12.0, -27.0)], "role": &"gable.left", "stable_id": &"kit.spatial.parcel.maze.house.027/k0427", "color": (1.0, 1.0, 1.0, 1.0), "roof_side": 1, "roof_index": 40 }
+CUTTER 35 REMAINING 0 ROOF { "rect": [P: (8, -14), S: (2, 2)], "axis": 1, "eave_band": 8, "colour": &"red", "open_min": false, "open_max": false, "extend_min": 0, "extend_max": 0, "dormers": {  }, "ridge_peaks": true, &"chimney": true, &"chimney_end": 0, &"union_index": 35 }
+MODE normal HOLES 4
+MODE no_walls HOLES 4
+MODE no_roofs HOLES 0
+MODE no_clips HOLES 4
+MODE raw HOLES 0
+AUDIT { "roofs": 63, "tiny": 0, "tiny_beside": 0, "open_ends": 21, "open_exposed": 0, "gable_ends": 105, "gable_holes": 1, "air_roofs": 0, "air_unsupported": 0, "eaves_cut": 0, "examples": ["gable_hole end=1 samples=4 kit.spatial.parcel.maze.house.027 [P: (2, -16), S: (6, 4)] axis=0 eave=6"], "uncapped_towers": 0, &"seed": -1, &"towers": 1, &"decks": 40 }

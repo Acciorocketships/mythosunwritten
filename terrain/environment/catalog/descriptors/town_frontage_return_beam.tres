@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_k1udf"]
+
+[resource]
+script = ExtResource("1_k1udf")
+id = &"town.frontage.return_beam"
+visual_path = "res://terrain/environment/visuals/town_room_fronts/town_frontage_return_beam.tres"
+tags = Array[StringName]([&"building", &"town_room_fronts", &"village"])
+measured_aabb = AABB(-0.325, -0.14229257, -0.083864056, 0.65, 0.28657222, 0.28053597)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"town_room_fronts:town.frontage.return_beam"

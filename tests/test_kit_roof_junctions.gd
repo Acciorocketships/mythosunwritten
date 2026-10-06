@@ -104,7 +104,7 @@ func test_native_cross_roof_triangles_are_trimmed_with_matching_collision() -> v
 	for i in masses.size():
 		roofs[i].union_index = i
 		placements.append_array(BuildingKitAssembler.new(kit).assemble(masses[i]))
-	var data: Dictionary = FileAccess.open(union_script.DATA_PATH, FileAccess.READ).get_var()
+	var data: Dictionary = FileAccess.open(SuntailBuildingKit.create().roof_geometry_path, FileAccess.READ).get_var()
 	var buried_before := 0
 	var buried_after := 0
 	for placement: Dictionary in placements:
@@ -195,3 +195,19 @@ func _assert_closed_roof(branch_rect: Rect2i, axis: int) -> void:
 				Vector3(p.x, 20, p.y), Vector3(p.x, 5.9, p.y)))
 			if hit.is_empty(): misses.append(p)
 	assert_eq(misses.size(), 0, "native union stays closed, missing rays: %s" % str(misses.slice(0, 12)))
+
+
+func test_contained_triangle_removal_preserves_coplanar_and_tolerance_faces() -> void:
+	var union_script := preload("res://scripts/terrain/features/villages/kit/KitRoofMeshUnion.gd")
+	var cutter := union_script.box_volume(AABB(Vector3.ZERO,Vector3.ONE*2.0))
+	for x in [1.0, 2.0, 2.0-union_script.EPS*0.5, 3.0]:
+		var polygon: Array = []
+		for yz: Vector2 in [Vector2(0.5,0.5),Vector2(1.5,0.5),Vector2(1.0,1.5)]:
+			polygon.append({"p":Vector3(x,yz.x,yz.y),"n":Vector3.RIGHT,"uv":yz})
+		var fragments := union_script.subtract(polygon,cutter.planes)
+		if x == 1.0:
+			assert_true(fragments.is_empty(),"a fully buried face is removed")
+		else:
+			assert_eq(fragments.size(),1,"outside and tolerance-boundary faces remain")
+			if fragments.size()==1:
+				assert_true(is_same(fragments[0],polygon),"uncut faces keep their original corner records")

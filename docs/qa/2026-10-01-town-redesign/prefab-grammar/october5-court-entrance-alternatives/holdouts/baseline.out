@@ -1,0 +1,16 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+COURT_HOLDOUT 19 ms=10960 attempts=0 accepted=true
+COURT_HOLDOUT 29 ms=18579 attempts=0 accepted=false
+COURT_HOLDOUT 47 ms=9958 attempts=0 accepted=true
+COURT_HOLDOUT 61 ms=11652 attempts=0 accepted=true
+COURT_HOLDOUT 73 ms=8826 attempts=0 accepted=false
+COURT_HOLDOUT 97 ms=15862 attempts=0 accepted=true
+COURT_HOLDOUT 109 ms=7758 attempts=0 accepted=true
+COURT_HOLDOUT 139 ms=8260 attempts=0 accepted=true
+COURT_HOLDOUT 163 ms=3276 attempts=0 accepted=false
+COURT_HOLDOUT 181 ms=30271 attempts=0 accepted=true
+COURT_HOLDOUT 223 ms=20573 attempts=0 accepted=false
+COURT_HOLDOUT 283 ms=3422 attempts=0 accepted=true

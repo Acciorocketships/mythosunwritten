@@ -152,7 +152,29 @@ static func clear_forecourt(platform: Dictionary, massif: WarrenMassif,
 	var out := platform.duplicate()
 	out["centre"] = centre
 	out["columns"] = columns
-	return {} if columns.size() < MIN_COLUMNS else out
+	if columns.size() < MIN_COLUMNS: return {}
+	out["tiers"] = nested_tiers(world_seed, out)
+	return out
+
+
+## Nested districts require two full columns of lower city around each wall.
+## A separate seed stream chooses whether an eligible district rises again.
+static func nested_tiers(seed_value: int, outer: Dictionary) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var parent := outer
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash([seed_value, &"town-fortified-rings"])
+	for index in 2:
+		if rng.randf() >= 0.6: break
+		var centre: Vector2 = parent.centre + Vector2(rng.randf_range(-0.5,0.5),rng.randf_range(-0.5,0.5))
+		var half: Vector2 = parent.half * rng.randf_range(0.5,0.7)
+		var columns := region(centre,half,parent.columns,ring_depths(parent.columns))
+		if columns.size() < MIN_COLUMNS: break
+		var tier := {"columns":columns,"centre":centre,"half":half,
+			"bands":int(parent.bands)+2*WarrenBuildingParcel.STOREY_BANDS}
+		out.append(tier)
+		parent = tier
+	return out
 
 
 ## The fortification's parapet: a solid stone course this high (fabric
@@ -192,16 +214,16 @@ static func huddle_top(massif: WarrenMassif, column: Vector2i) -> int:
 	## The highest band (roof included) the lower town may reach on `column`:
 	## within HUDDLE_RINGS of the raised district, its own ground plus the
 	## plinth height -- no house at the wall's foot stands taller than the
-	## wall -- or 2147483647 off that ring (and on the platform itself).
-	## Ground-relative, like every other massif profile, so the rule reads the
-	## same on sloped and flat sites.
-	if massif == null or massif.is_platform(column):
+	## wall -- or 2147483647 where there is no higher nearby district.
+	## Ground-relative, like every other massif profile. A lower raised
+	## district obeys the next higher ring in the same way as the low town.
+	if massif == null:
 		return 2147483647
 	var plinth := 0
 	for dz in range(-HUDDLE_RINGS, HUDDLE_RINGS + 1):
 		for dx in range(-HUDDLE_RINGS, HUDDLE_RINGS + 1):
 			plinth = maxi(plinth, massif.plinth_at(column + Vector2i(dx, dz)))
-	if plinth <= 0:
+	if plinth <= massif.plinth_at(column):
 		return 2147483647
 	return massif.base_at(column) + maxi(plinth, WarrenMazeSourcePlan.MIN_HOUSE_BANDS)
 
@@ -209,6 +231,8 @@ static func huddle_top(massif: WarrenMassif, column: Vector2i) -> int:
 static func crown_column(platform: Dictionary) -> Vector2i:
 	## The platform column nearest its own centroid: the citadel is the
 	## town's crown, the summit the spine climbs to.
+	if not (platform.get("tiers",[]) as Array).is_empty():
+		platform = platform.tiers.back()
 	var sum := Vector2.ZERO
 	for column: Vector2i in platform.columns:
 		sum += Vector2(column)

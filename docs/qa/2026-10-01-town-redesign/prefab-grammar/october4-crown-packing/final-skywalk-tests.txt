@@ -1,0 +1,38 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september29_skywalks.gd
+[0m* test_every_enclosed_skywalk_abuts_a_building_storey_at_both_ends
+    enclosed spans checked: 5
+* test_source_bridge_houses_abut_endpoint_houses
+    source bridge bodies checked: 5
+* test_exposed_wall_bases_over_air_carry_a_floor_beam
+* test_roof_over_free_air_closes_the_attic
+* test_unoccupied_porch_attic_requires_real_ceiling_boards
+[1m5/5 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               1
+Tests                 5
+Passing Tests         5
+Asserts              10
+Time              47.003s
+
+
+[32m---- All tests passed! ----
+[0m

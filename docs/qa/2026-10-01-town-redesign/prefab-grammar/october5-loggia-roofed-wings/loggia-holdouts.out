@@ -1,0 +1,6 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+AUDIT { "roofs": 50, "tiny": 1, "tiny_beside": 0, "open_ends": 16, "open_exposed": 0, "gable_ends": 84, "gable_holes": 1, "air_roofs": 1, "air_unsupported": 0, "eaves_cut": 0, "examples": ["tiny kit.spatial.parcel.maze.bridge.00.end.0.lower [P: (-2, 5), S: (2, 1)] axis=0 eave=8", "gable_hole end=1 samples=4 kit.spatial.parcel.maze.house.041 [P: (4, 0), S: (4, 4)] axis=0 eave=8"], "uncapped_towers": 0, &"seed": 8, &"towers": 1, &"decks": 33 }
+AUDIT { "roofs": 40, "tiny": 0, "tiny_beside": 0, "open_ends": 10, "open_exposed": 0, "gable_ends": 70, "gable_holes": 0, "air_roofs": 0, "air_unsupported": 0, "eaves_cut": 0, "examples": [], "uncapped_towers": 0, &"seed": 9, &"towers": 4, &"decks": 35 }

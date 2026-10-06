@@ -1,0 +1,212 @@
+[
+  {
+    "gate": "wall-room.house.wall-room.001",
+    "passed": true,
+    "reverse": false,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(-29.91161, 12.05021, 18.08839)",
+        "target": "(-28.0, 12.05, 20.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-28.04953, 12.05021, 19.93198)",
+        "target": "(-26.65, 12.05, 20.0)",
+        "tick": 0,
+        "waypoint": 2
+      }
+    ]
+  },
+  {
+    "gate": "wall-room.house.wall-room.001",
+    "passed": true,
+    "reverse": true,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(-26.775, 12.05039, 20.0)",
+        "target": "(-28.0, 12.05, 20.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-27.89503, 12.05039, 19.98703)",
+        "target": "(-30.0, 12.05, 18.0)",
+        "tick": 0,
+        "waypoint": 2
+      }
+    ]
+  },
+  {
+    "gate": "wall-room.house.wall-room.002",
+    "passed": true,
+    "reverse": false,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(-29.91161, 12.05039, 26.08839)",
+        "target": "(-28.0, 12.05, 28.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-28.04953, 12.05039, 27.93198)",
+        "target": "(-26.65, 12.05, 28.0)",
+        "tick": 0,
+        "waypoint": 2
+      }
+    ]
+  },
+  {
+    "gate": "wall-room.house.wall-room.002",
+    "passed": true,
+    "reverse": true,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(-26.775, 12.05039, 28.0)",
+        "target": "(-28.0, 12.05, 28.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-27.89503, 12.05039, 27.98703)",
+        "target": "(-30.0, 12.05, 26.0)",
+        "tick": 0,
+        "waypoint": 2
+      }
+    ]
+  },
+  {
+    "gate": "wall-room.house.wall-room.003",
+    "passed": true,
+    "reverse": false,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(-29.91161, 12.05039, 34.08839)",
+        "target": "(-28.0, 12.05, 36.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-28.04953, 12.05039, 35.93198)",
+        "target": "(-26.65, 12.05, 36.0)",
+        "tick": 0,
+        "waypoint": 2
+      }
+    ]
+  },
+  {
+    "gate": "wall-room.house.wall-room.003",
+    "passed": true,
+    "reverse": true,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(-26.775, 12.05039, 36.0)",
+        "target": "(-28.0, 12.05, 36.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-27.89503, 12.05039, 35.98703)",
+        "target": "(-30.0, 12.05, 34.0)",
+        "tick": 0,
+        "waypoint": 2
+      }
+    ]
+  },
+  {
+    "gate": "wall-room.house.wall-room.004",
+    "passed": true,
+    "reverse": false,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(1.911612, 12.05039, 33.91161)",
+        "target": "(0.0, 12.05, 32.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(0.049533, 12.05039, 32.06802)",
+        "target": "(-1.35, 12.05, 32.0)",
+        "tick": 0,
+        "waypoint": 2
+      }
+    ]
+  },
+  {
+    "gate": "wall-room.house.wall-room.004",
+    "passed": true,
+    "reverse": true,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(-1.225, 12.05039, 32.0)",
+        "target": "(0.0, 12.05, 32.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-0.104972, 12.05039, 32.01297)",
+        "target": "(2.0, 12.05, 34.0)",
+        "tick": 0,
+        "waypoint": 2
+      }
+    ]
+  },
+  {
+    "gate": "wall-room.house.wall-room.005",
+    "passed": true,
+    "reverse": false,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(-13.91161, 12.05039, 41.91161)",
+        "target": "(-12.0, 12.05, 40.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-12.06802, 12.05039, 40.04953)",
+        "target": "(-12.0, 12.05, 38.65)",
+        "tick": 0,
+        "waypoint": 2
+      }
+    ]
+  },
+  {
+    "gate": "wall-room.house.wall-room.005",
+    "passed": true,
+    "reverse": true,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(-12.0, 12.05039, 38.775)",
+        "target": "(-12.0, 12.05, 40.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-12.01297, 12.05039, 39.89503)",
+        "target": "(-14.0, 12.05, 42.0)",
+        "tick": 0,
+        "waypoint": 2
+      }
+    ]
+  }
+]

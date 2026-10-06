@@ -1,0 +1,48 @@
+[
+  {
+    "floating": {
+      "count": 0,
+      "floating_storey_cells": [],
+      "incomplete_skywalks": [],
+      "unborne_crown_cells": []
+    },
+    "joins": 3,
+    "profile": "grand",
+    "roof": {
+      "area": 0.0,
+      "examples": [],
+      "gable_area": 8.39626317747229,
+      "gable_contacts": 578,
+      "intrusions": 0,
+      "roles": {
+
+      },
+      "triangles": 1405142
+    },
+    "seed": 53,
+    "valid_payload": true
+  },
+  {
+    "floating": {
+      "count": 0,
+      "floating_storey_cells": [],
+      "incomplete_skywalks": [],
+      "unborne_crown_cells": []
+    },
+    "joins": 0,
+    "profile": "large",
+    "roof": {
+      "area": 0.0,
+      "examples": [],
+      "gable_area": 0.0,
+      "gable_contacts": 0,
+      "intrusions": 0,
+      "roles": {
+
+      },
+      "triangles": 417744
+    },
+    "seed": 31,
+    "valid_payload": true
+  }
+]

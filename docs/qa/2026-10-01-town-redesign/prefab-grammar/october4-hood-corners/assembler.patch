@@ -1,0 +1,56 @@
+--- before/scripts/terrain/features/villages/kit/BuildingKitAssembler.gd
++++ after/scripts/terrain/features/villages/kit/BuildingKitAssembler.gd
+@@ -535,6 +535,7 @@
+ func _emit_pent_eaves(ctx: Dictionary, slots: Dictionary, colour: StringName,
+ 		y: float) -> void:
+ 	var visited := {}
++	var accepted: Array[Dictionary] = []
+ 	for seed_centre: Vector2 in slots:
+ 		if visited.has(seed_centre): continue
+ 		var slot: Dictionary = slots[seed_centre]
+@@ -578,6 +579,45 @@
+ 		if not clear: continue
+ 		(ctx.out as Array).append_array(pending)
+ 		ctx.serial = candidate.serial
++		accepted.append({"run":run,"parts":pending,"dir":dir,"y":hood_y})
++	_join_hood_corners(ctx, accepted, slots)
++
++
++## Native outer-corner grammar: StreetHouse_7 places one corner at the
++## left vertex of a face and middle pieces on both meeting runs. Open ends
++## retain their caps. Decide this only after both faces have survived their
++## independent admission, so a blocked alley cannot erase a street frontage.
++func _join_hood_corners(ctx: Dictionary, runs: Array[Dictionary], slots: Dictionary) -> void:
++	if not kit.has_role(&"wallhood.outer_corner"): return
++	for left: Dictionary in runs:
++		var dir := int(left.dir)
++		var first: Vector2 = left.run.front()
++		if not bool(slots[first].left_convex): continue
++		var vertex := first - Vector2(right_of(dir)) * 0.5
++		for right: Dictionary in runs:
++			if int(right.dir) != (dir+1)%4 or not is_equal_approx(float(left.y),float(right.y)): continue
++			var last: Vector2 = right.run.back()
++			if not bool(slots[last].right_convex): continue
++			if not vertex.is_equal_approx(last + Vector2(right_of(right.dir))*0.5): continue
++			var parts: Array[Dictionary] = []
++			var candidate := {"mass":ctx.mass,"out":parts,"serial":ctx.serial}
++			_emit(candidate,&"wallhood.outer_corner",vertex,left.y,yaw_for_dir(dir))
++			_emit(candidate,&"wallhood.middle",first,left.y,yaw_for_dir(dir))
++			_emit(candidate,&"wallhood.middle",last,right.y,yaw_for_dir(right.dir))
++			var clear := true
++			for part: Dictionary in parts:
++				if ornament_clear.is_valid() and not bool(ornament_clear.call(part.asset_id,part.transform)):
++					clear = false
++					break
++			if not clear: continue
++			# Mutate the dictionaries already owned by the emitted payload;
++			# retain each straight bay's stable identity when replacing its cap.
++			for pair: Array in [[left.parts.front(),parts[1]],[right.parts.back(),parts[2]]]:
++				for key: String in ["asset_id","role","transform"]:
++					pair[0][key] = pair[1][key]
++			(ctx.out as Array).append(parts[0])
++			ctx.serial = candidate.serial
++			break
+ 
+ 
+ ## Boards close the underside of cells that overhang empty space (bridge

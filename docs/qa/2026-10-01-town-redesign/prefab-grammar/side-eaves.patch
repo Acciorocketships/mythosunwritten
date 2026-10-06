@@ -1,0 +1,116 @@
+--- before/scripts/terrain/features/villages/kit/BuildingKitAssembler.gd
++++ scripts/terrain/features/villages/kit/BuildingKitAssembler.gd
+@@ -684,9 +684,11 @@
+ 	var p_min := u0 - int(wing.extend_min)
+ 	var p_max := u1 + int(wing.extend_max)
+ 	var dormers: Dictionary = wing.dormers
+-	var tight := bool(wing.get("tight_eave",false)) and kit.has_role(StringName("roof.%s.eave_tight" % colour))
++	var tight_sides := tight_eave_sides(wing) if kit.has_role(StringName("roof.%s.eave_tight" % colour)) else 0
+ 	# Sides: 0 = +v face, 1 = -v face.
+ 	for side in 2:
++		var tight := bool(tight_sides & (1 << side))
++		var side_start: int = ctx.out.size()
+ 		var dir := (1 if axis == 0 else 0) if side == 0 else (3 if axis == 0 else 2)
+ 		var yaw := yaw_for_dir(dir)
+ 		for k in rows:
+@@ -712,6 +714,8 @@
+ 					var end_role := _roof_end_role(role,end,p_min,p_max,along)
+ 					var at := _roof_cap_at(wing,end_role,end,p_min,along)
+ 					_emit(ctx, end_role, _uv(axis,at,line),y,yaw)
++		for part_index in range(side_start,ctx.out.size()):
++			ctx.out[part_index]["roof_side"] = side
+ 	if bool(profile.top):
+ 		var top_y := eave_y + float(rows) * kit.roof_row_rise
+ 		var mid := float(v0 + v1) * 0.5
+@@ -748,7 +752,7 @@
+ 		if bool(wing.open_min if end == 0 else wing.open_max):
+ 			continue
+ 		_assemble_gable(ctx, axis, end, u0 if end == 0 else u1, v0, v1,
+-			eave_y, profile, float(wing.get("verge_min" if end == 0 else "verge_max", -1.0)), tight)
++			eave_y, profile, float(wing.get("verge_min" if end == 0 else "verge_max", -1.0)), tight_sides)
+ 
+ 
+ func _roof_cap_at(wing: Dictionary, role: StringName, end: int, first: int,
+@@ -808,7 +812,7 @@
+ 
+ 
+ func _assemble_gable(ctx: Dictionary, axis: int, end: int, u: int, v0: int,
+-		v1: int, eave_y: float, profile: Dictionary, verge := -1.0, tight := false) -> void:
++		v1: int, eave_y: float, profile: Dictionary, verge := -1.0, tight_sides := 0) -> void:
+ 	var mass: BuildingMass = ctx.mass
+ 	# Gable faces outward along the ridge axis.
+ 	var dir := (0 if axis == 0 else 1) if end == 1 else (2 if axis == 0 else 3)
+@@ -845,8 +849,9 @@
+ 		for k in rows:
+ 			var line := float(v1 - k) if side == 0 else float(v0 + k)
+ 			var y := eave_y + float(k) * kit.roof_row_rise
+-			var role := &"trim.barge.eave" if k == 0 and not tight else &"trim.barge.slope"
++			var role := &"trim.barge.eave" if k == 0 and not bool(tight_sides & (1 << side)) else &"trim.barge.slope"
+ 			_emit(ctx, role, _uv(axis, float(u) + outward, line), y, board_yaw)
++			ctx.out.back()["roof_side"] = side
+ 	if bool(profile.top):
+ 		var top_y := eave_y + float(rows) * kit.roof_row_rise + 1.0
+ 		var top_yaw := yaw_for_dir((1 if axis == 0 else 0)) - PI * 0.5
+@@ -1236,3 +1241,9 @@
+ 				Vector2(box.size.x, box.size.z))):
+ 			top = box.position.y
+ 	return top
++
++
++## Side 0 faces +v, side 1 faces -v, where v is across the ridge.
++## Legacy authored tight roofs retain both sides unless a measured mask exists.
++static func tight_eave_sides(wing: Dictionary) -> int:
++	return int(wing.get("tight_eave_sides",3 if bool(wing.get("tight_eave",false)) else 0))
+--- before/scripts/terrain/features/villages/kit/KitRoofEaveFits.gd
++++ scripts/terrain/features/villages/kit/KitRoofEaveFits.gd
+@@ -24,9 +24,12 @@
+ 	for i in candidates:
+ 		var own: BuildingKit = roof_kits.get(i,base)
+ 		var wing: Dictionary = roofs[i]
+-		if _eaves_clear(wing,i,own,ctx): continue
++		var blocked_sides := _blocked_sides(wing,i,own,ctx)
++		if blocked_sides == 0: continue
+ 		var changed := false
+-		if not bool(wing.get("tight_eave",false)):
++		var before := BuildingKitAssembler.tight_eave_sides(wing)
++		if (before | blocked_sides) != before:
++			wing.tight_eave_sides = before | blocked_sides
+ 			wing.tight_eave = true
+ 			changed = true
+ 		# Straight slopes can still carry a projecting gable-end cap around a
+@@ -49,11 +52,21 @@
+ 
+ static func _eaves_clear(wing: Dictionary, index: int, kit: BuildingKit,
+ 		ctx: Dictionary) -> bool:
++	return _blocked_sides(wing,index,kit,ctx,true)==0
++
++
++static func _blocked_sides(wing: Dictionary, index: int, kit: BuildingKit,
++		ctx: Dictionary, first_only := false) -> int:
+ 	var mass := BuildingMass.new()
+ 	var trial := wing.duplicate()
+ 	trial.union_index = index
+ 	mass.roofs.append(trial)
++	var blocked := 0
+ 	for part: Dictionary in BuildingKitAssembler.new(kit).assemble(mass):
+-		if String(part.role).contains(".eave") and not UNION.realize(part,ctx).is_empty():
+-			return false
+-	return true
++		if not String(part.role).contains(".eave"): continue
++		var bit := 1 << int(part.roof_side)
++		if blocked & bit: continue
++		if not UNION.realize(part,ctx).is_empty():
++			blocked |= bit
++			if first_only or blocked==3: return blocked
++	return blocked
+--- before/scripts/terrain/features/villages/kit/KitRoofDormerFits.gd
++++ scripts/terrain/features/villages/kit/KitRoofDormerFits.gd
+@@ -58,7 +58,7 @@
+ 	var along := float(key.y)+(0.5 if kit.roof_edge_caps else 0.0)
+ 	var across := float(rect.end[1-axis] if key.x==0 else rect.position[1-axis])
+ 	var point := Vector2(along,across) if axis==0 else Vector2(across,along)
+-	var tight := bool(wing.get("tight_eave",false))
++	var tight := bool(BuildingKitAssembler.tight_eave_sides(wing) & (1 << key.x))
+ 	var role := StringName("roof.%s.%s" % [wing.colour,"eave_tight_dormer" if tight else "eave_dormer"])
+ 	var asset := kit.asset(role)
+ 	var pose := Transform3D(Basis(Vector3.UP,BuildingKitAssembler.yaw_for_dir(dir)),

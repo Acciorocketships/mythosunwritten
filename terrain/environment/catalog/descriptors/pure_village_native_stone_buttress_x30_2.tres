@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_qb8pu"]
+
+[resource]
+script = ExtResource("1_qb8pu")
+id = &"pure_village.native.stone_buttress_x30_2"
+visual_path = "res://terrain/environment/visuals/pure_village_turret_grammar/pure_village_native_stone_buttress_x30_2.tres"
+tags = Array[StringName]([&"building", &"pure_village_native_grammar", &"village"])
+measured_aabb = AABB(-0.54039335, -0.006645394, -0.014511718, 1.0750122, 3.0106957, 0.5579492)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"pure_village_turret_grammar:pure_village.native.stone_buttress_x30_2"

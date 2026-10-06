@@ -1,0 +1,84 @@
+--- a/scripts/terrain/features/villages/fabric/WarrenMazeCarver.gd
++++ b/scripts/terrain/features/villages/fabric/WarrenMazeCarver.gd
+@@ -180,7 +180,7 @@
+ 		if massif.ring_depth(column) == 1:
+ 			interior_held[column] = true
+ 	_select_bridge_spans(world_seed, massif, excavation, early_market,
+-		profile, interior_held)
++		profile, interior_held, false)
+ 	_reserve_early_bridge_bearings(massif, excavation)
+ 	var descent := _extend_spine_descent(context)
+ 	WarrenPlatformStreets.carve(world_seed, massif, excavation, occupied)
+@@ -190,7 +190,7 @@
+ 	WarrenPlatformStreets.carve_tunnel(world_seed,massif,excavation,occupied)
+ 	# Later district streets can offer additional spans within the same quota.
+ 	_select_bridge_spans(world_seed, massif, excavation, early_market,
+-		profile, held.envelopes)
++		profile, held.envelopes, false)
+ 	_reserve_early_bridge_bearings(massif, excavation)
+ 	var perimeter_sites: Dictionary = held.sites.duplicate()
+ 	perimeter_sites.merge(excavation.bridge_bearing_columns)
+@@ -1928,7 +1928,7 @@
+ static func _select_bridge_spans(world_seed: int, massif: WarrenMassif,
+ 		excavation: WarrenExcavation, market_set: Dictionary,
+ 		profile: WarrenVillageScaleProfile,
+-		held_columns: Dictionary = {}) -> Dictionary:
++		held_columns: Dictionary = {}, allow_ground_links := true) -> Dictionary:
+ 	## Walks the spine then each lane in array order (never dictionary order)
+ 	## collecting every non-market, non-portal, non-facade-crossing,
+ 	## level-stride cell -- each would otherwise open straight to the sky.
+@@ -2005,7 +2005,7 @@
+ 	# endpoint houses outrank one, which outranks a portal fallback; stable hash
+ 	# only varies ties. The accepted feature still owns its complete envelope.
+ 	_select_spans_from_candidates(world_seed, massif, excavation, candidates,
+-		accepted, reserved_columns, quota)
++		accepted, reserved_columns, quota, allow_ground_links)
+ 	excavation.bridge_directions = accepted.duplicate()
+ 	return accepted
+ 
+@@ -2079,7 +2079,7 @@
+ static func _select_spans_from_candidates(world_seed: int,
+ 		massif: WarrenMassif, excavation: WarrenExcavation,
+ 		candidates: Array[Dictionary], accepted: Dictionary,
+-		reserved_columns: Dictionary, quota: int) -> void:
++		reserved_columns: Dictionary, quota: int, allow_ground_links := true) -> void:
+ 	var options: Array[Dictionary] = []
+ 	var seen_options: Dictionary = {}
+ 	for record: Dictionary in candidates:
+@@ -2133,6 +2133,17 @@
+ 			# prove now. Other support idioms stay available to ordinary overhangs.
+ 			if direct_endpoints != 2:
+ 				proof["reason"] = "bridge lacks two ground-borne endpoint houses"
++				_record_bridge_proof(excavation, proof, false)
++				continue
++			# Keep early reservations for the massif's raised crossings. Cottage
++			# links on natural ground are fitted after the full street network,
++			# so they cannot displace a later climb or its inhabited cover.
++			var natural_ground_link := false
++			for group: Array in proof.endpoint_foundation_groups:
++				for column: Vector2i in group:
++					natural_ground_link = natural_ground_link or int(proof.endpoint_foundation_floor) == massif.base_at(column)
++			if natural_ground_link and not allow_ground_links:
++				proof["reason"] = "natural-ground link deferred until streets are complete"
+ 				_record_bridge_proof(excavation, proof, false)
+ 				continue
+ 			var exterior_depth := _bridge_span_exterior_depth(massif, span)
+@@ -2467,12 +2478,15 @@
+ 		columns: Array, foundation_floor: int, top_band: int) -> bool:
+ 	# Solid plinth below bearing_at is foundation, not a lower house room.
+ 	# A broad footprint straddling it must try the narrower endpoint instead.
++	# At the bearing datum, terrain/plinth supplies the foundation directly;
++	# the finite above-ground massif cannot contain a cell below natural ground.
+ 	for column_value: Variant in columns:
+ 		var column := column_value as Vector2i
+-		if not massif.has_column(column) \
++		if not massif.has_column(column) or massif.is_reserved_ground(column) \
+ 				or foundation_floor < massif.bearing_at(column) \
+-				or not _column_is_solid_at(massif, excavation, column,
+-					foundation_floor - 1):
++				or (foundation_floor != massif.bearing_at(column) \
++					and not _column_is_solid_at(massif, excavation, column,
++						foundation_floor - 1)):
+ 			return false
+ 		for band in range(foundation_floor, top_band):
+ 			var cell := Vector3i(column.x, band, column.y)

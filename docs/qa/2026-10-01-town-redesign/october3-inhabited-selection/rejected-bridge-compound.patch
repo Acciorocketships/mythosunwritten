@@ -1,0 +1,213 @@
+--- before/KitVillageBuildings.gd
++++ candidate/KitVillageBuildings.gd
+@@ -65,6 +65,7 @@
+ 	var feature_masses := _feature_masses(spatial, fabric, houses, grid, spans)
+ 	# Adjacent lots on one ground become one building (after the balconies
+ 	# have opened their doors in their owner lots).
++	houses = merge_bridge_houses(houses, spatial)
+ 	houses = merge_houses(houses, spatial.world_seed)
+ 	owner_at.clear()
+ 	for house_id: StringName in houses:
+@@ -78,9 +79,12 @@
+ 	var canopy_claims: Array = []
+ 	var podium := _podium_cells(feature_masses)
+ 	var house_kits: Dictionary = {}
++	var bridge_compounds: Array[StringName] = []
+ 	var ridge_counts := Vector2i.ZERO
+ 	for house_id: StringName in ids:
+ 		var house: Dictionary = houses[house_id]
++		if bool(house.get("bridge_compound", false)):
++			bridge_compounds.append(StringName("kit.%s" % house_id))
+ 		var house_kit := preload("res://scripts/terrain/features/villages/kit/TownBuildingStyles.gd").for_house(
+ 			kit, spatial.world_seed, house_id, native_roofs) if mixed_styles else kit
+ 		house_kits[house_id] = house_kit
+@@ -127,8 +131,12 @@
+ 	walls.append_array(public_air)
+ 	var tower_catalog := EnvironmentCatalog.load_default()
+ 	var tower_audit := {}
++	# Inhabited bridge floors are private room cells but carry through-routes.
++	# Their internal clearance is an obstacle to a shaft, not a roof cutter.
++	var tower_air := public_air.duplicate()
++	tower_air.append_array(preload("res://scripts/terrain/features/villages/kit/KitPublicClearance.gd").inhabited_bridge_rooms(spatial, kit))
+ 	var towers := preload("res://scripts/terrain/features/villages/kit/KitTownTowers.gd").propose(
+-		masses,house_kits,kit,tower_catalog,public_air,
++		masses,house_kits,kit,tower_catalog,tower_air,
+ 		func(own: StringName,cell: Vector2i,band: int) -> bool:
+ 			var at := Vector3i(cell.x,band,cell.y)
+ 			# Public columns may extend to open sky. Their finished walking
+@@ -225,6 +233,7 @@
+ 				StringName("%s/tower.%d" % [tower.host.stable_id,index]),true)
+ 	tower_audit["accepted"] = towers.size()
+ 	roof_audit["towers"] = tower_audit
++	roof_audit["bridge_compounds"] = bridge_compounds
+ 	roof_audit["facade_bays"] = facade_bays.size()
+ 	roof_audit["retaining_relief"] = retaining_relief.size()
+ 	roof_audit["retaining_windows"] = retaining_windows.size()
+@@ -828,7 +837,7 @@
+ 	var ground: Dictionary = {}
+ 	for house_id: StringName in ids:
+ 		var house: Dictionary = houses[house_id]
+-		if bool(house.landmark) or int(house.terrain_band) >= (1 << 20):
++		if bool(house.landmark) or bool(house.get("bridge_compound",false)) or int(house.terrain_band) >= (1 << 20):
+ 			continue
+ 		var floors: Array = (house.storeys as Dictionary).keys()
+ 		floors.sort()
+@@ -947,55 +956,112 @@
+ 			out[keep] = houses[keep]
+ 			continue
+ 		group = sorted_ids(group)
+-		var merged := {"cells": [], "storeys": {}, "doors": [], "terrain_band": 1 << 20,
+-			"landmark": false, "roof_crowns": {}, "grounded": {}, "crown_parts": {},
+-			"members": group}
+-		var tops: Dictionary = {}
+-		for member: StringName in group:
+-			var house: Dictionary = houses[member]
+-			(merged.cells as Array).append_array(house.cells)
+-			(merged.doors as Array).append_array(house.doors)
+-			merged.terrain_band = mini(int(merged.terrain_band), int(house.terrain_band))
+-			var base := int(house.terrain_band)
++		out[keep] = _merge_house_records(houses, group)
++	return out
++
++
++## The structural planner already builds a two-ended inhabited compound.
++## Give its three joined room bodies one architectural identity; do not
++## change any room, floor, bearing, doorway or public passage to obtain it.
++static func merge_bridge_houses(houses: Dictionary, spatial: WarrenSpatialPlan) -> Dictionary:
++	var out := houses.duplicate()
++	var room_house := {}
++	var bridge_rooms := {}
++	for building: WarrenBuildingVolume in spatial.buildings:
++		var id := house_id_for(building.stable_id)
++		for room: WarrenRoomStamp in building.room_records:
++			var host := StringName(room.audit.get("back_room_parcel_id", &""))
++			if not host.is_empty():
++				id = StringName("spatial.%s" % host)
++		for room: WarrenRoomStamp in building.room_records:
++			room_house[room.stable_id] = id
++			if room.audit.get("bridge_support_room_ids", []).size() == 2 \
++					and not bool(room.audit.get("bridge_is_bracketed_jetty", false)):
++				bridge_rooms[room.stable_id] = room
++	# A shared endpoint can join only one compound. Resolve this by stable
++	# textual IDs, independently of volume insertion / StringName intern order.
++	for room_id: StringName in sorted_ids(bridge_rooms.keys()):
++		var room: WarrenRoomStamp = bridge_rooms[room_id]
++		var group: Array = [room_house[room_id]]
++		for support: StringName in room.audit.bridge_support_room_ids:
++			if room_house.has(support) and not group.has(room_house[support]):
++				group.append(room_house[support])
++		if group.size() != 3:
++			continue
++		var complete := true
++		var footprint := {}
++		var phases := {}
++		for id: StringName in group:
++			if not out.has(id):
++				complete = false
++				break
++			for floor: int in out[id].storeys:
++				phases[posmod(floor, 2)] = true
++			for cell: Vector3i in out[id].cells:
++				footprint[Vector2i(cell.x, cell.z)] = true
++		if not complete or phases.size() != 1:
++			continue
++		var box := BuildingDesigner._bounds(footprint)
++		if footprint.size() > MERGE_MAX_CELLS or maxi(box.size.x, box.size.y) > MERGE_MAX_SPAN:
++			continue
++		group = sorted_ids(group)
++		var merged := _merge_house_records(out, group)
++		merged["bridge_compound"] = true
++		for id: StringName in group:
++			out.erase(id)
++		out[group[0]] = merged
++	return out
++
++
++static func _merge_house_records(houses: Dictionary, group: Array) -> Dictionary:
++	var merged := {"cells": [], "storeys": {}, "doors": [], "terrain_band": 1 << 20,
++		"landmark": false, "roof_crowns": {}, "grounded": {}, "crown_parts": {},
++		"members": group}
++	var tops: Dictionary = {}
++	for member: StringName in group:
++		var house: Dictionary = houses[member]
++		(merged.cells as Array).append_array(house.cells)
++		(merged.doors as Array).append_array(house.doors)
++		merged.terrain_band = mini(int(merged.terrain_band), int(house.terrain_band))
++		var base := int(house.terrain_band)
++		if house.storeys.has(base):
+ 			if not (merged.grounded as Dictionary).has(base):
+ 				merged.grounded[base] = {}
+ 			(merged.grounded[base] as Dictionary).merge(house.storeys[base])
+-			for floor: int in house.get("grounded", {}):
+-				if not (merged.grounded as Dictionary).has(floor):
+-					merged.grounded[floor] = {}
+-				(merged.grounded[floor] as Dictionary).merge(house.grounded[floor])
+-			var top := -(1 << 20)
+-			for floor: int in house.storeys:
+-				top = maxi(top, floor)
+-				if not (merged.storeys as Dictionary).has(floor):
+-					merged.storeys[floor] = {}
+-				(merged.storeys[floor] as Dictionary).merge(house.storeys[floor])
+-			tops[member] = top
+-		# Each member's own top is roofed in the compound unless another
+-		# member stands directly on it; crowns beneath the compound's own
+-		# upper storeys (a stepped plan, a recessed loggia) keep the house's
+-		# terrace rule.
+-		var solid: Dictionary = {}
+-		for member: StringName in group:
+-			for cell: Vector3i in houses[member].cells:
+-				solid[cell] = true
+-		for member: StringName in group:
+-			var top: int = tops[member]
+-			if not (merged.roof_crowns as Dictionary).has(top):
+-				merged.roof_crowns[top] = {}
+-			for cell: Vector2i in houses[member].storeys[top]:
+-				if not solid.has(Vector3i(cell.x, top + 2, cell.y)):
+-					(merged.roof_crowns[top] as Dictionary)[cell] = true
+-		# Every member's footprint per storey: the designer may fall back to
+-		# the members' own crown packing.
+-		for member: StringName in group:
+-			for floor: int in houses[member].storeys:
+-				if not (merged.crown_parts as Dictionary).has(floor):
+-					merged.crown_parts[floor] = []
+-				(merged.crown_parts[floor] as Array).append(houses[member].storeys[floor])
+-		out[keep] = merged
+-	return out
+-
++		for floor: int in house.get("grounded", {}):
++			if not (merged.grounded as Dictionary).has(floor):
++				merged.grounded[floor] = {}
++			(merged.grounded[floor] as Dictionary).merge(house.grounded[floor])
++		var top := -(1 << 20)
++		for floor: int in house.storeys:
++			top = maxi(top, floor)
++			if not (merged.storeys as Dictionary).has(floor):
++				merged.storeys[floor] = {}
++			(merged.storeys[floor] as Dictionary).merge(house.storeys[floor])
++		tops[member] = top
++	# Each member's own top is roofed in the compound unless another
++	# member stands directly on it; crowns beneath the compound's own
++	# upper storeys (a stepped plan, a recessed loggia) keep the house's
++	# terrace rule.
++	var solid: Dictionary = {}
++	for member: StringName in group:
++		for cell: Vector3i in houses[member].cells:
++			solid[cell] = true
++	for member: StringName in group:
++		var top: int = tops[member]
++		if not (merged.roof_crowns as Dictionary).has(top):
++			merged.roof_crowns[top] = {}
++		for cell: Vector2i in houses[member].storeys[top]:
++			if not solid.has(Vector3i(cell.x, top + 2, cell.y)):
++				(merged.roof_crowns[top] as Dictionary)[cell] = true
++	# Every member's footprint per storey: the designer may fall back to
++	# the members' own crown packing.
++	for member: StringName in group:
++		for floor: int in houses[member].storeys:
++			if not (merged.crown_parts as Dictionary).has(floor):
++				merged.crown_parts[floor] = []
++			(merged.crown_parts[floor] as Array).append(houses[member].storeys[floor])
++	return merged
+ 
+ static func _add_storey_cells(house: Dictionary, floor: int,
+ 		cells: Array) -> void:

@@ -1,0 +1,24 @@
+--- KitTowerHostFit.gd
++++ KitTowerHostFit.gd
+@@ -105,7 +105,11 @@
+ 	var base_band := roundi(pose.origin.y / kit.band_height())
+ 	var top_band := base_band + int(candidate.storeys) * 2
+ 	var quadrant := Vector2i(2147483647,2147483647)
+-	for band in range(base_band,top_band):
++	# Below the house, the complete round shaft is its own grounded foundation.
++	# Admission already proves its support and checks all intervening cells.
++	var join_base := maxi(base_band, host.ground_band)
++	if join_base >= top_band: return {}
++	for band in range(join_base,top_band):
+ 		var cells := host.cells_at_band(band)
+ 		var occupied: Array[Vector2i] = []
+ 		for offset: Vector2i in [Vector2i(-1,-1),Vector2i(-1,0),Vector2i(0,-1),Vector2i.ZERO]:
+@@ -113,7 +117,7 @@
+ 		if occupied.size()!=1:
+ 			audit["corner_join_quadrants"]=int(audit.get("corner_join_quadrants",0))+1
+ 			return {}
+-		if band==base_band: quadrant=occupied[0]
++		if band==join_base: quadrant=occupied[0]
+ 		elif quadrant!=occupied[0]:
+ 			audit["corner_join_shifted"]=int(audit.get("corner_join_shifted",0))+1
+ 			return {}

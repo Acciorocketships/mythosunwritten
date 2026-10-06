@@ -1,0 +1,52 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_native_turret_site.gd
+[0m* test_ground_door_stair_and_bound_materials_survive_site_and_recipe
+* test_invalid_sites_publish_no_partial_house
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_native_bound_asset_compilation.gd
+[0m* test_authored_material_and_reflection_ids_survive_all_site_rotations
+* test_missing_authored_variant_cannot_silently_fall_back_to_stock
+* test_double_reflection_keeps_material_binding_identity
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_native_house_recipe.gd
+[0m* test_planner_recipe_round_trip_preserves_every_native_module_in_world_space
+* test_fabric_assembler_preserves_the_native_derivation_without_extra_joints
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_native_street_site.gd
+[0m* test_street_derivations_preserve_complete_supported_projection_and_entry
+* test_street_site_rejects_invalid_dimensions_scale_and_frame
+[1m2/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               4
+Tests                 9
+Passing Tests         9
+Asserts           17977
+Time              8.057s
+
+
+[32m---- All tests passed! ----
+[0m

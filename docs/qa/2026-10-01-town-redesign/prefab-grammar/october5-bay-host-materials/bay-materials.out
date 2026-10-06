@@ -1,0 +1,13 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+suntail.frame.frame_extension_red
+Wall res://terrain/environment/materials/suntail_village_kit/suntail_frame_frame_extension_red_piece_00_surface_00.tres (0.97, 0.96, 0.93, 1.0) tex=res://terrain/environment/textures/suntail_village_kit/c033a6bf3663a6a3f1ce.res
+Roof_Red res://terrain/environment/materials/suntail_village_kit/suntail_frame_frame_extension_red_piece_00_surface_01.tres (0.58, 0.4, 0.26, 1.0) tex=res://terrain/environment/textures/suntail_village_kit/6b0098c1ce293881a211.res
+Roof_Planks res://terrain/environment/materials/suntail_village_kit/suntail_frame_frame_extension_red_piece_00_surface_02.tres (0.62, 0.44, 0.31, 1.0) tex=res://terrain/environment/textures/suntail_village_kit/afd6d877caaca4af79c4.res
+Wooden_Planks res://terrain/environment/materials/suntail_village_kit/suntail_frame_frame_extension_red_piece_00_surface_03.tres (0.56, 0.36, 0.24, 1.0) tex=res://terrain/environment/textures/suntail_village_kit/9260ee14ceeeba62152c.res
+Wooden_Boards res://terrain/environment/materials/suntail_village_kit/suntail_frame_frame_extension_red_piece_00_surface_04.tres (0.6, 0.43, 0.3, 1.0) tex=res://terrain/environment/textures/suntail_village_kit/6b0098c1ce293881a211.res
+Window res://terrain/environment/materials/suntail_village_kit/suntail_frame_frame_extension_red_piece_00_surface_05.tres (0.8, 0.9087, 1.0, 1.0) tex=res://terrain/environment/textures/suntail_village_kit/c3703ea787bc151f959e.res
+pure_village.wall.plaster.plain
+Plaster res://terrain/environment/materials/pure_village_kit/pure_village_wall_plaster_plain_piece_00_surface_00.tres (1.0, 1.0, 1.0, 1.0) tex=res://terrain/environment/textures/pure_village_kit/5c9680459e062de69b4b.res
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)

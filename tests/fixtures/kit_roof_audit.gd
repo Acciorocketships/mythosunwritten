@@ -23,7 +23,23 @@ const MARGIN := 0.35
 
 static func audit(built: Dictionary, kit: BuildingKit) -> Dictionary:
 	var roofs: Array = built.roofs
-	var ctx := UNION.prepare(roofs, built.walls, kit)
+	var ctx := UNION.prepare(roofs, built.walls, kit, built.get("roof_kits", {}))
+	# Native turret caps replace the gable inside their measured inner skin.
+	# Reconstruct from present parts rather than trusting the clipping request:
+	# removing a cap must expose the missing gable in this audit.
+	ctx["cap_interiors"] = []
+	const TOWER = preload("res://scripts/terrain/features/villages/kit/KitTowerAssembly.gd")
+	if not built.get("towers", []).is_empty():
+		var core: Array = FileAccess.open(TOWER.ROOF_CORE, FileAccess.READ).get_var()
+		for tower: Dictionary in built.towers:
+			if tower.get("attachment",&"") == &"roof":
+				ctx.cap_interiors.append_array(preload("res://scripts/terrain/features/villages/kit/KitRoofTurrets.gd").cutters(tower))
+			for part: Dictionary in tower.parts:
+				if part.role == &"tower.roof" and tower.has("cap_core_path"):
+					var corner_core: Array = FileAccess.open(tower.cap_core_path,FileAccess.READ).get_var()
+					ctx.cap_interiors.append_array(TOWER.placed_cutters(corner_core,tower.pose*part.transform))
+				if _is_native_tower_cap(part.asset_id):
+					ctx.cap_interiors.append_array(TOWER.placed_cutters(core, tower.pose * part.transform))
 	var by_roof: Dictionary = {}
 	for placement: Dictionary in built.placements:
 		var index := int(placement.get("roof_index", -1))
@@ -35,6 +51,22 @@ static func audit(built: Dictionary, kit: BuildingKit) -> Dictionary:
 		for roof: Dictionary in mass.roofs: owner[int(roof.union_index)] = mass.stable_id
 	var out := {"roofs": roofs.size(), "tiny": 0, "tiny_beside": 0, "open_ends": 0, "open_exposed": 0,
 		"gable_ends": 0, "gable_holes": 0, "air_roofs": 0, "air_unsupported": 0, "eaves_cut": 0, "examples": []}
+	# A full shaft's roof need not cut a visible hole in the host gable.
+	# Check the tower's own exposed crown as well: removing its cap must
+	# never pass just because the taller building behind it remains closed.
+	out["uncapped_towers"] = 0
+	var catalog := EnvironmentCatalog.load_default()
+	for tower: Dictionary in built.get("towers",[]):
+		var shaft_top := -INF
+		var caps: Array[AABB] = []
+		for part: Dictionary in tower.parts:
+			var box: AABB = part.transform*catalog.descriptor(part.asset_id).measured_aabb
+			if part.role == &"tower.roof": caps.append(box)
+			else: shaft_top = maxf(shaft_top,box.end.y)
+		var closed := false
+		for cap: AABB in caps:
+			closed = closed or (cap.position.y <= shaft_top and cap.end.y > shaft_top)
+		if not closed: out.uncapped_towers += 1
 	# Walking clearance alone (no other roofs, no solid walls).
 	var open_ctx := ctx.duplicate()
 	var none: Array[Dictionary] = []
@@ -45,7 +77,13 @@ static func audit(built: Dictionary, kit: BuildingKit) -> Dictionary:
 	open_ctx.walls = (built.walls as Array).filter(func(w: Dictionary) -> bool: return bool(w.get("open", false)))
 	for placement: Dictionary in built.placements:
 		if int(placement.get("roof_index", -1)) < 0 or not String(placement.role).contains(".eave"): continue
-		var realized := UNION.realize(placement, open_ctx)
+		# Native tower caps legitimately replace the covered portion of an
+		# eave. Exclude only cutters backed by a cap actually present in this
+		# build; a missing cap must expose the cut again.
+		var walking_placement := placement.duplicate()
+		walking_placement["clip_volumes"] = (placement.get("clip_volumes",[]) as Array).filter(
+			func(cutter: Dictionary)->bool:return not ctx.cap_interiors.has(cutter))
+		var realized := UNION.realize(walking_placement, open_ctx)
 		if realized.is_empty(): continue
 		var t: Transform3D = placement.transform
 		var raw := 0.0
@@ -110,6 +148,15 @@ static func audit(built: Dictionary, kit: BuildingKit) -> Dictionary:
 					out.gable_holes += 1
 					(out.examples as Array).append("gable_hole end=%d samples=%d %s" % [end, holes, tag])
 	return out
+
+
+## Only catalogued geometry-preserving variants count as the native cap.
+## A role or stale cut request alone is not evidence of replacement geometry.
+static func _is_native_tower_cap(id: StringName) -> bool:
+	var base := StringName(String(id).get_slice(".finish_", 0))
+	const TOWER = preload("res://scripts/terrain/features/villages/kit/KitTowerAssembly.gd")
+	return (base == &"pure_village.tower.roof" \
+		or String(base).begins_with("pure_village.tower.roof.")) and TOWER.asset_ids().has(base)
 
 
 ## Area of the triangles of `soup` lying outside the wall line of the eave
@@ -180,9 +227,9 @@ static func _section(f: Dictionary) -> Array[Vector2]:
 	return out
 
 
-static func _inside(volume: Dictionary, p: Vector3) -> bool:
+static func _inside(volume: Dictionary, p: Vector3, margin: float = 0.01) -> bool:
 	for plane: Plane in volume.planes:
-		if plane.distance_to(p) > -0.01: return false
+		if plane.distance_to(p) > -margin: return false
 	return true
 
 
@@ -190,7 +237,11 @@ static func _buried(p: Vector3, own: int, ctx: Dictionary, skins: bool) -> bool:
 	var roofs: Array = ctx.roofs
 	for j in roofs.size():
 		if j == own: continue
-		if _inside(ctx.volumes[j] if skins else _enclosed(roofs[j], ctx.kit), p): return true
+		if _inside(ctx.volumes[j] if skins else _enclosed(roofs[j], ctx.roof_kits.get(j, ctx.kit)), p): return true
+	for cap: Dictionary in ctx.get("cap_interiors", []):
+		# These measured interior slices meet exactly. Shrinking each slice
+		# would invent gaps at their internal boundaries.
+		if _inside(cap, p, -0.00001): return true
 	for wall: Dictionary in ctx.walls:
 		# Public headroom is open air: it hides nothing.
 		if not bool(wall.get("open", false)) and _inside(wall, p): return true
@@ -215,7 +266,7 @@ static func _enclosed(roof: Dictionary, kit: BuildingKit) -> Dictionary:
 
 
 static func _open_exposed(roof: Dictionary, end: int, index: int, ctx: Dictionary) -> int:
-	var kit: BuildingKit = ctx.kit
+	var kit: BuildingKit = ctx.roof_kits.get(index, ctx.kit)
 	var f := _frame(roof, kit)
 	var w := kit.module_width
 	var r: Rect2i = roof.rect
@@ -237,7 +288,7 @@ static func _open_exposed(roof: Dictionary, end: int, index: int, ctx: Dictionar
 
 static func _gable_holes(roof: Dictionary, end: int, index: int, pieces: Array,
 		ctx: Dictionary) -> int:
-	var kit: BuildingKit = ctx.kit
+	var kit: BuildingKit = ctx.roof_kits.get(index, ctx.kit)
 	var f := _frame(roof, kit)
 	var axis := int(f.axis)
 	var u_g := float(f.u1) if end == 1 else float(f.u0)
@@ -295,8 +346,39 @@ static func _gable_holes(roof: Dictionary, end: int, index: int, pieces: Array,
 		if _buried(_point(f, u_g + probe, s.x, s.y), index, ctx, false) \
 				or _buried(_point(f, u_g - probe, s.x, s.y), index, ctx, false):
 			continue
+		# Native panels stand proud of the module plane. At a rising adjacent
+		# attic their actual outer face can be enclosed while this nominal
+		# section is outside. Prove enclosure at every authored face hit;
+		# no hit (a missing panel) must still count as a hole.
+		if _native_gable_faces_buried(_point(f, u_g, s.x, s.y), axis, end, index, pieces, ctx):
+			continue
 		holes += 1
 	return holes
+
+
+static func _native_gable_faces_buried(point: Vector3, axis: int, end: int,
+		index: int, pieces: Array, ctx: Dictionary) -> bool:
+	var outward := Vector3.ZERO
+	outward[0 if axis == 0 else 2] = 1.0 if end == 1 else -1.0
+	var found := false
+	for placement: Dictionary in pieces:
+		if not String(placement.role).begins_with("gable."): continue
+		var transform: Transform3D = placement.transform
+		var normal_map := transform.basis.inverse().transposed()
+		for surface: Dictionary in ctx.data[placement.asset_id]:
+			var indices: PackedInt32Array = surface.indices
+			for i in range(0, indices.size(), 3):
+				var normal: Vector3 = normal_map * (surface.normals[indices[i]] \
+					+ surface.normals[indices[i + 1]] + surface.normals[indices[i + 2]])
+				if normal.dot(outward) < 0.6: continue
+				var hit = Geometry3D.segment_intersects_triangle(point + outward * 0.7,
+					point - outward * 0.7, transform * surface.vertices[indices[i]],
+					transform * surface.vertices[indices[i + 1]],
+					transform * surface.vertices[indices[i + 2]])
+				if hit == null: continue
+				found = true
+				if not _buried(hit, index, ctx, false): return false
+	return found
 
 
 ## Joins and assembles free-standing masses the way `KitVillageBuildings`

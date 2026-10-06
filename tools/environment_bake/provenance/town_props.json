@@ -1,0 +1,385 @@
+{
+  "assets": [
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/alchemy_cauldron_001.tres",
+      "id": "alchemy.cauldron.001",
+      "license": "Original purchased source-pack licenses; per-asset source path identifies the pack",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.561154961585999,
+            0.00000000541266054199241,
+            -0.530829131603241
+          ],
+          "size": [
+            1.12230980396271,
+            0.989174962043762,
+            1.06166076660156
+          ]
+        },
+        "mesh_bytes": 145044,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 1598
+      },
+      "pack": "town_props",
+      "parameters": {
+        "collision_profile": "convex",
+        "fallback_albedo_texture": "res://assets/AlchemyPackFBX/AWS_MAIN_TEXTURE.png",
+        "id": "alchemy.cauldron.001",
+        "max_collision_pieces": 32.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 16.0,
+        "max_visual_triangles": 30000.0,
+        "merge_pieces": true,
+        "source": "res://assets/AlchemyPackFBX/FBX/Alchemy Props/Cauldrons/AWS_Cauldron_Stylized_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "decoration",
+          "AlchemyPackFBX"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/AlchemyPackFBX/FBX/Alchemy Props/Cauldrons/AWS_Cauldron_Stylized_001.fbx",
+      "source_sha256": "852c781a59b8fa24efc6b54df37725e7942f8262aff492f57214ead3a53d856c",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/town_props/alchemy_cauldron_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/crafting_herbalism_table_001.tres",
+      "id": "crafting.herbalism.table.001",
+      "license": "Original purchased source-pack licenses; per-asset source path identifies the pack",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.40993654727936,
+            -0.000000295074158884745,
+            -1.06960678100586
+          ],
+          "size": [
+            3.33394980430603,
+            3.3330864906311,
+            2.05073165893555
+          ]
+        },
+        "mesh_bytes": 3267045,
+        "surface_count": 3,
+        "visual_piece_count": 1,
+        "visual_triangles": 34106
+      },
+      "pack": "town_props",
+      "parameters": {
+        "collision_profile": "convex",
+        "id": "crafting.herbalism.table.001",
+        "max_collision_pieces": 32.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 16.0,
+        "max_visual_triangles": 40000.0,
+        "merge_pieces": true,
+        "source": "res://assets/CraftingFBX/FBX/Workstations/SFWC_Herbalism_Table_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "decoration",
+          "CraftingFBX"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/CraftingFBX/FBX/Workstations/SFWC_Herbalism_Table_001.fbx",
+      "source_sha256": "b361276252d8611801761c088aa366595a5e8ba304882f614b1bca87ae0e2c58",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/town_props/crafting_herbalism_table_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/forge_anvil_001.tres",
+      "id": "forge.anvil.001",
+      "license": "Original purchased source-pack licenses; per-asset source path identifies the pack",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.454700320959091,
+            0.000000013045021951541,
+            -0.464213281869888
+          ],
+          "size": [
+            0.909400641918182,
+            1.05296957492828,
+            0.928426563739777
+          ]
+        },
+        "mesh_bytes": 193094,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 2138
+      },
+      "pack": "town_props",
+      "parameters": {
+        "collision_profile": "convex",
+        "id": "forge.anvil.001",
+        "max_collision_pieces": 32.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 16.0,
+        "max_visual_triangles": 30000.0,
+        "merge_pieces": true,
+        "source": "res://assets/ForgeFBX/FBX/Forge Props/SFFA_Anvil_Stand_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "decoration",
+          "ForgeFBX"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/ForgeFBX/FBX/Forge Props/SFFA_Anvil_Stand_001.fbx",
+      "source_sha256": "7ce56621b8708dac67fc389eb282f647c3078873f25e60abc09608780880e1c7",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/town_props/forge_anvil_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/interior_bench_001.tres",
+      "id": "interior.bench.001",
+      "license": "Original purchased source-pack licenses; per-asset source path identifies the pack",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.766284584999084,
+            -0.0000000500952204163241,
+            -0.192668527364731
+          ],
+          "size": [
+            1.53256916999817,
+            0.495019882917404,
+            0.385337054729462
+          ]
+        },
+        "mesh_bytes": 60877,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 672
+      },
+      "pack": "town_props",
+      "parameters": {
+        "collision_profile": "convex",
+        "id": "interior.bench.001",
+        "max_collision_pieces": 32.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 16.0,
+        "max_visual_triangles": 30000.0,
+        "merge_pieces": true,
+        "source": "res://assets/InteriorPackFBX/FBX/General Furniture/Seating Furniture/SFI_Bench_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "decoration",
+          "InteriorPackFBX"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/InteriorPackFBX/FBX/General Furniture/Seating Furniture/SFI_Bench_001.fbx",
+      "source_sha256": "85d1347728e0bed6906e422593e73415c9cea58b4774ce85e342b2ba2ab1542a",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/town_props/interior_bench_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/market_bakery_stall_001.tres",
+      "id": "market.bakery.stall.001",
+      "license": "Original purchased source-pack licenses; per-asset source path identifies the pack",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 11023,
+        "measured_aabb": {
+          "position": [
+            -2.23680901527405,
+            -0.000000417232513427734,
+            -1.59946775436401
+          ],
+          "size": [
+            4.47361755371094,
+            4.01934194564819,
+            3.19893550872803
+          ]
+        },
+        "mesh_bytes": 991942,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 11023
+      },
+      "pack": "town_props",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "market.bakery.stall.001",
+        "max_collision_pieces": 32.0,
+        "max_collision_triangles": 15000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 16.0,
+        "max_visual_triangles": 30000.0,
+        "merge_pieces": true,
+        "source": "res://tools/environment_bake/assembly_sources/town_props/bakery.tscn",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "decoration",
+          "FantasyMarketFBX"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://tools/environment_bake/assembly_sources/town_props/bakery.tscn",
+      "source_sha256": "529813a435b576ff2420b0cff155567008ac31232ee0adf5a7a7ede9b4d1911b",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/town_props/market_bakery_stall_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/market_vegetable_stall_001.tres",
+      "id": "market.vegetable.stall.001",
+      "license": "Original purchased source-pack licenses; per-asset source path identifies the pack",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -3.9299840927124,
+            -0.0241763889789581,
+            -1.90536856651306
+          ],
+          "size": [
+            6.85498571395874,
+            4.18458938598633,
+            4.31868457794189
+          ]
+        },
+        "mesh_bytes": 4521327,
+        "surface_count": 3,
+        "visual_piece_count": 1,
+        "visual_triangles": 47217
+      },
+      "pack": "town_props",
+      "parameters": {
+        "collision_profile": "convex",
+        "id": "market.vegetable.stall.001",
+        "max_collision_pieces": 32.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 16.0,
+        "max_visual_triangles": 50000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyMarketFBX/FBX/Fruits Stall/Stall/SFM_Veg_Stall_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "decoration",
+          "FantasyMarketFBX"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyMarketFBX/FBX/Fruits Stall/Stall/SFM_Veg_Stall_001.fbx",
+      "source_sha256": "e5e62918673158e69f53a238d79064d87c90d5d321a30d9ea2b39e4ecfb5050a",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/town_props/market_vegetable_stall_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/tavern_adventurer_table_001.tres",
+      "id": "tavern.adventurer.table.001",
+      "license": "Original purchased source-pack licenses; per-asset source path identifies the pack",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -2.18220329284668,
+            0.304741740226746,
+            -1.29211592674255
+          ],
+          "size": [
+            3.82505130767822,
+            1.873814702034,
+            2.62832617759705
+          ]
+        },
+        "mesh_bytes": 1491186,
+        "surface_count": 5,
+        "visual_piece_count": 1,
+        "visual_triangles": 16547
+      },
+      "pack": "town_props",
+      "parameters": {
+        "collision_profile": "convex",
+        "id": "tavern.adventurer.table.001",
+        "max_collision_pieces": 32.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 16.0,
+        "max_visual_triangles": 30000.0,
+        "merge_pieces": true,
+        "source": "res://assets/TavernandKitchenFBX/FBX/Bar Props/Tables/Themed Tables/SFT_Adventurer_Table_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "decoration",
+          "TavernandKitchenFBX"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/TavernandKitchenFBX/FBX/Bar Props/Tables/Themed Tables/SFT_Adventurer_Table_001.fbx",
+      "source_sha256": "03c6492b201ad7b1fa9bf8d34eb62b11c3e6ef0610272f5bfabd94ed151ec857",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/town_props/tavern_adventurer_table_001.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/tavern_bench_001.tres",
+      "id": "tavern.bench.001",
+      "license": "Original purchased source-pack licenses; per-asset source path identifies the pack",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.210340395569801,
+            0.00000000594761351280226,
+            -1.35546743869781
+          ],
+          "size": [
+            0.42068088054657,
+            0.563957631587982,
+            2.71093487739563
+          ]
+        },
+        "mesh_bytes": 92723,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1024
+      },
+      "pack": "town_props",
+      "parameters": {
+        "collision_profile": "convex",
+        "id": "tavern.bench.001",
+        "max_collision_pieces": 32.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 16.0,
+        "max_visual_triangles": 30000.0,
+        "merge_pieces": true,
+        "source": "res://assets/TavernandKitchenFBX/FBX/Bar Props/Bench/SFT_Bench_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "decoration",
+          "TavernandKitchenFBX"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/TavernandKitchenFBX/FBX/Bar Props/Bench/SFT_Bench_001.fbx",
+      "source_sha256": "353cf8eccf608df0fe7cb7638b601759bd107e98514c10b66b4a2eca9b90c543",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/town_props/tavern_bench_001.tres"
+    }
+  ],
+  "license": "Original purchased source-pack licenses; per-asset source path identifies the pack",
+  "pack": "town_props",
+  "tool_version": 38
+}

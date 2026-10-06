@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_4wh8h"]
+
+[resource]
+script = ExtResource("1_4wh8h")
+id = &"pure_village.tower.half_window.finish_walnut"
+visual_path = "res://terrain/environment/visuals/pure_village_towers/pure_village_tower_half_window.tres"
+tags = Array[StringName]([&"building", &"pure_village_towers", &"village"])
+measured_aabb = AABB(-1.6220398, -0.125, -4.8828124e-06, 3.2440796, 3.125, 1.7273036)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"pure_village_towers:pure_village.tower.half_window/frame/walnut"
+material_tints = {
+"DoorShutter": Color(0.48, 0.37, 0.29, 1),
+"DoorShutters": Color(0.48, 0.37, 0.29, 1),
+"Planks": Color(0.48, 0.37, 0.29, 1),
+"Planks_Full": Color(0.48, 0.37, 0.29, 1),
+"Wood": Color(0.48, 0.37, 0.29, 1),
+"Wood_1": Color(0.48, 0.37, 0.29, 1),
+"Wood_2": Color(0.48, 0.37, 0.29, 1),
+"Wood_3": Color(0.48, 0.37, 0.29, 1),
+"Wooden_Planks": Color(0.48, 0.37, 0.29, 1)
+}

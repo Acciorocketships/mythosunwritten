@@ -1,8 +1,8 @@
 [gd_resource type="StandardMaterial3D" load_steps=4 format=3]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/fbdb058f02677d25467f.res" id="1_esdim"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/2a22e078a5804cf5a762.res" id="2_jv6bq"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/6ddd4ccb5f53a916ab51.res" id="3_4ms8m"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/d0831074166f74f7d1bc.res" id="1_esdim"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/3c1b86baae605d7781ef.res" id="2_jv6bq"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/4ec57a095ef8385ecf48.res" id="3_4ms8m"]
 
 [resource]
 resource_name = "Rack_2"

@@ -1,0 +1,22 @@
+extends SceneTree
+func _init():
+ var program=SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
+ var spatial=WarrenVolumetricSolver.generate(63,{},program,WarrenVillageScaleProfile.for_id(&"grand"))
+ var kit=SuntailBuildingKit.create()
+ var fabric=spatial.compiled_fabric_cache()
+ var built=KitVillageBuildings.build(spatial,fabric,kit)
+ var payload=KitVillageBuildings.legacy_payload_without(fabric,built.replaced_units)
+ payload.append_from(built.payload)
+ payload.append_from(SettlementFabricAssembler.production_surface_bundle(fabric.surface_plan,SettlementFabricAssembler.maze_module_footprints(fabric),SettlementFabricAssembler.maze_skin_panel_boxes_for(fabric),fabric.planned_plaza_cells))
+ payload=KitSubstitution.apply(payload)
+ var frame=Transform3D(Basis.from_scale(VillageWorldScale.frame_scale()),Vector3.ZERO)
+ var catalog=EnvironmentCatalog.load_default()
+ var rows=[]
+ for id in payload.asset_ids():
+  var batch=payload.batches[id]
+  for i in batch.ids.size():
+   var box:AABB=frame*batch.transforms[i]*catalog.descriptor(id).measured_aabb
+   if box.size.y<2:continue
+   rows.append({"id":batch.ids[i],"asset":id,"p":[box.position.x,box.position.y,box.position.z],"s":[box.size.x,box.size.y,box.size.z]})
+ FileAccess.open("/tmp/wing-supports.json",FileAccess.WRITE).store_string(JSON.stringify(rows,"\t"))
+ quit()

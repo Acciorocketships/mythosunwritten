@@ -1,0 +1,64 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_pure_bay_opening_bounds.gd
+[0m* test_material_swapped_bays_keep_glass_and_frame_contact_checks
+[31m    [Failed]:  [0mMaterial swaps retain measured glazing
+      at line 10
+[31m    [Failed]:  [0mARRAY([]) != ARRAY([[P: (-0.31266, 0.528125, 0.838919), S: (0.555445, 0.030038, 0.027435)], [P: (-0.312...244858)]]).
+    [] != [[P: (-0.31266, 0.528125, 0.838919), S: ....244858)]]  8 of 8 indexes do not match.  The same authored window surrounds retain their bounds
+      at line 11
+[31m    [Failed]:  [0mA roof through the glass blocks the material-swapped bay
+      at line 15
+[31m    [Failed]:  [0mMaterial swaps retain measured glazing
+      at line 10
+[31m    [Failed]:  [0mARRAY([]) != ARRAY([[P: (-0.31266, 0.528125, 0.838919), S: (0.555445, 0.030038, 0.027435)], [P: (-0.312...244858)]]).
+    [] != [[P: (-0.31266, 0.528125, 0.838919), S: ....244858)]]  8 of 8 indexes do not match.  The same authored window surrounds retain their bounds
+      at line 11
+[31m    [Failed]:  [0mA roof through the glass blocks the material-swapped bay
+      at line 15
+[1m0/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_pure_bay_opening_bounds.gd
+[0m- test_material_swapped_bays_keep_glass_and_frame_contact_checks
+[31m    [Failed]:  [0mMaterial swaps retain measured glazing
+          at line 10
+[31m    [Failed]:  [0mARRAY([]) != ARRAY([[P: (-0.31266, 0.528125, 0.838919), S: (0.555445, 0.030038, 0.027435)], [P: (-0.312...244858)]]).
+    [] != [[P: (-0.31266, 0.528125, 0.838919), S: ....244858)]]  8 of 8 indexes do not match.  The same authored window surrounds retain their bounds
+          at line 11
+[31m    [Failed]:  [0mA roof through the glass blocks the material-swapped bay
+          at line 15
+[31m    [Failed]:  [0mMaterial swaps retain measured glazing
+          at line 10
+[31m    [Failed]:  [0mARRAY([]) != ARRAY([[P: (-0.31266, 0.528125, 0.838919), S: (0.555445, 0.030038, 0.027435)], [P: (-0.312...244858)]]).
+    [] != [[P: (-0.31266, 0.528125, 0.838919), S: ....244858)]]  8 of 8 indexes do not match.  The same authored window surrounds retain their bounds
+          at line 11
+[31m    [Failed]:  [0mA roof through the glass blocks the material-swapped bay
+          at line 15
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts             2/8
+Time              0.393s
+
+
+[31m---- 1 failing tests ----
+[0m

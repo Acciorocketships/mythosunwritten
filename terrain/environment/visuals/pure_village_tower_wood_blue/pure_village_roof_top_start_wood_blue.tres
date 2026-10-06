@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_g311t"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/pure_village_tower_wood_blue/pure_village_roof_top_start_wood_blue_piece_00.res" id="2_57xed"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_87mru"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/pure_village_tower_wood_blue/pure_village_roof_top_start_wood_blue_piece_00.res" id="4_usdct"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_wg2ya"]
+
+[sub_resource type="Resource" id="Resource_ypps8"]
+script = ExtResource("1_g311t")
+shape = ExtResource("2_57xed")
+
+[sub_resource type="Resource" id="Resource_xc2y6"]
+script = ExtResource("3_87mru")
+mesh = ExtResource("4_usdct")
+
+[resource]
+script = ExtResource("5_wg2ya")
+pieces = Array[ExtResource("3_87mru")]([SubResource("Resource_xc2y6")])
+collisions = Array[ExtResource("1_g311t")]([SubResource("Resource_ypps8")])

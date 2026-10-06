@@ -1,0 +1,43 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+PART { "asset_id": &"pure_village.roof.slope.end", "transform": [X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-4.0, 3.0, 8.0)], "role": &"roof.red.eave_tight.end", "stable_id": &"kit.spatial.parcel.maze.house.000/k0062", "color": (1.0, 1.0, 1.0, 1.0), "roof_side": 1, "roof_index": 0 }
+ROOF { "rect": [P: (-2, 4), S: (4, 2)], "axis": 0, "eave_band": 2, "colour": &"red", "open_min": false, "open_max": false, "extend_min": 0, "extend_max": 0, "dormers": { (0, -1): true }, "ridge_peaks": false, &"chimney": true, &"chimney_end": 0, &"union_index": 0, &"tight_eave_sides": 2, &"tight_eave": true, &"chimney_u": -1.0 }
+KIT pure_village
+CUT { "bounds": [P: (-6.0, 3.025, 6.0), S: (2.0, 1.2, 2.0)], "planes": [[N: (0.0, -1.0, 0.0), D: -3.025], [N: (0.0, 1.0, 0.0), D: 4.225], [N: (0.707107, 0.0, -0.707107), D: -8.485281], [N: (0.0, 0.0, 1.0), D: 8], [N: (-1.0, 0.0, 0.0), D: 6]], "open": true }
+CUT { "bounds": [P: (-6.0, 3.025, 6.0), S: (2.0, 1.2, 2.0)], "planes": [[N: (0.0, -1.0, 0.0), D: -3.025], [N: (0.0, 1.0, 0.0), D: 4.225], [N: (0.0, 0.0, -1.0), D: -6], [N: (1.0, 0.0, 0.0), D: -4], [N: (-0.707107, 0.0, 0.707107), D: 8.485281]], "open": true }
+CUT { "bounds": [P: (-4.0, 3.1875, 4.0), S: (0.5, 1.2, 4.0)], "planes": [[N: (0.0, -1.0, 0.0), D: -3.1875], [N: (0.0, 1.0, 0.0), D: 4.3875], [N: (0.0, 0.0, -1.0), D: -4], [N: (1.0, 0.0, 0.0), D: -3.5], [N: (-0.992278, 0.0, 0.124035), D: 4.46525]], "open": true }
+TRIAL 0 roof.red.eave_tight (-3.0, 3.0, 8.0) lost 0.45935036249823 raw 21.8076094260399
+TRIAL 0 roof.red.eave_tight (-1.0, 3.0, 8.0) lost -0.00000008922318 raw 21.8076090217415
+SURFACE 0 RoofTiles overhang 0.5476699276478 retained 0.0
+SURFACE 0 Planks_Full overhang 0.14328965730965 retained 0.06661321184856
+SURFACE 0 Wood_2 overhang 0.0 retained 0.0
+TRIAL 0 roof.red.eave_tight.end (-4.0, 3.0, 8.0) lost 0.85148249792985 raw 12.1094728014152
+TRIAL 1 roof.red.eave_tight (-3.0, 3.0, 8.0) lost 0.45935036249823 raw 21.8076094260399
+TRIAL 1 roof.red.eave_tight (-1.0, 3.0, 8.0) lost -0.00000008922318 raw 21.8076090217415
+SURFACE 1 RoofTiles overhang 0.54767002380686 retained 0.16138082987163
+SURFACE 1 Planks_Full overhang 0.14328965730965 retained 0.22177102731075
+SURFACE 1 Wood_2 overhang 0.0 retained 0.0
+TRIAL 1 roof.red.eave_tight.end (-3.277032, 3.0, 8.0) lost 0.54707826293298 raw 12.1094724547457
+TRIAL 2 roof.red.eave_tight (-3.0, 3.0, 8.0) lost 0.45935036249823 raw 21.8076094260399
+TRIAL 2 roof.red.eave_tight (-1.0, 3.0, 8.0) lost -0.00000008922318 raw 21.8076090217415
+SURFACE 2 RoofTiles overhang 0.5476699276478 retained 0.0
+SURFACE 2 Planks_Full overhang 0.14328965730965 retained 0.06661321184856
+SURFACE 2 Wood_2 overhang 0.0 retained 0.0
+TRIAL 2 roof.red.eave_tight.end (-4.0, 3.0, 8.0) lost 0.85148249792985 raw 12.1094728014152
+TRIAL 3 roof.red.eave_tight (-3.0, 3.0, 8.0) lost 0.45935036249823 raw 21.8076094260399
+TRIAL 3 roof.red.eave_tight (-1.0, 3.0, 8.0) lost -0.00000008922318 raw 21.8076090217415
+SURFACE 3 RoofTiles overhang 0.54767002380686 retained 0.16138082987163
+SURFACE 3 Planks_Full overhang 0.14328965730965 retained 0.22177102731075
+SURFACE 3 Wood_2 overhang 0.0 retained 0.0
+TRIAL 3 roof.red.eave_tight.end (-3.277032, 3.0, 8.0) lost 0.54707826293298 raw 12.1094724547457
+ALT_FIT 1
+ALT_BLOCKED roof.red.eave_tight (-4.0, 3.0, 8.0) lost 0.42861196427839
+ALT_BLOCKED roof.red.eave_tight (-2.0, 3.0, 8.0) lost 0.00000008638017
+ALT_BLOCKED roof.red.eave_tight (0.0, 3.0, 8.0) lost 0.00000120638288
+ALT_BLOCKED roof.red.eave_tight (2.0, 3.0, 8.0) lost -0.00000071316026
+ALT_BLOCKED roof.red.eave_tight (4.0, 3.0, 8.0) lost -0.00000142375939
+AIR_SOURCE volume.transition.07.mesh ["stable_id", "kind", "is_transition", "claim_cells", "vertices", "normals", "uvs", "indices", "collision_faces", "run_direction", "guard_index_ranges", "guard_spans"]
+AIR_SOURCE volume.transition.07.mesh ["stable_id", "kind", "is_transition", "claim_cells", "vertices", "normals", "uvs", "indices", "collision_faces", "run_direction", "guard_index_ranges", "guard_spans"]
+AUDIT { "roofs": 31, "tiny": 0, "tiny_beside": 0, "open_ends": 13, "open_exposed": 0, "gable_ends": 49, "gable_holes": 0, "air_roofs": 0, "air_unsupported": 0, "eaves_cut": 1, "examples": ["eave_cut kit.spatial.parcel.maze.house.000/k0062 at (-4.0, 3.0, 8.0)"], "uncapped_towers": 0 }

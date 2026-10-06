@@ -1,0 +1,18 @@
+[gd_resource type="StandardMaterial3D" load_steps=4 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/PureVillage/Textures/Wood/Wood_a_1002.png" id="1_3h8us"]
+[ext_resource type="Texture2D" path="res://assets/PureVillage/Textures/Wood/Wood_mask_1002_MOS_100_50.png" id="2_blk1f"]
+[ext_resource type="Texture2D" path="res://assets/PureVillage/Textures/Wood/Wood_n_1002.png" id="3_45nxl"]
+
+[resource]
+resource_name = "Wood_2"
+albedo_texture = ExtResource("1_3h8us")
+metallic = 1.0
+metallic_texture = ExtResource("2_blk1f")
+metallic_texture_channel = 2
+roughness_texture = ExtResource("2_blk1f")
+roughness_texture_channel = 1
+normal_enabled = true
+normal_texture = ExtResource("3_45nxl")
+ao_enabled = true
+ao_texture = ExtResource("2_blk1f")

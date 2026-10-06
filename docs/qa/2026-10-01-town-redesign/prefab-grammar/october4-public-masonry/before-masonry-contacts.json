@@ -1,0 +1,162 @@
+[
+	{
+		"a": "kit.platform-wall/k0111",
+		"asset_a": "pure_village.stone.block.4",
+		"asset_b": "suntail.stone.stone_base",
+		"at_a": "(-1.125, 0.0, -0.75)",
+		"at_b": "(0.0, -1.0, -0.75)",
+		"b": "kit.spatial.parcel.maze.house.wall-room.001/k0010"
+	},
+	{
+		"a": "kit.platform-wall/k0113",
+		"asset_a": "pure_village.stone.block.4",
+		"asset_b": "suntail.stone.stone_base",
+		"at_a": "(-1.125, 0.25, -0.75)",
+		"at_b": "(0.0, -1.0, -0.75)",
+		"b": "kit.spatial.parcel.maze.house.wall-room.001/k0010"
+	},
+	{
+		"a": "kit.platform-wall/k0194",
+		"asset_a": "pure_village.stone.block.4",
+		"asset_b": "suntail.stone.stone_base",
+		"at_a": "(-12.75, 0.0, -9.375)",
+		"at_b": "(-12.75, -1.0, -10.5)",
+		"b": "kit.spatial.feature.landmark.01/k0049"
+	},
+	{
+		"a": "kit.platform-wall/k0196",
+		"asset_a": "pure_village.stone.block.4",
+		"asset_b": "suntail.stone.stone_base",
+		"at_a": "(-12.75, 0.25, -9.375)",
+		"at_b": "(-12.75, -1.0, -10.5)",
+		"b": "kit.spatial.feature.landmark.01/k0049"
+	},
+	{
+		"a": "kit.platform-wall/k0562",
+		"asset_a": "pure_village.stone.block.4",
+		"asset_b": "suntail.stone.stone_base",
+		"at_a": "(-13.125, 5.78, -0.7485)",
+		"at_b": "(-12.0, 5.0, -0.75)",
+		"b": "kit.spatial.parcel.maze.bridge.00.end.0.lower/k0023"
+	},
+	{
+		"a": "kit.spatial.feature.landmark.02/k0079",
+		"asset_a": "pure_village.stone.plinth.finish_walnut",
+		"asset_b": "suntail.stone.stone_base",
+		"at_a": "(-1.5, -1.0, 20.3775)",
+		"at_b": "(0.0, -1.0, 20.25)",
+		"b": "kit.spatial.residual.00/k0025"
+	},
+	{
+		"a": "kit.tunnel-ceilings/k0005",
+		"asset_a": "pure_village.stone.retaining_half",
+		"asset_b": "suntail.stone.stone_base",
+		"at_a": "(4.5, 4.49996, -3.75)",
+		"at_b": "(6.0, 5.0, -3.75)",
+		"b": "kit.spatial.parcel.maze.bridge.01.end.1.lower/k0016"
+	},
+	{
+		"a": "kit.tunnel-ceilings/k0007",
+		"asset_a": "pure_village.stone.retaining_half",
+		"asset_b": "suntail.stone.stone_base",
+		"at_a": "(2.25, 4.49996, -4.5)",
+		"at_b": "(2.25, 5.0, -6.0)",
+		"b": "kit.spatial.parcel.maze.bridge.01.end.1.lower/k0021"
+	},
+	{
+		"a": "kit.retained/k0002",
+		"asset_a": "pure_village.stone.retaining_half",
+		"asset_b": "suntail.stone.stone_base",
+		"at_a": "(5.25, -0.00004, -4.5)",
+		"at_b": "(5.25, -1.0, -3.0)",
+		"b": "kit.spatial.parcel.maze.house.005/k0023"
+	},
+	{
+		"a": "kit.platform-wall/k0109",
+		"asset_a": "pure_village.wall.stone.plain",
+		"asset_b": "suntail.stone.stone_base",
+		"at_a": "(-1.5, 0.0, -0.87)",
+		"at_b": "(0.0, -1.0, -0.75)",
+		"b": "kit.spatial.parcel.maze.house.wall-room.001/k0010"
+	},
+	{
+		"a": "kit.platform-wall/k0115",
+		"asset_a": "pure_village.wall.stone.plain",
+		"asset_b": "suntail.stone.stone_base",
+		"at_a": "(-0.75, 0.0, -0.4875)",
+		"at_b": "(0.0, -1.0, -0.75)",
+		"b": "kit.spatial.parcel.maze.house.wall-room.001/k0010"
+	},
+	{
+		"a": "kit.platform-wall/k0193",
+		"asset_a": "pure_village.wall.stone.plain",
+		"asset_b": "suntail.stone.stone_base",
+		"at_a": "(-12.63, 0.0, -9.0)",
+		"at_b": "(-12.75, -1.0, -10.5)",
+		"b": "kit.spatial.feature.landmark.01/k0049"
+	},
+	{
+		"a": "kit.platform-wall/k0248",
+		"asset_a": "pure_village.wall.stone.plain",
+		"asset_b": "suntail.stone.stone_base",
+		"at_a": "(-1.5, 0.0, -3.63)",
+		"at_b": "(0.0, -1.0, -3.75)",
+		"b": "kit.spatial.parcel.maze.house.wall-room.001/k0016"
+	},
+	{
+		"a": "kit.platform-wall/k0316",
+		"asset_a": "pure_village.wall.stone.plain",
+		"asset_b": "suntail.stone.stone_base",
+		"at_a": "(-9.87, 3.0, 3.0)",
+		"at_b": "(-9.75, 5.0, 1.5)",
+		"b": "kit.spatial.parcel.maze.bridge.00.end.0.lower/k0011"
+	},
+	{
+		"a": "kit.platform-wall/k0323",
+		"asset_a": "pure_village.wall.stone.plain",
+		"asset_b": "suntail.stone.stone_base",
+		"at_a": "(-9.87, 3.0, 4.5)",
+		"at_b": "(-9.423588, 2.380041, 5.892349)",
+		"b": "retaining-wall/-6/3/4/-1/0/tile1"
+	},
+	{
+		"a": "kit.platform-wall/k0323",
+		"asset_a": "pure_village.wall.stone.plain",
+		"asset_b": "suntail.stone.stone_base",
+		"at_a": "(-9.87, 3.0, 4.5)",
+		"at_b": "(-9.423588, 3.380082, 5.892349)",
+		"b": "retaining-wall/-6/3/4/-1/0/tile2"
+	},
+	{
+		"a": "kit.platform-wall/k0425",
+		"asset_a": "pure_village.wall.stone.plain",
+		"asset_b": "suntail.stone.stone_base",
+		"at_a": "(-10.5, 3.0, 5.13)",
+		"at_b": "(-8.892349, 2.380041, 5.576412)",
+		"b": "retaining-wall/-6/3/4/0/-1/tile1"
+	},
+	{
+		"a": "kit.platform-wall/k0425",
+		"asset_a": "pure_village.wall.stone.plain",
+		"asset_b": "suntail.stone.stone_base",
+		"at_a": "(-10.5, 3.0, 5.13)",
+		"at_b": "(-8.892349, 3.380082, 5.576412)",
+		"b": "retaining-wall/-6/3/4/0/-1/tile2"
+	},
+	{
+		"a": "kit.platform-wall/k0561",
+		"asset_a": "pure_village.wall.stone.plain",
+		"asset_b": "suntail.stone.stone_base",
+		"at_a": "(-13.5, 3.0, -0.63)",
+		"at_b": "(-12.0, 5.0, -0.75)",
+		"b": "kit.spatial.parcel.maze.bridge.00.end.0.lower/k0023"
+	},
+	{
+		"a": "kit.platform-wall/k0182",
+		"asset_a": "pure_village.wall.stone.window",
+		"asset_b": "suntail.stone.stone_base",
+		"at_a": "(-15.58647, 0.0, -1.5)",
+		"at_b": "(-15.75, -1.0, 0.0)",
+		"b": "kit.spatial.parcel.maze.house.wall-room.002/k0022"
+	}
+]

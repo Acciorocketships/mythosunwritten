@@ -1,0 +1,291 @@
+--- a/scripts/terrain/features/villages/fabric/WarrenVolumetricSolver.gd
++++ b/scripts/terrain/features/villages/fabric/WarrenVolumetricSolver.gd
+@@ -7477,138 +7477,144 @@
+ 	var added := 0
+ 	var addressed_count := 0
+ 	var private_count := 0
+-	for item: Dictionary in work:
+-		var cells := item["cells"] as Array[Vector3i]
+-		var blocked := false
+-		for cell: Vector3i in cells:
+-			if grid.use_at(cell) != WarrenSpatialGrid.Use.ALLOCATABLE \
+-					or _residual_feature_protected(grid, cell,
+-						protected_owners, &"spatial.skywalk.reserve.maze_over."
+-						if bool(records[int(item["record"])].get("over_passage", false)) else &""):
+-				blocked = true
+-				break
+-		if blocked:
+-			_note_maze_back_room_refusal(refusals,
+-				"mass already spent or feature-reserved")
+-			continue
+-		var band := int(item["band"])
+-		var columns := item["columns"] as Array[Vector2i]
+-		var kind := StringName(item["kind"])
+-		var over_record := records[int(item["record"])] as Dictionary
+-		if bool(over_record.get("over_passage", false)) \
+-				and not _over_passage_is_borne(grid, over_record, columns, band,
+-					building_by_id, building_by_cell):
+-			_note_maze_back_room_refusal(refusals,
+-				"passage cover lacks its crown, jambs or host storey")
+-			continue
+-		var yaw := int(item["yaw"])
+-		var origin := _maze_back_room_origin(kind, cells, yaw)
+-		# TASK C5c RULING 3 -- THE SECOND DOOR. A back room whose own shell can
+-		# open an authored doorway onto a street is an ADDRESSED room of this
+-		# building, not a windowless cell reached through the house in front of
+-		# it: the plot is a corner and this is its second frontage.
+-		var address := _maze_back_room_address(grid, kind, cells, yaw)
+-		if not address.is_empty():
+-			yaw = int(address.yaw)
+-			origin = address.origin as Vector3i
+-		if origin.x == 2147483647:
+-			_note_maze_back_room_refusal(refusals,
+-				"rectangle is not an authored shell")
+-			continue
+-		var terrain_bearing := _maze_back_room_bears_terrain(grid, volume,
+-			columns, band)
+-		var support_parent_id := &""
+-		var support_parent_cell := Vector3i(2147483647, 2147483647, 2147483647)
+-		if not terrain_bearing:
+-			var support_counts: Dictionary = {}
+-			var support_cell_by_owner: Dictionary = {}
++	while not work.is_empty():
++		var added_before := added
++		var deferred: Array[Dictionary] = []
++		for item: Dictionary in work:
++			var cells := item["cells"] as Array[Vector3i]
++			var blocked := false
+ 			for cell: Vector3i in cells:
+-				if cell.y != band:
++				if grid.use_at(cell) != WarrenSpatialGrid.Use.ALLOCATABLE \
++						or _residual_feature_protected(grid, cell,
++							protected_owners, &"spatial.skywalk.reserve.maze_over."
++							if bool(records[int(item["record"])].get("over_passage", false)) else &""):
++					blocked = true
++					break
++			if blocked:
++				_note_maze_back_room_refusal(refusals,
++					"mass already spent or feature-reserved")
++				continue
++			var band := int(item["band"])
++			var columns := item["columns"] as Array[Vector2i]
++			var kind := StringName(item["kind"])
++			var over_record := records[int(item["record"])] as Dictionary
++			if bool(over_record.get("over_passage", false)) \
++					and not _over_passage_is_borne(grid, over_record, columns, band,
++						building_by_id, building_by_cell):
++				_note_maze_back_room_refusal(refusals,
++					"passage cover lacks its crown, jambs or host storey")
++				continue
++			var yaw := int(item["yaw"])
++			var origin := _maze_back_room_origin(kind, cells, yaw)
++			# TASK C5c RULING 3 -- THE SECOND DOOR. A back room whose own shell can
++			# open an authored doorway onto a street is an ADDRESSED room of this
++			# building, not a windowless cell reached through the house in front of
++			# it: the plot is a corner and this is its second frontage.
++			var address := _maze_back_room_address(grid, kind, cells, yaw)
++			if not address.is_empty():
++				yaw = int(address.yaw)
++				origin = address.origin as Vector3i
++			if origin.x == 2147483647:
++				_note_maze_back_room_refusal(refusals,
++					"rectangle is not an authored shell")
++				continue
++			var terrain_bearing := _maze_back_room_bears_terrain(grid, volume,
++				columns, band)
++			var support_parent_id := &""
++			var support_parent_cell := Vector3i(2147483647, 2147483647, 2147483647)
++			if not terrain_bearing:
++				var support_counts: Dictionary = {}
++				var support_cell_by_owner: Dictionary = {}
++				for cell: Vector3i in cells:
++					if cell.y != band:
++						continue
++					var below := cell + Vector3i.DOWN
++					var owner := StringName(building_by_cell.get(below, &""))
++					if owner.is_empty():
++						continue
++					support_counts[owner] = int(
++						support_counts.get(owner, 0)) + 1
++					support_cell_by_owner[owner] = below
++				support_parent_id = _largest_contact_owner(support_counts)
++				var required := maxi(1, columns.size() * 2)
++				if support_parent_id.is_empty() \
++						or int(support_counts[support_parent_id]) < required:
++					# Neither the ground nor half a floorplate of inhabited mass
++					# stands under this rectangle. What is usually there instead is
++					# structural ROCK, which is derived stone rather than
++					# construction and which no room may name as its bearing.
++					_note_maze_back_room_refusal(refusals,
++						"no terrain or building bearing")
+ 					continue
+-				var below := cell + Vector3i.DOWN
+-				var owner := StringName(building_by_cell.get(below, &""))
+-				if owner.is_empty():
+-					continue
+-				support_counts[owner] = int(
+-					support_counts.get(owner, 0)) + 1
+-				support_cell_by_owner[owner] = below
+-			support_parent_id = _largest_contact_owner(support_counts)
+-			var required := maxi(1, columns.size() * 2)
+-			if support_parent_id.is_empty() \
+-					or int(support_counts[support_parent_id]) < required:
+-				# Neither the ground nor half a floorplate of inhabited mass
+-				# stands under this rectangle. What is usually there instead is
+-				# structural ROCK, which is derived stone rather than
+-				# construction and which no room may name as its bearing.
++				support_parent_cell = support_cell_by_owner[
++					support_parent_id] as Vector3i
++			var parent_building := building_by_id.get(support_parent_id) \
++				as WarrenBuildingVolume
++			var parent_room := _maze_back_room_parent_room(parent_building,
++				support_parent_cell)
++			if not terrain_bearing and parent_room == null:
+ 				_note_maze_back_room_refusal(refusals,
+-					"no terrain or building bearing")
++					"bearing parent has no room to name")
+ 				continue
+-			support_parent_cell = support_cell_by_owner[
+-				support_parent_id] as Vector3i
+-		var parent_building := building_by_id.get(support_parent_id) \
+-			as WarrenBuildingVolume
+-		var parent_room := _maze_back_room_parent_room(parent_building,
+-			support_parent_cell)
+-		if not terrain_bearing and parent_room == null:
+-			_note_maze_back_room_refusal(refusals,
+-				"bearing parent has no room to name")
+-			continue
+-		var building_id := StringName("spatial.maze_back.%02d" % added)
+-		var source_id := StringName("maze.back.%02d" % added)
+-		var support_source := &"" if terrain_bearing \
+-			else parent_room.source_parcel_id
+-		var support_storey := -1 if terrain_bearing \
+-			else parent_room.source_storey_index
+-		var roof_feature := _residual_roof_feature(kind, origin,
+-			volume.world_seed)
+-		var addressed := not address.is_empty()
+-		var threshold_cell := address.get("threshold",
+-			Vector3i(2147483647, 2147483647, 2147483647)) as Vector3i
+-		var frontage_direction := address.get("direction",
+-			Vector3i.ZERO) as Vector3i
+-		var probe := WarrenRoomStamp.new(&"maze.back.envelope.probe",
+-			&"maze.back.envelope.probe", kind, origin, yaw, 0, terrain_bearing,
+-			addressed, threshold_cell, frontage_direction, roof_feature,
+-			support_source, support_storey, 0,
+-			bool(item.get("flat_roof", false)))
+-		probe.private_cells.assign(cells)
+-		# A passage cover is its host's own storey continued over the lane:
+-		# the host's rooms beneath and beside it are the same building, whose
+-		# shells may meet it (jetty, eave) as any storey meets the one below.
+-		if bool(records[int(item["record"])].get("over_passage", false)):
++			var building_id := StringName("spatial.maze_back.%02d" % added)
++			var source_id := StringName("maze.back.%02d" % added)
++			var support_source := &"" if terrain_bearing \
++				else parent_room.source_parcel_id
++			var support_storey := -1 if terrain_bearing \
++				else parent_room.source_storey_index
++			var roof_feature := _residual_roof_feature(kind, origin,
++				volume.world_seed)
++			var addressed := not address.is_empty()
++			var threshold_cell := address.get("threshold",
++				Vector3i(2147483647, 2147483647, 2147483647)) as Vector3i
++			var frontage_direction := address.get("direction",
++				Vector3i.ZERO) as Vector3i
++			var probe := WarrenRoomStamp.new(&"maze.back.envelope.probe",
++				&"maze.back.envelope.probe", kind, origin, yaw, 0, terrain_bearing,
++				addressed, threshold_cell, frontage_direction, roof_feature,
++				support_source, support_storey, 0,
++				bool(item.get("flat_roof", false)))
++			probe.private_cells.assign(cells)
++			# A passage cover is its host's own storey continued over the lane:
++			# the host's rooms beneath and beside it are the same building, whose
++			# shells may meet it (jetty, eave) as any storey meets the one below.
+ 			probe.audit["lineage_parcel_id"] = StringName(
+ 				records[int(item["record"])]["parcel_id"])
+-		if not _residual_room_envelope_fits(probe, building_by_id,
+-				construction_program, volume.world_seed, grid):
+-			_note_maze_back_room_refusal(refusals,
+-				"authored envelope does not fit")
+-			continue
+-		if _stamp_maze_private_room(grid, supports, {
+-				"building_id": building_id, "source_id": source_id,
+-				"kind": kind, "origin": origin, "yaw": yaw, "cells": cells,
+-				"floor_band": band, "terrain_bearing": terrain_bearing,
+-				"addressed": addressed, "threshold_cell": threshold_cell,
+-				"frontage_direction": frontage_direction,
+-				"access_id": StringName(item["access_id"]),
+-				"support_parcel_id": support_source,
+-				"support_storey_index": support_storey,
+-				"roof_feature": roof_feature,
+-				"flat_roof": bool(item.get("flat_roof", false)),
+-				"parent_building_id": &"" if terrain_bearing \
+-					else parent_building.stable_id,
+-				# The plot planner's building: a back room is its parcel's
+-				# own room, whatever volume carries it (kit houses read it).
+-				"room_audit": {"back_room_parcel_id": StringName(
+-					records[int(item["record"])]["parcel_id"])}},
+-				buildings, building_by_id, building_by_cell,
+-				required_supports, terrain_support_ids,
+-				support_edges) == null:
+-			return {"failed": true}
+-		for cell: Vector3i in cells:
+-			stamped_cells[cell] = true
+-		addressed_count += int(addressed)
+-		private_count += int(not addressed)
+-		added += 1
++			if not _residual_room_envelope_fits(probe, building_by_id,
++					construction_program, volume.world_seed, grid):
++				_note_maze_back_room_refusal(refusals,
++					"authored envelope does not fit")
++				deferred.append(item)
++				continue
++			if _stamp_maze_private_room(grid, supports, {
++					"building_id": building_id, "source_id": source_id,
++					"kind": kind, "origin": origin, "yaw": yaw, "cells": cells,
++					"floor_band": band, "terrain_bearing": terrain_bearing,
++					"addressed": addressed, "threshold_cell": threshold_cell,
++					"frontage_direction": frontage_direction,
++					"access_id": StringName(item["access_id"]),
++					"support_parcel_id": support_source,
++					"support_storey_index": support_storey,
++					"roof_feature": roof_feature,
++					"flat_roof": bool(item.get("flat_roof", false)),
++					"parent_building_id": &"" if terrain_bearing \
++						else parent_building.stable_id,
++					# The plot planner's building: a back room is its parcel's
++					# own room, whatever volume carries it (kit houses read it).
++					"room_audit": {"back_room_parcel_id": StringName(
++						records[int(item["record"])]["parcel_id"])}},
++					buildings, building_by_id, building_by_cell,
++					required_supports, terrain_support_ids,
++					support_edges) == null:
++				return {"failed": true}
++			for cell: Vector3i in cells:
++				stamped_cells[cell] = true
++			addressed_count += int(addressed)
++			private_count += int(not addressed)
++			added += 1
++		if added == added_before:
++			break
++		work = deferred
+ 	var unstamped: Array[Vector3i] = []
+ 	for cell_value: Variant in candidate_cells.keys():
+ 		var cell := cell_value as Vector3i
+@@ -10177,6 +10183,17 @@
+ 							existing_semantic_solids[FabricRecipe.transform_cell(
+ 								local_solid, existing.lattice_origin,
+ 								existing.yaw_quarters)] = true
++	# A fully inhabited storey above is the ceiling; there is no exposed
++	# crown to roof. Partial crowns still use the exact closure proof below.
++	var ceiling_cells := 0
++	var covered_cells := 0
++	var top_band := candidate.lattice_origin.y + WarrenSpatialGrid.STOREY_CELLS - 1
++	for cell: Vector3i in candidate.private_cells:
++		if cell.y == top_band:
++			ceiling_cells += 1
++			covered_cells += int(occupied.has(cell + Vector3i.UP))
++	if ceiling_cells > 0 and covered_cells == ceiling_cells:
++		return true
+ 	# `flat_roof` is a source-plot height relationship, not permission to crown
+ 	# a free inhabited box with boards. The final compiler pitches every complete
+ 	# terminal plate, so proposal admission must prove that same real gable even

@@ -14,7 +14,10 @@ extends RefCounted
 ## walk cell is flanked -- is therefore the carver's to enforce and the
 ## tests' to re-derive independently. Construction freezes the authored walk;
 ## validate_construction() inspects it without withdrawing or repairing it.
-const HEADROOM_BANDS := 3
+# Share the volumetric/transition passage contract. The former third band
+# excavated nine world metres of air and removed otherwise supported rooms.
+# Two bands retain six world metres, before the exact finished-surface checks.
+const HEADROOM_BANDS := WarrenVolumePlan.HEADROOM_BANDS
 
 var world_seed: int
 var route: Array[Vector3i] = []
@@ -52,6 +55,13 @@ var bridge_spans: Array[Array] = []
 ## measured optional flank columns. Written only by `WarrenMazeCarver
 ## ._select_bridge_spans`; another producer leaves it empty.
 var bridge_span_audit: Dictionary = {}
+## Load paths chosen before optional streets: later boring leaves these
+## columns solid. Span directions preserve the same daylight-carve contract.
+var bridge_bearing_columns: Dictionary = {}
+var bridge_directions: Dictionary = {}
+## Committed landmark and courtyard envelopes, including their bearing band.
+## Optional boring and opening-to-sky may not consume this construction.
+var construction_reservations: Dictionary = {}
 ## Short naturally bored passages retained independently of occupied skywalks.
 var tunnel_cells: Dictionary = {}
 var carved: Dictionary = {}

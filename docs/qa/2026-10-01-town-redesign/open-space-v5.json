@@ -1,0 +1,188 @@
+[
+	{
+		"failed": true,
+		"profile": "compact",
+		"seed": 7
+	},
+	{
+		"clearings": 2,
+		"core_cells": 5,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 189,
+		"plots": {
+			"asset": 1,
+			"deck": 1,
+			"house": 36
+		},
+		"profile": "compact",
+		"reserved_cells": 9,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 2,
+		"seed": 10,
+		"tunnel_cells": 1
+	},
+	{
+		"failed": true,
+		"profile": "compact",
+		"seed": 38
+	},
+	{
+		"failed": true,
+		"profile": "compact",
+		"seed": 1260018864828801968
+	},
+	{
+		"clearings": 1,
+		"core_cells": 7,
+		"core_massif_cells": 1,
+		"core_plot_cells": 0,
+		"massif_columns": 237,
+		"plots": {
+			"asset": 3,
+			"bridge": 4,
+			"house": 45
+		},
+		"profile": "standard",
+		"reserved_cells": 1,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 1,
+		"seed": 7,
+		"tunnel_cells": 0
+	},
+	{
+		"clearings": 2,
+		"core_cells": 9,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 259,
+		"plots": {
+			"asset": 3,
+			"bridge": 3,
+			"deck": 1,
+			"house": 25
+		},
+		"profile": "standard",
+		"reserved_cells": 11,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 2,
+		"seed": 10,
+		"tunnel_cells": 0
+	},
+	{
+		"clearings": 0,
+		"core_cells": 0,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 297,
+		"plots": {
+			"asset": 4,
+			"deck": 1,
+			"house": 43,
+			"over": 3
+		},
+		"profile": "standard",
+		"reserved_cells": 13,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 2,
+		"seed": 38,
+		"tunnel_cells": 4
+	},
+	{
+		"clearings": 0,
+		"core_cells": 0,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 299,
+		"plots": {
+			"asset": 4,
+			"bridge": 1,
+			"deck": 2,
+			"house": 44,
+			"over": 1
+		},
+		"profile": "standard",
+		"reserved_cells": 4,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 1,
+		"seed": 1260018864828801968,
+		"tunnel_cells": 2
+	},
+	{
+		"clearings": 1,
+		"core_cells": 8,
+		"core_massif_cells": 1,
+		"core_plot_cells": 0,
+		"massif_columns": 270,
+		"plots": {
+			"asset": 3,
+			"bridge": 3,
+			"deck": 1,
+			"house": 44
+		},
+		"profile": "large",
+		"reserved_cells": 7,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 1,
+		"seed": 7,
+		"tunnel_cells": 0
+	},
+	{
+		"clearings": 2,
+		"core_cells": 12,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 355,
+		"plots": {
+			"asset": 4,
+			"bridge": 1,
+			"deck": 1,
+			"house": 49,
+			"over": 1
+		},
+		"profile": "large",
+		"reserved_cells": 12,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 2,
+		"seed": 10,
+		"tunnel_cells": 11
+	},
+	{
+		"clearings": 0,
+		"core_cells": 0,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 399,
+		"plots": {
+			"asset": 8,
+			"bridge": 2,
+			"deck": 2,
+			"house": 43
+		},
+		"profile": "large",
+		"reserved_cells": 20,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 2,
+		"seed": 38,
+		"tunnel_cells": 0
+	},
+	{
+		"clearings": 0,
+		"core_cells": 0,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 404,
+		"plots": {
+			"asset": 6,
+			"bridge": 3,
+			"deck": 3,
+			"house": 51
+		},
+		"profile": "large",
+		"reserved_cells": 5,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 1,
+		"seed": 1260018864828801968,
+		"tunnel_cells": 1
+	}
+]

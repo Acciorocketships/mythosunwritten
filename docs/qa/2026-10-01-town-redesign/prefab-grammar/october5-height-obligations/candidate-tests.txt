@@ -1,0 +1,34 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_massif_optional_height_recheck.gd
+[0m* test_optional_house_roll_stays_within_the_planned_massif
+* test_required_upper_street_and_room_keep_their_bearing_height
+* test_neighboring_path_keeps_a_complete_overhead_room_budget
+[1m3/3 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               1
+Tests                 3
+Passing Tests         3
+Asserts             133
+Time              0.411s
+
+
+[32m---- All tests passed! ----
+[0m

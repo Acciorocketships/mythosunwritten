@@ -124,10 +124,12 @@ func has_modified_surface() -> bool:
 	return not _connection_masks.is_empty() or not _node_cells.is_empty() \
 		or not _surface_shapes.is_empty()
 
-func clearance_at(world_xz: Vector2) -> float:
+func clearance_at(world_xz: Vector2, include_envelopes: bool = true) -> float:
 	var best := _clearance_limit
 	for shape: FeatureGroundShape in _clearance_buckets.get(
 			_bucket_of(world_xz), []):
+		if shape.envelope and not include_envelopes:
+			continue
 		best = minf(best, shape.signed_distance(world_xz))
 	return clampf(best, -_clearance_limit, _clearance_limit)
 

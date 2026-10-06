@@ -1,0 +1,167 @@
+[
+  {
+    "platform": false,
+    "seed": 1,
+    "tunnels": []
+  },
+  {
+    "platform": true,
+    "seed": 2,
+    "tunnels": []
+  },
+  {
+    "platform": true,
+    "seed": 3,
+    "tunnels": []
+  },
+  {
+    "platform": false,
+    "seed": 4,
+    "tunnels": []
+  },
+  {
+    "platform": true,
+    "seed": 5,
+    "tunnels": [
+      {
+        "anchor": "(-1, 0, 0)",
+        "length": 3
+      }
+    ]
+  },
+  {
+    "platform": true,
+    "seed": 6,
+    "tunnels": [
+      {
+        "anchor": "(4, 0, 5)",
+        "length": 3
+      }
+    ]
+  },
+  {
+    "platform": false,
+    "seed": 7,
+    "tunnels": []
+  },
+  {
+    "platform": false,
+    "seed": 8,
+    "tunnels": []
+  },
+  {
+    "platform": false,
+    "seed": 9,
+    "tunnels": []
+  },
+  {
+    "platform": false,
+    "seed": 10,
+    "tunnels": []
+  },
+  {
+    "platform": true,
+    "seed": 11,
+    "tunnels": []
+  },
+  {
+    "platform": true,
+    "seed": 12,
+    "tunnels": []
+  },
+  {
+    "platform": true,
+    "seed": 13,
+    "tunnels": [
+      {
+        "anchor": "(1, 0, 0)",
+        "length": 3
+      }
+    ]
+  },
+  {
+    "platform": false,
+    "seed": 14,
+    "tunnels": []
+  },
+  {
+    "platform": false,
+    "seed": 15,
+    "tunnels": []
+  },
+  {
+    "platform": false,
+    "seed": 16,
+    "tunnels": []
+  },
+  {
+    "platform": false,
+    "seed": 17,
+    "tunnels": []
+  },
+  {
+    "platform": false,
+    "seed": 18,
+    "tunnels": []
+  },
+  {
+    "platform": false,
+    "seed": 19,
+    "tunnels": []
+  },
+  {
+    "platform": false,
+    "seed": 20,
+    "tunnels": []
+  },
+  {
+    "platform": false,
+    "seed": 21,
+    "tunnels": []
+  },
+  {
+    "platform": false,
+    "seed": 22,
+    "tunnels": []
+  },
+  {
+    "platform": false,
+    "seed": 23,
+    "tunnels": []
+  },
+  {
+    "platform": true,
+    "seed": 24,
+    "tunnels": []
+  },
+  {
+    "platform": false,
+    "seed": 25,
+    "tunnels": []
+  },
+  {
+    "platform": false,
+    "seed": 26,
+    "tunnels": []
+  },
+  {
+    "platform": true,
+    "seed": 27,
+    "tunnels": []
+  },
+  {
+    "platform": false,
+    "seed": 28,
+    "tunnels": []
+  },
+  {
+    "platform": false,
+    "seed": 29,
+    "tunnels": []
+  },
+  {
+    "platform": false,
+    "seed": 30,
+    "tunnels": []
+  }
+]

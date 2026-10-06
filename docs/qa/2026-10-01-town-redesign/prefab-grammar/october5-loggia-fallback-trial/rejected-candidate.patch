@@ -1,0 +1,144 @@
+--- a/scripts/terrain/features/villages/kit/KitLoggias.gd
++++ b/scripts/terrain/features/villages/kit/KitLoggias.gd
+@@ -4,7 +4,7 @@
+ ## each terrace; retained side piers and the back wall support a room above it.
+ ## Entrances, party walls and public crowns are immutable.
+ static func recess(mass: BuildingMass, forbidden: Callable, walked: Callable,
+-		open_street_air: Callable = Callable()) -> void:
++		open_street_air: Callable = Callable(), bearing: Callable = Callable()) -> void:
+ 	if mass.storeys.size() < 2: return
+ 	var rng := RandomNumberGenerator.new()
+ 	rng.seed = hash([mass.seed, &"loggias"])
+@@ -27,44 +27,59 @@
+ 			var start := int(run.start) + 1 + rng.randi_range(0, length - width - 2)
+ 			if length >= 5 and index == mass.storeys.size() - 1 and rng.randf() < 0.5:
+ 				start = int(run.start) if rng.randf() < 0.5 else int(run.end) - width
+-			var cut := {}
+-			var valid := true
+-			for along in range(start, start + width):
+-				var cell := BuildingKitAssembler._inside_cell(dir, int(run.line), along)
+-				var back := cell - BuildingMass.DIRS[dir]
+-				cut[cell] = true
+-				if not lower.has(cell) or not storey.cells.has(back): valid = false
+-				for b in range(band, band + 3):
+-					var outside := cell + BuildingMass.DIRS[dir]
+-					# This operation removes a room bay; it never projects into
+-					# the street. Reserved air above a public floor is a valid
+-					# outlook. Party walls, walked levels and daylight reservations
+-					# still keep their original boundary.
+-					if forbidden.is_valid() and bool(forbidden.call(outside, b)) \
+-							and not (open_street_air.is_valid() and bool(open_street_air.call(outside,b))): valid = false
+-					if walked.is_valid() and bool(walked.call(cell, b)): valid = false
+-				for edge: Vector3i in storey.openings:
+-					if Vector2i(edge.x, edge.y) == cell: valid = false
+-			if not valid or cut.size() * 3 > storey.cells.size(): continue
+-			var remaining: Dictionary = storey.cells.duplicate()
+-			for cell: Vector2i in cut: remaining.erase(cell)
+-			if not _connected(remaining): continue
+-			# A narrow upper room cannot lose its front row without leaving a
+-			# one-module roof strip. Keep its complete crown; the lower loggia
+-			# supplies depth and the intact room above supplies the overhang.
+-			var original_extent := BuildingDesigner._bounds(storey.cells)
+-			if index == mass.storeys.size()-1 and mini(original_extent.size.x,original_extent.size.y)<=2:
+-				var slender := false
+-				for rect: Rect2i in BuildingDesigner.decompose(remaining):
+-					if mini(rect.size.x,rect.size.y)<2: slender = true
+-				if slender: continue
+-			candidates.append({"cells": remaining, "dir": dir,
+-				"score": length + (8 if dir == preferred else 0)})
++			# Keep the sampled choice first. A blocked doorway need not rule out
++			# another complete, supported bay on the same facade.
++			for option: Vector2i in _bay_options(run, start, width):
++				var cut := {}
++				var valid := true
++				for along in range(option.x, option.x + option.y):
++					var cell := BuildingKitAssembler._inside_cell(dir, int(run.line), along)
++					var back := cell - BuildingMass.DIRS[dir]
++					cut[cell] = true
++					if not lower.has(cell) or not storey.cells.has(back): valid = false
++					for b in range(band, band + 3):
++						var outside := cell + BuildingMass.DIRS[dir]
++						# This operation removes a room bay; it never projects into
++						# the street. Reserved air above a public floor is a valid
++						# outlook. Party walls, walked levels and daylight reservations
++						# still keep their original boundary.
++						if forbidden.is_valid() and bool(forbidden.call(outside, b)) \
++								and not (open_street_air.is_valid() and bool(open_street_air.call(outside,b))): valid = false
++						if walked.is_valid() and bool(walked.call(cell, b)): valid = false
++						if bearing.is_valid() and bool(bearing.call(cell, b)): valid = false
++					for edge: Vector3i in storey.openings:
++						if Vector2i(edge.x, edge.y) == cell: valid = false
++				if not valid or cut.size() * 3 > storey.cells.size(): continue
++				var remaining: Dictionary = storey.cells.duplicate()
++				for cell: Vector2i in cut: remaining.erase(cell)
++				if not _connected(remaining): continue
++				# A narrow upper room cannot lose its front row without leaving a
++				# one-module roof strip. Keep its complete crown; the lower loggia
++				# supplies depth and the intact room above supplies the overhang.
++				var original_extent := BuildingDesigner._bounds(storey.cells)
++				if index == mass.storeys.size()-1 and mini(original_extent.size.x,original_extent.size.y)<=2:
++					var slender := false
++					for rect: Rect2i in BuildingDesigner.decompose(remaining):
++						if mini(rect.size.x,rect.size.y)<2: slender = true
++					if slender: continue
++				candidates.append({"cells": remaining, "dir": dir,
++					"score": length + (8 if dir == preferred else 0)})
++				break
+ 		if candidates.is_empty(): continue
+ 		candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a.score > b.score)
+ 		storey.cells = candidates[0].cells
+ 		storey["loggia"] = true
+ 		preferred = (int(candidates[0].dir) + 1) % 4
++
++static func _bay_options(run: Dictionary, preferred_start: int,
++		preferred_width: int) -> Array[Vector2i]:
++	var out: Array[Vector2i] = [Vector2i(preferred_start, preferred_width)]
++	for width in range(preferred_width, 1, -1):
++		for start in range(int(run.start) + 1, int(run.end) - width):
++			var option := Vector2i(start, width)
++			if not out.has(option): out.append(option)
++	return out
++
+ 
+ static func _connected(cells: Dictionary) -> bool:
+ 	if cells.is_empty(): return false
+--- a/scripts/terrain/features/villages/kit/KitVillageBuildings.gd
++++ b/scripts/terrain/features/villages/kit/KitVillageBuildings.gd
+@@ -1497,7 +1497,7 @@
+ 			shaped = preload("res://scripts/terrain/features/villages/kit/KitSteppedWings.gd").shape(
+ 				mass, designer.covered, designer.walked, bearing)
+ 	preload("res://scripts/terrain/features/villages/kit/KitLoggias.gd").recess(
+-		mass, designer.forbidden, designer.walked, designer.public_air)
++		mass, designer.forbidden, designer.walked, designer.public_air, bearing)
+ 	if not shaped:
+ 		preload("res://scripts/terrain/features/villages/kit/KitSteppedWings.gd").shape(
+ 			mass, designer.covered, designer.walked, bearing)
+--- a/tests/test_october3_street_loggias.gd
++++ b/tests/test_october3_street_loggias.gd
+@@ -40,3 +40,26 @@
+ 		if mass.storeys[1].cells.has(cell): continue
+ 		assert_true(mass.cells_at_band(4).has(cell),"The whole upper room remains an overhang")
+ 
++func test_door_on_preferred_bay_does_not_discard_a_clear_supported_recess() -> void:
++	var mass := BuildingMass.new()
++	mass.seed = 31
++	var original := BuildingMass.rect_cells(Rect2i(0,0,6,2))
++	for band in [0,2,4]: mass.add_storey(band,original.duplicate(),BuildingMass.MATERIAL_TIMBER)
++	mass.storeys[1].openings[Vector3i(2,0,3)] = BuildingMass.OPENING_DOOR
++	preload("res://scripts/terrain/features/villages/kit/KitLoggias.gd").recess(
++		mass,func(cell:Vector2i,_band:int)->bool:return cell.y>=0,Callable())
++	assert_true(mass.storeys[1].get("loggia",false),"A complete two-bay recess fits beside the doorway")
++	assert_true(mass.storeys[1].cells.has(Vector2i(2,0)),"The original doorway room stays intact")
++	assert_eq(mass.storeys[0].cells,original)
++	assert_eq(mass.storeys[2].cells,original,"The whole upper room covers the recessed balcony")
++
++func test_fallback_recess_cannot_remove_a_carried_balcony_bearing() -> void:
++	var mass := BuildingMass.new()
++	mass.seed = 31
++	var original := BuildingMass.rect_cells(Rect2i(0,0,6,2))
++	for band in [0,2,4]: mass.add_storey(band,original.duplicate(),BuildingMass.MATERIAL_TIMBER)
++	preload("res://scripts/terrain/features/villages/kit/KitLoggias.gd").recess(
++		mass,func(cell:Vector2i,_band:int)->bool:return cell.y>=0,Callable(),Callable(),
++		func(cell:Vector2i,band:int)->bool:return cell.y==0 and band==2)
++	assert_eq(mass.storeys[1].cells,original,"Every candidate on this front carries a measured bracket contact")
++	assert_false(mass.storeys[1].get("loggia",false))

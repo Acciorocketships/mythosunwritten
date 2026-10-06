@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_8a5xh"]
+
+[resource]
+script = ExtResource("1_8a5xh")
+id = &"pure_village.wall_hood.outer_corner.finish_oak"
+visual_path = "res://terrain/environment/visuals/pure_village_wall_hoods/pure_village_wall_hood_outer_corner.tres"
+tags = Array[StringName]([&"building", &"pure_village_wall_hoods", &"village"])
+measured_aabb = AABB(-1.2288098, -1.4260108, -4.8828124e-06, 1.2288098, 1.6986434, 1.26312)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"pure_village_wall_hoods:pure_village.wall_hood.outer_corner/frame/oak"
+material_tints = {
+"DoorShutter": Color(0.9, 0.74, 0.53, 1),
+"DoorShutters": Color(0.9, 0.74, 0.53, 1),
+"Planks": Color(0.9, 0.74, 0.53, 1),
+"Planks_Full": Color(0.9, 0.74, 0.53, 1),
+"Wood": Color(0.9, 0.74, 0.53, 1),
+"Wood_1": Color(0.9, 0.74, 0.53, 1),
+"Wood_2": Color(0.9, 0.74, 0.53, 1),
+"Wood_3": Color(0.9, 0.74, 0.53, 1),
+"Wooden_Planks": Color(0.9, 0.74, 0.53, 1)
+}

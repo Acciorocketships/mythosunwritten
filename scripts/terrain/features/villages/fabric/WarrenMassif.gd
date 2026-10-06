@@ -64,6 +64,12 @@ var form_id: StringName = &"hill"
 ## Intentional open ground, authored before streets and plots. This is distinct
 ## from an accidental missing construction column.
 var open_court: Dictionary = {}
+## Purpose-bearing circles planned before boring. Their cells remain air;
+## consumers dress them without reconstructing intent from empty columns.
+var open_spaces: Array[Dictionary] = []
+## Outer town footprint before interior court reservations. Edge-height rules
+## apply to the lawn boundary, not to a deliberate hole inside a dense district.
+var outer_ring_domain: Dictionary = {}
 ## The column the town field designed as its crown (its tallest lobe's
 ## centre). The spine climbs toward it.
 var crown_column := Vector2i.ZERO
@@ -121,7 +127,7 @@ func validate_construction() -> bool:
 		last_rejection = "footprint is not a single connected component"
 		return false
 	for column: Vector2i in open_court:
-		if columns.has(column):
+		if columns.has(column) and not is_reserved_ground(column):
 			last_rejection = "court overlaps construction at %s" % column
 			return false
 	var hole: Variant = _find_interior_hole(true)
@@ -139,6 +145,10 @@ func has_column(column: Vector2i) -> bool:
 	return columns.has(column)
 
 
+func is_reserved_ground(column: Vector2i) -> bool:
+	return bool((columns.get(column, {}) as Dictionary).get("reserved_ground", false))
+
+
 func ring_depth(column: Vector2i) -> int:
 	## Rings from the footprint boundary: 1 for a column with a cardinal
 	## neighbour outside the massif, 0 outside it. Cached once sealed.
@@ -153,16 +163,17 @@ func ring_depth(column: Vector2i) -> int:
 
 
 func _compute_ring_depths() -> Dictionary:
+	var domain := columns if outer_ring_domain.is_empty() else outer_ring_domain
 	var depth: Dictionary = {}
 	var frontier: Array[Vector2i] = []
 	var order: Array[Vector2i] = []
-	order.assign(columns.keys())
+	order.assign(domain.keys())
 	order.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
 		return a.y < b.y if a.y != b.y else a.x < b.x)
 	for column: Vector2i in order:
 		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.UP,
 				Vector2i.DOWN]:
-			if not columns.has(column + direction):
+			if not domain.has(column + direction):
 				depth[column] = 1
 				frontier.append(column)
 				break
@@ -173,7 +184,7 @@ func _compute_ring_depths() -> Dictionary:
 		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.UP,
 				Vector2i.DOWN]:
 			var next := column + direction
-			if columns.has(next) and not depth.has(next):
+			if domain.has(next) and not depth.has(next):
 				depth[next] = int(depth[column]) + 1
 				frontier.append(next)
 	return depth
@@ -304,7 +315,8 @@ func terrace_levels() -> Array[int]:
 
 
 func widest_plateau_cells() -> int:
-	## Largest 4-connected component sharing one LAYER thickness. Grouping by
+	## Largest solid 4-connected component sharing one LAYER thickness.
+	## Reserved ground is route air, not a plateau of construction. Grouping by
 	## absolute top instead makes a constant-thickness layer on a ramp -- where
 	## the base rises exactly as the terrace falls -- read as one huge plateau,
 	## which is the audit's observed 12-14 cell plateau on a slope.
@@ -312,7 +324,7 @@ func widest_plateau_cells() -> int:
 	var widest := 0
 	for start_value: Variant in columns.keys():
 		var start := start_value as Vector2i
-		if visited.has(start):
+		if visited.has(start) or is_reserved_ground(start):
 			continue
 		var level := layer_at(start)
 		var frontier: Array[Vector2i] = [start]
@@ -324,7 +336,7 @@ func widest_plateau_cells() -> int:
 			for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT,
 					Vector2i.UP, Vector2i.DOWN]:
 				var neighbor := cell + direction
-				if visited.has(neighbor) or not columns.has(neighbor) \
+				if visited.has(neighbor) or is_reserved_ground(neighbor) or not columns.has(neighbor) \
 						or layer_at(neighbor) != level:
 					continue
 				visited[neighbor] = true

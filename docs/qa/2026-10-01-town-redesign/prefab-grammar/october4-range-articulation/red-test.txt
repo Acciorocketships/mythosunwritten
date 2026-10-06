@@ -1,0 +1,117 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_october2_range_roofs.gd
+[0m* test_two_to_one_ranges_always_seek_a_connected_cross_gable
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+      at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+      at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+      at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+      at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+      at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+      at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+      at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+      at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+      at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+      at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+      at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+      at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+      at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+      at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+      at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+      at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+      at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+      at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+      at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+      at line 196
+[1m0/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_october2_range_roofs.gd
+[0m- test_two_to_one_ranges_always_seek_a_connected_cross_gable
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+          at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+          at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+          at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+          at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+          at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+          at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+          at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+          at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+          at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+          at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+          at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+          at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+          at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+          at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+          at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+          at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+          at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+          at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+          at line 196
+[31m    [Failed]:  [0m[1] expected to equal [2]:  Unobstructed elongated houses must not skip articulation on a random roll
+          at line 196
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts           1420/1440
+Time              0.48s
+
+
+Ran Tests matching "test_two_to_one"
+[31m---- 1 failing tests ----
+[0m

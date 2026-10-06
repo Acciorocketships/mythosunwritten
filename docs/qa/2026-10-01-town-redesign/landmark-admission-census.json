@@ -1,0 +1,575 @@
+[
+  {
+    "admitted": 1,
+    "assets": [
+      {
+        "kind_id": "anchor.prefab.16",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "lane_refusals": {
+            "envelope_outside_grid": 1
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 1,
+          "street_over_top": 0,
+          "tested": 1
+        },
+        "realisable": true,
+        "reason": "",
+        "site": {
+          "anchor": "(-4, 0)",
+          "clearance_column_count": 7,
+          "cost": 42,
+          "datum": 0,
+          "id": "asset.00",
+          "orientation": 0
+        }
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 0
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 0
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 0
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 0
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 0,
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 0
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      }
+    ],
+    "profile": "compact",
+    "quota": 6,
+    "seed": 1260018864828801968
+  },
+  {
+    "admitted": 1,
+    "assets": [
+      {
+        "kind_id": "anchor.prefab.14",
+        "mirror": {
+          "bearing_off_ground": 6,
+          "body_outside_plot": 2,
+          "lane_refusals": {
+            "bearing_crosses_plinth": 6,
+            "bearing_in_huddle": 2,
+            "bearing_outside_massif": 2,
+            "envelope_outside_grid": 6
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 4,
+          "street_over_top": 0,
+          "tested": 12
+        },
+        "realisable": true,
+        "reason": "",
+        "site": {
+          "anchor": "(-2, -7)",
+          "clearance_column_count": 15,
+          "cost": 74,
+          "datum": 0,
+          "id": "asset.00",
+          "orientation": 1
+        }
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 4,
+          "lane_refusals": {
+            "envelope_claimed": 8
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 4
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 4,
+          "lane_refusals": {
+            "envelope_claimed": 8
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 4
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 4,
+          "lane_refusals": {
+            "envelope_claimed": 8
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 4
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 0,
+          "body_outside_plot": 4,
+          "lane_refusals": {
+            "envelope_claimed": 8
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 4
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      }
+    ],
+    "profile": "compact",
+    "quota": 5,
+    "seed": 1998423929946073270
+  },
+  {
+    "admitted": 0,
+    "assets": [
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 2,
+          "body_outside_plot": 8,
+          "lane_refusals": {
+            "bearing_in_huddle": 2,
+            "envelope_over_green": 18
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 10
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 2,
+          "body_outside_plot": 8,
+          "lane_refusals": {
+            "bearing_in_huddle": 2,
+            "envelope_over_green": 18
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 10
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 2,
+          "body_outside_plot": 8,
+          "lane_refusals": {
+            "bearing_in_huddle": 2,
+            "envelope_over_green": 18
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 10
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 2,
+          "body_outside_plot": 8,
+          "lane_refusals": {
+            "bearing_in_huddle": 2,
+            "envelope_over_green": 18
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 10
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 2,
+          "body_outside_plot": 8,
+          "lane_refusals": {
+            "bearing_in_huddle": 2,
+            "envelope_over_green": 18
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 10
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 2,
+          "body_outside_plot": 8,
+          "lane_refusals": {
+            "bearing_in_huddle": 2,
+            "envelope_over_green": 18
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 10
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 2,
+          "body_outside_plot": 8,
+          "lane_refusals": {
+            "bearing_in_huddle": 2,
+            "envelope_over_green": 18
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 10
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 2,
+          "body_outside_plot": 8,
+          "lane_refusals": {
+            "bearing_in_huddle": 2,
+            "envelope_over_green": 18
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 10
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      }
+    ],
+    "profile": "standard",
+    "quota": 8,
+    "seed": 3
+  },
+  {
+    "admitted": 0,
+    "assets": [
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 12,
+          "body_outside_plot": 7,
+          "lane_refusals": {
+            "bearing_crosses_plinth": 19,
+            "bearing_in_huddle": 2,
+            "body_in_public_air": 13,
+            "envelope_over_green": 4
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 19
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 12,
+          "body_outside_plot": 7,
+          "lane_refusals": {
+            "bearing_crosses_plinth": 19,
+            "bearing_in_huddle": 2,
+            "body_in_public_air": 13,
+            "envelope_over_green": 4
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 19
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 12,
+          "body_outside_plot": 7,
+          "lane_refusals": {
+            "bearing_crosses_plinth": 19,
+            "bearing_in_huddle": 2,
+            "body_in_public_air": 13,
+            "envelope_over_green": 4
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 19
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 12,
+          "body_outside_plot": 7,
+          "lane_refusals": {
+            "bearing_crosses_plinth": 19,
+            "bearing_in_huddle": 2,
+            "body_in_public_air": 13,
+            "envelope_over_green": 4
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 19
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 12,
+          "body_outside_plot": 7,
+          "lane_refusals": {
+            "bearing_crosses_plinth": 19,
+            "bearing_in_huddle": 2,
+            "body_in_public_air": 13,
+            "envelope_over_green": 4
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 19
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 12,
+          "body_outside_plot": 7,
+          "lane_refusals": {
+            "bearing_crosses_plinth": 19,
+            "bearing_in_huddle": 2,
+            "body_in_public_air": 13,
+            "envelope_over_green": 4
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 19
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 12,
+          "body_outside_plot": 7,
+          "lane_refusals": {
+            "bearing_crosses_plinth": 19,
+            "bearing_in_huddle": 2,
+            "body_in_public_air": 13,
+            "envelope_over_green": 4
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 19
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 12,
+          "body_outside_plot": 7,
+          "lane_refusals": {
+            "bearing_crosses_plinth": 19,
+            "bearing_in_huddle": 2,
+            "body_in_public_air": 13,
+            "envelope_over_green": 4
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 19
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      },
+      {
+        "kind_id": "",
+        "mirror": {
+          "bearing_off_ground": 12,
+          "body_outside_plot": 7,
+          "lane_refusals": {
+            "bearing_crosses_plinth": 19,
+            "bearing_in_huddle": 2,
+            "body_in_public_air": 13,
+            "envelope_over_green": 4
+          },
+          "lone_raised_level": 0,
+          "no_frontage": 0,
+          "realisable": 0,
+          "street_over_top": 0,
+          "tested": 19
+        },
+        "realisable": false,
+        "reason": "no street-fronting supportable site remains",
+        "site": null
+      }
+    ],
+    "profile": "large",
+    "quota": 9,
+    "seed": 6
+  }
+]

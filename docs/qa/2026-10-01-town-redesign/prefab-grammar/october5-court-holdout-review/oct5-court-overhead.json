@@ -1,0 +1,589 @@
+{
+	"211:grand": [
+		{
+			"cells": [
+				"(-6, -2)",
+				"(-5, -2)",
+				"(-4, -2)",
+				"(-6, -1)",
+				"(-5, -1)",
+				"(-4, -1)",
+				"(-6, 0)",
+				"(-5, 0)",
+				"(-4, 0)"
+			],
+			"floor": 7,
+			"floor_quarters": 36,
+			"id": "plaza.00",
+			"overhead_rooms": {
+				"(-10, -4)": {
+					"floor": 9,
+					"host": "kit.skywalk.-10.9.-5.0.1"
+				},
+				"(-10, -3)": {
+					"floor": 9,
+					"host": "kit.skywalk.-10.9.-5.0.1"
+				},
+				"(-10, -2)": {
+					"floor": 9,
+					"host": "kit.skywalk.-10.9.-5.0.1"
+				},
+				"(-10, -1)": {
+					"floor": 9,
+					"host": "kit.skywalk.-10.9.-5.0.1"
+				},
+				"(-10, 0)": {
+					"floor": 9,
+					"host": "kit.spatial.parcel.maze.bridge.00.end.0.lower"
+				},
+				"(-10, 1)": {
+					"floor": 9,
+					"host": "kit.spatial.parcel.maze.bridge.00.end.0.lower"
+				},
+				"(-9, -4)": {
+					"floor": 9,
+					"host": "kit.skywalk.-10.9.-5.0.1"
+				},
+				"(-9, -3)": {
+					"floor": 9,
+					"host": "kit.skywalk.-10.9.-5.0.1"
+				},
+				"(-9, -2)": {
+					"floor": 9,
+					"host": "kit.skywalk.-10.9.-5.0.1"
+				},
+				"(-9, -1)": {
+					"floor": 9,
+					"host": "kit.skywalk.-10.9.-5.0.1"
+				},
+				"(-9, 0)": {
+					"floor": 9,
+					"host": "kit.spatial.parcel.maze.bridge.00.end.0.lower"
+				},
+				"(-9, 1)": {
+					"floor": 9,
+					"host": "kit.spatial.parcel.maze.bridge.00.end.0.lower"
+				},
+				"(-8, -4)": {
+					"floor": 11,
+					"host": "kit.skywalk.-8.11.-5.0.1"
+				},
+				"(-8, -3)": {
+					"floor": 11,
+					"host": "kit.skywalk.-8.11.-5.0.1"
+				},
+				"(-8, -2)": {
+					"floor": 11,
+					"host": "kit.skywalk.-8.11.-5.0.1"
+				},
+				"(-8, -1)": {
+					"floor": 11,
+					"host": "kit.skywalk.-8.11.-5.0.1"
+				},
+				"(-8, 0)": {
+					"floor": 11,
+					"host": "kit.skywalk.-8.11.-5.0.1"
+				},
+				"(-8, 1)": {
+					"floor": 11,
+					"host": "kit.skywalk.-8.11.-5.0.1"
+				},
+				"(-7, -4)": {
+					"floor": 11,
+					"host": "kit.skywalk.-8.11.-5.0.1"
+				},
+				"(-7, -3)": {
+					"floor": 11,
+					"host": "kit.skywalk.-8.11.-5.0.1"
+				},
+				"(-7, -2)": {
+					"floor": 11,
+					"host": "kit.skywalk.-8.11.-5.0.1"
+				},
+				"(-7, -1)": {
+					"floor": 11,
+					"host": "kit.skywalk.-8.11.-5.0.1"
+				},
+				"(-7, 0)": {
+					"floor": 11,
+					"host": "kit.skywalk.-8.11.-5.0.1"
+				},
+				"(-7, 1)": {
+					"floor": 11,
+					"host": "kit.skywalk.-8.11.-5.0.1"
+				}
+			},
+			"room_covered_quarters": 24,
+			"sides": [
+				{
+					"direction": "(1, 0)",
+					"samples": [
+						{
+							"cell": "(-7, -4)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 7,
+									"id": "bridge.00.end.1.lower",
+									"kind": "house",
+									"top": 10
+								}
+							],
+							"raw_top": 14,
+							"room": {
+								"distance": 1,
+								"host": "kit.spatial.parcel.maze.bridge.00.end.1.lower"
+							},
+							"walk_bands": [
+								2
+							]
+						},
+						{
+							"cell": "(-7, -3)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 7,
+									"id": "bridge.00.end.1.lower",
+									"kind": "house",
+									"top": 10
+								}
+							],
+							"raw_top": 14,
+							"room": {
+								"distance": 1,
+								"host": "kit.spatial.parcel.maze.bridge.00.end.1.lower"
+							},
+							"walk_bands": [
+								2
+							]
+						},
+						{
+							"cell": "(-7, -2)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 10,
+									"id": "bridge.00",
+									"kind": "bridge",
+									"top": 12
+								}
+							],
+							"raw_top": 14,
+							"room": {
+
+							},
+							"walk_bands": [
+								2,
+								7
+							]
+						},
+						{
+							"cell": "(-7, -1)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 10,
+									"id": "bridge.00",
+									"kind": "bridge",
+									"top": 12
+								}
+							],
+							"raw_top": 14,
+							"room": {
+
+							},
+							"walk_bands": [
+								2,
+								7
+							]
+						},
+						{
+							"cell": "(-7, 0)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 7,
+									"id": "bridge.00.end.0.lower",
+									"kind": "house",
+									"top": 10
+								}
+							],
+							"raw_top": 14,
+							"room": {
+								"distance": 1,
+								"host": "kit.spatial.parcel.maze.bridge.00.end.0.lower"
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(-7, 1)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 7,
+									"id": "bridge.00.end.0.lower",
+									"kind": "house",
+									"top": 10
+								}
+							],
+							"raw_top": 14,
+							"room": {
+								"distance": 1,
+								"host": "kit.spatial.parcel.maze.bridge.00.end.0.lower"
+							},
+							"walk_bands": [
+								0
+							]
+						}
+					]
+				},
+				{
+					"direction": "(0, 1)",
+					"samples": [
+						{
+							"cell": "(-12, 1)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 4,
+									"id": "over.06",
+									"kind": "over",
+									"top": 8
+								}
+							],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(-11, 1)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 4,
+									"id": "over.06",
+									"kind": "over",
+									"top": 8
+								}
+							],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(-10, 1)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "house.009",
+									"kind": "house",
+									"top": 7
+								},
+								{
+									"floor": 7,
+									"id": "house.002",
+									"kind": "house",
+									"top": 19
+								}
+							],
+							"raw_top": 8,
+							"room": {
+								"distance": 1,
+								"host": "kit.spatial.parcel.maze.bridge.00.end.0.lower"
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-9, 1)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "house.009",
+									"kind": "house",
+									"top": 7
+								},
+								{
+									"floor": 7,
+									"id": "house.002",
+									"kind": "house",
+									"top": 19
+								}
+							],
+							"raw_top": 8,
+							"room": {
+								"distance": 1,
+								"host": "kit.spatial.parcel.maze.bridge.00.end.0.lower"
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-8, 1)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "house.009",
+									"kind": "house",
+									"top": 7
+								},
+								{
+									"floor": 7,
+									"id": "house.002",
+									"kind": "house",
+									"top": 19
+								}
+							],
+							"raw_top": 10,
+							"room": {
+								"distance": 1,
+								"host": "kit.spatial.parcel.maze.bridge.00.end.0.lower"
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-7, 1)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "house.009",
+									"kind": "house",
+									"top": 7
+								},
+								{
+									"floor": 7,
+									"id": "house.002",
+									"kind": "house",
+									"top": 19
+								}
+							],
+							"raw_top": 10,
+							"room": {
+								"distance": 1,
+								"host": "kit.spatial.parcel.maze.bridge.00.end.0.lower"
+							},
+							"walk_bands": []
+						}
+					]
+				},
+				{
+					"direction": "(-1, 0)",
+					"samples": [
+						{
+							"cell": "(-12, -4)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(-12, -3)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(-12, -2)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(-12, -1)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(-12, 0)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 6,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(-12, 1)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 6,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						}
+					]
+				},
+				{
+					"direction": "(0, -1)",
+					"samples": [
+						{
+							"cell": "(-12, -4)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "house.023",
+									"kind": "house",
+									"top": 6
+								}
+							],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-11, -4)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "house.023",
+									"kind": "house",
+									"top": 6
+								}
+							],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-10, -4)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 7,
+									"id": "house.000",
+									"kind": "house",
+									"top": 15
+								}
+							],
+							"raw_top": 8,
+							"room": {
+								"distance": 1,
+								"host": "kit.spatial.parcel.maze.bridge.00.end.1.lower"
+							},
+							"walk_bands": [
+								1
+							]
+						},
+						{
+							"cell": "(-9, -4)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 7,
+									"id": "house.000",
+									"kind": "house",
+									"top": 15
+								}
+							],
+							"raw_top": 8,
+							"room": {
+								"distance": 1,
+								"host": "kit.spatial.parcel.maze.bridge.00.end.1.lower"
+							},
+							"walk_bands": [
+								1
+							]
+						},
+						{
+							"cell": "(-8, -4)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 3,
+									"id": "house.006",
+									"kind": "house",
+									"top": 7
+								},
+								{
+									"floor": 7,
+									"id": "house.000",
+									"kind": "house",
+									"top": 15
+								}
+							],
+							"raw_top": 12,
+							"room": {
+								"distance": 1,
+								"host": "kit.spatial.parcel.maze.bridge.00.end.1.lower"
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-7, -4)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 3,
+									"id": "house.006",
+									"kind": "house",
+									"top": 7
+								},
+								{
+									"floor": 7,
+									"id": "house.000",
+									"kind": "house",
+									"top": 15
+								}
+							],
+							"raw_top": 12,
+							"room": {
+								"distance": 1,
+								"host": "kit.spatial.parcel.maze.bridge.00.end.1.lower"
+							},
+							"walk_bands": []
+						}
+					]
+				}
+			]
+		}
+	]
+}

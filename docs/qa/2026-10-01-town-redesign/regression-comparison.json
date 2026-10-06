@@ -1,0 +1,1465 @@
+{
+  "note": "Initial current suite predates later focused repairs. New failures need classification; counts alone do not establish regression. Baseline source b8e130d9.",
+  "files": [
+    {
+      "file": "tests/test_cliff_rock_foot_lines.gd",
+      "baseline": {
+        "tests": 4,
+        "pass": 3,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 4,
+        "pass": 3,
+        "fail": 1,
+        "script_errors": 1
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_dressing_field.gd",
+      "baseline": {
+        "tests": 7,
+        "pass": 2,
+        "fail": 5,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 7,
+        "pass": 6,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_excavation_construction.gd",
+      "baseline": {
+        "tests": 7,
+        "pass": 7,
+        "fail": 0,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 7,
+        "pass": 5,
+        "fail": 2,
+        "script_errors": 0
+      },
+      "new_failed_methods": [
+        "test_optional_source_diagnostics_cannot_change_construction",
+        "test_volume_projection_preserves_the_bore_with_diagnostics_disabled"
+      ]
+    },
+    {
+      "file": "tests/test_feature_program.gd",
+      "baseline": {
+        "tests": 2,
+        "pass": "?",
+        "fail": 2,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_field_streamer.gd",
+      "baseline": {
+        "tests": 17,
+        "pass": 12,
+        "fail": 5,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 17,
+        "pass": 16,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_meadow_rocks.gd",
+      "baseline": {
+        "tests": 3,
+        "pass": 1,
+        "fail": 2,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 3,
+        "pass": 2,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_mythos_loading_screen.gd",
+      "baseline": {
+        "tests": 4,
+        "pass": 3,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 4,
+        "pass": 3,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_path_plan_nodes.gd",
+      "baseline": {
+        "tests": 6,
+        "pass": 1,
+        "fail": 5,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 6,
+        "pass": 5,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_river_generation.gd",
+      "baseline": {
+        "tests": 5,
+        "pass": 4,
+        "fail": 1,
+        "script_errors": 1
+      },
+      "initial_current": {
+        "tests": 5,
+        "pass": 4,
+        "fail": 1,
+        "script_errors": 1
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_room_band_construction.gd",
+      "baseline": {
+        "tests": 3,
+        "pass": 1,
+        "fail": 2,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 3,
+        "pass": 2,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september10_ceiling_courses.gd",
+      "baseline": {
+        "tests": 3,
+        "pass": 1,
+        "fail": 2,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 3,
+        "pass": 2,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september10_city_form.gd",
+      "baseline": {
+        "tests": 10,
+        "pass": 6,
+        "fail": 4,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 10,
+        "pass": 7,
+        "fail": 3,
+        "script_errors": 0
+      },
+      "new_failed_methods": [
+        "test_town_rims_step_down_to_one_storey_and_admit_open_ground_streets"
+      ]
+    },
+    {
+      "file": "tests/test_september10_grass_sampling.gd",
+      "baseline": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 1
+      },
+      "initial_current": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 1
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september10_hamlets.gd",
+      "baseline": {
+        "tests": 5,
+        "pass": 1,
+        "fail": 4,
+        "script_errors": 1
+      },
+      "initial_current": {
+        "tests": 5,
+        "pass": 1,
+        "fail": 4,
+        "script_errors": 1
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september10_prefab_floor.gd",
+      "baseline": {
+        "tests": 4,
+        "pass": "?",
+        "fail": 4,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 4,
+        "pass": 3,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september10_turf_depth.gd",
+      "baseline": {
+        "tests": 2,
+        "pass": "?",
+        "fail": 2,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september10_wall_returns.gd",
+      "baseline": {
+        "tests": 4,
+        "pass": "?",
+        "fail": 4,
+        "script_errors": 1
+      },
+      "initial_current": {
+        "tests": 4,
+        "pass": 3,
+        "fail": 1,
+        "script_errors": 1
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september11_architectural_variety.gd",
+      "baseline": {
+        "tests": 3,
+        "pass": "?",
+        "fail": 3,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 3,
+        "pass": 2,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september11_camera_roles.gd",
+      "baseline": {
+        "tests": 9,
+        "pass": 6,
+        "fail": 3,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 9,
+        "pass": 6,
+        "fail": 3,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september11_floating_support.gd",
+      "baseline": {
+        "tests": 1,
+        "pass": "?",
+        "fail": 1,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 1,
+        "pass": "?",
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september11_natural_arches.gd",
+      "baseline": {
+        "tests": 3,
+        "pass": 1,
+        "fail": 2,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 3,
+        "pass": 2,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september11_prefab_integration.gd",
+      "baseline": {
+        "tests": 2,
+        "pass": "?",
+        "fail": 2,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september11_prefab_only_settlement.gd",
+      "baseline": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september11_roofless_cells.gd",
+      "baseline": {
+        "tests": 2,
+        "pass": "?",
+        "fail": 2,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september11_skywalk_integration.gd",
+      "baseline": {
+        "tests": 3,
+        "pass": "?",
+        "fail": 3,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 3,
+        "pass": 2,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september11_skywalk_neighborhood.gd",
+      "baseline": {
+        "tests": 2,
+        "pass": "?",
+        "fail": 2,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 2,
+        "pass": "?",
+        "fail": 2,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september11_unified_city.gd",
+      "baseline": {
+        "tests": 4,
+        "pass": 3,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 4,
+        "pass": 3,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september13_civic.gd",
+      "baseline": {
+        "tests": 3,
+        "pass": "?",
+        "fail": 3,
+        "script_errors": 1
+      },
+      "initial_current": {
+        "tests": 3,
+        "pass": "?",
+        "fail": 3,
+        "script_errors": 1
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september13_deck_purpose.gd",
+      "baseline": {
+        "tests": 4,
+        "pass": 2,
+        "fail": 2,
+        "script_errors": 6
+      },
+      "initial_current": {
+        "tests": 4,
+        "pass": 2,
+        "fail": 2,
+        "script_errors": 6
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september13_door_panels.gd",
+      "baseline": {
+        "tests": 2,
+        "pass": "?",
+        "fail": 2,
+        "script_errors": 2
+      },
+      "initial_current": {
+        "tests": 2,
+        "pass": "?",
+        "fail": 2,
+        "script_errors": 2
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september13_street_infill.gd",
+      "baseline": {
+        "tests": 4,
+        "pass": 2,
+        "fail": 2,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 4,
+        "pass": 2,
+        "fail": 2,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september13_transition_material.gd",
+      "baseline": {
+        "tests": 5,
+        "pass": 1,
+        "fail": 3,
+        "script_errors": 2
+      },
+      "initial_current": {
+        "tests": 5,
+        "pass": 2,
+        "fail": 2,
+        "script_errors": 2
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september13_water_turf.gd",
+      "baseline": {
+        "tests": 1,
+        "pass": "?",
+        "fail": 1,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 1,
+        "pass": "?",
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september15_mountain_assets.gd",
+      "baseline": {
+        "tests": 2,
+        "pass": "?",
+        "fail": 2,
+        "script_errors": 1
+      },
+      "initial_current": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 1
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september16_immersion.gd",
+      "baseline": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 1
+      },
+      "initial_current": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 1
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september19_retained_road_bounds.gd",
+      "baseline": {
+        "tests": 3,
+        "pass": 3,
+        "fail": 0,
+        "script_errors": 1
+      },
+      "initial_current": {
+        "tests": 3,
+        "pass": 3,
+        "fail": 0,
+        "script_errors": 1
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september19_road_bend_ownership.gd",
+      "baseline": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 1
+      },
+      "initial_current": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 1
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september19_stream_observers.gd",
+      "baseline": {
+        "tests": 2,
+        "pass": "?",
+        "fail": 2,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september19_terminal_landing.gd",
+      "baseline": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 3
+      },
+      "initial_current": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 3
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september23_cliff_directions.gd",
+      "baseline": {
+        "tests": 18,
+        "pass": 14,
+        "fail": 4,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 18,
+        "pass": 15,
+        "fail": 3,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september27_edge_slopes.gd",
+      "baseline": {
+        "tests": 7,
+        "pass": 6,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 7,
+        "pass": 6,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september27_rock_placement.gd",
+      "baseline": {
+        "tests": 10,
+        "pass": 4,
+        "fail": 6,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 10,
+        "pass": 9,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september27_town_details.gd",
+      "baseline": {
+        "tests": 4,
+        "pass": 1,
+        "fail": 3,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 4,
+        "pass": 3,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september28_ground_seams.gd",
+      "baseline": {
+        "tests": 5,
+        "pass": 3,
+        "fail": 2,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 5,
+        "pass": 4,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september29_floating_masses.gd",
+      "baseline": {
+        "tests": 5,
+        "pass": 5,
+        "fail": 0,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 5,
+        "pass": 4,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": [
+        "test_passage_covers_are_whole_or_absent"
+      ]
+    },
+    {
+      "file": "tests/test_september29_terrain_review.gd",
+      "baseline": {
+        "tests": 7,
+        "pass": 6,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 7,
+        "pass": 6,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september29_town_edges.gd",
+      "baseline": {
+        "tests": 6,
+        "pass": 5,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 6,
+        "pass": 5,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": [
+        "test_landmarks_keep_their_sites_beside_the_lane"
+      ]
+    },
+    {
+      "file": "tests/test_september29_town_materials.gd",
+      "baseline": {
+        "tests": 5,
+        "pass": 2,
+        "fail": 3,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 5,
+        "pass": 4,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september7_garden_wall.gd",
+      "baseline": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september8_baked_exteriors.gd",
+      "baseline": {
+        "tests": 3,
+        "pass": 1,
+        "fail": 2,
+        "script_errors": 1
+      },
+      "initial_current": {
+        "tests": 3,
+        "pass": 2,
+        "fail": 1,
+        "script_errors": 1
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september8_facade_ends.gd",
+      "baseline": {
+        "tests": 3,
+        "pass": 1,
+        "fail": 2,
+        "script_errors": 1
+      },
+      "initial_current": {
+        "tests": 3,
+        "pass": 2,
+        "fail": 1,
+        "script_errors": 1
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september8_gate_paint.gd",
+      "baseline": {
+        "tests": 1,
+        "pass": "?",
+        "fail": 1,
+        "script_errors": 1
+      },
+      "initial_current": {
+        "tests": 1,
+        "pass": "?",
+        "fail": 1,
+        "script_errors": 1
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september8_ledge_caps.gd",
+      "baseline": {
+        "tests": 1,
+        "pass": "?",
+        "fail": 1,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 1,
+        "pass": "?",
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september8_night_corners.gd",
+      "baseline": {
+        "tests": 6,
+        "pass": 1,
+        "fail": 5,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 6,
+        "pass": 4,
+        "fail": 2,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september8_night_destinations.gd",
+      "baseline": {
+        "tests": 4,
+        "pass": 2,
+        "fail": 2,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 4,
+        "pass": 3,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september8_night_lamp.gd",
+      "baseline": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september8_night_stair_clearance.gd",
+      "baseline": {
+        "tests": 3,
+        "pass": "?",
+        "fail": 3,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 3,
+        "pass": 2,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september8_night_water_boundaries.gd",
+      "baseline": {
+        "tests": 1,
+        "pass": "?",
+        "fail": 1,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 1,
+        "pass": "?",
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_warren_maze_plots.gd",
+      "baseline": {
+        "tests": 42,
+        "pass": 38,
+        "fail": 4,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 42,
+        "pass": 28,
+        "fail": 14,
+        "script_errors": 0
+      },
+      "new_failed_methods": [
+        "test_add_plot_enforces_support_and_headroom",
+        "test_add_plot_on_a_sealed_plan_changes_nothing",
+        "test_add_plot_rejects_a_plot_overlapping_one_already_standing",
+        "test_exterior_rock_ratio_is_pinned",
+        "test_local_skyline_peaks_are_complete_grounded_plots",
+        "test_ownership_is_pinned_on_the_planner_seeds",
+        "test_partition_fills_every_street_fronting_column",
+        "test_seal_rejects_a_plot_appended_straight_onto_the_array",
+        "test_signature_covers_plots",
+        "test_stack_invariant_rejects_a_floating_plot_at_seal",
+        "test_translator_emits_one_parcel_group_per_building"
+      ]
+    },
+    {
+      "file": "tests/test_september8_river_banks.gd",
+      "baseline": {
+        "tests": 3,
+        "pass": 1,
+        "fail": 2,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 3,
+        "pass": 1,
+        "fail": 2,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september8_walkway_destination.gd",
+      "baseline": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september9_city_lanterns.gd",
+      "baseline": {
+        "tests": 3,
+        "pass": 2,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 3,
+        "pass": 2,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september9_city_props.gd",
+      "baseline": {
+        "tests": 4,
+        "pass": 3,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 4,
+        "pass": 3,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september9_dense_region.gd",
+      "baseline": {
+        "tests": 2,
+        "pass": "?",
+        "fail": 2,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 2,
+        "pass": "?",
+        "fail": 2,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september9_door_ownership.gd",
+      "baseline": {
+        "tests": 4,
+        "pass": 1,
+        "fail": 3,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 4,
+        "pass": 2,
+        "fail": 2,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september9_flat_collision.gd",
+      "baseline": {
+        "tests": 2,
+        "pass": "?",
+        "fail": 2,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 2,
+        "pass": "?",
+        "fail": 2,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september9_flat_water_profile.gd",
+      "baseline": {
+        "tests": 3,
+        "pass": 2,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 3,
+        "pass": 2,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september9_grass_lip.gd",
+      "baseline": {
+        "tests": 2,
+        "pass": "?",
+        "fail": 2,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 2,
+        "pass": "?",
+        "fail": 2,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september9_road_exit.gd",
+      "baseline": {
+        "tests": 2,
+        "pass": "?",
+        "fail": 2,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september9_roof_end.gd",
+      "baseline": {
+        "tests": 2,
+        "pass": "?",
+        "fail": 2,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september9_source_domain_cache.gd",
+      "baseline": {
+        "tests": 1,
+        "pass": "?",
+        "fail": 1,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 1,
+        "pass": "?",
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_september9_water_profile_retention.gd",
+      "baseline": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 1
+      },
+      "initial_current": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 1
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_settlement_fabric.gd",
+      "baseline": {
+        "tests": 53,
+        "pass": 50,
+        "fail": 3,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 53,
+        "pass": 51,
+        "fail": 2,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_terrain_chunk_mesher.gd",
+      "baseline": {
+        "tests": 31,
+        "pass": 6,
+        "fail": 25,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 31,
+        "pass": 30,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_terrain_tinting.gd",
+      "baseline": {
+        "tests": 9,
+        "pass": 7,
+        "fail": 2,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 9,
+        "pass": 8,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_town_architecture.gd",
+      "baseline": {
+        "tests": 11,
+        "pass": 10,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 11,
+        "pass": 10,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": [
+        "test_roof_finishes_use_wood_colour_and_board_normals"
+      ]
+    },
+    {
+      "file": "tests/test_town_canopies.gd",
+      "baseline": {
+        "tests": 2,
+        "pass": "?",
+        "fail": 2,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_village_outskirts_construction.gd",
+      "baseline": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_village_outskirts_solver.gd",
+      "baseline": {
+        "tests": 12,
+        "pass": 8,
+        "fail": 4,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 12,
+        "pass": 11,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_village_plan.gd",
+      "baseline": {
+        "tests": 3,
+        "pass": "?",
+        "fail": 3,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 3,
+        "pass": "?",
+        "fail": 3,
+        "script_errors": 1
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_village_program.gd",
+      "baseline": {
+        "tests": 2,
+        "pass": "?",
+        "fail": 2,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_village_reported_ground.gd",
+      "baseline": {
+        "tests": 4,
+        "pass": 2,
+        "fail": 2,
+        "script_errors": 1
+      },
+      "initial_current": {
+        "tests": 4,
+        "pass": 2,
+        "fail": 2,
+        "script_errors": 1
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_warren_maze_carver.gd",
+      "baseline": {
+        "tests": 13,
+        "pass": 13,
+        "fail": 0,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 13,
+        "pass": 12,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": [
+        "test_the_spine_climbs_with_momentum_and_descends_past_the_summit"
+      ]
+    },
+    {
+      "file": "tests/test_warren_maze_composition.gd",
+      "baseline": {
+        "tests": 88,
+        "pass": 65,
+        "fail": 22,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 88,
+        "pass": 66,
+        "fail": 21,
+        "script_errors": 0
+      },
+      "new_failed_methods": [
+        "test_a_roof_never_stands_inside_the_wall_it_meets",
+        "test_every_garden_edge_turns_the_rim",
+        "test_facade_projections_and_crowns_carry_the_measured_variation",
+        "test_large_and_grand_towns_exist",
+        "test_retained_stone_concentrates_in_the_bottom_storeys",
+        "test_rock_is_retained_as_stone",
+        "test_stone_split_reconciles_across_the_compiler",
+        "test_the_plaza_deck_opens_the_square",
+        "test_the_production_site_builds_a_maze_town_on_real_terrain",
+        "test_unroomed_plot_mass_is_bounded"
+      ]
+    },
+    {
+      "file": "tests/test_warren_production_surfaces.gd",
+      "baseline": {
+        "tests": 23,
+        "pass": 21,
+        "fail": 2,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 23,
+        "pass": 22,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_warren_spatial_fabric_compiler.gd",
+      "baseline": {
+        "tests": 16,
+        "pass": 12,
+        "fail": 4,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 16,
+        "pass": 15,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_water_contour.gd",
+      "baseline": {
+        "tests": 7,
+        "pass": 5,
+        "fail": 2,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 7,
+        "pass": 5,
+        "fail": 2,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_water_plan.gd",
+      "baseline": {
+        "tests": 29,
+        "pass": 27,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 29,
+        "pass": 27,
+        "fail": 1,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    },
+    {
+      "file": "tests/test_water_skin.gd",
+      "baseline": {
+        "tests": 34,
+        "pass": 29,
+        "fail": 2,
+        "script_errors": 0
+      },
+      "initial_current": {
+        "tests": 34,
+        "pass": 29,
+        "fail": 2,
+        "script_errors": 0
+      },
+      "new_failed_methods": []
+    }
+  ]
+}

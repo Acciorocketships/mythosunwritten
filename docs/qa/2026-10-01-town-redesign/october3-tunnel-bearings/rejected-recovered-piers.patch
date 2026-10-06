@@ -1,0 +1,178 @@
+--- WarrenPlotPlanner.before
++++ WarrenPlotPlanner.rejected
+@@ -1027,6 +1027,14 @@
+ 				WarrenBuildingParcel.ROOF_RESERVATION_BANDS):
+ 			record["reason"] = "would overtop the edge-ring profile"
+ 			continue
++		var recovered: Array[Vector2i] = []
++		var restored_jamb_floors: Dictionary = {}
++		for jamb: Vector2i in jambs:
++			for band in range(walk.y,roof):
++				if not plan.solid_at(Vector3i(jamb.x,band,jamb.y)):
++					recovered.append(jamb)
++					restored_jamb_floors[jamb] = plan.rock_shoulder(jamb)
++					break
+ 		if not plan.add_plot({"id": StringName("over.%02d" % records.size()),
+ 				"kind": WarrenMazeSourcePlan.PLOT_OVER, "cells": [column],
+ 				"floor": host.y, "top": int(host_plot["top"]),
+@@ -1038,6 +1046,8 @@
+ 		over["host"] = StringName(host_plot["id"])
+ 		over["crown"] = roof
+ 		over["jambs"] = jambs
++		over["restored_jamb_floors"] = restored_jamb_floors
++		record["recovered_jambs"] = recovered
+ 		record["host"] = host_plot["id"]
+ 		record["floor"] = host.y
+ 	outcomes(plan)["tunnel_roofs"] = records
+@@ -1055,8 +1065,25 @@
+ 		return plan.passage_kinds.has(Vector3i(c.x, walk.y, c.y))
+ 	var wall := func(c: Vector2i) -> bool:
+ 		for band in range(walk.y, roof):
+-			if not plan.solid_at(Vector3i(c.x, band, c.y)):
++			var at := Vector3i(c.x,band,c.y)
++			if plan.solid_at(at): continue
++			# A no-plot shoulder may have been lowered after the bore's
++			# original support proof. Recover only unexcavated massif, and
++			# only if the subsequently admitted room records this jamb.
++			if not plan.plots_at(c).is_empty() or not plan.massif.has_column(c) \
++					or plan.massif.is_reserved_ground(c) \
++					or plan.massif.columns[c].has("house_lobe") \
++					or band >= plan.massif.top_at(c) \
++					or plan.excavation.carved.has(at) or plan.passage_kinds.has(at):
+ 				return false
++			# Recovery needs an unbroken original pier down to terrain, not
++			# merely a solid lip over a second, lower passage.
++			for lower in range(plan.massif.base_at(c), roof + 1):
++				var support := Vector3i(c.x, lower, c.y)
++				if lower >= plan.massif.top_at(c) \
++						or plan.excavation.carved.has(support) \
++						or plan.passage_kinds.has(support):
++					return false
+ 		return true
+ 	for axis: Vector2i in [Vector2i.RIGHT, Vector2i.DOWN]:
+ 		var ends: Array[Vector2i] = []
+--- WarrenMazeSourcePlan.before
++++ WarrenMazeSourcePlan.rejected
+@@ -1059,6 +1059,17 @@
+ 		return
+ 	var street_floors := _street_rock_floors()
+ 	var prefab_support_floors := _prefab_support_rock_floors()
++	# Only an admitted room over a bore can retain its original side piers.
++	# Without these, regional shoulder lowering removes the very jambs that
++	# make the occupied crown a supported piece of the massif.
++	var inhabited_tunnel_supports := {}
++	for plot: Dictionary in plots:
++		if StringName(plot.get("kind",&"")) != PLOT_OVER: continue
++		for jamb: Vector2i in plot.get("jambs", []):
++			var required_top := mini(massif.top_at(jamb),
++				int(plot.get("crown", int(plot.floor) - 1)) + 1)
++			inhabited_tunnel_supports[jamb] = maxi(
++				int(inhabited_tunnel_supports.get(jamb, 0)), required_top)
+ 	var columns: Array[Vector2i] = []
+ 	columns.assign(massif.columns.keys())
+ 	columns.sort_custom(Callable(WarrenMazeSourcePlan, "_column_less"))
+@@ -1089,6 +1100,7 @@
+ 				else massif.top_at(member)
+ 			# A raised district's plinth is permanent rock: a low town beside
+ 			# it never steps the platform down.
++			derived = maxi(derived,int(inhabited_tunnel_supports.get(member,derived)))
+ 			_rock_shoulders[member] = maxi(maxi(maxi(derived,
+ 				int(street_floors.get(member, derived))),
+ 				int(prefab_support_floors.get(member, derived))),
+--- WarrenVolumetricSolver.before
++++ WarrenVolumetricSolver.rejected
+@@ -514,6 +514,10 @@
+ 	var released_crowns := _release_unborne_maze_crowns(grid, buildings)
+ 	if released_crowns < 0:
+ 		return null
++	var released_piers := _release_unused_tunnel_piers(grid, volume, buildings)
++	if bool(released_piers.failed):
++		return null
++	volume.mass_context[&"released_tunnel_piers"] = released_piers.cells
+ 	if not _discard_unassigned_mass(grid) or not _derive_shell(grid, buildings):
+ 		last_failure = "unassigned-mass discard or shell derivation failed: %s" \
+ 			% grid.last_rejection
+@@ -1214,6 +1218,15 @@
+ 		var macro := Vector3i(walk.x, roof, walk.z)
+ 		if source.solid_at(macro):
+ 			for fine: Vector3i in _fine_square(macro): out[fine] = true
++	# Retain the source-owned side piers alongside an inhabited tunnel crown.
++	for plot: Dictionary in source.plots:
++		if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_OVER: continue
++		for jamb: Vector2i in plot.get("jambs", []):
++			if not source.plots_at(jamb).is_empty(): continue
++			for band in range(source.massif.base_at(jamb), int(plot["crown"]) + 1):
++				var macro := Vector3i(jamb.x, band, jamb.y)
++				if not source.solid_at(macro): continue
++				for fine: Vector3i in _fine_square(macro): out[fine] = true
+ 	var parents: Dictionary = {}
+ 	for parent_value: Variant in (WarrenMazeBlockPartitioner.stack_parents(
+ 			source)["parents"] as Dictionary).values():
+@@ -1381,6 +1394,59 @@
+ 		for cell: Vector3i in building.private_cells:
+ 			out[cell] = true
+ 	return out
++
++
++static func _release_unused_tunnel_piers(grid: WarrenSpatialGrid,
++		volume: WarrenVolumePlan, buildings: Array[WarrenBuildingVolume]) -> Dictionary:
++	## Shoulder recovery is conditional on an inhabited bore. If construction
++	## declines its cover, return its extra stone to the prior shoulder height.
++	## A shared successful cover, room, or walked surface keeps its bearing.
++	var source := volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
++	var released: Dictionary = {}
++	if source == null:
++		return {"failed": false, "cells": released}
++	var rooms := building_private_cells(buildings)
++	var needed: Dictionary = {}
++	var prior: Dictionary = {}
++	for plot: Dictionary in source.plots:
++		if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_OVER:
++			continue
++		var whole := true
++		for column: Vector2i in plot["cells"]:
++			for fine: Vector3i in _fine_square(Vector3i(column.x, int(plot["floor"]), column.y)):
++				if not rooms.has(fine): whole = false
++		if whole:
++			for jamb: Vector2i in plot.get("jambs", []): needed[jamb] = true
++		var restored := plot.get("restored_jamb_floors", {}) as Dictionary
++		for jamb: Vector2i in restored:
++			prior[jamb] = mini(int(prior.get(jamb, restored[jamb])), int(restored[jamb]))
++	var cells: Array[Vector3i] = []
++	for jamb: Vector2i in prior:
++		if needed.has(jamb): continue
++		var candidates: Array[Vector3i] = []
++		var occupied := false
++		for band in range(int(prior[jamb]), grid.minimum.y + grid.size.y):
++			for fine: Vector3i in _fine_square(Vector3i(jamb.x, band, jamb.y)):
++				if not grid.contains(fine): continue
++				var use := grid.use_at(fine)
++				if use == WarrenSpatialGrid.Use.PRIVATE_VOLUME or int(
++						grid.face_claim(fine, Vector3i.DOWN).get("kind", -1)) in [
++						WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR,
++						WarrenSpatialGrid.FaceKind.GARDEN_FLOOR]:
++					occupied = true
++				candidates.append(fine)
++		if occupied: continue
++		for fine: Vector3i in candidates:
++			released[fine] = true
++			if grid.use_at(fine) == WarrenSpatialGrid.Use.STRUCTURAL_VOLUME \
++					and grid.owner_name_at(fine) == MAZE_STONE_FEATURE_ID:
++				cells.append(fine)
++	if not cells.is_empty():
++		var release := grid.begin_transaction(MAZE_STONE_FEATURE_ID)
++		if not release.release(cells, MAZE_STONE_FEATURE_ID) or not release.commit():
++			last_failure = "could not release unused tunnel piers: %s" % release.last_rejection
++			return {"failed": true, "cells": {}}
++	return {"failed": false, "cells": released}
+ 
+ 
+ static func _retain_maze_slab_courses(grid: WarrenSpatialGrid,
+@@ -1521,6 +1587,7 @@
+ 	var plot_mass := _maze_plot_mass_cells(volume)
+ 	var plot_roof := _maze_plot_roof_cells(volume)
+ 	var released := _maze_released_parapet_cells(grid, volume, route_floors)
++	released.merge(volume.mass_context.get(&"released_tunnel_piers", {}) as Dictionary)
+ 	var released_asset_envelope := _maze_released_asset_envelope_cells(source)
+ 	var released_required_roof_envelope := \
+ 		_maze_released_required_roof_envelope_cells(grid, buildings, program,

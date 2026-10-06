@@ -1,0 +1,53 @@
+{
+  "setup_ms": 4622,
+  "towns": [
+    {
+      "compose_ms": 1308,
+      "houses": 28,
+      "instances": 1524,
+      "kit_ms": 259,
+      "plan_ms": 273,
+      "procedural_triangles": 6297,
+      "profile": "compact",
+      "seed": "1260018864828801968",
+      "static_memory_bytes": 901497782.0,
+      "total_ms": 1840
+    },
+    {
+      "compose_ms": 2824,
+      "houses": 35,
+      "instances": 2688,
+      "kit_ms": 811,
+      "plan_ms": 1452,
+      "procedural_triangles": 18717,
+      "profile": "standard",
+      "seed": "3",
+      "static_memory_bytes": 926084102.0,
+      "total_ms": 5087
+    },
+    {
+      "compose_ms": 7442,
+      "houses": 56,
+      "instances": 4024,
+      "kit_ms": 1275,
+      "plan_ms": 2551,
+      "procedural_triangles": 32813,
+      "profile": "large",
+      "seed": "34",
+      "static_memory_bytes": 960778210.0,
+      "total_ms": 11268
+    },
+    {
+      "compose_ms": 8909,
+      "houses": 55,
+      "instances": 4163,
+      "kit_ms": 1338,
+      "plan_ms": 3208,
+      "procedural_triangles": 30698,
+      "profile": "grand",
+      "seed": "13",
+      "static_memory_bytes": 957323718.0,
+      "total_ms": 13455
+    }
+  ]
+}

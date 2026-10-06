@@ -109,8 +109,9 @@ func test_no_arch_frame_is_embedded_in_a_town() -> void:
 		var payload := town.payload as EnvironmentInstancePayload
 		for asset_id: StringName in payload.asset_ids():
 			var id := String(asset_id)
-			assert_false(id.contains("arch") or id.contains("gate"),
-				"%s: arch/gate asset %s in the town" % [town.id, id])
+			# The prohibition is on freestanding tunnel-mouth frames, not
+			# arched windows in a modular wall. Catalog role tags distinguish
+			# those assets without interpreting fragments of their names.
 			if catalog.has(asset_id):
 				var tags := catalog.descriptor(asset_id).tags
 				assert_false(tags.has(&"arch") or tags.has(&"gate"),

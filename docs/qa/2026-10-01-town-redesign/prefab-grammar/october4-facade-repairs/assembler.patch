@@ -1,0 +1,59 @@
+--- before/scripts/terrain/features/villages/kit/BuildingKitAssembler.gd
++++ after/scripts/terrain/features/villages/kit/BuildingKitAssembler.gd
+@@ -416,7 +416,13 @@
+ 			continue
+ 		if bands == 1:
+ 			var sunk := bool(storey.get("sunk", false)) and kit.has_role(&"wall.stone.retaining")
+-			if sunk:
++			if retaining and kit.has_role(&"wall.stone.retaining_half"):
++				# The source pack has an actual half-height masonry course.
++				# Keep its stone scale instead of compressing a framed Suntail wall.
++				_emit(ctx, &"wall.stone.retaining_half", slot.centre as Vector2, wall_y,
++					yaw_for_dir(int(slot.dir)))
++				_emit_corner_post(ctx, slot, wall_y, 1, kit.wall_face)
++			elif sunk:
+ 				# Standing on the ground: a full storey panel whose lower band
+ 				# is buried, so the course keeps the storeys' masonry.
+ 				_emit(ctx, &"wall.stone.retaining", slot.centre as Vector2,
+@@ -478,6 +484,13 @@
+ 			_emit(ctx, &"trim.panel_head", centre, wall_y + kit.storey_height - 0.075, yaw)
+ 			if not bool(slot.right_convex) and not bool(slot.get("right_concave", false)):
+ 				_emit(ctx, &"trim.panel_joint", centre + Vector2(right_of(dir)) * 0.5, wall_y, yaw)
++		elif material == BuildingMass.MATERIAL_STONE and not retaining \
++				and _gable_starts_at(mass, slot, floor_band + bands):
++			# Unframed plaster gables need a sill even over masonry. Timber
++			# storeys already supply this beam through trim.panel_head above.
++			_emit(ctx, &"trim.panel_head", centre + Vector2(BuildingMass.DIRS[dir]) \
++				* kit.masonry_depth / kit.module_width,
++				wall_y + float(bands) * kit.band_height() - 0.075, yaw)
+ 		if pent_colour != &"" and _covered_above(mass, slot, floor_band + bands) \
+ 				and StringName(above_openings.get(slot.edge, &"")) != BuildingMass.OPENING_BAY \
+ 				and not above_offsets.has(slot.edge):
+@@ -619,6 +632,27 @@
+ 			continue
+ 		_emit(ctx, &"deck.board", Vector2(cell) + Vector2(0.5, 0.5),
+ 			float(eave) * kit.band_height(), 0.0)
++
++
++## A closed gable meets this exact wall head, rather than an eave, open
++## branch junction or a roof above a different storey.
++static func _gable_starts_at(mass: BuildingMass, slot: Dictionary, band: int) -> bool:
++	var dir := int(slot.dir)
++	var axis := 0 if dir % 2 == 0 else 1
++	var positive := dir < 2
++	var centre: Vector2 = slot.centre
++	for wing: Dictionary in mass.roofs:
++		if int(wing.eave_band) != band or int(wing.axis) != axis:
++			continue
++		if bool(wing.open_max if positive else wing.open_min):
++			continue
++		var rect: Rect2i = wing.rect
++		var end := rect.end[axis] if positive else rect.position[axis]
++		if is_equal_approx(centre[axis], float(end)) \
++				and centre[1-axis] > rect.position[1-axis] \
++				and centre[1-axis] < rect.end[1-axis]:
++			return true
++	return false
+ 
+ 
+ ## True when a storey (this building or another) stands directly under the

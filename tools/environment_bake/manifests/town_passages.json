@@ -1,0 +1,135 @@
+{
+  "pack": "pure_village_kit",
+  "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village and BK Pure Village)",
+  "default_scale": [
+    1,
+    1,
+    1
+  ],
+  "texture_policy": {
+    "compression": "basis_universal",
+    "mipmaps": true
+  },
+  "material_palette": {
+    "Wooden_Planks": [
+      0.56,
+      0.36,
+      0.24,
+      1.0
+    ],
+    "Roof_Planks": [
+      0.62,
+      0.44,
+      0.31,
+      1.0
+    ],
+    "Wooden_Boards": [
+      0.6,
+      0.43,
+      0.3,
+      1.0
+    ],
+    "Wall": [
+      0.97,
+      0.96,
+      0.93,
+      1.0
+    ],
+    "Stone_Wall": [
+      0.74,
+      0.78,
+      0.86,
+      1.0
+    ],
+    "Stone": [
+      0.46,
+      0.48,
+      0.53,
+      1.0
+    ],
+    "Roof_Red": [
+      0.58,
+      0.4,
+      0.26,
+      1.0
+    ],
+    "Roof_Blue": [
+      0.4,
+      0.34,
+      0.27,
+      1.0
+    ],
+    "FlowerPot": [
+      0.62,
+      0.4,
+      0.3,
+      1.0
+    ]
+  },
+  "assets": [
+    {
+      "id": "pure_village.wall.plaster.passage",
+      "source": "res://assets/PureVillage/Models/Architecture/Door_2_2.glb",
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "pure_village_kit",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 12000,
+      "max_surfaces": 12,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 12000,
+      "max_collision_pieces": 1,
+      "clip_ranges": {
+        "x": [
+          -1,
+          1
+        ]
+      },
+      "exclude_mesh_paths": [
+        "Door_2_2/Door_2_2_Door/Door_2_2_Door_LOD0"
+      ]
+    },
+    {
+      "id": "pure_village.wall.stone.passage",
+      "source": "res://assets/PureVillage/Models/Architecture/Door_9_1.glb",
+      "pivot": [
+        0.125,
+        0,
+        0
+      ],
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "pure_village_kit",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 12000,
+      "max_surfaces": 12,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 12000,
+      "max_collision_pieces": 1,
+      "clip_ranges": {
+        "x": [
+          -1,
+          1
+        ]
+      },
+      "exclude_mesh_paths": [
+        "Door_9_1/Door_9_1_Door/Door_9_1_Door_LOD0"
+      ]
+    }
+  ]
+}

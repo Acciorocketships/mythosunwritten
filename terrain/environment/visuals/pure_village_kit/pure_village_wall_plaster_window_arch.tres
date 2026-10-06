@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_nslcy"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/pure_village_kit/pure_village_wall_plaster_window_arch_piece_00.res" id="2_ui0ac"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_s2lvj"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/pure_village_kit/pure_village_wall_plaster_window_arch_piece_00.res" id="4_uekah"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_26h7x"]
+
+[sub_resource type="Resource" id="Resource_6socx"]
+script = ExtResource("1_nslcy")
+shape = ExtResource("2_ui0ac")
+
+[sub_resource type="Resource" id="Resource_oo674"]
+script = ExtResource("3_s2lvj")
+mesh = ExtResource("4_uekah")
+
+[resource]
+script = ExtResource("5_26h7x")
+pieces = Array[ExtResource("3_s2lvj")]([SubResource("Resource_oo674")])
+collisions = Array[ExtResource("1_nslcy")]([SubResource("Resource_6socx")])

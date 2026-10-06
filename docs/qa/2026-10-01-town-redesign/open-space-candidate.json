@@ -1,0 +1,224 @@
+[
+	{
+		"clearings": 1,
+		"core_cells": 4,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 95,
+		"plots": {
+			"asset": 2,
+			"house": 7
+		},
+		"profile": "compact",
+		"reserved_cells": 0,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 0,
+		"seed": 7,
+		"tunnel_cells": 2
+	},
+	{
+		"clearings": 2,
+		"core_cells": 5,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 82,
+		"plots": {
+			"asset": 1,
+			"bridge": 1,
+			"deck": 1,
+			"house": 12
+		},
+		"profile": "compact",
+		"reserved_cells": 10,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 2,
+		"seed": 10,
+		"tunnel_cells": 0
+	},
+	{
+		"clearings": 0,
+		"core_cells": 0,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 70,
+		"plots": {
+			"asset": 1,
+			"deck": 1,
+			"house": 6
+		},
+		"profile": "compact",
+		"reserved_cells": 10,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 2,
+		"seed": 38,
+		"tunnel_cells": 1
+	},
+	{
+		"clearings": 0,
+		"core_cells": 0,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 90,
+		"plots": {
+			"asset": 1,
+			"house": 13
+		},
+		"profile": "compact",
+		"reserved_cells": 3,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 1,
+		"seed": 1260018864828801968,
+		"tunnel_cells": 0
+	},
+	{
+		"clearings": 1,
+		"core_cells": 7,
+		"core_massif_cells": 1,
+		"core_plot_cells": 1,
+		"massif_columns": 122,
+		"plots": {
+			"asset": 1,
+			"deck": 1,
+			"house": 26
+		},
+		"profile": "standard",
+		"reserved_cells": 5,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 1,
+		"seed": 7,
+		"tunnel_cells": 2
+	},
+	{
+		"clearings": 2,
+		"core_cells": 9,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 122,
+		"plots": {
+			"asset": 1,
+			"bridge": 3,
+			"deck": 1,
+			"house": 27
+		},
+		"profile": "standard",
+		"reserved_cells": 10,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 2,
+		"seed": 10,
+		"tunnel_cells": 4
+	},
+	{
+		"clearings": 0,
+		"core_cells": 0,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 111,
+		"plots": {
+			"asset": 1,
+			"deck": 1,
+			"house": 20,
+			"over": 2
+		},
+		"profile": "standard",
+		"reserved_cells": 16,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 2,
+		"seed": 38,
+		"tunnel_cells": 6
+	},
+	{
+		"clearings": 0,
+		"core_cells": 0,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 131,
+		"plots": {
+			"bridge": 3,
+			"deck": 2,
+			"house": 32,
+			"over": 1
+		},
+		"profile": "standard",
+		"reserved_cells": 3,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 1,
+		"seed": 1260018864828801968,
+		"tunnel_cells": 3
+	},
+	{
+		"clearings": 1,
+		"core_cells": 8,
+		"core_massif_cells": 1,
+		"core_plot_cells": 0,
+		"massif_columns": 153,
+		"plots": {
+			"asset": 2,
+			"bridge": 2,
+			"house": 28,
+			"over": 1
+		},
+		"profile": "large",
+		"reserved_cells": 3,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 1,
+		"seed": 7,
+		"tunnel_cells": 4
+	},
+	{
+		"clearings": 2,
+		"core_cells": 12,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 177,
+		"plots": {
+			"asset": 1,
+			"bridge": 3,
+			"house": 44,
+			"over": 1
+		},
+		"profile": "large",
+		"reserved_cells": 7,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 2,
+		"seed": 10,
+		"tunnel_cells": 8
+	},
+	{
+		"clearings": 0,
+		"core_cells": 0,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 158,
+		"plots": {
+			"asset": 1,
+			"deck": 1,
+			"house": 34,
+			"over": 3
+		},
+		"profile": "large",
+		"reserved_cells": 21,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 2,
+		"seed": 38,
+		"tunnel_cells": 4
+	},
+	{
+		"clearings": 0,
+		"core_cells": 0,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 178,
+		"plots": {
+			"asset": 1,
+			"bridge": 2,
+			"deck": 3,
+			"house": 28
+		},
+		"profile": "large",
+		"reserved_cells": 4,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 1,
+		"seed": 1260018864828801968,
+		"tunnel_cells": 1
+	}
+]

@@ -20,6 +20,9 @@ var reason: StringName
 ## inspect the same topology instead of reverse-engineering render instances.
 var fabric_plan: SettlementFabricPlan
 var fabric_audit: Dictionary = {}
+## Ground dressing is selected after world placement and terrain grading.
+## Its disposition is not part of the sealed local construction's audit.
+var ground_dressing_audit: Dictionary = {}
 ## Volumetric generation retains its complete source stages as lineage; the
 ## common fabric above remains the sole render/collision transaction. The
 ## production lineage for the authoritative fine-grid town.

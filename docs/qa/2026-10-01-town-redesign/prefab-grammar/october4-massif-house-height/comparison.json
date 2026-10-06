@@ -1,0 +1,139 @@
+{
+  "103:grand": {
+    "covered_quarters": [
+      40,
+      40
+    ],
+    "fully_covered": [
+      9,
+      9
+    ],
+    "bridge_cells": [
+      2,
+      2
+    ],
+    "lost_ceiling_band_histogram": {}
+  },
+  "301:grand": {
+    "covered_quarters": [
+      44,
+      44
+    ],
+    "fully_covered": [
+      11,
+      11
+    ],
+    "bridge_cells": [
+      1,
+      1
+    ],
+    "lost_ceiling_band_histogram": {}
+  },
+  "31:large": {
+    "covered_quarters": [
+      22,
+      12
+    ],
+    "fully_covered": [
+      4,
+      3
+    ],
+    "bridge_cells": [
+      4,
+      4
+    ],
+    "lost_ceiling_band_histogram": {
+      "4": 6,
+      "2": 4
+    }
+  },
+  "43:grand": {
+    "covered_quarters": [
+      44,
+      40
+    ],
+    "fully_covered": [
+      10,
+      10
+    ],
+    "bridge_cells": [
+      3,
+      3
+    ],
+    "lost_ceiling_band_histogram": {
+      "4": 4
+    }
+  },
+  "53:grand": {
+    "covered_quarters": [
+      76,
+      56
+    ],
+    "fully_covered": [
+      18,
+      14
+    ],
+    "bridge_cells": [
+      2,
+      2
+    ],
+    "lost_ceiling_band_histogram": {
+      "4": 2,
+      "8": 8,
+      "2": 8,
+      "10": 2
+    }
+  },
+  "63:grand": {
+    "covered_quarters": [
+      22,
+      6
+    ],
+    "fully_covered": [
+      3,
+      0
+    ],
+    "bridge_cells": [
+      0,
+      0
+    ],
+    "lost_ceiling_band_histogram": {
+      "11": 4,
+      "8": 8,
+      "10": 4
+    }
+  },
+  "7:standard": {
+    "covered_quarters": [
+      36,
+      32
+    ],
+    "fully_covered": [
+      9,
+      8
+    ],
+    "bridge_cells": [
+      1,
+      1
+    ],
+    "lost_ceiling_band_histogram": {
+      "4": 4,
+      "2": 4
+    }
+  },
+  "83:grand": {
+    "covered_quarters": [
+      16,
+      18
+    ],
+    "fully_covered": [
+      4,
+      4
+    ],
+    "bridge_cells": [
+      2,
+      2
+    ],
+    "lost_ceiling_band_histogram": {}
+  }
+}

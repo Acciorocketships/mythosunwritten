@@ -1,0 +1,125 @@
+{
+  "pack": "suntail_village_kit",
+  "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village and BK Pure Village)",
+  "default_scale": [
+    1,
+    1,
+    1
+  ],
+  "texture_policy": {
+    "compression": "basis_universal",
+    "mipmaps": true
+  },
+  "material_palette": {
+    "Wooden_Planks": [
+      0.56,
+      0.36,
+      0.24,
+      1.0
+    ],
+    "Roof_Planks": [
+      0.62,
+      0.44,
+      0.31,
+      1.0
+    ],
+    "Wooden_Boards": [
+      0.6,
+      0.43,
+      0.3,
+      1.0
+    ],
+    "Wall": [
+      0.97,
+      0.96,
+      0.93,
+      1.0
+    ],
+    "Stone_Wall": [
+      0.74,
+      0.78,
+      0.86,
+      1.0
+    ],
+    "Stone": [
+      0.46,
+      0.48,
+      0.53,
+      1.0
+    ],
+    "Roof_Red": [
+      0.58,
+      0.4,
+      0.26,
+      1.0
+    ],
+    "Roof_Blue": [
+      0.4,
+      0.34,
+      0.27,
+      1.0
+    ],
+    "FlowerPot": [
+      0.62,
+      0.4,
+      0.3,
+      1.0
+    ]
+  },
+  "assets": [
+    {
+      "id": "suntail.frame.frame_wall_1_passage",
+      "source": "res://assets/Raygeas/Models/Building_Modules/Frame_Modules/Frame_Wall_1_D.glb",
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "suntail_kit",
+        "frame",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 12000,
+      "max_surfaces": 6,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 12000,
+      "max_collision_pieces": 1,
+      "exclude_mesh_paths": [
+        "Frame_Wall_1_D/Wooden_Door_1"
+      ]
+    },
+    {
+      "id": "suntail.stone.stone_wall_passage_deep",
+      "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall_D.glb",
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "suntail_kit",
+        "stone",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 12000,
+      "max_surfaces": 6,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 12000,
+      "max_collision_pieces": 1,
+      "masonry_depth": {
+        "depth": 0.2,
+        "setback": 0.06,
+        "body_paths": [
+          "Stone_Wall_D"
+        ],
+        "opening_paths": [
+          "Stone_Wall_D/Wooden_Door_1"
+        ]
+      },
+      "exclude_mesh_paths": [
+        "Stone_Wall_D/Wooden_Door_1"
+      ]
+    }
+  ]
+}

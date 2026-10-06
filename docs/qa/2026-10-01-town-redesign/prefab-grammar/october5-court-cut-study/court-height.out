@@ -1,0 +1,7 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+(0, 7) join={ "tier": -1, "reason": "" } envelope=8 decision={ "top": 7, "tiered": false, "skyline_peak": false } raw=6 bearing=0
+(0, 8) join={ "tier": -1, "reason": "" } envelope=6 decision={ "top": 5, "tiered": false, "skyline_peak": false } raw=2 bearing=0
+(0, 9) join={ "tier": -1, "reason": "column already spoken for" } envelope=2147483647 decision={ "top": 5, "tiered": false, "skyline_peak": false } raw=0 bearing=0
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)

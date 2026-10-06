@@ -25,10 +25,11 @@ const LANDING_RAIL_HEIGHT := 0.825
 
 static func build(stable_id: StringName,
 		transition: WarrenVolumeTransition,
-		claim_cells: Array[Vector3i], wall_boxes: Array[AABB] = [], defer_guards := false) -> Dictionary:
+		claim_cells: Array[Vector3i], wall_boxes: Array[AABB] = [], defer_guards := false,
+		side_insets := Vector2.ZERO) -> Dictionary:
 	if stable_id.is_empty() or transition == null \
 			or not transition.is_sealed() or not transition.is_vertical() \
-			or claim_cells.is_empty():
+			or claim_cells.is_empty() or not valid_side_insets(side_insets):
 		return {}
 	var payload := _empty_payload(stable_id, claim_cells)
 	var endpoints := _span_endpoints(transition)
@@ -38,15 +39,78 @@ static func build(stable_id: StringName,
 		float(transition.direction.y))
 	payload["run_direction"] = Vector3i(direction)
 	var lateral := Vector3(-direction.z, 0.0, direction.x)
+	var original_start := start
+	var original_end := end
+	var shift := lateral * (side_insets.x-side_insets.y)*0.5
+	start += shift
+	end += shift
+	var half_width := (MACRO_SIZE-side_insets.x-side_insets.y)*0.5
 	if transition.kind == WarrenVolumeTransition.Kind.RAMP:
-		_append_ramp(payload, start, end, lateral)
+		_append_ramp(payload, start, end, lateral, half_width)
 	else:
-		_append_stairs(payload, start, end, direction, lateral)
+		_append_stairs(payload, start, end, direction, lateral, half_width)
+	var span := {"start": start, "end": end, "lateral": lateral}
+	if side_insets != Vector2.ZERO:
+		span["half_width"] = half_width
+		span["landing_start"] = original_start
+		span["landing_end"] = original_end
 	if defer_guards:
-		payload["pending_guard_span"] = {"start": start, "end": end, "lateral": lateral}
+		payload["pending_guard_span"] = span
 	else:
-		_append_side_guards(payload, start, end, lateral, true, wall_boxes)
+		finish_profile_guards(payload, span, wall_boxes)
 	return payload
+
+
+## Insets are local metres at the negative/positive lateral edge. Both reserved
+## lane centres must stay on the real flight, with clearance for the guard beam.
+static func valid_side_insets(insets: Vector2) -> bool:
+	var limit := CELL_SIZE*0.5-GUARD_BEAM
+	return insets.is_finite() and insets.x >= 0.0 and insets.y >= 0.0 \
+		and insets.x <= limit and insets.y <= limit
+
+
+static func finish_profile_guards(payload: Dictionary, span: Dictionary,
+		wall_boxes: Array[AABB]) -> void:
+	var half_width := float(span.get("half_width", MACRO_SIZE*0.5))
+	_append_side_guards(payload,span.start,span.end,span.lateral,true,wall_boxes,
+		GUARD_HEIGHT,0.0,half_width)
+	if not span.has("landing_start"): return
+	var lateral: Vector3 = span.lateral
+	for endpoint in ["start","end"]:
+		var centre: Vector3 = span[endpoint]
+		var landing: Vector3 = span["landing_"+endpoint]
+		for side: float in [-1.0,1.0]:
+			var inner := centre+lateral*half_width*side
+			var outer := landing+lateral*MACRO_SIZE*0.5*side
+			if inner.distance_to(outer) > 0.00001:
+				_append_landing_return(payload,inner,outer,wall_boxes)
+
+
+## The wider landing owns the small shoulder left beside a narrower flight.
+## Close its exposed edge to the inset side rail at both ends. These rails use
+## the same collision, clipping and native redraw metadata as the long rails.
+static func _append_landing_return(payload: Dictionary, inner: Vector3,
+		outer: Vector3, wall_boxes: Array[AABB]) -> void:
+	var first := (payload.indices as PackedInt32Array).size()
+	var spans: Array = payload.get("guard_spans",[])
+	var rails: Array[PackedVector3Array] = []
+	for fraction: float in [0.52,1.0]:
+		var height := Vector3.UP*GUARD_HEIGHT*fraction
+		for rail: PackedVector3Array in _exposed_guard_spans(inner+height,outer+height,wall_boxes):
+			rails.append(rail)
+			_append_beam(payload,rail[0],rail[1],GUARD_BEAM)
+			if fraction == 1.0:
+				spans.append({"top_a":rail[0],"top_b":rail[1],
+					"foot_a":rail[0]-height,"foot_b":rail[1]-height,
+					"lateral":(outer-inner).normalized().cross(Vector3.UP),"landing_return":true})
+	for post: PackedVector3Array in _exposed_guard_spans(outer,
+			outer+Vector3.UP*(GUARD_HEIGHT+END_POST_HEADROOM),wall_boxes):
+		if _post_meets_rail(post,rails,END_POST_WIDTH):
+			_append_beam(payload,post[0],post[1],END_POST_WIDTH)
+	payload["guard_spans"] = spans
+	var ranges: Array = payload.get("guard_index_ranges",[])
+	ranges.append(Vector2i(first,(payload.indices as PackedInt32Array).size()))
+	payload["guard_index_ranges"] = ranges
 
 
 static func _span_endpoints(transition: WarrenVolumeTransition) -> Dictionary:
@@ -104,8 +168,7 @@ static func _empty_payload(stable_id: StringName,
 
 
 static func _append_ramp(payload: Dictionary, start: Vector3, end: Vector3,
-		lateral: Vector3) -> void:
-	var half_width := MACRO_SIZE * 0.5
+		lateral: Vector3, half_width := MACRO_SIZE * 0.5) -> void:
 	# The lit board material shades by these normals; a run direction that
 	# flips the cross product must not turn the walk surface downward-facing.
 	var top_normal := lateral.cross(end - start).normalized()
@@ -128,7 +191,7 @@ static func _append_ramp(payload: Dictionary, start: Vector3, end: Vector3,
 
 
 static func _append_stairs(payload: Dictionary, start: Vector3, end: Vector3,
-		direction: Vector3, lateral: Vector3) -> void:
+		direction: Vector3, lateral: Vector3, half_width := MACRO_SIZE * 0.5) -> void:
 	var horizontal_length := Vector2(end.x - start.x,
 		end.z - start.z).length()
 	# Run length alone formerly made 0.5 m world risers. The ground approach
@@ -137,7 +200,6 @@ static func _append_stairs(payload: Dictionary, start: Vector3, end: Vector3,
 		maxi(2, roundi(horizontal_length / STAIR_STEP_RUN)))
 	var step_run := horizontal_length / float(step_count)
 	var rise := end.y - start.y
-	var half_width := MACRO_SIZE * 0.5
 	for index in step_count:
 		var t0 := float(index) / float(step_count)
 		var t1 := float(index + 1) / float(step_count)
@@ -198,7 +260,7 @@ static func _append_stairs(payload: Dictionary, start: Vector3, end: Vector3,
 static func _append_side_guards(payload: Dictionary, start: Vector3,
 		end: Vector3, lateral: Vector3, owns_start_posts := true,
 		wall_boxes: Array[AABB] = [], start_rail_height := GUARD_HEIGHT,
-		start_inset := 0.0) -> void:
+		start_inset := 0.0, half_width := MACRO_SIZE * 0.5) -> void:
 	var horizontal_length := Vector2(end.x - start.x,
 		end.z - start.z).length()
 	var post_intervals := maxi(1, ceili(horizontal_length / POST_SPACING))
@@ -210,7 +272,7 @@ static func _append_side_guards(payload: Dictionary, start: Vector3,
 	var guard_spans: Array = payload.get("guard_spans", [])
 	for side_value: Variant in [-1.0, 1.0]:
 		var side := float(side_value)
-		var side_offset: Vector3 = lateral * MACRO_SIZE * 0.5 * side
+		var side_offset: Vector3 = lateral * half_width * side
 		var inset := ((end-start)*Vector3(1,0,1)).normalized()*start_inset
 		var rails: Array[PackedVector3Array] = []
 		var upper_rails: Array[PackedVector3Array] = []

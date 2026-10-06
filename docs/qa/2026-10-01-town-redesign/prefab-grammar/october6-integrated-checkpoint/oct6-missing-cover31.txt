@@ -1,0 +1,39 @@
+{
+"audit": {
+"maze_back_room_building_count": 27,
+"maze_back_room_cell_count": 480,
+"maze_back_room_record_count": 10,
+"maze_back_room_rectangle_count": 21,
+"maze_back_room_refusals": {
+"passage cover lacks its crown, jambs or host storey": 1
+},
+"maze_back_room_stamped_cell_count": 472,
+"maze_back_room_unstamped_cells": {
+"cells": Array[Vector3i]([Vector3i(-6, 4, 2), Vector3i(-5, 4, 2), Vector3i(-6, 4, 3), Vector3i(-5, 4, 3), Vector3i(-6, 5, 2), Vector3i(-5, 5, 2), Vector3i(-6, 5, 3), Vector3i(-5, 5, 3)]),
+"count": 8
+},
+"maze_back_rooms_addressed": 5,
+"maze_back_rooms_private": 22,
+"maze_back_rooms_unstamped_cells": 8
+},
+"plots": [{
+"building_id": &"house.003",
+"cells": Array[Vector2i]([Vector2i(-2, 1), Vector2i(-2, 2), Vector2i(-2, 3)]),
+"door_walk": Vector3i(-2, 0, 0),
+"floor": 0,
+"id": &"house.003",
+"kind": &"house",
+"top": 8
+}, {
+"building_id": &"house.003",
+"cells": Array[Vector2i]([Vector2i(-3, 1)]),
+"crown": 2,
+"door_walk": Vector3i(-2, 0, 0),
+"floor": 4,
+"host": &"house.003",
+"id": &"over.01",
+"jambs": Array[Vector2i]([Vector2i(-2, 1), Vector2i(-3, 2)]),
+"kind": &"over",
+"top": 8
+}]
+}

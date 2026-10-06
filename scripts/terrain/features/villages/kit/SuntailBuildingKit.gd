@@ -17,34 +17,52 @@ const ROOF_COLOURS: Array[StringName] = [&"red", &"blue"]
 static func create() -> BuildingKit:
 	var kit := BuildingKit.new()
 	kit.kit_id = &"suntail"
+	kit.roof_geometry_path = "res://terrain/environment/geometry/suntail_roofs.bin"
 	kit.module_width = 2.0
 	kit.storey_height = 3.0
 	kit.plinth_height = 1.0
 	kit.roof_row_rise = 3.0
 	kit.roof_top_rise = 1.62
+	kit.roof_ridge_head = 0.013463
 	kit.jetty_depth = 1.0
 	# Frame_Wall_* outer faces stand 0.157 m proud of their pivot line.
 	kit.wall_face = 0.157
+	# Cornice_Cover_2 spans native z -0.0466..0.0640 before rotation.
+	kit.barge_half_depth = 0.065
 	# Support_3 is 0.2586 m square.
 	kit.corner_post_half = 0.1293
 	var r := kit.roles
 	r[&"wall.timber.plain"] = [&"suntail.frame.frame_wall_2", &"suntail.frame.frame_wall_1"]
+	# A complete Pure Village clerestory panel fits the same 2 m / 3 m bay.
+	r[&"trim.high_window_joint"] = [&"suntail.decor.support_3"]
+	kit.anchors[&"trim.high_window_joint"] = Transform3D(Basis.from_scale(Vector3(0.6,3.0,0.6)),Vector3(0,0,kit.wall_face))
+	r[&"trim.high_window_head"] = [&"suntail.decor.crossbar_2"]
+	r[&"wall.timber.window.high"] = [&"pure_village.wall.plaster.window_open"]
 	r[&"wall.timber.window"] = [&"suntail.frame.frame_wall_1_w", &"suntail.frame.frame_wall_2_w"]
 	r[&"wall.timber.door"] = [&"suntail.frame.frame_wall_1_d", &"suntail.frame.frame_wall_1_d_1"]
+	r[&"wall.timber.passage"] = [&"suntail.frame.frame_wall_1_passage"]
 	# Storey masonry is the pack's stone panels baked 0.2 m thicker in front
 	# (`masonry_depth` in the bake manifest): windows and doors keep their
 	# frames in the original plane, sunk into deep reveals, and the stone
-	# storey stands proud of the timber storey above it. Retaining courses
-	# keep the flush source panel.
+	# storey stands proud of the timber storey above it. Retained earth uses
+	# unframed Pure Village masonry, matching its native stone corbel courses.
 	kit.masonry_depth = 0.2
 	r[&"wall.stone.plain"] = [&"suntail.stone.stone_wall_deep"]
 	r[&"wall.stone.window"] = [&"suntail.stone.stone_wall_w_deep"]
 	r[&"wall.stone.door"] = [&"suntail.stone.stone_wall_d_deep", &"suntail.stone.stone_wall_d_1_deep"]
-	r[&"wall.stone.retaining"] = [&"suntail.stone.stone_wall"]
+	r[&"wall.stone.passage"] = [&"suntail.stone.stone_wall_passage_deep"]
+	r[&"wall.stone.retaining"] = [&"pure_village.wall.stone.plain"]
+	r[&"wall.stone.retaining_half"] = [&"pure_village.stone.retaining_half"]
 	r[&"plinth.stone"] = [&"suntail.stone.stone_base"]
 	# Fortification (a raised district's plinth): plain coursed stone, the
 	# kit's stone wall with its timber frame baked away.
-	r[&"wall.fort"] = [&"suntail.stone.stone_wall_plain"]
+	r[&"wall.fort"] = [&"pure_village.wall.stone.plain"]
+	r[&"fort.block"] = [&"pure_village.stone.block.4"]
+	r[&"gate.arch"] = [&"pure_village.stone.gate_arch"]
+	kit.gate_arch_size = Vector3(3.164761,2.005289,0.541562)
+	kit.gate_arch_cap_lap = 0.12
+	r[&"bay.spire"] = [&"pure_village.bay.spire"]
+	kit.oriel_bounds = AABB(Vector3(-0.9947556,-0.67883146,-0.05),Vector3(1.9957291,5.396718,1.0600911))
 	# One band of coursed stone: the flush storey masonry panel at half height.
 	# (Stone_Base is a corner plinth: its taller corner pier repeated at every
 	# module and jutted past run ends, a gap-toothed wall.) Courses standing on
@@ -62,11 +80,20 @@ static func create() -> BuildingKit:
 	r[&"gable.left"] = [&"suntail.frame.gable_l"]
 	r[&"gable.right"] = [&"suntail.frame.gable_r"]
 	r[&"gable.small"] = [&"suntail.frame.gable_small"]
+	r[&"gable.plain"] = r[&"wall.timber.plain"]
 	r[&"gable.wall"] = [&"suntail.frame.frame_wall_2_w", &"suntail.frame.frame_wall_1_w"]
 	for colour: StringName in ROOF_COLOURS:
 		r[StringName("roof.%s.eave" % colour)] = [StringName("suntail.roof.roof_1_cornice_%s" % colour)]
 		r[StringName("roof.%s.eave_dormer" % colour)] = [StringName("suntail.roof.roof_1_cornice_w_%s" % colour)]
 		r[StringName("roof.%s.slope" % colour)] = [StringName("suntail.roof.roof_1_%s" % colour)]
+		# A complete straight slope starts at the wall line when the curved
+		# cornice would dip into a stair's headroom.
+		r[StringName("roof.%s.eave_tight" % colour)] = r[StringName("roof.%s.slope" % colour)]
+		# The straight source panel still projects 0.118539 m beyond its
+		# nominal foot. Slide the complete panel along its 3:2 roof plane so
+		# a tight eave actually clears the wall line, without changing pitch.
+		kit.anchors[StringName("roof.%s.eave_tight" % colour)] = Transform3D(
+			Basis.IDENTITY, Vector3(0, 0.12 * 1.5, -0.12))
 		r[StringName("roof.%s.top" % colour)] = [StringName("suntail.roof.roof_top_1_%s" % colour)]
 		r[StringName("roof.%s.valley_eave" % colour)] = [StringName("suntail.roof.roof_2_cornice_%s" % colour)]
 		r[StringName("roof.%s.valley" % colour)] = [StringName("suntail.roof.roof_2_%s" % colour)]
@@ -79,9 +106,17 @@ static func create() -> BuildingKit:
 	r[&"trim.ridge_peak"] = [&"suntail.decor.decor_peaks_1"]
 	r[&"trim.ridge_peak_end"] = [&"suntail.decor.decor_peaks_2"]
 	r[&"trim.floor_beam"] = [&"suntail.decor.crossbar_2"]
-	r[&"trim.floor_beam_corner"] = [&"suntail.decor.crossbar_1"]
+	# Close the retracted panel's wall head with the native horizontal timber.
+	# Its outer face stays inside the public wall plane (native max Z=.197263).
+	r[&"trim.eave_tight"] = r[&"trim.floor_beam"]
+	kit.anchors[&"trim.eave_tight"] = Transform3D(Basis.IDENTITY, Vector3(0,.15,-.2))
+	# The source corner beam includes a stone block below its return. That
+	# block reads as a loose cube under an upper-storey jetty; retain the
+	# authored timber connection alone for suspended floor trim.
+	r[&"trim.floor_beam_corner"] = [&"suntail.decor.crossbar_1_timber"]
 	r[&"bracket.jetty"] = [&"suntail.decor.support_2"]
 	r[&"bracket.small"] = [&"suntail.decor.support_1"]
+	r[&"bracket.cantilever"] = [&"pure_village.support.cantilever"]
 	r[&"post.timber"] = [&"suntail.decor.support_3"]
 	r[&"post.base"] = [&"suntail.decor.support_3_base"]
 	r[&"awning"] = [&"suntail.decor.wooden_canopy_1"]
@@ -109,6 +144,14 @@ static func create() -> BuildingKit:
 	r[&"stair.run_2"] = [&"suntail.stair.wooden_stairs_2"]
 	r[&"deck.platform"] = [&"suntail.stair.wooden_platform"]
 	r[&"deck.platform_edge"] = [&"suntail.stair.wooden_platform_cover"]
+	# Complete native shallow cornice course, with authored closed end caps.
+	for part: String in ["middle", "left", "right", "outer_corner", "inner_corner", "middle_half"]:
+		r[StringName("wallhood."+part)] = [StringName("pure_village.wall_hood."+part)]
+		# Seat the shallow roof on the retained half-storey cap; its low
+		# edge clears the complete native door/window heads below.
+		kit.anchors[StringName("wallhood."+part)] = Transform3D(Basis.IDENTITY,Vector3(0,0.85,0))
+	for part: String in ["floor","return","return_beam"]:
+		r[StringName("frontage."+part)] = [StringName("town.frontage."+part)]
 	r[&"deck.board"] = [&"suntail.floor.floor_2"]
 	r[&"rail.low"] = [&"suntail.stair.wooden_railings_1"]
 	r[&"rail.stair"] = [&"suntail.stair.wooden_railings_2"]

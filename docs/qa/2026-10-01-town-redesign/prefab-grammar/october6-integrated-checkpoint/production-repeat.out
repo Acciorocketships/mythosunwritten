@@ -1,0 +1,7 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+REPEATED_PRODUCTION { "attempt": 0, "ms": 8691, "signature": "a9d2d10b0a8257863cffaf0799e9aab4c5455112919199f316c798df76013663", "accepted": true, "entries": 1821, "meshes": 884, "stages": { &"parcels": 10, &"hero_beam": 21, &"room_composition": 143, &"bridge_stamping": 160, &"directed_back_rooms": 235, &"residual_rooms": 20, &"partition_rooms": 593, &"feature_solver": 91, &"room_gate": 79 } }
+REPEATED_PRODUCTION { "attempt": 1, "ms": 13649, "signature": "a9d2d10b0a8257863cffaf0799e9aab4c5455112919199f316c798df76013663", "accepted": true, "entries": 1821, "meshes": 884, "stages": { &"parcels": 17, &"hero_beam": 20, &"room_composition": 268, &"bridge_stamping": 328, &"directed_back_rooms": 598, &"residual_rooms": 51, &"partition_rooms": 1289, &"feature_solver": 170, &"room_gate": 157 } }
+REPEATED_PRODUCTION { "attempt": 2, "ms": 8680, "signature": "a9d2d10b0a8257863cffaf0799e9aab4c5455112919199f316c798df76013663", "accepted": true, "entries": 1821, "meshes": 884, "stages": { &"parcels": 11, &"hero_beam": 19, &"room_composition": 173, &"bridge_stamping": 164, &"directed_back_rooms": 238, &"residual_rooms": 19, &"partition_rooms": 628, &"feature_solver": 92, &"room_gate": 75 } }

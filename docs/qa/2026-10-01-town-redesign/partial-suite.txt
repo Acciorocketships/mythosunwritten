@@ -1,0 +1,11 @@
+tests/test_atmosphere_director.gd tests=3 pass=3 fail=0 script_errors=0
+tests/test_atmosphere_field.gd tests=10 pass=10 fail=0 script_errors=0
+tests/test_biome_chunk_fx.gd tests=6 pass=6 fail=0 script_errors=0
+tests/test_biome_registry.gd tests=6 pass=6 fail=0 script_errors=0
+tests/test_biomes.gd tests=6 pass=6 fail=0 script_errors=0
+tests/test_building_kit.gd tests=8 pass=8 fail=0 script_errors=0
+tests/test_camera_obstruction.gd tests=6 pass=5 fail=1 script_errors=0
+tests/test_cantilever_construction.gd tests=2 pass=2 fail=0 script_errors=0
+tests/test_cliff_envelope_shortcuts.gd tests=4 pass=4 fail=0 script_errors=0
+tests/test_cliff_rock_foot_lines.gd tests=4 pass=3 fail=1 script_errors=1
+tests/test_cliff_sheet_ends.gd tests=6 pass=6 fail=0 script_errors=0

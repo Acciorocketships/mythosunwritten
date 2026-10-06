@@ -1,0 +1,224 @@
+[
+	{
+		"clearings": 1,
+		"core_cells": 4,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 95,
+		"plots": {
+			"asset": 2,
+			"house": 7
+		},
+		"profile": "compact",
+		"reserved_cells": 1,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 1,
+		"seed": 7,
+		"tunnel_cells": 2
+	},
+	{
+		"clearings": 2,
+		"core_cells": 5,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 86,
+		"plots": {
+			"asset": 2,
+			"house": 9
+		},
+		"profile": "compact",
+		"reserved_cells": 2,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 2,
+		"seed": 10,
+		"tunnel_cells": 2
+	},
+	{
+		"clearings": 0,
+		"core_cells": 0,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 81,
+		"plots": {
+			"asset": 1,
+			"bridge": 1,
+			"house": 15
+		},
+		"profile": "compact",
+		"reserved_cells": 2,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 2,
+		"seed": 38,
+		"tunnel_cells": 1
+	},
+	{
+		"clearings": 0,
+		"core_cells": 0,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 92,
+		"plots": {
+			"bridge": 1,
+			"deck": 1,
+			"house": 27,
+			"over": 1
+		},
+		"profile": "compact",
+		"reserved_cells": 3,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 1,
+		"seed": 1260018864828801968,
+		"tunnel_cells": 3
+	},
+	{
+		"clearings": 1,
+		"core_cells": 7,
+		"core_massif_cells": 1,
+		"core_plot_cells": 1,
+		"massif_columns": 125,
+		"plots": {
+			"asset": 1,
+			"house": 30
+		},
+		"profile": "standard",
+		"reserved_cells": 1,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 1,
+		"seed": 7,
+		"tunnel_cells": 3
+	},
+	{
+		"clearings": 2,
+		"core_cells": 9,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 132,
+		"plots": {
+			"asset": 1,
+			"bridge": 3,
+			"deck": 1,
+			"house": 28,
+			"over": 1
+		},
+		"profile": "standard",
+		"reserved_cells": 2,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 2,
+		"seed": 10,
+		"tunnel_cells": 4
+	},
+	{
+		"clearings": 0,
+		"core_cells": 0,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 124,
+		"plots": {
+			"asset": 1,
+			"bridge": 3,
+			"house": 30,
+			"over": 1
+		},
+		"profile": "standard",
+		"reserved_cells": 3,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 2,
+		"seed": 38,
+		"tunnel_cells": 5
+	},
+	{
+		"clearings": 0,
+		"core_cells": 0,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 134,
+		"plots": {
+			"bridge": 2,
+			"house": 36,
+			"over": 3
+		},
+		"profile": "standard",
+		"reserved_cells": 3,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 1,
+		"seed": 1260018864828801968,
+		"tunnel_cells": 3
+	},
+	{
+		"clearings": 1,
+		"core_cells": 8,
+		"core_massif_cells": 1,
+		"core_plot_cells": 0,
+		"massif_columns": 155,
+		"plots": {
+			"asset": 2,
+			"bridge": 2,
+			"house": 29,
+			"over": 2
+		},
+		"profile": "large",
+		"reserved_cells": 1,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 1,
+		"seed": 7,
+		"tunnel_cells": 4
+	},
+	{
+		"clearings": 2,
+		"core_cells": 12,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 183,
+		"plots": {
+			"asset": 2,
+			"bridge": 2,
+			"deck": 2,
+			"house": 34,
+			"over": 1
+		},
+		"profile": "large",
+		"reserved_cells": 4,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 2,
+		"seed": 10,
+		"tunnel_cells": 8
+	},
+	{
+		"clearings": 0,
+		"core_cells": 0,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 177,
+		"plots": {
+			"asset": 2,
+			"bridge": 4,
+			"deck": 2,
+			"house": 39
+		},
+		"profile": "large",
+		"reserved_cells": 2,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 2,
+		"seed": 38,
+		"tunnel_cells": 3
+	},
+	{
+		"clearings": 0,
+		"core_cells": 0,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 182,
+		"plots": {
+			"bridge": 2,
+			"deck": 3,
+			"house": 46,
+			"over": 1
+		},
+		"profile": "large",
+		"reserved_cells": 1,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 1,
+		"seed": 1260018864828801968,
+		"tunnel_cells": 3
+	}
+]

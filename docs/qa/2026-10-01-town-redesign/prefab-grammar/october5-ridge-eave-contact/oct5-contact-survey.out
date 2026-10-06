@@ -1,0 +1,10 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+TOWN 127:large houses=28 gable_front=11/25 minority=0.46 pairs=5 twins=0 run=0 same_ridge=2 levels=7 compound=12 | tiny=0 open=0 holes=0 air=0 eaves=0
+TOWN 83:grand houses=22 gable_front=11/20 minority=0.41 pairs=3 twins=0 run=0 same_ridge=2 levels=9 compound=13 | tiny=0 open=0 holes=0 air=0 eaves=0
+TOWN 103:grand houses=22 gable_front=13/18 minority=0.36 pairs=4 twins=0 run=0 same_ridge=4 levels=7 compound=10 | tiny=1 open=0 holes=0 air=0 eaves=0
+TOWN 8:grand houses=23 gable_front=9/22 minority=0.39 pairs=4 twins=0 run=0 same_ridge=0 levels=12 compound=14 | tiny=0 open=0 holes=0 air=0 eaves=0
+TOTAL { "houses": 95.0, "gable_front": 44.0, "fronted": 85.0, "axis_minority": 1.62831733483907, "pairs": 16.0, "twins": 0.0, "twin_run": 0.0, "same_ridge": 8.0, "ridge_levels": 35.0, "compound": 49.0, "audit_roofs": 204, "audit_tiny": 1, "audit_open_exposed": 0, "audit_gable_holes": 0, "audit_air_unsupported": 0, "audit_eaves_cut": 0, &"towns": 4 }
+SUMMARY gable_front=0.52 twin_share=0.00 same_ridge_share=0.50 compound=0.52 mean_twin_run=0.00 minority=0.41

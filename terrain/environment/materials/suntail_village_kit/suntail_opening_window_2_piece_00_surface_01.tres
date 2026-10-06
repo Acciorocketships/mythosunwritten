@@ -1,7 +1,7 @@
 [gd_resource type="StandardMaterial3D" load_steps=3 format=3]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/58833ae329eb7f6517b7.res" id="1_opngx"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/0c3c9b3561e957276eb0.res" id="2_2rpau"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/c3703ea787bc151f959e.res" id="1_opngx"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/9b40837b12d358957dc9.res" id="2_2rpau"]
 
 [resource]
 resource_name = "Window"

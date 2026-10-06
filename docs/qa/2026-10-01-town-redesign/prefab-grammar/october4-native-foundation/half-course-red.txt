@@ -1,0 +1,104 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_pure_village_half_course.gd
+[0m* test_short_house_course_uses_native_matching_masonry
+[31m    [Failed]:  [0m[STRING_NAME(suntail.stone.stone_wall)] expected to equal [STRING_NAME(pure_village.stone.retaining_half)]:  
+      at line 16
+[31m    [Failed]:  [0m[0.48793181777000427246] expected to equal [1.0] +/- [0.001]:  Keep authored stone proportions
+      at line 17
+[31m    [Failed]:  [0m[STRING_NAME(suntail.stone.stone_wall)] expected to equal [STRING_NAME(pure_village.stone.retaining_half)]:  
+      at line 16
+[31m    [Failed]:  [0m[0.48793181777000427246] expected to equal [1.0] +/- [0.001]:  Keep authored stone proportions
+      at line 17
+[31m    [Failed]:  [0m[STRING_NAME(suntail.stone.stone_wall)] expected to equal [STRING_NAME(pure_village.stone.retaining_half)]:  
+      at line 16
+[31m    [Failed]:  [0m[0.48793181777000427246] expected to equal [1.0] +/- [0.001]:  Keep authored stone proportions
+      at line 17
+[31m    [Failed]:  [0m[STRING_NAME(suntail.stone.stone_wall)] expected to equal [STRING_NAME(pure_village.stone.retaining_half)]:  
+      at line 16
+[31m    [Failed]:  [0m[0.48793181777000427246] expected to equal [1.0] +/- [0.001]:  Keep authored stone proportions
+      at line 17
+[31m    [Failed]:  [0m[STRING_NAME(suntail.stone.stone_wall)] expected to equal [STRING_NAME(pure_village.stone.retaining_half)]:  
+      at line 16
+[31m    [Failed]:  [0m[0.48793181777000427246] expected to equal [1.0] +/- [0.001]:  Keep authored stone proportions
+      at line 17
+[31m    [Failed]:  [0m[STRING_NAME(suntail.stone.stone_wall)] expected to equal [STRING_NAME(pure_village.stone.retaining_half)]:  
+      at line 16
+[31m    [Failed]:  [0m[0.48793181777000427246] expected to equal [1.0] +/- [0.001]:  Keep authored stone proportions
+      at line 17
+[31m    [Failed]:  [0m[STRING_NAME(suntail.stone.stone_wall)] expected to equal [STRING_NAME(pure_village.stone.retaining_half)]:  
+      at line 16
+[31m    [Failed]:  [0m[0.48793181777000427246] expected to equal [1.0] +/- [0.001]:  Keep authored stone proportions
+      at line 17
+[31m    [Failed]:  [0m[STRING_NAME(suntail.stone.stone_wall)] expected to equal [STRING_NAME(pure_village.stone.retaining_half)]:  
+      at line 16
+[31m    [Failed]:  [0m[0.48793181777000427246] expected to equal [1.0] +/- [0.001]:  Keep authored stone proportions
+      at line 17
+[31m    [Failed]:  [0m[0.00000000000000000000] expected to equal [0.17000000178814] +/- [0.001]:  
+      at line 21
+[1m0/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_pure_village_half_course.gd
+[0m- test_short_house_course_uses_native_matching_masonry
+[31m    [Failed]:  [0m[STRING_NAME(suntail.stone.stone_wall)] expected to equal [STRING_NAME(pure_village.stone.retaining_half)]:  
+          at line 16
+[31m    [Failed]:  [0m[0.48793181777000427246] expected to equal [1.0] +/- [0.001]:  Keep authored stone proportions
+          at line 17
+[31m    [Failed]:  [0m[STRING_NAME(suntail.stone.stone_wall)] expected to equal [STRING_NAME(pure_village.stone.retaining_half)]:  
+          at line 16
+[31m    [Failed]:  [0m[0.48793181777000427246] expected to equal [1.0] +/- [0.001]:  Keep authored stone proportions
+          at line 17
+[31m    [Failed]:  [0m[STRING_NAME(suntail.stone.stone_wall)] expected to equal [STRING_NAME(pure_village.stone.retaining_half)]:  
+          at line 16
+[31m    [Failed]:  [0m[0.48793181777000427246] expected to equal [1.0] +/- [0.001]:  Keep authored stone proportions
+          at line 17
+[31m    [Failed]:  [0m[STRING_NAME(suntail.stone.stone_wall)] expected to equal [STRING_NAME(pure_village.stone.retaining_half)]:  
+          at line 16
+[31m    [Failed]:  [0m[0.48793181777000427246] expected to equal [1.0] +/- [0.001]:  Keep authored stone proportions
+          at line 17
+[31m    [Failed]:  [0m[STRING_NAME(suntail.stone.stone_wall)] expected to equal [STRING_NAME(pure_village.stone.retaining_half)]:  
+          at line 16
+[31m    [Failed]:  [0m[0.48793181777000427246] expected to equal [1.0] +/- [0.001]:  Keep authored stone proportions
+          at line 17
+[31m    [Failed]:  [0m[STRING_NAME(suntail.stone.stone_wall)] expected to equal [STRING_NAME(pure_village.stone.retaining_half)]:  
+          at line 16
+[31m    [Failed]:  [0m[0.48793181777000427246] expected to equal [1.0] +/- [0.001]:  Keep authored stone proportions
+          at line 17
+[31m    [Failed]:  [0m[STRING_NAME(suntail.stone.stone_wall)] expected to equal [STRING_NAME(pure_village.stone.retaining_half)]:  
+          at line 16
+[31m    [Failed]:  [0m[0.48793181777000427246] expected to equal [1.0] +/- [0.001]:  Keep authored stone proportions
+          at line 17
+[31m    [Failed]:  [0m[STRING_NAME(suntail.stone.stone_wall)] expected to equal [STRING_NAME(pure_village.stone.retaining_half)]:  
+          at line 16
+[31m    [Failed]:  [0m[0.48793181777000427246] expected to equal [1.0] +/- [0.001]:  Keep authored stone proportions
+          at line 17
+[31m    [Failed]:  [0m[0.00000000000000000000] expected to equal [0.17000000178814] +/- [0.001]:  
+          at line 21
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts            9/26
+Time              1.804s
+
+
+[31m---- 1 failing tests ----
+[0m

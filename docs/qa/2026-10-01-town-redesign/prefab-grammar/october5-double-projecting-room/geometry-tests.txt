@@ -1,0 +1,38 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_pure_village_street_house.gd
+[0m* test_new_lengths_keep_roof_side_rows_and_projecting_floor_closed
+* test_sampled_facades_preserve_structural_connections_and_coherent_window_family
+* test_projecting_bays_are_seeded_complete_lower_panels
+* test_projecting_window_glass_is_not_buried_by_neighboring_walls_or_the_roof
+* test_upper_window_compatibility_uses_visible_glazing_below_real_eave
+* test_rear_jetty_is_a_closed_supported_room_with_a_complete_extended_roof
+* test_rear_jetty_glazing_is_clear_of_the_complete_host
+[1m7/7 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               1
+Tests                 7
+Passing Tests         7
+Asserts            3356
+Time              52.538s
+
+
+[32m---- All tests passed! ----
+[0m

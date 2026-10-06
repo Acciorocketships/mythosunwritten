@@ -1,0 +1,26 @@
+[
+  {
+    "carved": {
+      "clear_body": 26,
+      "failures": {
+        "bearing_outside_massif": 2,
+        "envelope_outside_grid": 2
+      },
+      "fits": 0,
+      "fronted": 1,
+      "ground_bearing": 27,
+      "rectangles": 49
+    },
+    "field": {
+      "clear_body": 27,
+      "failures": {
+
+      },
+      "fits": 0,
+      "fronted": 0,
+      "ground_bearing": 27,
+      "rectangles": 119
+    },
+    "seed": 31
+  }
+]

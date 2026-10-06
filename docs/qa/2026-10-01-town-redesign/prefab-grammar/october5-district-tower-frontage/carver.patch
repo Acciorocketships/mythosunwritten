@@ -1,0 +1,58 @@
+--- oct5-before-district-tower-carver.gd
++++ scripts/terrain/features/villages/fabric/WarrenMazeCarver.gd
+@@ -172,7 +172,7 @@
+ 	WarrenPlatformStreets.carve_gate(world_seed, massif, excavation, occupied,
+ 		summit)
+ 	WarrenPlatformStreets.carve_nested_gates(world_seed, massif, excavation, occupied)
+-	_carve_district_access(massif, excavation, occupied)
++	_carve_district_access(massif, excavation, occupied, profile)
+ 	# Gate access is a prerequisite, not leftover space after buildings.
+ 	# Reserve it before landmark and bridge envelopes can strand the mouth.
+ 	var early_gates := _carve_secondary_gate_lanes(world_seed, massif,
+@@ -2749,6 +2749,11 @@
+ 	# This is a proposal used to route the perimeter; house frontage claims
+ 	# belong to the committed court after that route exists.
+ 	if not proposed_court.is_empty(): preview.audit["preselected_plaza"] = proposed_court
++	for lane: Dictionary in excavation.lanes:
++		if lane.has("landmark_site"):
++			var selected: Array = preview.audit.get("preselected_landmarks", [])
++			selected.append(lane.landmark_site)
++			preview.audit["preselected_landmarks"] = selected
+ 	WarrenPlotPlanner.reserve(preview, profile, false)
+ 	var reach: Dictionary = {}
+ 	for record: Dictionary in WarrenPlotPlanner.outcomes(preview).get(
+@@ -3350,7 +3355,7 @@
+ ## Central greens need inhabited edges. Establish a legal ground connection
+ ## to each sampled district before optional streets and asset reservations.
+ static func _carve_district_access(massif: WarrenMassif,
+-		excavation: WarrenExcavation, occupied: Dictionary) -> void:
++		excavation: WarrenExcavation, occupied: Dictionary, profile: WarrenVillageScaleProfile = null) -> void:
+ 	var districts := {}
+ 	for column: Vector2i in massif.columns:
+ 		var record: Dictionary = massif.columns[column]
+@@ -3370,6 +3375,25 @@
+ 		for cell: Vector3i in excavation.public_cells(): public[cell] = true
+ 		for cell: Vector3i in _walk_nodes(excavation): walk_nodes[cell] = true
+ 		var candidates: Array = districts[id]
++		var pair := preload("res://scripts/terrain/features/villages/fabric/WarrenDistrictLandmarkAccess.gd").propose(
++			massif, excavation, profile if profile != null else WarrenVillageScaleProfile.select(excavation.world_seed),
++			candidates, public, walk_nodes)
++		if not pair.is_empty():
++			preload("res://scripts/terrain/features/villages/fabric/WarrenDistrictLandmarkAccess.gd").append_connection(excavation,pair.connection)
++			excavation.lanes[-1]["landmark_site"] = pair.plot
++			# Keep the inhabited street edge promised alongside this landmark.
++			# Optional loops must not spend that neighbouring room frontage.
++			for column: Vector2i in pair.companions:
++				for band in range(int(pair.plot.floor),int(pair.plot.floor)+MIN_HOUSE_BANDS):
++					excavation.frontage_reservations[Vector3i(column.x,band,column.y)] = true
++			for cell: Vector3i in pair.connection.cells: occupied[cell] = true
++			var columns: Array = pair.plot.cells.duplicate()
++			columns.append_array(pair.realisation.get("reserved_columns",[]))
++			columns.append_array(pair.realisation.get("support_columns",[]))
++			for column: Vector2i in columns:
++				for band in range(int(pair.plot.floor)-1,int(pair.plot.top)):
++					excavation.construction_reservations[Vector3i(column.x,band,column.y)] = true
++			continue
+ 		candidates.sort_custom(func(a: Vector3i,b: Vector3i) -> bool:
+ 			var centre: Vector2 = massif.columns[Vector2i(a.x,a.z)].district_centre
+ 			var da := Vector2(a.x,a.z).distance_squared_to(centre)

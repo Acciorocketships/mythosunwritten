@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_6jggh"]
+
+[resource]
+script = ExtResource("1_6jggh")
+id = &"pure_village.stone.block.4.finish_oak"
+visual_path = "res://terrain/environment/visuals/pure_village_masonry/pure_village_stone_block_4.tres"
+tags = Array[StringName]([&"building", &"pure_village_masonry", &"village"])
+measured_aabb = AABB(-0.4997139, 1.8114224e-07, -0.26066446, 0.9994266, 0.46335208, 0.5213281)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"pure_village_masonry:pure_village.stone.block.4/frame/oak"
+material_tints = {
+"DoorShutter": Color(0.9, 0.74, 0.53, 1),
+"DoorShutters": Color(0.9, 0.74, 0.53, 1),
+"Planks": Color(0.9, 0.74, 0.53, 1),
+"Planks_Full": Color(0.9, 0.74, 0.53, 1),
+"Wood": Color(0.9, 0.74, 0.53, 1),
+"Wood_1": Color(0.9, 0.74, 0.53, 1),
+"Wood_2": Color(0.9, 0.74, 0.53, 1),
+"Wood_3": Color(0.9, 0.74, 0.53, 1),
+"Wooden_Planks": Color(0.9, 0.74, 0.53, 1)
+}

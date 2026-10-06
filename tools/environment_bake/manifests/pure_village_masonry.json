@@ -1,0 +1,62 @@
+{
+  "pack": "pure_village_masonry",
+  "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+  "default_scale": [
+    1,
+    1,
+    1
+  ],
+  "assets": [
+    {
+      "id": "pure_village.stone.block.4",
+      "source": "res://assets/PureVillage/Models/Architecture/Stone_Block_4.glb",
+      "pivot": [
+        0.0314885,
+        -0.007538,
+        0.003184
+      ],
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "pure_village_masonry",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 12000,
+      "max_surfaces": 12,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 12000,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "pure_village.stone.block.5",
+      "source": "res://assets/PureVillage/Models/Architecture/Stone_Block_5.glb",
+      "pivot": [
+        0.0392685,
+        -0.010464,
+        0.0118065
+      ],
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "pure_village_masonry",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 12000,
+      "max_surfaces": 12,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 12000,
+      "max_collision_pieces": 1
+    }
+  ],
+  "texture_policy": {
+    "compression": "basis_universal",
+    "mipmaps": true,
+    "namespace": "pure_village_kit"
+  }
+}

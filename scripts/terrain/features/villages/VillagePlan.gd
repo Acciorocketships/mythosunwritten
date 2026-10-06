@@ -17,6 +17,7 @@ var _world_seed: int
 var _program: VillageProgram
 var _fields: WorldFieldBlockCache
 var _records: Dictionary = {}
+var _discovery_bounds: Dictionary = {}
 var _stats := {"queries": 0, "builds": 0, "evictions": 0}
 
 func _init(world_seed: int, program: VillageProgram,
@@ -45,6 +46,16 @@ func stats() -> Dictionary:
 	var out := _stats.duplicate()
 	out["cache"] = _records.size()
 	return out
+
+
+func discovery_bound_for_cell(cell: Vector2i) -> Rect2:
+	if not _discovery_bounds.has(cell):
+		if _discovery_bounds.size() >= _CACHE_CAP: _discovery_bounds.clear()
+		var radius := preload("res://scripts/terrain/features/villages/WarrenTownDiscovery.gd").radius_for_seed(
+			warren_seed_for_cell(_world_seed,cell),_program.max_asset_reach)
+		var centre := Vector2(cell) * HeightfieldPlan.CELL
+		_discovery_bounds[cell] = Rect2(centre-Vector2.ONE*radius,Vector2.ONE*radius*2.0)
+	return _discovery_bounds[cell]
 
 func _build(frame: VillageFrame) -> VillageRecord:
 	var stage_start := Time.get_ticks_usec()
@@ -91,6 +102,7 @@ func _build(frame: VillageFrame) -> VillageRecord:
 	record.urban_fabric = urban_fabric
 	record.outskirts = null
 	record.prop_results = prop_results
+	record.discovery_bound = discovery_bound_for_cell(frame.cell)
 	return record
 
 

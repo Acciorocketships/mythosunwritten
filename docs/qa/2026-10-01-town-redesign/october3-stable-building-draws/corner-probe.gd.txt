@@ -1,0 +1,14 @@
+extends SceneTree
+func _init() -> void: call_deferred("_run")
+func _run() -> void:
+	var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
+	var spatial := WarrenVolumetricSolver.generate(58, {}, program, WarrenVillageScaleProfile.for_id(&"large"))
+	var fabric := spatial.compiled_fabric_cache()
+	var parents := {}
+	for unit: FabricUnit in fabric.units:
+		if String(unit.recipe_id).begins_with("roof.partial.gable.") and String(unit.recipe_id).ends_with(".1"):
+			parents[unit.parent_ids[0]] = true
+	for unit: FabricUnit in fabric.units:
+		if not unit.parent_ids.is_empty() and parents.has(unit.parent_ids[0]):
+			print("CORNER ",unit.parent_ids," ",unit.recipe_id," ",unit.lattice_origin," ",program.recipe(unit.recipe_id).occluder_cells)
+	quit()

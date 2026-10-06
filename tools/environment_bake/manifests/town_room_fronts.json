@@ -1,0 +1,169 @@
+{
+  "pack": "town_room_fronts",
+  "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village and BK Pure Village)",
+  "default_scale": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "material_palette": {
+    "Wooden_Planks": [
+      0.56,
+      0.36,
+      0.24,
+      1.0
+    ],
+    "Roof_Planks": [
+      0.62,
+      0.44,
+      0.31,
+      1.0
+    ],
+    "Wooden_Boards": [
+      0.6,
+      0.43,
+      0.3,
+      1.0
+    ],
+    "Wall": [
+      0.97,
+      0.96,
+      0.93,
+      1.0
+    ],
+    "Stone_Wall": [
+      0.74,
+      0.78,
+      0.86,
+      1.0
+    ],
+    "Stone": [
+      0.46,
+      0.48,
+      0.53,
+      1.0
+    ],
+    "Roof_Red": [
+      0.58,
+      0.4,
+      0.26,
+      1.0
+    ],
+    "Roof_Blue": [
+      0.4,
+      0.34,
+      0.27,
+      1.0
+    ],
+    "FlowerPot": [
+      0.62,
+      0.4,
+      0.3,
+      1.0
+    ]
+  },
+  "material_roughness": {
+    "Roof_Red": 0.85,
+    "Roof_Blue": 0.9,
+    "Wall": 0.9,
+    "Stone_Wall": 0.85,
+    "Stone": 0.85,
+    "Wooden_Planks": 0.8,
+    "Roof_Planks": 0.8,
+    "Wooden_Boards": 0.8,
+    "FlowerPot": 0.85
+  },
+  "assets": [
+    {
+      "id": "town.frontage.floor",
+      "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Floor_2.glb",
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "town_room_fronts",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 12000,
+      "max_surfaces": 6,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 12000,
+      "max_collision_pieces": 1,
+      "clip_ranges": {
+        "z": [
+          -0.325,
+          0.325
+        ]
+      }
+    },
+    {
+      "id": "town.frontage.return_beam",
+      "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Crossbar_2.glb",
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "town_room_fronts",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 20000,
+      "max_surfaces": 6,
+      "max_collision_triangles": 12000,
+      "max_collision_pieces": 1,
+      "clip_ranges": {
+        "x": [
+          -0.325,
+          0.325
+        ]
+      },
+      "collision_profile": "building_trimesh"
+    },
+    {
+      "id": "town.frontage.return",
+      "source": "res://assets/PureVillage/Models/Architecture/Wall_Start_10x30_0.glb",
+      "pivot": [
+        -0.325,
+        0,
+        0
+      ],
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "town_room_fronts",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 20000,
+      "max_surfaces": 12,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 12000,
+      "max_collision_pieces": 1,
+      "clip_ranges": {
+        "x": [
+          -0.325,
+          0.325
+        ]
+      }
+    }
+  ],
+  "material_textures": {
+    "Roof_Red": {
+      "albedo_texture": "res://assets/Raygeas/Textures/Building_Modules/Boards_AlbedoSmoothness.png",
+      "normal_texture": "res://assets/Raygeas/Textures/Building_Modules/Boards_Normal.png"
+    },
+    "Roof_Blue": {
+      "albedo_texture": "res://assets/Raygeas/Textures/Building_Modules/Boards_AlbedoSmoothness.png",
+      "normal_texture": "res://assets/Raygeas/Textures/Building_Modules/Boards_Normal.png"
+    }
+  },
+  "texture_policy": {
+    "compression": "basis_universal",
+    "mipmaps": true
+  }
+}

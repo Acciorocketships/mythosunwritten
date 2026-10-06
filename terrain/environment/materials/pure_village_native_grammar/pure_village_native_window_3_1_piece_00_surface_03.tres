@@ -1,0 +1,23 @@
+[gd_resource type="StandardMaterial3D" load_steps=5 format=3]
+
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/pure_village_kit/cab2255d7a8350398b28.res" id="1_kk6ea"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/pure_village_kit/fd8923e97c766fd83762.res" id="2_4cij8"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/pure_village_kit/4932be9896047ec46091.res" id="3_gd2qk"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/pure_village_kit/d26111bc2023d73735de.res" id="4_j3iqd"]
+
+[resource]
+resource_name = "Glass_In"
+vertex_color_use_as_albedo = true
+albedo_color = Color(1, 0.9235921, 0.836478, 1)
+albedo_texture = ExtResource("1_kk6ea")
+metallic = 1.0
+metallic_texture = ExtResource("2_4cij8")
+metallic_texture_channel = 2
+roughness_texture = ExtResource("2_4cij8")
+roughness_texture_channel = 1
+emission_enabled = true
+emission_texture = ExtResource("3_gd2qk")
+normal_enabled = true
+normal_texture = ExtResource("4_j3iqd")
+ao_enabled = true
+ao_texture = ExtResource("2_4cij8")

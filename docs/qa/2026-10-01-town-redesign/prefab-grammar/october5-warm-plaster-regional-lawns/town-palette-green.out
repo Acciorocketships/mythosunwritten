@@ -1,0 +1,52 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_october5_town_surface_palette.gd
+[0m* test_suntail_plaster_warms_without_recolouring_timber_or_mutating_source
+* test_raised_courtyard_uses_same_colour_as_terrain_below
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_october2_garden_grass.gd
+[0m* test_rotated_garden_support_preserves_holes_and_outer_boundary
+* test_real_elevated_garden_survives_worker_detachment_and_grows_grass_over_lower_clearance
+* test_query_support_survives_without_render_ownership_and_context_extension
+* test_tree_canopy_does_not_erase_grass_but_root_and_low_branches_do
+* test_world_feature_queries_keep_cross_chunk_gardens_through_cache_eviction
+[1m5/5 passed.
+[0m[4m
+
+res://tests/test_biome_registry.gd
+[0m* test_all_five_profiles_load_complete
+* test_meadow_and_highland_are_fog_free
+* test_blend_atmosphere_endpoints_and_midpoint
+* test_blended_density_uses_the_profile_budget
+* test_biome_id_order_and_density_bound_are_explicit
+* test_ground_tint_combines_biome_and_shared_patch_fields
+[1m6/6 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               3
+Tests                13
+Passing Tests        13
+Asserts             328
+Time              24.976s
+
+
+[32m---- All tests passed! ----
+[0m

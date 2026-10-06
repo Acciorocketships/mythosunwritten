@@ -2,6 +2,7 @@
   "assets": [
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_chimney_fireplace_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.chimney.fireplace_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -44,11 +45,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Fireplace_2.glb",
       "source_sha256": "0b39009988878d3b3b60c873b9be0f2bd77bcc3d5081c3cb8fd7cf3be18b901f",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_chimney_fireplace_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_chimney_fireplace_3.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.chimney.fireplace_3",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -91,11 +97,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Fireplace_3.glb",
       "source_sha256": "8bd370b19aca84cfbba2b55ecb66bb1281d6b2f4f12d4ffbbecb9b0c745be3f4",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_chimney_fireplace_3.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_decor_cornice_cover_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.decor.cornice_cover_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -138,11 +149,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Cornice_Cover_1.glb",
       "source_sha256": "25c525504b08fb2e6d07086a0e96ecfd017c5d489e6e0ddc95cec90e239c0e2b",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_decor_cornice_cover_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_decor_cornice_cover_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.decor.cornice_cover_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -185,11 +201,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Cornice_Cover_2.glb",
       "source_sha256": "e44e121cf2ed58a54843e37256e9abcdf2bff4419444eb2a705091f394c3f2b0",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_decor_cornice_cover_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_decor_cornice_cover_3.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.decor.cornice_cover_3",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -232,11 +253,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Cornice_Cover_3.glb",
       "source_sha256": "35881d83c54d2d88ad781c8d47a5b312ed8691ad51531212f46c98f62bb4470b",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_decor_cornice_cover_3.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_decor_crossbar_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.decor.crossbar_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -279,11 +305,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Crossbar_1.glb",
       "source_sha256": "6ecfcfdc832abb1b8cff84c31f4e104c934e70a5a068806935f02c0c7c2b0657",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_decor_crossbar_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_decor_crossbar_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.decor.crossbar_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -326,11 +357,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Crossbar_2.glb",
       "source_sha256": "7c0351a0f0b1e085282ad753f1d9388691daf597034a55ea72bb1b4a9612d41a",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_decor_crossbar_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_decor_decor_peaks_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.decor.decor_peaks_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -373,11 +409,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Decor_Peaks_1.glb",
       "source_sha256": "17ee80502133a19870a93b38277a0a2dfc49edfa7af6dd9765171d27c93f27a7",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_decor_decor_peaks_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_decor_decor_peaks_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.decor.decor_peaks_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -420,11 +461,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Decor_Peaks_2.glb",
       "source_sha256": "d0b986ef9f14664e0117a11d475ccd203ef7408c89e2519b59f095f76288af03",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_decor_decor_peaks_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_decor_flovers_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.decor.flovers_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -467,11 +513,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Flovers_1.glb",
       "source_sha256": "55fe116734e2ac5576ba4a36aaee0a13bf15c504ec995642025471d2c745c7d4",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_decor_flovers_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_decor_flovers_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.decor.flovers_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -514,11 +565,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Flovers_2.glb",
       "source_sha256": "0ce4f2ca3ad67d8006bb3e305e0236bd4b67eed9630a30e3a0e499f85cf7e0aa",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_decor_flovers_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_decor_ivy_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.decor.ivy_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -561,11 +617,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Ivy_1.glb",
       "source_sha256": "5ef93d28fce97ae1f3928e8d94a67673bf81ceac0c517fc27fc5838c013842c8",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_decor_ivy_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_decor_ivy_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.decor.ivy_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -608,11 +669,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Ivy_2.glb",
       "source_sha256": "1730f8c746f6ce0b1e1dbda11ec619f865f1a217c7fabbec020418bbb8927885",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_decor_ivy_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_decor_ivy_3.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.decor.ivy_3",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -655,11 +721,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Ivy_3.glb",
       "source_sha256": "3a7557ed37481a2edd7bc8132998d69225c25bc0d254e7b5bc86ad716f0d51fa",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_decor_ivy_3.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_decor_ivy_4_l.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.decor.ivy_4_l",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -702,11 +773,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Ivy_4_L.glb",
       "source_sha256": "b8a7651149d022d992024db8ae6e388d6c29d6f9451c2e767ef33cd09da25923",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_decor_ivy_4_l.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_decor_ivy_4_r.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.decor.ivy_4_r",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -749,11 +825,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Ivy_4_R.glb",
       "source_sha256": "7f5a159f6a73f8908be1cc452bbd923c8d9deb18648cf03f0d952dac8498fac3",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_decor_ivy_4_r.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_decor_ivy_5_l.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.decor.ivy_5_l",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -796,11 +877,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Ivy_5_L.glb",
       "source_sha256": "9323115ca3a6c69a35479ee0a30d195033e8aacb000d59bff1ac747f3ae33db7",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_decor_ivy_5_l.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_decor_ivy_5_r.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.decor.ivy_5_r",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -843,11 +929,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Ivy_5_R.glb",
       "source_sha256": "0189822992e780eadcbc2e681d875e557464d50bdab6b601aeeb601e3955ad7b",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_decor_ivy_5_r.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_decor_ridge.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.decor.ridge",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -890,11 +981,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Ridge.glb",
       "source_sha256": "4687589a533ce71f218a8e891110ff527e803f866bdaac23eebb0866c5d8ee92",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_decor_ridge.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_decor_support_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.decor.support_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -937,11 +1033,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Support_1.glb",
       "source_sha256": "de516666e293eb71068e6887547574de1c179c1e27f45239d7d978802c1fca58",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_decor_support_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_decor_support_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.decor.support_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -984,11 +1085,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Support_2.glb",
       "source_sha256": "b7c1bb053c17f2cf8e2ecbe7ccdd2794a56cf9bdc8aa66f8867fdaec6587c711",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_decor_support_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_decor_support_3.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.decor.support_3",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -1031,11 +1137,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Support_3.glb",
       "source_sha256": "e21b6fa561e4663665a982ec4e44484c81adec93a3ebf7fa41060e2066431f95",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_decor_support_3.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_decor_support_3_base.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.decor.support_3_base",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -1044,7 +1155,7 @@
         "measured_aabb": {
           "position": [
             -0.203535094857216,
-            -0.000000000465661287307739,
+            -0.00000000046566128,
             -0.203535035252571
           ],
           "size": [
@@ -1078,11 +1189,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Support_3_Base.glb",
       "source_sha256": "e287560b147d46c94fa9b267f596d74a47460863531388d2062380dff62c06e5",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_decor_support_3_base.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_decor_wooden_canopy_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.decor.wooden_canopy_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -1091,7 +1207,7 @@
         "measured_aabb": {
           "position": [
             -1.87531316280365,
-            -0.000186681747436523,
+            -0.00018668174743652,
             -0.811209440231323
           ],
           "size": [
@@ -1125,11 +1241,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Wooden_Canopy_1.glb",
       "source_sha256": "3fb41a052c21103e00c223caac133625447b510fdd79c845f8b1526b3a0cf8c1",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_decor_wooden_canopy_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_floor_beam_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.floor.beam_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -1172,11 +1293,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Beam_1.glb",
       "source_sha256": "b6972adaa2c2e5d70792843bd3d9f927e5d441c5bf87a57373dbb9a16bd6dd96",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_floor_beam_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_floor_beam_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.floor.beam_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -1219,11 +1345,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Beam_2.glb",
       "source_sha256": "1e2e7b60e2427d5915c723f8f5be5f5ef6fb3beaad31379de07ba0c9787c45fb",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_floor_beam_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_floor_floor_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.floor.floor_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -1268,11 +1399,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Floor_1.glb",
       "source_sha256": "646f0ecb708c086114c080f8c9728f30ad712b9d06ab8a79819b832781b69ad5",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_floor_floor_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_floor_floor_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.floor.floor_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -1317,11 +1453,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Floor_2.glb",
       "source_sha256": "bf165097da8d211b19b9d334983fbb4272b4cdab0a0ef76d059f6b3a4f2b1e12",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_floor_floor_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_frame_frame_extension_blue.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.frame.frame_extension_blue",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -1366,11 +1507,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Frame_Modules/Frame_Extension_Blue.glb",
       "source_sha256": "f6588a8d2f3b7fe0c078b568ad9f074a46eca6b99bbc661efd3ad1950a0d7bfc",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_frame_frame_extension_blue.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_frame_frame_extension_red.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.frame.frame_extension_red",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -1415,11 +1561,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Frame_Modules/Frame_Extension_Red.glb",
       "source_sha256": "8dfd4a086bee1fbfe3774f184209626777f0ec340d80aeb72323390ffe8c2fcb",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_frame_frame_extension_red.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_frame_frame_wall_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.frame.frame_wall_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -1464,11 +1615,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Frame_Modules/Frame_Wall_1.glb",
       "source_sha256": "96cf750eabd691910e0c2d37979da880b90e842d463ee0a2459770c659c03f46",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_frame_frame_wall_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_frame_frame_wall_1_d.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.frame.frame_wall_1_d",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -1477,7 +1633,7 @@
         "measured_aabb": {
           "position": [
             -1.1600261926651,
-            0.000000119209275339927,
+            0.00000011920927533,
             -0.157033160328865
           ],
           "size": [
@@ -1513,11 +1669,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Frame_Modules/Frame_Wall_1_D.glb",
       "source_sha256": "381e2cddad220146456fb7654eb0724651c368d21eb3ae3749db02798320d947",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_frame_frame_wall_1_d.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_frame_frame_wall_1_d_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.frame.frame_wall_1_d_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -1526,7 +1687,7 @@
         "measured_aabb": {
           "position": [
             -1.1600261926651,
-            0.000000119209275339927,
+            0.00000011920927533,
             -0.157033160328865
           ],
           "size": [
@@ -1562,11 +1723,72 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Frame_Modules/Frame_Wall_1_D_1.glb",
       "source_sha256": "66c502dc86ac4a130c5201ed724e88037dc05932a02c3621c0ba0755f3906fd3",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_frame_frame_wall_1_d_1.tres"
     },
     {
+      "descriptor": "res://terrain/environment/catalog/descriptors/suntail_frame_frame_wall_1_passage.tres",
+      "id": "suntail.frame.frame_wall_1_passage",
+      "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village and BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 312.0,
+        "measured_aabb": {
+          "position": [
+            -1.1600261926651,
+            0.00000011920927533,
+            -0.157033160328865
+          ],
+          "size": [
+            2.16138529777527,
+            3.07419681549072,
+            0.314066171646118
+          ]
+        },
+        "mesh_bytes": 15682.0,
+        "surface_count": 2.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 312.0
+      },
+      "pack": "suntail_village_kit",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "exclude_mesh_paths": [
+          "Frame_Wall_1_D/Wooden_Door_1"
+        ],
+        "id": "suntail.frame.frame_wall_1_passage",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 6.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "source": "res://assets/Raygeas/Models/Building_Modules/Frame_Modules/Frame_Wall_1_D.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "suntail_kit",
+          "frame",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/Raygeas/Models/Building_Modules/Frame_Modules/Frame_Wall_1_D.glb",
+      "source_sha256": "381e2cddad220146456fb7654eb0724651c368d21eb3ae3749db02798320d947",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39.0,
+      "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_frame_frame_wall_1_passage.tres"
+    },
+    {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_frame_frame_wall_1_w.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.frame.frame_wall_1_w",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -1611,11 +1833,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Frame_Modules/Frame_Wall_1_W.glb",
       "source_sha256": "0fbb02660b347c4bb7db30367697efccda8bda5c8914331c571130a1fa73d883",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_frame_frame_wall_1_w.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_frame_frame_wall_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.frame.frame_wall_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -1660,11 +1887,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Frame_Modules/Frame_Wall_2.glb",
       "source_sha256": "5fcf17adffa7fa2fb04b58d60e4921e86ad5a98c5e252b8587f6a0cfd97344f1",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_frame_frame_wall_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_frame_frame_wall_2_w.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.frame.frame_wall_2_w",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -1673,7 +1905,7 @@
         "measured_aabb": {
           "position": [
             -1.16340577602386,
-            0.000000119209275339927,
+            0.00000011920927533,
             -0.158903792500496
           ],
           "size": [
@@ -1709,11 +1941,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Frame_Modules/Frame_Wall_2_W.glb",
       "source_sha256": "e68c03a091b3e5dd737dd635d282f25d3e622451f0ffc22ed1db3d5b6b051103",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_frame_frame_wall_2_w.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_frame_gable_l.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.frame.gable_l",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -1758,11 +1995,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Frame_Modules/Gable_L.glb",
       "source_sha256": "6a56303e347fc1dd2c3f62884d8106ceae123ec62788e5c1173754bd5823c3f8",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_frame_gable_l.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_frame_gable_r.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.frame.gable_r",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -1807,11 +2049,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Frame_Modules/Gable_R.glb",
       "source_sha256": "ad3f1ae1fac30f45debad884508f791e527beddf335a2f621ac0f98eb83585d3",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_frame_gable_r.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_frame_gable_small.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.frame.gable_small",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -1856,11 +2103,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Frame_Modules/Gable_Small.glb",
       "source_sha256": "455563225aaadc5505ddef68ce03535419b82ca278245f2acfcc09b688ddb093",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_frame_gable_small.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_opening_window_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.opening.window_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -1903,11 +2155,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Doors_And_Windows/Window_1.glb",
       "source_sha256": "2b69dba66f2a4610284a03346dfcee898136e9e790807d9276974664f75c21fb",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_opening_window_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_opening_window_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.opening.window_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -1950,11 +2207,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Doors_And_Windows/Window_2.glb",
       "source_sha256": "13254a15f026af1d24aef34e2efba763e1008713967727ef91e6683d9d1aa4a3",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_opening_window_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_opening_window_2_small.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.opening.window_2_small",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -1997,11 +2259,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Doors_And_Windows/Window_2_Small.glb",
       "source_sha256": "46ee1385bf2a92abe0a1a112121cfe37ee955e7831827fccf3f8d2c74cc6ed28",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_opening_window_2_small.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_opening_wooden_door_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.opening.wooden_door_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -2044,11 +2311,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Doors_And_Windows/Wooden_Door_1.glb",
       "source_sha256": "3f0bd1c23af2754c6ed970b93ea1f79fa485a10a72203ad0f0cce52ed886d762",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_opening_wooden_door_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_opening_wooden_door_1_w.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.opening.wooden_door_1_w",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -2091,11 +2363,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Doors_And_Windows/Wooden_Door_1_W.glb",
       "source_sha256": "bf39d5183a1659f2fe03952ef06ff7320b2a4dced5af488b619c5c9da893d1be",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_opening_wooden_door_1_w.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_allboard.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.allboard",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -2140,11 +2417,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/_allboard.glb",
       "source_sha256": "b5a5256f70da51e8b35d8617fe804a2488520dcc249d6d0da18675c62541692f",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_allboard.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_anvil.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.anvil",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -2189,11 +2471,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Anvil.glb",
       "source_sha256": "f33d4ef4d1e15ea949cefc7d4eb77818e9fb7f8e0ffc2e5ffbfcf27050782c19",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_anvil.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_apple_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.apple_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -2236,11 +2523,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Apple_2.glb",
       "source_sha256": "4732c4a221f26988008be0dea4c9a0625cdd4c24d7c165b26483afb211402f70",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_apple_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_axe.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.axe",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -2283,11 +2575,16 @@
       },
       "source": "res://assets/Raygeas/Models/Props/Axe.glb",
       "source_sha256": "4db9298bb843a07ec007996ec03e46836d7d907bdd53f184262caa26b07b308b",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_axe.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_bag_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.bag_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -2330,11 +2627,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Bag_1.glb",
       "source_sha256": "714b9a18f3ac9c6ca4269546aa4fc042e3155688468ad52fd8be1786c3ab7520",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_bag_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_bag_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.bag_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -2377,11 +2679,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Bag_2.glb",
       "source_sha256": "f4c7fda0e936e87f485925dd39f183bce35867a9e886eb2c5a59aa2cbd94127c",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_bag_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_bag_3.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.bag_3",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -2424,11 +2731,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Bag_3.glb",
       "source_sha256": "e84a5fd53f7e98c6b2c38958631371e1253cd00e215d70f3aeb3ad8d54f0a5c2",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_bag_3.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_bag_4.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.bag_4",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -2471,11 +2783,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Bag_4.glb",
       "source_sha256": "37dd7233182f70c1157490d6dd6486e82d9e766a74e65afc291349a3d08702b3",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_bag_4.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_barrel.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.barrel",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -2520,11 +2837,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Barrel.glb",
       "source_sha256": "423f647774a0ff289f98adef6106e64d92abc63689a652a0b5612491aabc773f",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_barrel.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_boat.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.boat",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -2569,11 +2891,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Boat.glb",
       "source_sha256": "35ed04cb7e2d0d41b22bd6b0c38c2ff8c919dac22e92d8b1d93d70656c1fef4a",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_boat.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_boiler.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.boiler",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -2618,11 +2945,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Boiler.glb",
       "source_sha256": "407347dfb2727c7e5b231ccc5e512656e5c46330663bcfa4c47c7ca9f1a73acb",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_boiler.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_bonfire.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.bonfire",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -2667,11 +2999,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Bonfire.glb",
       "source_sha256": "1cef69b2b8364eae8a8399af66820b93231172e99ab9a322ac108749c32edec0",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_bonfire.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_box_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.box_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -2716,11 +3053,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Box_1.glb",
       "source_sha256": "5df60daf75a4d60dc273866f1b8ca862a94d61ae675b1f3b9f09265b373e0da0",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_box_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_box_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.box_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -2765,11 +3107,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Box_2.glb",
       "source_sha256": "c954e19c2335244c88bc03234953884c1001e89f281256eac63ad8dc2a26978a",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_box_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_bucket.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.bucket",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -2812,11 +3159,16 @@
       },
       "source": "res://assets/Raygeas/Models/Props/Bucket.glb",
       "source_sha256": "8b0812e6ad8870560e1c0884c32df06da2a3f9cd08e180dddaebf2ea1e3da499",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_bucket.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_carrot_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.carrot_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -2859,11 +3211,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Carrot_2.glb",
       "source_sha256": "fba56e5d638e77ed60fc340dec08a864aeb3543df0db1eafe8d46d79fb793c8e",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_carrot_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_cart_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.cart_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -2908,11 +3265,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Cart_1.glb",
       "source_sha256": "a3dc5b1357312066f5d3093dc6507dbc0987db5e1226f3943140fd7d816c1287",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_cart_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_cart_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.cart_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -2957,11 +3319,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Cart_2.glb",
       "source_sha256": "6fb23b92075604cfcec2efb79918cb2ba2673b2ebb20e4d99172a64a33be78ce",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_cart_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_cart_3.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.cart_3",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -3006,11 +3373,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Cart_3.glb",
       "source_sha256": "06b1118e147199f71aaf0131de85cb241fead9841dfc0716d292662d3aa4a6aa",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_cart_3.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_case_and_food_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.case_and_food_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -3055,11 +3427,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Case_and_food_1.glb",
       "source_sha256": "860fdf8d0bbb4880249f9d0ff3f933472f4cf6a0dd343bb486edad2aa9bb5435",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_case_and_food_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_case_and_food_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.case_and_food_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -3104,11 +3481,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Case_and_food_2.glb",
       "source_sha256": "b91660b9103d5e0f9d40702c799a892614fef7ba1f1eecc99ca6c94a50108741",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_case_and_food_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_case_and_food_3.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.case_and_food_3",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -3153,11 +3535,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Case_and_food_3.glb",
       "source_sha256": "55e2441d68c9da6585bd516a4191ee8c2b9f3e2acf860d96f8bd66c64e440e96",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_case_and_food_3.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_chair_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.chair_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -3202,11 +3589,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Chair_1.glb",
       "source_sha256": "5f80f03de3257e3b6034aa3840570691df6683399ee6ff0b5f13fa663e536ffb",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_chair_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_chair_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.chair_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -3251,11 +3643,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Chair_2.glb",
       "source_sha256": "6c15f24de2c7c94f9c0854c12019127f7d7ba1cca785b3675d03928b5dc2550a",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_chair_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_chest_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.chest_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -3300,11 +3697,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Chest_1.glb",
       "source_sha256": "be52850232a0c66c0db3cb476a10069d3b2544397c17564395fb4b29cc369bfb",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_chest_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_chest_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.chest_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -3349,11 +3751,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Chest_2.glb",
       "source_sha256": "6e2b8b453bf0e3c880c754d3d00a1e7edde097cf794ea3b9e907185ddb54e097",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_chest_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_chest_3.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.chest_3",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -3398,11 +3805,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Chest_3.glb",
       "source_sha256": "ca2cef71fceb0b288ca25d71cd2aecf09fe4b9a114cc8a91404b3bacbd2ef09f",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_chest_3.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_fence_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.fence_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -3411,7 +3823,7 @@
         "measured_aabb": {
           "position": [
             -0.954136312007904,
-            -0.0000000020622696883521,
+            -0.00000000206226968,
             -0.0872003212571144
           ],
           "size": [
@@ -3447,11 +3859,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Fence_1.glb",
       "source_sha256": "3f5f9eea639348fcdeb6205a3cf886e581d5b2e675a75eb8c8c17d05f3365324",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_fence_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_fence_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.fence_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -3496,11 +3913,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Fence_2.glb",
       "source_sha256": "a09dd505cbf3ac7707eaa9b4b7b7d810ea0e64f82e6b062446f7dd0340399e21",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_fence_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_fence_3.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.fence_3",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -3509,7 +3931,7 @@
         "measured_aabb": {
           "position": [
             -1.27512335777283,
-            -0.00000000344066442004021,
+            -0.00000000344066442,
             -0.0862887427210808
           ],
           "size": [
@@ -3545,11 +3967,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Fence_3.glb",
       "source_sha256": "59e4d7f1d6162c944956205c119c49adb2252c739499aabf47ac04995417494f",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_fence_3.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_fence_4.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.fence_4",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -3558,7 +3985,7 @@
         "measured_aabb": {
           "position": [
             -1.17344260215759,
-            -0.000000000492271501340014,
+            -0.0000000004922715,
             -0.0738365054130554
           ],
           "size": [
@@ -3594,11 +4021,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Fence_4.glb",
       "source_sha256": "18bef33fd75811639eaee075b9d069aa18eda5f7d17ad9b5a7194a0a7ef3cfbb",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_fence_4.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_fence_5.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.fence_5",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -3643,11 +4075,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Fence_5.glb",
       "source_sha256": "eca1d16e1037651bd0a2ae7486c212a29b716b0d7cfe641f6f407ac3854bd5ea",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_fence_5.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_fence_6.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.fence_6",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -3692,11 +4129,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Fence_6.glb",
       "source_sha256": "724c1bca9414a1d7953c4228fc91ff06569db7e4626dfdc5731aa3301ad19165",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_fence_6.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_fence_7.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.fence_7",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -3741,11 +4183,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Fence_7.glb",
       "source_sha256": "cefccbd762fc708c0f4924979062f5fdc0ca462d7870379a80f1db0f67deda23",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_fence_7.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_hoe.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.hoe",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -3788,11 +4235,16 @@
       },
       "source": "res://assets/Raygeas/Models/Props/Hoe.glb",
       "source_sha256": "a7459261effa2ff063d717c9491e8a3a930c0b78cc183a98a39f50161f7dbbdb",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_hoe.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_horns.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.horns",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -3835,11 +4287,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Horns.glb",
       "source_sha256": "6a47466b2abdfff8faec1e7a25e02f92754dcc46934df3a5a7213baca212fb44",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_horns.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_ladder.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.ladder",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -3884,11 +4341,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Ladder.glb",
       "source_sha256": "48654775a7aa13e07cc235e075d4e20b35b3579843bdb4cb7ad6997feab292b0",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_ladder.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_lamp_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.lamp_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -3933,11 +4395,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Lamp_1.glb",
       "source_sha256": "b8a8f03ed26ad2ca6514d6eaae0ae49fd0cb559e779b0b011cbf91e984e089f6",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_lamp_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_lamp_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.lamp_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -3982,11 +4449,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Lamp_2.glb",
       "source_sha256": "3cae28c3afca19b5a641f15eabeb7d483be8148a1ab1aebf246b1a5474dcd14c",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_lamp_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_lamp_3.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.lamp_3",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -3995,7 +4467,7 @@
         "measured_aabb": {
           "position": [
             -0.369050085544586,
-            0.000729057821445167,
+            0.00072905782144516,
             -0.357596457004547
           ],
           "size": [
@@ -4031,11 +4503,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Lamp_3.glb",
       "source_sha256": "068c98dbed4986e3fb29c4fef716f0b6e0854746ff9b5639df751485583cb665",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_lamp_3.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_lantern_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.lantern_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -4078,11 +4555,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Lantern_1.glb",
       "source_sha256": "3d9ad0ec72de4a4432d560b6a58968e3957c3f486744909090acd9c8f536eab5",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_lantern_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_lantern_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.lantern_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -4125,11 +4607,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Lantern_2.glb",
       "source_sha256": "68dd4c1ee394b7054298ccea28c4542f1f5257c8189ff4c1e29bae428fc6f2af",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_lantern_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_log_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.log_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -4172,11 +4659,16 @@
       },
       "source": "res://assets/Raygeas/Models/Props/Log_1.glb",
       "source_sha256": "4a653ee174394476a185d7ce1468bab1012f24d10ed6475e6b3e8ca4d4d200dd",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_log_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_log_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.log_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -4221,11 +4713,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Log_2.glb",
       "source_sha256": "88ccb1b1498d41769a50d3caa14fb18b646096fa86a33d404435f59b9184e4db",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_log_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_log_3.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.log_3",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -4270,11 +4767,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Log_3.glb",
       "source_sha256": "f3ab4ace3a594a32f6d4beb6f460c277788ff606dc28e6baf5fa877934e04f05",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_log_3.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_pot_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.pot_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -4317,11 +4819,16 @@
       },
       "source": "res://assets/Raygeas/Models/Props/Pot_1.glb",
       "source_sha256": "c91aedd3ba57d5e44e4e32f31d7765bd852d74473875432e82bda66c9886e7ad",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_pot_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_pot_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.pot_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -4364,11 +4871,16 @@
       },
       "source": "res://assets/Raygeas/Models/Props/Pot_2.glb",
       "source_sha256": "3b62837711cc65ebc6a88076ae7dea3fdfd495fa94b1fdee10720e2ff56bebfe",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_pot_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_pot_3.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.pot_3",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -4411,11 +4923,16 @@
       },
       "source": "res://assets/Raygeas/Models/Props/Pot_3.glb",
       "source_sha256": "e77572abc6b7819bd869299a9d3b216b21d95ad3f4ac2be860c9ef88dd6f6976",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_pot_3.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_pot_4.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.pot_4",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -4458,11 +4975,16 @@
       },
       "source": "res://assets/Raygeas/Models/Props/Pot_4.glb",
       "source_sha256": "42c3a472fb4c306e33230c22b2d762d6adabd824603a48eb184b36c03630ede8",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_pot_4.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_pot_5.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.pot_5",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -4505,11 +5027,16 @@
       },
       "source": "res://assets/Raygeas/Models/Props/Pot_5.glb",
       "source_sha256": "94b600b3841038501337b8a7b7b6f07ecd709102355bd663679ff0ca5e3bf0a4",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_pot_5.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_pot_6.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.pot_6",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -4518,7 +5045,7 @@
         "measured_aabb": {
           "position": [
             -0.169226363301277,
-            -0.000224619172513485,
+            -0.00022461917251348,
             -0.169226363301277
           ],
           "size": [
@@ -4552,11 +5079,16 @@
       },
       "source": "res://assets/Raygeas/Models/Props/Pot_6.glb",
       "source_sha256": "36a6509a4b21e22cb897abae88b7e2d60bf7d305b2247220e66650bc7760ba22",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_pot_6.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_pumpkin.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.pumpkin",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -4599,11 +5131,16 @@
       },
       "source": "res://assets/Raygeas/Models/Props/Pumpkin.glb",
       "source_sha256": "efcf69999aa2019218623bc3d890d54daa58adc2981ed169b7d76badffa40f78",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_pumpkin.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_rack_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.rack_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -4648,11 +5185,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Rack_1.glb",
       "source_sha256": "2eea70f162ba2f7383a401f46c020eb2251b380d451059aeff2306d91d57f1f9",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_rack_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_rack_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.rack_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -4697,11 +5239,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Rack_2.glb",
       "source_sha256": "918d473d2b853783f522a6ee1673bfe7caea3c3fdd5546243fc73095904c4912",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_rack_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_rack_3.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.rack_3",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -4746,11 +5293,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Rack_3.glb",
       "source_sha256": "ba7dbc49e290ca327e8e9498e8d7ee49a3442a378b5e8d0834d55c3c597d717b",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_rack_3.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_rake.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.rake",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -4793,11 +5345,16 @@
       },
       "source": "res://assets/Raygeas/Models/Props/Rake.glb",
       "source_sha256": "351cc2163803b92624d3cbbd0063faae970ee20d79a6e861cfdf0593b0fd57bf",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_rake.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_shop_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.shop_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -4842,11 +5399,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Shop_1.glb",
       "source_sha256": "094833943ebdf743636a3a88f96a3d218bb5356f6a8b5fd926f21a7b3c87f6b0",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_shop_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_shop_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.shop_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -4891,11 +5453,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Shop_2.glb",
       "source_sha256": "c4c35f19102bbb36ab1e96cd37e91be566177e2a0e5a9f04fc319b67f8cfe06f",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_shop_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_shop_3.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.shop_3",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -4940,11 +5507,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Shop_3.glb",
       "source_sha256": "ede6a53b8b4bcd6ab27462b1b013e0a539106900ef300d52349bd8d728d376a4",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_shop_3.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_shovel.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.shovel",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -4987,11 +5559,16 @@
       },
       "source": "res://assets/Raygeas/Models/Props/Shovel.glb",
       "source_sha256": "2a730b88044d8157dba97f5b20f868589f9e240078e869f81dfc6fe860855739",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_shovel.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_smelter.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.smelter",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -5036,11 +5613,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Smelter.glb",
       "source_sha256": "5e473ac4b120ef24554826be749e0317b135a3616d1e5b4155ded881334daa3e",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_smelter.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_table_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.table_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -5049,7 +5631,7 @@
         "measured_aabb": {
           "position": [
             -0.948452293872833,
-            -0.000864751636981964,
+            -0.00086475163698196,
             -0.634864807128906
           ],
           "size": [
@@ -5085,11 +5667,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Table_1.glb",
       "source_sha256": "ac1ee4fbf73af7b29fe1f1bc67326efc2e96b6c5a1e0eb7b844a21030ba4f791",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_table_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_table_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.table_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -5134,11 +5721,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Table_2.glb",
       "source_sha256": "e835ea9499a626db6336d4dca0eae4079431e8ba29d89af3931ac079358908f0",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_table_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_tomato_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.tomato_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -5181,11 +5773,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Tomato_2.glb",
       "source_sha256": "f3941b7492dc4e4c77c1c260dcaefb862f0e16a45b7e903043edd32ccc890deb",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_tomato_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_washtub.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.washtub",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -5230,11 +5827,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Washtub.glb",
       "source_sha256": "5ca979c1238ed894b60777c1dbcb7ded01d580c0add06ac2d5185e3c05681ab2",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_washtub.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_well_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.well_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -5279,11 +5881,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Well_1.glb",
       "source_sha256": "5b5a1654c3a2eea9f239734091a8775e55e396f3d976629fd5d566379b10ffe3",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_well_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_prop_well_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.prop.well_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -5328,11 +5935,16 @@
       },
       "source": "res://assets/Raygeas/Models/Environment/Well_2.glb",
       "source_sha256": "c56c669b38fcf94c563c3dab6c9d4675f78220009d2e22e1a7d7ef16745a858d",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_well_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_roof_roof_1_blue.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.roof.roof_1_blue",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -5377,11 +5989,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Roofs/Blue/Roof_1_Blue.glb",
       "source_sha256": "3c8f05a885d21a4fe41cef3afa979b4be98f1daded12c1de29724a9ee247cc6d",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_roof_roof_1_blue.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_roof_roof_1_cornice_blue.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.roof.roof_1_cornice_blue",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -5426,11 +6043,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Roofs/Blue/Roof_1_Cornice_Blue.glb",
       "source_sha256": "f1da3df367e7cf65af1f48a6b8a634c1a9625e172c56f363a0f6e9aecc34921e",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_roof_roof_1_cornice_blue.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_roof_roof_1_cornice_red.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.roof.roof_1_cornice_red",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -5475,11 +6097,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Roofs/Red/Roof_1_Cornice_Red.glb",
       "source_sha256": "81266619dd2cad9cce1cb3b0076c64a1ea5c73f28c192b4e1fe0b076a9f69d59",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_roof_roof_1_cornice_red.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_roof_roof_1_cornice_w_blue.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.roof.roof_1_cornice_w_blue",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -5524,11 +6151,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Roofs/Blue/Roof_1_Cornice_W_Blue.glb",
       "source_sha256": "4b04cee5385439e016d0de37a2e91c5842fbf4416f4037f9fb04e8bb8068aafe",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_roof_roof_1_cornice_w_blue.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_roof_roof_1_cornice_w_red.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.roof.roof_1_cornice_w_red",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -5573,11 +6205,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Roofs/Red/Roof_1_Cornice_W_Red.glb",
       "source_sha256": "7d33c9e060793005786d0c5c769deb04dff1d062ec33441db923b45cb720bf10",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_roof_roof_1_cornice_w_red.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_roof_roof_1_red.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.roof.roof_1_red",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -5622,11 +6259,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Roofs/Red/Roof_1_Red.glb",
       "source_sha256": "c1a316bdfdd3838b222275d6cb51236e694aaabf64a6533e20c2af6f4e645628",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_roof_roof_1_red.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_roof_roof_2_blue.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.roof.roof_2_blue",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -5671,11 +6313,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Roofs/Blue/Roof_2_Blue.glb",
       "source_sha256": "50f9c6c9a1ca47484cf31dc671bae8e73d05f2538776a9bd63adc1fd43286629",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_roof_roof_2_blue.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_roof_roof_2_cornice_blue.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.roof.roof_2_cornice_blue",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -5720,11 +6367,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Roofs/Blue/Roof_2_Cornice_Blue.glb",
       "source_sha256": "d0a0fd20b66b64a522a758dabb489c748c0327da2d569b09590ed4d857018e29",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_roof_roof_2_cornice_blue.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_roof_roof_2_cornice_red.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.roof.roof_2_cornice_red",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -5769,11 +6421,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Roofs/Red/Roof_2_Cornice_Red.glb",
       "source_sha256": "94e026794f7916d3a306e08b2e60ca4081101e713dcf4899fcc8a93e1cf600c7",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_roof_roof_2_cornice_red.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_roof_roof_2_red.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.roof.roof_2_red",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -5818,11 +6475,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Roofs/Red/Roof_2_Red.glb",
       "source_sha256": "c4f987eaf630f13dfa1c6a77cc0e1235321f8753cb96f0761cd2ed3c595c4fad",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_roof_roof_2_red.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_roof_roof_top_1_blue.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.roof.roof_top_1_blue",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -5867,11 +6529,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Roofs/Blue/Roof_Top_1_Blue.glb",
       "source_sha256": "e6d85d15e62f1a6445468040845563500edd32715fba965f5dea91b080ba60ce",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_roof_roof_top_1_blue.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_roof_roof_top_1_red.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.roof.roof_top_1_red",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -5916,11 +6583,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Roofs/Red/Roof_Top_1_Red.glb",
       "source_sha256": "e5a01dc1c0eda30c2f7477225d347c7a4530e42044b7a631b22ef6ba142c5cab",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_roof_roof_top_1_red.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_roof_roof_top_2_blue.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.roof.roof_top_2_blue",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -5965,11 +6637,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Roofs/Blue/Roof_Top_2_Blue.glb",
       "source_sha256": "4d85602ead19ab0a77084db1c629e585f4862434531aa8c3f63b42463990e7eb",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_roof_roof_top_2_blue.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_roof_roof_top_2_red.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.roof.roof_top_2_red",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -6014,11 +6691,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Roofs/Red/Roof_Top_2_Red.glb",
       "source_sha256": "9302e7584add85019ec26be3cb6d569168526e8ce8ae5be60972b5ce0207223a",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_roof_roof_top_2_red.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_stair_stone_stairs.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.stair.stone_stairs",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -6063,11 +6745,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Stairs/Stone_Stairs.glb",
       "source_sha256": "0f1961b7becfe6a72fbdf118d35d1c96ac7f93020339cca5cbdbdb96542598d8",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_stair_stone_stairs.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_stair_wooden_platform.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.stair.wooden_platform",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -6112,11 +6799,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Stairs/Wooden_Platform.glb",
       "source_sha256": "af1f56ae7c93334ac640b1779989fa76f378b06629c3e25c198cc5b2b3f2a26b",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_stair_wooden_platform.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_stair_wooden_platform_cover.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.stair.wooden_platform_cover",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -6124,7 +6816,7 @@
         "collision_triangles": 28,
         "measured_aabb": {
           "position": [
-            -0.00000000308151637540277,
+            -0.00000000308151637,
             -0.141324445605278,
             -0.0476727336645126
           ],
@@ -6161,11 +6853,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Stairs/Wooden_Platform_Cover.glb",
       "source_sha256": "d614d8fcaf28faa4c691e34c766a60635b56a4c88c1d82b81957ad74a2f31f78",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_stair_wooden_platform_cover.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_stair_wooden_railings_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.stair.wooden_railings_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -6210,11 +6907,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Stairs/Wooden_Railings_1.glb",
       "source_sha256": "c01e3fa6f09109f1d23915c5b0ef1b08f90e67dfe49f73f9c2d3f13b2627f0d9",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_stair_wooden_railings_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_stair_wooden_railings_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.stair.wooden_railings_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -6259,11 +6961,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Stairs/Wooden_Railings_2.glb",
       "source_sha256": "b9fd2bbdeb24e68ae3d98405202a7b074efc833f0e4e8d3857d822159da35c92",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_stair_wooden_railings_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_stair_wooden_railings_3.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.stair.wooden_railings_3",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -6308,11 +7015,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Stairs/Wooden_Railings_3.glb",
       "source_sha256": "d645863b10eb2c95d5272bf4e8ae135cd2e72413858ac0ce45c9763d00f87f7d",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_stair_wooden_railings_3.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_stair_wooden_stairs_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.stair.wooden_stairs_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -6357,11 +7069,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Stairs/Wooden_Stairs_1.glb",
       "source_sha256": "97e680a61d5f4633dd4b34eb71b7961aa62062a64bb38e1ab6437b403cdc6603",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_stair_wooden_stairs_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_stair_wooden_stairs_2.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.stair.wooden_stairs_2",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -6406,11 +7123,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Stairs/Wooden_Stairs_2.glb",
       "source_sha256": "963f595e468ad861db571612a2f8da426f8a979236a738f512ae8fddfea4a244",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_stair_wooden_stairs_2.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_stone_stone_base.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.stone.stone_base",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -6455,11 +7177,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Base.glb",
       "source_sha256": "d72eab91cec40d07b27a0cf82484bb51d84c23f197258cd8fa068dc62aa7b3b5",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_stone_stone_base.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_stone_stone_wall.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.stone.stone_wall",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -6468,7 +7195,7 @@
         "measured_aabb": {
           "position": [
             -1.15302515029907,
-            0.000000119209275339927,
+            0.00000011920927533,
             -0.161410361528397
           ],
           "size": [
@@ -6504,11 +7231,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall.glb",
       "source_sha256": "2330c3d111a76e2ff4f47c45dcbb5088c822c527348b203a7e0d39b3ae50b2ec",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_stone_stone_wall.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_stone_stone_wall_d.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.stone.stone_wall_d",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -6517,7 +7249,7 @@
         "measured_aabb": {
           "position": [
             -1.1600261926651,
-            0.000000119209275339927,
+            0.00000011920927533,
             -0.157032817602158
           ],
           "size": [
@@ -6553,11 +7285,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall_D.glb",
       "source_sha256": "d9fe2dcdf5bdec651face96b51adb95583d0a6343e4d78d35f1db9fd7cef5806",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_stone_stone_wall_d.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_stone_stone_wall_d_1.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.stone.stone_wall_d_1",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -6566,7 +7303,7 @@
         "measured_aabb": {
           "position": [
             -1.1600261926651,
-            0.000000119209275339927,
+            0.00000011920927533,
             -0.157032817602158
           ],
           "size": [
@@ -6602,11 +7339,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall_D_1.glb",
       "source_sha256": "9c5ae44a5cc6f70ca9395dc20fbab6fa4e88b3c3545a50f433c6c349699f8d5e",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_stone_stone_wall_d_1.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_stone_stone_wall_d_1_deep.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.stone.stone_wall_d_1_deep",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -6615,7 +7357,7 @@
         "measured_aabb": {
           "position": [
             -1.1600261926651,
-            0.000000119209275339927,
+            0.00000011920927533,
             -0.188845485448837
           ],
           "size": [
@@ -6661,11 +7403,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall_D_1.glb",
       "source_sha256": "9c5ae44a5cc6f70ca9395dc20fbab6fa4e88b3c3545a50f433c6c349699f8d5e",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_stone_stone_wall_d_1_deep.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_stone_stone_wall_d_deep.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.stone.stone_wall_d_deep",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -6674,7 +7421,7 @@
         "measured_aabb": {
           "position": [
             -1.1600261926651,
-            0.000000119209275339927,
+            0.00000011920927533,
             -0.163705468177795
           ],
           "size": [
@@ -6720,11 +7467,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall_D.glb",
       "source_sha256": "d9fe2dcdf5bdec651face96b51adb95583d0a6343e4d78d35f1db9fd7cef5806",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_stone_stone_wall_d_deep.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_stone_stone_wall_deep.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.stone.stone_wall_deep",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -6733,7 +7485,7 @@
         "measured_aabb": {
           "position": [
             -1.15302515029907,
-            0.000000119209275339927,
+            0.00000011920927533,
             -0.161410361528397
           ],
           "size": [
@@ -6777,11 +7529,82 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall.glb",
       "source_sha256": "2330c3d111a76e2ff4f47c45dcbb5088c822c527348b203a7e0d39b3ae50b2ec",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_stone_stone_wall_deep.tres"
     },
     {
+      "descriptor": "res://terrain/environment/catalog/descriptors/suntail_stone_stone_wall_passage_deep.tres",
+      "id": "suntail.stone.stone_wall_passage_deep",
+      "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village and BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 292.0,
+        "measured_aabb": {
+          "position": [
+            -1.1600261926651,
+            0.00000011920927533,
+            -0.157032817602158
+          ],
+          "size": [
+            2.16002607345581,
+            3.07419681549072,
+            0.514066100120544
+          ]
+        },
+        "mesh_bytes": 14448.0,
+        "surface_count": 2.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 292.0
+      },
+      "pack": "suntail_village_kit",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "exclude_mesh_paths": [
+          "Stone_Wall_D/Wooden_Door_1"
+        ],
+        "id": "suntail.stone.stone_wall_passage_deep",
+        "masonry_depth": {
+          "body_paths": [
+            "Stone_Wall_D"
+          ],
+          "depth": 0.2,
+          "opening_paths": [
+            "Stone_Wall_D/Wooden_Door_1"
+          ],
+          "setback": 0.06
+        },
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 6.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall_D.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "suntail_kit",
+          "stone",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall_D.glb",
+      "source_sha256": "d9fe2dcdf5bdec651face96b51adb95583d0a6343e4d78d35f1db9fd7cef5806",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39.0,
+      "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_stone_stone_wall_passage_deep.tres"
+    },
+    {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_stone_stone_wall_plain.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.stone.stone_wall_plain",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -6790,7 +7613,7 @@
         "measured_aabb": {
           "position": [
             -1.0,
-            0.000000119209275339927,
+            0.00000011920927533,
             -0.0935944095253944
           ],
           "size": [
@@ -6830,11 +7653,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall.glb",
       "source_sha256": "2330c3d111a76e2ff4f47c45dcbb5088c822c527348b203a7e0d39b3ae50b2ec",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_stone_stone_wall_plain.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_stone_stone_wall_w.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.stone.stone_wall_w",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -6843,7 +7671,7 @@
         "measured_aabb": {
           "position": [
             -1.15747106075287,
-            0.000000119209268234499,
+            0.00000011920926823,
             -0.154928594827652
           ],
           "size": [
@@ -6879,11 +7707,16 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall_W.glb",
       "source_sha256": "b65c80f5ac4e8fd011f1ce268bb92bc82e896bad4847463116cdf7b9fc01e3fd",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_stone_stone_wall_w.tres"
     },
     {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_stone_stone_wall_w_deep.tres",
+      "geometry_tool_version": 38,
       "id": "suntail.stone.stone_wall_w_deep",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
       "metrics": {
@@ -6892,7 +7725,7 @@
         "measured_aabb": {
           "position": [
             -1.15747106075287,
-            0.000000119209268234499,
+            0.00000011920926823,
             -0.188936859369278
           ],
           "size": [
@@ -6938,11 +7771,15 @@
       },
       "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall_W.glb",
       "source_sha256": "b65c80f5ac4e8fd011f1ce268bb92bc82e896bad4847463116cdf7b9fc01e3fd",
-      "tool_version": 38,
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_stone_stone_wall_w_deep.tres"
     }
   ],
   "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
   "pack": "suntail_village_kit",
-  "tool_version": 38
+  "tool_version": 39
 }

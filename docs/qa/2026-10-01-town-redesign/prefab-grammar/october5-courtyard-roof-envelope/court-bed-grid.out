@@ -1,0 +1,45 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+RIDGE suntail trim.ridge [P: (-1.0, -0.406836, -0.301209), S: (2.0, 0.420299, 0.602418)]
+RIDGE pure_village trim.ridge [P: (-1.0, -0.3, -0.335413), S: (2.0, 0.76906, 0.700378)]
+RIDGE pure_village trim.ridge.start [P: (-0.8, -0.3, -0.335413), S: (0.853591, 0.735075, 0.670825)]
+RIDGE pure_village trim.ridge.end [P: (0.0, -0.3, -0.335413), S: (0.79499, 0.759083, 0.670825)]
+HOUSE spatial.parcel.maze.house.028 { "cells": [(5, 0, -3), (4, 0, -3), (5, 0, -4), (4, 0, -4), (5, 1, -3), (4, 1, -3), (5, 1, -4), (4, 1, -4), (5, 2, -3), (4, 2, -3), (5, 2, -4), (4, 2, -4), (5, 3, -3), (4, 3, -3), (5, 3, -4), (4, 3, -4)], "storeys": { 0: { (4, -4): true, (5, -4): true, (4, -3): true, (5, -3): true }, 2: { (4, -4): true, (5, -4): true, (4, -3): true, (5, -3): true } }, "doors": [{ "cell": (4, 0, -4), "direction": (0, 0, -1) }], "terrain_band": 0, "landmark": false, "grounded": { 0: { (4, -4): true, (5, -4): true, (4, -3): true, (5, -3): true } } }
+GRID (6, 6, -2) 0
+GRID (6, 7, -2) 0
+GRID (6, 8, -2) 2
+GRID (6, 9, -2) 2
+GRID (6, 6, -1) 0
+GRID (6, 7, -1) 0
+GRID (6, 8, -1) 2
+GRID (6, 9, -1) 2
+GRID (6, 6, 0) 2
+GRID (6, 7, 0) 5
+GRID (6, 8, 0) 2
+GRID (6, 9, 0) 2
+GRID (7, 6, -2) 0
+GRID (7, 7, -2) 0
+GRID (7, 8, -2) 3
+GRID (7, 9, -2) 3
+GRID (7, 6, -1) 0
+GRID (7, 7, -1) 0
+GRID (7, 8, -1) 3
+GRID (7, 9, -1) 3
+GRID (7, 6, 0) 2
+GRID (7, 7, 0) 0
+GRID (7, 8, 0) 2
+GRID (7, 9, 0) 2
+GRID (8, 6, -2) 2
+GRID (8, 7, -2) 0
+GRID (8, 8, -2) 3
+GRID (8, 9, -2) 3
+GRID (8, 6, -1) 2
+GRID (8, 7, -1) 0
+GRID (8, 8, -1) 3
+GRID (8, 9, -1) 3
+GRID (8, 6, 0) 5
+GRID (8, 7, 0) 5
+GRID (8, 8, 0) 3
+GRID (8, 9, 0) 3

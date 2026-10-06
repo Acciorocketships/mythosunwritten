@@ -1,0 +1,14 @@
+--- a/scripts/terrain/features/villages/fabric/WarrenExcavation.gd
++++ b/scripts/terrain/features/villages/fabric/WarrenExcavation.gd
+@@ -14,7 +14,10 @@
+ ## walk cell is flanked -- is therefore the carver's to enforce and the
+ ## tests' to re-derive independently. Construction freezes the authored walk;
+ ## validate_construction() inspects it without withdrawing or repairing it.
+-const HEADROOM_BANDS := 3
++# Share the volumetric/transition passage contract. The former third band
++# excavated nine world metres of air and removed otherwise supported rooms.
++# Two bands retain six world metres, before the exact finished-surface checks.
++const HEADROOM_BANDS := WarrenVolumePlan.HEADROOM_BANDS
+ 
+ var world_seed: int
+ var route: Array[Vector3i] = []

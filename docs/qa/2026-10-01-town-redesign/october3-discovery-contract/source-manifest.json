@@ -1,0 +1,5 @@
+{
+  "tests/test_october3_town_discovery.gd": "94bffbf017f9fc8c5ac5532ff99965d3c35f243a48557c2985092af17964a2d5",
+  "scripts/terrain/features/WorldFeaturePlan.gd": "a8d645ce49c04d6c9657fb0e2383667080ec7a2d485323015c6cc59ccdbec68b",
+  "scripts/terrain/features/villages/VillageProgram.gd": "b31046ebb1caab2e850bd0b31bfd92ae25496f18f5cdfde0f8c2bb19abc751aa"
+}

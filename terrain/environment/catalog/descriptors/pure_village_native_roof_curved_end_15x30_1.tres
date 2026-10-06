@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_5i7v0"]
+
+[resource]
+script = ExtResource("1_5i7v0")
+id = &"pure_village.native.roof_curved_end_15x30_1"
+visual_path = "res://terrain/environment/visuals/pure_village_native_grammar/pure_village_native_roof_curved_end_15x30_1.tres"
+tags = Array[StringName]([&"building", &"pure_village_native_grammar", &"village"])
+measured_aabb = AABB(-0.00013305664, -2.3861556, -4.8828124e-06, 2.4481757, 2.497959, 2.3742673)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"pure_village_native_grammar:pure_village.native.roof_curved_end_15x30_1"

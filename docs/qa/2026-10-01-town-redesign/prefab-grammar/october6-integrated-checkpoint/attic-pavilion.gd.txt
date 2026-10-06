@@ -1,0 +1,30 @@
+extends RefCounted
+static func shape(mass:BuildingMass, designer:BuildingDesigner)->bool:
+ if mass.storeys.size()!=1:return false
+ var lower:Dictionary=mass.storeys[0]
+ if lower.cells.size()<24:return false
+ var rects:=BuildingDesigner.decompose(lower.cells)
+ var floor_band:=int(lower.floor_band)+2
+ var height:=2+ceili(designer.kit.roof_clearance_height(2)/designer.kit.band_height())
+ for rect:Rect2i in rects:
+  if mini(rect.size.x,rect.size.y)<4:continue
+  for corner:Vector2i in [Vector2i.ZERO,Vector2i.ONE,Vector2i(1,0),Vector2i(0,1)]:
+   var candidate:=Rect2i(rect.position+corner*(rect.size-Vector2i(2,2)),Vector2i(2,2))
+   var cells:=BuildingMass.rect_cells(candidate)
+   var remaining:Dictionary=lower.cells.duplicate()
+   var valid:=true
+   for cell:Vector2i in cells:
+    remaining.erase(cell)
+    for band in range(floor_band,floor_band+height):
+     if designer.forbidden.is_valid() and designer.forbidden.call(cell,band):valid=false
+     if designer.walked.is_valid() and designer.walked.call(cell,band):valid=false
+     if designer.covered.is_valid() and designer.covered.call(cell,band):valid=false
+   for part:Rect2i in BuildingDesigner.decompose(remaining):
+    if mini(part.size.x,part.size.y)<2:valid=false
+   if not valid:continue
+   lower['roofed']=lower.cells.duplicate()
+   var upper:=mass.add_storey(floor_band,cells,BuildingMass.MATERIAL_TIMBER)
+   upper['attic_pavilion']=true
+   print('ATTIC_PAVILION ',mass.stable_id,' ',candidate,' floor=',floor_band)
+   return true
+ return false

@@ -1,0 +1,47 @@
+--- scripts/terrain/features/villages/kit/BuildingDesigner.gd
++++ scripts/terrain/features/villages/kit/BuildingDesigner.gd
+@@ -858,6 +858,44 @@
+ 			return {"rect":grown,"axis":1-across,"backed_shed":true,"backing":backing,
+ 				"cut_key":"shed_min" if sign_value<0 else "shed_max",
+ 				"cut_at":strip.position[across] if sign_value<0 else strip.end[across]}
++	return _end_backed_shed(mass, strip, band)
++
++
++## A short wing may meet its tall host at the end instead of along its side.
++## Use complete native pitch rows, with continuous room backing up to the
++## ridge. The upper facade must not contain an addressed door at that join.
++func _end_backed_shed(mass: BuildingMass, strip: Rect2i, band: int) -> Dictionary:
++	var across := 0 if strip.size.x > strip.size.y else 1
++	var run := strip.size[across]
++	if run != 2 or strip.size[1-across] != 1: return {}
++	var height_bands := ceili(kit.roof_clearance_height(run*2) / kit.band_height())
++	for sign_value in [-1,1]:
++		var grown := strip
++		grown.size[across] += run
++		if sign_value < 0: grown.position[across] -= run
++		var backing: Array[Dictionary] = []
++		var complete := true
++		for cell: Vector2i in BuildingMass.rect_cells(grown):
++			if strip.has_point(cell): continue
++			var step := Vector2i.ZERO
++			step[across] = -sign_value
++			var edge := BuildingMass.edge_key(cell,BuildingMass.DIRS.find(step))
++			for b in range(band,band+height_bands):
++				var found := false
++				for i in mass.storeys.size():
++					var storey: Dictionary = mass.storeys[i]
++					if b < int(storey.floor_band) or b >= int(storey.floor_band)+2 or not storey.cells.has(cell): continue
++					if storey.get("inset",false): continue
++					if strip.has_point(cell+step):
++						if storey.openings.get(edge,&"") == BuildingMass.OPENING_DOOR: continue
++						var contact := {"storey":i,"edge":edge}
++						if not backing.has(contact): backing.append(contact)
++					found = true
++				if not found: complete = false
++		if complete and _roof_fits(mass,grown,1-across,band):
++			return {"rect":grown,"axis":1-across,"backed_shed":true,"backing":backing,
++				"cut_key":"shed_min" if sign_value<0 else "shed_max",
++				"cut_at":strip.position[across] if sign_value<0 else strip.end[across]}
+ 	return {}
+ 
+ 

@@ -1,0 +1,5 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+AUDIT { "roofs": 60, "tiny": 0, "tiny_beside": 0, "open_ends": 17, "open_exposed": 0, "gable_ends": 103, "gable_holes": 0, "air_roofs": 0, "air_unsupported": 0, "eaves_cut": 0, "examples": [], "uncapped_towers": 0, &"seed": -1, &"towers": 4, &"decks": 30 }

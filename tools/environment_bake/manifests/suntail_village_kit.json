@@ -2735,5 +2735,9 @@
    "albedo_texture": "res://assets/Raygeas/Textures/Building_Modules/Boards_AlbedoSmoothness.png",
    "normal_texture": "res://assets/Raygeas/Textures/Building_Modules/Boards_Normal.png"
   }
+ },
+ "texture_policy": {
+  "compression": "basis_universal",
+  "mipmaps": true
  }
 }

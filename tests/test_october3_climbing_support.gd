@@ -1,0 +1,53 @@
+extends GutTest
+
+
+func test_bridge_foundation_cannot_count_platform_rock_as_lower_rooms() -> void:
+	var massif := WarrenMassif.new(1)
+	var column := Vector2i.ZERO
+	massif.columns[column] = {"base": -2, "plinth": 4, "top": 12}
+	var excavation := WarrenExcavation.new(1)
+	assert_false(
+		WarrenMazeCarver._bridge_foundation_is_direct(massif, excavation, {}, [column], 0, 6),
+		"A lower room inside the solid platform has no legal ground floor"
+	)
+	assert_true(
+		WarrenMazeCarver._bridge_foundation_is_direct(massif, excavation, {}, [column], 2, 6),
+		"The platform can carry a room starting on its own bearing surface"
+	)
+	excavation.carved[Vector3i(0, 3, 0)] = true
+	assert_false(
+		WarrenMazeCarver._bridge_foundation_is_direct(massif, excavation, {}, [column], 2, 6),
+		"A correct datum does not waive the uninterrupted support proof"
+	)
+
+
+func test_climbing_gate_keeps_an_inhabited_room_over_its_flight() -> void:
+	var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
+	var spatial := WarrenVolumetricSolver.generate(
+		101, {}, program, WarrenVillageScaleProfile.for_id(&"large")
+	)
+	assert_not_null(spatial, WarrenVolumetricSolver.last_failure)
+	if spatial == null:
+		return
+	var fabric := spatial.compiled_fabric_cache()
+	assert_true(fabric.validate())
+	var source: WarrenMazeSourcePlan = spatial.source_volume.mass_context[&"maze_source_plan"]
+	var passage := Vector3i(1, 1, 4)
+	var on_gate := false
+	for lane: Dictionary in source.excavation.lanes:
+		if lane.get("feature_kind", &"") == &"citadel_gate":
+			on_gate = on_gate or lane.cells.has(passage)
+	assert_true(on_gate, "Regression is on the actual rising district approach")
+	var kit := SuntailBuildingKit.create()
+	var built := KitVillageBuildings.build(spatial, fabric, kit)
+	for dx in 2:
+		for dz in 2:
+			var column := Vector2i(passage.x * 2 + dx, passage.z * 2 + dz)
+			var occupied := false
+			for house: BuildingMass in built.houses:
+				occupied = occupied or house.cells_at_band(5).has(column)
+			assert_true(occupied, "Each quarter of the climbing street has a real room overhead")
+	assert_eq(KitFloatingMassAudit.audit(spatial, fabric, built.masses).count, 0)
+	assert_eq(
+		preload("res://tests/fixtures/kit_roof_public_air_audit.gd").audit(built, kit).intrusions, 0
+	)

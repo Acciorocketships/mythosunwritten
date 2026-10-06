@@ -102,7 +102,7 @@ func claim_face(cell: Vector3i, direction: Vector3i, kind: int,
 		owner_id: StringName) -> bool:
 	if not _can_stage() or not grid.contains(cell) or owner_id.is_empty() \
 			or kind < WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR \
-			or kind > WarrenSpatialGrid.FaceKind.CONSTRUCTION_JOINT \
+			or kind > WarrenSpatialGrid.FaceKind.GARDEN_FLOOR \
 			or absi(direction.x) + absi(direction.y) + absi(direction.z) != 1:
 		return false
 	face_records.append({"cell": cell, "direction": direction,

@@ -8,6 +8,7 @@ enum Kind {
 	CIRCLE,
 	CAPSULE,
 	ORIENTED_RECT,
+	POLYGON,
 }
 
 var kind: Kind
@@ -23,6 +24,7 @@ var _b: Vector2
 var _radius: float
 var _half_extents: Vector2
 var _angle: float
+var _vertices := PackedVector2Array()
 
 func _init(p_kind: Kind, p_a: Vector2, p_b: Vector2, p_radius: float,
 		p_half_extents: Vector2, p_angle: float, p_surface_id: int,
@@ -69,6 +71,17 @@ static func axis_rect(rect: Rect2, p_surface_id: int = 0,
 	return oriented_rect(rect.get_center(), rect.size * 0.5, 0.0,
 		p_surface_id, p_priority, p_stable_id)
 
+## Simple, possibly concave polygon. Its tessellated boundary is shared with
+## visible ground meshes, so paint and asset clearance cannot disagree.
+static func polygon(vertices: PackedVector2Array, p_surface_id: int = 0,
+		p_priority: int = 0, p_stable_id: StringName = &"") -> FeatureGroundShape:
+	assert(vertices.size() >= 3)
+	for point: Vector2 in vertices: assert(_finite_vector(point))
+	var result := FeatureGroundShape.new(Kind.POLYGON, vertices[0], vertices[0],
+		0.0, Vector2.ZERO, 0.0, p_surface_id, p_priority, p_stable_id)
+	result._vertices = vertices.duplicate()
+	return result
+
 func contains(point: Vector2) -> bool:
 	return signed_distance(point) <= 0.0
 
@@ -79,6 +92,8 @@ func contains(point: Vector2) -> bool:
 func intersects(other: FeatureGroundShape, margin: float = 0.0) -> bool:
 	assert(other != null)
 	assert(is_finite(margin) and margin >= 0.0)
+	if kind == Kind.POLYGON: return _polygon_intersects(other, margin)
+	if other.kind == Kind.POLYGON: return other._polygon_intersects(self, margin)
 	match kind:
 		Kind.CIRCLE:
 			return _circle_intersects(other, margin)
@@ -96,6 +111,12 @@ func intersects(other: FeatureGroundShape, margin: float = 0.0) -> bool:
 
 
 func signed_distance(point: Vector2) -> float:
+	if kind == Kind.POLYGON:
+		var distance_squared := INF
+		for i in _vertices.size():
+			distance_squared = minf(distance_squared, _point_segment_distance_squared(
+				point, _vertices[i], _vertices[(i+1)%_vertices.size()]))
+		return sqrt(distance_squared) * (-1.0 if Geometry2D.is_point_in_polygon(point, _vertices) else 1.0)
 	match kind:
 		Kind.CIRCLE:
 			return point.distance_to(_a) - _radius
@@ -113,6 +134,10 @@ func signed_distance(point: Vector2) -> float:
 	return INF
 
 func bounds() -> Rect2:
+	if kind == Kind.POLYGON:
+		var result := Rect2(_vertices[0], Vector2.ZERO)
+		for point: Vector2 in _vertices: result = result.expand(point)
+		return result
 	match kind:
 		Kind.CIRCLE:
 			return Rect2(_a - Vector2.ONE * _radius,
@@ -249,3 +274,26 @@ static func _point_on_segment(point: Vector2, a: Vector2, b: Vector2,
 
 static func _finite_vector(value: Vector2) -> bool:
 	return is_finite(value.x) and is_finite(value.y)
+
+
+func _polygon_intersects(other: FeatureGroundShape, margin: float) -> bool:
+	if other.kind == Kind.CIRCLE:
+		return signed_distance(other._a) <= other._radius + margin
+	if other.kind == Kind.CAPSULE:
+		if contains(other._a) or contains(other._b): return true
+		for i in _vertices.size():
+			if _segment_distance_squared(_vertices[i], _vertices[(i+1)%_vertices.size()],
+					other._a, other._b) <= pow(other._radius+margin, 2): return true
+		return false
+	var points := other._vertices
+	if other.kind == Kind.ORIENTED_RECT:
+		points = PackedVector2Array()
+		for corner: Vector2 in [Vector2(-1,-1),Vector2(1,-1),Vector2(1,1),Vector2(-1,1)]:
+			points.append(other._a+(corner*other._half_extents).rotated(other._angle))
+	if points.is_empty(): return false
+	if contains(points[0]) or other.contains(_vertices[0]): return true
+	for i in _vertices.size():
+		for j in points.size():
+			if _segment_distance_squared(_vertices[i], _vertices[(i+1)%_vertices.size()],
+					points[j], points[(j+1)%points.size()]) <= margin*margin: return true
+	return false

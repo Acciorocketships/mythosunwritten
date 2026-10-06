@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_c11fe"]
+
+[resource]
+script = ExtResource("1_c11fe")
+id = &"market.bakery.stall.001"
+visual_path = "res://terrain/environment/visuals/town_props/market_bakery_stall_001.tres"
+tags = Array[StringName]([&"FantasyMarketFBX", &"decoration", &"village"])
+measured_aabb = AABB(-2.236809, -4.172325e-07, -1.5994678, 4.4736176, 4.019342, 3.1989355)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"town_props:market.bakery.stall.001"

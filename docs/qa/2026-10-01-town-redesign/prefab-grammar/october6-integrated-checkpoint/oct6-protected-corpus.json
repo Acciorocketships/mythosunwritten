@@ -1,0 +1,239 @@
+{
+  "103:grand": {
+    "baseline": {
+      "assets": [
+        "anchor.z_native.street.02.07",
+        "anchor.prefab.16",
+        "anchor.prefab.12"
+      ],
+      "bridges": 2,
+      "courts": [
+        {
+          "area": 4,
+          "floor": 0,
+          "id": "plaza.00"
+        },
+        {
+          "area": 4,
+          "floor": 0,
+          "id": "deck.00"
+        }
+      ],
+      "covered": 22,
+      "ms": 27967,
+      "public": 73
+    },
+    "candidate": {
+      "assets": [
+        "anchor.z_native.turret.00",
+        "anchor.prefab.16",
+        "anchor.prefab.10"
+      ],
+      "bridges": 1,
+      "courts": [
+        {
+          "area": 4,
+          "floor": 0,
+          "id": "plaza.00"
+        }
+      ],
+      "covered": 27,
+      "ms": 31596,
+      "public": 75
+    }
+  },
+  "13:grand": {
+    "baseline": {
+      "assets": [],
+      "bridges": 2,
+      "courts": [
+        {
+          "area": 9,
+          "floor": 2,
+          "id": "plaza.00"
+        },
+        {
+          "area": 4,
+          "floor": 8,
+          "id": "deck.00"
+        },
+        {
+          "area": 6,
+          "floor": 0,
+          "id": "deck.01"
+        }
+      ],
+      "covered": 24,
+      "ms": 15453,
+      "public": 104
+    },
+    "candidate": {
+      "assets": [],
+      "bridges": 2,
+      "courts": [
+        {
+          "area": 9,
+          "floor": 2,
+          "id": "plaza.00"
+        },
+        {
+          "area": 4,
+          "floor": 8,
+          "id": "deck.00"
+        },
+        {
+          "area": 6,
+          "floor": 0,
+          "id": "deck.01"
+        }
+      ],
+      "covered": 24,
+      "ms": 14923,
+      "public": 104
+    }
+  },
+  "43:grand": {
+    "baseline": {
+      "assets": [
+        "anchor.prefab.11",
+        "anchor.z_native.street.02.06",
+        "anchor.z_native.street.03.03"
+      ],
+      "bridges": 2,
+      "courts": [
+        {
+          "area": 9,
+          "floor": 7,
+          "id": "plaza.00"
+        },
+        {
+          "area": 4,
+          "floor": 6,
+          "id": "deck.00"
+        }
+      ],
+      "covered": 43,
+      "ms": 17720,
+      "public": 93
+    },
+    "candidate": {
+      "assets": [
+        "anchor.prefab.11",
+        "anchor.z_native.street.02.06",
+        "anchor.z_native.street.03.03"
+      ],
+      "bridges": 2,
+      "courts": [
+        {
+          "area": 9,
+          "floor": 7,
+          "id": "plaza.00"
+        },
+        {
+          "area": 4,
+          "floor": 6,
+          "id": "deck.00"
+        }
+      ],
+      "covered": 43,
+      "ms": 17221,
+      "public": 93
+    }
+  },
+  "53:grand": {
+    "baseline": {
+      "assets": [
+        "anchor.prefab.11",
+        "anchor.z_native.street.03.06",
+        "anchor.z_native.arcade.01.window_1_2",
+        "anchor.z_native.arcade.02.window_1_2",
+        "anchor.prefab.10"
+      ],
+      "bridges": 0,
+      "courts": [
+        {
+          "area": 9,
+          "floor": 9,
+          "id": "plaza.00"
+        },
+        {
+          "area": 4,
+          "floor": 2,
+          "id": "deck.00"
+        },
+        {
+          "area": 4,
+          "floor": 0,
+          "id": "deck.01"
+        }
+      ],
+      "covered": 57,
+      "ms": 43508,
+      "public": 82
+    },
+    "candidate": {
+      "assets": [
+        "anchor.z_native.turret.00",
+        "anchor.prefab.11",
+        "anchor.z_native.street.03.03"
+      ],
+      "bridges": 0,
+      "courts": [
+        {
+          "area": 9,
+          "floor": 9,
+          "id": "plaza.00"
+        },
+        {
+          "area": 4,
+          "floor": 2,
+          "id": "deck.00"
+        },
+        {
+          "area": 4,
+          "floor": 4,
+          "id": "deck.01"
+        }
+      ],
+      "covered": 51,
+      "ms": 73449,
+      "public": 77
+    }
+  },
+  "83:grand": {
+    "baseline": {
+      "assets": [
+        "anchor.z_native.turret.00",
+        "anchor.prefab.10"
+      ],
+      "bridges": 1,
+      "courts": [
+        {
+          "area": 9,
+          "floor": 3,
+          "id": "plaza.00"
+        }
+      ],
+      "covered": 33,
+      "ms": 24732,
+      "public": 119
+    },
+    "candidate": {
+      "assets": [
+        "anchor.z_native.turret.00",
+        "anchor.prefab.10"
+      ],
+      "bridges": 1,
+      "courts": [
+        {
+          "area": 9,
+          "floor": 3,
+          "id": "plaza.00"
+        }
+      ],
+      "covered": 33,
+      "ms": 25863,
+      "public": 119
+    }
+  }
+}

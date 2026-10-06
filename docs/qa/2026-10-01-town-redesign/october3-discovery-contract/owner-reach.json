@@ -1,0 +1,130 @@
+[
+  {
+    "declared_halo": 1,
+    "discovery_radius": 437.004913330078,
+    "geometry": "[P: (-108.5621, -2.92788, -1.433033), S: (169.3117, 48.01911, 201.493)]",
+    "required_halo": 1,
+    "valid": true,
+    "world_seed": 1
+  },
+  {
+    "declared_halo": 1,
+    "discovery_radius": 348.288024902344,
+    "geometry": "[P: (-60.9077, -5.92, -35.6), S: (96.34073, 52.41127, 95.89523)]",
+    "required_halo": 1,
+    "valid": true,
+    "world_seed": 2
+  },
+  {
+    "declared_halo": 1,
+    "discovery_radius": 388.635223388672,
+    "geometry": "[P: (-61.38108, -2.92788, -13.68728), S: (131.5429, 45.6348, 149.8491)]",
+    "required_halo": 1,
+    "valid": false,
+    "world_seed": 3
+  },
+  {
+    "declared_halo": 1,
+    "discovery_radius": 388.635223388672,
+    "geometry": "[P: (-66.44102, -2.92788, -44.34515), S: (130.7926, 31.546, 159.0852)]",
+    "required_halo": 1,
+    "valid": true,
+    "world_seed": 4
+  },
+  {
+    "declared_halo": 1,
+    "discovery_radius": 420.886688232422,
+    "geometry": "[P: (-94.20219, -2.92788, -12.20219), S: (156.364, 45.01911, 96.49744)]",
+    "required_halo": 1,
+    "valid": true,
+    "world_seed": 5
+  },
+  {
+    "declared_halo": 1,
+    "discovery_radius": 364.431762695312,
+    "geometry": "[P: (-72.35922, -2.92788, -21.94871), S: (126.0792, 42.01911, 123.4802)]",
+    "required_halo": 1,
+    "valid": true,
+    "world_seed": 6
+  },
+  {
+    "declared_halo": 1,
+    "discovery_radius": 364.431762695312,
+    "geometry": "[P: (-54.20219, -2.92788, -9.573153), S: (124.3302, 33.01911, 105.7349)]",
+    "required_halo": 1,
+    "valid": true,
+    "world_seed": 7
+  },
+  {
+    "declared_halo": 1,
+    "discovery_radius": 372.501129150391,
+    "geometry": "[P: (-32.18056, -2.92788, -12.20219), S: (109.704, 31.41915, 91.10989)]",
+    "required_halo": 1,
+    "valid": true,
+    "world_seed": 8
+  },
+  {
+    "declared_halo": 1,
+    "discovery_radius": 396.700103759766,
+    "geometry": "[P: (-86.20218, -2.92788, -4.20219), S: (140.4044, 31.546, 164.4044)]",
+    "required_halo": 1,
+    "valid": true,
+    "world_seed": 9
+  },
+  {
+    "declared_halo": 1,
+    "discovery_radius": 356.360748291016,
+    "geometry": "[P: (-38.16177, -2.92788, -17.51362), S: (111.8103, 35.83308, 95.00343)]",
+    "required_halo": 1,
+    "valid": true,
+    "world_seed": 10
+  },
+  {
+    "declared_halo": 1,
+    "discovery_radius": 380.568908691406,
+    "geometry": "[P: (-118.2086, -2.92788, -2.999195), S: (149.6941, 37.41915, 147.161)]",
+    "required_halo": 1,
+    "valid": true,
+    "world_seed": 11
+  },
+  {
+    "declared_halo": 1,
+    "discovery_radius": 356.360748291016,
+    "geometry": "[P: (-30.01084, -5.92, -4.20219), S: (125.4964, 54.62692, 108.4044)]",
+    "required_halo": 1,
+    "valid": true,
+    "world_seed": 12
+  },
+  {
+    "declared_halo": 1,
+    "discovery_radius": 332.137054443359,
+    "geometry": "[P: (-46.20219, -2.92788, -20.16177), S: (100.364, 35.83308, 100.3235)]",
+    "required_halo": 1,
+    "valid": true,
+    "world_seed": 13
+  },
+  {
+    "declared_halo": 1,
+    "discovery_radius": 348.288024902344,
+    "geometry": "[P: (-54.29524, -5.92, -12.16177), S: (100.4232, 52.41127, 85.64729)]",
+    "required_halo": 1,
+    "valid": true,
+    "world_seed": 14
+  },
+  {
+    "declared_halo": 1,
+    "discovery_radius": 380.568908691406,
+    "geometry": "[P: (-54.20219, -5.92, -1.433033), S: (124.977, 39.01123, 73.56102)]",
+    "required_halo": 1,
+    "valid": true,
+    "world_seed": 15
+  },
+  {
+    "declared_halo": 1,
+    "discovery_radius": 445.062347412109,
+    "geometry": "[P: (-14.16177, -2.92788, -74.08242), S: (211.357, 47.83308, 202.2846)]",
+    "required_halo": 1,
+    "valid": true,
+    "world_seed": 16
+  }
+]

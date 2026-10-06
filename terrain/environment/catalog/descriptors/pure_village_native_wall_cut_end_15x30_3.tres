@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_1o81h"]
+
+[resource]
+script = ExtResource("1_1o81h")
+id = &"pure_village.native.wall_cut_end_15x30_3"
+visual_path = "res://terrain/environment/visuals/pure_village_native_grammar/pure_village_native_wall_cut_end_15x30_3.tres"
+tags = Array[StringName]([&"building", &"pure_village_native_grammar", &"village"])
+measured_aabb = AABB(-0.18008766, -0.072683685, -0.2361721, 1.841343, 3.1378837, 0.47211856)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"pure_village_native_grammar:pure_village.native.wall_cut_end_15x30_3"

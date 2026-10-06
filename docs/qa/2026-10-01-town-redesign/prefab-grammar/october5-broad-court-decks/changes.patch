@@ -1,0 +1,195 @@
+--- before/WarrenPlotReservations.gd
++++ after/WarrenPlotReservations.gd
+@@ -314,6 +314,12 @@
+ 	# landmark's body or eave halo cannot consume their addressed frontage.
+ 	for column: Vector2i in plan.massif.columns:
+ 		if plan.massif.columns[column].has("house_site"): blocked[column] = true
++	# Reserve a broad, supportable internal court before landmark envelopes
++	# consume its house frontages. Small fallback courts keep the old order.
++	var plaza := 0
++	var broad_site := _best_plaza_site(plan, streets, blocked, {})
++	if int(broad_site.get("frontage_sides", 0)) >= 3:
++		plaza = _place_plaza(plan, streets, blocked, outcomes)
+ 	_place_assets(plan, profile, streets, blocked, outcomes)
+ 	# The extra measured prefab reach is a height-bounded construction
+ 	# reservation, not ownership of every band in a column. Rebuild the ordinary
+@@ -326,7 +332,8 @@
+ 	blocked = WarrenPlotPlanner.blocked_columns(plan)
+ 	for column: Vector2i in plan.massif.columns:
+ 		if plan.massif.columns[column].has("house_site"): blocked[column] = true
+-	var plaza := _place_plaza(plan, streets, blocked, outcomes)
++	if plaza == 0:
++		plaza = _place_plaza(plan, streets, blocked, outcomes)
+ 	_grow_decks(plan, streets, blocked, outcomes, plaza)
+ 	_reserve_deck_access(plan)
+ 
+@@ -1124,6 +1131,7 @@
+ 	columns.assign(plan.massif.columns.keys())
+ 	columns.sort_custom(Callable(WarrenPlotPlanner, "column_less"))
+ 	var best: Dictionary = {}
++	var held_site: Dictionary = {}
+ 	for shape: Vector2i in _plaza_shapes(cap):
+ 		for anchor: Vector2i in columns:
+ 			var cells := _plaza_footprint(plan, anchor, shape, blocked)
+@@ -1154,15 +1162,20 @@
+ 					"short": mini(shape.x, shape.y),
+ 					"heart": offset.x * offset.x + offset.y * offset.y,
+ 					"cells": cells, "door": doors[datum]}
++				site["frontage_sides"] = _plaza_buildable_frontages(
++					plan, cells, datum, streets, blocked) if mini(shape.x, shape.y) >= 3 else 0
+ 				if refused.has(_plaza_site_key(site)):
+ 					continue
+-				# Keep the square whose footprint the carver already protected,
+-				# provided every current support/landing rule still accepts it.
++				# Prefer the protected square within its class. A later broad
++				# internal site may supersede an earlier small fallback pocket.
+ 				var held: Dictionary = plan.audit.get("preselected_plaza",{})
+ 				if not held.is_empty() and int(held.floor)==datum and held.cells==cells:
+-					return site
++					held_site = site
+ 				if best.is_empty() or _plaza_site_less(site, best):
+ 					best = site
++	if not held_site.is_empty() and (int(held_site.get("frontage_sides", 0)) >= 3 \
++			or int(best.get("frontage_sides", 0)) < 3):
++		return held_site
+ 	return best
+ 
+ 
+@@ -1191,22 +1204,49 @@
+ 	return _footprint(plan, anchor, shape.x, shape.y, blocked)
+ 
+ 
++static func _plaza_buildable_frontages(plan: WarrenMazeSourcePlan,
++		cells: Array[Vector2i], datum: int, streets: Dictionary,
++		blocked: Dictionary) -> int:
++	var sides := 0
++	for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
++		var edge := 0
++		var fronts := 0
++		for member: Vector2i in cells:
++			var next := member + direction
++			if cells.has(next):
++				continue
++			edge += 1
++			var existing_front := false
++			for plot: Dictionary in plan.plots:
++				if plot.kind not in [WarrenMazeSourcePlan.PLOT_HOUSE,
++						WarrenMazeSourcePlan.PLOT_ASSET]:
++					continue
++				if (plot.cells as Array).has(next) and int(plot.floor) <= datum \
++						and int(plot.top) >= datum + WarrenMazeSourcePlan.MIN_HOUSE_BANDS:
++					existing_front = true
++					break
++			if existing_front:
++				fronts += 1
++				continue
++			var join := WarrenPlotPlanner._join(plan, next, datum, streets,
++				blocked, {}, -1, false)
++			if String(join.reason).is_empty() and WarrenPlotPlanner._edge_envelope_top(
++					plan, next) >= datum + WarrenMazeSourcePlan.MIN_HOUSE_BANDS:
++				fronts += 1
++		if edge > 0 and fronts * 2 > edge:
++			sides += 1
++	return sides
++
++
+ static func _plaza_site_less(a: Dictionary, b: Dictionary) -> bool:
+-	## CHEAPEST FIRST, then nearest the heart, then biggest, then squarest.
+-	##
+-	## The aspect bound has already thrown out everything that is not a room, so
+-	## what is left to choose between are rooms -- and the choice is made by how
+-	## much hill each one takes, because that is what the corpus's seals turned
+-	## out to be a function of. Ordering by the heart first sealed 41 of 48 (grand
+-	## 7/12 against 10/12) and ordering by cost first seals 44 with the SAME
+-	## squares on the towns that matter: 12/compact and 4/compact keep the site
+-	## the heart order chose, because on those towns nothing cheaper exists and
+-	## the heart is the tie-break that picks it.
+-	##
+-	## Heart before size for the reason the direction gives -- "a grass plaza in
+-	## the center" -- and size before squareness because the aspect bound has
+-	## already made every candidate square enough. The last two keys exist so the
+-	## order is total.
++	# Broad courts come first only where real house admission can enclose at
++	# least three sides. Raw massif height does not establish a frontage:
++	# support, public tiers, edge caps and other reservations must all fit.
++	var enclosed_a := int(a.get("frontage_sides", 0)) >= 3
++	var enclosed_b := int(b.get("frontage_sides", 0)) >= 3
++	if enclosed_a != enclosed_b:
++		return enclosed_a
++	# Otherwise preserve the established cut-cost / heart / size ordering.
+ 	if int(a["cost"]) != int(b["cost"]):
+ 		return int(a["cost"]) < int(b["cost"])
+ 	if int(a["heart"]) != int(b["heart"]):
+--- before/SettlementFabricAssembler.gd
++++ after/SettlementFabricAssembler.gd
+@@ -1615,7 +1615,7 @@
+ 	garden = close_borne_turf_corners(garden, retained, solids, paved, walked,
+ 		classification_shell, footprints)
+ 	var capped_ground := garden.duplicate()
+-	for plaza_cell_value: Variant in plan.planned_plaza_cells.keys():
++	for plaza_cell_value: Variant in plan.planned_plaza_planting_cells.keys():
+ 		capped_ground[plaza_cell_value as Vector3i] = true
+ 	var final_cap_owners := initial_cap_owners.duplicate()
+ 	for ground_cell_value: Variant in capped_ground.keys():
+@@ -8716,7 +8716,7 @@
+ 		return out
+ 	var courtyard_cells := plan.cells_owned_by_prefix("volume.courtyard.")
+ 	var courtyard_set := _cell_set(courtyard_cells)
+-	var ground_finish_cells := _surface_cells_above(ground_finish_supports)
++	var ground_finish_cells := _surface_cells_above(ground_finish_supports, plan)
+ 	courtyard_cells = _without_cells(courtyard_cells, ground_finish_cells)
+ 	for kind in [PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,
+ 			PublicRealmSurfacePlan.SurfaceKind.BRIDGE]:
+@@ -8746,7 +8746,7 @@
+ 		return out
+ 	var courtyard_cells := plan.cells_owned_by_prefix("volume.courtyard.")
+ 	var courtyard_set := _cell_set(courtyard_cells)
+-	var ground_finish_cells := _surface_cells_above(ground_finish_supports)
++	var ground_finish_cells := _surface_cells_above(ground_finish_supports, plan)
+ 	courtyard_cells = _without_cells(courtyard_cells, ground_finish_cells)
+ 	for kind in [PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,
+ 			PublicRealmSurfacePlan.SurfaceKind.INTERIOR_PASSAGE,
+@@ -8826,7 +8826,7 @@
+ 		ground_finish_supports)
+ 	if plan == null or not plan.is_sealed():
+ 		return out
+-	var ground_finish_cells := _surface_cells_above(ground_finish_supports)
++	var ground_finish_cells := _surface_cells_above(ground_finish_supports, plan)
+ 	for mesh: Dictionary in plan.mesh_payloads:
+ 		if int(mesh.get("kind", -1)) \
+ 				== PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET:
+@@ -9142,15 +9142,22 @@
+ 	return out
+ 
+ 
+-static func _surface_cells_above(supports: Dictionary) -> Dictionary:
++static func _surface_cells_above(supports: Dictionary,
++		public_plan: PublicRealmSurfacePlan = null) -> Dictionary:
+ 	## A ground-finished public feature names the solid cells that carry it,
+ 	## while PublicRealmSurfacePlan names the walk cells one band above. Convert
+ 	## once at the visual adapter boundary so topology, collision, guards, and
+ 	## traversal keep their canonical public-surface cells and only the finish
+-	## changes from plank to terrain.
++	## selects terrain only for unwalked planting; public court cells keep planks.
+ 	var out: Dictionary = {}
+ 	for cell_value: Variant in supports.keys():
+-		out[(cell_value as Vector3i) + Vector3i.UP] = true
++		var cell := (cell_value as Vector3i) + Vector3i.UP
++		# A town square's walked ring is a deck. Only its deliberately unwalked
++		# planting island receives lawn; callers may still pass the whole plot.
++		if public_plan != null and public_plan.kind_at(cell) \
++				== PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT:
++			continue
++		out[cell] = true
+ 	return out
+ 
+ 
+@@ -9187,7 +9194,7 @@
+ 	var triangle_count := 0
+ 	var collision_piece_count := 0
+ 	var payloads: Array[Dictionary] = []
+-	var ground_finish_cells := _surface_cells_above(ground_finish_supports)
++	var ground_finish_cells := _surface_cells_above(ground_finish_supports, plan)
+ 	for source: Dictionary in plan.mesh_payloads:
+ 		var kind := int(source.get("kind", -1))
+ 		if not bool(source.get("is_transition", false)) \

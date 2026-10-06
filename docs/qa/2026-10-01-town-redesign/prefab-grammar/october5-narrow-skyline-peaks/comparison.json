@@ -1,0 +1,82 @@
+{
+  "8:grand": {
+    "covered_before": 70,
+    "covered_after": 70,
+    "floating": 0,
+    "air_intrusions": 0,
+    "turrets_before": 1,
+    "turrets_after": 1
+  },
+  "9:grand": {
+    "covered_before": 80,
+    "covered_after": 80,
+    "floating": 0,
+    "air_intrusions": 0,
+    "turrets_before": 5,
+    "turrets_after": 5
+  },
+  "103:grand": {
+    "covered_before": 40,
+    "covered_after": 40,
+    "floating": 0,
+    "air_intrusions": 0,
+    "turrets_before": 1,
+    "turrets_after": 1
+  },
+  "13:grand": {
+    "covered_before": 16,
+    "covered_after": 16,
+    "floating": 0,
+    "air_intrusions": 0,
+    "turrets_before": 0,
+    "turrets_after": 0
+  },
+  "301:grand": {
+    "covered_before": 44,
+    "covered_after": 44,
+    "floating": 0,
+    "air_intrusions": 0,
+    "turrets_before": 3,
+    "turrets_after": 3
+  },
+  "31:large": {
+    "covered_before": 38,
+    "covered_after": 38,
+    "floating": 0,
+    "air_intrusions": 0,
+    "turrets_before": 0,
+    "turrets_after": 0
+  },
+  "43:grand": {
+    "covered_before": 56,
+    "covered_after": 56,
+    "floating": 0,
+    "air_intrusions": 0,
+    "turrets_before": 2,
+    "turrets_after": 2
+  },
+  "53:grand": {
+    "covered_before": 86,
+    "covered_after": 86,
+    "floating": 0,
+    "air_intrusions": 0,
+    "turrets_before": 3,
+    "turrets_after": 3
+  },
+  "63:grand": {
+    "covered_before": 34,
+    "covered_after": 34,
+    "floating": 0,
+    "air_intrusions": 0,
+    "turrets_before": 2,
+    "turrets_after": 2
+  },
+  "83:grand": {
+    "covered_before": 16,
+    "covered_after": 16,
+    "floating": 0,
+    "air_intrusions": 0,
+    "turrets_before": 0,
+    "turrets_after": 0
+  }
+}

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_up4ua"]
+
+[resource]
+script = ExtResource("1_up4ua")
+id = &"pure_village.stone.retaining_half"
+visual_path = "res://terrain/environment/visuals/pure_village_retaining/pure_village_stone_retaining_half.tres"
+tags = Array[StringName]([&"building", &"pure_village_retaining", &"village"])
+measured_aabb = AABB(-1, -0.011028877, -0.18266602, 2, 1.5165672, 0.36529052)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"pure_village_retaining:pure_village.stone.retaining_half"

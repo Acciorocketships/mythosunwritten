@@ -1,0 +1,48 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+PROFILE generate 1852
+KIT_PHASE masses 35
+KIT_PHASE roof joins/air 8
+KIT_PHASE towers 158
+KIT_PHASE projections 34
+KIT_PHASE bays 34
+KIT_DETAIL eaves 67
+KIT_DETAIL dormers 457
+KIT_DETAIL roof skin preparation 2686
+KIT_DETAIL public floors 1
+KIT_PHASE contact preparation 114
+KIT_PHASE assemble/contact fitting 641
+KIT_PHASE retaining dressing 54
+KIT_PHASE decor clearance 116
+KIT_PHASE mesh union 974
+PROFILE kit build 5386
+PROFILE public payload 94
+PROFILE frontage/support/substitution 28
+PROFILE world payload 168
+PROFILE materialize 5791
+PROFILE roads/dressing 270
+PROFILE total 7915 accepted true stages { &"parcels": 10, &"hero_beam": 18, &"room_composition": 121, &"bridge_stamping": 156, &"directed_back_rooms": 219, &"residual_rooms": 19, &"partition_rooms": 544, &"feature_solver": 90, &"room_gate": 68 }
+PROFILE generate 1835
+KIT_PHASE masses 35
+KIT_PHASE roof joins/air 7
+KIT_PHASE towers 155
+KIT_PHASE projections 34
+KIT_PHASE bays 34
+KIT_DETAIL eaves 61
+KIT_DETAIL dormers 453
+KIT_DETAIL roof skin preparation 2667
+KIT_DETAIL public floors 1
+KIT_PHASE contact preparation 115
+KIT_PHASE assemble/contact fitting 629
+KIT_PHASE retaining dressing 34
+KIT_PHASE decor clearance 142
+KIT_PHASE mesh union 1115
+PROFILE kit build 5489
+PROFILE public payload 92
+PROFILE frontage/support/substitution 26
+PROFILE world payload 172
+PROFILE materialize 5893
+PROFILE roads/dressing 45
+PROFILE total 7787 accepted true stages { &"parcels": 9, &"hero_beam": 18, &"room_composition": 132, &"bridge_stamping": 135, &"directed_back_rooms": 218, &"residual_rooms": 18, &"partition_rooms": 532, &"feature_solver": 85, &"room_gate": 71 }

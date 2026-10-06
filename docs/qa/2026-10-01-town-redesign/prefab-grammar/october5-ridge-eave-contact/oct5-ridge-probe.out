@@ -1,0 +1,7 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+kit.spatial.feature.landmark.00/k0229 cuts=11 vertices=2952
+kit.spatial.feature.landmark.00/k0231 cuts=15 vertices=0
+FITTED 2
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)

@@ -1,0 +1,53 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+/tmp/oct6-cap-regression-baseline/test_continuous_crown_cover.gd
+[0m* test_obstructed_l_crown_is_closed_without_a_miniature_gable
+[31m    [Failed]:  [0m[8] expected to not equal [8]:  This obstructed crown cannot host a full-depth pitched wing
+      at line 20
+[31m    [Failed]:  [0m[4] expected to equal [6]:  Every exposed cell is closed
+      at line 28
+[31m    [Failed]:  [0mExpected [DICTIONARY({ (8, 4): true, (9, 4): true, (10, 4): true, (11, 4): true })] to contain value:  [VECTOR2I(10, 3)]:  
+      at line 29
+[31m    [Failed]:  [0mExpected [DICTIONARY({ (8, 4): true, (9, 4): true, (10, 4): true, (11, 4): true })] to contain value:  [VECTOR2I(11, 3)]:  
+      at line 29
+* test_restored_clearance_retains_full_depth_pitched_wings
+[1m1/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+/tmp/oct6-cap-regression-baseline/test_continuous_crown_cover.gd
+[0m- test_obstructed_l_crown_is_closed_without_a_miniature_gable
+[31m    [Failed]:  [0m[8] expected to not equal [8]:  This obstructed crown cannot host a full-depth pitched wing
+          at line 20
+[31m    [Failed]:  [0m[4] expected to equal [6]:  Every exposed cell is closed
+          at line 28
+[31m    [Failed]:  [0mExpected [DICTIONARY({ (8, 4): true, (9, 4): true, (10, 4): true, (11, 4): true })] to contain value:  [VECTOR2I(10, 3)]:  
+          at line 29
+[31m    [Failed]:  [0mExpected [DICTIONARY({ (8, 4): true, (9, 4): true, (10, 4): true, (11, 4): true })] to contain value:  [VECTOR2I(11, 3)]:  
+          at line 29
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests         1
+Failing Tests         1
+Asserts           12/16
+Time              0.374s
+
+
+[31m---- 1 failing tests ----
+[0m

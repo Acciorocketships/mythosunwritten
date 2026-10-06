@@ -1,0 +1,23 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+STEPPED_HOUSES [{ "id": &"kit.spatial.parcel.maze.house.002", "at": (-2.25, 6.0, -17.25), "reach": 8.0 }, { "id": &"kit.spatial.parcel.maze.house.009", "at": (21.75, 3.0, -5.25), "reach": 8.0 }, { "id": &"kit.spatial.parcel.maze.house.010", "at": (21.75, 3.0, 0.75), "reach": 8.0 }, { "id": &"kit.spatial.parcel.maze.house.029", "at": (-17.25, 3.0, 3.75), "reach": 8.0 }, { "id": &"kit.spatial.parcel.maze.house.031", "at": (-17.25, 3.0, -2.25), "reach": 8.0 }, { "id": &"kit.spatial.parcel.maze.house.released.000", "at": (0.75, 16.5, 6.75), "reach": 24.0 }]
+ROOF_AUDIT { "clipped": 340, "removed": 56, "chimneys": { "moved": 0, "omitted": 0, "checked": 4 }, "towers": { "corner_attempts": 41, "corner_bearing_rejected": 23, "corner_bearing_example": "kit.spatial.parcel.maze.house.released.000 / (3, 7, 8) / base 8", "corner_no_bearing_or_space": 38, "attempts": 44, "corner_reservation_rejected": 11, "corner_reservation_example": "kit.spatial.parcel.maze.house.released.000 / (-2, 9, 8) / base 10", "corner_supported": 3, "corner_public_blocked": 1, "corbel_corner_accepted": 2, "corner_accepted": 2, "accepted": 2 }, "facade_bays": 0, "room_projections": 0, "retaining_relief": 7, "retaining_flight_joints": 11, "retaining_windows": 14, "fortified_windows": 57, "retaining_recesses": 60, "decor_clearance": { &"fort.block": 88, &"window_box": 47, &"prop.doorstep": 44 }, "fitted_window_boxes": 15, "joins": 2, "parallel_joins": 0, "fitted_eaves": 3, "dormers": { "moved": 0, "omitted": 0, "checked": 3 }, "seated_balcony_brackets": 0, "roof_blocked_windows": 99, "roof_fitted_windows": 29 }
+WALK_SURFACE skywalk.0 expected=(52.0, 6.0, -12.0) floor=(52.0, 6.25544, -12.0)
+WALK_SURFACE skywalk.0 expected=(52.0, 6.0, 0.0) floor=(52.0, 6.25544, 0.0)
+TOWN_ROUTE_WALK skywalk.0 reverse=false passed=true end=(52.0, 6.256259, -0.249976)
+TOWN_ROUTE_WALK skywalk.0 reverse=true passed=true end=(52.0, 6.25556, -11.74975)
+WALK_SURFACE skywalk.1 expected=(-52.0, 6.0, -4.0) floor=(-52.0, 6.25544, -4.0)
+WALK_SURFACE skywalk.1 expected=(-52.0, 6.0, 8.0) floor=(-52.0, 6.25544, 8.0)
+TOWN_ROUTE_WALK skywalk.1 reverse=false passed=true end=(-52.0, 6.25583, 7.749993)
+TOWN_ROUTE_WALK skywalk.1 reverse=true passed=true end=(-52.0, 6.25583, -3.750012)
+WALK_SURFACE source_bridge.00 expected=(-6.0, 24.0, 50.0) floor=(-6.0, 24.25544, 50.0)
+WALK_SURFACE source_bridge.00 expected=(-6.0, 24.0, 34.0) floor=(-6.0, 24.25544, 34.0)
+TOWN_ROUTE_WALK source_bridge.00 reverse=false passed=true end=(-6.0, 24.25583, 34.24998)
+TOWN_ROUTE_WALK source_bridge.00 reverse=true passed=true end=(-6.0, 24.25583, 49.74998)
+WALK_SURFACE underpass.(-1, 4, 5) expected=(2.0, 12.0, 42.0) floor=(2.0, 12.05, 42.0)
+WALK_SURFACE underpass.(-1, 4, 5) expected=(-6.0, 12.0, 42.0) floor=(-6.0, 13.5, 42.0)
+WALK_SURFACE underpass.(-1, 4, 5) expected=(-14.0, 15.0, 42.0) floor=(-14.0, 15.05, 42.0)
+TOWN_ROUTE_WALK underpass.(-1, 4, 5) reverse=false passed=true end=(-13.75, 15.05081, 42.0)
+TOWN_ROUTE_WALK underpass.(-1, 4, 5) reverse=true passed=true end=(1.750354, 12.05, 42.0)

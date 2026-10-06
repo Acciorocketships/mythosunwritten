@@ -1,0 +1,59 @@
+--- /tmp/hood-height-before.gd	2026-10-04 01:04:56
++++ scripts/terrain/features/villages/kit/BuildingKitAssembler.gd	2026-10-04 01:04:56
+@@ -537,6 +537,7 @@
+ 		y: float) -> void:
+ 	var visited := {}
+ 	var accepted: Array[Dictionary] = []
++	var heights := _hood_attachment_heights(slots, y)
+ 	for seed_centre: Vector2 in slots:
+ 		if visited.has(seed_centre): continue
+ 		var slot: Dictionary = slots[seed_centre]
+@@ -558,9 +559,7 @@
+ 		var pending: Array[Dictionary] = []
+ 		var candidate := {"mass":ctx.mass,"out":pending,"serial":ctx.serial}
+ 		var yaw := yaw_for_dir(dir)
+-		var hood_y := y
+-		for at:Vector2 in run:
+-			if float(slots[at].get("wall_offset",0.0))>0.0:hood_y=y+.35
++		var hood_y: float = heights[first]
+ 		if kit.has_role(&"wallhood.middle") and kit.has_role(&"wallhood.left") and kit.has_role(&"wallhood.right"):
+ 			# A wall hood is only the shallow bottom course. A complete
+ 			# gable-slope strip would climb a storey into the retained cap.
+@@ -582,6 +581,37 @@
+ 		ctx.serial = candidate.serial
+ 		accepted.append({"run":run,"parts":pending,"dir":dir,"y":hood_y})
+ 	_join_hood_corners(ctx, accepted, slots)
++
++
++## A projecting facade needs extra window-head clearance. Its connected
++## cornice must share that datum around corners; lifting just one face
++## produces stepped, disconnected roof ends. Separate courses stay independent.
++static func _hood_attachment_heights(slots: Dictionary, y: float) -> Dictionary:
++	var endpoints := {}
++	for centre: Vector2 in slots:
++		var side := Vector2(right_of(int(slots[centre].dir))) * 0.5
++		for vertex: Vector2 in [centre-side, centre+side]:
++			if not endpoints.has(vertex): endpoints[vertex] = []
++			endpoints[vertex].append(centre)
++	var heights := {}
++	for seed_centre: Vector2 in slots:
++		if heights.has(seed_centre): continue
++		var component: Array[Vector2] = [seed_centre]
++		var seen := {seed_centre:true}
++		var top := y
++		var index := 0
++		while index < component.size():
++			var centre := component[index]
++			index += 1
++			if float(slots[centre].get("wall_offset",0.0)) > 0.0: top = y + 0.35
++			var side := Vector2(right_of(int(slots[centre].dir))) * 0.5
++			for vertex: Vector2 in [centre-side, centre+side]:
++				for neighbor: Vector2 in endpoints[vertex]:
++					if seen.has(neighbor): continue
++					seen[neighbor] = true
++					component.append(neighbor)
++		for centre: Vector2 in component: heights[centre] = top
++	return heights
+ 
+ 
+ ## Native canopy grammar: StreetHouse_7 supplies the convex connection;

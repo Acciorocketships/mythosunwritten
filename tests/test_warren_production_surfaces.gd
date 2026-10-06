@@ -115,7 +115,7 @@ func test_patchwork_planks_have_one_exact_recessed_closure_skin() -> void:
 				"decorative board seams may not create a second collision floor")
 
 
-func test_ground_finished_court_cells_are_not_hidden_by_patchwork_wood() \
+func test_walked_court_cells_keep_decks_even_in_a_ground_finished_plot() \
 		-> void:
 	var plan := PublicRealmSurfacePlan.new(&"test.production.ground-finish")
 	for z in 2:
@@ -124,8 +124,8 @@ func test_ground_finished_court_cells_are_not_hidden_by_patchwork_wood() \
 				PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,
 				&"volume.courtyard.test"), plan.last_rejection)
 	assert_true(plan.seal(), plan.last_rejection)
-	# Finish ownership is expressed at its supporting solid cell, one band below
-	# the canonical public walk claim, exactly like planned village greens.
+	# A whole plot's support set must not replace its claimed public walk with
+	# turf. Planting is explicitly unwalked, outside these surface claims.
 	var bundle := SettlementFabricAssembler.production_surface_bundle(plan, {},
 		[], {Vector3i(0, 0, 0): true})
 	var closure: Dictionary = {}
@@ -135,15 +135,15 @@ func test_ground_finished_court_cells_are_not_hidden_by_patchwork_wood() \
 			break
 	assert_false(closure.is_empty())
 	var closure_cells := closure.logical_cells as Array
-	assert_eq(closure_cells.size(), 3)
-	assert_false(closure_cells.has(Vector3i(0, 1, 0)),
-		"village turf must be the sole visual/collision finish on its cell")
+	assert_eq(closure_cells.size(), 4)
+	assert_true(closure_cells.has(Vector3i(0, 1, 0)),
+		"a claimed court walk keeps its continuous deck finish")
 	assert_true(closure_cells.has(Vector3i(1, 1, 0)),
 		"ordinary structural court remains sealed by patchwork wood")
 	var detail_batch := bundle.batches.get(
 		SettlementFabricAssembler.PLANK_SINGLE, {}) as Dictionary
-	assert_eq((detail_batch.get("transforms", []) as Array).size(), 3,
-		"courtyard styling must also defer to the canonical turf finish")
+	assert_eq((detail_batch.get("transforms", []) as Array).size(), 4,
+		"native board detail covers every walked court cell")
 
 
 func test_town_streets_reuse_sparse_spots_without_rounding_their_edges() -> void:

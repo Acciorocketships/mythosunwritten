@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_5ic70"]
+
+[resource]
+script = ExtResource("1_5ic70")
+id = &"pure_village.native.roof_base_start_5x30_1"
+visual_path = "res://terrain/environment/visuals/pure_village_native_grammar/pure_village_native_roof_base_start_5x30_1.tres"
+tags = Array[StringName]([&"building", &"pure_village_native_grammar", &"village"])
+measured_aabb = AABB(-0.6554712, 0, -1.5, 1.3347602, 3.1118033, 1.7236035)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"pure_village_native_grammar:pure_village.native.roof_base_start_5x30_1"

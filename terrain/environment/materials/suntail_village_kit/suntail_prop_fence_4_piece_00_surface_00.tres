@@ -1,8 +1,8 @@
 [gd_resource type="StandardMaterial3D" load_steps=4 format=3]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/840229b1859d2b481cf6.res" id="1_vrq66"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/fa3b1d71d544c4b2a029.res" id="2_8mw4g"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/b9071ea70598cddba288.res" id="3_asv02"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/f1865dd855f6b95a870c.res" id="1_vrq66"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/caa9faecaddf9e02d67e.res" id="2_8mw4g"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/a009d4f9c26c7d6527d6.res" id="3_asv02"]
 
 [resource]
 resource_name = "Fence"

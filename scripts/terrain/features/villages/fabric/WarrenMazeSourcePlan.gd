@@ -323,6 +323,8 @@ func add_plot(plot: Dictionary) -> bool:
 		"door_walk": plot["door_walk"] as Vector3i,
 		"building_id": StringName(plot["building_id"]),
 	})
+	if bool(plot.get("wall_room",false)):
+		plots.back()["wall_room"] = true
 	for column: Vector2i in cells:
 		var indices: Array = _plot_columns.get(column, [])
 		indices.append(plots.size() - 1)
@@ -372,13 +374,85 @@ func derive_rock_shoulders() -> void:
 
 
 func plot_support_ok(cell: Vector2i, floor: int) -> bool:
-	# `bearing_at` is the ground, or the plinth top in a raised district: the
-	# platform's rock is never a plot's floor space.
+	# Ordinary houses stand on the ground or raised district datum. Explicit
+	# wall rooms have the separate grounded-room/structural-cap proof below.
 	if massif != null and floor < massif.bearing_at(cell):
 		return false
+	# The exact stair/ramp reserves its full flight-height interval. The
+	# macro bore can retain a band above its lower treads which the finished
+	# flight's clearance removes; that band cannot be a house foundation.
+	if excavation != null:
+		for edge: Dictionary in excavation.walk_edges():
+			var a: Vector3i = edge.a
+			var b: Vector3i = edge.b
+			if a.y == b.y or floor - 1 < mini(a.y, b.y) \
+					or floor - 1 >= maxi(a.y, b.y) + WarrenVolumePlan.HEADROOM_BANDS:
+				continue
+			for tread: Vector3i in edge.swept:
+				if Vector2i(tread.x, tread.z) == cell:
+					return false
 	if not solid_at(Vector3i(cell.x, floor - 1, cell.y)):
 		return false
 	return _first_carved_band(cell, floor, floor + MIN_HOUSE_BANDS) < 0
+
+
+## A wall room reaches the platform datum, an upper plot or a public terrace.
+## Its structural cap preserves the support that retained rock supplied.
+## This exception never permits excavation into natural terrain or a street.
+func wall_room_top(column: Vector2i) -> int:
+	if massif.is_platform(column): return massif.bearing_at(column)
+	# The lowest addressed plot owns this support. Street ceilings are admitted
+	# separately after destination pruning, without changing this datum.
+	var top := 1 << 20
+	for index: int in _plot_columns.get(column,[]):
+		var upper: Dictionary = plots[index]
+		if not bool(upper.get("wall_room",false)):
+			top = mini(top,int(upper.floor))
+	return massif.base_at(column) if top == 1 << 20 else top
+
+
+func wall_room_support_ok(plot: Dictionary, column: Vector2i) -> bool:
+	if not bool(plot.get("wall_room",false)) or plot.kind != PLOT_HOUSE \
+			or (plot.cells as Array).size()!=1 or not massif.has_column(column):
+		return false
+	var floor_band := int(plot.floor)
+	var top_band := int(plot.top)
+	var door: Vector3i = plot.door_walk
+	# Platforms may carry additional retained rock above their datum. Keep that
+	# overburden. Ordinary wall rooms instead reach the lowest existing plot,
+	# so they replace the complete support interval without leaving a gap.
+	for index: int in _plot_columns.get(column,[]):
+		if massif.is_platform(column) and int(plots[index].floor)>top_band:
+			return false
+	for walk: Vector3i in passage_kinds:
+		if massif.is_platform(column) and walk.x==column.x and walk.z==column.y and walk.y>top_band:
+			return false
+	var upper_walk := Vector3i(column.x,top_band,column.y)
+	var terrace := passage_kinds.has(upper_walk) and not excavation.flight_cells().has(upper_walk)
+	# A terrace room replaces this column's retained rock up to its cap.
+	# If an upper house starts higher, that replacement would erase the
+	# intervening bearing course; the street alone cannot carry the house.
+	if terrace and wall_room_top(column) > top_band:
+		return false
+	# A walked terrace can close a two-band room with one slab band.
+	# Under a house, keep the usual two-band roof reservation: its facade
+	# may set back and expose part of the lower crown.
+	return floor_band>=massif.base_at(column) and (top_band==wall_room_top(column) or terrace) \
+		and top_band-floor_band>=(3 if terrace else 4) and top_band-floor_band<=6 \
+		and door.y==floor_band and passage_kinds.has(door) \
+		and absi(column.x-door.x)+absi(column.y-door.z)==1 \
+		and massif.bearing_at(Vector2i(door.x,door.z))<top_band \
+		and not excavation.flight_cells().has(door) \
+		and _first_carved_band(column,floor_band,top_band)<0 \
+		and solid_at(Vector3i(column.x,floor_band-1,column.y))
+
+
+func plot_bearing_at(column: Vector2i, floor_band: int) -> int:
+	for index: int in _plot_columns.get(column,[]):
+		var plot: Dictionary = plots[index]
+		if int(plot.floor)==floor_band and bool(plot.get("wall_room",false)):
+			return floor_band
+	return massif.bearing_at(column)
 
 
 ## Derived solid mass; rock is never stored. A carved street cell or its
@@ -402,6 +476,8 @@ func solid_at(cell: Vector3i) -> bool:
 		return false
 	if cell.y < massif.base_at(column):
 		return true
+	if massif.is_reserved_ground(column):
+		return false
 	var indices: Array = _plot_columns.get(column, [])
 	if indices.is_empty():
 		return cell.y < rock_shoulder(column)
@@ -427,8 +503,12 @@ func solid_at(cell: Vector3i) -> bool:
 func rock_shoulder(column: Vector2i) -> int:
 	if massif == null or not massif.has_column(column):
 		return 0
+	if massif.is_reserved_ground(column):
+		return massif.base_at(column)
 	if _plot_columns.has(column):
 		return _lowest_plot_floor(column)
+	if massif.columns[column].has("house_lobe"):
+		return massif.base_at(column)
 	if _rock_shoulders.has(column):
 		return int(_rock_shoulders[column])
 	return massif.top_at(column)
@@ -1157,7 +1237,7 @@ func _plot_placement_rejection(plot: Dictionary, self_index: int) -> String:
 	var reserved_top := _plot_reserved_top(plot)
 	if kind in [PLOT_HOUSE, PLOT_ASSET]:
 		var door := plot["door_walk"] as Vector3i
-		if not passage_kinds.has(door):
+		if not passage_kinds.has(door) and not court_addresses().has(door):
 			return "plot %s has a door_walk at %s that is not a passage cell" \
 				% [id, door]
 		var addressed := false
@@ -1171,6 +1251,8 @@ func _plot_placement_rejection(plot: Dictionary, self_index: int) -> String:
 				+ "touches") % [id, door]
 	for cell_value: Variant in plot["cells"] as Array:
 		var column := cell_value as Vector2i
+		if massif.is_reserved_ground(column):
+			return "plot %s occupies reserved ground at %s" % [id, column]
 		# A bridge plot is carried laterally by its authored room sockets or by a
 		# complete terrain-reaching portal. Its own column is deliberately the
 		# public bore, so applying the ordinary vertical support rule would require
@@ -1184,7 +1266,8 @@ func _plot_placement_rejection(plot: Dictionary, self_index: int) -> String:
 			if massif != null and floor_band < massif.bearing_at(column):
 				return ("bridge plot %s stands inside the raised district's " \
 					+ "plinth at column %s") % [id, column]
-		elif not plot_support_ok(column, floor_band):
+		elif not (wall_room_support_ok(plot,column) if bool(plot.get("wall_room",false)) \
+				else plot_support_ok(column, floor_band)):
 			if massif != null and floor_band < massif.base_at(column):
 				return ("plot %s breaks support rule 3 at column %s: its " \
 					+ "floor %d is %d bands inside the terrain, which " \
@@ -1225,6 +1308,46 @@ func passage_cells() -> Array[Vector3i]:
 	var out: Array[Vector3i] = []
 	out.assign(passage_kinds.keys())
 	out.sort_custom(Callable(WarrenMazeSourcePlan, "_cell_less"))
+	return out
+
+
+func court_addresses() -> Dictionary:
+	## Reachable level court floors may address houses. Do not register them as
+	## excavated passages: their existing deck owns paving and support.
+	var out := {}
+	var flights := excavation.flight_cells()
+	for plot: Dictionary in plots:
+		if plot.kind != PLOT_DECK:
+			continue
+		var flat := {}
+		for column: Vector2i in deck_flat_columns(plot):
+			flat[column] = true
+		var entries := {}
+		for column: Vector2i in flat:
+			for step: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+				var neighbor := column + step
+				var walk := Vector3i(neighbor.x, int(plot.floor), neighbor.y)
+				if passage_kinds.has(walk) and not flights.has(walk):
+					entries[column] = true
+		if plot.has("access_transition"):
+			var access: Dictionary = plot.access_transition
+			var start: Vector3i = access.from
+			var end: Vector3i = access.to
+			if start.y == int(plot.floor) and passage_kinds.has(end) and not flights.has(end):
+				for step: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+					var neighbor := Vector2i(start.x,start.z) + step
+					if flat.has(neighbor):
+						entries[neighbor] = true
+		var pending: Array = entries.keys()
+		var visited := entries.duplicate()
+		while not pending.is_empty():
+			var column: Vector2i = pending.pop_back()
+			out[Vector3i(column.x,int(plot.floor),column.y)] = true
+			for step: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+				var neighbor := column + step
+				if flat.has(neighbor) and not visited.has(neighbor):
+					visited[neighbor] = true
+					pending.append(neighbor)
 	return out
 
 
@@ -1311,6 +1434,8 @@ func deterministic_signature() -> String:
 			var access: Dictionary = plot.access_transition
 			plot_lines.append("deck-access:%s:%s>%s:%d" % [plot.id,
 				str(access.from),str(access.to),int(access.kind)])
+		if bool(plot.get("wall_room",false)):
+			plot_lines.append("wall-room:%s" % plot.id)
 		var plot_cells: Array[Vector2i] = []
 		plot_cells.assign(plot["cells"])
 		plot_cells.sort_custom(Callable(WarrenMazeSourcePlan, "_column_less"))
@@ -1432,10 +1557,11 @@ func _market_cell_count() -> int:
 	return cells.size()
 
 
-## Streets of a raised district (WarrenPlatformStreets) run along or on the
-## citadel's straight walls, so the alley straight-run cap does not apply.
+## Wall streets follow the citadel, and access streets connect separated
+## districts directly. Through-wall routes have their own bounded bore and
+## bearing proof; adding bends to satisfy an alley cadence would be spurious.
 const DISTRICT_LANE_KINDS: Array[StringName] = [&"citadel_gate", &"upper_town",
-	&"wall_street"]
+	&"wall_street", &"district_access", &"house_site_access", &"wall_tunnel"]
 
 
 func _max_alley_straight_run() -> int:

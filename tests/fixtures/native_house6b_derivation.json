@@ -1,0 +1,2763 @@
+{
+  "source": "assets/PureVillage/Models/Houses/House_6b.glb",
+  "complete": true,
+  "parts": [
+    {
+      "module": "Roof_Base_End_15x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Base_End_15x30_1.glb",
+      "matrix": [
+        -0.9999999999825899,
+        0.0,
+        -5.900858923217603e-06,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        5.900858923217603e-06,
+        0.0,
+        -0.9999999999825899,
+        0.0,
+        -4.5,
+        6.125,
+        -1.5,
+        1.0
+      ],
+      "source_node": 1,
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ]
+    },
+    {
+      "module": "Wall_End_30x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Wall_End_30x30_1.glb",
+      "matrix": [
+        2.220446049250313e-16,
+        0.0,
+        -0.9999999999999998,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.9999999999999998,
+        0.0,
+        2.220446049250313e-16,
+        0.0,
+        6.0,
+        0.0,
+        -1.5,
+        1.0
+      ],
+      "source_node": 3,
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "WallStone_Bottom_Middle_30x15",
+      "module_source": "assets/PureVillage/Models/Architecture/WallStone_Bottom_Middle_30x15.glb",
+      "matrix": [
+        2.220446049250313e-16,
+        0.0,
+        0.9999999999999998,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.9999999999999998,
+        0.0,
+        2.220446049250313e-16,
+        0.0,
+        -6.0,
+        -1.5,
+        1.5,
+        1.0
+      ],
+      "source_node": 5,
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Base_30x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Base_30x30_1.glb",
+      "matrix": [
+        -0.9999999999779163,
+        0.0,
+        -6.645916982887969e-06,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        6.645916982887969e-06,
+        0.0,
+        -0.9999999999779163,
+        0.0,
+        -3.0,
+        6.125,
+        -1.5,
+        1.0
+      ],
+      "source_node": 7,
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Base_Start_15x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Base_Start_15x30_1.glb",
+      "matrix": [
+        -0.9999999999825899,
+        0.0,
+        -5.900858923217603e-06,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        5.900858923217603e-06,
+        0.0,
+        -0.9999999999825899,
+        0.0,
+        4.5,
+        6.125,
+        -1.5,
+        1.0
+      ],
+      "source_node": 9,
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ]
+    },
+    {
+      "module": "Wall_Start_30x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Wall_Start_30x30_1.glb",
+      "matrix": [
+        2.220446049250313e-16,
+        0.0,
+        -0.9999999999999998,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.9999999999999998,
+        0.0,
+        2.220446049250313e-16,
+        0.0,
+        6.0,
+        0.0,
+        1.5,
+        1.0
+      ],
+      "source_node": 11,
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Base_30x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Base_30x30_1.glb",
+      "matrix": [
+        -0.9999999999779163,
+        0.0,
+        -6.645916982887969e-06,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        6.645916982887969e-06,
+        0.0,
+        -0.9999999999779163,
+        0.0,
+        0.0,
+        6.125,
+        -1.5,
+        1.0
+      ],
+      "source_node": 13,
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ]
+    },
+    {
+      "module": "Wall_End_30x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Wall_End_30x30_1.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        4.4554901123046875,
+        0.0,
+        3.0,
+        1.0
+      ],
+      "source_node": 15,
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "Wall_CutBendDown_End_30x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Wall_CutBendDown_End_30x30_1.glb",
+      "matrix": [
+        2.781691932352004e-06,
+        0.0,
+        -0.9999999999961309,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.9999999999961309,
+        0.0,
+        2.781691932352004e-06,
+        0.0,
+        6.0,
+        3.0,
+        0.0,
+        1.0
+      ],
+      "source_node": 17,
+      "materials": [
+        [
+          "Wood_1",
+          "Wood_3",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "Wall_Start_30x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Wall_Start_30x30_1.glb",
+      "matrix": [
+        2.220446049250313e-16,
+        0.0,
+        0.9999999999999998,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.9999999999999998,
+        0.0,
+        2.220446049250313e-16,
+        0.0,
+        -6.0,
+        0.0,
+        -1.5,
+        1.0
+      ],
+      "source_node": 19,
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "Wall_Start_30x10_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Wall_Start_30x10_1.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -4.5,
+        3.0,
+        3.0,
+        1.0
+      ],
+      "source_node": 21,
+      "materials": [
+        [
+          "Wood_2",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "WallStone_Bottom_Middle_30x15",
+      "module_source": "assets/PureVillage/Models/Architecture/WallStone_Bottom_Middle_30x15.glb",
+      "matrix": [
+        2.220446049250313e-16,
+        0.0,
+        -0.9999999999999998,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.9999999999999998,
+        0.0,
+        2.220446049250313e-16,
+        0.0,
+        5.9554901123046875,
+        -1.5,
+        -1.5,
+        1.0
+      ],
+      "source_node": 23,
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Base_Start_5x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Base_Start_5x30_1.glb",
+      "matrix": [
+        2.9502793219560175e-06,
+        0.0,
+        -0.9999999999956478,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.9999999999956478,
+        0.0,
+        2.9502793219560175e-06,
+        0.0,
+        1.5,
+        6.125,
+        4.5,
+        1.0
+      ],
+      "source_node": 25,
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Base_30x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Base_30x30_1.glb",
+      "matrix": [
+        -4.0460971851841165e-06,
+        0.0,
+        0.9999999999918145,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.9999999999918145,
+        0.0,
+        4.0460971851841165e-06,
+        0.0,
+        1.5,
+        6.125,
+        3.0,
+        1.0
+      ],
+      "source_node": 27,
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ]
+    },
+    {
+      "module": "WallStone_Bottom_End_15x15",
+      "module_source": "assets/PureVillage/Models/Architecture/WallStone_Bottom_End_15x15.glb",
+      "matrix": [
+        2.9502793219560175e-06,
+        0.0,
+        0.9999999999956478,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.9999999999956478,
+        0.0,
+        2.9502793219560175e-06,
+        0.0,
+        -2.9877471923828125,
+        -1.5,
+        2.9969329833984375,
+        1.0
+      ],
+      "source_node": 29,
+      "materials": [
+        [
+          "Stone_1",
+          "Stone_2",
+          "Stones"
+        ]
+      ]
+    },
+    {
+      "module": "WallStone_Bottom_End_15x15",
+      "module_source": "assets/PureVillage/Models/Architecture/WallStone_Bottom_End_15x15.glb",
+      "matrix": [
+        2.9502793219560175e-06,
+        0.0,
+        0.9999999999956478,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.9999999999956478,
+        0.0,
+        -2.9502793219560175e-06,
+        0.0,
+        3.0122528076171875,
+        -1.5,
+        2.9969329833984375,
+        1.0
+      ],
+      "source_node": 31,
+      "materials": [
+        [
+          "Stone_1",
+          "Stone_2",
+          "Stones"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Curved_InCorner_30x30x15_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Curved_InCorner_30x30x15_1.glb",
+      "matrix": [
+        2.9502793219560175e-06,
+        0.0,
+        -0.9999999999956478,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.9999999999956478,
+        0.0,
+        2.9502793219560175e-06,
+        0.0,
+        1.5,
+        6.125,
+        1.5,
+        1.0
+      ],
+      "source_node": 33,
+      "materials": [
+        [
+          "RoofTransition",
+          "RoofTiles",
+          "Planks_Full"
+        ]
+      ]
+    },
+    {
+      "module": "Stone_Corner_End_x15",
+      "module_source": "assets/PureVillage/Models/Architecture/Stone_Corner_End_x15.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        2.875,
+        -1.5,
+        4.25,
+        1.0
+      ],
+      "source_node": 35,
+      "materials": [
+        [
+          "Stone_1"
+        ]
+      ]
+    },
+    {
+      "module": "Wall_Middle1_30x10_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Wall_Middle1_30x10_1.glb",
+      "matrix": [
+        -0.9999999999825899,
+        0.0,
+        5.900858923217603e-06,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -5.900858923217603e-06,
+        0.0,
+        -0.9999999999825899,
+        0.0,
+        -1.5,
+        3.0,
+        -3.0,
+        1.0
+      ],
+      "source_node": 37,
+      "materials": [
+        [
+          "Wood_2",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Top30_Start_x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Top30_Start_x30_1.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -3.0,
+        9.125,
+        0.0,
+        1.0
+      ],
+      "source_node": 39,
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "RoofTopTiles"
+        ]
+      ]
+    },
+    {
+      "module": "Window_RoofCurved_1_2",
+      "module_source": "assets/PureVillage/Models/Architecture/Window_RoofCurved_1_2.glb",
+      "matrix": [
+        -0.9999999999825899,
+        0.0,
+        -5.900858923217603e-06,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        5.900858923217603e-06,
+        0.0,
+        -0.9999999999825899,
+        0.0,
+        -3.0,
+        6.125,
+        -1.5,
+        1.0
+      ],
+      "source_node": 41,
+      "materials": [
+        [
+          "RoofTransition",
+          "RoofTiles",
+          "Lit",
+          "Planks_Full",
+          "Window_1",
+          "Glass_Out",
+          "Glass_In",
+          "Wood_2",
+          "Wood_1",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "Wall_CutBendDown_Start_30x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Wall_CutBendDown_Start_30x30_1.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        3.0,
+        4.5,
+        1.0
+      ],
+      "source_node": 43,
+      "materials": [
+        [
+          "Wood_1",
+          "Wood_3",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "Stone_Corner_End_x15",
+      "module_source": "assets/PureVillage/Models/Architecture/Stone_Corner_End_x15.glb",
+      "matrix": [
+        -0.9999999999999964,
+        0.0,
+        -8.74227765734757e-08,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        8.74227765734757e-08,
+        0.0,
+        -0.9999999999999964,
+        0.0,
+        -6.0,
+        -1.5,
+        -3.0,
+        1.0
+      ],
+      "source_node": 45,
+      "materials": [
+        [
+          "Stone_1"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Top30_Start_x15_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Top30_Start_x15_1.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -4.5,
+        9.125,
+        0.0,
+        1.0
+      ],
+      "source_node": 47,
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "RoofTopTiles"
+        ]
+      ]
+    },
+    {
+      "module": "WallStone_Bottom_Middle_30x15",
+      "module_source": "assets/PureVillage/Models/Architecture/WallStone_Bottom_Middle_30x15.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        1.5,
+        -1.5,
+        4.5,
+        1.0
+      ],
+      "source_node": 49,
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Curved_End_15x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Curved_End_15x30_1.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        4.5,
+        6.125,
+        1.5,
+        1.0
+      ],
+      "source_node": 51,
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ]
+    },
+    {
+      "module": "Wall_End_15x10_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Wall_End_15x10_1.glb",
+      "matrix": [
+        2.9502793219560175e-06,
+        0.0,
+        0.9999999999956478,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.9999999999956478,
+        0.0,
+        2.9502793219560175e-06,
+        0.0,
+        -3.0,
+        3.0,
+        3.0,
+        1.0
+      ],
+      "source_node": 53,
+      "materials": [
+        [
+          "Wood_1",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "Stone_Corner_Start_x15",
+      "module_source": "assets/PureVillage/Models/Architecture/Stone_Corner_Start_x15.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -3.0,
+        -1.5,
+        4.25,
+        1.0
+      ],
+      "source_node": 55,
+      "materials": [
+        [
+          "Stone_1"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Top30_Start_x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Top30_Start_x30_1.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        3.0,
+        9.125,
+        0.0,
+        1.0
+      ],
+      "source_node": 57,
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "RoofTopTiles"
+        ]
+      ]
+    },
+    {
+      "module": "Wall_End_30x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Wall_End_30x30_1.glb",
+      "matrix": [
+        2.220446049250313e-16,
+        0.0,
+        0.9999999999999998,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.9999999999999998,
+        0.0,
+        2.220446049250313e-16,
+        0.0,
+        -6.0,
+        0.0,
+        1.5,
+        1.0
+      ],
+      "source_node": 59,
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "WallStone_Bottom_Middle_30x15",
+      "module_source": "assets/PureVillage/Models/Architecture/WallStone_Bottom_Middle_30x15.glb",
+      "matrix": [
+        -0.9999999999999964,
+        0.0,
+        -8.74227765734757e-08,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        8.74227765734757e-08,
+        0.0,
+        -0.9999999999999964,
+        0.0,
+        4.4554901123046875,
+        -1.5,
+        -3.0,
+        1.0
+      ],
+      "source_node": 61,
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ]
+    },
+    {
+      "module": "WallStone_Bottom_Middle_30x15",
+      "module_source": "assets/PureVillage/Models/Architecture/WallStone_Bottom_Middle_30x15.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -4.5,
+        -1.5,
+        3.0,
+        1.0
+      ],
+      "source_node": 63,
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ]
+    },
+    {
+      "module": "Stone_Corner_Start_x15",
+      "module_source": "assets/PureVillage/Models/Architecture/Stone_Corner_Start_x15.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -6.0,
+        -1.5,
+        3.0,
+        1.0
+      ],
+      "source_node": 65,
+      "materials": [
+        [
+          "Stone_1"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Base_Start_15x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Base_Start_15x30_1.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -4.5,
+        6.125,
+        1.5,
+        1.0
+      ],
+      "source_node": 67,
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Curved_Start_15x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Curved_Start_15x30_1.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -4.5,
+        6.125,
+        1.5,
+        1.0
+      ],
+      "source_node": 69,
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ]
+    },
+    {
+      "module": "Wall_End_30x10_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Wall_End_30x10_1.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        4.5,
+        3.0,
+        3.0,
+        1.0
+      ],
+      "source_node": 71,
+      "materials": [
+        [
+          "Wood_2",
+          "Wood_1",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "Wall_End_30x10_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Wall_End_30x10_1.glb",
+      "matrix": [
+        -0.9999999999825899,
+        0.0,
+        5.900858923217603e-06,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -5.900858923217603e-06,
+        0.0,
+        -0.9999999999825899,
+        0.0,
+        -4.5,
+        3.0,
+        -3.0,
+        1.0
+      ],
+      "source_node": 73,
+      "materials": [
+        [
+          "Wood_2",
+          "Wood_1",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Base_End_5x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Base_End_5x30_1.glb",
+      "matrix": [
+        9.609480814742888e-06,
+        0.0,
+        0.9999999999538289,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.9999999999538289,
+        0.0,
+        9.609480814742888e-06,
+        0.0,
+        -1.5,
+        6.125,
+        4.5,
+        1.0
+      ],
+      "source_node": 75,
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ]
+    },
+    {
+      "module": "Wall_CutBendDown_Start_30x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Wall_CutBendDown_Start_30x30_1.glb",
+      "matrix": [
+        -8.766543901028712e-06,
+        0.0,
+        -0.9999999999615738,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.9999999999615738,
+        0.0,
+        -8.766543901028712e-06,
+        0.0,
+        6.0,
+        3.0,
+        -0.0299835205078125,
+        1.0
+      ],
+      "source_node": 77,
+      "materials": [
+        [
+          "Wood_1",
+          "Wood_3",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "Stone_Corner_Start_x15",
+      "module_source": "assets/PureVillage/Models/Architecture/Stone_Corner_Start_x15.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -3.0,
+        -1.5,
+        4.5,
+        1.0
+      ],
+      "source_node": 79,
+      "materials": [
+        [
+          "Stone_1"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Top30_Start_x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Top30_Start_x30_1.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        9.125,
+        0.0,
+        1.0
+      ],
+      "source_node": 81,
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "RoofTopTiles"
+        ]
+      ]
+    },
+    {
+      "module": "Wall_Start_15x10_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Wall_Start_15x10_1.glb",
+      "matrix": [
+        2.9502793219560175e-06,
+        0.0,
+        0.9999999999956478,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.9999999999956478,
+        0.0,
+        -2.9502793219560175e-06,
+        0.0,
+        3.0,
+        3.0,
+        4.5,
+        1.0
+      ],
+      "source_node": 83,
+      "materials": [
+        [
+          "Wood_1",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "Wall_Start_15x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Wall_Start_15x30_1.glb",
+      "matrix": [
+        3.0345728890823764e-06,
+        0.0,
+        -0.9999999999953956,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.9999999999953956,
+        0.0,
+        3.0345728890823764e-06,
+        0.0,
+        3.0,
+        0.0,
+        3.0,
+        1.0
+      ],
+      "source_node": 85,
+      "materials": [
+        [
+          "Wood_1",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "WallStone_Bottom_Middle_30x15",
+      "module_source": "assets/PureVillage/Models/Architecture/WallStone_Bottom_Middle_30x15.glb",
+      "matrix": [
+        -0.9999999999999964,
+        0.0,
+        -8.74227765734757e-08,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        8.74227765734757e-08,
+        0.0,
+        -0.9999999999999964,
+        0.0,
+        -4.5,
+        -1.5,
+        -3.0,
+        1.0
+      ],
+      "source_node": 87,
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ]
+    },
+    {
+      "module": "Stone_Corner_Start_x15",
+      "module_source": "assets/PureVillage/Models/Architecture/Stone_Corner_Start_x15.glb",
+      "matrix": [
+        2.9502793219560175e-06,
+        0.0,
+        -0.9999999999956478,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.9999999999956478,
+        0.0,
+        2.9502793219560175e-06,
+        0.0,
+        3.0,
+        -1.5,
+        4.5,
+        1.0
+      ],
+      "source_node": 89,
+      "materials": [
+        [
+          "Stone_1"
+        ]
+      ]
+    },
+    {
+      "module": "WallStone_Bottom_Middle_30x15",
+      "module_source": "assets/PureVillage/Models/Architecture/WallStone_Bottom_Middle_30x15.glb",
+      "matrix": [
+        2.220446049250313e-16,
+        0.0,
+        0.9999999999999998,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.9999999999999998,
+        0.0,
+        2.220446049250313e-16,
+        0.0,
+        -6.0,
+        -1.5,
+        -1.5,
+        1.0
+      ],
+      "source_node": 91,
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Top30_Start_x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Top30_Start_x30_1.glb",
+      "matrix": [
+        2.9502793219560175e-06,
+        0.0,
+        0.9999999999956478,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.9999999999956478,
+        0.0,
+        2.9502793219560175e-06,
+        0.0,
+        0.0,
+        9.125,
+        3.0,
+        1.0
+      ],
+      "source_node": 93,
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "RoofTopTiles"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Top30_Start_x10",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Top30_Start_x10.glb",
+      "matrix": [
+        2.2544797528847704e-06,
+        0.0,
+        0.7641580700841071,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.9999999999956478,
+        0.0,
+        2.9502793219560175e-06,
+        0.0,
+        0.0,
+        9.125,
+        1.5,
+        1.0
+      ],
+      "source_node": 95,
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "RoofTopTiles"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Base_30x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Base_30x30_1.glb",
+      "matrix": [
+        -0.9999999999779163,
+        0.0,
+        -6.645916982887969e-06,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        6.645916982887969e-06,
+        0.0,
+        -0.9999999999779163,
+        0.0,
+        3.0,
+        6.125,
+        -1.5,
+        1.0
+      ],
+      "source_node": 97,
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ]
+    },
+    {
+      "module": "WallStone_Bottom_Middle_30x15",
+      "module_source": "assets/PureVillage/Models/Architecture/WallStone_Bottom_Middle_30x15.glb",
+      "matrix": [
+        -0.9999999999999964,
+        0.0,
+        -8.74227765734757e-08,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        8.74227765734757e-08,
+        0.0,
+        -0.9999999999999964,
+        0.0,
+        -4.5,
+        -1.5,
+        -3.0,
+        1.0
+      ],
+      "source_node": 99,
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Curved_Start_15x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Curved_Start_15x30_1.glb",
+      "matrix": [
+        -0.9999999999825899,
+        0.0,
+        -5.900858923217603e-06,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        5.900858923217603e-06,
+        0.0,
+        -0.9999999999825899,
+        0.0,
+        4.5,
+        6.125,
+        -1.5,
+        1.0
+      ],
+      "source_node": 101,
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ]
+    },
+    {
+      "module": "Wall_End_30x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Wall_End_30x30_1.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        1.5,
+        0.0,
+        4.5,
+        1.0
+      ],
+      "source_node": 103,
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Base_30x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Base_30x30_1.glb",
+      "matrix": [
+        1.6858738273173302e-06,
+        0.0,
+        0.9999999999985788,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.9999999999985788,
+        0.0,
+        1.6858738273173302e-06,
+        0.0,
+        -1.5,
+        6.125,
+        3.0,
+        1.0
+      ],
+      "source_node": 105,
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ]
+    },
+    {
+      "module": "Wall_CutBendDown_End_30x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Wall_CutBendDown_End_30x30_1.glb",
+      "matrix": [
+        3.0345728890823764e-06,
+        0.0,
+        0.9999999999953956,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.9999999999953956,
+        0.0,
+        3.0345728890823764e-06,
+        0.0,
+        -6.0,
+        3.0,
+        0.0,
+        1.0
+      ],
+      "source_node": 107,
+      "materials": [
+        [
+          "Wood_1",
+          "Wood_3",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "Wall_CutBendDown_Start_30x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Wall_CutBendDown_Start_30x30_1.glb",
+      "matrix": [
+        3.0345728890823764e-06,
+        0.0,
+        0.9999999999953956,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.9999999999953956,
+        0.0,
+        3.0345728890823764e-06,
+        0.0,
+        -6.0,
+        3.0,
+        0.0,
+        1.0
+      ],
+      "source_node": 109,
+      "materials": [
+        [
+          "Wood_1",
+          "Wood_3",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "Wall_Peak_30x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Wall_Peak_30x30_1.glb",
+      "matrix": [
+        2.9502793219560175e-06,
+        0.0,
+        0.9999999999956478,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.9999999999956478,
+        0.0,
+        2.9502793219560175e-06,
+        0.0,
+        -6.0,
+        6.0,
+        0.0,
+        1.0
+      ],
+      "source_node": 111,
+      "materials": [
+        [
+          "Wood_1",
+          "Wood_3",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "Wall_Peak_30x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Wall_Peak_30x30_1.glb",
+      "matrix": [
+        2.9502793219560175e-06,
+        0.0,
+        0.9999999999956478,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.9999999999956478,
+        0.0,
+        -2.9502793219560175e-06,
+        0.0,
+        6.0,
+        6.0,
+        0.0,
+        1.0
+      ],
+      "source_node": 113,
+      "materials": [
+        [
+          "Wood_1",
+          "Wood_3",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Curved_End_15x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Curved_End_15x30_1.glb",
+      "matrix": [
+        -0.9999999999825899,
+        0.0,
+        -5.900858923217603e-06,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        5.900858923217603e-06,
+        0.0,
+        -0.9999999999825899,
+        0.0,
+        -4.5,
+        6.125,
+        -1.5,
+        1.0
+      ],
+      "source_node": 115,
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ]
+    },
+    {
+      "module": "Stone_Corner_Start_x15",
+      "module_source": "assets/PureVillage/Models/Architecture/Stone_Corner_Start_x15.glb",
+      "matrix": [
+        -0.9999999999999964,
+        0.0,
+        -8.74227765734757e-08,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        8.74227765734757e-08,
+        0.0,
+        -0.9999999999999964,
+        0.0,
+        5.9554901123046875,
+        -1.5,
+        -3.0,
+        1.0
+      ],
+      "source_node": 117,
+      "materials": [
+        [
+          "Stone_1"
+        ]
+      ]
+    },
+    {
+      "module": "Window_RoofCurved_1_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Window_RoofCurved_1_1.glb",
+      "matrix": [
+        -0.9999999999825899,
+        0.0,
+        -5.900858923217603e-06,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        5.900858923217603e-06,
+        0.0,
+        -0.9999999999825899,
+        0.0,
+        3.0,
+        6.125,
+        -1.5,
+        1.0
+      ],
+      "source_node": 119,
+      "materials": [
+        [
+          "RoofTransition",
+          "RoofTiles",
+          "Lit",
+          "Planks_Full",
+          "Window_1",
+          "Glass_Out",
+          "Glass_In",
+          "Wood_2",
+          "Wood_1",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Curved_30x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Curved_30x30_1.glb",
+      "matrix": [
+        -0.9999999999825899,
+        0.0,
+        -5.900858923217603e-06,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        5.900858923217603e-06,
+        0.0,
+        -0.9999999999825899,
+        0.0,
+        0.0,
+        6.125,
+        -1.5,
+        1.0
+      ],
+      "source_node": 121,
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_1"
+        ]
+      ]
+    },
+    {
+      "module": "WallStone_Bottom_Middle_30x15",
+      "module_source": "assets/PureVillage/Models/Architecture/WallStone_Bottom_Middle_30x15.glb",
+      "matrix": [
+        2.220446049250313e-16,
+        0.0,
+        -0.9999999999999998,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.9999999999999998,
+        0.0,
+        2.220446049250313e-16,
+        0.0,
+        5.9554901123046875,
+        -1.5,
+        1.5,
+        1.0
+      ],
+      "source_node": 123,
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ]
+    },
+    {
+      "module": "Wall_Middle1_30x10_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Wall_Middle1_30x10_1.glb",
+      "matrix": [
+        -0.9999999999825899,
+        0.0,
+        5.900858923217603e-06,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -5.900858923217603e-06,
+        0.0,
+        -0.9999999999825899,
+        0.0,
+        4.4554901123046875,
+        3.0,
+        -3.0,
+        1.0
+      ],
+      "source_node": 125,
+      "materials": [
+        [
+          "Wood_2",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "Wall_End_15x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Wall_End_15x30_1.glb",
+      "matrix": [
+        3.0345728890823764e-06,
+        0.0,
+        0.9999999999953956,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.9999999999953956,
+        0.0,
+        3.0345728890823764e-06,
+        0.0,
+        -3.0000839233398438,
+        0.0,
+        3.0,
+        1.0
+      ],
+      "source_node": 127,
+      "materials": [
+        [
+          "Wood_1",
+          "Wood_3",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Curved_InCorner_30x30x15_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Curved_InCorner_30x30x15_1.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.5,
+        6.125,
+        1.5,
+        1.0
+      ],
+      "source_node": 129,
+      "materials": [
+        [
+          "RoofTransition",
+          "RoofTiles",
+          "Planks_Full"
+        ]
+      ]
+    },
+    {
+      "module": "WallStone_Bottom_Middle_30x15",
+      "module_source": "assets/PureVillage/Models/Architecture/WallStone_Bottom_Middle_30x15.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.5,
+        -1.5,
+        4.5,
+        1.0
+      ],
+      "source_node": 131,
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ]
+    },
+    {
+      "module": "Wall_Middle1_30x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Wall_Middle1_30x30_1.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.5,
+        0.0,
+        4.5,
+        1.0
+      ],
+      "source_node": 133,
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Base_30x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Base_30x30_1.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -3.0,
+        6.125,
+        1.5,
+        1.0
+      ],
+      "source_node": 135,
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Curved_Start_5x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Curved_Start_5x30_1.glb",
+      "matrix": [
+        2.9502793219560175e-06,
+        0.0,
+        -0.9999999999956478,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.9999999999956478,
+        0.0,
+        2.9502793219560175e-06,
+        0.0,
+        1.5,
+        6.125,
+        4.5,
+        1.0
+      ],
+      "source_node": 137,
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Base_End_15x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Base_End_15x30_1.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        4.5,
+        6.125,
+        1.5,
+        1.0
+      ],
+      "source_node": 139,
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ]
+    },
+    {
+      "module": "WallStone_Bottom_Middle_30x15",
+      "module_source": "assets/PureVillage/Models/Architecture/WallStone_Bottom_Middle_30x15.glb",
+      "matrix": [
+        -0.9999999999999964,
+        0.0,
+        -8.74227765734757e-08,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        8.74227765734757e-08,
+        0.0,
+        -0.9999999999999964,
+        0.0,
+        -1.5,
+        -1.5,
+        -3.0,
+        1.0
+      ],
+      "source_node": 141,
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ]
+    },
+    {
+      "module": "WallStone_Bottom_Middle_30x15",
+      "module_source": "assets/PureVillage/Models/Architecture/WallStone_Bottom_Middle_30x15.glb",
+      "matrix": [
+        -0.9999999999999964,
+        0.0,
+        -8.74227765734757e-08,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        8.74227765734757e-08,
+        0.0,
+        -0.9999999999999964,
+        0.0,
+        1.5,
+        -1.5,
+        -3.0,
+        1.0
+      ],
+      "source_node": 143,
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Base_InCorner_15x15_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Base_InCorner_15x15_1.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.5,
+        6.125,
+        1.5,
+        1.0
+      ],
+      "source_node": 145,
+      "materials": [
+        [
+          "RoofTransition_1",
+          "Planks_Full",
+          "RoofTiles"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Curved_End_5x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Curved_End_5x30_1.glb",
+      "matrix": [
+        9.778068197463519e-06,
+        0.0,
+        0.9999999999521946,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.9999999999521946,
+        0.0,
+        9.778068197463519e-06,
+        0.0,
+        -1.5,
+        6.125,
+        4.5,
+        1.0
+      ],
+      "source_node": 147,
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ]
+    },
+    {
+      "module": "WallStone_Bottom_Middle_30x15",
+      "module_source": "assets/PureVillage/Models/Architecture/WallStone_Bottom_Middle_30x15.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        4.4554901123046875,
+        -1.5,
+        3.0,
+        1.0
+      ],
+      "source_node": 149,
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ]
+    },
+    {
+      "module": "Stone_Corner_End_x15",
+      "module_source": "assets/PureVillage/Models/Architecture/Stone_Corner_End_x15.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        5.9554901123046875,
+        -1.5,
+        3.0,
+        1.0
+      ],
+      "source_node": 151,
+      "materials": [
+        [
+          "Stone_1"
+        ]
+      ]
+    },
+    {
+      "module": "Wall_Start_30x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Wall_Start_30x30_1.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -4.5,
+        0.0,
+        3.0,
+        1.0
+      ],
+      "source_node": 153,
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Top30_End_x15_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Top30_End_x15_1.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        4.5,
+        9.125,
+        0.0,
+        1.0
+      ],
+      "source_node": 155,
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "RoofTopTiles"
+        ]
+      ]
+    },
+    {
+      "module": "Wall_Middle1_30x10_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Wall_Middle1_30x10_1.glb",
+      "matrix": [
+        -0.9999999999825899,
+        0.0,
+        5.900858923217603e-06,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -5.900858923217603e-06,
+        0.0,
+        -0.9999999999825899,
+        0.0,
+        1.5,
+        3.0,
+        -3.0,
+        1.0
+      ],
+      "source_node": 157,
+      "materials": [
+        [
+          "Wood_2",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Base_InCorner_15x15_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Base_InCorner_15x15_1.glb",
+      "matrix": [
+        2.275929762651785e-06,
+        0.0,
+        -0.99999999999741,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.99999999999741,
+        0.0,
+        2.275929762651785e-06,
+        0.0,
+        1.5,
+        6.125,
+        1.5,
+        1.0
+      ],
+      "source_node": 159,
+      "materials": [
+        [
+          "RoofTransition_1",
+          "Planks_Full",
+          "RoofTiles"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Top30_End_x5_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Top30_End_x5_1.glb",
+      "matrix": [
+        2.9502793219560175e-06,
+        0.0,
+        0.9999999999956478,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.9999999999956478,
+        0.0,
+        2.9502793219560175e-06,
+        0.0,
+        0.0,
+        9.125,
+        4.5,
+        1.0
+      ],
+      "source_node": 161,
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "RoofTopTiles"
+        ]
+      ]
+    },
+    {
+      "module": "Wall_CutBendDown_End_30x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Wall_CutBendDown_End_30x30_1.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        3.0,
+        4.5,
+        1.0
+      ],
+      "source_node": 163,
+      "materials": [
+        [
+          "Wood_1",
+          "Wood_3",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "Roof_Base_30x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Roof_Base_30x30_1.glb",
+      "matrix": [
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        3.0,
+        6.125,
+        1.5,
+        1.0
+      ],
+      "source_node": 165,
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ]
+    },
+    {
+      "module": "Wall_Peak_30x30_1",
+      "module_source": "assets/PureVillage/Models/Architecture/Wall_Peak_30x30_1.glb",
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        6.0,
+        4.5,
+        1.0
+      ],
+      "source_node": 167,
+      "materials": [
+        [
+          "Wood_1",
+          "Wood_3",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "StoreFacade2",
+      "module_source": "assets/PureVillage/Models/Structures/StoreFacade2.glb",
+      "matrix": [
+        -0.9999999999926104,
+        0.0,
+        -3.84449913325114e-06,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        3.84449913325114e-06,
+        0.0,
+        -0.9999999999926104,
+        0.0,
+        -1.5,
+        0.125,
+        -3.0,
+        1.0
+      ],
+      "source_node": 169,
+      "materials": [
+        [
+          "Stone_2"
+        ],
+        [
+          "Wood_2",
+          "Wood_1"
+        ],
+        [
+          "Stones"
+        ],
+        [
+          "Stones"
+        ],
+        [
+          "Stones"
+        ],
+        [
+          "Wood_2"
+        ],
+        [
+          "Wood_2"
+        ],
+        [
+          "Wood_2"
+        ],
+        [
+          "DoorShutter_1",
+          "Metal_1",
+          "Wood_2"
+        ],
+        [
+          "Stone_1"
+        ],
+        [
+          "Wood_2"
+        ],
+        [
+          "Wood_3"
+        ],
+        [
+          "Wood_3"
+        ],
+        [
+          "Wood_2"
+        ],
+        [
+          "Wood_3"
+        ],
+        [
+          "Wood_2"
+        ],
+        [
+          "Wood_1"
+        ],
+        [
+          "Wood_3"
+        ],
+        [
+          "Wood_2"
+        ],
+        [
+          "Wood_2"
+        ],
+        [
+          "Glass"
+        ],
+        [
+          "Wood_2"
+        ],
+        [
+          "Glass"
+        ]
+      ]
+    },
+    {
+      "module": "StoreFacade2",
+      "module_source": "assets/PureVillage/Models/Structures/StoreFacade2.glb",
+      "matrix": [
+        -0.9999999999926104,
+        0.0,
+        -3.84449913325114e-06,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        3.84449913325114e-06,
+        0.0,
+        -0.9999999999926104,
+        0.0,
+        4.25,
+        0.125,
+        -3.0,
+        1.0
+      ],
+      "source_node": 214,
+      "materials": [
+        [
+          "Stone_2"
+        ],
+        [
+          "Wood_2",
+          "Wood_1"
+        ],
+        [
+          "Stones"
+        ],
+        [
+          "Stones"
+        ],
+        [
+          "Stones"
+        ],
+        [
+          "Wood_2"
+        ],
+        [
+          "Wood_2"
+        ],
+        [
+          "Wood_2"
+        ],
+        [
+          "DoorShutter_1",
+          "Metal_1",
+          "Wood_2"
+        ],
+        [
+          "Stone_1"
+        ],
+        [
+          "Wood_2"
+        ],
+        [
+          "Wood_3"
+        ],
+        [
+          "Wood_3"
+        ],
+        [
+          "Wood_2"
+        ],
+        [
+          "Wood_3"
+        ],
+        [
+          "Wood_2"
+        ],
+        [
+          "Wood_1"
+        ],
+        [
+          "Wood_3"
+        ],
+        [
+          "Wood_2"
+        ],
+        [
+          "Wood_2"
+        ],
+        [
+          "Glass"
+        ],
+        [
+          "Wood_2"
+        ],
+        [
+          "Glass"
+        ]
+      ]
+    },
+    {
+      "module": "Window_Roof_3_3",
+      "module_source": "assets/PureVillage/Models/Architecture/Window_Roof_3_3.glb",
+      "matrix": [
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        4.625,
+        4.125,
+        2.5,
+        1.0
+      ],
+      "source_node": 259,
+      "materials": [
+        [
+          "RoofTransition",
+          "RoofTiles",
+          "Planks_Full",
+          "RoofTopTiles",
+          "Glass_Out",
+          "Glass_In",
+          "Window_1",
+          "Wood_1",
+          "Plaster"
+        ]
+      ]
+    },
+    {
+      "module": "Window_Roof_3_3",
+      "module_source": "assets/PureVillage/Models/Architecture/Window_Roof_3_3.glb",
+      "matrix": [
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -4.625,
+        4.125,
+        2.5,
+        1.0
+      ],
+      "source_node": 261,
+      "materials": [
+        [
+          "RoofTransition",
+          "RoofTiles",
+          "Planks_Full",
+          "RoofTopTiles",
+          "Glass_Out",
+          "Glass_In",
+          "Window_1",
+          "Wood_1",
+          "Plaster"
+        ]
+      ]
+    }
+  ],
+  "unmatched": []
+}

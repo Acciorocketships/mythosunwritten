@@ -43,6 +43,7 @@ func context_for(block: Vector2i, cancelled := Callable()) -> FeatureContext:
 	var surface_shapes: Array[FeatureGroundShape] = []
 	var clearance_shapes: Array[FeatureGroundShape] = []
 	var village_payload := EnvironmentInstancePayload.new()
+	var garden_supports: Array[Dictionary] = []
 	var grades: Array[TerrainGradePatch] = []
 	# Dressing may carry a broad canopy into this block from an anchor outside
 	# it. Discover records over the same complete context used by reservation
@@ -58,6 +59,12 @@ func context_for(block: Vector2i, cancelled := Callable()) -> FeatureContext:
 			if shape.bounds().grow(_program.maximum_clearance).intersects(
 					path_context.coverage(), true):
 				clearance_shapes.append(shape)
+		# Grass support is spatial query data, independent of the town's single
+		# render owner. Neighbouring chunks need the same elevated garden edges.
+		for mesh: Dictionary in record.payload.surface_meshes:
+			for support: Dictionary in mesh.get("garden_grass_regions",[]):
+				if (support.bounds as Rect2).intersects(path_context.coverage(),true):
+					garden_supports.append(support)
 		# A village is already one sealed atomic record whose maximum reach is
 		# smaller than one streaming block. Own its complete render/collision
 		# payload from the block containing the canonical centre. Splitting the
@@ -70,6 +77,7 @@ func context_for(block: Vector2i, cancelled := Callable()) -> FeatureContext:
 	var context := path_context.extended(surface_shapes, clearance_shapes,
 		EnvironmentInstancePayload.new(), Rect2())
 	context.terrain_grades = grades
+	context.garden_support_regions = garden_supports
 	# Path reservations are solved on natural terrain. Ground-mounted props
 	# receive their final vertical attachment after the town's grade is sealed.
 	# Do this before adding village placements: terrace props already have an
@@ -147,17 +155,14 @@ func _records_affecting(core: Rect2) -> Array[VillageRecord]:
 			var site := _settlements.site_for(super_cell)
 			if site.is_empty():
 				continue
-			var site_centre := Vector2(site.cell) * HeightfieldPlan.CELL
-			var layout_bound := Rect2(site_centre - Vector2.ONE \
-				* _village_program.layout_record_radius,
-				Vector2.ONE * _village_program.layout_record_radius * 2.0)
+			var layout_bound := _villages.discovery_bound_for_cell(site.cell)
 			if not layout_bound.intersects(control_query.grow(
 					_program.maximum_clearance), true):
 				continue
 			var frame := frame_for(super_cell)
 			if frame == null:
 				continue
-			var conservative := _village_program.record_bound(frame.centre)
+			var conservative := layout_bound
 			if not conservative.intersects(control_query.grow(
 					_program.maximum_clearance), true):
 				continue

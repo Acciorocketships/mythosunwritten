@@ -1,0 +1,10 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+roof.red.eave (-4.0, 3.0, 8.0) raw 25.9851883065421 lost 0.79729331702401
+roof.red.eave (-2.0, 3.0, 8.0) raw 25.9851880942006 lost -0.00000084102612
+roof.red.eave (0.0, 3.0, 8.0) raw 25.9851880429778 lost 0.00000009923679
+roof.red.eave (2.0, 3.0, 8.0) raw 25.9851878054906 lost -0.00000014901161
+roof.red.eave (4.0, 3.0, 8.0) raw 25.9851885859389 lost 0.00000027567148
+trim.barge.eave (-5.0, 3.0, 8.0) raw 3.82680248375982 lost 0.2763264866735

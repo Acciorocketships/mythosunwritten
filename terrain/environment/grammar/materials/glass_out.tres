@@ -1,0 +1,18 @@
+[gd_resource type="StandardMaterial3D" load_steps=4 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/PureVillage/Textures/Window/Window_a_1001.png" id="1_huo7x"]
+[ext_resource type="Texture2D" path="res://assets/PureVillage/Textures/Window/Window_mask_1001_MOS_84_50.png" id="2_upy8b"]
+[ext_resource type="Texture2D" path="res://assets/PureVillage/Textures/Window/Window_n_1001.png" id="3_vab6c"]
+
+[resource]
+resource_name = "Glass_Out"
+albedo_texture = ExtResource("1_huo7x")
+metallic = 1.0
+metallic_texture = ExtResource("2_upy8b")
+metallic_texture_channel = 2
+roughness_texture = ExtResource("2_upy8b")
+roughness_texture_channel = 1
+normal_enabled = true
+normal_texture = ExtResource("3_vab6c")
+ao_enabled = true
+ao_texture = ExtResource("2_upy8b")

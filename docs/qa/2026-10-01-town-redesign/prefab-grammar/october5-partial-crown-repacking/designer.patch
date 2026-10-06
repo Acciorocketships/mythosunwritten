@@ -1,0 +1,30 @@
+--- scripts/terrain/features/villages/kit/BuildingDesigner.gd
++++ scripts/terrain/features/villages/kit/BuildingDesigner.gd
+@@ -912,6 +912,12 @@
+ func _repack_slivers(mass: BuildingMass, rectangles: Array[Rect2i],
+ 		exposed: Dictionary, band: int) -> Array[Rect2i]:
+ 	var out := rectangles.duplicate()
++	# A blocked portion already falls back to a deck. Preserve that option
++	# while recovering a proper roof from the clear portion of the same crown.
++	var flat_cells := {}
++	for original: Rect2i in rectangles:
++		if not _roof_fits(mass, original, 0, band) and not _roof_fits(mass, original, 1, band):
++			flat_cells.merge(BuildingMass.rect_cells(original))
+ 	var improved := true
+ 	while improved:
+ 		improved = false
+@@ -941,8 +947,12 @@
+ 				var repacked := decompose(remainder)
+ 				repacked.append(wing)
+ 				for part: Rect2i in repacked:
+-					if not _roof_fits(mass, part, 0, band) and not _roof_fits(mass, part, 1, band):
+-						valid = false
++					if _roof_fits(mass, part, 0, band) or _roof_fits(mass, part, 1, band): continue
++					# The new wing must fit. A remainder may stay flat only on
++					# cells that belonged to an already unroofable rectangle.
++					if part == wing: valid = false
++					for cell: Vector2i in BuildingMass.rect_cells(part):
++						if not flat_cells.has(cell): valid = false
+ 				if not valid: continue
+ 				kept.append_array(repacked)
+ 				if _slivers(kept) >= _slivers(out): continue

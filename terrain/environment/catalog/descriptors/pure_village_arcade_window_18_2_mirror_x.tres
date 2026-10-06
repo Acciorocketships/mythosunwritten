@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_e7dgo"]
+
+[resource]
+script = ExtResource("1_e7dgo")
+id = &"pure_village.arcade.window_18_2.mirror_x"
+visual_path = "res://terrain/environment/visuals/pure_village_arcade_grammar/pure_village_arcade_window_18_2_mirror_x.tres"
+tags = Array[StringName]([&"building", &"pure_village_native_grammar", &"village"])
+measured_aabb = AABB(-1.5758209, 0, -0.2640381, 3.1412125, 3.1600327, 0.5308691)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"pure_village_arcade_grammar:pure_village.arcade.window_18_2.mirror_x"

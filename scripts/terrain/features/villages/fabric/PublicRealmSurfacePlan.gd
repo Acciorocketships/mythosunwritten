@@ -123,8 +123,7 @@ func finish_transition_guards(wall_boxes: Array[AABB],
 		var span: Dictionary = payload.pending_guard_span
 		# Sloping guards share the finished native wall envelope with landing
 		# guards; coarse retained courses alone leave timber across upper rooms.
-		WarrenTransitionSurfaceBuilder._append_side_guards(payload,
-			span.start, span.end, span.lateral, true,
+		WarrenTransitionSurfaceBuilder.finish_profile_guards(payload, span,
 			_guard_wall_boxes + _raised_stair_side_barriers(span))
 		payload.erase("pending_guard_span")
 	return true
@@ -135,8 +134,8 @@ func _raised_stair_side_barriers(span: Dictionary) -> Array[AABB]:
 	# also closes the ends of any diagonal rail emerging from the retaining wall.
 	# End landings are excluded: their posts still receive the sloping handrail.
 	var out: Array[AABB] = []
-	var start: Vector3 = span.start
-	var end: Vector3 = span.end
+	var start: Vector3 = span.get("landing_start",span.start)
+	var end: Vector3 = span.get("landing_end",span.end)
 	var lateral: Vector3 = span.lateral
 	var run := ((end-start)*Vector3(1,0,1)).normalized()
 	var length := Vector2(end.x-start.x,end.z-start.z).length()

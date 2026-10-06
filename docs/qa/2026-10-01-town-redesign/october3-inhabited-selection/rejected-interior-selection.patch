@@ -1,0 +1,47 @@
+--- before/WarrenMazeCarver.gd
++++ candidate/WarrenMazeCarver.gd
+@@ -2139,20 +2139,22 @@
+ 			proof["exterior_depth_cells"] = exterior_depth
+ 			options.append({"span": span, "directions": directions,
+ 				"proof": proof, "direct_endpoints": direct_endpoints,
++				"massif_depth": _bridge_massif_depth(massif,proof),
+ 				"exterior_depth": exterior_depth,
+ 				"tie": WarrenPassageLatticeRules.hash_key(world_seed,
+ 					0xB21D6E, candidate, candidate_length + 17)})
+ 	options.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+ 		if int(a.direct_endpoints) != int(b.direct_endpoints):
+ 			return int(a.direct_endpoints) > int(b.direct_endpoints)
+-		# Once both endpoint houses are structurally equivalent, prefer a span
+-		# close to the massif perimeter.  It remains part of the same connected
+-		# route, but reads as a real house over open air from outside the town
+-		# instead of disappearing in the central roof cluster.
+-		if int(a.exterior_depth) != int(b.exterior_depth):
+-			return int(a.exterior_depth) < int(b.exterior_depth)
++		# Prefer an inhabited bore through existing mass over a freestanding
++		# bridge assembled above the rim. Both flanking rooms and the span must
++		# fit inside that mass; a tall central column alone is insufficient.
++		if int(a.massif_depth) != int(b.massif_depth):
++			return int(a.massif_depth) > int(b.massif_depth)
+ 		if (a.span as Array).size() != (b.span as Array).size():
+ 			return (a.span as Array).size() > (b.span as Array).size()
++		if int(a.exterior_depth) != int(b.exterior_depth):
++			return int(a.exterior_depth) > int(b.exterior_depth)
+ 		return int(a.tie) < int(b.tie))
+ 	for option: Dictionary in options:
+ 		if excavation.bridge_spans.size() >= quota:
+@@ -2171,6 +2173,15 @@
+ 		var directions := option.directions as Dictionary
+ 		for cell: Vector3i in span:
+ 			accepted[cell] = directions.get(cell, Vector2i.ZERO)
++
++
++static func _bridge_massif_depth(massif: WarrenMassif, proof: Dictionary) -> int:
++	var depth := MIN_HOUSE_BANDS
++	for cell: Vector3i in proof.cells:
++		depth = mini(depth,massif.top_at(Vector2i(cell.x,cell.z))-int(proof.floor))
++	for column: Vector2i in proof.room_flanks:
++		depth = mini(depth,massif.top_at(column)-int(proof.floor))
++	return maxi(0,depth)
+ 
+ 
+ static func _bridge_span_exterior_depth(massif: WarrenMassif,

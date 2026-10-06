@@ -1,0 +1,92 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_house_massif_height.gd
+* test_optional_house_roll_stays_within_the_planned_massif
+    [Failed]:  [16] expected to be <= than [12]:  Optional walls must not grow above the volume that streets bored through
+      at line 13
+    [Failed]:  [16] expected to be <= than [12]:  Optional walls must not grow above the volume that streets bored through
+      at line 13
+    [Failed]:  [14] expected to be <= than [12]:  Optional walls must not grow above the volume that streets bored through
+      at line 13
+    [Failed]:  [16] expected to be <= than [12]:  Optional walls must not grow above the volume that streets bored through
+      at line 13
+    [Failed]:  [16] expected to be <= than [12]:  Optional walls must not grow above the volume that streets bored through
+      at line 13
+    [Failed]:  [14] expected to be <= than [12]:  Optional walls must not grow above the volume that streets bored through
+      at line 13
+    [Failed]:  [16] expected to be <= than [12]:  Optional walls must not grow above the volume that streets bored through
+      at line 13
+    [Failed]:  [16] expected to be <= than [12]:  Optional walls must not grow above the volume that streets bored through
+      at line 13
+    [Failed]:  [14] expected to be <= than [12]:  Optional walls must not grow above the volume that streets bored through
+      at line 13
+    [Failed]:  [14] expected to be <= than [12]:  Optional walls must not grow above the volume that streets bored through
+      at line 13
+    [Failed]:  [14] expected to be <= than [12]:  Optional walls must not grow above the volume that streets bored through
+      at line 13
+    [Failed]:  [14] expected to be <= than [12]:  Optional walls must not grow above the volume that streets bored through
+      at line 13
+    [Failed]:  [16] expected to be <= than [12]:  Optional walls must not grow above the volume that streets bored through
+      at line 13
+    [Failed]:  [16] expected to be <= than [12]:  Optional walls must not grow above the volume that streets bored through
+      at line 13
+0/1 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_house_massif_height.gd
+- test_optional_house_roll_stays_within_the_planned_massif
+    [Failed]:  [16] expected to be <= than [12]:  Optional walls must not grow above the volume that streets bored through
+          at line 13
+    [Failed]:  [16] expected to be <= than [12]:  Optional walls must not grow above the volume that streets bored through
+          at line 13
+    [Failed]:  [14] expected to be <= than [12]:  Optional walls must not grow above the volume that streets bored through
+          at line 13
+    [Failed]:  [16] expected to be <= than [12]:  Optional walls must not grow above the volume that streets bored through
+          at line 13
+    [Failed]:  [16] expected to be <= than [12]:  Optional walls must not grow above the volume that streets bored through
+          at line 13
+    [Failed]:  [14] expected to be <= than [12]:  Optional walls must not grow above the volume that streets bored through
+          at line 13
+    [Failed]:  [16] expected to be <= than [12]:  Optional walls must not grow above the volume that streets bored through
+          at line 13
+    [Failed]:  [16] expected to be <= than [12]:  Optional walls must not grow above the volume that streets bored through
+          at line 13
+    [Failed]:  [14] expected to be <= than [12]:  Optional walls must not grow above the volume that streets bored through
+          at line 13
+    [Failed]:  [14] expected to be <= than [12]:  Optional walls must not grow above the volume that streets bored through
+          at line 13
+    [Failed]:  [14] expected to be <= than [12]:  Optional walls must not grow above the volume that streets bored through
+          at line 13
+    [Failed]:  [14] expected to be <= than [12]:  Optional walls must not grow above the volume that streets bored through
+          at line 13
+    [Failed]:  [16] expected to be <= than [12]:  Optional walls must not grow above the volume that streets bored through
+          at line 13
+    [Failed]:  [16] expected to be <= than [12]:  Optional walls must not grow above the volume that streets bored through
+          at line 13
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts           19/33
+Time              0.381s
+
+
+---- 1 failing tests ----
+

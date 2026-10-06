@@ -1,0 +1,50 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_skywalk_hood_clearance.gd
+[0m* test_finished_skywalk_landings_have_no_wall_canopy_obstruction
+[1m1/1 passed.
+[0m[4m
+
+res://tests/test_october3_bridge_room_clearance.gd
+[0m* test_turret_shafts_leave_inhabited_bridge_routes_and_endpoints_clear
+* test_inhabited_route_clearance_is_not_a_roof_cutting_volume
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_october1_public_clearance.gd
+[0m* test_sloped_walking_air_follows_surface_and_excludes_guards
+* test_every_finished_stair_tread_has_roof_clearance
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_october1_facade_prop_clearance.gd
+[0m* test_rotated_prop_bounds_clear_sloping_walking_air
+* test_nested_town_keeps_only_clear_window_boxes_and_doorstep_props
+[1m2/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               4
+Tests                 7
+Passing Tests         7
+Asserts             171
+Time              154.575s
+
+
+[32m---- All tests passed! ----
+[0m

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_dueoe"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/pure_village_towers/pure_village_tower_half_base_piece_00.res" id="2_euq58"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_iw1q6"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/pure_village_towers/pure_village_tower_half_base_piece_00.res" id="4_bncnu"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_0enia"]
+
+[sub_resource type="Resource" id="Resource_tmxb0"]
+script = ExtResource("1_dueoe")
+shape = ExtResource("2_euq58")
+
+[sub_resource type="Resource" id="Resource_dii87"]
+script = ExtResource("3_iw1q6")
+mesh = ExtResource("4_bncnu")
+
+[resource]
+script = ExtResource("5_0enia")
+pieces = Array[ExtResource("3_iw1q6")]([SubResource("Resource_dii87")])
+collisions = Array[ExtResource("1_dueoe")]([SubResource("Resource_tmxb0")])

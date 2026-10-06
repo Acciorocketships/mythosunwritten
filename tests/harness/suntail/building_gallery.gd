@@ -99,6 +99,10 @@ func _run() -> void:
 	get_root().size = Vector2i(1600, 900)
 	var stage := _stage()
 	var kit := SuntailBuildingKit.create()
+	if OS.get_cmdline_user_args().has("--pure-village"):
+		kit = preload("res://scripts/terrain/features/villages/kit/PureVillageBuildingKit.gd").create()
+	if OS.get_cmdline_user_args().has("--pure-roofs"):
+		kit = preload("res://scripts/terrain/features/villages/kit/PureVillageBuildingKit.gd").roof_study()
 	var assembler := BuildingKitAssembler.new(kit)
 	var payload := EnvironmentInstancePayload.new()
 	var spots: Array[Vector3] = []

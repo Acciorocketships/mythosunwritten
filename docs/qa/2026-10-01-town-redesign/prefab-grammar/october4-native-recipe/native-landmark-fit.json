@@ -1,0 +1,1802 @@
+[
+  {
+    "attempts": [
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, -5)",
+        "fits": false,
+        "unreserved_bearing_cells": 11,
+        "unreserved_visual_cells": 205,
+        "variation": 0
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, -5)",
+        "fits": false,
+        "unreserved_bearing_cells": 11,
+        "unreserved_visual_cells": 205,
+        "variation": 1
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-9, 5, -6)",
+        "fits": false,
+        "unreserved_bearing_cells": 10,
+        "unreserved_visual_cells": 204,
+        "variation": 2
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-9, 5, -6)",
+        "fits": false,
+        "unreserved_bearing_cells": 10,
+        "unreserved_visual_cells": 204,
+        "variation": 3
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, -5)",
+        "fits": false,
+        "unreserved_bearing_cells": 11,
+        "unreserved_visual_cells": 205,
+        "variation": 4
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, -5)",
+        "fits": false,
+        "unreserved_bearing_cells": 11,
+        "unreserved_visual_cells": 205,
+        "variation": 5
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-9, 5, -6)",
+        "fits": false,
+        "unreserved_bearing_cells": 10,
+        "unreserved_visual_cells": 204,
+        "variation": 6
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, -5)",
+        "fits": false,
+        "unreserved_bearing_cells": 11,
+        "unreserved_visual_cells": 205,
+        "variation": 7
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-7, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 21,
+        "unreserved_visual_cells": 303,
+        "variation": 0
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, -7)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 315,
+        "variation": 1
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, -5)",
+        "fits": false,
+        "unreserved_bearing_cells": 17,
+        "unreserved_visual_cells": 286,
+        "variation": 2
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, -3)",
+        "fits": false,
+        "unreserved_bearing_cells": 21,
+        "unreserved_visual_cells": 303,
+        "variation": 3
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, -7)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 315,
+        "variation": 4
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-7, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 21,
+        "unreserved_visual_cells": 303,
+        "variation": 5
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, -5)",
+        "fits": false,
+        "unreserved_bearing_cells": 17,
+        "unreserved_visual_cells": 286,
+        "variation": 6
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-7, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 21,
+        "unreserved_visual_cells": 303,
+        "variation": 7
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, -7)",
+        "fits": false,
+        "unreserved_bearing_cells": 25,
+        "unreserved_visual_cells": 277,
+        "variation": 0
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-9, 5, -5)",
+        "fits": false,
+        "unreserved_bearing_cells": 19,
+        "unreserved_visual_cells": 285,
+        "variation": 1
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-7, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 29,
+        "unreserved_visual_cells": 297,
+        "variation": 2
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-7, 5, -8)",
+        "fits": false,
+        "unreserved_bearing_cells": 25,
+        "unreserved_visual_cells": 277,
+        "variation": 3
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-9, 5, -5)",
+        "fits": false,
+        "unreserved_bearing_cells": 19,
+        "unreserved_visual_cells": 285,
+        "variation": 4
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, -7)",
+        "fits": false,
+        "unreserved_bearing_cells": 25,
+        "unreserved_visual_cells": 277,
+        "variation": 5
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-7, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 29,
+        "unreserved_visual_cells": 297,
+        "variation": 6
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, -7)",
+        "fits": false,
+        "unreserved_bearing_cells": 25,
+        "unreserved_visual_cells": 277,
+        "variation": 7
+      }
+    ],
+    "feature": "spatial.feature.landmark.00",
+    "fit_count": 0,
+    "profile": "standard",
+    "seed": 7
+  },
+  {
+    "attempts": [
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-6, 5, 1)",
+        "fits": false,
+        "unreserved_bearing_cells": 11,
+        "unreserved_visual_cells": 205,
+        "variation": 0
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-6, 5, 1)",
+        "fits": false,
+        "unreserved_bearing_cells": 11,
+        "unreserved_visual_cells": 205,
+        "variation": 1
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-7, 5, 0)",
+        "fits": false,
+        "unreserved_bearing_cells": 10,
+        "unreserved_visual_cells": 204,
+        "variation": 2
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-7, 5, 0)",
+        "fits": false,
+        "unreserved_bearing_cells": 10,
+        "unreserved_visual_cells": 204,
+        "variation": 3
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-6, 5, 1)",
+        "fits": false,
+        "unreserved_bearing_cells": 11,
+        "unreserved_visual_cells": 205,
+        "variation": 4
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-6, 5, 1)",
+        "fits": false,
+        "unreserved_bearing_cells": 11,
+        "unreserved_visual_cells": 205,
+        "variation": 5
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-7, 5, 0)",
+        "fits": false,
+        "unreserved_bearing_cells": 10,
+        "unreserved_visual_cells": 204,
+        "variation": 6
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-6, 5, 1)",
+        "fits": false,
+        "unreserved_bearing_cells": 11,
+        "unreserved_visual_cells": 205,
+        "variation": 7
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-5, 5, 4)",
+        "fits": false,
+        "unreserved_bearing_cells": 21,
+        "unreserved_visual_cells": 303,
+        "variation": 0
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-6, 5, -1)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 315,
+        "variation": 1
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-6, 5, 1)",
+        "fits": false,
+        "unreserved_bearing_cells": 17,
+        "unreserved_visual_cells": 286,
+        "variation": 2
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-6, 5, 3)",
+        "fits": false,
+        "unreserved_bearing_cells": 21,
+        "unreserved_visual_cells": 303,
+        "variation": 3
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-6, 5, -1)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 315,
+        "variation": 4
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-5, 5, 4)",
+        "fits": false,
+        "unreserved_bearing_cells": 21,
+        "unreserved_visual_cells": 303,
+        "variation": 5
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-6, 5, 1)",
+        "fits": false,
+        "unreserved_bearing_cells": 17,
+        "unreserved_visual_cells": 286,
+        "variation": 6
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-5, 5, 4)",
+        "fits": false,
+        "unreserved_bearing_cells": 21,
+        "unreserved_visual_cells": 303,
+        "variation": 7
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-6, 5, -1)",
+        "fits": false,
+        "unreserved_bearing_cells": 25,
+        "unreserved_visual_cells": 277,
+        "variation": 0
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-7, 5, 1)",
+        "fits": false,
+        "unreserved_bearing_cells": 19,
+        "unreserved_visual_cells": 285,
+        "variation": 1
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-5, 5, 4)",
+        "fits": false,
+        "unreserved_bearing_cells": 29,
+        "unreserved_visual_cells": 297,
+        "variation": 2
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-5, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 25,
+        "unreserved_visual_cells": 277,
+        "variation": 3
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-7, 5, 1)",
+        "fits": false,
+        "unreserved_bearing_cells": 19,
+        "unreserved_visual_cells": 285,
+        "variation": 4
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-6, 5, -1)",
+        "fits": false,
+        "unreserved_bearing_cells": 25,
+        "unreserved_visual_cells": 277,
+        "variation": 5
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-5, 5, 4)",
+        "fits": false,
+        "unreserved_bearing_cells": 29,
+        "unreserved_visual_cells": 297,
+        "variation": 6
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-6, 5, -1)",
+        "fits": false,
+        "unreserved_bearing_cells": 25,
+        "unreserved_visual_cells": 277,
+        "variation": 7
+      }
+    ],
+    "feature": "spatial.feature.landmark.01",
+    "fit_count": 0,
+    "profile": "standard",
+    "seed": 7
+  },
+  {
+    "attempts": [
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (6, 5, 12)",
+        "fits": false,
+        "unreserved_bearing_cells": 11,
+        "unreserved_visual_cells": 205,
+        "variation": 0
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (6, 5, 12)",
+        "fits": false,
+        "unreserved_bearing_cells": 11,
+        "unreserved_visual_cells": 205,
+        "variation": 1
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (7, 5, 13)",
+        "fits": false,
+        "unreserved_bearing_cells": 10,
+        "unreserved_visual_cells": 204,
+        "variation": 2
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (7, 5, 13)",
+        "fits": false,
+        "unreserved_bearing_cells": 10,
+        "unreserved_visual_cells": 204,
+        "variation": 3
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (6, 5, 12)",
+        "fits": false,
+        "unreserved_bearing_cells": 11,
+        "unreserved_visual_cells": 205,
+        "variation": 4
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (6, 5, 12)",
+        "fits": false,
+        "unreserved_bearing_cells": 11,
+        "unreserved_visual_cells": 205,
+        "variation": 5
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (7, 5, 13)",
+        "fits": false,
+        "unreserved_bearing_cells": 10,
+        "unreserved_visual_cells": 204,
+        "variation": 6
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (6, 5, 12)",
+        "fits": false,
+        "unreserved_bearing_cells": 11,
+        "unreserved_visual_cells": 205,
+        "variation": 7
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (5, 5, 9)",
+        "fits": false,
+        "unreserved_bearing_cells": 21,
+        "unreserved_visual_cells": 303,
+        "variation": 0
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (6, 5, 14)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 315,
+        "variation": 1
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (6, 5, 12)",
+        "fits": false,
+        "unreserved_bearing_cells": 17,
+        "unreserved_visual_cells": 286,
+        "variation": 2
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (6, 5, 10)",
+        "fits": false,
+        "unreserved_bearing_cells": 21,
+        "unreserved_visual_cells": 303,
+        "variation": 3
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (6, 5, 14)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 315,
+        "variation": 4
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (5, 5, 9)",
+        "fits": false,
+        "unreserved_bearing_cells": 21,
+        "unreserved_visual_cells": 303,
+        "variation": 5
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (6, 5, 12)",
+        "fits": false,
+        "unreserved_bearing_cells": 17,
+        "unreserved_visual_cells": 286,
+        "variation": 6
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (5, 5, 9)",
+        "fits": false,
+        "unreserved_bearing_cells": 21,
+        "unreserved_visual_cells": 303,
+        "variation": 7
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (6, 5, 14)",
+        "fits": false,
+        "unreserved_bearing_cells": 25,
+        "unreserved_visual_cells": 277,
+        "variation": 0
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (7, 5, 12)",
+        "fits": false,
+        "unreserved_bearing_cells": 19,
+        "unreserved_visual_cells": 285,
+        "variation": 1
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (5, 5, 9)",
+        "fits": false,
+        "unreserved_bearing_cells": 29,
+        "unreserved_visual_cells": 297,
+        "variation": 2
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (5, 5, 15)",
+        "fits": false,
+        "unreserved_bearing_cells": 25,
+        "unreserved_visual_cells": 277,
+        "variation": 3
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (7, 5, 12)",
+        "fits": false,
+        "unreserved_bearing_cells": 19,
+        "unreserved_visual_cells": 285,
+        "variation": 4
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (6, 5, 14)",
+        "fits": false,
+        "unreserved_bearing_cells": 25,
+        "unreserved_visual_cells": 277,
+        "variation": 5
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (5, 5, 9)",
+        "fits": false,
+        "unreserved_bearing_cells": 29,
+        "unreserved_visual_cells": 297,
+        "variation": 6
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (6, 5, 14)",
+        "fits": false,
+        "unreserved_bearing_cells": 25,
+        "unreserved_visual_cells": 277,
+        "variation": 7
+      }
+    ],
+    "feature": "spatial.feature.landmark.00",
+    "fit_count": 0,
+    "profile": "large",
+    "seed": 31
+  },
+  {
+    "attempts": [
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, 7)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 175,
+        "variation": 0
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, 7)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 175,
+        "variation": 1
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-9, 5, 6)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 175,
+        "variation": 2
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-9, 5, 6)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 175,
+        "variation": 3
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, 7)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 175,
+        "variation": 4
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, 7)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 175,
+        "variation": 5
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-9, 5, 6)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 175,
+        "variation": 6
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, 7)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 175,
+        "variation": 7
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-7, 5, 10)",
+        "fits": false,
+        "unreserved_bearing_cells": 19,
+        "unreserved_visual_cells": 291,
+        "variation": 0
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, 5)",
+        "fits": false,
+        "unreserved_bearing_cells": 17,
+        "unreserved_visual_cells": 284,
+        "variation": 1
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, 7)",
+        "fits": false,
+        "unreserved_bearing_cells": 13,
+        "unreserved_visual_cells": 263,
+        "variation": 2
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, 9)",
+        "fits": false,
+        "unreserved_bearing_cells": 19,
+        "unreserved_visual_cells": 291,
+        "variation": 3
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, 5)",
+        "fits": false,
+        "unreserved_bearing_cells": 17,
+        "unreserved_visual_cells": 284,
+        "variation": 4
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-7, 5, 10)",
+        "fits": false,
+        "unreserved_bearing_cells": 19,
+        "unreserved_visual_cells": 291,
+        "variation": 5
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, 7)",
+        "fits": false,
+        "unreserved_bearing_cells": 13,
+        "unreserved_visual_cells": 263,
+        "variation": 6
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-7, 5, 10)",
+        "fits": false,
+        "unreserved_bearing_cells": 19,
+        "unreserved_visual_cells": 291,
+        "variation": 7
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, 5)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 273,
+        "variation": 0
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-9, 5, 7)",
+        "fits": false,
+        "unreserved_bearing_cells": 14,
+        "unreserved_visual_cells": 263,
+        "variation": 1
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-7, 5, 10)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 277,
+        "variation": 2
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-7, 5, 4)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 273,
+        "variation": 3
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-9, 5, 7)",
+        "fits": false,
+        "unreserved_bearing_cells": 14,
+        "unreserved_visual_cells": 263,
+        "variation": 4
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, 5)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 273,
+        "variation": 5
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-7, 5, 10)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 277,
+        "variation": 6
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, 5)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 273,
+        "variation": 7
+      }
+    ],
+    "feature": "spatial.feature.landmark.01",
+    "fit_count": 0,
+    "profile": "large",
+    "seed": 31
+  },
+  {
+    "attempts": [
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-1, 5, -10)",
+        "fits": false,
+        "unreserved_bearing_cells": 11,
+        "unreserved_visual_cells": 205,
+        "variation": 0
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-1, 5, -10)",
+        "fits": false,
+        "unreserved_bearing_cells": 11,
+        "unreserved_visual_cells": 205,
+        "variation": 1
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (0, 5, -11)",
+        "fits": false,
+        "unreserved_bearing_cells": 10,
+        "unreserved_visual_cells": 204,
+        "variation": 2
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (0, 5, -11)",
+        "fits": false,
+        "unreserved_bearing_cells": 10,
+        "unreserved_visual_cells": 204,
+        "variation": 3
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-1, 5, -10)",
+        "fits": false,
+        "unreserved_bearing_cells": 11,
+        "unreserved_visual_cells": 205,
+        "variation": 4
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-1, 5, -10)",
+        "fits": false,
+        "unreserved_bearing_cells": 11,
+        "unreserved_visual_cells": 205,
+        "variation": 5
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (0, 5, -11)",
+        "fits": false,
+        "unreserved_bearing_cells": 10,
+        "unreserved_visual_cells": 204,
+        "variation": 6
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-1, 5, -10)",
+        "fits": false,
+        "unreserved_bearing_cells": 11,
+        "unreserved_visual_cells": 205,
+        "variation": 7
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-4, 5, -9)",
+        "fits": false,
+        "unreserved_bearing_cells": 21,
+        "unreserved_visual_cells": 303,
+        "variation": 0
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (1, 5, -10)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 315,
+        "variation": 1
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-1, 5, -10)",
+        "fits": false,
+        "unreserved_bearing_cells": 17,
+        "unreserved_visual_cells": 286,
+        "variation": 2
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-3, 5, -10)",
+        "fits": false,
+        "unreserved_bearing_cells": 21,
+        "unreserved_visual_cells": 303,
+        "variation": 3
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (1, 5, -10)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 315,
+        "variation": 4
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-4, 5, -9)",
+        "fits": false,
+        "unreserved_bearing_cells": 21,
+        "unreserved_visual_cells": 303,
+        "variation": 5
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-1, 5, -10)",
+        "fits": false,
+        "unreserved_bearing_cells": 17,
+        "unreserved_visual_cells": 286,
+        "variation": 6
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-4, 5, -9)",
+        "fits": false,
+        "unreserved_bearing_cells": 21,
+        "unreserved_visual_cells": 303,
+        "variation": 7
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (1, 5, -10)",
+        "fits": false,
+        "unreserved_bearing_cells": 25,
+        "unreserved_visual_cells": 277,
+        "variation": 0
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-1, 5, -11)",
+        "fits": false,
+        "unreserved_bearing_cells": 19,
+        "unreserved_visual_cells": 285,
+        "variation": 1
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-4, 5, -9)",
+        "fits": false,
+        "unreserved_bearing_cells": 29,
+        "unreserved_visual_cells": 297,
+        "variation": 2
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (2, 5, -9)",
+        "fits": false,
+        "unreserved_bearing_cells": 25,
+        "unreserved_visual_cells": 277,
+        "variation": 3
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-1, 5, -11)",
+        "fits": false,
+        "unreserved_bearing_cells": 19,
+        "unreserved_visual_cells": 285,
+        "variation": 4
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (1, 5, -10)",
+        "fits": false,
+        "unreserved_bearing_cells": 25,
+        "unreserved_visual_cells": 277,
+        "variation": 5
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-4, 5, -9)",
+        "fits": false,
+        "unreserved_bearing_cells": 29,
+        "unreserved_visual_cells": 297,
+        "variation": 6
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (1, 5, -10)",
+        "fits": false,
+        "unreserved_bearing_cells": 25,
+        "unreserved_visual_cells": 277,
+        "variation": 7
+      }
+    ],
+    "feature": "spatial.feature.landmark.02",
+    "fit_count": 0,
+    "profile": "large",
+    "seed": 31
+  },
+  {
+    "attempts": [
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (12, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 175,
+        "variation": 0
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (12, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 175,
+        "variation": 1
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (13, 5, -1)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 175,
+        "variation": 2
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (13, 5, -1)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 175,
+        "variation": 3
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (12, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 175,
+        "variation": 4
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (12, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 175,
+        "variation": 5
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (13, 5, -1)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 175,
+        "variation": 6
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (12, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 175,
+        "variation": 7
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (11, 5, -5)",
+        "fits": false,
+        "unreserved_bearing_cells": 19,
+        "unreserved_visual_cells": 291,
+        "variation": 0
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (12, 5, 0)",
+        "fits": false,
+        "unreserved_bearing_cells": 17,
+        "unreserved_visual_cells": 284,
+        "variation": 1
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (12, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 13,
+        "unreserved_visual_cells": 263,
+        "variation": 2
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (12, 5, -4)",
+        "fits": false,
+        "unreserved_bearing_cells": 19,
+        "unreserved_visual_cells": 291,
+        "variation": 3
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (12, 5, 0)",
+        "fits": false,
+        "unreserved_bearing_cells": 17,
+        "unreserved_visual_cells": 284,
+        "variation": 4
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (11, 5, -5)",
+        "fits": false,
+        "unreserved_bearing_cells": 19,
+        "unreserved_visual_cells": 291,
+        "variation": 5
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (12, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 13,
+        "unreserved_visual_cells": 263,
+        "variation": 6
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (11, 5, -5)",
+        "fits": false,
+        "unreserved_bearing_cells": 19,
+        "unreserved_visual_cells": 291,
+        "variation": 7
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (12, 5, 0)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 273,
+        "variation": 0
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (13, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 14,
+        "unreserved_visual_cells": 263,
+        "variation": 1
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (11, 5, -5)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 277,
+        "variation": 2
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (11, 5, 1)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 273,
+        "variation": 3
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (13, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 14,
+        "unreserved_visual_cells": 263,
+        "variation": 4
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (12, 5, 0)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 273,
+        "variation": 5
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (11, 5, -5)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 277,
+        "variation": 6
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (12, 5, 0)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 273,
+        "variation": 7
+      }
+    ],
+    "feature": "spatial.feature.landmark.00",
+    "fit_count": 0,
+    "profile": "large",
+    "seed": 13
+  },
+  {
+    "attempts": [
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (12, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 175,
+        "variation": 0
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (12, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 175,
+        "variation": 1
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (11, 5, -1)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 175,
+        "variation": 2
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (11, 5, -1)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 175,
+        "variation": 3
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (12, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 175,
+        "variation": 4
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (12, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 175,
+        "variation": 5
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (11, 5, -1)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 175,
+        "variation": 6
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (12, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 175,
+        "variation": 7
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (15, 5, -3)",
+        "fits": false,
+        "unreserved_bearing_cells": 19,
+        "unreserved_visual_cells": 291,
+        "variation": 0
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (10, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 17,
+        "unreserved_visual_cells": 284,
+        "variation": 1
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (12, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 13,
+        "unreserved_visual_cells": 263,
+        "variation": 2
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (14, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 19,
+        "unreserved_visual_cells": 291,
+        "variation": 3
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (10, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 17,
+        "unreserved_visual_cells": 284,
+        "variation": 4
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (15, 5, -3)",
+        "fits": false,
+        "unreserved_bearing_cells": 19,
+        "unreserved_visual_cells": 291,
+        "variation": 5
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (12, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 13,
+        "unreserved_visual_cells": 263,
+        "variation": 6
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (15, 5, -3)",
+        "fits": false,
+        "unreserved_bearing_cells": 19,
+        "unreserved_visual_cells": 291,
+        "variation": 7
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (10, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 273,
+        "variation": 0
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (12, 5, -1)",
+        "fits": false,
+        "unreserved_bearing_cells": 14,
+        "unreserved_visual_cells": 263,
+        "variation": 1
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (15, 5, -3)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 277,
+        "variation": 2
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (9, 5, -3)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 273,
+        "variation": 3
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (12, 5, -1)",
+        "fits": false,
+        "unreserved_bearing_cells": 14,
+        "unreserved_visual_cells": 263,
+        "variation": 4
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (10, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 273,
+        "variation": 5
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (15, 5, -3)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 277,
+        "variation": 6
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (10, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 273,
+        "variation": 7
+      }
+    ],
+    "feature": "spatial.feature.landmark.00",
+    "fit_count": 0,
+    "profile": "grand",
+    "seed": 43
+  },
+  {
+    "attempts": [
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_End_15x30_1 at (-8, 5, -1)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 54,
+        "variation": 0
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_End_15x30_1 at (-8, 5, -1)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 54,
+        "variation": 1
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_End_15x30_1 at (-15, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 54,
+        "variation": 2
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_End_15x30_1 at (-15, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 54,
+        "variation": 3
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_End_15x30_1 at (-8, 5, -1)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 54,
+        "variation": 4
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_End_15x30_1 at (-8, 5, -1)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 54,
+        "variation": 5
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_End_15x30_1 at (-15, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 54,
+        "variation": 6
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_End_15x30_1 at (-8, 5, -1)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 54,
+        "variation": 7
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, -3)",
+        "fits": false,
+        "unreserved_bearing_cells": 19,
+        "unreserved_visual_cells": 185,
+        "variation": 0
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Curved_InCorner_30x30x15_1 at (-15, 3, -1)",
+        "fits": false,
+        "unreserved_bearing_cells": 17,
+        "unreserved_visual_cells": 170,
+        "variation": 1
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_30x30_1 at (-8, 5, -1)",
+        "fits": false,
+        "unreserved_bearing_cells": 13,
+        "unreserved_visual_cells": 142,
+        "variation": 2
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, -2)",
+        "fits": false,
+        "unreserved_bearing_cells": 19,
+        "unreserved_visual_cells": 185,
+        "variation": 3
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Curved_InCorner_30x30x15_1 at (-15, 3, -1)",
+        "fits": false,
+        "unreserved_bearing_cells": 17,
+        "unreserved_visual_cells": 170,
+        "variation": 4
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, -3)",
+        "fits": false,
+        "unreserved_bearing_cells": 19,
+        "unreserved_visual_cells": 185,
+        "variation": 5
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_30x30_1 at (-8, 5, -1)",
+        "fits": false,
+        "unreserved_bearing_cells": 13,
+        "unreserved_visual_cells": 142,
+        "variation": 6
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, -3)",
+        "fits": false,
+        "unreserved_bearing_cells": 19,
+        "unreserved_visual_cells": 185,
+        "variation": 7
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-15, 5, -3)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 183,
+        "variation": 0
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_End_15x30_1 at (-8, 5, 0)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 52,
+        "variation": 1
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, -3)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 206,
+        "variation": 2
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-15, 5, -3)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 183,
+        "variation": 3
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_End_15x30_1 at (-8, 5, 0)",
+        "fits": false,
+        "unreserved_bearing_cells": 4,
+        "unreserved_visual_cells": 52,
+        "variation": 4
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-15, 5, -3)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 183,
+        "variation": 5
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-8, 5, -3)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 206,
+        "variation": 6
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-15, 5, -3)",
+        "fits": false,
+        "unreserved_bearing_cells": 24,
+        "unreserved_visual_cells": 183,
+        "variation": 7
+      }
+    ],
+    "feature": "spatial.feature.landmark.01",
+    "fit_count": 0,
+    "profile": "grand",
+    "seed": 43
+  },
+  {
+    "attempts": [
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-2, 5, 0)",
+        "fits": false,
+        "unreserved_bearing_cells": 0,
+        "unreserved_visual_cells": 153,
+        "variation": 0
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-2, 5, 0)",
+        "fits": false,
+        "unreserved_bearing_cells": 0,
+        "unreserved_visual_cells": 153,
+        "variation": 1
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-1, 5, -1)",
+        "fits": false,
+        "unreserved_bearing_cells": 0,
+        "unreserved_visual_cells": 153,
+        "variation": 2
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-1, 5, -1)",
+        "fits": false,
+        "unreserved_bearing_cells": 0,
+        "unreserved_visual_cells": 153,
+        "variation": 3
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-2, 5, 0)",
+        "fits": false,
+        "unreserved_bearing_cells": 0,
+        "unreserved_visual_cells": 153,
+        "variation": 4
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-2, 5, 0)",
+        "fits": false,
+        "unreserved_bearing_cells": 0,
+        "unreserved_visual_cells": 153,
+        "variation": 5
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-1, 5, -1)",
+        "fits": false,
+        "unreserved_bearing_cells": 0,
+        "unreserved_visual_cells": 153,
+        "variation": 6
+      },
+      {
+        "dimensions": "(1, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-2, 5, 0)",
+        "fits": false,
+        "unreserved_bearing_cells": 0,
+        "unreserved_visual_cells": 153,
+        "variation": 7
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-5, 5, 1)",
+        "fits": false,
+        "unreserved_bearing_cells": 17,
+        "unreserved_visual_cells": 280,
+        "variation": 0
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (0, 5, 0)",
+        "fits": false,
+        "unreserved_bearing_cells": 13,
+        "unreserved_visual_cells": 263,
+        "variation": 1
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-2, 5, 0)",
+        "fits": false,
+        "unreserved_bearing_cells": 8,
+        "unreserved_visual_cells": 240,
+        "variation": 2
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-4, 5, 0)",
+        "fits": false,
+        "unreserved_bearing_cells": 17,
+        "unreserved_visual_cells": 280,
+        "variation": 3
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (0, 5, 0)",
+        "fits": false,
+        "unreserved_bearing_cells": 13,
+        "unreserved_visual_cells": 263,
+        "variation": 4
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-5, 5, 1)",
+        "fits": false,
+        "unreserved_bearing_cells": 17,
+        "unreserved_visual_cells": 280,
+        "variation": 5
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-2, 5, 0)",
+        "fits": false,
+        "unreserved_bearing_cells": 8,
+        "unreserved_visual_cells": 240,
+        "variation": 6
+      },
+      {
+        "dimensions": "(2, 1)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-5, 5, 1)",
+        "fits": false,
+        "unreserved_bearing_cells": 17,
+        "unreserved_visual_cells": 280,
+        "variation": 7
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (0, 5, 0)",
+        "fits": false,
+        "unreserved_bearing_cells": 19,
+        "unreserved_visual_cells": 253,
+        "variation": 0
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-2, 5, -1)",
+        "fits": false,
+        "unreserved_bearing_cells": 11,
+        "unreserved_visual_cells": 247,
+        "variation": 1
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-5, 5, 1)",
+        "fits": false,
+        "unreserved_bearing_cells": 23,
+        "unreserved_visual_cells": 273,
+        "variation": 2
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (1, 5, 1)",
+        "fits": false,
+        "unreserved_bearing_cells": 19,
+        "unreserved_visual_cells": 253,
+        "variation": 3
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-2, 5, -1)",
+        "fits": false,
+        "unreserved_bearing_cells": 11,
+        "unreserved_visual_cells": 247,
+        "variation": 4
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (0, 5, 0)",
+        "fits": false,
+        "unreserved_bearing_cells": 19,
+        "unreserved_visual_cells": 253,
+        "variation": 5
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (-5, 5, 1)",
+        "fits": false,
+        "unreserved_bearing_cells": 23,
+        "unreserved_visual_cells": 273,
+        "variation": 6
+      },
+      {
+        "dimensions": "(1, 2)",
+        "first": "Roof_Base_InCorner_15x15_1 at (0, 5, 0)",
+        "fits": false,
+        "unreserved_bearing_cells": 19,
+        "unreserved_visual_cells": 253,
+        "variation": 7
+      }
+    ],
+    "feature": "spatial.feature.landmark.02",
+    "fit_count": 0,
+    "profile": "grand",
+    "seed": 43
+  }
+]

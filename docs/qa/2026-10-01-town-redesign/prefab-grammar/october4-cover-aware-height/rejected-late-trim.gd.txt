@@ -1,0 +1,51 @@
+extends RefCounted
+## Trim only unneeded crown rooms after the town's circulation and room
+## composition are fixed. Never re-roll the parcels or their lower rooms.
+const COVER_REACH_BANDS := 4
+
+static func trim(mass: BuildingMass, massif: WarrenMassif, occupied: Callable,
+		walked: Callable, public_air: Callable) -> int:
+	if massif == null: return 0
+	var removed := 0
+	var audit := {"removed":0,"reason":""}
+	mass.set_meta(&"crown_trim",audit)
+	while mass.storeys.size() > 2:
+		var top: Dictionary = mass.storeys.back()
+		var band := int(top.floor_band)
+		var limit := 2147483647
+		for cell: Vector2i in top.cells:
+			var column := Vector2i(floori(cell.x/2.0),floori(cell.y/2.0))
+			if massif.has_column(column): limit = mini(limit,massif.top_at(column))
+		if band+2 <= limit:
+			audit.reason="within massif"
+			break
+		if not top.openings.is_empty() or top.get("abutted",false) or top.get("bears_balcony",false):
+			audit.reason="door or balcony"
+			break
+		var lower: Dictionary = mass.storeys[-2]
+		if int(lower.floor_band)+2 != band: break
+		var rect := BuildingDesigner._bounds(lower.cells)
+		# A complete, broad crown can receive the existing roof grammar.
+		# Do not trade a tower for disconnected/sliver roof pieces.
+		if lower.cells.size()!=rect.get_area() or mini(rect.size.x,rect.size.y)<2:
+			audit.reason="lower roof shape"
+			break
+		var protected := false
+		for cell: Vector2i in top.cells:
+			for at in range(band-1,band+3):
+				if walked.is_valid() and walked.call(cell,at): protected=true
+				if occupied.is_valid() and occupied.call(cell,at): protected=true
+				for direction: Vector2i in BuildingMass.DIRS:
+					if occupied.is_valid() and occupied.call(cell+direction,at): protected=true
+			# Keep low overhead rooms even if the public route lies below the
+			# removed storey rather than on its floor. Very distant cantilevers
+			# are not treated as low passage ceilings (the audit reports both).
+			for at in range(band-COVER_REACH_BANDS,band):
+				if public_air.is_valid() and public_air.call(cell,at): protected=true
+		if protected:
+			audit.reason="protected neighbor or public air"
+			break
+		mass.storeys.pop_back()
+		removed += 1
+		audit.removed=removed
+	return removed

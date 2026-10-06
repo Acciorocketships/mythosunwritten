@@ -1,0 +1,27 @@
+--- /tmp/town4-carver-before.gd	2026-10-03 22:49:35
++++ scripts/terrain/features/villages/fabric/WarrenMazeCarver.gd	2026-10-03 22:49:36
+@@ -2465,6 +2465,24 @@
+ static func _bridge_foundation_is_direct(massif: WarrenMassif,
+ 		excavation: WarrenExcavation, public_floors: Dictionary,
+ 		columns: Array, foundation_floor: int, top_band: int) -> bool:
++	# The fine-grid stair pass reserves the whole swept flight envelope. Its
++	# upper clearance can consume a source-solid bearing course, so prove the
++	# lower house and its bearing against that same geometry before admitting it.
++	var transitions: Array[Dictionary] = excavation.transitions.duplicate()
++	for lane: Dictionary in excavation.lanes:
++		transitions.append_array(lane.transitions)
++	transitions.append_array(excavation.loop_edges)
++	for spec: Dictionary in transitions:
++		var flight := WarrenVolumeTransition.new(&"bridge.foundation",
++			spec.from, spec.to, WarrenVolumeTransition.Kind.STAIR,
++			[] as Array[Vector3i])
++		for cell: Vector3i in flight.clearance_air_cells():
++			if cell.y < foundation_floor - 1 or cell.y >= top_band:
++				continue
++			var column := Vector2i(floori(float(cell.x) / 2.0),
++				floori(float(cell.z) / 2.0))
++			if columns.has(column):
++				return false
+ 	# Solid plinth below bearing_at is foundation, not a lower house room.
+ 	# A broad footprint straddling it must try the narrower endpoint instead.
+ 	for column_value: Variant in columns:

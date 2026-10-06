@@ -75,6 +75,8 @@ const COMPACT_ROOF_SLATE_REAR_END_TIGHT := \
 	&"lpfv.fabric.roof.compact.slate.06.rear.end.tight"
 const COMPACT_ROOF_SLATE_FRONT_END_TIGHT := \
 	&"lpfv.fabric.roof.compact.slate.03.front.end.tight"
+const CORNER_ROOF_SLATE := &"lpfv.fabric.roof.corner.slate.gable"
+const CORNER_ROOF_ORANGE := &"lpfv.fabric.roof.corner.orange.gable"
 const COMPACT_ROOF_SLATE_REAR_TIGHT := \
 	&"lpfv.fabric.roof.compact.slate.06.rear.tight"
 const COMPACT_ROOF_SLATE_MIDDLE_TIGHT := \
@@ -927,6 +929,8 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 			-1, WINDOW_ROOF_ORANGE, modules),
 		_setback_shed_roof_recipe(&"roof.setback.shed.orange.6.positive", 6,
 			1, WINDOW_ROOF_ORANGE, modules),
+		_corner_gable_roof_recipe(&"roof.partial.gable.blue.1", CORNER_ROOF_SLATE, modules),
+		_corner_gable_roof_recipe(&"roof.partial.gable.orange.1", CORNER_ROOF_ORANGE, modules),
 		_partial_gable_roof_recipe(&"roof.partial.gable.blue.2.negative", 2,
 			-1, &"blue", modules),
 		_partial_gable_roof_recipe(&"roof.partial.gable.blue.2.positive", 2,
@@ -1208,6 +1212,22 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 				"<null>" if candidate == null else candidate.recipe_id,
 				"null recipe" if candidate == null else candidate.last_rejection])
 			return null
+	# Native grammar recipes are already sealed from measured complete modules.
+	# Do not run generic wall/end substitutions over their authored interfaces.
+	for configuration: Dictionary in preload("res://scripts/terrain/features/villages/grammar/NativeHouseVocabulary.gd").CONFIGURATIONS:
+		var factory = preload("res://scripts/terrain/features/villages/grammar/NativeHouseRecipe.gd")
+		var native: FabricRecipe
+		if configuration.get("family", "cross") == "turret":
+			native = factory.turret(catalog, configuration.id, configuration.extra_upper_storeys)
+		elif configuration.get("family", "cross") == "arcade":
+			native = factory.arcade(catalog, configuration.id, configuration.upper_storeys, configuration.upper_side_window)
+		elif configuration.get("family", "cross") == "street":
+			native = factory.street(catalog, configuration.id, configuration.bays, configuration.seed, bool(configuration.get("rear_jetty", false)))
+		else:
+			native = factory.cross(catalog, configuration.id, configuration.x_bays, configuration.z_bays, configuration.seed)
+		if native == null or not program._add_recipe(native):
+			push_error("Could not compile native grammar recipe %s" % configuration.id)
+			return null
 	var unique_assets: Dictionary = {}
 	for recipe_value: FabricRecipe in program._recipes.values():
 		for asset_id: StringName in recipe_value.asset_ids():
@@ -1253,6 +1273,7 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 		SettlementFabricAssembler.GREEN_RIM_INNER_CORNER,
 		SettlementFabricAssembler.GREEN_RIM_EDGE,
 		SettlementFabricAssembler.GREEN_RIM_OUTER_CORNER,
+		SettlementFabricAssembler.PLAZA_SEAT,
 		SettlementFabricAssembler.SKYWALK_DECK,
 		SettlementFabricAssembler.SKYWALK_DECK_SHORT,
 		SettlementFabricAssembler.SKYWALK_RAIL,
@@ -1264,6 +1285,8 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 			WOOD_CELL_FACADE_ORANGE, WOOD_CELL_FACADE_AMBER,
 			SettlementFabricAssembler.GARDEN_PLANTING,
 			SettlementFabricAssembler.PLAZA_WIDE_FEATURES,
+			SettlementFabricAssembler.PLAZA_COURT_TREES,
+			SettlementFabricAssembler.PLAZA_UNDERPLANTS,
 			[SettlementFabricAssembler.GARDEN_PLANTER] as Array[StringName]]:
 		for asset_id: StringName in pool:
 			if not adapter_assets.has(asset_id):
@@ -1304,6 +1327,7 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 				SettlementFabricAssembler.PLANK_SINGLE, SettlementFabricAssembler.PLANK_GALLERY,
 				SettlementFabricAssembler.GREEN_RIM_EDGE,
 				SettlementFabricAssembler.GREEN_RIM_OUTER_CORNER,
+		SettlementFabricAssembler.PLAZA_SEAT,
 				SettlementFabricAssembler.GREEN_RIM_INNER_CORNER]:
 			var interface: Dictionary = program.asset_wall_interfaces.get(asset_id,{})
 			interface["visual_bounds"] = descriptor.measured_aabb
@@ -1385,6 +1409,7 @@ static func _compile_module_program(catalog: EnvironmentCatalog) \
 		WALL_WOOD_S_A, WALL_WOOD_S_B, WALL_WOOD_CORNER_S,
 		WALL_WOOD_WINDOW_S_BLUE, WALL_WOOD_WINDOW_S_ORANGE,
 		WALL_WOOD_WINDOW_S_AMBER,
+		CORNER_ROOF_SLATE, CORNER_ROOF_ORANGE,
 		COMPACT_CHIMNEY, ROOM_ROOF_01, ROOM_ROOF_02, ROOM_ROOF_04,
 		ROOM_ROOF_05, COMPACT_ROOF_03, COMPACT_ROOF_06,
 		COMPACT_ROOF_SLATE_03, COMPACT_ROOF_SLATE_06,
@@ -3535,6 +3560,30 @@ static func _setback_shed_roof_recipe(recipe_id: StringName,
 		recipe_value.occluder_cells.append(Vector3i(x, 0, 0))
 	recipe_value.add_socket(&"bearing.bottom",
 		FabricRecipe.SocketKind.BEARING, Vector3i.ZERO, Vector3i.DOWN)
+	return recipe_value
+
+
+static func _corner_gable_roof_recipe(recipe_id: StringName,
+		asset_id: StringName, modules: FabricModuleProgram) -> FabricRecipe:
+	# A one-cell private remainder needs a COMPLETE roof, with both native end
+	# faces. Use the same compact gable at half module scale, uniformly: pitch
+	# and tile proportions remain intact. Native attic panels close both ends.
+	# It is the last measured alternative for an odd crown, never a public deck
+	# or an open cut from a larger roof.
+	var recipe_value := FabricRecipe.new(recipe_id,
+		[&"roof", &"thin_roof_face", &"partial_gable", &"occupied_mass", &"pitched_roof"], 1)
+	var pose := Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * 0.5), Vector3.ZERO)
+	pose = modules.roof_bearing_aligned_transform(asset_id, pose, 0.0)
+	recipe_value.add_placement(&"gable", asset_id, pose)
+	# Roof_03 supplies the boarded slopes, ridge and end framing. The matching
+	# native timber gable panel closes each attic end beneath that frame.
+	for end: int in [-1, 1]:
+		var end_pose := Transform3D(Basis(Vector3.UP, 0.0 if end > 0 else PI)
+			.scaled(Vector3(0.245, 0.23, 0.25)), Vector3(0.0, 0.0, end * 0.65))
+		recipe_value.add_placement(StringName("attic.%d" % end), GABLE, end_pose)
+	recipe_value.occluder_cells.append(Vector3i.ZERO)
+	recipe_value.add_socket(&"bearing.bottom", FabricRecipe.SocketKind.BEARING,
+		Vector3i.ZERO, Vector3i.DOWN)
 	return recipe_value
 
 

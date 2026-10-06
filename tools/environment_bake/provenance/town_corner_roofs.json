@@ -1,0 +1,182 @@
+{
+  "assets": [
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_fabric_roof_corner_orange_gable.tres",
+      "id": "lpfv.fabric.roof.corner.orange.gable",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 2238,
+        "measured_aabb": {
+          "position": [
+            -1.5,
+            0.0276991538703442,
+            -1.5
+          ],
+          "size": [
+            3.0,
+            2.05888724327087,
+            3.0
+          ]
+        },
+        "mesh_bytes": 211306,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 2238
+      },
+      "pack": "town_corner_roofs",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -1.5,
+            1.5
+          ],
+          "z": [
+            -1.5,
+            1.5
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "fit_axis_profile": {
+          "axis": "z",
+          "knots": [
+            [
+              -1.5,
+              -1.5
+            ],
+            [
+              -1.22379875,
+              -1.48
+            ],
+            [
+              1.22379875,
+              1.48
+            ],
+            [
+              1.5,
+              1.5
+            ]
+          ]
+        },
+        "id": "lpfv.fabric.roof.corner.orange.gable",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 3000.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 3000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          2.672677,
+          0.0
+        ],
+        "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "building",
+          "fabric_roof",
+          "corner_gable",
+          "village"
+        ],
+        "tint_group": "identity",
+        "use_instance_color": false
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
+      "texture_policy": {},
+      "tool_version": 40,
+      "visual": "res://terrain/environment/visuals/town_corner_roofs/lpfv_fabric_roof_corner_orange_gable.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_fabric_roof_corner_slate_gable.tres",
+      "id": "lpfv.fabric.roof.corner.slate.gable",
+      "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 2238,
+        "measured_aabb": {
+          "position": [
+            -1.5,
+            0.0276991538703442,
+            -1.5
+          ],
+          "size": [
+            3.0,
+            2.05888724327087,
+            3.0
+          ]
+        },
+        "mesh_bytes": 211305,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 2238
+      },
+      "pack": "town_corner_roofs",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -1.5,
+            1.5
+          ],
+          "z": [
+            -1.5,
+            1.5
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "fit_axis_profile": {
+          "axis": "z",
+          "knots": [
+            [
+              -1.5,
+              -1.5
+            ],
+            [
+              -1.22379875,
+              -1.48
+            ],
+            [
+              1.22379875,
+              1.48
+            ],
+            [
+              1.5,
+              1.5
+            ]
+          ]
+        },
+        "id": "lpfv.fabric.roof.corner.slate.gable",
+        "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 3000.0,
+        "max_mesh_bytes": 2097152.0,
+        "max_surfaces": 2.0,
+        "max_visual_triangles": 3000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          2.672677,
+          0.0
+        ],
+        "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "building",
+          "fabric_roof",
+          "corner_gable",
+          "village"
+        ],
+        "tint_group": "identity",
+        "use_instance_color": false
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
+      "texture_policy": {},
+      "tool_version": 40,
+      "visual": "res://terrain/environment/visuals/town_corner_roofs/lpfv_fabric_roof_corner_slate_gable.tres"
+    }
+  ],
+  "license": "LowPolyFantasyVillage source-pack license",
+  "pack": "town_corner_roofs",
+  "tool_version": 40
+}

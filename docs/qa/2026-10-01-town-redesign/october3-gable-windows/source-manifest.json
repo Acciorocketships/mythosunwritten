@@ -1,0 +1,6 @@
+{
+  "scripts/terrain/features/villages/kit/PureVillageBuildingKit.gd": "7dd16b10f81b0723ad222f0ea5a0bf65640a9746265373b2ae13688705dfca4a",
+  "tests/harness/suntail/bake_roof_geometry.gd": "2a8040ffe6f50e032c8c9806a0df5a43247dda40f9ef7d2e9da6f5014d33fefe",
+  "tests/test_october1_pure_roofs.gd": "66114c1bf5c0f1d10fe578f670b6732da7a5efed3fce1186add50ea25ddd9233",
+  "terrain/environment/geometry/pure_village_roofs.bin": "06857c99eb5b966af255ebc1d27ccb94bd29ebc7009eec68920dcb67bccc2251"
+}

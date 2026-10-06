@@ -1,0 +1,6 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+WIDE_PLOT { "id": &"house.016", "kind": &"house", "cells": [(0, -11), (1, -11), (0, -10), (1, -10), (0, -9), (1, -9), (0, -8), (1, -8), (0, -7), (1, -7), (0, -6), (1, -6)], "floor": 2, "top": 6, "door_walk": (2, 2, -6), "building_id": &"house.016" }
+WIDE_PLOT { "id": &"house.017", "kind": &"house", "cells": [(2, -12), (3, -12), (4, -12), (5, -12), (2, -11), (3, -11), (4, -11), (5, -11), (6, -11), (2, -10), (3, -10), (4, -10), (5, -10), (6, -10), (2, -9), (3, -9), (4, -9), (5, -9), (6, -9), (2, -8), (3, -8), (4, -8), (5, -8), (6, -8), (2, -7), (3, -7), (4, -7), (5, -7), (6, -7)], "floor": 2, "top": 6, "door_walk": (2, 2, -6), "building_id": &"house.017" }
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)

@@ -1,0 +1,26 @@
+TIERS 2 levels={ 4: 39, 8: 9 } served={ 4: true, 8: true } plots=19
+TIERS 13 levels={ 4: 44, 8: 9 } served={ 4: true, 8: true } plots=34
+TIERS 58 levels={ 4: 46, 8: 16 } served={ 4: true, 8: true } plots=24
+TIERS 67 levels={ 4: 47, 8: 12 } served={ 4: true, 8: true } plots=21
+TIERS 78 levels={ 4: 38, 8: 15 } served={ 4: true, 8: true } plots=45
+TIERS 95 levels={ 4: 45, 8: 15 } served={ 4: true, 8: true } plots=51
+TIERS 116 levels={ 4: 37, 8: 9 } served={ 4: true, 8: true } plots=24
+TIERS 134 levels={ 4: 47, 8: 15 } served={ 4: true, 8: true } plots=33
+TIERS 178 levels={ 4: 44, 8: 15 } served={ 4: true, 8: true } plots=26
+TIERS 182 levels={ 4: 41, 8: 12 } served={ 4: true, 8: true } plots=35
+TIERS 183 levels={ 4: 40, 8: 15 } served={ 4: true, 8: true } plots=31
+TIERS 196 levels={ 4: 32, 8: 9 } served={ 4: true, 8: true } plots=23
+TIERS 208 levels={ 4: 47, 8: 22 } served={ 4: true, 8: true } plots=25
+TIERS 217 levels={ 4: 46, 8: 9 } served={ 4: true, 8: true } plots=23
+TIERS 229 levels={ 4: 40, 8: 12 } served={ 4: true, 8: true } plots=40
+TIERS 255 levels={ 4: 39, 8: 12 } served={ 4: true, 8: true } plots=30
+TIERS 274 levels={ 4: 47, 8: 9 } served={ 4: true, 8: true } plots=25
+TIERS 284 levels={ 4: 44, 8: 19 } served={ 4: true, 8: true } plots=28
+TIERS 287 levels={ 4: 42, 8: 9 } served={ 4: true, 8: true } plots=29
+TIERS 302 levels={ 4: 37, 8: 9 } served={ 4: true, 8: true } plots=22
+TIERS 317 levels={ 4: 46, 8: 12 } served={ 4: true, 8: true } plots=25
+TIERS 352 levels={ 4: 42, 8: 15 } served={ 4: true, 8: true } plots=28
+TIERS 353 levels={ 4: 44, 8: 16 } served={ 4: true, 8: true } plots=53
+TIERS 377 levels={ 4: 41, 8: 15 } served={ 4: true, 8: true } plots=33
+TIERS 378 levels={ 4: 38, 8: 12 } served={ 4: true, 8: true } plots=28
+FOUND 25

@@ -9,13 +9,18 @@ static func read(path: String, finish: bool = true) -> WarrenMazeSourcePlan:
 		data.massif_columns, data.massif_core)
 	massif.form_id = StringName(data.get("massif_form", &"hill"))
 	massif.open_court = data.get("massif_open_court", {})
+	for key: String in data.get("massif_state", {}):
+		massif.set(key, data.massif_state[key])
 	assert(massif.seal(), massif.last_rejection)
 	var excavation := WarrenExcavation.new(data.world_seed)
 	for key: String in data.excavation:
 		excavation.set(key, data.excavation[key])
 	assert(excavation.seal(), excavation.last_rejection)
+	var profile := WarrenVillageScaleProfile.for_id(data.profile)
+	for key: String in data.get("profile_state", {}):
+		profile.set(key, data.profile_state[key])
 	var source := WarrenMazeSourcePlan.new(data.world_seed,
-		WarrenVillageScaleProfile.for_id(data.profile), massif, excavation)
+		profile, massif, excavation)
 	for key: String in data.source:
 		source.set(key, data.source[key])
 	if finish:

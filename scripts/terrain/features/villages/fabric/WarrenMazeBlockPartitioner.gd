@@ -350,6 +350,7 @@ static func plot_crown_carries_public_realm(source: WarrenMazeSourcePlan,
 static func plot_prefers_pitched_roof(source: WarrenMazeSourcePlan,
 		plot: Dictionary, stack_parent_ids: Dictionary) -> bool:
 	if source == null or plot.is_empty() \
+			or bool(plot.get("wall_room",false)) \
 			or StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_HOUSE \
 			or stack_parent_ids.has(StringName(plot["id"])):
 		return false
@@ -620,10 +621,12 @@ static func _parcel_for_plot(source: WarrenMazeSourcePlan,
 				# smaller rectangle, win instead, and a plot where no lane is
 				# floored is refused with a reason rather than dropped in
 				# silence three stages later.
-				if volume.has_exact_route_surface(
-						WarrenParcelConstruction.threshold_cell(parcel)
-						+ Vector3i(parcel.frontage_direction.x, 0,
-							parcel.frontage_direction.y)):
+				var landing := WarrenParcelConstruction.threshold_cell(parcel) \
+					+ Vector3i(parcel.frontage_direction.x, 0, parcel.frontage_direction.y)
+				# Deck paving owns these exact fine cells, excluding planting and
+				# stair cutouts. A macro frontage flag alone never proves a floor.
+				if volume.has_exact_route_surface(landing) or \
+					WarrenVolumetricSolver._maze_deck_walk_cells(volume).has(landing):
 					return {"parcel": parcel, "skipped": index,
 						"reason": first_refusal}
 				refusal = "the door lane opens onto swept headroom, " \

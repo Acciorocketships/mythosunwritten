@@ -1,0 +1,37 @@
+--- before
++++ candidate
+@@ -2140,11 +2140,16 @@
+ 			options.append({"span": span, "directions": directions,
+ 				"proof": proof, "direct_endpoints": direct_endpoints,
+ 				"exterior_depth": exterior_depth,
++				"rising_street": not level_cells.has(candidate),
+ 				"tie": WarrenPassageLatticeRules.hash_key(world_seed,
+ 					0xB21D6E, candidate, candidate_length + 17)})
+ 	options.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+ 		if int(a.direct_endpoints) != int(b.direct_endpoints):
+ 			return int(a.direct_endpoints) > int(b.direct_endpoints)
++		# Give an otherwise exposed climb an inhabited overhead connection
++		# before spending its bearings on an equally sound level-street span.
++		if bool(a.rising_street) != bool(b.rising_street):
++			return bool(a.rising_street)
+ 		# Once both endpoint houses are structurally equivalent, prefer a span
+ 		# close to the massif perimeter.  It remains part of the same connected
+ 		# route, but reads as a real house over open air from outside the town
+@@ -2467,12 +2472,15 @@
+ 		columns: Array, foundation_floor: int, top_band: int) -> bool:
+ 	# Solid plinth below bearing_at is foundation, not a lower house room.
+ 	# A broad footprint straddling it must try the narrower endpoint instead.
++	# At the bearing datum, terrain/plinth supplies the foundation directly;
++	# the finite above-ground massif cannot contain a cell below natural ground.
+ 	for column_value: Variant in columns:
+ 		var column := column_value as Vector2i
+ 		if not massif.has_column(column) \
+ 				or foundation_floor < massif.bearing_at(column) \
+-				or not _column_is_solid_at(massif, excavation, column,
+-					foundation_floor - 1):
++				or (foundation_floor != massif.bearing_at(column) \
++					and not _column_is_solid_at(massif, excavation, column,
++						foundation_floor - 1)):
+ 			return false
+ 		for band in range(foundation_floor, top_band):
+ 			var cell := Vector3i(column.x, band, column.y)

@@ -1,0 +1,149 @@
+{
+  "pack": "town_props",
+  "license": "Original purchased source-pack licenses; per-asset source path identifies the pack",
+  "default_scale": [
+    1,
+    1,
+    1
+  ],
+  "assets": [
+    {
+      "id": "alchemy.cauldron.001",
+      "source": "res://assets/AlchemyPackFBX/FBX/Alchemy Props/Cauldrons/AWS_Cauldron_Stylized_001.fbx",
+      "tags": [
+        "village",
+        "decoration",
+        "AlchemyPackFBX"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "collision_profile": "convex",
+      "max_collision_pieces": 32,
+      "max_visual_triangles": 30000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 16,
+      "merge_pieces": true,
+      "fallback_albedo_texture": "res://assets/AlchemyPackFBX/AWS_MAIN_TEXTURE.png"
+    },
+    {
+      "id": "crafting.herbalism.table.001",
+      "source": "res://assets/CraftingFBX/FBX/Workstations/SFWC_Herbalism_Table_001.fbx",
+      "tags": [
+        "village",
+        "decoration",
+        "CraftingFBX"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "collision_profile": "convex",
+      "max_collision_pieces": 32,
+      "max_visual_triangles": 40000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 16,
+      "merge_pieces": true
+    },
+    {
+      "id": "market.vegetable.stall.001",
+      "source": "res://assets/FantasyMarketFBX/FBX/Fruits Stall/Stall/SFM_Veg_Stall_001.fbx",
+      "tags": [
+        "village",
+        "decoration",
+        "FantasyMarketFBX"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "collision_profile": "convex",
+      "max_collision_pieces": 32,
+      "max_visual_triangles": 50000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 16,
+      "merge_pieces": true
+    },
+    {
+      "id": "market.bakery.stall.001",
+      "source": "res://tools/environment_bake/assembly_sources/town_props/bakery.tscn",
+      "tags": [
+        "village",
+        "decoration",
+        "FantasyMarketFBX"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "collision_profile": "native_trimesh",
+      "max_collision_pieces": 32,
+      "max_visual_triangles": 30000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 16,
+      "merge_pieces": true,
+      "max_collision_triangles": 15000
+    },
+    {
+      "id": "forge.anvil.001",
+      "source": "res://assets/ForgeFBX/FBX/Forge Props/SFFA_Anvil_Stand_001.fbx",
+      "tags": [
+        "village",
+        "decoration",
+        "ForgeFBX"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "collision_profile": "convex",
+      "max_collision_pieces": 32,
+      "max_visual_triangles": 30000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 16,
+      "merge_pieces": true
+    },
+    {
+      "id": "tavern.adventurer.table.001",
+      "source": "res://assets/TavernandKitchenFBX/FBX/Bar Props/Tables/Themed Tables/SFT_Adventurer_Table_001.fbx",
+      "tags": [
+        "village",
+        "decoration",
+        "TavernandKitchenFBX"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "collision_profile": "convex",
+      "max_collision_pieces": 32,
+      "max_visual_triangles": 30000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 16,
+      "merge_pieces": true
+    },
+    {
+      "id": "tavern.bench.001",
+      "source": "res://assets/TavernandKitchenFBX/FBX/Bar Props/Bench/SFT_Bench_001.fbx",
+      "tags": [
+        "village",
+        "decoration",
+        "TavernandKitchenFBX"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "collision_profile": "convex",
+      "max_collision_pieces": 32,
+      "max_visual_triangles": 30000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 16,
+      "merge_pieces": true
+    },
+    {
+      "id": "interior.bench.001",
+      "source": "res://assets/InteriorPackFBX/FBX/General Furniture/Seating Furniture/SFI_Bench_001.fbx",
+      "tags": [
+        "village",
+        "decoration",
+        "InteriorPackFBX"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "collision_profile": "convex",
+      "max_collision_pieces": 32,
+      "max_visual_triangles": 30000,
+      "max_mesh_bytes": 8388608,
+      "max_surfaces": 16,
+      "merge_pieces": true
+    }
+  ]
+}

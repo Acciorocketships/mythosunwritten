@@ -1,0 +1,60 @@
+[
+  {
+    "fully_covered": [],
+    "kinds_by_covered_quarters": {
+      "alley": [
+        62,
+        0,
+        0,
+        0,
+        0
+      ],
+      "market": [
+        2,
+        0,
+        0,
+        0,
+        0
+      ],
+      "spine": [
+        6,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "original_cell": "(2, 0, -4)",
+    "original_kind": "absent",
+    "seed": 13
+  },
+  {
+    "fully_covered": [],
+    "kinds_by_covered_quarters": {
+      "alley": [
+        36,
+        0,
+        0,
+        0,
+        0
+      ],
+      "market": [
+        2,
+        0,
+        0,
+        0,
+        0
+      ],
+      "spine": [
+        6,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "original_cell": "(-2, 0, 0)",
+    "original_kind": "spine",
+    "seed": 31
+  }
+]

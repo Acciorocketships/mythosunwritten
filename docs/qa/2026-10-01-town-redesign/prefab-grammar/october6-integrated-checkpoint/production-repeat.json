@@ -1,0 +1,59 @@
+[
+	{
+		"accepted": true,
+		"attempt": 0,
+		"entries": 1821,
+		"meshes": 884,
+		"ms": 8691,
+		"signature": "a9d2d10b0a8257863cffaf0799e9aab4c5455112919199f316c798df76013663",
+		"stages": {
+			"bridge_stamping": 160,
+			"directed_back_rooms": 235,
+			"feature_solver": 91,
+			"hero_beam": 21,
+			"parcels": 10,
+			"partition_rooms": 593,
+			"residual_rooms": 20,
+			"room_composition": 143,
+			"room_gate": 79
+		}
+	},
+	{
+		"accepted": true,
+		"attempt": 1,
+		"entries": 1821,
+		"meshes": 884,
+		"ms": 13649,
+		"signature": "a9d2d10b0a8257863cffaf0799e9aab4c5455112919199f316c798df76013663",
+		"stages": {
+			"bridge_stamping": 328,
+			"directed_back_rooms": 598,
+			"feature_solver": 170,
+			"hero_beam": 20,
+			"parcels": 17,
+			"partition_rooms": 1289,
+			"residual_rooms": 51,
+			"room_composition": 268,
+			"room_gate": 157
+		}
+	},
+	{
+		"accepted": true,
+		"attempt": 2,
+		"entries": 1821,
+		"meshes": 884,
+		"ms": 8680,
+		"signature": "a9d2d10b0a8257863cffaf0799e9aab4c5455112919199f316c798df76013663",
+		"stages": {
+			"bridge_stamping": 164,
+			"directed_back_rooms": 238,
+			"feature_solver": 92,
+			"hero_beam": 19,
+			"parcels": 11,
+			"partition_rooms": 628,
+			"residual_rooms": 19,
+			"room_composition": 173,
+			"room_gate": 75
+		}
+	}
+]
