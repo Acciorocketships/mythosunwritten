@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="TownOddsTable" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/features/villages/odds/TownOddsTable.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+knobs = Array[Resource]([])
