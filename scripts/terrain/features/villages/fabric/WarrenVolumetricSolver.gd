@@ -2585,7 +2585,7 @@ const CLEARING_DECO_MAX_GROUPS := 6
 
 static func maze_clearing_decor(volume: WarrenVolumePlan) -> Array[Dictionary]:
 	## The furnishing brief of every courtyard clearing (`clearing.NN`), as
-	## `{id, purpose, cells, budget, rolls}`, or empty when the town's
+	## `{id, purpose, cells, walk, budget, rolls}`, or empty when the town's
 	## `clearing_deco_density` is 0 (the default: no roll is consumed and
 	## nothing is placed).
 	##
@@ -2596,7 +2596,9 @@ static func maze_clearing_decor(volume: WarrenVolumePlan) -> Array[Dictionary]:
 	## every edge facing a street mouth, stair or drop, and the one-cell strips
 	## joining them (`_ringless_court_walk`, the ringless green's own rule). A
 	## court whose walk cannot be derived is left bare. `budget` is
-	## round(density x capacity) prop groups and `rolls` one vocabulary roll
+	## round(density x capacity) prop groups, `walk` the kept walk every piece
+	## stands a capsule radius off (the court's non-deco cells and the landings
+	## beside it), and `rolls` one vocabulary roll
 	## per group; the assembler places them (`SettlementFabricAssembler.
 	## maze_clearing_decor`) against the finished town.
 	var out: Array[Dictionary] = []
@@ -2626,6 +2628,18 @@ static func maze_clearing_decor(volume: WarrenVolumePlan) -> Array[Dictionary]:
 			for cell: Vector3i in floor_cells:
 				if not walk.has(cell) and not landings.has(cell): deco[cell] = true
 		if deco.is_empty(): continue
+		# The kept walk a piece must stand off: every court cell that is not
+		# deco (ring, strips, street mouths) and every landing beside the court.
+		var kept: Array[Vector3i] = []
+		for cell: Vector3i in floor_cells:
+			if not deco.has(cell): kept.append(cell + Vector3i.DOWN)
+		for cell: Vector3i in landings:
+			if floor_cells.has(cell): continue
+			for step: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT, Vector3i.FORWARD, Vector3i.BACK]:
+				if floor_cells.has(cell + step):
+					kept.append(cell + Vector3i.DOWN)
+					break
+		kept.sort_custom(_cell_less)
 		var id := String(plot.id)
 		var budget := roundi(density * float(clampi(deco.size() / CLEARING_DECO_CELLS_PER_GROUP,
 			CLEARING_DECO_MIN_GROUPS, CLEARING_DECO_MAX_GROUPS)))
@@ -2642,7 +2656,7 @@ static func maze_clearing_decor(volume: WarrenVolumePlan) -> Array[Dictionary]:
 		for index in budget:
 			rolls.append(character.roll(CLEARING_DECO_KNOB, "%s/group/%d" % [id, index]))
 		out.append({"id": plot.id, "purpose": StringName(plot.get("purpose", &"")),
-			"cells": cells, "budget": budget, "rolls": rolls})
+			"cells": cells, "walk": kept, "budget": budget, "rolls": rolls})
 	return out
 
 

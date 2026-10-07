@@ -631,6 +631,23 @@ const PLAZA_FEATURE_SALT := 53
 const CLEARING_DECO_ANVIL := &"forge.anvil.001"
 const CLEARING_DECO_WORKBENCH := &"crafting.herbalism.table.001"
 const CLEARING_DECO_PREFIX := "maze-clearing-deco/"
+## The baked collider union of every deco piece that carries colliders, in the
+## asset's own frame. A piece's clearance envelope is this merged with its
+## visual AABB: the market stall's boxes reach 5.28 m across against a 4.47 m
+## visual (see PERIMETER_FRONTAGE_CLEARANCE). Mirrored against the bake by
+## `test_clearing_deco.gd::test_collision_hulls_mirror_the_baked_colliders`.
+const CLEARING_DECO_COLLISION_HULLS := {
+	PLAZA_MARKET_STALL: AABB(Vector3(-2.64, 0.0, -1.83061), Vector3(5.28, 4.550289, 3.66122)),
+	SettlementFabricProgram.COVERED_MARKET_TABLE: AABB(Vector3(-0.98, 0.0, -0.5), Vector3(1.96, 0.91, 1.0)),
+	SettlementFabricProgram.TERRACE_BENCH: AABB(Vector3(-1.018899, 0.0, -0.195912), Vector3(2.049526, 0.452121, 0.403827)),
+	SettlementFabricProgram.TERRACE_BENCH_ALT: AABB(Vector3(-1.152981, 0.0, -0.218379), Vector3(2.296773, 0.499049, 0.437097)),
+	&"forge.anvil.001": AABB(Vector3(-0.4547, 0.0, -0.464213), Vector3(0.909401, 1.05297, 0.928336)),
+	&"crafting.herbalism.table.001": AABB(Vector3(-1.409937, 0.0, -1.069607), Vector3(3.33395, 3.333086, 2.050732)),
+}
+## How far a piece's envelope stays off its clearing's kept walk (strips,
+## street mouths, landings): the player capsule's radius, in the authored frame
+## (the town frame scales it by VillageWorldScale.HORIZONTAL_SCALE).
+const CLEARING_DECO_WALK_MARGIN := TraversalEnvelope.CAPSULE_RADIUS / VillageWorldScale.HORIZONTAL_SCALE
 ## Where in its cell a group may stand: the centre, the corner it shares with
 ## three neighbours (wide pieces), then quarter-cell nudges into a crowded bed.
 const CLEARING_DECO_ANCHORS: Array[Vector3] = [Vector3.ZERO, Vector3(0.5, 0.0, 0.5),
@@ -6671,6 +6688,8 @@ static func maze_clearing_decor(records: Array[Dictionary], footprints: Dictiona
 		if vocabulary.is_empty(): continue
 		var deco := {}
 		for cell: Vector3i in record.cells: deco[cell] = true
+		var walk := {}
+		for cell: Vector3i in record.get("walk", []): walk[cell] = true
 		var floors := {}
 		var rolls: Array = record.rolls
 		for group_index in int(record.budget):
@@ -6678,7 +6697,7 @@ static func maze_clearing_decor(records: Array[Dictionary], footprints: Dictiona
 			var start := int(roll * float(vocabulary.size())) % vocabulary.size()
 			for attempt in vocabulary.size():
 				var group: Array = vocabulary[(start + group_index + attempt) % vocabulary.size()]
-				var pieces := _clearing_deco_group(group, record, deco, floors, roll,
+				var pieces := _clearing_deco_group(group, record, deco, walk, floors, roll,
 					footprints, skin, obstacles, world_seed)
 				if pieces.is_empty(): continue
 				for piece: Dictionary in pieces:
@@ -6691,12 +6710,12 @@ static func maze_clearing_decor(records: Array[Dictionary], footprints: Dictiona
 
 
 static func _clearing_deco_group(group: Array, record: Dictionary, deco: Dictionary,
-		floors: Dictionary, roll: float, footprints: Dictionary, skin: Array[AABB],
+		walk: Dictionary, floors: Dictionary, roll: float, footprints: Dictionary, skin: Array[AABB],
 		obstacles: Array[AABB], world_seed: int) -> Array[Dictionary]:
 	## The first anchor (deco cells in the clearing's seeded order, on the
 	## cell centre or its corner) and quarter turn at which the whole group
 	## stands, as `{asset, transform, box, part}` per piece (a stall's goods
-	## included), or empty.
+	## included; `box` is the visual-or-collider envelope), or empty.
 	var bounds := footprints.get("asset_bounds", {}) as Dictionary
 	for item: Dictionary in group:
 		if not bounds.has(StringName(item.asset)): return []
@@ -6730,12 +6749,14 @@ static func _clearing_deco_group(group: Array, record: Dictionary, deco: Diction
 							var goods_asset := StringName(goods.asset)
 							if not bounds.has(goods_asset): continue
 							parts.append({"asset": goods_asset, "transform": goods.transform,
-								"box": (goods.transform as Transform3D) * (bounds[goods_asset] as AABB),
+								"box": (goods.transform as Transform3D) \
+									* clearing_deco_envelope(goods_asset, bounds[goods_asset] as AABB),
 								"part": "%d.goods.%s" % [index, String(goods.station)]})
 					for part: Dictionary in parts:
 						var box := (part.box as AABB).grow(0.05)
 						whole = whole and optional_dressing_is_clear(StringName(part.asset),
-							part.transform as Transform3D, footprints, skin)
+							part.transform as Transform3D, footprints, skin) \
+							and _clearing_deco_clears_walk(part.box as AABB, walk, cell.y)
 						for other: AABB in obstacles:
 							whole = whole and not box.intersects(other)
 						for other: Dictionary in pieces:
@@ -6754,7 +6775,8 @@ static func _clearing_deco_pose(asset: StringName, basis: Basis, origin: Vector3
 	## `{transform, box}` with the piece's measured foot on its clearing's
 	## floor, or empty when its footprint leaves the deco cells or straddles
 	## floors of different heights.
-	var local: AABB = (footprints.asset_bounds as Dictionary)[asset]
+	var visual: AABB = (footprints.asset_bounds as Dictionary)[asset]
+	var local := clearing_deco_envelope(asset, visual)
 	var pose := Transform3D(basis, origin)
 	var box := pose * local
 	var floor_y := NAN
@@ -6770,8 +6792,26 @@ static func _clearing_deco_pose(asset: StringName, basis: Basis, origin: Vector3
 			var top := float(floors[covered])
 			if is_nan(floor_y): floor_y = top
 			elif absf(top - floor_y) > 0.02: return {}
-	pose.origin.y += floor_y - box.position.y
+	pose.origin.y += floor_y - (pose * visual).position.y
 	return {"transform": pose, "box": pose * local}
+
+
+static func clearing_deco_envelope(asset: StringName, visual: AABB) -> AABB:
+	## A deco piece's clearance envelope in its own frame: what you see and
+	## what you bump into.
+	return visual.merge(CLEARING_DECO_COLLISION_HULLS[asset]) \
+		if CLEARING_DECO_COLLISION_HULLS.has(asset) else visual
+
+
+static func _clearing_deco_clears_walk(box: AABB, walk: Dictionary, band: int) -> bool:
+	## True when `box`, grown by the capsule margin, reaches no kept-walk cell.
+	var margin := CLEARING_DECO_WALK_MARGIN
+	for x in range(floori((box.position.x - margin) / FabricRecipe.CELL_SIZE + 0.5),
+			floori((box.end.x + margin) / FabricRecipe.CELL_SIZE + 0.5) + 1):
+		for z in range(floori((box.position.z - margin) / FabricRecipe.CELL_SIZE + 0.5),
+				floori((box.end.z + margin) / FabricRecipe.CELL_SIZE + 0.5) + 1):
+			if walk.has(Vector3i(x, band, z)): return false
+	return true
 
 
 static func _clearing_floor_top(cell: Vector3i, footprints: Dictionary) -> float:
