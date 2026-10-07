@@ -4,11 +4,11 @@ extends RefCounted
 ## are bored. Placement is a biased draw, never a rule: columns far from any
 ## street (big uncut blocks) are more likely, ground level moderately
 ## favoured, size/shape/purpose drawn from the town's character. Two more
-## pulls are knobs, both off by default: `clearing_lobe_bias` weights columns
-## deep inside the town field's Gaussian lobes (where houses end up), and
-## `clearing_enclosure_bias` keeps a grown clearing with a probability that
-## rises with the sides houses can front -- an open clearing is less likely,
-## never refused outright. Only
+## pulls are knobs, both off by default, applied to the GROWN clearing as an
+## acceptance roll: `clearing_lobe_bias` favours clearings deep inside the
+## town field's Gaussian lobes (where houses end up), and
+## `clearing_enclosure_bias` favours clearings whose sides houses can front.
+## A shallow or open clearing is less likely, never refused outright. Only
 ## guardrails are hard: a legal deck column at the floor, minimum width 2
 ## (every cell lies in a fully contained 2x2 block), and no overlap with other
 ## reservations or earlier clearings. Pure: nothing is carved here.
@@ -20,7 +20,14 @@ const SALT_GROW := 0x47524F57
 const SALT_ANCHOR := 0x414E4348
 const SALT_SIZE := 0x53495A45
 const SALT_ENCLOSE := 0x454E434C
+const SALT_LOBE := 0x4C4F4245
 const LOBE_FLOOR := 0.01
+## A pull's acceptance never falls below this. A pull rejection does not use
+## up the ordinary attempt budget (it has its own, equally large) and is kept
+## as a fallback: if the draw ends short, the best rejected clearings that
+## still fit are taken. Pulls bias where clearings go; they never leave
+## clearing_count under-filled by themselves.
+const KEEP_FLOOR := 0.05
 const LOBE_REACH := 3
 ## (1 + sides) / ENCLOSURE_SIDES: four fronted sides keep a clearing always.
 const ENCLOSURE_SIDES := 5.0
@@ -70,9 +77,17 @@ static func propose(world_seed: int, massif: WarrenMassif, excavation: WarrenExc
 	var candidates := _candidates(empty, street, blocked, character, by_band)
 	var enclosure_bias := character.value(&"clearing_enclosure_bias")
 	var streets := WarrenPlotPlanner.street_bands(empty) if enclosure_bias > 0.0 else {}
+	var lobe_bias := character.value(&"clearing_lobe_bias")
+	var depth := lobe_depth(massif) if lobe_bias > 0.0 else {}
+	var reach_peak := _reach_peak(empty, candidates, blocked, street, depth,
+		maxi(4, character.count(&"clearing_area") / 2)) if lobe_bias > 0.0 else 1.0
 	var taken := {}
 	var attempt := 0
-	while out.size() < wanted and attempt < wanted * ATTEMPTS_PER_CLEARING and not candidates.is_empty():
+	var attempts := wanted * ATTEMPTS_PER_CLEARING
+	var pulled := 0
+	var fallbacks: Array[Dictionary] = []
+	while out.size() < wanted and attempt - pulled < attempts and pulled < attempts \
+			and not candidates.is_empty():
 		attempt += 1
 		var centre := _weighted_pick(candidates, character.roll(&"clearing_block_bias", Vector2i(attempt, SALT_CENTRE)))
 		if taken.has(centre.column):
@@ -84,21 +99,55 @@ static func propose(world_seed: int, massif: WarrenMassif, excavation: WarrenExc
 			shape, blocked, taken, street, character, attempt)
 		if cells.size() < maxi(4, area / 2):
 			continue
-		# Enclosure pull: an acceptance roll on the knob's own stream, skipped
-		# at bias 0 so the default draw sequence is untouched.
-		if enclosure_bias > 0.0:
+		# Pulls on the grown clearing: acceptance rolls on each knob's own
+		# stream, skipped at bias 0 so the default draw sequence is untouched.
+		var kept := true
+		var keep_all := 1.0
+		if lobe_bias > 0.0:
+			var mean := 0.0
+			for column: Vector2i in cells:
+				mean += float(depth[column])
+			mean /= float(cells.size())
+			var keep := maxf(KEEP_FLOOR, pow(minf(1.0, mean / reach_peak), lobe_bias))
+			keep_all *= keep
+			kept = character.roll(&"clearing_lobe_bias", Vector2i(attempt, SALT_LOBE)) < keep
+		if enclosure_bias > 0.0 and kept:
 			var sides := WarrenPlotReservations._plaza_buildable_frontages(
 				empty, cells, floor_band, streets, blocked)
-			var keep := pow((1.0 + float(sides)) / ENCLOSURE_SIDES, enclosure_bias)
-			if character.roll(&"clearing_enclosure_bias", Vector2i(attempt, SALT_ENCLOSE)) >= keep:
-				continue
-		for column: Vector2i in cells:
-			taken[column] = true
-		var key := Vector2i(out.size(), floor_band)
-		out.append({"cells": cells, "floor": floor_band, "shape": shape, "area": area,
-			"purpose": character.pick(&"clearing_purpose", key),
-			"cover": character.pick(&"clearing_cover", key)})
+			var keep := maxf(KEEP_FLOOR, pow((1.0 + float(sides)) / ENCLOSURE_SIDES, enclosure_bias))
+			keep_all *= keep
+			kept = character.roll(&"clearing_enclosure_bias", Vector2i(attempt, SALT_ENCLOSE)) < keep
+		if not kept:
+			pulled += 1
+			fallbacks.append({"cells": cells, "floor": floor_band, "shape": shape,
+				"area": area, "keep": keep_all, "attempt": attempt})
+			continue
+		_accept(out, taken, character, cells, floor_band, shape, area)
+	# Fallback: the best pull-rejected clearings that still fit fill the count.
+	fallbacks.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if float(a.keep) != float(b.keep):
+			return float(a.keep) > float(b.keep)
+		return int(a.attempt) < int(b.attempt))
+	for fallback: Dictionary in fallbacks:
+		if out.size() >= wanted:
+			break
+		var fits := true
+		for column: Vector2i in fallback.cells:
+			fits = fits and not taken.has(column)
+		if fits:
+			_accept(out, taken, character, fallback.cells, int(fallback.floor),
+				fallback.shape, int(fallback.area))
 	return out
+
+
+static func _accept(out: Array[Dictionary], taken: Dictionary, character: TownCharacter,
+		cells: Array[Vector2i], floor_band: int, shape: StringName, area: int) -> void:
+	for column: Vector2i in cells:
+		taken[column] = true
+	var key := Vector2i(out.size(), floor_band)
+	out.append({"cells": cells, "floor": floor_band, "shape": shape, "area": area,
+		"purpose": character.pick(&"clearing_purpose", key),
+		"cover": character.pick(&"clearing_cover", key)})
 
 
 static func carve(world_seed: int, massif: WarrenMassif, excavation: WarrenExcavation,
@@ -247,15 +296,11 @@ static func _door_of(connection: Dictionary) -> Vector3i:
 
 static func _candidates(plan: WarrenMazeSourcePlan, street: Dictionary, blocked: Dictionary,
 		character: TownCharacter, by_band: Dictionary) -> Array[Dictionary]:
-	## (column, floor) pairs weighted by street distance ^ bias x lobe depth ^
-	## lobe bias, ground x weight.
+	## (column, floor) pairs weighted by street distance ^ bias, ground x weight.
 	var out: Array[Dictionary] = []
 	var massif := plan.massif
 	var bias := character.value(&"clearing_block_bias")
 	var ground := character.value(&"clearing_ground_weight")
-	var lobe_bias := character.value(&"clearing_lobe_bias")
-	var depth := lobe_depth(massif) if lobe_bias > 0.0 else {}
-	var memo := {}
 	var columns: Array = massif.columns.keys()
 	columns.sort_custom(WarrenPlotPlanner.column_less)
 	for column: Vector2i in columns:
@@ -270,21 +315,34 @@ static func _candidates(plan: WarrenMazeSourcePlan, street: Dictionary, blocked:
 					or _reserved(plan.excavation, column, floor_band):
 				continue
 			if WarrenPlotReservations._deck_column_ok(plan, column, floor_band, {}, blocked, DECK_LEVEL_BANDS):
-				var weight := base_weight * (ground if floor_band == low else 1.0)
-				if lobe_bias > 0.0:
-					weight *= pow(_block_depth(plan, column, floor_band, blocked, street,
-						depth, memo), lobe_bias)
-				out.append({"column": column, "floor": floor_band, "weight": weight})
+				out.append({"column": column, "floor": floor_band,
+					"weight": base_weight * (ground if floor_band == low else 1.0)})
 	return out
 
 
+static func _reach_peak(plan: WarrenMazeSourcePlan, candidates: Array[Dictionary],
+		blocked: Dictionary, street: Dictionary, depth: Dictionary, need: int) -> float:
+	## The deepest lobe depth a full clearing could stand at: the lobe pull's
+	## acceptance is the grown clearing's mean depth over this, so the deepest
+	## reachable site is always kept and the measure adapts to each town.
+	var memo := {}
+	var region := {}
+	var peak := LOBE_FLOOR
+	for c: Dictionary in candidates:
+		peak = maxf(peak, _block_depth(plan, c.column, int(c.floor), blocked, street,
+			depth, memo, region, need))
+	return peak
+
+
 static func _block_depth(plan: WarrenMazeSourcePlan, column: Vector2i, floor_band: int,
-		blocked: Dictionary, street: Dictionary, depth: Dictionary, memo: Dictionary) -> float:
+		blocked: Dictionary, street: Dictionary, depth: Dictionary, memo: Dictionary,
+		region: Dictionary, need: int) -> float:
 	## The lobe depth a clearing centred here can actually have: the deepest
 	## mean over the legal 2x2 blocks holding the column (a clearing's smallest
-	## piece). A lobe core too steep for any 2x2 floor reads LOBE_FLOOR, so
-	## the pull favours buildable ground inside the lobes rather than drawing
-	## centres `_grow` can never open.
+	## piece) whose level legal ground at this floor holds at least `need`
+	## columns (the area guard). A lobe core too steep or too cramped reads
+	## LOBE_FLOOR, so the pull is not normalised by a lobe core `_grow` must
+	## refuse.
 	var best := LOBE_FLOOR
 	for corner: Vector2i in [column, column - Vector2i(1, 0), column - Vector2i(0, 1), column - Vector2i(1, 1)]:
 		var sum := 0.0
@@ -298,9 +356,37 @@ static func _block_depth(plan: WarrenMazeSourcePlan, column: Vector2i, floor_ban
 				legal = false
 				break
 			sum += float(depth[cell])
-		if legal:
+		if legal and _region_size(plan, corner, floor_band, blocked, street, memo, region) >= need:
 			best = maxf(best, sum / 4.0)
 	return best
+
+
+static func _region_size(plan: WarrenMazeSourcePlan, start: Vector2i, floor_band: int,
+		blocked: Dictionary, street: Dictionary, memo: Dictionary, region: Dictionary) -> int:
+	## Size of the 4-connected legal component holding `start` at this floor,
+	## memoised per component (an upper bound on what `_grow` can reach).
+	var start_key := Vector3i(start.x, floor_band, start.y)
+	if region.has(start_key):
+		return int((region[start_key] as Array)[0])
+	var shared := [0]
+	var frontier: Array[Vector2i] = [start]
+	region[start_key] = shared
+	var index := 0
+	while index < frontier.size():
+		var column := frontier[index]
+		index += 1
+		for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+			var next := column + direction
+			var key := Vector3i(next.x, floor_band, next.y)
+			if region.has(key):
+				continue
+			if not memo.has(key):
+				memo[key] = _legal(plan, next, floor_band, blocked, {}, street)
+			if memo[key]:
+				region[key] = shared
+				frontier.append(next)
+	shared[0] = frontier.size()
+	return frontier.size()
 
 
 static func _reserved(excavation: WarrenExcavation, column: Vector2i, floor_band: int) -> bool:

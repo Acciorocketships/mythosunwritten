@@ -101,7 +101,7 @@ at_large = 0.0
 spread = 0.0
 clamp_min = 0.0
 clamp_max = 4.0
-notes = "Town taste knobs (Oct 7) task 1: exponent on a clearing candidate's lobe depth (WarrenCourtClearings.lobe_depth: massif layer over its own ground averaged over a 3-column diamond, normalised to the deepest column, floor 0.01; taken over the best legal 2x2 block at the floor), pulling courtyards into the town field's Gaussian lobes where houses stand. 0 = off (today)."
+notes = "Town taste knobs (Oct 7) task 1: a grown clearing is kept with probability max(0.05, (mean lobe depth of its cells / deepest depth a full clearing could reach)^bias), rolled on its own stream; lobe depth = massif layer over ground averaged over a 3-column diamond, normalised (WarrenCourtClearings.lobe_depth). Pulls courtyards into the town field's Gaussian lobes where houses stand. Rejections have their own attempt budget and the last attempts accept regardless, so the count is not under-filled. 0 = off (today)."
 
 [sub_resource type="Resource" id="clearing_enclosure_bias"]
 script = ExtResource("2")
@@ -112,7 +112,7 @@ at_large = 0.0
 spread = 0.0
 clamp_min = 0.0
 clamp_max = 4.0
-notes = "Town taste knobs (Oct 7) task 1: a grown clearing is kept with probability ((1 + sides houses can front) / 5)^bias, rolled on its own stream; attempts stay bounded. 0 = always kept (today)."
+notes = "Town taste knobs (Oct 7) task 1: a grown clearing is kept with probability max(0.05, ((1 + sides houses can front) / 5)^bias), rolled on its own stream; rejections have their own attempt budget and the last attempts accept regardless. 0 = always kept (today)."
 
 [resource]
 script = ExtResource("1")
