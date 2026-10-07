@@ -80,6 +80,7 @@ var raycast: RayCast3D
 var on_ground: bool = true
 var was_on_ground: bool = false
 var step_visual_offset_y: float = 0.0
+var _prev_step_offset_y := 0.0
 var _step_visual_velocity := 0.0
 var body_model_base_pos: Vector3 = Vector3.ZERO
 var prev_body_global_y: float = 0.0
@@ -559,11 +560,15 @@ func _try_step_up(delta: float) -> bool:
 	return true
 
 func _update_step_visual_smoothing(delta: float) -> void:
+	_prev_step_offset_y = step_visual_offset_y
 	var body_delta_y: float = global_position.y - prev_body_global_y
 	if absf(body_delta_y) > MAX_STEP_HEIGHT + 0.05:
-		# Teleports are new locations, not steps to ease across.
+		# Teleports are new locations, not steps to ease across (nor motion
+		# for the renderer to interpolate across).
 		step_visual_offset_y = 0.0
+		_prev_step_offset_y = 0.0
 		_step_visual_velocity = 0.0
+		reset_physics_interpolation()
 	elif not in_water and velocity.y <= 0.0 and (on_ground or is_on_floor()):
 		step_visual_offset_y -= body_delta_y
 	prev_body_global_y = global_position.y
@@ -577,5 +582,13 @@ func _update_step_visual_smoothing(delta: float) -> void:
 	body_model_root.position = body_model_base_pos + Vector3(0.0, step_visual_offset_y, 0.0)
 
 
+## Where the camera looks this frame. The body moves on physics ticks and is
+## drawn interpolated between them (world.tscn turns physics interpolation on
+## for the character), so a camera placed every rendered frame follows the
+## drawn body, step offset included, instead of the last tick's position.
 func camera_follow_position() -> Vector3:
-	return global_position + Vector3.UP * step_visual_offset_y
+	if not is_physics_interpolated_and_enabled():
+		return global_position + Vector3.UP * step_visual_offset_y
+	var fraction := Engine.get_physics_interpolation_fraction()
+	return get_global_transform_interpolated().origin \
+		+ Vector3.UP * lerpf(_prev_step_offset_y, step_visual_offset_y, fraction)

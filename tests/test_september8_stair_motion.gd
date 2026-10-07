@@ -42,7 +42,7 @@ func _check_stair_motion(speed:float) -> void:
 		for tick in 60:
 			await get_tree().physics_frame
 			player._physics_process(1.0/60)
-			camera._physics_process(1.0/60)
+			camera._process(1.0/60)
 		var last:=Vector3(player.position.y,player.body_model_root.global_position.y,camera.global_position.y)
 		var wrong_way:=0.0
 		var worst_recovery:=0.0
@@ -54,7 +54,7 @@ func _check_stair_motion(speed:float) -> void:
 		for tick in 180:
 			await get_tree().physics_frame
 			player._physics_process(1.0/60)
-			camera._physics_process(1.0/60)
+			camera._process(1.0/60)
 			airborne_animation_ticks+=int(not player.was_on_ground)
 			var current:=Vector3(player.position.y,player.body_model_root.global_position.y,camera.global_position.y)
 			var change:=current-last

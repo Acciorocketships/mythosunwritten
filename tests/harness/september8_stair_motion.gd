@@ -58,7 +58,7 @@ func _run() -> void:
 	camera.set_script(load("res://scripts/camera/camera.gd"))
 	camera.target=player
 	stage.add_child(camera)
-	camera.set_physics_process(false)
+	camera.set_process(false)
 	await physics_frame
 	await physics_frame
 	var args := OS.get_cmdline_user_args()
@@ -88,14 +88,14 @@ func _run() -> void:
 			for tick in 30:
 				await physics_frame
 				player._physics_process(1.0/60)
-				camera._physics_process(1.0/60)
+				camera._process(1.0/60)
 			var trace: Array = []
 			controller.direction=Vector2(direction.x,direction.z)*speed
 			var success := false
 			for tick in 360:
 				await physics_frame
 				player._physics_process(1.0/60)
-				camera._physics_process(1.0/60)
+				camera._process(1.0/60)
 				var probe:=KinematicCollision3D.new()
 				var supported:=player.test_move(player.global_transform,Vector3.DOWN*0.51,probe)
 				trace.append({"support_hit":supported,"support_normal":str(probe.get_normal()) if supported else "","support_travel":str(probe.get_travel()) if supported else "","tick":tick,"xyz":[player.global_position.x,player.global_position.y,player.global_position.z],
@@ -113,7 +113,7 @@ func _run() -> void:
 			for tick in 60:
 				await physics_frame
 				player._physics_process(1.0/60)
-				camera._physics_process(1.0/60)
+				camera._process(1.0/60)
 			var row := {"id":str(transition.stable_id),"descent":descent,"passed":success,"trace":trace}
 			results.append(row)
 			print("STAIR_MOTION ",transition.stable_id," descent=",descent," passed=",success)

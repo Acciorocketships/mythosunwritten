@@ -6,7 +6,7 @@ var _view: SubViewport
 func _run() -> void:
 	assert(_frozen,"This control comparison uses the saved native world; live walking is separate")
 	await get_tree().create_timer(2.0).timeout
-	_camera.set_physics_process(false)
+	_camera.set_process(false)
 	_camera._visibility.clear()
 	_camera.free()
 	var world := _character.get_parent().get_parent()
@@ -40,8 +40,8 @@ func _run() -> void:
 			_camera.process_mode = Node.PROCESS_MODE_ALWAYS
 			world.add_child(_camera)
 			_camera.make_current()
-			_camera.set_physics_process(false)
-			_camera._physics_process(0.0)
+			_camera.set_process(false)
+			_camera._process(0.0)
 			var right := _camera.global_basis.x
 			if scenario.begins_with("close"):
 				_camera.toggle_view()
@@ -49,7 +49,7 @@ func _run() -> void:
 			_camera.set_process_input(false)
 			_camera.set_process_unhandled_input(false)
 			for frame in 12:
-				_camera._physics_process(.1)
+				_camera._process(.1)
 				await get_tree().process_frame
 			var samples := []
 			var initial_yaw: float = _camera._yaw
@@ -66,7 +66,7 @@ func _run() -> void:
 							_camera._apply_look_motion(motion.relative)
 						else:
 							_camera._input(motion)
-					_camera._physics_process(1.0/60)
+					_camera._process(1.0/60)
 					# Keep the frozen actor posed consistently with production mouse aim.
 					if not before and scenario.begins_with("close"):
 						var facing: Vector2 = _camera.facing_direction(_character.global_position)

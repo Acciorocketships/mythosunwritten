@@ -220,7 +220,11 @@ func _exit_tree() -> void:
 	_release_edge()
 	_release_look()
 
-func _physics_process(delta: float) -> void:
+## Every rendered frame, not every physics tick: the display runs faster
+## than (and out of step with) 60 Hz physics, so a tick-driven camera moved
+## in uneven steps and a mouse turn waited for the next tick. The target is
+## drawn interpolated between ticks (camera_follow_position).
+func _process(delta: float) -> void:
 	if _look_captured and (tactical_view or not is_instance_valid(target)
 			or not is_instance_valid(camera) or not camera.is_current()
 			or Input.mouse_mode != Input.MOUSE_MODE_CAPTURED):
@@ -269,7 +273,7 @@ func _apply_view() -> void:
 	_close.reset()
 	camera.fov = 50.0 if tactical_view else 75.0
 	if not tactical_view: _begin_look()
-	_physics_process(0.0)
+	_process(0.0)
 
 func reset_orbit() -> void:
 	if camera == null or target == null: return

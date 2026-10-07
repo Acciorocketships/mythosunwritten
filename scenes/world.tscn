@@ -32,6 +32,7 @@ script = ExtResource("2_rwgxs")
 metadata/_custom_type_script = "uid://bb8ia06ag8nwf"
 
 [node name="World" type="Node3D"]
+physics_interpolation_mode = 2
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_world")
@@ -80,6 +81,7 @@ player = NodePath("../Characters/Character")
 [node name="Characters" type="Node" parent="."]
 
 [node name="Character" parent="Characters" instance=ExtResource("1_nnsk1")]
+physics_interpolation_mode = 1
 position = Vector3(262, 24, 1045)
 controller = SubResource("Resource_rwgxs")
 

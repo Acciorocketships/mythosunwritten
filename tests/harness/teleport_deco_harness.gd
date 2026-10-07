@@ -97,7 +97,7 @@ func _run(world: Node3D, player: Node3D) -> void:
 	(world.get_node("CoordOverlay") as CanvasLayer).visible = false
 	(world.get_node("ReviewTeleporter") as CanvasLayer).visible = false
 	var camera := world.get_node("Camera3D") as Camera3D
-	camera.set_physics_process(false)
+	camera.set_process(false)
 	camera.fov = 60.0
 	var focus := player.global_position + Vector3.UP * 4.0
 	# `--close` also saves a person-scale view beside the overhead one (same

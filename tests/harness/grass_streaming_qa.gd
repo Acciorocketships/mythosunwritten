@@ -93,7 +93,7 @@ func _run(world: Node3D, player: Node3D,
 			TrampleField.PLAYER_RADIUS, 1.0)
 
 	var camera := world.get_node("Camera3D") as Camera3D
-	camera.set_physics_process(false)
+	camera.set_process(false)
 	camera.fov = 55.0
 	var focus := player.global_position + Vector3.UP * 0.5
 	camera.global_position = focus + _camera_offset

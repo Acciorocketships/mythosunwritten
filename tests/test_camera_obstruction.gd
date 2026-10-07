@@ -29,7 +29,7 @@ func test_f7_switches_original_and_wider_tactical_views_without_key_repeat() -> 
 	# The old camera still resolves its boom against real collision.
 	_box(world, Vector3(0,5,4), Vector3(6,6,0.5))
 	await get_tree().physics_frame
-	camera._physics_process(1.0 / 60)
+	camera._process(1.0 / 60)
 	assert_lt(camera.position.z, 3.5)
 	camera._unhandled_input(key)
 	assert_true(camera.tactical_view)

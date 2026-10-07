@@ -11,6 +11,14 @@ const WIND_IDLE_BEND := 0.055
 const WIND_GUST_SCALE := 110.0
 const WIND_GUST_SPEED := 4.2
 const WIND_GUST_BEND := 0.27
+## Blade LOD: a tile whose nearest point is beyond these distances draws a
+## patch mesh keeping 1/2, then 1/4, of the authored blade groups (whole
+## blades, hash-ranked, nested). Far grass is already shaded toward the
+## terrain colour, so the thinner carpet reads the same at a fraction of the
+## triangles. static var so profiling can switch it off.
+const BLADE_LOD_DISTANCES := [24.0, 44.0]
+const BLADE_LOD_KEEP := [0.5, 0.25]
+static var BLADE_LOD := true
 
 var _program: GrassProgram
 var _render_cache: EnvironmentRenderCache
@@ -19,6 +27,7 @@ var _ground_palette_texture: Texture2D
 var _ground_palette_uv := Vector2.ZERO
 var _materials: Dictionary = {}
 var _meshes: Dictionary = {}
+var _lod_meshes: Dictionary = {}
 var _built: Dictionary = {}
 var _requested: Dictionary = {}
 var _pending_tiles: Dictionary = {}
@@ -229,6 +238,43 @@ func _prepare_asset(asset_id: StringName) -> void:
 	material.set_shader_parameter(&"local_height", float(metadata.local_height))
 	_materials[asset_id] = material
 	_meshes[asset_id] = piece.mesh
+	var lods: Array[Mesh] = [piece.mesh]
+	for keep: float in BLADE_LOD_KEEP:
+		lods.append(thinned_blades(piece.mesh, keep))
+	_lod_meshes[asset_id] = lods
+
+## The same patch keeping only blade groups whose rank is below `keep`. A
+## blade group is the vertices sharing one root (UV2, written by the bake);
+## ranks are a hash of that root, so smaller keeps are subsets of larger ones.
+static func thinned_blades(mesh: Mesh, keep: float) -> ArrayMesh:
+	var arrays := mesh.surface_get_arrays(0)
+	var roots: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV2]
+	var source: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+	var kept := PackedInt32Array()
+	for t in range(0, source.size(), 3):
+		if blade_rank(roots[source[t]]) < keep:
+			kept.append(source[t])
+			kept.append(source[t + 1])
+			kept.append(source[t + 2])
+	arrays[Mesh.ARRAY_INDEX] = kept
+	var out := ArrayMesh.new()
+	out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	out.surface_set_material(0, mesh.surface_get_material(0))
+	out.custom_aabb = mesh.get_aabb()
+	return out
+
+static func blade_rank(root: Vector2) -> float:
+	var h := hash(Vector2i(roundi(root.x * 1.0e6), roundi(root.y * 1.0e6)))
+	return float(h & 0xffff) / 65536.0
+
+static func blade_lod(distance: float) -> int:
+	if not BLADE_LOD:
+		return 0
+	var level := 0
+	for limit: float in BLADE_LOD_DISTANCES:
+		if distance > limit:
+			level += 1
+	return level
 
 func _prepare_wind() -> void:
 	var noise := FastNoiseLite.new()
@@ -282,7 +328,8 @@ func _batch_records(node: Node3D) -> Array[Dictionary]:
 		if instance != null:
 			out.append({"multimesh": instance.multimesh,
 				"count": int(instance.get_meta(&"grass_count", 0)),
-				"visible": -1})
+				"asset_id": instance.get_meta(&"grass_asset_id", &""),
+				"visible": -1, "lod": 0})
 	return out
 
 func _update_visible_counts() -> void:
@@ -290,10 +337,15 @@ func _update_visible_counts() -> void:
 		_update_tile_visible(tile)
 
 func _update_tile_visible(tile: Vector2i) -> void:
-	var tile_density := density(distance_to_tile(_lod_origin, tile)) * _density_scale
+	var distance := distance_to_tile(_lod_origin, tile)
+	var tile_density := density(distance) * _density_scale
+	var lod := blade_lod(distance)
 	for batch: Dictionary in _built[tile].batches:
 		var count: int = batch.count
 		var multimesh: MultiMesh = batch.multimesh
+		if lod != int(batch.lod) and _lod_meshes.has(batch.asset_id):
+			multimesh.mesh = _lod_meshes[batch.asset_id][lod]
+			batch.lod = lod
 		var visible := mini(count, int(ceil(float(count) * tile_density)))
 		# The cap is still derived from this frame's player origin; only the
 		# redundant server write is skipped when the integer is unchanged.

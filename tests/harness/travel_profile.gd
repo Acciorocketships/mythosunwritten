@@ -138,7 +138,7 @@ func _run() -> void:
 func _render_probe() -> void:
 	_phase = "settling"
 	_player.process_mode = Node.PROCESS_MODE_DISABLED
-	(_world.get_node("Camera3D") as Camera3D).set_physics_process(false)
+	(_world.get_node("Camera3D") as Camera3D).set_process(false)
 	# End generation for this diagnostic scene, then wait for its one active
 	# job to finish. No frame-rate comparison overlaps background generation.
 	_streamer.set_process(false)

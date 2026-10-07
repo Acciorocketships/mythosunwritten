@@ -19,7 +19,7 @@ func _ready() -> void:
 	_mode = "south_walk"
 	_player.controller = SouthController.new()
 	_walk_camera = _world.get_node("Camera3D")
-	_walk_camera.set_physics_process(false)
+	_walk_camera.set_process(false)
 	_walk_camera.set_process(false)
 	_walk_camera.set("target", null)
 	_walk_camera.global_position = PIN + Vector3(4, 9, 10)

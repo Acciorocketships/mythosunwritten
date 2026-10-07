@@ -21,15 +21,15 @@ func test_tactical_left_right_motion_turns_the_orbit_and_idle_does_not() -> void
 		var rig := _rig()
 		var target: Node3D = rig[0]
 		var camera: Camera3D = rig[1]
-		camera._physics_process(1.0/60)
+		camera._process(1.0/60)
 		for tick in 60:
 			target.position.x += direction/6.0
-			camera._physics_process(1.0/60)
+			camera._process(1.0/60)
 		assert_gt(-camera._yaw*direction,.1,"Tactical yaw trails left/right travel")
 		assert_almost_eq(Vector2(camera.position.x-target.position.x,camera.position.z-target.position.z).length(),26.0,.001)
 		camera.reset_orbit()
 		var yaw: float = camera._yaw
-		for tick in 60: camera._physics_process(1.0/60)
+		for tick in 60: camera._process(1.0/60)
 		assert_almost_eq(camera._yaw,yaw,.00001,"Idle must not keep spinning")
 
 func test_close_view_mouse_look_crosshair_and_release() -> void:
@@ -47,13 +47,13 @@ func test_close_view_mouse_look_crosshair_and_release() -> void:
 	motion.position = camera.get_viewport().get_visible_rect().size/2
 	motion.relative = Vector2(100,-80)
 	camera.get_viewport().push_input(motion,true)
-	camera._physics_process(1.0/60)
+	camera._process(1.0/60)
 	assert_gt((-camera.global_basis.z).x,(-before.z).x+.01,"Right mouse motion turns right")
 	assert_gt((-camera.global_basis.z).y,(-before.z).y+.01,"Upward mouse motion looks upward")
 	for vertical in [-100000.0,100000.0]:
 		motion.relative = Vector2(0,vertical)
 		camera.get_viewport().push_input(motion,true)
-		camera._physics_process(1.0/60)
+		camera._process(1.0/60)
 		assert_almost_eq(camera._pitch,deg_to_rad(-60 if vertical < 0 else 75),.00001,"Mouse pitch is bounded")
 	var escape := InputEventKey.new()
 	escape.keycode = KEY_ESCAPE
@@ -62,7 +62,7 @@ func test_close_view_mouse_look_crosshair_and_release() -> void:
 	assert_eq(Input.mouse_mode,Input.MOUSE_MODE_VISIBLE,"Escape releases mouse look")
 	var released: Basis = camera.global_basis
 	camera.get_viewport().push_input(motion,true)
-	camera._physics_process(1.0/60)
+	camera._process(1.0/60)
 	assert_almost_eq(camera.global_basis.z,released.z,Vector3.ONE*.00001,"Released pointer does not turn camera")
 
 func test_close_view_travel_does_not_override_mouse_heading() -> void:
@@ -73,7 +73,7 @@ func test_close_view_travel_does_not_override_mouse_heading() -> void:
 	var heading := Vector2(camera.global_basis.z.x,camera.global_basis.z.z).normalized()
 	for tick in 60:
 		target.position.x += 1.0/6.0
-		camera._physics_process(1.0/60)
+		camera._process(1.0/60)
 	assert_almost_eq(Vector2(camera.global_basis.z.x,camera.global_basis.z.z).normalized(),heading,Vector2.ONE*.001,"Mouse heading survives strafing")
 
 func test_tactical_heading_matches_original_close_follow_at_multiple_tick_rates() -> void:
@@ -90,12 +90,12 @@ func test_tactical_heading_matches_original_close_follow_at_multiple_tick_rates(
 		original.target = target
 		original.collision_enabled = false
 		target.get_parent().add_child(original)
-		camera._physics_process(0.0)
+		camera._process(0.0)
 		original.update_view(0.0)
 		var maximum_error := 0.0
 		for tick in rate*3:
 			target.position += Vector3(8,0,-4)/rate
-			camera._physics_process(1.0/rate)
+			camera._process(1.0/rate)
 			original.update_view(1.0/rate)
 			var offset := original_camera.position-target.position
 			maximum_error = maxf(maximum_error,absf(wrapf(camera._yaw-atan2(offset.x,offset.z),-PI,PI)))
@@ -108,7 +108,7 @@ func test_close_pitch_limits_and_above_horizon_facing_remain_finite() -> void:
 	for pitch in [deg_to_rad(-60),deg_to_rad(75)]:
 		camera._pitch = pitch
 		camera._yaw = 1.2
-		camera._physics_process(0.0)
+		camera._process(0.0)
 		var aim: Vector2 = camera.facing_direction(rig[0].global_position)
 		assert_almost_eq(aim,Vector2(-sin(1.2),-cos(1.2)),Vector2.ONE*.0001)
 		assert_true(camera.global_transform.is_finite())
@@ -121,7 +121,7 @@ func test_heading_survives_switches_and_focus_pause_release() -> void:
 		await get_tree().process_frame
 		await get_tree().process_frame
 	camera._yaw = 1.1
-	camera._physics_process(0.0)
+	camera._process(0.0)
 	for notification in [Node.NOTIFICATION_WM_WINDOW_FOCUS_OUT,Node.NOTIFICATION_PAUSED]:
 		camera.toggle_view()
 		assert_almost_eq(camera._yaw,1.1,.0001,"F7 preserves chosen heading")
@@ -159,7 +159,7 @@ func test_mouse_boom_resolves_walls_and_ground_in_four_orientations() -> void:
 		camera._yaw = yaw
 		camera._pitch = .4
 		camera._close.reset()
-		camera._physics_process(0.0)
+		camera._process(0.0)
 		assert_lt(Vector2(camera.position.x,camera.position.z).length(),2.5,"Camera sphere stays ahead of wall")
 		assert_almost_eq(Vector2(camera.global_basis.z.x,camera.global_basis.z.z).normalized(),Vector2(sin(yaw),cos(yaw)),Vector2.ONE*.0001)
 	wall.rotation = Vector3.ZERO
@@ -169,7 +169,7 @@ func test_mouse_boom_resolves_walls_and_ground_in_four_orientations() -> void:
 	await get_tree().physics_frame
 	camera._pitch = deg_to_rad(-60)
 	camera._close.reset()
-	camera._physics_process(0.0)
+	camera._process(0.0)
 	assert_gt(camera.position.y,.29,"Looking upward cannot push camera through ground")
 
 func test_reset_uses_explicitly_relocated_eye() -> void:
@@ -177,7 +177,7 @@ func test_reset_uses_explicitly_relocated_eye() -> void:
 	var camera: Camera3D = rig[1]
 	camera.position = rig[0].position+Vector3(26,16,0)
 	camera.reset_orbit()
-	camera._physics_process(0.0)
+	camera._process(0.0)
 	assert_almost_eq(camera._yaw,PI/2,.0001)
 	assert_almost_eq(camera.position,rig[0].position+Vector3(26,16,0),Vector3.ONE*.001)
 
