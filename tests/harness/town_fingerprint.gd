@@ -81,6 +81,11 @@ func _run() -> void:
 		results[town] = {"source": source_hash, "payload": _payload_hash(payload),
 			"ms": Time.get_ticks_msec() - started}
 		print("FINGERPRINT ", town, " ", JSON.stringify(results[town]))
+		if not overrides.is_empty():
+			# Read-only diagnostics, after hashing: one centre feature per green.
+			var facts := WarrenSpatialFabricCompiler.construction_diagnostics(spatial, fabric, program)
+			print("GREEN_FEATURES ", town, " greens=", facts.get("maze_green_component_count", 0),
+				" ", JSON.stringify(facts.get("maze_plaza_centre_features", [])))
 	var file := FileAccess.open(out_path, FileAccess.WRITE)
 	file.store_string(JSON.stringify(results, "  "))
 	file.close()

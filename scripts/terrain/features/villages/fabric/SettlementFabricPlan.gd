@@ -221,13 +221,29 @@ func set_planned_plaza(cells: Dictionary, planting: Dictionary = {}) -> bool:
 	if _sealed or _plaza_declared:
 		return false
 	# Several typed greens may be declared (the plaza and any clearing drawn as
-	# a green). Each is its own same-band component, so no band or single-run
-	# rule spans the set; every walking cell still needs its public claim.
+	# a green), each its own connected run. A run may not span two bands:
+	# cells touching laterally, at whatever band, must share one.
+	var unseen := {}
 	for cell_value: Variant in cells.keys():
 		var cell := cell_value as Vector3i
 		if surface_plan != null and not planting.has(cell) and not surface_plan.has_cell(
 				cell + Vector3i.UP):
 			return false
+		unseen[Vector2i(cell.x, cell.z)] = cell.y
+	while not unseen.is_empty():
+		var start: Vector2i = unseen.keys()[0]
+		var band := int(unseen[start])
+		unseen.erase(start)
+		var frontier: Array[Vector2i] = [start]
+		while not frontier.is_empty():
+			var column: Vector2i = frontier.pop_back()
+			for step: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+				if not unseen.has(column + step):
+					continue
+				if int(unseen[column + step]) != band:
+					return false
+				unseen.erase(column + step)
+				frontier.append(column + step)
 	for cell: Vector3i in planting:
 		if not cells.has(cell): return false
 		# Islands may not consume an entrance or exterior edge of the court.

@@ -1990,9 +1990,10 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		walked)
 	var plaza_entries := SettlementFabricAssembler.maze_plaza_entries(plaza,
 		walked)
-	var plaza_feature := SettlementFabricAssembler.maze_plaza_centre_feature(
+	var plaza_features := SettlementFabricAssembler.maze_plaza_centre_features(
 		plaza, plaza_entries, footprints, decor_skin, walked,not plan.planned_plaza_cells.is_empty(),
 		plan.world_seed)
+	var plaza_feature: Dictionary = plaza_features[0] if not plaza_features.is_empty() else {}
 	# TASK I3. `maze_garden_planting_count` stays what it has always meant --
 	# what GROWS on the yards -- so it is counted off the `maze-garden/` ids
 	# rather than off the dressing payload's whole instance count, which now
@@ -2038,9 +2039,9 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 				== StringName(decor_by_cell[decor_cell + step]))
 	var planting_refused := 0
 	var planting_reserved: Dictionary = {}
-	for cell_value: Variant in (plaza_feature.get("cells", {}) \
-			as Dictionary).keys():
-		planting_reserved[cell_value as Vector3i] = true
+	for feature: Dictionary in plaza_features:
+		for cell_value: Variant in (feature.get("cells", {}) as Dictionary).keys():
+			planting_reserved[cell_value as Vector3i] = true
 	for site: Dictionary in SettlementFabricAssembler \
 			.maze_garden_planting_sites(garden, plaza, plaza_entries,
 				planting_reserved, treatments, footprints, decor_skin, walked,
@@ -2121,8 +2122,10 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	# it: the square's own centre feature and the town's outward front. The goods
 	# under them are counted off the payloads themselves, so "every canopy is
 	# stocked" is a ratio a reader can check rather than a promise.
-	var stall_canopies := int(SettlementFabricAssembler.STALL_CANOPIES.has(
-		StringName(plaza_feature.get("asset", &""))))
+	var stall_canopies := 0
+	for feature: Dictionary in plaza_features:
+		stall_canopies += int(SettlementFabricAssembler.STALL_CANOPIES.has(
+			StringName(feature.get("asset", &""))))
 	for site: Dictionary in frontages:
 		frontages_wide += int((site.cells as Array).size() \
 			>= SettlementFabricAssembler.PERIMETER_WINDOW_CELLS)
@@ -2181,7 +2184,10 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		"maze_garden_cell_count": garden.size(),
 		"maze_village_green_cell_count": plaza.size(),
 		"maze_plaza_entry_count": plaza_entries.size(),
-		"maze_plaza_centre_feature_count": int(not plaza_feature.is_empty()),
+		"maze_plaza_centre_feature_count": plaza_features.size(),
+		"maze_green_component_count": SettlementFabricAssembler.maze_green_components(plaza).size(),
+		"maze_plaza_centre_features": plaza_features.map(func(f: Dictionary) -> Dictionary:
+			return {"asset": StringName(f.asset), "cell": f.cell as Vector3i}),
 		"maze_plaza_centre_feature_asset": StringName(
 			plaza_feature.get("asset", &"")),
 		"maze_garden_planting_count": planting_instances,

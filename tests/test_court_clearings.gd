@@ -297,3 +297,44 @@ func test_withdrawn_clearing_withdraws_its_plot() -> void:
 	for column: Vector2i in gone.cells:
 		for index: int in plan.plots_at(column):
 			assert_ne(plan.plots[index].id, gone.id)
+
+func _green_features(seed_value: int, scale: StringName, count: float) -> Dictionary:
+	var profile := WarrenVillageScaleProfile.for_id(scale)
+	var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
+	if count > 0.0:
+		program.town_odds = program.town_odds.with_overrides({&"clearing_count": count})
+	var spatial := WarrenVolumetricSolver.generate(seed_value, {}, program, profile)
+	assert_not_null(spatial)
+	var source := spatial.source_volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
+	var facts := WarrenSpatialFabricCompiler.construction_diagnostics(spatial,
+		spatial.compiled_fabric_cache(), program)
+	var plaza_columns := {}
+	for plot: Dictionary in source.plots:
+		if plot.id == WarrenPlotReservations.PLAZA_PLOT_ID:
+			for column: Vector2i in plot.cells: plaza_columns[column] = true
+	var plaza_feature := {}
+	for feature: Dictionary in facts.get("maze_plaza_centre_features", []):
+		var cell := feature.cell as Vector3i
+		if plaza_columns.has(Vector2i(floori(cell.x / 2.0), floori(cell.z / 2.0))):
+			plaza_feature = feature
+	return {"facts": facts, "plaza_columns": plaza_columns, "plaza_feature": plaza_feature,
+		"greens": source.plots.filter(func(p: Dictionary) -> bool: return WarrenPlotReservations.is_green_court(p)).size()}
+
+func test_every_green_gets_its_own_centre_feature_and_the_plaza_keeps_its_own() -> void:
+	var on := _green_features(53, &"grand", 3.0)
+	var facts: Dictionary = on.facts
+	var features: Array = facts.get("maze_plaza_centre_features", [])
+	assert_gte(int(on.greens), 2, "the town carries the plaza and a green clearing")
+	assert_eq(int(facts.get("maze_green_component_count", 0)), int(on.greens))
+	assert_eq(int(facts.get("maze_plaza_centre_feature_count", -1)), features.size())
+	assert_gte(features.size(), 2, "a green clearing that fits a feature gets one beside the plaza's")
+	var components := {}
+	for feature: Dictionary in features:
+		var cell := feature.cell as Vector3i
+		var key := Vector2i(floori(cell.x / 2.0), floori(cell.z / 2.0))
+		assert_false(components.has(key))
+		components[key] = true
+	var off := _green_features(53, &"grand", 0.0)
+	assert_false((off.plaza_feature as Dictionary).is_empty())
+	if on.plaza_columns == off.plaza_columns:
+		assert_eq(on.plaza_feature, off.plaza_feature, "the plaza keeps its own centrepiece")

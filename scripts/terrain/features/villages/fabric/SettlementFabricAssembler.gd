@@ -5643,13 +5643,60 @@ static func maze_village_green_cells(garden: Dictionary,
 
 static func maze_plaza_cells_for(plan: SettlementFabricPlan,
 		garden: Dictionary, walked: Dictionary = {}) -> Dictionary:
-	## The typed source-planned square wins outright. It was reserved as one
-	## connected, street-fronted rectangle before buildings were packed and its
-	## public floor was proved when attached to the fabric plan. Only towns with
-	## no such source rectangle may promote a naturally reachable garden run.
+	## The typed source-planned greens win outright: the plaza, reserved as one
+	## connected, street-fronted rectangle before buildings were packed, and any
+	## courtyard clearing drawn as a green. The result may therefore be several
+	## separate greens (see `maze_green_components`); their public floor was
+	## proved when attached to the fabric plan. Only towns with no planned green
+	## may promote a naturally reachable garden run.
 	if plan != null and not plan.planned_plaza_cells.is_empty():
 		return plan.planned_plaza_cells.duplicate()
 	return maze_village_green_cells(garden, walked)
+
+
+static func maze_green_components(plaza: Dictionary) -> Array[Dictionary]:
+	## The separate greens of a plaza cell set: lateral (4-neighbour, one band)
+	## components, each a cell set, ordered by their lowest sorted cell.
+	var out: Array[Dictionary] = []
+	var seen: Dictionary = {}
+	var cells: Array[Vector3i] = []
+	cells.assign(plaza.keys())
+	cells.sort_custom(_cell_before)
+	for start: Vector3i in cells:
+		if seen.has(start):
+			continue
+		var component := {start: true}
+		seen[start] = true
+		var frontier: Array[Vector3i] = [start]
+		while not frontier.is_empty():
+			var cell: Vector3i = frontier.pop_back()
+			for step: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+					Vector3i.FORWARD, Vector3i.BACK]:
+				var probe := cell + step
+				if plaza.has(probe) and not seen.has(probe):
+					seen[probe] = true
+					component[probe] = true
+					frontier.append(probe)
+		out.append(component)
+	return out
+
+
+static func maze_plaza_centre_features(plaza: Dictionary,
+		entries: Dictionary, footprints: Dictionary,
+		skin: Array[AABB],
+		walked: Dictionary, planted_island: bool,
+		world_seed: int) -> Array[Dictionary]:
+	## One centre feature per separate green (`maze_green_components`), each
+	## chosen inside its own cells by `maze_plaza_centre_feature` with its own
+	## cell-keyed roll, so the primary plaza keeps exactly the piece it has with
+	## no other green beside it and every green clearing gets one where it fits.
+	var out: Array[Dictionary] = []
+	for component: Dictionary in maze_green_components(plaza):
+		var feature := maze_plaza_centre_feature(component, entries, footprints,
+			skin, walked, planted_island, world_seed)
+		if not feature.is_empty():
+			out.append(feature)
+	return out
 
 
 static func maze_plaza_centre_feature(plaza: Dictionary,
@@ -6441,18 +6488,20 @@ static func maze_garden_dressing(retained: Dictionary, solids: Dictionary,
 	var plaza := planned_plaza.duplicate() if not planned_plaza.is_empty() \
 		else maze_village_green_cells(garden, walked)
 	var entries := maze_plaza_entries(plaza, walked)
-	var feature := maze_plaza_centre_feature(plaza, entries, footprints, skin,
+	# One centre feature per separate green: the plaza and each green clearing.
+	var features := maze_plaza_centre_features(plaza, entries, footprints, skin,
 		walked,not planned_plaza.is_empty(), world_seed)
 	var reserved: Dictionary = {}
-	for cell_value: Variant in (feature.get("cells", {}) as Dictionary).keys():
-		reserved[cell_value as Vector3i] = true
+	for feature: Dictionary in features:
+		for cell_value: Variant in (feature.get("cells", {}) as Dictionary).keys():
+			reserved[cell_value as Vector3i] = true
 	var cells: Array[Vector3i] = []
 	cells.assign(garden.keys())
 	cells.sort_custom(_cell_before)
 	# The plaza's turf is emitted by `terrace_retaining_payload` as one
 	# terrain-style procedural surface. This function owns only its furniture
 	# and planting; entry cells stay clear but add no competing floor geometry.
-	if not feature.is_empty():
+	for feature: Dictionary in features:
 		var anchor := feature.origin as Vector3
 		var feature_cell := feature.cell as Vector3i
 		var feature_yaw := float(int(feature.quarter)) * PI * 0.5

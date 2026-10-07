@@ -407,7 +407,9 @@ static func withdraw_orphan_clearings(plan: WarrenMazeSourcePlan) -> void:
 		if not matched:
 			orphans.append(StringName(plot.id))
 	for id: StringName in orphans:
-		plan.remove_plot(id)
+		if not plan.remove_plot(id):
+			push_error("could not withdraw clearing plot %s: %s" % [id, plan.last_rejection])
+			continue
 		for record: Dictionary in WarrenPlotPlanner.outcomes(plan).get("clearings", []):
 			if record.id == id: record["reason"] = "withdrawn with its pruned clearing"
 
