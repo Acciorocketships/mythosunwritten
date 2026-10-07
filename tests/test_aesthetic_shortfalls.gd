@@ -32,12 +32,3 @@ func test_source_audit_has_record_without_diagnostics() -> void:
 		WarrenVillageScaleProfile.for_id(&"standard"), &"", false)
 	assert_not_null(plan)
 	assert_true(plan.audit.has("aesthetic_shortfalls"))
-
-func test_feature_shortfall_shape_is_target_found() -> void:
-	# The annex/outcrop records need a composed town that misses its quota;
-	# no cheap fixture does, so pin the shape contract used by the solver.
-	var rec := {"target": 2, "found": 1}
-	WarrenVolumetricSolver.last_advisory_shortfalls = {"tower_annexes": rec}
-	assert_eq(WarrenVolumetricSolver.last_advisory_shortfalls["tower_annexes"].keys(),
-		["target", "found"])
-	WarrenVolumetricSolver.last_advisory_shortfalls = {}

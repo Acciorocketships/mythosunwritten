@@ -4,7 +4,9 @@ extends Resource
 ## (`at_large`) blends linearly; `spread` is how far one town may deviate.
 ## CHANCE and RANGE_FLOAT draw a float, RANGE_INT draws an integer whose mean
 ## is the (possibly fractional) centre, WEIGHTS draws per-town option weights
-## (each centre weight jittered by +-spread, then normalised).
+## (each centre weight jittered by +-spread, then normalised). RANGE_INT
+## clamps its draw to [clamp_min, clamp_max], which skews the realised mean
+## away from the centre when the centre sits near a clamp bound.
 
 enum Kind { CHANCE, RANGE_FLOAT, RANGE_INT, WEIGHTS }
 

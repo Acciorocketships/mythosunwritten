@@ -53,7 +53,7 @@ All eight towns build; every row has `valid_payload: true`, `floating: 0`, roof 
 Headlines:
 - Median block is 1 to 2 columns in every town with or without clearings; clearings do not move it.
 - The only really large blocks off are 31 large (29 columns) and 83 grand (14) and 53 grand (10). 53 and 83 shrink (10 to 6, 14 to 8). 31 large keeps its 29-column block because no clearing survived there (guardrails reject them), so the owner's "large block" complaint is not addressed in that town.
-- Clearing supply is low: 5 of 8 towns kept at most 1, 2 kept none. With the requested count 2.5 a large/grand town kept 0 to 2.
+- Clearing supply is low: 6 of 8 towns kept at most 1 (2 of them none); only 53 grand and 43 large kept 2. With the requested count 2.5 a large/grand town kept 0 to 2.
 
 ## Images inspected
 

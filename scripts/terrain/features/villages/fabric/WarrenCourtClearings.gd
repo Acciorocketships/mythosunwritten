@@ -10,7 +10,7 @@ extends RefCounted
 
 const ATTEMPTS_PER_CLEARING := 24
 const SALT_CENTRE := 0x434C4552
-const SALT_FLOOR := 0x464C4F52
+const SALT_SHAPE := 0x53484150  # "SHAP"; was SALT_FLOOR ("FLOR") until Oct 7 -- reshuffles shapes under overrides only (off by default)
 const SALT_GROW := 0x47524F57
 const SALT_ANCHOR := 0x414E4348
 const SALT_SIZE := 0x53495A45
@@ -66,7 +66,7 @@ static func propose(world_seed: int, massif: WarrenMassif, excavation: WarrenExc
 		if taken.has(centre.column):
 			continue
 		var floor_band := int(centre.floor)
-		var shape := character.pick(&"clearing_shape", Vector2i(attempt, SALT_FLOOR))
+		var shape := character.pick(&"clearing_shape", Vector2i(attempt, SALT_SHAPE))
 		var area := character.count(&"clearing_area")
 		var cells := _grow(empty, centre.column as Vector2i, floor_band, area,
 			shape, blocked, taken, street, character, attempt)

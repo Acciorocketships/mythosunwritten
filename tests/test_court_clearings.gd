@@ -6,11 +6,14 @@ func _setup(seed_value: int, scale: StringName, count: float) -> Dictionary:
 	var plan := WarrenMazeSitePlanner.plan(seed_value, {}, profile, &"carve")
 	return {"profile": profile, "plan": plan}
 
-func test_default_table_proposes_nothing() -> void:
+func test_default_table_proposes_and_carves_no_clearings() -> void:
 	var profile := WarrenVillageScaleProfile.for_id(&"large")
 	TownCharacter.attach(profile, TownOddsProgram.builtin(), 31)
 	var plan := WarrenMazeSitePlanner.plan(31, {}, profile, &"carve")
 	assert_eq(WarrenCourtClearings.propose(31, plan.massif, plan.excavation, profile).size(), 0)
+	assert_eq(plan.excavation.court_clearings.size(), 0)
+	assert_eq(plan.excavation.lanes.filter(func(l: Dictionary) -> bool:
+		return l.get("feature_kind", &"") == &"court_clearing_access").size(), 0)
 
 func test_proposals_are_deterministic_disjoint_and_wide_enough() -> void:
 	var s := _setup(31, &"large", 3.0)
@@ -178,14 +181,6 @@ func test_clearing_lanes_survive_destination_pruning() -> void:
 		walk[cell] = true
 	for clearing: Dictionary in plan.excavation.court_clearings:
 		assert_true(walk.has(clearing.door_walk), "a kept clearing keeps its door on the public realm")
-
-func test_default_table_carves_no_clearings() -> void:
-	var profile := WarrenVillageScaleProfile.for_id(&"large")
-	TownCharacter.attach(profile, TownOddsProgram.builtin(), 31)
-	var plan := WarrenMazeSitePlanner.plan(31, {}, profile, &"carve")
-	assert_eq(plan.excavation.court_clearings.size(), 0)
-	assert_eq(plan.excavation.lanes.filter(func(l: Dictionary) -> bool:
-		return l.get("feature_kind", &"") == &"court_clearing_access").size(), 0)
 
 func _copy_excavation(source: WarrenExcavation) -> WarrenExcavation:
 	var excavation := WarrenExcavation.new(source.world_seed)
@@ -357,3 +352,29 @@ func test_centre_features_never_overlap_103_standard() -> void:
 
 func test_centre_features_never_overlap_53_grand() -> void:
 	_assert_centre_features_never_overlap(53, &"grand")
+
+func test_greens_at_different_bands_are_separate_components_not_a_rejection() -> void:
+	# Two greens touching sideways at bands 0 and 2, plus a green stacked in
+	# one column at bands 0 and 2. Keyed by column, the sideways touch failed
+	# the band check (rejecting the whole town) and the stack overwrote its
+	# lower cell; keyed by Vector3i both are separate components.
+	var sideways := {}
+	for x in [0, 1]:
+		for z in [0, 1]:
+			sideways[Vector3i(x, 0, z)] = true
+			sideways[Vector3i(x + 2, 2, z)] = true
+	var plan := SettlementFabricPlan.new(&"sideways-greens")
+	assert_true(plan.set_planned_plaza(sideways))
+	assert_eq(plan.planned_plaza_cells.size(), 8)
+	assert_eq(SettlementFabricAssembler.maze_green_components(plan.planned_plaza_cells).size(), 2)
+	var stacked := {}
+	for x in [0, 1]:
+		for z in [0, 1]:
+			stacked[Vector3i(x, 0, z)] = true
+			stacked[Vector3i(x, 2, z)] = true
+	var stack_plan := SettlementFabricPlan.new(&"stacked-greens")
+	assert_true(stack_plan.set_planned_plaza(stacked))
+	assert_eq(stack_plan.planned_plaza_cells.size(), 8)
+	assert_eq(SettlementFabricAssembler.maze_green_components(stack_plan.planned_plaza_cells).size(), 2)
+	# A genuinely malformed declaration is still refused: a second one.
+	assert_false(stack_plan.set_planned_plaza({}))

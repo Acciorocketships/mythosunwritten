@@ -1,3 +1,28 @@
+> October 7 town odds layer (branch `town-redesign`; spec
+> `docs/superpowers/specs/2026-10-07-town-odds-layer-design.md`, decisions
+> `docs/qa/2026-10-07-town-rule-audit/audit.md` section 10). Owner principle: hard rules
+> only guard against broken results; aesthetic targets never reject a town. Aesthetic
+> numbers live in `terrain/villages/town_odds.tres` (`TownKnob`/`TownOddsTable`/
+> `TownOddsProgram`/`TownCharacter`, `scripts/terrain/features/villages/odds/`); each town
+> draws its own character (`WarrenVillageScaleProfile.character`) from per-knob independent
+> streams, so retuning one knob moves no other. `--odds name=value` (numeric overrides
+> only) in `kit_town_review` and `tests/harness/town_fingerprint.gd`; the fingerprint
+> compare against `docs/qa/2026-10-07-town-odds/fingerprint/baseline.json` is the
+> default-town byte-identity gate (must print FINGERPRINT_MATCH). Loop, straight-run,
+> annex and outcrop quotas are advisory `aesthetic_shortfalls`, never refusals. Dressing
+> rolls take the world seed. Tunnel attrition counters + report
+> (`docs/qa/2026-10-07-town-odds/tunnels/attrition.md`: `cover_tunnels` refuses most
+> bored cells). COURTYARD CLEARINGS (`WarrenCourtClearings`): carved after alleys, biased
+> by distance to street, reached by a street at their own band, withdrawn whole if
+> unconnectable or overlapping; realised as `clearing.NN` deck plots; a green is lawn
+> with its own centrepiece. OFF by default (`clearing_count` 0) pending owner checkpoint
+> (`docs/qa/2026-10-07-town-odds/clearings/result.md`). `set_planned_plaza` keys greens
+> by column AND band: greens touching sideways at other bands or stacked are separate
+> components, not a rejection. Deleted (unreached legacy): VillageHamletConstruction,
+> VillageMassingSolver, VillageMarketSolver, VillageCirculationSolver,
+> VillageTimberFabricSolver, VillageSkirtDeckSolver, PureVillageNativeHouse,
+> KitRoofTurrets.propose.
+
 > October 4 turret course grammar: PureVillageTurretHouse derives exact source
 > or one extra upper course (11facades+1shaft); crown/cap/brackets move together,
 > low wing fixed. Five native round windows dress new bays; shaft-facing bay
@@ -227,7 +252,7 @@
 > StreetHouse_1 reconstruction claim. See
 > `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-native-jetty-rule/result.md`.
 
-> October 4 native house grammar: `PureVillageNativeHouse` reconstructs the
+> October 4 native house grammar (`PureVillageNativeHouse` deleted October 7): it reconstructed the
 > entire authored House_4 from ridge-bay count and shared facade/foundation/
 > corner/head rules plus the native roof grammar. Opening choices replace whole
 > wall bays; Door_9_1 coordinates its entrance foundation and 125 mm tangent
@@ -599,7 +624,7 @@
 
 > October3 roof turrets: inspected native House_11c's complete round shaft
 > emerging through a roof. Baked original Middle2_15x30, Window_15x30, Roof_Tower_2;
-> KitRoofTurrets is a seeded fallback behind existing larger tower fitting.
+> KitRoofTurrets is a seeded fallback behind existing larger tower fitting (its `propose` deleted October 7).
 > Shaft begins inside an occupied upper room; native window is above the roof,
 > cap laps0.25m. Whole public air/reservations and individual neighbor pieces
 > protected. Hidden source-measured shaft cutters only; no visible generated
@@ -6037,7 +6062,7 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
   `VillageTerrainView` is the only cross-block terrain/water query adapter;
   `VillageTerrainSurvey` discovers and spatially buckets guarded-source-dry buildable perches
   without mutating the heightfield (exact water remains a final-transaction check); and
-  `VillageMassingSolver` uses a bounded, composition-diverse beam plus a ranked complete-plan
+  `VillageMassingSolver` (deleted October 7) used a bounded, composition-diverse beam plus a ranked complete-plan
   frontier to pack 7–15 inhabited buildings into a 42 m core (10/15 authored targets for
   village/town). It tries comparable ranks
   across building counts instead of exhausting near-duplicate dense failures first. The massing
@@ -6049,11 +6074,11 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
   footprint expands into both legitimate facade directions, and reviewed door/stair access is
   qualified before beam search. Larger furnished houses are ground-only accents, so adding asset
   variety cannot silently increase the vertical cadence or erase the compact-house vocabulary.
-  `VillageMarketSolver` runs first and selects one connected orthogonal alley topology before any
+  `VillageMarketSolver` (deleted October 7) ran first and selected one connected orthogonal alley topology before any
   building is admitted; reviewed stalls line both sides where terrain and exact 3D occupancy
   permit. The market's street/headroom volumes participate in the same massing transaction rather
   than being optional decoration added after the town exists.
-  `VillageCirculationSolver` owns topology only. It first builds all cheap direct right-angle
+  `VillageCirculationSolver` (deleted October 7) owned topology only. It first builds all cheap direct right-angle
   terrain edges, then asks `VillageGroundRouter` for bounded A* detours solely between remaining
   disconnected components. Ground routes may cross natural height bands only through frozen
   fixed-module `VillageStairTransition`s. `VillageRouteStairFabricSolver` materializes each flight
