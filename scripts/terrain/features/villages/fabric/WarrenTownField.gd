@@ -35,9 +35,15 @@ const SUBURB_KNOB := &"suburb_house_count"
 const SUBURB_BAND := Vector2(1.0, 1.4)
 const SUBURB_MAX_WIDTH := 3.6
 const SUBURB_TRIES := 8
-const SUBURB_STEP := 0.5
-## Columns of open ground between a detached cottage and other town mass.
-const COTTAGE_CLEARANCE := 2
+const SUBURB_STEP := 0.25
+## Tangential tries (radians round the drawn direction) at each radius.
+const SUBURB_TURNS: Array[float] = [0.0, 0.25, -0.25]
+## Beyond this many radii a cottage is no longer suburb: it is dropped.
+const SUBURB_MAX_REACH := 1.6
+## Mass standing a house storey (WarrenMazeSourcePlan.MIN_HOUSE_BANDS).
+const BUILT_BANDS := 4.0
+## Columns of open ground between a detached cottage and other built mass.
+const COTTAGE_CLEARANCE := 1
 
 ## The same limits used below bound the sampling box, including a green
 ## whose centre and satellite both move away from the original crown.
@@ -272,18 +278,23 @@ static func _add_suburb_lobes(lobes: Array[Dictionary], clearings: Array[Diction
 				"angle": roll.call(6) * TAU, "kind": &"house", "storeys": 1,
 				"suburb": true}
 			# Just outside the core edge: start in the 1.0-1.4 radius band and
-			# step outwards to the first spot with a clear ring round the
-			# cottage, never past the discovery bound (maximum_sample_extent).
+			# step outwards, trying the drawn direction and two tangential
+			# neighbours at each radius, to the first spot with a clear ring
+			# round the cottage; never past SUBURB_MAX_REACH radii (nor the
+			# discovery bound, maximum_sample_extent).
 			var reach := float(ceili((lobe.width as Vector2).length() * 1.5) + 1)
-			var limit := float(maximum_sample_extent(radius)) - reach
+			var limit := minf(radius * SUBURB_MAX_REACH,
+				float(maximum_sample_extent(radius)) - reach)
 			var distance := radius * lerpf(SUBURB_BAND.x, SUBURB_BAND.y, roll.call(3))
 			var placed := false
-			while distance <= limit:
-				lobe.centre = direction * distance
-				if _suburb_spot_is_clear(lobe, lobes, clearings):
-					placed = true
-					break
-				distance += SUBURB_STEP
+			while distance <= limit and not placed:
+				for turn: float in SUBURB_TURNS:
+					lobe.centre = direction.rotated(turn) * distance
+					if _suburb_spot_is_clear(lobe, lobes, clearings):
+						placed = true
+						break
+				if not placed:
+					distance += SUBURB_STEP
 			if placed:
 				lobes.append(lobe)
 				break
@@ -302,27 +313,29 @@ static func _suburb_spot_is_clear(lobe: Dictionary, lobes: Array[Dictionary],
 	return _has_clear_ring(lobe, lobes)
 
 
-## The columns a lobe raises to at least a building column on its own,
+## The columns a lobe raises to at least `threshold` bands on its own,
 ## taking the boundary noise at its strongest (x1.18).
-static func _footprint(lobe: Dictionary) -> Dictionary:
+static func _footprint(lobe: Dictionary,
+		threshold := float(WarrenMassifBuilder.MIN_COLUMN_BANDS)) -> Dictionary:
 	var out := {}
 	var centre: Vector2 = lobe.centre
 	var reach := ceili((lobe.width as Vector2).length() * 1.5) + 1
 	for z in range(floori(centre.y) - reach, ceili(centre.y) + reach + 1):
 		for x in range(floori(centre.x) - reach, ceili(centre.x) + reach + 1):
-			if _lobe_height(lobe, Vector2(x, z)) * 1.18 >= float(WarrenMassifBuilder.MIN_COLUMN_BANDS):
+			if _lobe_height(lobe, Vector2(x, z)) * 1.18 >= threshold:
 				out[Vector2i(x, z)] = true
 	return out
 
 
 ## A detached cottage (task 6) keeps COTTAGE_CLEARANCE columns (Chebyshev,
-## an eave's reach) between its own footprint and every other lobe's.
-## Shoulders are not lobes: the low ridge joining it to the town stays.
+## an eave's reach) between its own footprint and every other lobe's BUILT
+## footprint (mass standing a house storey, BUILT_BANDS): the low Gaussian
+## tails and the shoulder ridge joining it to the town may touch it.
 static func _has_clear_ring(lobe: Dictionary, lobes: Array[Dictionary]) -> bool:
 	var own := _footprint(lobe)
 	for other: Dictionary in lobes:
 		if other == lobe: continue
-		for column: Vector2i in _footprint(other):
+		for column: Vector2i in _footprint(other, BUILT_BANDS):
 			for d in range(-COTTAGE_CLEARANCE, COTTAGE_CLEARANCE + 1):
 				for e in range(-COTTAGE_CLEARANCE, COTTAGE_CLEARANCE + 1):
 					if own.has(column + Vector2i(d, e)): return false
@@ -331,8 +344,8 @@ static func _has_clear_ring(lobe: Dictionary, lobes: Array[Dictionary]) -> bool:
 
 ## Admission of a detached cottage's site (task 6): no column within
 ## COTTAGE_CLEARANCE of its house and of its garden on its own mound belongs
-## to another lobe's own mass (owner by strongest influence, standing on its
-## own height).
+## to another lobe's built mass (owner by strongest influence, standing a
+## house storey, BUILT_BANDS, on its own height).
 static func _site_ring_is_clear(site: Dictionary, garden: Dictionary,
 		lobes: Array[Dictionary], solid: Dictionary) -> bool:
 	# The garden as far as the cottage's own mound reaches: beyond it the
@@ -354,8 +367,7 @@ static func _site_ring_is_clear(site: Dictionary, garden: Dictionary,
 					if influence > strongest:
 						strongest = influence
 						owner = index
-				if owner != lobe_index and strongest * 1.18 \
-						>= float(WarrenMassifBuilder.MIN_COLUMN_BANDS):
+				if owner != lobe_index and strongest * 1.18 >= BUILT_BANDS:
 					return false
 	return true
 

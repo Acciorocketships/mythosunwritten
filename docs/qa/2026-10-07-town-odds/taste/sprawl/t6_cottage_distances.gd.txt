@@ -1,0 +1,10 @@
+extends SceneTree
+func _init() -> void:
+	for town in [[13,&"standard"],[53,&"grand"],[7,&"compact"],[1,&"compact"],[2,&"compact"],[3,&"compact"],[4,&"compact"],[5,&"compact"],[12,&"compact"],[6,&"standard"],[8,&"standard"],[9,&"standard"],[10,&"standard"],[11,&"standard"]]:
+		var profile := WarrenVillageScaleProfile.for_id(town[1])
+		TownCharacter.attach(profile, TownOddsProgram.builtin().with_overrides({&"satellite_reach_scale":0.6,&"suburb_house_count":4.0,&"lone_house_path_chance":0.0}), town[0])
+		var f: Dictionary = preload("res://scripts/terrain/features/villages/fabric/WarrenTownField.gd").sample(town[0], profile)
+		var subs: Array = f.lobes.filter(func(l): return l.get("suburb", false))
+		var sites: Array = f.house_sites.filter(func(s): return f.lobes[s.lobe].get("suburb", false))
+		print("FIELD ", town, " placed=", subs.size(), " admitted=", sites.size(), " dropped=", 4 - sites.size(), " dist=", sites.map(func(s): return snappedf(s.centre.length()/profile.radius_cells, 0.01)), " refused=", f.lobes.filter(func(l): return l.get("refused", false)).size())
+	quit()

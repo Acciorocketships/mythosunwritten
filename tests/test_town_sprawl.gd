@@ -67,7 +67,7 @@ func test_suburb_band_adds_cottages_near_the_core_edge() -> void:
 			if not bool(lobe.get("suburb", false)): continue
 			added += 1
 			var distance := (site.centre as Vector2).length()
-			assert_between(distance, radius * 0.95, float(FIELD.maximum_sample_extent(radius)))
+			assert_between(distance, radius * 0.95, radius * FIELD.SUBURB_MAX_REACH + 0.01)
 			assert_eq(int(lobe.storeys), 1, "suburb cottages are small")
 		gut.p("%d:%s house sites %d -> %d (suburb %d)" % [town[0], town[1],
 			base.house_sites.size(), field.house_sites.size(), added])

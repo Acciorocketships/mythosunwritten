@@ -1,12 +1,12 @@
-SWEEP [1, &"compact"] ok=true footways=4 fail=
-SWEEP [2, &"compact"] ok=true footways=4 fail=
-SWEEP [3, &"compact"] ok=true footways=4 fail=
-SWEEP [4, &"compact"] ok=true footways=4 fail=
+SWEEP [1, &"compact"] ok=true footways=3 fail=
+SWEEP [2, &"compact"] ok=true footways=2 fail=
+SWEEP [3, &"compact"] ok=true footways=1 fail=
+SWEEP [4, &"compact"] ok=true footways=1 fail=
 SWEEP [5, &"compact"] ok=true footways=0 fail=
-SWEEP [6, &"standard"] ok=true footways=4 fail=
-SWEEP [8, &"standard"] ok=true footways=2 fail=
-SWEEP [9, &"standard"] ok=true footways=3 fail=
+SWEEP [6, &"standard"] ok=true footways=3 fail=
+SWEEP [8, &"standard"] ok=true footways=3 fail=
+SWEEP [9, &"standard"] ok=true footways=4 fail=
 SWEEP [10, &"standard"] ok=true footways=0 fail=
-SWEEP [11, &"standard"] ok=true footways=4 fail=
+SWEEP [11, &"standard"] ok=true footways=3 fail=
 SWEEP [12, &"compact"] ok=true footways=3 fail=
 SWEEP_EXIT 0

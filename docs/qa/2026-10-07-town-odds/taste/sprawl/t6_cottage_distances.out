@@ -1,0 +1,14 @@
+FIELD [13, &"standard"] placed=3 admitted=3 dropped=1 dist=[1.53, 1.5, 1.48] refused=0
+FIELD [53, &"grand"] placed=4 admitted=4 dropped=0 dist=[1.4, 1.36, 1.44, 1.28] refused=0
+FIELD [7, &"compact"] placed=4 admitted=4 dropped=0 dist=[1.29, 1.59, 1.53, 1.54] refused=0
+FIELD [1, &"compact"] placed=3 admitted=3 dropped=1 dist=[1.5, 1.57, 1.51] refused=0
+FIELD [2, &"compact"] placed=2 admitted=2 dropped=2 dist=[1.57, 1.49] refused=0
+FIELD [3, &"compact"] placed=1 admitted=1 dropped=3 dist=[1.56] refused=1
+FIELD [4, &"compact"] placed=1 admitted=1 dropped=3 dist=[1.56] refused=0
+FIELD [5, &"compact"] placed=3 admitted=3 dropped=1 dist=[1.48, 1.36, 1.36] refused=0
+FIELD [12, &"compact"] placed=3 admitted=3 dropped=1 dist=[1.59, 1.55, 1.6] refused=0
+FIELD [6, &"standard"] placed=3 admitted=3 dropped=1 dist=[1.59, 1.52, 1.32] refused=0
+FIELD [8, &"standard"] placed=3 admitted=3 dropped=1 dist=[1.48, 1.51, 1.56] refused=1
+FIELD [9, &"standard"] placed=4 admitted=4 dropped=0 dist=[1.46, 1.58, 1.54, 1.43] refused=0
+FIELD [10, &"standard"] placed=2 admitted=2 dropped=2 dist=[1.27, 1.6] refused=0
+FIELD [11, &"standard"] placed=3 admitted=3 dropped=1 dist=[1.51, 1.48, 1.49] refused=0
