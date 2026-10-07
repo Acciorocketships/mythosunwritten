@@ -209,6 +209,15 @@ func drain_commits() -> Array[Dictionary]:
 func built_count() -> int:
 	return _built.size()
 
+## Desired tiles (within GRASS_RADIUS of the last LOD origin) not yet built:
+## how far grass fill-in lags the player.
+func pending_tiles() -> int:
+	var count := 0
+	for tile: Vector2i in desired_tiles(_lod_origin):
+		if not _built.has(tile):
+			count += 1
+	return count
+
 func pending_count() -> int:
 	return _pending.size()
 

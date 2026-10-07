@@ -21,6 +21,7 @@ const ABLATIONS := ["full", "no_shadows", "shadow_2048", "shadow_2_splits", "no_
 var _world: Node3D
 var _player: CharacterBody3D
 var _streamer: FieldTerrainStreamer
+var _memory_idle_end := 0.0
 var _rig: Node
 var _camera: Camera3D
 var _seed := 2697992464
@@ -71,6 +72,9 @@ func _ready() -> void:
 			"--ablate": _ablate = true
 			"--grass-shots": _shots_dir = next
 			"--prespin": _prespin = true
+			"--grass-radius":
+				var pair := next.split(",")
+				GrassStreamer.set_radii(float(pair[0]), float(pair[1]))
 	if size != Vector2i.ZERO: get_window().size = size
 	if not vsync: DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	RenderingServer.viewport_set_measure_render_time(get_viewport().get_viewport_rid(), true)
@@ -131,6 +135,7 @@ func _process(delta: float) -> void:
 			"pipe": _pipelines(),
 			"warmed": _streamer._first_view.warmed if _streamer._first_view != null else 0,
 			"grass_tiles": _streamer._grass_streamer.built_count() if _streamer._grass_streamer != null else 0,
+			"grass_pending": _streamer._grass_streamer.pending_tiles() if _streamer._grass_streamer != null else 0,
 			"chunks": _streamer._built.size(),
 			"dressing_pending": _streamer._dressing_queue.pending_count()})
 	if _phase in _all_phases and now - _last_usec > 40000:
@@ -197,6 +202,7 @@ func _run() -> void:
 				_rig._yaw += TAU / 48.0
 				await get_tree().process_frame
 		_phase = phase
+		if phase == "idle_end": _memory_idle_end = Performance.get_monitor(Performance.MEMORY_STATIC) / 1048576.0
 		_turning = phase in ["turn", "run_turn"]
 		if phase.begins_with("run"): Input.action_press(&"forward")
 		else: Input.action_release(&"forward")
@@ -334,6 +340,7 @@ func _finish() -> void:
 			"process": _stats(pick.call("process")), "physics": _stats(pick.call("physics")),
 			"render_cpu": _stats(pick.call("render_cpu")), "gpu": _stats(pick.call("gpu")),
 			"draws": _stats(pick.call("draws")), "prims": _stats(pick.call("prims")),
+			"grass_tiles": _stats(pick.call("grass_tiles")), "grass_pending": _stats(pick.call("grass_pending")),
 			"physics_ticks_per_frame": tick_hist, "turn_error": _stats(judder)}
 	var result := {"seed": _seed, "viewport": str(get_viewport().get_visible_rect().size),
 		"window": str(get_window().size), "screen_scale": DisplayServer.screen_get_scale(),
@@ -342,6 +349,7 @@ func _finish() -> void:
 		"physics_tps": Engine.physics_ticks_per_second,
 		"scaling_3d": get_viewport().scaling_3d_scale,
 		"interpolation": ProjectSettings.get_setting("physics/common/physics_interpolation", false),
+		"memory_static_mb": _memory_idle_end,
 		"adapter": RenderingServer.get_video_adapter_name(), "summary": summary}
 	var file := FileAccess.open(_report_path, FileAccess.WRITE)
 	file.store_string(JSON.stringify(result, "  "))

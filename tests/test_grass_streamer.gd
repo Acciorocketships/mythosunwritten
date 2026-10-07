@@ -274,3 +274,9 @@ func test_set_radii_moves_the_whole_ring() -> void:
 	for tile: Vector2i in GrassStreamer.desired_tiles(Vector2.ZERO):
 		assert_lt(GrassStreamer.distance_to_tile(Vector2.ZERO, tile), 140.0)
 	GrassStreamer.set_radii(full, edge)
+
+func test_pending_tiles_counts_desired_tiles_not_built() -> void:
+	var parts := _program_and_cache()
+	var streamer := GrassStreamer.new(parts.program, parts.cache)
+	assert_eq(streamer.pending_tiles(), GrassStreamer.desired_tiles(Vector2.ZERO).size(),
+		"with nothing built every desired tile is pending")
