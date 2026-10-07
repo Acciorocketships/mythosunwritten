@@ -31,6 +31,12 @@
 > in any phase; frames are GPU-bound at ~17-18 ms. Remaining freezes when outrunning
 > generation are cold water solves (30-60 s a block on the single planning thread).
 
+> October 7 grass render distance: radii are runtime values (`GrassStreamer.set_radii(full, edge)`,
+> shader globals `grass_full_radius`/`grass_radius`), still 60/84 m. A re-sweep with two grass workers
+> (`docs/qa/2026-10-07-grass-distance/result.md`) found 90/140 and 100/170 over the frame-time gates
+> (run_turn dt p95 +2.5 ms, >10 ms frames) and fill-in lag 12-22 tiles, so they were not shipped.
+> `EnvironmentCommitQueue.visibility_range` fades sparse grass/flower dressing at `GRASS_RADIUS + 6`.
+> `frame_feel_profile` samples `pending_tiles()` every 10th frame (it sorts the ring).
 > October 5 nature style (owner: try the Meadow and Farmlands packs; branch `meadow-nature`).
 > Ambient trees, bushes, flowers, plants, cliff tufts, toadstools, logs and stumps now come from
 > ANGRY MESH Meadow (`tools/environment_bake/manifests/angry_mesh_meadow_nature.json`, ids

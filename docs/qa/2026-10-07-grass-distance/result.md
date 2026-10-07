@@ -25,3 +25,21 @@ No pair passes every gate. Frame time is fine up to 100,170, so the frame-time-l
 
 `baseline_60-84_pitch12.png` and `candidate_100-170_pitch12.png` (this folder); all others under `/private/tmp/grass-radius/shots_*/` (pitches 3, 12.7 (saved as 12), 30).
 At 60,84 the grass visibly ends on the distant left slope (bare green terrain, a visible edge about 80 m out). At 100,170 grass carpets the whole view to the horizon and the edge is not visible.
+
+## Re-sweep with two workers
+
+Same setup, each pair run twice, one at a time, after making the harness sample `pending_tiles()` every 10th frame (it sorts the whole ring and was inflating process time with the ring size). Raw: `/private/tmp/grass-radius2/`. Per run: run_turn dt p95 / run_turn process p95 / frames >10 ms process (run_turn) / run-phase grass_pending max.
+
+| pair | run 1 | run 2 | mean dt p95 | run pending max |
+|---|---|---|---|---|
+| 60,84 (base) | 23.8 / 4.2 / 0 / 5 | 24.2 / 12.6 / 45 (one 221 ms hitch) / 5 | 24.0 | 5 |
+| 90,140 | 24.0 / 8.9 / 11 / 16 | 28.9 / 6.4 / 1 / 12 | 26.5 (+2.5) | 16, 12 |
+| 100,170 | 27.8 / 7.3 / 4 / 22 | 25.5 / 6.1 / 0 / 21 | 26.7 (+2.7) | 22, 21 |
+
+Runs are noisy (the baseline's own second run has a 221 ms hitch; `turn` p95 of 90,140 run 2 was 31.7 ms).
+
+Gates: neither 90,140 nor 100,170 holds run_turn dt p95 within +1.5 ms of baseline (mean +2.5/+2.7), both have run_turn frames over 10 ms process in at least one run, and both fail run pending (the 2x-baseline fallback allows 10; they show 12-22). The second worker only moved pending from 12/26 to 12-16/21-22.
+
+## Decision
+
+By the stated rules 90,140 fails the frame-time gates, so the shipped default stays **60,84**. The sparse-dressing coupling still ships (`EnvironmentCommitQueue` grass/flower range = `GrassStreamer.GRASS_RADIUS + 6`), so any later radius change moves it with the ring. Screenshots (`baseline_60-84_pitch12_resweep.png` vs `candidate_90-140_pitch12_resweep.png`) confirm the owner's complaint: at 60,84 grass visibly ends on the distant left slope; at 90,140 it does not. Reaching 90,140 needs a cheaper commit path first (run_turn process hitches, fill-in lag) and is a follow-up. Try it at runtime with `--grass-radius 90,140` in the harness or `GrassStreamer.set_radii(90, 140)`.

@@ -115,7 +115,7 @@ static func visibility_range(tags: Array, bounds: AABB) -> float:
 		return 0.0
 	var content := 0.0
 	if &"grass" in tags or &"flower" in tags:
-		content = 90.0
+		content = GrassStreamer.GRASS_RADIUS + 6.0
 	elif &"plant" in tags or &"mushroom" in tags or &"reed" in tags or &"foliage" in tags:
 		content = 140.0
 	elif &"deadwood" in tags or &"rock" in tags:

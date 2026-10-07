@@ -112,6 +112,21 @@ func _physics_process(_delta: float) -> void:
 	_physics_begin = Time.get_ticks_usec()
 
 
+var _pending_frame := 0
+var _pending_last := 0
+
+
+## pending_tiles() sorts the whole ring; sampling it every frame would sit inside the measured
+## process time and grow with the ring, so sample every 10th frame and carry the value forward.
+func _sampled_pending() -> int:
+	if _streamer._grass_streamer == null:
+		return 0
+	if _pending_frame % 10 == 0:
+		_pending_last = _streamer._grass_streamer.pending_tiles()
+	_pending_frame += 1
+	return _pending_last
+
+
 func _process(delta: float) -> void:
 	if _turning:
 		# The real input path: mouse motion through the rig's look handler,
@@ -135,7 +150,7 @@ func _process(delta: float) -> void:
 			"pipe": _pipelines(),
 			"warmed": _streamer._first_view.warmed if _streamer._first_view != null else 0,
 			"grass_tiles": _streamer._grass_streamer.built_count() if _streamer._grass_streamer != null else 0,
-			"grass_pending": _streamer._grass_streamer.pending_tiles() if _streamer._grass_streamer != null else 0,
+			"grass_pending": _sampled_pending(),
 			"chunks": _streamer._built.size(),
 			"dressing_pending": _streamer._dressing_queue.pending_count()})
 	if _phase in _all_phases and now - _last_usec > 40000:

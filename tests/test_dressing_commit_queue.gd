@@ -169,3 +169,14 @@ func test_painted_trees_cast_their_sun_shadow_from_the_baked_stand_in() -> void:
 	if blob_width != null and leaf_width != null:
 		assert_eq(blob_width.get_string(1), leaf_width.get_string(1),
 			"cards and blob split the cascades at one width")
+
+
+func test_dressing_grass_and_flowers_end_with_the_grass_ring() -> void:
+	var full := GrassStreamer.FULL_RADIUS
+	var edge := GrassStreamer.GRASS_RADIUS
+	GrassStreamer.set_radii(70.0, 100.0)
+	var bounds := AABB(Vector3.ZERO, Vector3.ONE)
+	var range_end := EnvironmentCommitQueue.visibility_range([&"nature", &"grass"], bounds)
+	GrassStreamer.set_radii(full, edge)
+	assert_almost_eq(range_end, 100.0 + 6.0 + EnvironmentCommitQueue._TILE_HALF_DIAGONAL, 0.01,
+		"sparse grass/flower dressing fades with the dense carpet, not at a fixed 90 m")
