@@ -1387,7 +1387,7 @@ func _integrate_pending_terrain(centre: Vector2i) -> void:
 				break
 			var prepare_started := Time.get_ticks_usec()
 			_integrating = {"result": next, "steps": _integration_steps(next),
-				"index": 0, "usec": 0}
+				"labels": _step_labels, "index": 0, "usec": 0}
 			var prepare_usec := Time.get_ticks_usec() - prepare_started
 			if LOG_SLOW_FRAMES and prepare_usec >= SLOW_FRAME_USEC:
 				print("[terrain-streamer] slow_integrate_prepare chunk=%s ms=%.1f steps=%d" % [
@@ -1417,9 +1417,11 @@ func _integrate_pending_terrain(centre: Vector2i) -> void:
 		t_steps += step_usec
 		_integrating.usec = int(_integrating.usec) + step_usec
 		if step_usec >= (SLOW_FRAME_USEC if LOG_SLOW_FRAMES else 50000):
+			var labels: PackedStringArray = _integrating.get("labels", PackedStringArray())
+			var index := int(_integrating.index) - 1
 			print("[terrain-streamer] slow_integrate_step seed=%d chunk=%s step=%d/%d %s ms=%.1f" % [
-				world_seed, c, int(_integrating.index), steps.size(),
-				step.get_method(), step_usec / 1000.0])
+				world_seed, c, index + 1, steps.size(),
+				labels[index] if index < labels.size() else step.get_method(), step_usec / 1000.0])
 		stepped = true
 		if int(_integrating.index) == steps.size():
 			_pending_terrain.remove_at(_pending_index_of(result))
@@ -1510,20 +1512,29 @@ func _reap_drop_tasks(wait_all := false) -> void:
 static func _drop(_value: Variant) -> void:
 	pass
 
+var _step_labels := PackedStringArray()
+
 func _integration_steps(result: Dictionary) -> Array[Callable]:
 	var c: Vector2i = result.chunk
 	var commit := _mesher.commit_steps(result.terrain)
 	var node: Node3D = commit.root
 	var steps: Array[Callable] = []
 	steps.append_array(commit.steps)
+	# Names for the slow-step log (one per step, same order).
+	var labels := PackedStringArray()
+	for index in steps.size(): labels.append("terrain#%d" % index)
 	steps.append(func() -> void:
 		var water_node: Node3D = _water_builder.commit_chunk(result.water)
 		if water_node != null:
 			node.add_child(water_node))
-	steps.append_array(EnvironmentCollisionBuilder.commit_steps(node, result.dressing,
-		_environment_cache, &"DressingCollision").steps)
+	labels.append("water")
+	var collision_steps: Array = EnvironmentCollisionBuilder.commit_steps(node, result.dressing,
+		_environment_cache, &"DressingCollision").steps
+	steps.append_array(collision_steps)
+	for _i in collision_steps.size(): labels.append("dressing_collision")
 	# Embedded rocks' ground skirts are ground: they commit with it.
 	steps.append(func() -> void: RockSkirt.commit(node, result.dressing.ground_skirts))
+	labels.append("rock_skirts")
 	# The chunk's effects (mist, particles, orbs) build one element per step,
 	# after the chunk is attached; built in the attach step they held it 10-25 ms.
 	var fx_steps: Array[Callable] = []
@@ -1557,7 +1568,10 @@ func _integration_steps(result: Dictionary) -> Array[Callable]:
 			print("[terrain-streamer] slow_attach chunk=%s add_child=%.1f fx=%.1f trample=%.1f dressing_enqueue=%.1f nodes=%d" % [
 				c, (t1 - t0) / 1000.0, (t2 - t1) / 1000.0, (t3 - t2) / 1000.0, (t4 - t3) / 1000.0,
 				node.get_child_count()]))
+	labels.append("attach")
 	steps.append_array(fx_steps)
+	for _i in fx_steps.size(): labels.append("fx")
+	_step_labels = labels
 	_integrating_node_ref = {"node": node}
 	return steps
 

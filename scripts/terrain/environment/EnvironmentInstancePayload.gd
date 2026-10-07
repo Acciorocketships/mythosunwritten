@@ -44,10 +44,12 @@ static func _surface_mesh_is_valid(mesh: Dictionary) -> bool:
 			or (collision.is_empty() and not visual_only) \
 			or collision.size() % 3 != 0:
 		return false
-	for index: int in indices:
-		if index < 0 or index >= vertices.size():
-			return false
-	return true
+	# Range check through a native sort: a village's surface meshes hold tens
+	# of thousands of indices, and a GDScript loop over them cost ~14 ms each
+	# time a block was validated on the main thread.
+	var ordered := indices.duplicate()
+	ordered.sort()
+	return ordered[0] >= 0 and ordered[ordered.size() - 1] < vertices.size()
 
 func add(asset_id: StringName, transform: Transform3D, color: Color,
 		stable_id: StringName = &"", collision_enabled: bool = true,
