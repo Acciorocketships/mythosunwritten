@@ -74,16 +74,14 @@ func test_tree_stature_and_mushroom_colonies_are_explicit_content_data() -> void
 	var stature: Dictionary = {}
 	for choice: Dictionary in trees.choices:
 		stature[choice.asset_id] = choice.scale_multiplier
-	assert_gt(stature[&"lpfv.tree.07"], 1.8,
-		"one full-canopy conifer is a landmark tree")
 	var catalog := EnvironmentCatalog.load_default()
-	var broad_height := catalog.descriptor(&"lpfv.tree.02").measured_aabb.size.y \
-		* float(stature[&"lpfv.tree.02"])
-	var small_height := catalog.descriptor(&"lpfv.tree.04").measured_aabb.size.y \
-		* float(stature[&"lpfv.tree.04"])
-	assert_gt(broad_height, small_height * 2.0,
-		"the broad canopy remains a taller tier in actual world metres")
-	assert_almost_eq(stature[&"lpfv.tree.04"], 1.0, 0.001,
+	var height := func(asset_id: StringName) -> float:
+		return catalog.descriptor(asset_id).measured_aabb.size.y * float(stature[asset_id])
+	# October 5 Meadow/Farmlands stature tiers (the LPFV conifer is retired).
+	assert_gt(height.call(&"farm.tree.c_full"), 18.0, "the Farmlands C is a landmark tree")
+	assert_gt(height.call(&"meadow.oak.02.summer"), height.call(&"meadow.oak.06.summer") * 2.0,
+		"the broad oak remains a taller tier in actual world metres")
+	assert_almost_eq(stature[&"meadow.oak.06.summer"], 1.0, 0.001,
 		"small tree varieties retain their natural tier")
 	var patch: Dictionary = by_id[&"ambient.mushroom.patch"]
 	var single: Dictionary = by_id[&"ambient.mushroom.single"]

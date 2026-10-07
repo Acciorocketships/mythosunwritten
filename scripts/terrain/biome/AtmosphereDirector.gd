@@ -105,6 +105,7 @@ func _apply_grade() -> void:
 	set_quality(quality)
 
 func _process(dt: float) -> void:
+	_publish_leaf_lod_camera()
 	if is_instance_valid(_light_budget): _light_budget.update_lights(camera, quality)
 	for wisp in get_tree().get_nodes_in_group("atmosphere_mist_wisp"):
 		if camera != null and wisp.get_world_3d() == camera.get_world_3d():
@@ -185,3 +186,15 @@ func _exit_tree() -> void:
 	RenderingServer.global_shader_parameter_set("atmosphere_sky_top", Vector4.ZERO)
 	RenderingServer.global_shader_parameter_set("atmosphere_sky_horizon", Vector4.ZERO)
 	RenderingServer.global_shader_parameter_set("atmosphere_water_gain", 1.0)
+
+## painted_leaf.gdshader thins leaf cards by the main camera's distance and
+## pixel size (mesh LOD threshold included), in the view and the shadow pass.
+func _publish_leaf_lod_camera() -> void:
+	if camera == null or not camera.is_inside_tree():
+		return
+	var viewport := camera.get_viewport()
+	var height := maxf(viewport.get_visible_rect().size.y, 1.0)
+	var pixel := 2.0 * tan(deg_to_rad(camera.fov) * 0.5) / height * viewport.mesh_lod_threshold
+	var eye := camera.global_position
+	RenderingServer.global_shader_parameter_set("leaf_lod_camera",
+		Vector4(eye.x, eye.y, eye.z, pixel))

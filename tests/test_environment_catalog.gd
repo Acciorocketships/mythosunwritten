@@ -613,3 +613,85 @@ func test_painted_nature_is_capped_and_collides_on_its_trunk_in_every_season() -
 		else:
 			assert_almost_eq(capsule.radius, summer_radius, 0.01,
 				"%s fits the same wood as summer whatever its leaf colour" % asset_id)
+
+func test_painted_nature_leaves_keep_radial_normals_and_wood_is_matte() -> void:
+	## October 6 owner review: painted canopies split into a lit and a black
+	## shade (Godot flipped every back-face normal into the crown), trunks and
+	## stumps were glossy (converted smoothness masks) and stumps were stained
+	## by a canopy tint. Leaves use the painted leaf shader; wood is matte and
+	## keeps the pack's own colour.
+	var catalog := EnvironmentCatalog.load_default()
+	var cache := EnvironmentRenderCache.new(catalog)
+	var ids: Array[StringName] = [&"meadow.oak.01.summer", &"meadow.birch.03.autumn",
+		&"meadow.birch_bush.01.summer", &"farm.tree.a_full", &"meadow.stump.01", &"meadow.log.01"]
+	assert_true(cache.prepare(ids))
+	for asset_id: StringName in ids:
+		var leaves := 0
+		for piece: EnvironmentVisualPiece in cache.visual(asset_id).pieces:
+			for surface in piece.mesh.get_surface_count():
+				var material := piece.mesh.surface_get_material(surface)
+				if material is ShaderMaterial:
+					assert_eq((material as ShaderMaterial).shader.resource_path,
+						"res://terrain/environment/materials/painted_leaf.gdshader", "%s leaf shader" % asset_id)
+					var texture := (material as ShaderMaterial).get_shader_parameter("albedo_texture") as Texture2D
+					assert_lte(maxf(texture.get_width(), texture.get_height()), 1024.0)
+					var half := (material as ShaderMaterial).get_shader_parameter(
+						"crown_half_extents") as Vector3
+					var crown_aabb := piece.mesh.surface_get_arrays(surface)[Mesh.ARRAY_VERTEX] \
+						as PackedVector3Array
+					var top := -INF
+					for vertex in crown_aabb: top = maxf(top, vertex.y)
+					var centre := (material as ShaderMaterial).get_shader_parameter("crown_centre") as Vector3
+					assert_almost_eq(centre.y + half.y, top, 0.01,
+						"%s crown bounds come from its own leaf surface" % asset_id)
+					leaves += 1
+				elif material is StandardMaterial3D:
+					var wood := material as StandardMaterial3D
+					assert_eq(wood.transparency, BaseMaterial3D.TRANSPARENCY_DISABLED,
+						"%s has no alpha-card surface left on the standard material" % asset_id)
+					assert_null(wood.roughness_texture, "%s drops its smoothness mask" % asset_id)
+					assert_gte(wood.roughness, 0.85, "%s is matte" % asset_id)
+		var is_wood := String(asset_id).contains("stump") or String(asset_id).contains("log")
+		assert_eq(leaves > 0, not is_wood, "%s leaf surfaces" % asset_id)
+		if is_wood:
+			assert_eq(catalog.descriptor(asset_id).tint_group, &"identity",
+				"%s keeps the pack's own wood colour" % asset_id)
+
+func test_painted_leaves_thin_by_card_and_the_shader_matches_the_bake() -> void:
+	## October 6 dense forest: leaf cards carry no importer LODs, so each crown
+	## drew every card at any distance. The bake writes three card-thinned LODs
+	## (half, quarter, eighth of the cards) and each card's centre and drop
+	## rank; painted_leaf.gdshader shrinks a card before its LOD drops it.
+	var bake := load("res://tools/environment_bake/environment_bake.gd")
+	var shader_code := (load("res://terrain/environment/materials/painted_leaf.gdshader") as Shader).code
+	assert_true(shader_code.contains("const float LEAF_LOD_EDGE = %s;" % str(bake.LEAF_LOD_EDGE)),
+		"shader and bake share the LOD switch edge")
+	var catalog := EnvironmentCatalog.load_default()
+	var cache := EnvironmentRenderCache.new(catalog)
+	var ids: Array[StringName] = [&"meadow.oak.01.summer", &"meadow.birch_bush.03.summer", &"farm.tree.a_full"]
+	assert_true(cache.prepare(ids))
+	for asset_id: StringName in ids:
+		var mesh := cache.visual(asset_id).pieces[0].mesh
+		var leaf_surfaces := 0
+		# RenderingServer.mesh_get_surface nests its LOD list in itself (Godot
+		# 4.5); the mesh's own serialized surfaces hold [edge, indices, ...].
+		var surfaces: Array = mesh.get("_surfaces")
+		for surface in surfaces.size():
+			var data: Dictionary = surfaces[surface]
+			var lods: Array = data.get("lods", [])
+			if not mesh.surface_get_material(surface) is ShaderMaterial:
+				assert_gt(lods.size(), 0, "%s wood has generated LODs" % asset_id)
+				continue
+			leaf_surfaces += 1
+			var full := float((data.index_data as PackedByteArray).size())
+			assert_eq(lods.size(), 2 * bake.LEAF_LOD_KEEP.size(), "%s leaf LOD count" % asset_id)
+			var arrays := mesh.surface_get_arrays(surface)
+			var custom: PackedFloat32Array = arrays[Mesh.ARRAY_CUSTOM0]
+			assert_eq(custom.size(), (arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array).size() * 4,
+				"%s cards carry centre and rank" % asset_id)
+			for k in bake.LEAF_LOD_KEEP.size():
+				var kept := float((lods[2 * k + 1] as PackedByteArray).size()) / full
+				assert_almost_eq(kept, bake.LEAF_LOD_KEEP[k], 0.08,
+					"%s LOD %d keeps its share of cards" % [asset_id, k + 1])
+				assert_almost_eq(float(lods[2 * k]), bake.LEAF_LOD_EDGE * pow(2.0, k), 0.0001)
+		assert_eq(leaf_surfaces, 1, "%s has one painted leaf surface" % asset_id)

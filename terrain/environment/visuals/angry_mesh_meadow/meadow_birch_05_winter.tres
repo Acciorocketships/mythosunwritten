@@ -1,22 +1,24 @@
-[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=9 format=3]
 
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_1tvhx"]
-[ext_resource type="Shape3D" path="res://terrain/environment/collisions/angry_mesh_meadow/meadow_birch_05_winter_piece_00.res" id="2_hy6pv"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_7hcya"]
-[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_05_winter_piece_00.res" id="4_gnbcb"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_cw5vn"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_hy6pv"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/angry_mesh_meadow/meadow_birch_05_winter_piece_00.res" id="2_7hcya"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_gnbcb"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_05_winter_piece_00.res" id="4_cw5vn"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_05_winter_piece_00_shadow.res" id="5_7vra7"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="6_v56nh"]
 
-[sub_resource type="Resource" id="Resource_7vra7"]
-script = ExtResource("1_1tvhx")
-shape = ExtResource("2_hy6pv")
+[sub_resource type="Resource" id="Resource_jj555"]
+script = ExtResource("1_hy6pv")
+shape = ExtResource("2_7hcya")
 local_transform = Transform3D(0.5921778, 0.093432106, 1.1535145, 0, 1.2957565, -0.10495337, -1.1572922, 0.04780851, 0.5902447, 0.064357944, 0.5704365, -0.022809291)
 
-[sub_resource type="Resource" id="Resource_v56nh"]
-script = ExtResource("3_7hcya")
-mesh = ExtResource("4_gnbcb")
+[sub_resource type="Resource" id="Resource_iayqm"]
+script = ExtResource("3_gnbcb")
+mesh = ExtResource("4_cw5vn")
 local_transform = Transform3D(1.3, 0, 0, 0, 1.3, 0, 0, 0, 1.3, 0, 0, 0)
+shadow_mesh = ExtResource("5_7vra7")
 
 [resource]
-script = ExtResource("5_cw5vn")
-pieces = Array[ExtResource("3_7hcya")]([SubResource("Resource_v56nh")])
-collisions = Array[ExtResource("1_1tvhx")]([SubResource("Resource_7vra7")])
+script = ExtResource("6_v56nh")
+pieces = Array[ExtResource("3_gnbcb")]([SubResource("Resource_iayqm")])
+collisions = Array[ExtResource("1_hy6pv")]([SubResource("Resource_jj555")])

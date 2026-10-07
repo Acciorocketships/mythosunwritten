@@ -7,6 +7,8 @@
   1.3
  ],
  "max_texture_size": 1024,
+ "roughness_floor": 0.85,
+ "painted_leaf_materials": "_Leaf_",
  "assets": [
   {
    "id": "meadow.birch.01.autumn",
@@ -1521,16 +1523,10 @@
     "deadwood",
     "nature"
    ],
-   "tint_group": "tree",
+   "tint_group": "identity",
    "supports_instance_color": true,
    "collision_profile": "oriented_cylinder",
-   "collision_radius_fraction": 0.42,
-   "material_tint": [
-    0.492,
-    0.498,
-    0.215,
-    1.0
-   ]
+   "collision_radius_fraction": 0.42
   },
   {
    "id": "meadow.log.02",
@@ -1539,16 +1535,10 @@
     "deadwood",
     "nature"
    ],
-   "tint_group": "tree",
+   "tint_group": "identity",
    "supports_instance_color": true,
    "collision_profile": "oriented_cylinder",
-   "collision_radius_fraction": 0.42,
-   "material_tint": [
-    0.492,
-    0.498,
-    0.215,
-    1.0
-   ]
+   "collision_radius_fraction": 0.42
   },
   {
    "id": "meadow.oak.01.autumn",
@@ -2157,15 +2147,9 @@
     "deadwood",
     "nature"
    ],
-   "tint_group": "tree",
+   "tint_group": "identity",
    "supports_instance_color": true,
-   "collision_profile": "stump_cylinder",
-   "material_tint": [
-    0.607,
-    0.664,
-    0.43,
-    1.0
-   ]
+   "collision_profile": "stump_cylinder"
   },
   {
    "id": "meadow.stump.02",
@@ -2174,15 +2158,9 @@
     "deadwood",
     "nature"
    ],
-   "tint_group": "tree",
+   "tint_group": "identity",
    "supports_instance_color": true,
-   "collision_profile": "stump_cylinder",
-   "material_tint": [
-    0.607,
-    0.664,
-    0.43,
-    1.0
-   ]
+   "collision_profile": "stump_cylinder"
   },
   {
    "id": "meadow.town_birch",

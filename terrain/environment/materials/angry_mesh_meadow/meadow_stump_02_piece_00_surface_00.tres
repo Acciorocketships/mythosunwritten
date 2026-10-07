@@ -7,11 +7,10 @@
 [resource]
 resource_name = "M_Stump_02_Summer"
 vertex_color_use_as_albedo = true
-albedo_color = Color(0.607, 0.664, 0.43, 1)
 albedo_texture = ExtResource("1_cjs47")
 metallic_texture = ExtResource("2_t4pj4")
 metallic_texture_channel = 2
-roughness_texture = ExtResource("2_t4pj4")
+roughness = 0.85
 roughness_texture_channel = 1
 normal_enabled = true
 normal_texture = ExtResource("3_uf1f5")

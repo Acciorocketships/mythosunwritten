@@ -1,14 +1,21 @@
-[gd_resource type="StandardMaterial3D" load_steps=2 format=3]
+[gd_resource type="ShaderMaterial" load_steps=3 format=3]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/angry_mesh_meadow/a88ddce63597b97d22ca.res" id="1_uiddj"]
+[ext_resource type="Shader" path="res://terrain/environment/materials/painted_leaf.gdshader" id="1_swpxt"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/angry_mesh_meadow/a88ddce63597b97d22ca.res" id="2_4pg1f"]
 
 [resource]
-resource_name = "M_OakTree_Leaf_01_Winter"
-transparency = 2
-alpha_scissor_threshold = 0.3
-alpha_antialiasing_mode = 0
-cull_mode = 2
-vertex_color_use_as_albedo = true
-albedo_color = Color(0.8862746, 0.44705883, 0.43137258, 1)
-albedo_texture = ExtResource("1_uiddj")
-roughness = 0.9
+render_priority = 0
+shader = ExtResource("1_swpxt")
+shader_parameter/albedo_texture = ExtResource("2_4pg1f")
+shader_parameter/base_color = Color(0.8862746, 0.44705883, 0.43137258, 1)
+shader_parameter/alpha_scissor = 0.3
+shader_parameter/crown_centre = Vector3(0.083740234, 7.5433497, 0.2850852)
+shader_parameter/crown_half_extents = Vector3(6.83496, 5.47005, 6.292795)
+shader_parameter/saturation = null
+shader_parameter/value_scale = null
+shader_parameter/interior = null
+shader_parameter/underside = null
+shader_parameter/translucency = null
+shader_parameter/survivor_growth = null
+shader_parameter/shadow_keep = null
+shader_parameter/shadow_card_cascade_width = null

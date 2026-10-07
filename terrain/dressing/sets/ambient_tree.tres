@@ -10,419 +10,419 @@
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak.01.summer"
 biome_affinity = {&"meadow": 1.3, &"deep_forest": 1.5, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.8, &"amber_heath": 0.0, &"jade_wetlands": 0.8}
-spacing_radius = 11.0
+spacing_radius = 7.0
 
 [sub_resource type="Resource" id="Choice_2"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak.02.summer"
 biome_affinity = {&"meadow": 1.3, &"deep_forest": 1.5, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.8, &"amber_heath": 0.0, &"jade_wetlands": 0.8}
-spacing_radius = 11.0
+spacing_radius = 6.0
 
 [sub_resource type="Resource" id="Choice_3"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak.03.summer"
 biome_affinity = {&"meadow": 1.3, &"deep_forest": 1.5, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.8, &"amber_heath": 0.0, &"jade_wetlands": 0.8}
-spacing_radius = 9.0
+spacing_radius = 4.5
 
 [sub_resource type="Resource" id="Choice_4"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak.04.summer"
 biome_affinity = {&"meadow": 1.3, &"deep_forest": 1.5, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.8, &"amber_heath": 0.0, &"jade_wetlands": 0.8}
-spacing_radius = 8.0
+spacing_radius = 4.0
 
 [sub_resource type="Resource" id="Choice_5"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak.05.summer"
 biome_affinity = {&"meadow": 1.3, &"deep_forest": 1.5, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.8, &"amber_heath": 0.0, &"jade_wetlands": 0.8}
-spacing_radius = 6.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_6"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak.06.summer"
 biome_affinity = {&"meadow": 1.3, &"deep_forest": 1.5, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.8, &"amber_heath": 0.0, &"jade_wetlands": 0.8}
-spacing_radius = 6.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_7"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak.07.summer"
 biome_affinity = {&"meadow": 1.3, &"deep_forest": 1.5, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.8, &"amber_heath": 0.0, &"jade_wetlands": 0.8}
-spacing_radius = 8.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_8"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak_ivy.01.summer"
 biome_affinity = {&"meadow": 0.2, &"deep_forest": 0.9, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.8, &"amber_heath": 0.0, &"jade_wetlands": 0.5}
-spacing_radius = 11.0
+spacing_radius = 7.0
 
 [sub_resource type="Resource" id="Choice_9"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak_ivy.02.summer"
 biome_affinity = {&"meadow": 0.2, &"deep_forest": 0.9, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.8, &"amber_heath": 0.0, &"jade_wetlands": 0.5}
-spacing_radius = 11.0
+spacing_radius = 6.0
 
 [sub_resource type="Resource" id="Choice_10"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak_ivy.04.summer"
 biome_affinity = {&"meadow": 0.2, &"deep_forest": 0.9, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.8, &"amber_heath": 0.0, &"jade_wetlands": 0.5}
-spacing_radius = 8.0
+spacing_radius = 4.0
 
 [sub_resource type="Resource" id="Choice_11"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.birch.01.summer"
 biome_affinity = {&"meadow": 0.8, &"deep_forest": 0.7, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 1.2, &"amber_heath": 0.0, &"jade_wetlands": 1.4}
-spacing_radius = 6.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_12"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.birch.02.summer"
 biome_affinity = {&"meadow": 0.8, &"deep_forest": 0.7, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 1.2, &"amber_heath": 0.0, &"jade_wetlands": 1.4}
-spacing_radius = 6.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_13"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.birch.03.summer"
 biome_affinity = {&"meadow": 0.8, &"deep_forest": 0.7, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 1.2, &"amber_heath": 0.0, &"jade_wetlands": 1.4}
-spacing_radius = 6.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_14"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.birch.04.summer"
 biome_affinity = {&"meadow": 0.8, &"deep_forest": 0.7, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 1.2, &"amber_heath": 0.0, &"jade_wetlands": 1.4}
-spacing_radius = 6.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_15"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.birch.05.summer"
 biome_affinity = {&"meadow": 0.8, &"deep_forest": 0.7, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 1.2, &"amber_heath": 0.0, &"jade_wetlands": 1.4}
-spacing_radius = 6.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_16"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.birch.06.summer"
 biome_affinity = {&"meadow": 0.8, &"deep_forest": 0.7, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 1.2, &"amber_heath": 0.0, &"jade_wetlands": 1.4}
-spacing_radius = 6.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_17"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.birch.07.summer"
 biome_affinity = {&"meadow": 0.8, &"deep_forest": 0.7, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 1.2, &"amber_heath": 0.0, &"jade_wetlands": 1.4}
-spacing_radius = 6.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_18"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak.01.autumn"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.0, &"blossom_grove": 1.2, &"twilight_marsh": 0.0, &"amber_heath": 1.3, &"jade_wetlands": 0.0}
-spacing_radius = 11.0
+spacing_radius = 7.0
 
 [sub_resource type="Resource" id="Choice_19"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak.02.autumn"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.0, &"blossom_grove": 1.2, &"twilight_marsh": 0.0, &"amber_heath": 1.3, &"jade_wetlands": 0.0}
-spacing_radius = 11.0
+spacing_radius = 6.0
 
 [sub_resource type="Resource" id="Choice_20"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak.03.autumn"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.0, &"blossom_grove": 1.2, &"twilight_marsh": 0.0, &"amber_heath": 1.3, &"jade_wetlands": 0.0}
-spacing_radius = 9.0
+spacing_radius = 4.5
 
 [sub_resource type="Resource" id="Choice_21"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak.04.autumn"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.0, &"blossom_grove": 1.2, &"twilight_marsh": 0.0, &"amber_heath": 1.3, &"jade_wetlands": 0.0}
-spacing_radius = 8.0
+spacing_radius = 4.0
 
 [sub_resource type="Resource" id="Choice_22"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak.05.autumn"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.0, &"blossom_grove": 1.2, &"twilight_marsh": 0.0, &"amber_heath": 1.3, &"jade_wetlands": 0.0}
-spacing_radius = 6.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_23"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak.06.autumn"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.0, &"blossom_grove": 1.2, &"twilight_marsh": 0.0, &"amber_heath": 1.3, &"jade_wetlands": 0.0}
-spacing_radius = 6.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_24"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak.07.autumn"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.0, &"blossom_grove": 1.2, &"twilight_marsh": 0.0, &"amber_heath": 1.3, &"jade_wetlands": 0.0}
-spacing_radius = 8.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_25"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak_ivy.01.autumn"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.0, &"blossom_grove": 0.3, &"twilight_marsh": 0.0, &"amber_heath": 0.2, &"jade_wetlands": 0.0}
-spacing_radius = 11.0
+spacing_radius = 7.0
 
 [sub_resource type="Resource" id="Choice_26"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak_ivy.02.autumn"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.0, &"blossom_grove": 0.3, &"twilight_marsh": 0.0, &"amber_heath": 0.2, &"jade_wetlands": 0.0}
-spacing_radius = 11.0
+spacing_radius = 6.0
 
 [sub_resource type="Resource" id="Choice_27"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak_ivy.04.autumn"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.0, &"blossom_grove": 0.3, &"twilight_marsh": 0.0, &"amber_heath": 0.2, &"jade_wetlands": 0.0}
-spacing_radius = 8.0
+spacing_radius = 4.0
 
 [sub_resource type="Resource" id="Choice_28"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.birch.01.autumn"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.0, &"blossom_grove": 1.0, &"twilight_marsh": 0.0, &"amber_heath": 0.9, &"jade_wetlands": 0.0}
-spacing_radius = 6.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_29"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.birch.02.autumn"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.0, &"blossom_grove": 1.0, &"twilight_marsh": 0.0, &"amber_heath": 0.9, &"jade_wetlands": 0.0}
-spacing_radius = 6.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_30"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.birch.03.autumn"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.0, &"blossom_grove": 1.0, &"twilight_marsh": 0.0, &"amber_heath": 0.9, &"jade_wetlands": 0.0}
-spacing_radius = 6.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_31"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.birch.04.autumn"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.0, &"blossom_grove": 1.0, &"twilight_marsh": 0.0, &"amber_heath": 0.9, &"jade_wetlands": 0.0}
-spacing_radius = 6.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_32"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.birch.05.autumn"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.0, &"blossom_grove": 1.0, &"twilight_marsh": 0.0, &"amber_heath": 0.9, &"jade_wetlands": 0.0}
-spacing_radius = 6.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_33"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.birch.06.autumn"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.0, &"blossom_grove": 1.0, &"twilight_marsh": 0.0, &"amber_heath": 0.9, &"jade_wetlands": 0.0}
-spacing_radius = 6.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_34"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.birch.07.autumn"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.0, &"blossom_grove": 1.0, &"twilight_marsh": 0.0, &"amber_heath": 0.9, &"jade_wetlands": 0.0}
-spacing_radius = 6.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_35"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak.01.winter"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.6, &"blossom_grove": 0.0, &"twilight_marsh": 0.0, &"amber_heath": 0.0, &"jade_wetlands": 0.0}
-spacing_radius = 11.0
+spacing_radius = 7.0
 
 [sub_resource type="Resource" id="Choice_36"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak.02.winter"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.6, &"blossom_grove": 0.0, &"twilight_marsh": 0.0, &"amber_heath": 0.0, &"jade_wetlands": 0.0}
-spacing_radius = 11.0
+spacing_radius = 6.0
 
 [sub_resource type="Resource" id="Choice_37"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak.03.winter"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.6, &"blossom_grove": 0.0, &"twilight_marsh": 0.0, &"amber_heath": 0.0, &"jade_wetlands": 0.0}
-spacing_radius = 9.0
+spacing_radius = 4.5
 
 [sub_resource type="Resource" id="Choice_38"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak.04.winter"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.6, &"blossom_grove": 0.0, &"twilight_marsh": 0.0, &"amber_heath": 0.0, &"jade_wetlands": 0.0}
-spacing_radius = 8.0
+spacing_radius = 4.0
 
 [sub_resource type="Resource" id="Choice_39"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak.05.winter"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.6, &"blossom_grove": 0.0, &"twilight_marsh": 0.0, &"amber_heath": 0.0, &"jade_wetlands": 0.0}
-spacing_radius = 6.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_40"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak.06.winter"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.6, &"blossom_grove": 0.0, &"twilight_marsh": 0.0, &"amber_heath": 0.0, &"jade_wetlands": 0.0}
-spacing_radius = 6.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_41"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak.07.winter"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.6, &"blossom_grove": 0.0, &"twilight_marsh": 0.0, &"amber_heath": 0.0, &"jade_wetlands": 0.0}
-spacing_radius = 8.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_42"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak_ivy.01.winter"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.2, &"blossom_grove": 0.0, &"twilight_marsh": 0.0, &"amber_heath": 0.0, &"jade_wetlands": 0.0}
-spacing_radius = 11.0
+spacing_radius = 7.0
 
 [sub_resource type="Resource" id="Choice_43"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak_ivy.02.winter"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.2, &"blossom_grove": 0.0, &"twilight_marsh": 0.0, &"amber_heath": 0.0, &"jade_wetlands": 0.0}
-spacing_radius = 11.0
+spacing_radius = 6.0
 
 [sub_resource type="Resource" id="Choice_44"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.oak_ivy.04.winter"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.2, &"blossom_grove": 0.0, &"twilight_marsh": 0.0, &"amber_heath": 0.0, &"jade_wetlands": 0.0}
-spacing_radius = 8.0
+spacing_radius = 4.0
 
 [sub_resource type="Resource" id="Choice_45"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.birch.01.winter"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 1.6, &"blossom_grove": 0.0, &"twilight_marsh": 0.0, &"amber_heath": 0.0, &"jade_wetlands": 0.0}
-spacing_radius = 6.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_46"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.birch.02.winter"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 1.6, &"blossom_grove": 0.0, &"twilight_marsh": 0.0, &"amber_heath": 0.0, &"jade_wetlands": 0.0}
-spacing_radius = 6.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_47"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.birch.03.winter"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 1.6, &"blossom_grove": 0.0, &"twilight_marsh": 0.0, &"amber_heath": 0.0, &"jade_wetlands": 0.0}
-spacing_radius = 6.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_48"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.birch.04.winter"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 1.6, &"blossom_grove": 0.0, &"twilight_marsh": 0.0, &"amber_heath": 0.0, &"jade_wetlands": 0.0}
-spacing_radius = 6.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_49"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.birch.05.winter"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 1.6, &"blossom_grove": 0.0, &"twilight_marsh": 0.0, &"amber_heath": 0.0, &"jade_wetlands": 0.0}
-spacing_radius = 6.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_50"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.birch.06.winter"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 1.6, &"blossom_grove": 0.0, &"twilight_marsh": 0.0, &"amber_heath": 0.0, &"jade_wetlands": 0.0}
-spacing_radius = 6.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_51"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.birch.07.winter"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 1.6, &"blossom_grove": 0.0, &"twilight_marsh": 0.0, &"amber_heath": 0.0, &"jade_wetlands": 0.0}
-spacing_radius = 6.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_52"]
 script = ExtResource("1_choice")
 asset_id = &"farm.tree.a_full"
 weight = 0.6
 biome_affinity = {&"meadow": 0.45, &"deep_forest": 0.55, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.35, &"amber_heath": 0.0, &"jade_wetlands": 0.45}
-spacing_radius = 12.0
+spacing_radius = 9.0
 
 [sub_resource type="Resource" id="Choice_53"]
 script = ExtResource("1_choice")
 asset_id = &"farm.tree.a_young"
 weight = 0.6
 biome_affinity = {&"meadow": 0.45, &"deep_forest": 0.55, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.35, &"amber_heath": 0.0, &"jade_wetlands": 0.45}
-spacing_radius = 10.0
+spacing_radius = 7.5
 
 [sub_resource type="Resource" id="Choice_54"]
 script = ExtResource("1_choice")
 asset_id = &"farm.tree.b_full"
 weight = 0.6
 biome_affinity = {&"meadow": 0.45, &"deep_forest": 0.55, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.35, &"amber_heath": 0.0, &"jade_wetlands": 0.45}
-spacing_radius = 10.0
+spacing_radius = 6.5
 
 [sub_resource type="Resource" id="Choice_55"]
 script = ExtResource("1_choice")
 asset_id = &"farm.tree.b_young"
 weight = 0.6
 biome_affinity = {&"meadow": 0.45, &"deep_forest": 0.55, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.35, &"amber_heath": 0.0, &"jade_wetlands": 0.45}
-spacing_radius = 8.0
+spacing_radius = 5.5
 
 [sub_resource type="Resource" id="Choice_56"]
 script = ExtResource("1_choice")
 asset_id = &"farm.tree.c_full"
 weight = 0.6
 biome_affinity = {&"meadow": 0.45, &"deep_forest": 0.55, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.35, &"amber_heath": 0.0, &"jade_wetlands": 0.45}
-spacing_radius = 12.0
+spacing_radius = 9.0
 
 [sub_resource type="Resource" id="Choice_57"]
 script = ExtResource("1_choice")
 asset_id = &"farm.tree.c_young"
 weight = 0.6
 biome_affinity = {&"meadow": 0.45, &"deep_forest": 0.55, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.35, &"amber_heath": 0.0, &"jade_wetlands": 0.45}
-spacing_radius = 11.0
+spacing_radius = 9.0
 
 [sub_resource type="Resource" id="Choice_58"]
 script = ExtResource("1_choice")
 asset_id = &"farm.tree.d_full"
 weight = 0.6
 biome_affinity = {&"meadow": 0.45, &"deep_forest": 0.55, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.35, &"amber_heath": 0.0, &"jade_wetlands": 0.45}
-spacing_radius = 12.0
+spacing_radius = 9.0
 
 [sub_resource type="Resource" id="Choice_59"]
 script = ExtResource("1_choice")
 asset_id = &"farm.tree.d_young"
 weight = 0.6
 biome_affinity = {&"meadow": 0.45, &"deep_forest": 0.55, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.35, &"amber_heath": 0.0, &"jade_wetlands": 0.45}
-spacing_radius = 11.0
+spacing_radius = 8.0
 
 [sub_resource type="Resource" id="Choice_60"]
 script = ExtResource("1_choice")
 asset_id = &"farm.tree.c_full_red"
 weight = 1.6
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.0, &"blossom_grove": 0.5, &"twilight_marsh": 0.0, &"amber_heath": 0.5, &"jade_wetlands": 0.0}
-spacing_radius = 12.0
+spacing_radius = 9.0
 
 [sub_resource type="Resource" id="Choice_61"]
 script = ExtResource("1_choice")
 asset_id = &"farm.tree.c_young_red"
 weight = 1.6
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.0, &"blossom_grove": 0.5, &"twilight_marsh": 0.0, &"amber_heath": 0.5, &"jade_wetlands": 0.0}
-spacing_radius = 11.0
+spacing_radius = 9.0
 
 [sub_resource type="Resource" id="Choice_62"]
 script = ExtResource("1_choice")
 asset_id = &"farm.sapling.01"
 weight = 0.6
 biome_affinity = {&"meadow": 0.45, &"deep_forest": 0.55, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.35, &"amber_heath": 0.0, &"jade_wetlands": 0.45}
-spacing_radius = 6.0
+spacing_radius = 4.5
 
 [sub_resource type="Resource" id="Choice_63"]
 script = ExtResource("1_choice")
 asset_id = &"farm.sapling.02"
 weight = 0.6
 biome_affinity = {&"meadow": 0.45, &"deep_forest": 0.55, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.35, &"amber_heath": 0.0, &"jade_wetlands": 0.45}
-spacing_radius = 6.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Choice_64"]
 script = ExtResource("1_choice")
 asset_id = &"farm.small_tree.01"
 weight = 0.6
 biome_affinity = {&"meadow": 0.45, &"deep_forest": 0.55, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.35, &"amber_heath": 0.0, &"jade_wetlands": 0.45}
-spacing_radius = 7.0
+spacing_radius = 5.5
 
 [sub_resource type="Resource" id="Choice_65"]
 script = ExtResource("1_choice")
 asset_id = &"farm.small_tree.02"
 weight = 0.6
 biome_affinity = {&"meadow": 0.45, &"deep_forest": 0.55, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.35, &"amber_heath": 0.0, &"jade_wetlands": 0.45}
-spacing_radius = 7.0
+spacing_radius = 4.0
 
 [sub_resource type="Resource" id="Choice_66"]
 script = ExtResource("1_choice")
 asset_id = &"farm.small_tree.03"
 weight = 0.6
 biome_affinity = {&"meadow": 0.45, &"deep_forest": 0.55, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.35, &"amber_heath": 0.0, &"jade_wetlands": 0.45}
-spacing_radius = 7.0
+spacing_radius = 4.0
 
 [sub_resource type="Resource" id="Choice_67"]
 script = ExtResource("1_choice")
 asset_id = &"farm.small_tree.04"
 weight = 0.6
 biome_affinity = {&"meadow": 0.45, &"deep_forest": 0.55, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.35, &"amber_heath": 0.0, &"jade_wetlands": 0.45}
-spacing_radius = 7.0
+spacing_radius = 3.5
 
 [sub_resource type="Resource" id="Canopy"]
 script = ExtResource("3_habitat")
@@ -436,7 +436,7 @@ script = ExtResource("2_set")
 id = &"ambient.tree"
 feature_clearance = 2.0
 choices = Array[ExtResource("1_choice")]([SubResource("Choice_1"), SubResource("Choice_2"), SubResource("Choice_3"), SubResource("Choice_4"), SubResource("Choice_5"), SubResource("Choice_6"), SubResource("Choice_7"), SubResource("Choice_8"), SubResource("Choice_9"), SubResource("Choice_10"), SubResource("Choice_11"), SubResource("Choice_12"), SubResource("Choice_13"), SubResource("Choice_14"), SubResource("Choice_15"), SubResource("Choice_16"), SubResource("Choice_17"), SubResource("Choice_18"), SubResource("Choice_19"), SubResource("Choice_20"), SubResource("Choice_21"), SubResource("Choice_22"), SubResource("Choice_23"), SubResource("Choice_24"), SubResource("Choice_25"), SubResource("Choice_26"), SubResource("Choice_27"), SubResource("Choice_28"), SubResource("Choice_29"), SubResource("Choice_30"), SubResource("Choice_31"), SubResource("Choice_32"), SubResource("Choice_33"), SubResource("Choice_34"), SubResource("Choice_35"), SubResource("Choice_36"), SubResource("Choice_37"), SubResource("Choice_38"), SubResource("Choice_39"), SubResource("Choice_40"), SubResource("Choice_41"), SubResource("Choice_42"), SubResource("Choice_43"), SubResource("Choice_44"), SubResource("Choice_45"), SubResource("Choice_46"), SubResource("Choice_47"), SubResource("Choice_48"), SubResource("Choice_49"), SubResource("Choice_50"), SubResource("Choice_51"), SubResource("Choice_52"), SubResource("Choice_53"), SubResource("Choice_54"), SubResource("Choice_55"), SubResource("Choice_56"), SubResource("Choice_57"), SubResource("Choice_58"), SubResource("Choice_59"), SubResource("Choice_60"), SubResource("Choice_61"), SubResource("Choice_62"), SubResource("Choice_63"), SubResource("Choice_64"), SubResource("Choice_65"), SubResource("Choice_66"), SubResource("Choice_67")])
-fill_per_cell = {&"meadow": 0.45, &"deep_forest": 1.15, &"highland": 0.38, &"blossom_grove": 0.95, &"twilight_marsh": 0.55, &"amber_heath": 0.45, &"jade_wetlands": 0.55}
+fill_per_cell = {&"meadow": 0.7, &"deep_forest": 4.0, &"highland": 0.9, &"blossom_grove": 2.2, &"twilight_marsh": 1.0, &"amber_heath": 0.8, &"jade_wetlands": 1.0}
 habitat_layers = Array[ExtResource("3_habitat")]([SubResource("Canopy")])
 community_channel = &"forest_species"
 community_scale = 84.0
@@ -444,9 +444,9 @@ community_strength = 0.78
 surface_mode = 1
 shore_distance_range = Vector2(1.0, 1.0)
 support_radius = 0.75
-max_support_height_span = 0.75
-max_grade = 0.5
+max_support_height_span = 1.3
+max_grade = 0.8
 spacing_group = &"natural_structural"
 spacing_radius = 4.0
-scale_range = Vector2(0.92, 1.08)
+scale_range = Vector2(1.0, 1.3)
 brightness_range = Vector2(0.92, 1.08)

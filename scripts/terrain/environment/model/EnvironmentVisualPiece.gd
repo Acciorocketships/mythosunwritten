@@ -13,3 +13,6 @@ extends Resource
 ## colours. Palette-remap materials that need the authored channel may opt out;
 ## ordinary environment pieces keep the existing tinted-instance behavior.
 @export var use_instance_color: bool = true
+## Optional shadow-only stand-in (painted-leaf trees and bushes: an eighth of
+## the leaf cards and the coarsest bark). The visible batch then casts none.
+@export var shadow_mesh: Mesh

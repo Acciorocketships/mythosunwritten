@@ -1,15 +1,17 @@
-[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3]
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=7 format=3]
 
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_l3ex5"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_63w0k"]
-[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_04_winter_piece_00.res" id="3_1kot6"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_xgfiv"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_63w0k"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_1kot6"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_04_winter_piece_00.res" id="3_xgfiv"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_04_winter_piece_00_shadow.res" id="4_sx7e4"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_75rnk"]
 
-[sub_resource type="Resource" id="Resource_sx7e4"]
-script = ExtResource("2_63w0k")
-mesh = ExtResource("3_1kot6")
+[sub_resource type="Resource" id="Resource_ndh13"]
+script = ExtResource("2_1kot6")
+mesh = ExtResource("3_xgfiv")
 local_transform = Transform3D(1.3, 0, 0, 0, 1.3, 0, 0, 0, 1.3, 0, 0, 0)
+shadow_mesh = ExtResource("4_sx7e4")
 
 [resource]
-script = ExtResource("4_xgfiv")
-pieces = Array[ExtResource("2_63w0k")]([SubResource("Resource_sx7e4")])
+script = ExtResource("5_75rnk")
+pieces = Array[ExtResource("2_1kot6")]([SubResource("Resource_ndh13")])

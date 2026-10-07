@@ -1,14 +1,21 @@
-[gd_resource type="StandardMaterial3D" load_steps=2 format=3]
+[gd_resource type="ShaderMaterial" load_steps=3 format=3]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/angry_mesh_meadow/6c85fe13d4cf50759f02.res" id="1_7nl0u"]
+[ext_resource type="Shader" path="res://terrain/environment/materials/painted_leaf.gdshader" id="1_fgevq"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/angry_mesh_meadow/6c85fe13d4cf50759f02.res" id="2_snxxy"]
 
 [resource]
-resource_name = "M_BirchTree_Leaf_01_Summer"
-transparency = 2
-alpha_scissor_threshold = 0.25
-alpha_antialiasing_mode = 0
-cull_mode = 2
-vertex_color_use_as_albedo = true
-albedo_color = Color(0.5336918, 0.9245284, 0.18752229, 1)
-albedo_texture = ExtResource("1_7nl0u")
-roughness = 0.9
+render_priority = 0
+shader = ExtResource("1_fgevq")
+shader_parameter/albedo_texture = ExtResource("2_snxxy")
+shader_parameter/base_color = Color(0.5336918, 0.9245284, 0.18752229, 1)
+shader_parameter/alpha_scissor = 0.25
+shader_parameter/crown_centre = Vector3(-0.12901902, 0.5675267, 0.021835566)
+shader_parameter/crown_half_extents = Vector3(0.81927, 0.5716733, 0.8180785)
+shader_parameter/saturation = null
+shader_parameter/value_scale = null
+shader_parameter/interior = null
+shader_parameter/underside = null
+shader_parameter/translucency = null
+shader_parameter/survivor_growth = null
+shader_parameter/shadow_keep = null
+shader_parameter/shadow_card_cascade_width = null

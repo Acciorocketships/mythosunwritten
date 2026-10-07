@@ -11,4 +11,4 @@ cull_mode = 2
 vertex_color_use_as_albedo = true
 albedo_color = Color(0.34073588, 0.7924529, 0.1756853, 1)
 albedo_texture = ExtResource("1_y25wn")
-roughness = 0.05
+roughness = 0.85

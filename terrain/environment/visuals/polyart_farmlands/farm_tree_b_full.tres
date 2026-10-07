@@ -1,22 +1,24 @@
-[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=9 format=3]
 
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_cqo7l"]
-[ext_resource type="Shape3D" path="res://terrain/environment/collisions/polyart_farmlands/farm_tree_b_full_piece_00.res" id="2_tnnpm"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_52m81"]
-[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/polyart_farmlands/farm_tree_b_full_piece_00.res" id="4_2w4ri"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_du88s"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_tnnpm"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/polyart_farmlands/farm_tree_b_full_piece_00.res" id="2_52m81"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_2w4ri"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/polyart_farmlands/farm_tree_b_full_piece_00.res" id="4_du88s"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/polyart_farmlands/farm_tree_b_full_piece_00_shadow.res" id="5_wx4k8"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="6_6ke6n"]
 
-[sub_resource type="Resource" id="Resource_wx4k8"]
-script = ExtResource("1_cqo7l")
-shape = ExtResource("2_tnnpm")
+[sub_resource type="Resource" id="Resource_ql5br"]
+script = ExtResource("1_tnnpm")
+shape = ExtResource("2_52m81")
 local_transform = Transform3D(0.0076390146, 0.34381413, 0.72231126, 0, 0.72234416, -0.34382984, -0.7999636, 0.0032831512, 0.0068974975, 0.7944164, 0.9322271, 0.057793368)
 
-[sub_resource type="Resource" id="Resource_6ke6n"]
-script = ExtResource("3_52m81")
-mesh = ExtResource("4_2w4ri")
+[sub_resource type="Resource" id="Resource_ddsr6"]
+script = ExtResource("3_2w4ri")
+mesh = ExtResource("4_du88s")
 local_transform = Transform3D(0.8, 0, 0, 0, 0.8, 0, 0, 0, 0.8, 0, 0, 0)
+shadow_mesh = ExtResource("5_wx4k8")
 
 [resource]
-script = ExtResource("5_du88s")
-pieces = Array[ExtResource("3_52m81")]([SubResource("Resource_6ke6n")])
-collisions = Array[ExtResource("1_cqo7l")]([SubResource("Resource_wx4k8")])
+script = ExtResource("6_6ke6n")
+pieces = Array[ExtResource("3_2w4ri")]([SubResource("Resource_ddsr6")])
+collisions = Array[ExtResource("1_tnnpm")]([SubResource("Resource_ql5br")])

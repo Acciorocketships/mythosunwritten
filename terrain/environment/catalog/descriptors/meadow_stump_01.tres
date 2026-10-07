@@ -10,6 +10,6 @@ tags = Array[StringName]([&"deadwood", &"nature"])
 measured_aabb = AABB(-1.3783368, -0.10535933, -0.92433566, 2.4014113, 1.7139417, 1.8831942)
 ground_contact_points = PackedVector2Array()
 collision_piece_count = 1
-tint_group = &"tree"
+tint_group = &"identity"
 supports_instance_color = true
 provenance_id = &"angry_mesh_meadow:meadow.stump.01"
