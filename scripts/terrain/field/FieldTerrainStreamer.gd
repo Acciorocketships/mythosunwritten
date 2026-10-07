@@ -294,6 +294,8 @@ func _ready() -> void:
 	# C# grid kernels for the cliff sheet, when verified (no-op otherwise).
 	preload("res://scripts/native/NativeGridKernels.gd").setup()
 	preload("res://scripts/native/NativeTileKernel.gd").setup()
+	# Water fill kernels: load C# here; their gate runs on the first water solve.
+	preload("res://scripts/native/NativeWaterFill.gd").prepare()
 	for index in TAIL_THREADS:
 		var tail_mesher := TerrainChunkMesher.new()
 		tail_mesher.profile_enabled = PROFILE_STREAMING

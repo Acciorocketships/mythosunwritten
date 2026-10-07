@@ -12,6 +12,10 @@
 class_name WaterField
 extends Object
 
+## C# fill kernels (relax/reconcile/smooth/retain), used only once verified
+## bit-identical to the GDScript bodies below, which stay the reference.
+const NATIVE_FILL := preload("res://scripts/native/NativeWaterFill.gd")
+
 # 24 m FEATURE scale: river-sample buckets, the steep-scan window and the
 # channel claim radius. It is NOT the terrain lattice: ground heights live on
 # TerrainTileField's 12 m points and are always read through that kernel.
@@ -414,6 +418,7 @@ static func _source_fill(c: Dictionary, region) -> Dictionary:
 ## retained water, without using the disconnected pocket as a new source.
 static func _retain_source_connected_fill(levels: PackedFloat32Array,
 		side: int, source_indices: PackedInt32Array) -> int:
+	if NATIVE_FILL.on(): return NATIVE_FILL.retain(levels, side, source_indices)
 	var rows := int(levels.size() / side)
 	var retained := PackedByteArray(); retained.resize(levels.size())
 	var queue := PackedInt32Array()
@@ -447,6 +452,7 @@ static func _retain_source_connected_fill(levels: PackedFloat32Array,
 ## head across land. The operation cannot raise water or empty a wet node.
 static func _reconcile_connected_surface(levels: PackedFloat32Array,
 		ground: PackedFloat32Array, columns: int, step: float) -> int:
+	if NATIVE_FILL.on(): return NATIVE_FILL.reconcile(levels, ground, columns, step)
 	const MAX_GRADE := 0.30
 	const MIN_DEPTH := 0.10
 	var rows := int(levels.size() / columns)
@@ -589,6 +595,10 @@ static func _build_fill(c: Dictionary, region, base: Vector2) -> Dictionary:
 static func _smooth_fill_surface(region, base: Vector2, m1: int,
 		levels: PackedFloat32Array, gnd: PackedFloat32Array,
 		river_levels: PackedFloat32Array, physical_ceilings: PackedFloat32Array = PackedFloat32Array()) -> void:
+	# Native needs every ground sample (INF = not sampled yet, see _ground_at).
+	if NATIVE_FILL.on() and not gnd.has(INF):
+		NATIVE_FILL.smooth(m1, levels, gnd, river_levels, physical_ceilings, FILL_SURFACE_PASSES)
+		return
 	var rows := int(levels.size() / m1)
 	var ceilings := levels.duplicate() if physical_ceilings.is_empty() else physical_ceilings
 	for _pass in FILL_SURFACE_PASSES:
@@ -1152,6 +1162,10 @@ static func _settle(m1: int, levels: PackedFloat32Array, pq: PriorityQueue,
 static func _relax_fill(region, base: Vector2, m1: int,
 		levels: PackedFloat32Array, gnd: PackedFloat32Array,
 		river_levels: PackedFloat32Array, pq: PriorityQueue) -> void:
+	# Native needs every ground sample (INF = not sampled yet, see _ground_at).
+	if NATIVE_FILL.on() and not gnd.has(INF):
+		NATIVE_FILL.relax(m1, levels, gnd, river_levels, pq)
+		return
 	while not pq.is_empty():
 		var entry: Array = pq.pop()
 		var idx: int = entry[0]

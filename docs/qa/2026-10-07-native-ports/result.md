@@ -207,3 +207,44 @@ memo, not from the carve. After the fix round: `test_native_carve` passes on
 mono (1/1, 6016 asserts; each window's added samples equal the count the C#
 batch filled) and on standard Godot; `test_water_plan` 29/29;
 `test_heightfield_plan` 47/47; `parallel_tail_check` PASS.
+
+## Task 6: native water fill kernels and an exact binary heap
+
+`WaterField._relax_fill`, `_reconcile_connected_surface`,
+`_smooth_fill_surface` and `_retain_source_connected_fill` dispatch to
+`NativeWaterFill` (C#, `scripts/native/NativeWaterFill.cs`) once its parity
+gate passes; the GDScript bodies stay the reference. `GdPriorityQueue<T>` is
+a line-for-line port of `PriorityQueue.gd` (hole sifts, `>=` / `<`
+comparisons), so equal levels settle in the same order. Relax and smooth run
+natively only when their ground array is complete (`not gnd.has(INF)`, one C++
+scan); `_build_fill`'s lazily sampled lattice keeps GDScript. One C# call per
+kernel invocation; the relax queue is handed over as the GDScript heap's
+entries in heap order.
+
+Gate: `FieldTerrainStreamer._ready` only loads the C# class (`prepare()`,
+about 30 ms); the parity gate (four heap replays with heavy ties, twelve
+random 20..60-side terraced lattices with river seeds, pond discs at double
+levels, levels EPS above terrace steps, ceilings, shallow nodes, INF ground
+for reconcile, both lattice steps) runs lazily on the first `on()` call,
+i.e. the first worker water solve: about 0.4 s of GDScript reference runs,
+never on the main thread in the game. Threads arriving while it runs use
+GDScript (`try_lock`). Falsification: flipping the heap's `>=` to `>`, its
+right-child `<` to `<=`, the relax spread's `<` to `<=`, pushing the stored
+float32 instead of the double level, or a 1e-9 perturbation in reconcile
+each disables the gate.
+
+Godot_mono 4.5.1, headless, seed 2697992464, one process at a time.
+
+| measure (`PROFILE_WATER_COST=1 water_block_cost --chunk=-4,-5 --no-disk`) | before (916fdbcdc) | after |
+|---|---|---|
+| relax_ms (697 x 613 source lattice) | 1767 | 69 |
+| smooth_ms (smooth + reconcile) | 261 | 32 |
+| harness water_ms | 31028 | 29423 |
+| digest | `b6c965def22e7e93` | `b6c965def22e7e93` |
+
+`parallel_tail_check --rounds=2`: PASS failures=0. Tests on both binaries:
+`test_native_water_fill` 3/3, `test_september9_water_containment` 18/18,
+`test_september10_water_surface` 7/7 (+2 pending, as at baseline),
+`test_september10_water_relaxation_work` 2/2,
+`test_september11_water_rounding` 1/1, `test_september15_water_drops` 8/8,
+`test_september15_water_source_connectivity` 5/5, `test_priority_queue` 2/2.

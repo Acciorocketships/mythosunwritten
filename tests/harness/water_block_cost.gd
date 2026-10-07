@@ -22,6 +22,7 @@ func _init() -> void:
 		preload("res://scripts/terrain/field/PlanningDiskCache.gd").configure(seed)
 	preload("res://scripts/native/NativeGridKernels.gd").setup()
 	preload("res://scripts/native/NativeTileKernel.gd").setup()
+	preload("res://scripts/native/NativeWaterFill.gd").setup()
 	var water := TerrainWorldTuning.make_water(seed)
 	var plan := TerrainWorldTuning.make_heightfield(seed, water)
 	var catalog := EnvironmentCatalog.load_default()
