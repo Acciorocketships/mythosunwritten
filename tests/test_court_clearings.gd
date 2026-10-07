@@ -39,8 +39,17 @@ func test_proposals_are_deterministic_disjoint_and_wide_enough() -> void:
 					wide = wide or all_in
 			assert_true(wide, "every clearing cell belongs to a 2x2 block")
 
+func _streets_only(seed_value: int, scale: StringName, count: float) -> Dictionary:
+	## Streets built without clearings; the profile then carries `count`, so
+	## propose() sees a network none of its own clearings have reserved yet.
+	var profile := WarrenVillageScaleProfile.for_id(scale)
+	TownCharacter.attach(profile, TownOddsProgram.builtin(), seed_value)
+	var plan := WarrenMazeSitePlanner.plan(seed_value, {}, profile, &"carve")
+	TownCharacter.attach(profile, TownOddsProgram.builtin().with_overrides({&"clearing_count": count}), seed_value)
+	return {"profile": profile, "plan": plan}
+
 func test_thick_blocks_are_preferred() -> void:
-	var s := _setup(53, &"grand", 4.0)
+	var s := _streets_only(53, &"grand", 4.0)
 	var plan: WarrenMazeSourcePlan = s.plan
 	var street := WarrenCourtClearings.street_distance(plan.massif, plan.excavation)
 	var chosen := 0.0
@@ -69,18 +78,17 @@ func test_area_reached_and_floor_has_a_street_at_its_band() -> void:
 			by_band[cell.y][Vector2i(cell.x, cell.z)] = true
 		for clearing: Dictionary in WarrenCourtClearings.propose(pair[0], plan.massif, plan.excavation, s.profile):
 			assert_gte(clearing.cells.size(), maxi(4, int(clearing.area) / 2), "%s area" % [pair])
-			var column: Vector2i = clearing.cells[0]
-			if int(clearing.floor) != plan.massif.bearing_at(column):
-				# The site's centre column is one of the cells and was the one checked.
-				var near := false
-				var at: Dictionary = by_band.get(int(clearing.floor), {})
-				for cell: Vector2i in clearing.cells:
-					for c: Vector2i in at:
-						near = near or absi(c.x - cell.x) + absi(c.y - cell.y) <= WarrenCourtClearings.STREET_REACH
-				assert_true(near, "raised floor has a street within reach")
+			# Ground and raised floors alike: the centre column (one of the
+			# cells) lies within a level street's reach at the clearing's band.
+			var near := false
+			var at: Dictionary = by_band.get(int(clearing.floor), {})
+			for cell: Vector2i in clearing.cells:
+				for c: Vector2i in at:
+					near = near or absi(c.x - cell.x) + absi(c.y - cell.y) <= WarrenCourtClearings.STREET_REACH
+			assert_true(near, "floor has a street at its band within reach")
 
 func test_carved_clearings_are_reachable_and_reserved() -> void:
-	var s := _setup(31, &"large", 3.0)
+	var s := _setup(53, &"grand", 3.0)
 	var plan: WarrenMazeSourcePlan = s.plan
 	assert_gt(plan.excavation.court_clearings.size(), 0)
 	var walk := {}
@@ -160,9 +168,9 @@ func test_unconnectable_clearing_leaves_no_trace() -> void:
 			assert_true(lane_cells.has(Vector2i(cell.x, cell.z)), "new air belongs to a kept clearing's lane")
 
 func test_clearing_lanes_survive_destination_pruning() -> void:
-	var profile := WarrenVillageScaleProfile.for_id(&"large")
-	TownCharacter.attach(profile, TownOddsProgram.builtin().with_overrides({&"clearing_count": 3.0}), 31)
-	var plan := WarrenMazeSitePlanner.plan(31, {}, profile)
+	var profile := WarrenVillageScaleProfile.for_id(&"standard")
+	TownCharacter.attach(profile, TownOddsProgram.builtin().with_overrides({&"clearing_count": 3.0}), 103)
+	var plan := WarrenMazeSitePlanner.plan(103, {}, profile)
 	assert_not_null(plan)
 	assert_gt(plan.excavation.court_clearings.size(), 0)
 	var walk := {}
@@ -178,3 +186,48 @@ func test_default_table_carves_no_clearings() -> void:
 	assert_eq(plan.excavation.court_clearings.size(), 0)
 	assert_eq(plan.excavation.lanes.filter(func(l: Dictionary) -> bool:
 		return l.get("feature_kind", &"") == &"court_clearing_access").size(), 0)
+
+func _copy_excavation(source: WarrenExcavation) -> WarrenExcavation:
+	var excavation := WarrenExcavation.new(source.world_seed)
+	for key: String in ["route", "transitions", "lanes", "loop_edges", "carved", "covered", "portals",
+			"bridge_spans", "bridge_span_audit", "bridge_bearing_columns", "bridge_directions",
+			"construction_reservations", "frontage_reservations", "tunnel_cells", "tunnel_attrition",
+			"court_clearings"]:
+		excavation.set(key, source.get(key).duplicate(true))
+	return excavation
+
+func test_clearings_never_share_another_reservation() -> void:
+	var profile := WarrenVillageScaleProfile.for_id(&"grand")
+	TownCharacter.attach(profile, TownOddsProgram.builtin(), 53)
+	var base := WarrenMazeSitePlanner.plan(53, {}, profile, &"carve")
+	TownCharacter.attach(profile, TownOddsProgram.builtin().with_overrides({&"clearing_count": 3.0}), 53)
+	var excavation := _copy_excavation(base.excavation)
+	var first := WarrenCourtClearings.propose(53, base.massif, excavation, profile)
+	assert_gt(first.size(), 0)
+	# Pre-reserve one column of the first proposal at its floor (a foreign envelope).
+	var column: Vector2i = first[0].cells[0]
+	var foreign := Vector3i(column.x, int(first[0].floor), column.y)
+	excavation.construction_reservations[foreign] = true
+	var reserved_before := excavation.construction_reservations.duplicate()
+	var second := WarrenCourtClearings.propose(53, base.massif, excavation, profile)
+	for proposal: Dictionary in second:
+		for c: Vector2i in proposal.cells:
+			for band in range(int(proposal.floor) - 1, int(proposal.floor) + WarrenMazeSourcePlan.MIN_HOUSE_BANDS):
+				assert_false(reserved_before.has(Vector3i(c.x, band, c.y)), "proposal overlaps a reservation")
+	WarrenCourtClearings.carve(53, base.massif, excavation, {}, profile)
+	for cell: Vector3i in reserved_before:
+		assert_true(excavation.construction_reservations.has(cell), "carving never releases a foreign reservation")
+	for clearing: Dictionary in excavation.court_clearings:
+		var span := range(int(clearing.floor) - 1, int(clearing.floor) + WarrenMazeSourcePlan.MIN_HOUSE_BANDS)
+		assert_false((clearing.cells as Array).has(column) and span.has(foreign.y),
+			"the pre-reserved cell is in no clearing's span")
+
+func test_clearing_doors_are_never_flight_treads() -> void:
+	var s := _setup(103, &"standard", 3.0)
+	var plan: WarrenMazeSourcePlan = s.plan
+	assert_gt(plan.excavation.court_clearings.size(), 0)
+	var flights := plan.excavation.flight_cells()
+	for clearing: Dictionary in plan.excavation.court_clearings:
+		for door: Vector3i in clearing.doors:
+			assert_false(flights.has(door), "a door is never a flight tread")
+			assert_eq(door.y, int(clearing.floor))

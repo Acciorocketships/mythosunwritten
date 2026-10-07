@@ -86,8 +86,9 @@ static func carve(world_seed: int, massif: WarrenMassif, excavation: WarrenExcav
 	## Realise the proposals as reserved open rooms, each joined to the street
 	## network by at least one level access lane from a doorstep beside it, plus
 	## further separated lanes by odds. Each clearing is reserved before its lanes
-	## are searched, so no lane bores through it; one an earlier lane already
-	## bored through, or no street reaches at its floor, is withdrawn whole
+	## are searched, so no lane bores through it; one that overlaps any existing
+	## reservation or bored air, or that no street reaches at its floor, is
+	## withdrawn whole
 	## (reservations released, nothing carved).
 	var proposals := propose(world_seed, massif, excavation, profile)
 	if proposals.is_empty():
@@ -99,14 +100,14 @@ static func carve(world_seed: int, massif: WarrenMassif, excavation: WarrenExcav
 		# bores through it. An earlier clearing's lane may already have bored
 		# through this one: then it is withdrawn whole.
 		var claims := {}
-		var bored := false
+		var clash := false
 		for column: Vector2i in proposal.cells:
 			for band in range(floor_band - 1, floor_band + WarrenMazeSourcePlan.MIN_HOUSE_BANDS):
 				var cell := Vector3i(column.x, band, column.y)
-				bored = bored or excavation.carved.has(cell)
-				if not excavation.construction_reservations.has(cell):
-					claims[cell] = true
-		if bored:
+				clash = clash or excavation.carved.has(cell) \
+					or excavation.construction_reservations.has(cell)
+				claims[cell] = true
+		if clash:
 			continue
 		for cell: Vector3i in claims:
 			excavation.construction_reservations[cell] = true
@@ -119,6 +120,7 @@ static func carve(world_seed: int, massif: WarrenMassif, excavation: WarrenExcav
 		var walk_nodes := {}
 		for cell: Vector3i in WarrenMazeCarver._walk_nodes(excavation):
 			walk_nodes[cell] = true
+		var flights := excavation.flight_cells()
 		var doorsteps: Array[Vector3i] = []
 		for column: Vector2i in proposal.cells:
 			for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
@@ -126,6 +128,9 @@ static func carve(world_seed: int, massif: WarrenMassif, excavation: WarrenExcav
 				if inside.has(next) or not massif.has_column(next):
 					continue
 				var step := Vector3i(next.x, floor_band, next.y)
+				# A flight's tread is never a doorstep.
+				if flights.has(step):
+					continue
 				if not doorsteps.has(step):
 					doorsteps.append(step)
 		doorsteps.sort_custom(WarrenExcavation._cell_less)
@@ -208,7 +213,8 @@ static func _candidates(plan: WarrenMazeSourcePlan, street: Dictionary, blocked:
 		var high := massif.top_at(column)
 		var base_weight := pow(maxf(0.01, float(distance)), bias)
 		for floor_band in range(low, high + 1, FLOOR_STEP):
-			if floor_band != low and not _street_at_band(by_band, column, floor_band):
+			if not _street_at_band(by_band, column, floor_band) \
+					or _reserved(plan.excavation, column, floor_band):
 				continue
 			if WarrenPlotReservations._deck_column_ok(plan, column, floor_band, {}, blocked, DECK_LEVEL_BANDS):
 				out.append({"column": column, "floor": floor_band,
@@ -216,9 +222,18 @@ static func _candidates(plan: WarrenMazeSourcePlan, street: Dictionary, blocked:
 	return out
 
 
+static func _reserved(excavation: WarrenExcavation, column: Vector2i, floor_band: int) -> bool:
+	## A clearing never shares another construction envelope: no band of its
+	## span (floor-1 .. floor+MIN_HOUSE_BANDS-1) may already be reserved.
+	for band in range(floor_band - 1, floor_band + WarrenMazeSourcePlan.MIN_HOUSE_BANDS):
+		if excavation.construction_reservations.has(Vector3i(column.x, band, column.y)):
+			return true
+	return false
+
+
 static func _street_at_band(by_band: Dictionary, column: Vector2i, floor_band: int) -> bool:
-	## A raised floor needs a public cell at exactly that band within reach, so a
-	## later stage can connect it.
+	## A floor (ground or raised) needs a public cell at exactly that band within
+	## reach, so a level access lane can connect it.
 	var at: Dictionary = by_band.get(floor_band, {})
 	for dx in range(-STREET_REACH, STREET_REACH + 1):
 		var span := STREET_REACH - absi(dx)
@@ -243,6 +258,7 @@ static func _weighted_pick(candidates: Array[Dictionary], r: float) -> Dictionar
 static func _legal(plan: WarrenMazeSourcePlan, column: Vector2i, floor_band: int,
 		blocked: Dictionary, taken: Dictionary, street: Dictionary) -> bool:
 	return not taken.has(column) and int(street.get(column, 0)) > 0 \
+		and not _reserved(plan.excavation, column, floor_band) \
 		and WarrenPlotReservations._deck_column_ok(plan, column, floor_band, {}, blocked, DECK_LEVEL_BANDS)
 
 
