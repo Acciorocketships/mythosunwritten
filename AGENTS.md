@@ -21,7 +21,20 @@
 > components, not a rejection. Deleted (unreached legacy): VillageHamletConstruction,
 > VillageMassingSolver, VillageMarketSolver, VillageCirculationSolver,
 > VillageTimberFabricSolver, VillageSkirtDeckSolver, PureVillageNativeHouse,
-> KitRoofTurrets.propose.
+> KitRoofTurrets.propose; then (dead-code pass,
+> `docs/qa/2026-10-07-town-odds/dead-code-removal.md`) WarrenPlotVoidPlanner/Plan/Grammar,
+> WarrenRisingRingPlanner, WarrenPrefabSolver, StaggeredFabricEmbedder,
+> SectionalPublicRealmBuilder, WarrenOverheadSolver, the terrain-massing village
+> (VillageMassing*, VillageCirculationPlan/Link, VillagePlatform/Aerial/GroundRouter,
+> VillageRouteGeometry, VillageDoorGeometry, VillageStair*, VillageRouteStair*,
+> VillageTimberCell*/TimberFabricPlan, VillageSkirtDeckPlan, VillageMarketPlan/Program/Stall,
+> VillageRockCoreSolver, VillageBuildingSupport*, Foundation/SupportSolver,
+> VillageTerrainSurvey/Perch, VillageVerticalProfile, VillageModuleGrid/Cell,
+> VillageFrontageDomain) and the outskirts solver/program/plan
+> (`record.outskirts` is gone; VillageOutskirtsConstruction keeps only the world-road
+> street helpers). WarrenMarketSolver/WarrenElevatedFrontageSolver keep only what
+> production reads; `enable_paired_registration_relief` and the TARGET_* feature
+> defaults are gone (MAX_PAIRED_* live in `tests/fixtures/legacy_room_repair.gd`).
 
 > October 4 turret course grammar: PureVillageTurretHouse derives exact source
 > or one extra upper course (11facades+1shaft); crown/cap/brackets move together,
@@ -4508,7 +4521,7 @@
 > September 7 entrance construction: each exterior portal keeps its own transverse
 > coordinate until it meets the shared perimeter. Secondary entrances must not snap
 > to the primary entrance's lattice phase, which creates diagonal paint notches.
-> Completed physical clearance is inspected by `perimeter_gate_corpus.gd` (four
+> Completed physical clearance is inspected by `perimeter_gate_corpus.gd` (deleted October 7) (four
 > seeds, four scales, four orientations; 64 completed cases). The matched `perimeter-straight-gates-after` views
 > confirm the reported junction and entrance edges. Roof gardens, as well as pitched
 > roofs, use the remaining space after fixed ground-frame columns are reserved.
@@ -4667,7 +4680,7 @@
 > not yet accepted as a complete removal of runtime checks or retries.
 
 > September 7 construction follow-up: production outskirts now use
-> `VillageOutskirtsConstruction` and `VillageFrontageDomain`. Measured house
+> `VillageOutskirtsConstruction` and `VillageFrontageDomain` (deleted October 7). Measured house
 > envelopes subtract occupied space from continuous frontage intervals before
 > a lot is selected; each selected lot emits one house and a flat grade pad.
 > Different pad datums reserve disjoint footprints. The substantial-house
@@ -5075,7 +5088,7 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
   bridge → village gate → biome gate → lamp. Stable feature
   IDs never include a streaming chunk or contributing route.
   The sectional warren system lives under `features/villages/fabric/`, with its diagnostic
-  review scene in `tests/harness/warren_phase0_review.tscn`. The default production
+  review scene in `tests/harness/warren_phase0_review.tscn` (deleted October 7). The default production
   `VillagePlan` invokes `VillageWarrenFabricSolver`, which converts one sealed sectional
   plan into the canonical `VillageUrbanFabricPlan` and `VillageRecord`; topology is never
   re-inferred from render placements. Its production adapter coalesces the same canonical
@@ -5223,7 +5236,7 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
   guards derive from that union and structural occupancy, so graph
   transitions stay open and arbitrary leftover gaps never become platforms. The proof first
   compiles a diagnostic seed, then `FabricSolidVoidPlan` turns every exposed route side into a
-  boundary obligation. `StaggeredFabricEmbedder` runs a deterministic bounded beam over complete
+  boundary obligation. `StaggeredFabricEmbedder` (deleted October 7) runs a deterministic bounded beam over complete
   roof-closed one/two-storey envelopes at route, half-level-lower, and full-level-lower bases.
   `StaggeredFabricCompiler` turns proposals into ordinary terrain-perched room/roof DAGs; low
   edges that cannot fit a room may receive a complete baked market-stall envelope. The common
@@ -5997,8 +6010,8 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
   signature; `VillageRecord` seals sorted semantic output; `VillageOccupancy` is a bucketed typed
   3D index (`SOLID`, `WALK_SURFACE`, `HEADROOM`, `GROUND_EXCLUSIVE`, `WALK_GUARD`). Public
   `WALK_GUARD` rails may meet only walk surfaces or sibling guards in their explicitly declared
-  walk network; generic solids never inherit that seam permission. `FoundationSolver` proves
-  enterable floors above natural terrain and tiles fixed perimeter modules; `SupportSolver`
+  walk network; generic solids never inherit that seam permission. `FoundationSolver` (deleted October 7) proves
+  enterable floors above natural terrain and tiles fixed perimeter modules; `SupportSolver` (deleted October 7)
   composes fixed-height stacks with bounded burial and atomic occupancy. `VillagePlan` solves one
   atomic `VillageUrbanFabricPlan`; its furnishing belongs to that same transaction and there is no
   legacy post-pass for standalone props. A rejected urban solve emits no village payload, so a tent or campfire can never
@@ -6007,12 +6020,12 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
   removed. Production rolls only
   village/town; the compiled hamlet vocabulary stays dormant until it can satisfy the same
   inhabited multi-level contract.
-  `VillageOutskirtsSolver` runs only after an accepted urban transaction. Every painted outskirts
+  `VillageOutskirtsSolver` (deleted October 7) runs only after an accepted urban transaction. Every painted outskirts
   lane, including the final spur to a prefab doorstep, is the ordinary `PathProgram.PATH_WIDTH`;
   only the spur's reserved headroom narrows to the measured doorway. The edge district is meant to
   RING the dense core (2026-09-04): each exit's neighbourhood reaches sixteen grid steps so the
   flanking runs of two or three gates wrap most of a silhouette, six roots per side are ranked,
-  and `VillageOutskirtsProgram.target_houses` asks for 6/9 houses or three per sealed exit. The
+  and `VillageOutskirtsProgram.target_houses` (deleted October 7) asked for 6/9 houses or three per sealed exit. The
   town's terrain-qualified perimeter stalls are published on `VillageUrbanFabricPlan.frontage_sites`;
   the perimeter grid blocks them like mass so the lane runs in FRONT of the stalls, and a root
   facing a stall row is a MARKET lot: its house stands one `MARKET_STALL_BAND` (three cells) back
@@ -6060,7 +6073,7 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
   no partial edge payload. This makes the settlement taper into an immediate inhabited ground-level
   entrance district without growing a disconnected radial camp or a gratuitous full-town ring.
   `VillageTerrainView` is the only cross-block terrain/water query adapter;
-  `VillageTerrainSurvey` discovers and spatially buckets guarded-source-dry buildable perches
+  `VillageTerrainSurvey` (deleted October 7) discovers and spatially buckets guarded-source-dry buildable perches
   without mutating the heightfield (exact water remains a final-transaction check); and
   `VillageMassingSolver` (deleted October 7) used a bounded, composition-diverse beam plus a ranked complete-plan
   frontier to pack 7–15 inhabited buildings into a 42 m core (10/15 authored targets for
@@ -6068,7 +6081,7 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
   across building counts instead of exhausting near-duplicate dense failures first. The massing
   contract requires at least three irregular elevation bands, short neighbours, and real
   half-rises while preferring direct terrain contact over bounded retaining-terrace variants.
-  `VillageVerticalProfile` derives its 12 m full / 6 m half-level cadence from the tallest
+  `VillageVerticalProfile` (deleted October 7) derives its 12 m full / 6 m half-level cadence from the tallest
   stackable furnished house plus roof clearance; terrain storeys remain an unrelated landform
   unit. The route landing and already-solved ground market are hard reservations, each accepted
   footprint expands into both legitimate facade directions, and reviewed door/stair access is
@@ -6079,15 +6092,15 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
   permit. The market's street/headroom volumes participate in the same massing transaction rather
   than being optional decoration added after the town exists.
   `VillageCirculationSolver` (deleted October 7) owned topology only. It first builds all cheap direct right-angle
-  terrain edges, then asks `VillageGroundRouter` for bounded A* detours solely between remaining
+  terrain edges, then asks `VillageGroundRouter` (deleted October 7) for bounded A* detours solely between remaining
   disconnected components. Ground routes may cross natural height bands only through frozen
-  fixed-module `VillageStairTransition`s. `VillageRouteStairFabricSolver` materializes each flight
+  fixed-module `VillageStairTransition`s (deleted October 7). `VillageRouteStairFabricSolver` (deleted October 7) materializes each flight
   on the exact requesting terrain edge, keeps the worn street continuous beneath it, derives two
   slope-aligned collision-bearing side rails per stair module, and treats intersecting ground
-  flights as one public-circulation compound. `VillageAerialRouter` derives a
+  flights as one public-circulation compound. `VillageAerialRouter` (deleted October 7) derives a
   bounded acyclic set of short rounded links and one-module-deep public forecourts that exist only
   at inhabited facade seams. There is no long-span or empty suspended-platform fallback.
-  `VillageRouteGeometry` owns the shared swept-headroom facts. The graph must connect every door to
+  `VillageRouteGeometry` (deleted October 7) owns the shared swept-headroom facts. The graph must connect every door to
   the route landing, contain a useful ground-street fabric, at least two local aerial links, and at
   least one inhabited shared platform; aerial links remain at most 24 m.
   The support compiler freezes each massed floor and chooses one typed atomic mode from terrain
@@ -6106,7 +6119,7 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
   stairs, railings, and protected undercroft headroom beneath the lowest viable inhabited overhang
   all validate before the district materializes. Bound ground activity is optional and cannot
   veto a complete inhabited district; any required-structure failure omits the whole transaction.
-  `VillageOutskirtsSolver` may then place sparse houses immediately outside the exact occupied-volume
+  `VillageOutskirtsSolver` (deleted October 7) may then place sparse houses immediately outside the exact occupied-volume
   contour. Every sealed terrain exit feeds its bounded local entrance-neighbourhood street graph;
   no street is extended around unrelated sides of the settlement. Each complete prefab sits one
   shared 3 m lane outside the core, remains aligned to the town lattice, faces its doorstep connection, and is shown in
