@@ -4,7 +4,7 @@
 
 **Goal:** Turn the owner's October 7 visual feedback into tunable knobs on the existing town odds layer (defaults first reproduce today exactly), then move the defaults toward the requested look.
 
-**Architecture:** Every change reads a knob from `TownCharacter` (`terrain/villages/town_odds.tres`, see AGENTS.md October 7 entry). Tasks 1–6 add knobs whose default values reproduce current output byte-for-byte (fingerprint gate). Task 7 changes defaults (intended visual change) with renders, audits and walks. Only guardrails are hard rules: wells on ground only, door/entrance reachability, support, no overlap, min width.
+**Architecture:** Every change reads a knob from `TownCharacter` (`terrain/villages/town_odds.tres`, see AGENTS.md October 7 entry). Tasks 1–4 and 6 add knobs whose default values reproduce current output byte-for-byte (fingerprint gate); Task 5 (dark wood lamps) is a fixed change that re-baselines. Task 7 changes defaults (intended visual change) with renders, audits and walks. Only guardrails are hard rules: wells on ground only, door/entrance reachability, support, no overlap, min width.
 
 **Tech Stack:** Godot 4.5, typed GDScript, GUT, existing harnesses.
 
@@ -16,7 +16,7 @@
 - Not every green needs a walking ring; clearings probably look better without one; shapes vary.
 - Clearings need more decoration.
 - Wells only on the ground (hard rule — a well only makes sense on ground); the current well is too big (size is a knob).
-- Lamp posts dark brown wood to match the town (finish is a weighted knob; grey stays possible).
+- Lamp posts dark brown wood to match the town — a fixed change, not a knob (owner: "can just be dark wood").
 - Satellite houses closer to the core; a suburban band of small detached houses between dense core and countryside; a lone house need not get a road. All three are knobs; today's behaviour must remain reachable.
 
 ## Global Constraints
@@ -24,7 +24,7 @@
 - Worktree `/Users/ryko/.codex/worktrees/77a0/story`, branch `town-redesign`. Never touch `/Users/ryko/story`. Never run the `godot-test` alias.
 - Godot `/Applications/Godot.app/Contents/MacOS/Godot`, always `--log-file /tmp/<name>.log`, stdout redirected, exit code checked; no `timeout` on macOS; ignore unrelated Godot processes. Reimport after class_name changes.
 - Focused test: `/Applications/Godot.app/Contents/MacOS/Godot --headless --path . --log-file /tmp/t.log -s addons/gut/gut_cmdln.gd -gtest=res://tests/<file>.gd -gexit > /tmp/t.out 2>&1; tail -30 /tmp/t.out`.
-- Fingerprint gate (Tasks 1–6): `... --headless --path . --log-file /tmp/fp.log -s res://tests/harness/town_fingerprint.gd -- --out /tmp/fp.json --compare docs/qa/2026-10-07-town-odds/fingerprint/baseline.json > /tmp/fp.out 2>&1; echo EXIT $?; grep FINGERPRINT_ /tmp/fp.out` must print FINGERPRINT_MATCH. Where a task's knob only acts when clearings are on, also run with `--odds clearing_count=3 --towns 53:grand,103:standard` and confirm both build.
+- Fingerprint gate (Tasks 1–4, 6; Task 5 re-baselines): `... --headless --path . --log-file /tmp/fp.log -s res://tests/harness/town_fingerprint.gd -- --out /tmp/fp.json --compare docs/qa/2026-10-07-town-odds/fingerprint/baseline.json > /tmp/fp.out 2>&1; echo EXIT $?; grep FINGERPRINT_ /tmp/fp.out` must print FINGERPRINT_MATCH. Where a task's knob only acts when clearings are on, also run with `--odds clearing_count=3 --towns 53:grand,103:standard` and confirm both build.
 - New knobs go in `terrain/villages/town_odds.tres` (TownKnob kinds CHANCE=0, RANGE_FLOAT=1, RANGE_INT=2, WEIGHTS=3) with `notes` naming this plan's task. Numeric `--odds` overrides only (WEIGHTS knobs cannot be overridden from the CLI).
 - Read every knob through `TownCharacter.of(profile, world_seed)` with the town (city) seed; rolls keyed by stable decision keys.
 - Default value of every new knob reproduces today; no rule rejects a town for an aesthetic reason.
@@ -78,14 +78,13 @@
 - Tests: a raised green never gets a well (53:grand clearing.00 is raised); `well_scale=0.7` shrinks the placed well's AABB by ~0.7 and it stays clear.
 - Gate: fingerprint MATCH (today no evidence town puts a well on a raised green — if one does, the baseline legitimately changes: record which town and re-baseline with before/after render of that plaza, ledger it).
 
-### Task 5: Lamp finish knob
+### Task 5: Dark wood lamp posts (fixed change, not a knob)
 
-**Files:** Modify where the garden/plaza lamp role is substituted (`KitSubstitution.gd` prop.lamp / `SuntailBuildingKit.gd` ~162) and path lamps if they render grey (`sfv.light_pole.001`); knob; Test.
+**Files:** Modify where the garden/plaza lamp role is substituted (`KitSubstitution.gd` prop.lamp / `SuntailBuildingKit.gd` ~162) and path lamps if they render grey (`sfv.light_pole.001`, `PathProgram.gd`); Test.
 
-- Knob `lamp_finish` (WEIGHTS options `[grey, walnut]`, default weights 1/0 = today).
-- Pick per town (`character.pick(&"lamp_finish", &"town")`); walnut uses the existing `suntail_prop_lamp_1_finish_walnut` descriptor. Verify by a close-up render that the post (not only wooden sub-parts) turns dark brown; if the grey parts use a non-wood material, add a descriptor variant tinting that material dark brown (via the bake manifest `material_tints`/descriptor), not a runtime hack.
-- Tests: default → grey asset ids unchanged; walnut weights → lamp ids use the walnut variant.
-- Gate: fingerprint MATCH. Close-up render before/after archived.
+- All lamp posts use a dark brown wood finish. Prefer the existing `suntail_prop_lamp_1_finish_walnut` descriptor. Verify by a close-up render that the post itself (not only wooden sub-parts) turns dark brown; if the grey parts use a non-wood material, add a descriptor variant (bake manifest `material_tints`) tinting that material dark brown — no runtime hack.
+- Tests: lamp asset ids resolve to the dark-wood variant everywhere lamps are placed.
+- Gate: this intentionally changes output — fingerprint source hashes must match baseline, payload hashes change; commit a new baseline. Close-up before/after renders archived under docs/qa/2026-10-07-town-odds/taste/lamps/.
 
 ### Task 6: Satellites, suburban band, lone-house roads
 
@@ -100,5 +99,5 @@
 
 **Files:** `terrain/villages/town_odds.tres`, `docs/qa/2026-10-07-town-odds/taste/result.md`, new fingerprint baseline.
 
-- Set defaults: `clearing_lobe_bias` 2.0, `clearing_enclosure_bias` 2.0, `plaza_ring_chance` 1.0, `clearing_ring_chance` 0.25, `clearing_deco_density` 0.7, `well_scale` tuned (start 0.7; choose by person-scale render), `lamp_finish` grey 0.15 / walnut 0.85, `satellite_reach_scale` 0.7 (spread 0.15), `suburb_house_count` small 1 → large 4 (spread 1), `lone_house_path_chance` 0.2. `clearing_count` stays 0 by default (owner decides separately) — evidence renders run with `--odds clearing_count=2.5` (large/grand) / 1 (others).
+- Set defaults: `clearing_lobe_bias` 2.0, `clearing_enclosure_bias` 2.0, `plaza_ring_chance` 1.0, `clearing_ring_chance` 0.25, `clearing_deco_density` 0.7, `well_scale` tuned (start 0.7; choose by person-scale render), `satellite_reach_scale` 0.7 (spread 0.15), `suburb_house_count` small 1 → large 4 (spread 1), `lone_house_path_chance` 0.2. `clearing_count` stays 0 by default (owner decides separately) — evidence renders run with `--odds clearing_count=2.5` (large/grand) / 1 (others).
 - Evidence: before (previous commit) / after renders for 53:grand, 31:large, 103:standard, 13:standard, 83:grand, 7:compact (overview, orbit, courtyard, street, close lamp/well views); production audit all valid/0/0; court walks pass; new fingerprint baseline committed; result.md with images list, tables, limits.
