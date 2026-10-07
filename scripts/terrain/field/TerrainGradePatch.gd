@@ -84,6 +84,8 @@ var _continuous_cells: Dictionary = {}
 var _continuous_datum := 0.0
 const SURFACE_CACHE_LIMIT := 32768
 var _surface_cache: Dictionary = {}
+## Shared by chunk tails on pool threads; held only around the memo access.
+var _surface_lock := Mutex.new()
 var native_control_cache: Dictionary = {}
 ## Construction cells (NativeTerrainGrade.construction_cells) per plan.
 var native_construction_cache: Dictionary = {}
@@ -152,17 +154,17 @@ func _init(id: StringName, heights: Dictionary, origin: Vector2,
 func surface_y(point: Vector2, natural_height: float) -> float:
 	if not bounds.has_point(point):
 		return natural_height
-	if _surface_cache.has(point):
-		var cached: PackedFloat64Array = _surface_cache[point]
+	_surface_lock.lock()
+	var cached: Variant = _surface_cache.get(point)
+	_surface_lock.unlock()
+	if cached != null:
 		return lerpf(natural_height,cached[0],cached[1])
-	if _surface_cache.size() >= SURFACE_CACHE_LIMIT:
-		_surface_cache.clear()
 	var local := point - _origin
 	var cell := Vector2i(roundi(local.x / _targets.pitch),
 		roundi(local.y / _targets.pitch))
 	var weight := _collar_weight(local,cell)
 	if weight <= 0.0:
-		_surface_cache[point] = PackedFloat64Array([0.0,0.0])
+		_remember_surface(point, 0.0, 0.0)
 		return natural_height
 	var target := _target_at(local,cell) if _claims.has(cell) else (
 		_continuous_source.surface_y(point,_continuous_datum)
@@ -172,8 +174,16 @@ func surface_y(point: Vector2, natural_height: float) -> float:
 	# Cache only the immutable target/weight, never the caller's natural height.
 	# Neighboring mesh triangles, collision and nested grade fields revisit the
 	# same world coordinates; eviction cannot change their sampled surface.
-	_surface_cache[point] = PackedFloat64Array([target,weight])
+	_remember_surface(point, target, weight)
 	return lerpf(natural_height, target, weight)
+
+
+func _remember_surface(point: Vector2, target: float, weight: float) -> void:
+	_surface_lock.lock()
+	if _surface_cache.size() >= SURFACE_CACHE_LIMIT:
+		_surface_cache.clear()
+	_surface_cache[point] = PackedFloat64Array([target,weight])
+	_surface_lock.unlock()
 
 
 func _target_at(local: Vector2, cell: Vector2i) -> float:

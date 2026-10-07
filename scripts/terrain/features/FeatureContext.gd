@@ -10,21 +10,31 @@ var connection_masks: Dictionary
 var node_cells: Dictionary
 var bridge_cells: Dictionary
 var _graded: Dictionary = {}
+## Chunk tails on pool threads share this context: the memo is accessed under
+## this lock, never held while a region is graded.
+var _graded_lock := Mutex.new()
 var terrain_grades: Array[TerrainGradePatch] = []:
 	set(value):
 		terrain_grades = value
+		_graded_lock.lock()
 		_graded.clear()
+		_graded_lock.unlock()
 
 ## The final terrain: town grades, then road verges (no cliff beside a road;
 ## HeightfieldRegion.with_road_verges) wherever a grade does not already own a
 ## point. Memoized per natural region: placement seating asks per prop.
 func graded_region(natural: HeightfieldRegion) -> HeightfieldRegion:
-	if _graded.has(natural):
-		return _graded[natural]
+	_graded_lock.lock()
+	var cached: HeightfieldRegion = _graded.get(natural)
+	_graded_lock.unlock()
+	if cached != null:
+		return cached
 	var result := natural.with_terrain_grades(terrain_grades).with_road_verges(connection_masks)
+	_graded_lock.lock()
 	if _graded.size() >= 8:
 		_graded.erase(_graded.keys()[0])
 	_graded[natural] = result
+	_graded_lock.unlock()
 	return result
 
 func _init(p_coverage: Rect2, ground: FeatureGroundField,

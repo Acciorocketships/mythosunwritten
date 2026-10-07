@@ -10,6 +10,7 @@ var _coverage: Rect2
 var _shore_limit: float
 var _shore_curves: Array = []
 var _shore_curves_ready := false
+var _shore_lock := Mutex.new() # chunk tails and the planner share a context
 const DISK_CACHE := preload("res://scripts/terrain/field/PlanningDiskCache.gd")
 
 static func build(water: WaterPlan, query_rect: Rect2, region: HeightfieldRegion,
@@ -170,13 +171,20 @@ func raw_context() -> Dictionary:
 	return _ctx
 
 func _ensure_shore_curves() -> void:
-	if _shore_curves_ready:
+	_shore_lock.lock()
+	var ready := _shore_curves_ready
+	_shore_lock.unlock()
+	if ready:
 		return
 	# Path callers need crossings even when no shore-distance consumer asked
 	# for a non-zero saturation limit. Cache the same WaterContour result on
 	# first demand rather than constructing another shoreline approximation.
-	_shore_curves = WaterContour.curves(_ctx, _coverage.grow(_shore_limit))
-	_shore_curves_ready = true
+	var curves := WaterContour.curves(_ctx, _coverage.grow(_shore_limit))
+	_shore_lock.lock()
+	if not _shore_curves_ready:
+		_shore_curves = curves
+		_shore_curves_ready = true
+	_shore_lock.unlock()
 
 func _require_coverage(point: Vector2) -> void:
 	assert(covers(point), "WaterFieldContext query outside declared coverage: %s" % point)

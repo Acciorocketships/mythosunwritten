@@ -64,6 +64,9 @@ const _SAMPLE_CACHE_MAX := 1_000_000
 var _samples: Dictionary = {}
 var _sample_keys: Array[Vector2i] = []
 var _sample_cursor: int = 0
+## Chunk tails sample on pool threads beside the planner: the memo is read and
+## written under this lock, never held while a sample is computed.
+var _samples_lock := Mutex.new()
 
 
 func _sample(cx: int, cz: int) -> Array:
@@ -72,7 +75,9 @@ func _sample(cx: int, cz: int) -> Array:
 	assert(_lowpass_seen == LOWPASS_M,
 		"HeightfieldPlan.LOWPASS_M changed after this plan sampled; set it before building plans")
 	var key := Vector2i(cx, cz)
+	_samples_lock.lock()
 	var s = _samples.get(key)
+	_samples_lock.unlock()
 	if s == null:
 		var h: float
 		if _raw_override.is_valid():
@@ -83,20 +88,26 @@ func _sample(cx: int, cz: int) -> Array:
 		if _water_plan != null:
 			carve = _water_plan.carve_at(float(cx) * POINT, float(cz) * POINT)
 		s = [h - carve, carve, h]
-		if _samples.size() >= _SAMPLE_CACHE_MAX:
+		_samples_lock.lock()
+		if _samples.has(key):
+			pass
+		elif _samples.size() >= _SAMPLE_CACHE_MAX:
 			_samples.erase(_sample_keys[_sample_cursor])
 			_sample_keys[_sample_cursor] = key
 			_sample_cursor = (_sample_cursor + 1) % _SAMPLE_CACHE_MAX
 		else:
 			_sample_keys.append(key)
 		_samples[key] = s
+		_samples_lock.unlock()
 	return s
 
 
 func _clear_samples() -> void:
+	_samples_lock.lock()
 	_samples.clear()
 	_sample_keys.clear()
 	_sample_cursor = 0
+	_samples_lock.unlock()
 
 
 func _init(

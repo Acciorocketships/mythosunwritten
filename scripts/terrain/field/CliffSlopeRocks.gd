@@ -188,9 +188,13 @@ static func _buried_ends(source:Mesh,pose:Transform3D,bounds:Vector3)->ArrayMesh
 ## recedes (3 local units over the outer 22%), so a stamp sinks into the
 ## slope all round and only its middle stands proud.
 static var _depth: Dictionary = {}
+static var _depth_lock := Mutex.new() # chunk tails run on several pool threads
 static func depth_map(name: String) -> Array:
-	if _depth.has(name):
-		return _depth[name]
+	_depth_lock.lock()
+	var known: Variant = _depth.get(name)
+	_depth_lock.unlock()
+	if known != null:
+		return known
 	prepare()
 	var piece: Array = _pieces[name]
 	var mesh: Mesh = piece[0]
@@ -231,8 +235,11 @@ static func depth_map(name: String) -> Array:
 		for i in nx:
 			var edge := minf(float(mini(i, nx - 1 - i)) / (nx * .22), float(mini(j, ny - 1 - j)) / (ny * .22))
 			depths[j * nx + i] -= 3.0 * (1.0 - smoothstep(0.0, 1.0, edge))
-	_depth[name] = [lo, cell, nx, ny, depths]
-	return _depth[name]
+	var map := [lo, cell, nx, ny, depths]
+	_depth_lock.lock()
+	_depth[name] = map
+	_depth_lock.unlock()
+	return map
 
 
 ## Bilinear relief at local (x, y); -INF off the rock.

@@ -38,6 +38,7 @@ func _ready() -> void:
 		if args[i] == "--x" and i + 1 < args.size(): _x = float(args[i + 1])
 		if args[i] == "--z" and i + 1 < args.size(): _z = float(args[i + 1])
 		if args[i] == "--ablate": _ablate = true
+		if args[i] == "--parallel-tails": FieldTerrainStreamer.PARALLEL_TAILS = true
 		if args[i] == "--startup-timeout" and i + 1 < args.size(): _startup_timeout_msec = int(float(args[i + 1]) * 1000.0)
 		if args[i] == "--render-only": _render_only = true; _seconds = 0.0; _ablate = true
 	_log = FileAccess.open(_report_path + ".jsonl", FileAccess.WRITE)

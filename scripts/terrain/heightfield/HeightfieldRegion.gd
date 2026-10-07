@@ -19,19 +19,27 @@ var certified_points := Rect2i()
 # Vector2i point -> metres (town grades; per-point).
 var native_control_heights: Dictionary = {}
 var _native_grade_views: Dictionary = {}
+## Chunk tails on pool threads share regions with the planner: both memos are
+## accessed under this lock, never held while computing.
+var _memo_lock := Mutex.new()
 
 func with_terrain_grades(grades: Array[TerrainGradePatch]) -> HeightfieldRegion:
 	if grades.is_empty():
 		return self
-	if _native_grade_views.has(grades): return _native_grade_views[grades]
+	_memo_lock.lock()
+	var view: HeightfieldRegion = _native_grade_views.get(grades)
+	_memo_lock.unlock()
+	if view != null: return view
 	var result := HeightfieldRegion.new(_storeys, _levels, _carved, plan)
 	result.native_control_heights = native_control_heights.duplicate()
 	for grade: TerrainGradePatch in grades:
 		result.native_control_heights.merge(preload("res://scripts/terrain/field/NativeTerrainGrade.gd").controls(grade,self),true)
 	# The selected controls now go through ordinary terrain classification.
 	# There is no post-classification warp of the crown, corner or side face.
+	_memo_lock.lock()
 	if _native_grade_views.size() >= 8: _native_grade_views.erase(_native_grade_views.keys()[0])
 	_native_grade_views[grades.duplicate()] = result
+	_memo_lock.unlock()
 	return result
 
 ## Road verges (owner review, October 1): no cliff stands beside a road. A
@@ -99,7 +107,10 @@ var _grade_effect_cache: Dictionary = {}
 
 func has_grade_effect_in(area: Rect2) -> bool:
 	if terrain_grades.is_empty(): return false
-	if _grade_effect_cache.has(area): return _grade_effect_cache[area]
+	_memo_lock.lock()
+	var known: Variant = _grade_effect_cache.get(area)
+	_memo_lock.unlock()
+	if known != null: return known
 	var affected := false
 	for grade: TerrainGradePatch in terrain_grades:
 		if not grade.bounds.intersects(area, true): continue
@@ -107,7 +118,9 @@ func has_grade_effect_in(area: Rect2) -> bool:
 		if grade._weight_bounds(local).y > 0.000001:
 			affected = true
 			break
+	_memo_lock.lock()
 	_grade_effect_cache[area] = affected
+	_memo_lock.unlock()
 	return affected
 
 

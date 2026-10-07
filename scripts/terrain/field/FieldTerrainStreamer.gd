@@ -769,14 +769,15 @@ func _worker() -> void:
 ## serial ones while planning runs concurrently.
 const TAIL_THREADS := 3
 ## Off: the planning worker runs each tail itself (same code, serial).
-## OFF since October 6: tails share the planning worker's region, water and
-## feature contexts, and through them unlocked LRU caches that evict with
-## erase (HeightfieldPlan._samples, WaterPlan's memo caches, FeatureContext
-## _graded, HeightfieldRegion grade views). A tail and the planner erasing one
-## Dictionary at once corrupted the heap (SIGABRT in Dictionary::erase on a
-## pool thread, crash report 2026-10-06 02:17). Re-enable only after those
-## caches are made thread-safe or the tails get private copies.
-static var PARALLEL_TAILS := false
+## Tails share the planning worker's region, water and feature contexts, and
+## through them memo caches (HeightfieldPlan._samples, WaterPlan's memos,
+## FeatureContext._graded, HeightfieldRegion grade views, TerrainGradePatch
+## surfaces, WaterFieldContext shore curves, CliffSlopeRocks depth maps). Off
+## on October 6 after an unlocked erase raced (SIGABRT in Dictionary::erase on
+## a pool thread); back on October 7 with every one of those memos accessed
+## under a lock held only around the dictionary, never while computing. Any
+## new lazily filled cache reachable from _run_tail must do the same.
+static var PARALLEL_TAILS := true
 var _tail_meshers: Array[TerrainChunkMesher] = []
 var _tail_free: Array[int] = []
 var _tail_slots := Semaphore.new()
@@ -1071,6 +1072,7 @@ func _process(_delta: float) -> void:
 		_accept_feature_ready(event)
 	_mark(&"features")
 	_reap_tail_tasks()
+	_reap_drop_tasks()
 	_drain_results(centre)
 	_mark(&"drain_results")
 	_integrate_pending_terrain(centre)
@@ -1434,7 +1436,7 @@ func _integrate_pending_terrain(centre: Vector2i) -> void:
 			stale.append(result)
 	_pending_terrain = remaining
 	if not stale.is_empty():
-		WorkerThreadPool.add_task(_drop.bind(stale))
+		_drop_tasks.append(WorkerThreadPool.add_task(_drop.bind(stale)))
 		stale = []
 	var frame_usec := Time.get_ticks_usec() - frame_started
 	if LOG_SLOW_FRAMES and frame_usec >= 3 * SLOW_FRAME_USEC:
@@ -1480,7 +1482,21 @@ func _release_off_main(integration: Dictionary) -> void:
 	if integration.is_empty():
 		return
 	integration.erase("steps")
-	WorkerThreadPool.add_task(_drop.bind(integration))
+	_drop_tasks.append(WorkerThreadPool.add_task(_drop.bind(integration)))
+
+## Pool tasks must be waited on (they leak otherwise, and one still queued at
+## quit freed its payload during engine teardown). Finished ones are reaped
+## each frame; _exit_tree waits for the rest.
+var _drop_tasks: Array[int] = []
+
+func _reap_drop_tasks(wait_all := false) -> void:
+	var pending: Array[int] = []
+	for task: int in _drop_tasks:
+		if wait_all or WorkerThreadPool.is_task_completed(task):
+			WorkerThreadPool.wait_for_task_completion(task)
+		else:
+			pending.append(task)
+	_drop_tasks = pending
 
 static func _drop(_value: Variant) -> void:
 	pass
@@ -1956,6 +1972,7 @@ func _exit_tree() -> void:
 	# A worker waiting for a tail slot is released as running tails finish.
 	_thread.wait_to_finish()
 	_reap_tail_tasks(true)
+	_reap_drop_tasks(true)
 	# Pending entries are CPU-side payloads only; releasing the arrays and
 	# RefCounted samplers is sufficient and safe on the main thread.
 	_done.clear()

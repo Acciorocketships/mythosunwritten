@@ -152,9 +152,12 @@ var _trace_bounds_cursor := 0
 
 func _bounds_for(trace: RiverTrace) -> Rect2:
 	var key := trace.get_instance_id()
+	_lock.lock()
 	var cached = _trace_bounds_cache.get(key)
+	_lock.unlock()
 	if cached != null and cached[0].get_ref() == trace: return cached[1]
 	var bounds := trace.bounds()
+	_lock.lock()
 	if not _trace_bounds_cache.has(key):
 		if _trace_bounds_keys.size() == SOURCE_MEMO_LIMIT:
 			_trace_bounds_cache.erase(_trace_bounds_keys[_trace_bounds_cursor])
@@ -163,6 +166,7 @@ func _bounds_for(trace: RiverTrace) -> Rect2:
 		else:
 			_trace_bounds_keys.append(key)
 	_trace_bounds_cache[key] = [weakref(trace),bounds]
+	_lock.unlock()
 	return bounds
 
 ## Optional worker-thread observer used only by startup progress reporting.
@@ -178,6 +182,26 @@ static func _memo_insert(cache: Dictionary, key: Variant, value: Variant, limit:
 	if cache.size() >= limit:
 		cache.erase(cache.keys()[0])
 	cache[key] = value
+
+## The planner and the chunk tails (pool threads) share this plan, so every
+## cache is read and written under _lock, which is held only around the
+## dictionary access, never while computing: two threads may compute the same
+## deterministic record, never corrupt a cache (an unlocked eviction racing a
+## read corrupted the heap). _MISSING marks an absent key (some values are
+## false).
+const _MISSING := &"__missing__"
+var _lock := Mutex.new()
+
+func _cache_get(cache: Dictionary, key: Variant) -> Variant:
+	_lock.lock()
+	var value: Variant = cache.get(key, _MISSING)
+	_lock.unlock()
+	return value
+
+func _cache_put(cache: Dictionary, key: Variant, value: Variant, limit: int) -> void:
+	_lock.lock()
+	_memo_insert(cache, key, value, limit)
+	_lock.unlock()
 
 
 func _init(p_world_seed: int, p_amplitude: float, p_max_storeys: int) -> void:
@@ -221,9 +245,12 @@ var _detail_cursor := 0
 
 ## Smooth landform field in [0,1] at world XZ (no fine octave — see Task 1).
 func smooth01(p: Vector2) -> float:
+	_lock.lock()
 	var cached = _smooth_samples.get(p)
+	_lock.unlock()
 	if cached != null: return cached
 	var value := HeightfieldPlan.height01(Vector3(p.x, 0.0, p.y), world_seed, false)
+	_lock.lock()
 	if _smooth_keys.size() == FIELD_SAMPLE_LIMIT:
 		_smooth_samples.erase(_smooth_keys[_smooth_cursor])
 		_smooth_keys[_smooth_cursor] = p
@@ -231,6 +258,7 @@ func smooth01(p: Vector2) -> float:
 	else:
 		_smooth_keys.append(p)
 	_smooth_samples[p] = value
+	_lock.unlock()
 	return value
 
 
@@ -242,9 +270,12 @@ func smooth_h(p: Vector2) -> float:
 ## Pre-carve rendered-field height in metres (WITH detail) — pond levels and
 ## carve amounts measure against the ground the terrain will actually build.
 func noise_h(p: Vector2) -> float:
+	_lock.lock()
 	var cached = _detail_samples.get(p)
+	_lock.unlock()
 	if cached != null: return float(cached) * amplitude
 	var value := HeightfieldPlan.natural01(Vector3(p.x, 0.0, p.y), world_seed)
+	_lock.lock()
 	if _detail_keys.size() == FIELD_SAMPLE_LIMIT:
 		_detail_samples.erase(_detail_keys[_detail_cursor])
 		_detail_keys[_detail_cursor] = p
@@ -252,6 +283,7 @@ func noise_h(p: Vector2) -> float:
 	else:
 		_detail_keys.append(p)
 	_detail_samples[p] = value
+	_lock.unlock()
 	return value * amplitude
 
 
@@ -349,10 +381,11 @@ func _jitter_pos(sc: Vector2i) -> Vector2:
 ## Source point for a super-cell: the jittered candidate ascended to its
 ## local summit. Pure function of (seed, cell); cached per instance.
 func source_pos(sc: Vector2i) -> Vector2:
-	if _source_pos_cache.has(sc):
-		return _source_pos_cache[sc]
+	var cached: Variant = _cache_get(_source_pos_cache, sc)
+	if not (cached is StringName and cached == _MISSING):
+		return cached
 	var p: Vector2 = _ascend(_jitter_pos(sc))
-	_memo_insert(_source_pos_cache, sc, p, SOURCE_MEMO_LIMIT)
+	_cache_put(_source_pos_cache, sc, p, SOURCE_MEMO_LIMIT)
 	return p
 
 
@@ -362,10 +395,11 @@ func source_pos(sc: Vector2i) -> Vector2:
 ## (every super-cell in reach is asked, per depth) — cached, and gated
 ## cheap-first so the climb only ever runs on plausibly-high candidates.
 func has_source(sc: Vector2i) -> bool:
-	if _has_source_cache.has(sc):
-		return _has_source_cache[sc]
+	var cached: Variant = _cache_get(_has_source_cache, sc)
+	if not (cached is StringName and cached == _MISSING):
+		return cached
 	var ok: bool = _has_source_uncached(sc)
-	_memo_insert(_has_source_cache, sc, ok, SOURCE_MEMO_LIMIT)
+	_cache_put(_has_source_cache, sc, ok, SOURCE_MEMO_LIMIT)
 	return ok
 
 
@@ -405,12 +439,13 @@ func _has_source_uncached(sc: Vector2i) -> bool:
 func river_for(sc: Vector2i, depth: int = JOIN_DEPTH,
 		progress_start := -1.0, progress_end := -1.0) -> RiverTrace:
 	var key: Vector3i = Vector3i(sc.x, sc.y, depth)
-	if _trace_cache.has(key):
+	var cached: Variant = _cache_get(_trace_cache, key)
+	if not (cached is StringName and cached == _MISSING):
 		if progress_start >= 0.0:
 			_report_planning_progress(progress_end)
-		return _trace_cache[key]
+		return cached
 	var t: RiverTrace = _trace(sc, depth, progress_start, progress_end)
-	_memo_insert(_trace_cache, key, t, SOURCE_MEMO_LIMIT)
+	_cache_put(_trace_cache, key, t, SOURCE_MEMO_LIMIT)
 	if progress_start >= 0.0:
 		_report_planning_progress(progress_end)
 	return t
@@ -528,8 +563,9 @@ func _trace(sc: Vector2i, depth: int,
 var _walk_cache: Dictionary = {}
 
 func _walk(sc: Vector2i, progress_start := -1.0, progress_end := -1.0) -> RiverTrace:
-	if _walk_cache.has(sc):
-		return _walk_cache[sc]
+	var cached: Variant = _cache_get(_walk_cache, sc)
+	if not (cached is StringName and cached == _MISSING):
+		return cached
 	var t: RiverTrace = RiverTrace.new()
 	t.source_cell = sc
 	t.priority = priority_of(sc)
@@ -572,7 +608,7 @@ func _walk(sc: Vector2i, progress_start := -1.0, progress_end := -1.0) -> RiverT
 	_shape_alluvial_reach(t)
 	t.pond = _make_pond(p, arc, t.beds[-1])
 	_fit_terminal_land(t)
-	_memo_insert(_walk_cache, sc, t, SOURCE_MEMO_LIMIT)
+	_cache_put(_walk_cache, sc, t, SOURCE_MEMO_LIMIT)
 	return t
 
 
@@ -835,8 +871,9 @@ var _region_cache: Dictionary = {}   # Vector2i super_cell -> {"rivers", "bucket
 ## index: tile cell -> Array of [RiverTrace, sample_index] for fast carve
 ## lookups. Built lazily once per super-cell per session.
 func _region_for(rc: Vector2i) -> Dictionary:
-	if _region_cache.has(rc):
-		return _region_cache[rc]
+	var cached: Variant = _cache_get(_region_cache, rc)
+	if not (cached is StringName and cached == _MISSING):
+		return cached
 	var region_rect: Rect2 = Rect2(
 		Vector2(float(rc.x), float(rc.y)) * SUPER, Vector2(SUPER, SUPER)).grow(BANK_FEATHER + W_MAX)
 	var rivers: Array = []
@@ -891,7 +928,7 @@ func _region_for(rc: Vector2i) -> Dictionary:
 			ponds.append(t.pond)
 	var out: Dictionary = {"rivers": rivers, "buckets": buckets, "ponds": ponds,
 		"segments": segment_index(buckets)}
-	_memo_insert(_region_cache, rc, out, CARVE_REGION_CACHE_LIMIT)
+	_cache_put(_region_cache, rc, out, CARVE_REGION_CACHE_LIMIT)
 	_report_planning_progress(1.0, true)
 	return out
 
@@ -1014,7 +1051,10 @@ var _bank_strength_cache: Dictionary = {}
 
 func bank_strengths(trace: RiverTrace) -> PackedFloat64Array:
 	var key := trace.get_instance_id()
-	if _bank_strength_cache.has(key): return _bank_strength_cache[key]
+	_lock.lock()
+	var cached: Variant = _bank_strength_cache.get(key)
+	_lock.unlock()
+	if cached != null: return cached
 	var steep: Array[Vector2i] = []
 	for i in range(trace.points.size()-1):
 		if absf(trace.beds[i+1]-trace.beds[i]) / maxf(trace.points[i].distance_to(trace.points[i+1]),0.001) > BANK_GENTLE_GRADE:
@@ -1028,9 +1068,11 @@ func bank_strengths(trace: RiverTrace) -> PackedFloat64Array:
 			var t := clampf((point-a).dot(ab)/maxf(ab.length_squared(),0.000001),0,1)
 			distance = minf(distance,point.distance_to(a+ab*t))
 		weights.append(smoothstep(BANK_FEATHER,BANK_FEATHER*2,distance))
+	_lock.lock()
 	if _bank_strength_cache.size() >= BANK_PROFILE_CACHE_LIMIT:
 		_bank_strength_cache.erase(_bank_strength_cache.keys()[0])
 	_bank_strength_cache[key] = weights
+	_lock.unlock()
 	return weights
 
 
