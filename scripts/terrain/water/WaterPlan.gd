@@ -13,6 +13,8 @@ extends RefCounted
 
 ## Verified C# source search and raw walk (scripts/native/NativeRiverWalk.cs).
 const NATIVE_WALK := preload("res://scripts/native/NativeRiverWalk.gd")
+## Verified C# carve regions for the heightfield prefetch (scripts/native/NativeCarve.cs).
+const NATIVE_CARVE := preload("res://scripts/native/NativeCarve.gd")
 
 const SUPER := 768.0              # source super-grid pitch (32 tiles)
 # 24 m route/bucket cell (HeightfieldPlan.CELL): the carve index, source and
@@ -244,6 +246,7 @@ func _init(p_world_seed: int, p_amplitude: float, p_max_storeys: int) -> void:
 	amplitude = p_amplitude
 	max_storeys = p_max_storeys
 	NATIVE_WALK.setup(world_seed)
+	NATIVE_CARVE.setup(world_seed)
 
 
 ## True when the source search and raw walk run in verified C#. A subclass
@@ -949,7 +952,7 @@ func _nearby_neighbour_points(index: Dictionary, p: Vector2,
 # Carve field (hot path: called for every cell of every region window)
 # ---------------------------------------------------------------
 
-var _region_cache: Dictionary = {}   # Vector2i super_cell -> {"rivers", "buckets", "ponds", "segments"}
+var _region_cache: Dictionary = {}   # Vector2i super_cell -> {"rivers", "buckets", "ponds", "segments"[, "native"]}
 
 ## Rivers (full depth) whose bounds overlap super-cell `rc`, plus a bucket
 ## index: tile cell -> Array of [RiverTrace, sample_index] for fast carve
@@ -1017,6 +1020,10 @@ func _region_for(rc: Vector2i) -> Dictionary:
 			ponds.append(t.pond)
 	var out: Dictionary = {"rivers": rivers, "buckets": buckets, "ponds": ponds,
 		"segments": segment_index(buckets)}
+	# A verified C# copy under "native" (HeightfieldPlan's batched prefetch),
+	# attached before the region is published. Only a plain WaterPlan.
+	if get_script() == WaterPlan:
+		NATIVE_CARVE.attach(self, rc, out)
 	_cache_put(_region_cache, rc, out, CARVE_REGION_CACHE_LIMIT)
 	_report_planning_progress(1.0, true)
 	return out
@@ -1212,7 +1219,17 @@ func carve_at(x: float, z: float) -> float:
 	var cz: int = floori(z / TILE + 0.5)
 	var cells_per_super: int = int(SUPER / TILE)
 	var rc: Vector2i = Vector2i(floori(float(cx) / cells_per_super), floori(float(cz) / cells_per_super))
-	var region: Dictionary = _region_for(rc)
+	return _carve_region(_region_for(rc), x, z)
+
+
+## carve_at in a given carve region (the owner of (x, z)'s cell; NativeCarve's
+## parity gate also probes a region here before it is published).
+func _carve_region(region: Dictionary, x: float, z: float) -> float:
+	var p: Vector2 = Vector2(x, z)
+	if p.length() < SPAWN_WATER_RADIUS:
+		return 0.0
+	var cx: int = floori(x / TILE + 0.5)
+	var cz: int = floori(z / TILE + 0.5)
 	var ground: float = -INF   # evaluated on first real hit
 	var best: float = 0.0
 	for pond: PondStamp in region.ponds:

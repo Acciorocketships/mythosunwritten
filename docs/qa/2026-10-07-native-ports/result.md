@@ -128,3 +128,55 @@ All timings: Godot_mono 4.5.1, headless, seed 2697992464, one process at a time.
 Raw walks alone (30 cold super-cells, 22 sources): GDScript 578 ms, C# 203 ms.
 The parity gate costs 1.76 s on the main thread at `WaterPlan._init` (after
 the 2.17 s native height-field gate).
+
+## Task 5: native batched carve
+
+`HeightfieldPlan._prefetch_samples` now fills a large window in C#
+(`scripts/native/NativeCarve.cs` `SampleBatch`: native height, the
+`height01` wrapper, and the `WaterPlan.carve_at` river/pond carve, giving
+`[h - carve, carve, h]` per point), one call per pool task, when the seed's
+height field and carve are verified, the plans are plain `HeightfieldPlan` /
+`WaterPlan`, `LOWPASS_M == 0`, there is no raw override, and every owner
+super-cell's carve region carries a verified `"native"` copy. Otherwise the
+window takes the unchanged GDScript prefetch. The serial `_sample` path is
+unchanged. `carve_at`'s body after the region lookup moved, unchanged, into
+`WaterPlan._carve_region(region, x, z)`.
+
+Each carve region is flattened once in `WaterPlan._region_for`: traces
+(points, beds, widths, bank strengths, land bars, terminal pond), ponds, and
+the segment index as CSR over the region's 32 x 32 cells. The C# region is its
+own `NativeCarve` object stored in the region dictionary, so it lives as long
+as the dictionary or any batch using it. No handle table and no release on
+eviction, so there is no use-after-release race.
+
+Parity gate: it runs per region at build, on the planning worker, and only
+on regions the plan builds anyway. The C# region must equal `_carve_region`
+(`!=`) on probes in the region's own cells: 12 m lattice and quarter-metre
+points on segment cells, points round ponds, and random points. The first 3
+regions of a seed get 2000 probes and every later region gets 200. One
+mismatch turns the seed off with a warning. `setup()` on the main thread only
+loads C# and its constants.
+
+| check | result |
+|---|---|
+| `test_native_carve` (mono) | 1/1, 3000 points `[h - carve, carve, h]` equal, 1296 carved, 6004 asserts |
+| `test_native_carve` (standard editor) | 1/1, stays off |
+| mutation: `maxf` + 1e-9 in C#, gate bypassed | test red (423 sample mismatches) |
+| mutation: `maxf` + 1e-9 in C#, gate on | gate disables the seed at region (-4, -1); test red |
+| `water_block_cost --chunk=-4,-5 --no-disk` digest | `b6c965def22e7e93` (unchanged) |
+| `parallel_tail_check --rounds=2` | `PASS failures=0` |
+| `test_water_plan` (mono) | 29/29, 109686 asserts, 133.7 s |
+| `test_heightfield_plan`, `test_heightfield_lowpass`, `test_september9_water_buckets`, `test_native_river_walk` | pass |
+
+### Water source solve for chunk (-4, -5) (`PROFILE_WATER_COST=1 water_block_cost --no-disk`, ms)
+
+| stage | before (fe2aafcc7) | after |
+|---|---|---|
+| source solve inner region_ms | 9457 | 4527 |
+| seeds_ms | 15610 | 8758 |
+| harness region_ms | 2440 | 2464-3014 (run to run) |
+| harness water_ms | 42388 | 31205-32186 |
+
+Region attach cost: 111 regions, 1.48 s in total on the planning worker. Of
+that, 0.62 s is GDScript flattening plus the C# build, and 0.86 s is the
+parity gate. The main thread pays nothing beyond loading the script.

@@ -89,17 +89,22 @@ func _sample(cx: int, cz: int) -> Array:
 			carve = _water_plan.carve_at(float(cx) * POINT, float(cz) * POINT)
 		s = [h - carve, carve, h]
 		_samples_lock.lock()
-		if _samples.has(key):
-			pass
-		elif _samples.size() >= _SAMPLE_CACHE_MAX:
-			_samples.erase(_sample_keys[_sample_cursor])
-			_sample_keys[_sample_cursor] = key
-			_sample_cursor = (_sample_cursor + 1) % _SAMPLE_CACHE_MAX
-		else:
-			_sample_keys.append(key)
-		_samples[key] = s
+		_store_sample(key, s)
 		_samples_lock.unlock()
 	return s
+
+
+## Insert one sample into the memo. Caller holds _samples_lock.
+func _store_sample(key: Vector2i, s: Array) -> void:
+	if _samples.has(key):
+		pass
+	elif _samples.size() >= _SAMPLE_CACHE_MAX:
+		_samples.erase(_sample_keys[_sample_cursor])
+		_sample_keys[_sample_cursor] = key
+		_sample_cursor = (_sample_cursor + 1) % _SAMPLE_CACHE_MAX
+	else:
+		_sample_keys.append(key)
+	_samples[key] = s
 
 
 func _clear_samples() -> void:
@@ -505,6 +510,8 @@ func _prefetch_samples(lo: Vector2i, width: int, rows: int) -> void:
 	_samples_lock.unlock()
 	if missing.size() < PREFETCH_MIN:
 		return
+	if _prefetch_native(lo, width, rows, missing):
+		return
 	if _water_plan != null:
 		var step := int(WaterPlan.SUPER / POINT)
 		var xs: Array[int] = []
@@ -524,6 +531,52 @@ func _prefetch_samples(lo: Vector2i, width: int, rows: int) -> void:
 	var group := WorkerThreadPool.add_group_task(job, PREFETCH_TASKS, PREFETCH_TASKS, true,
 		"heightfield prefetch")
 	WorkerThreadPool.wait_for_group_task_completion(group)
+
+
+## The prefetch in C# (NativeCarve.SampleBatch: native height, the height01
+## wrapper and the carve, [h - carve, carve, h] per point), when the seed's
+## height field and carve are verified and every carve region the window needs
+## carries its verified native copy. False leaves the window to the GDScript
+## prefetch. Only plain plans (test subclasses override field reads).
+func _prefetch_native(lo: Vector2i, width: int, rows: int, missing: PackedInt32Array) -> bool:
+	if _water_plan == null or get_script() != HeightfieldPlan or _water_plan.get_script() != WaterPlan \
+			or not NativeHeightField.ready_for(world_seed) \
+			or not WaterPlan.NATIVE_CARVE.ready_for(_water_plan.world_seed):
+		return false
+	if _lowpass_seen < 0.0:
+		_lowpass_seen = LOWPASS_M
+	# Owner super-cells of the window (carve_at's rule; monotone in the index).
+	var per_super := int(WaterPlan.SUPER / WaterPlan.TILE)
+	var rc_lo := Vector2i(floori(float(floori(float(lo.x) * POINT / WaterPlan.TILE + 0.5)) / per_super),
+		floori(float(floori(float(lo.y) * POINT / WaterPlan.TILE + 0.5)) / per_super))
+	var rc_hi := Vector2i(floori(float(floori(float(lo.x + width - 1) * POINT / WaterPlan.TILE + 0.5)) / per_super),
+		floori(float(floori(float(lo.y + rows - 1) * POINT / WaterPlan.TILE + 0.5)) / per_super))
+	var regions: Array = []
+	var keys := PackedInt32Array()
+	for rz in range(rc_lo.y, rc_hi.y + 1):
+		for rx in range(rc_lo.x, rc_hi.x + 1):
+			var region: Dictionary = _water_plan._region_for(Vector2i(rx, rz))
+			if not region.has("native"):
+				return false
+			regions.append(region.native)
+			keys.append(rx)
+			keys.append(rz)
+	var band := ceili(float(missing.size()) / PREFETCH_TASKS)
+	var job := func(task: int) -> void:
+		var part := missing.slice(task * band, mini(missing.size(), (task + 1) * band))
+		if part.is_empty():
+			return
+		var out := WaterPlan.NATIVE_CARVE.sample_batch(self, lo, width, part, regions, keys)
+		_samples_lock.lock()
+		for k in part.size():
+			var index := part[k]
+			_store_sample(Vector2i(lo.x + index % width, lo.y + index / width),
+				[out[3 * k], out[3 * k + 1], out[3 * k + 2]])
+		_samples_lock.unlock()
+	var group := WorkerThreadPool.add_group_task(job, PREFETCH_TASKS, PREFETCH_TASKS, true,
+		"heightfield prefetch")
+	WorkerThreadPool.wait_for_group_task_completion(group)
+	return true
 
 
 ## Same certified terrain computation on a rectangular requested interior.
