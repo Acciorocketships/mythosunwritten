@@ -36,9 +36,25 @@ func test_sample_window_equals_surface_y_on_side() -> void:
 				o.x = clampi(o.x + rng.randi_range(-1, 1), -1, 6)
 				o.y = clampi(o.y + rng.randi_range(-1, 1), -1, 6)
 			oi.append(o.x); oj.append(o.y)
+		assert_true(Tile._owners_inside(window, oi, oj), "the test window holds every owner's tiles")
 		var got := Tile.sample_window(window, xs, zs, oi, oj)
 		for k in xs.size():
 			assert_eq(got[k], Tile.surface_y_on_side(region, xs[k], zs[k], Vector2i(oi[k], oj[k])))
+		# Separable grid: columns xs[0..19] (owners oi), rows zs[0..14] (owners oj).
+		var gx := xs.slice(0, 20); var gz := zs.slice(0, 15)
+		var gox := oi.slice(0, 20); var goz := oj.slice(0, 15)
+		var grid := Tile.sample_grid_window(window, gx, gz, gox, goz)
+		var grid32 := Tile.sample_grid_window32(window, gx, gz, gox, goz)
+		var same := true
+		var same32 := true
+		for k in gz.size():
+			for i in gx.size():
+				var want := Tile.surface_y_on_side(region, gx[i], gz[k], Vector2i(gox[i], goz[k]))
+				same = same and grid[k * gx.size() + i] == want
+				var want32 := PackedFloat32Array([want])
+				same32 = same32 and grid32[k * gx.size() + i] == want32[0]
+		assert_true(same, "sample_grid_window == surface_y_on_side")
+		assert_true(same32, "sample_grid_window32 == float32(surface_y_on_side)")
 	Tile.cliff_end = saved
 
 func test_native_matches_or_stays_off() -> void:
@@ -65,7 +81,9 @@ func test_sample_grid_matches_sample_baked_with_grades() -> void:
 	var changed := 0
 	for r in [region, graded, listed]:
 		var got := Tile.sample_grid(r, xs, zs)
+		var got32 := Tile.sample_grid32(r, xs, zs)
 		assert_eq(got.size(), xs.size() * zs.size())
+		assert_eq(got32, Tile._to_float32(got), "sample_grid32 rounds sample_grid like a float32 store")
 		var same := true
 		for k in zs.size():
 			for i in xs.size():

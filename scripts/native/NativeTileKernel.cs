@@ -16,25 +16,50 @@ namespace Story.Native
             double spacing, double[] xs, double[] zs, int[] ownerI, int[] ownerJ, int cliffEnd)
         {
             var output = new double[xs.Length];
-            double s = spacing;
             for (int k = 0; k < xs.Length; k++)
-            {
-                double cx = ownerI[k] * s, cz = ownerJ[k] * s;
-                double lx = Clamp(xs[k], cx - s * 0.5, cx + s * 0.5);
-                double lz = Clamp(zs[k], cz - s * 0.5, cz + s * 0.5);
-                int ti = lx >= cx ? ownerI[k] : ownerI[k] - 1;
-                int tj = lz >= cz ? ownerJ[k] : ownerJ[k] - 1;
-                int sx = ti == ownerI[k] ? -1 : 1, sy = tj == ownerJ[k] ? -1 : 1;
-                int a = (tj - j0) * w + (ti - i0);
-                double h0 = heights[a], h1 = heights[a + 1], h2 = heights[a + w + 1], h3 = heights[a + w];
-                int sa = storeys[a], sb = storeys[a + 1], sc = storeys[a + w + 1], sd = storeys[a + w];
-                double cb = System.Math.Abs(sa - sb) >= 2 ? 1.0 : 0.0;
-                double cr = System.Math.Abs(sb - sc) >= 2 ? 1.0 : 0.0;
-                double ct = System.Math.Abs(sd - sc) >= 2 ? 1.0 : 0.0;
-                double cl = System.Math.Abs(sa - sd) >= 2 ? 1.0 : 0.0;
-                output[k] = Eval(h0, h1, h2, h3, cb, cr, ct, cl, (lx - ti * s) / s, (lz - tj * s) / s, sx, sy, cliffEnd);
-            }
+                output[k] = Sample(heights, storeys, w, i0, j0, spacing, xs[k], zs[k], ownerI[k], ownerJ[k], cliffEnd);
             return output;
+        }
+
+        // Every (xs[i], zs[k]), row-major with z outer; owners per column / per row.
+        public double[] SampleGrid(float[] heights, int[] storeys, int w, int h, int i0, int j0,
+            double spacing, double[] xs, double[] zs, int[] ownerXs, int[] ownerZs, int cliffEnd)
+        {
+            var output = new double[xs.Length * zs.Length];
+            for (int k = 0; k < zs.Length; k++)
+                for (int i = 0; i < xs.Length; i++)
+                    output[k * xs.Length + i] = Sample(heights, storeys, w, i0, j0, spacing, xs[i], zs[k], ownerXs[i], ownerZs[k], cliffEnd);
+            return output;
+        }
+
+        // SampleGrid rounded to float32 as a PackedFloat32Array store rounds a double.
+        public float[] SampleGrid32(float[] heights, int[] storeys, int w, int h, int i0, int j0,
+            double spacing, double[] xs, double[] zs, int[] ownerXs, int[] ownerZs, int cliffEnd)
+        {
+            var output = new float[xs.Length * zs.Length];
+            for (int k = 0; k < zs.Length; k++)
+                for (int i = 0; i < xs.Length; i++)
+                    output[k * xs.Length + i] = (float)Sample(heights, storeys, w, i0, j0, spacing, xs[i], zs[k], ownerXs[i], ownerZs[k], cliffEnd);
+            return output;
+        }
+
+        static double Sample(float[] heights, int[] storeys, int w, int i0, int j0, double s,
+            double x, double z, int oi, int oj, int cliffEnd)
+        {
+            double cx = oi * s, cz = oj * s;
+            double lx = Clamp(x, cx - s * 0.5, cx + s * 0.5);
+            double lz = Clamp(z, cz - s * 0.5, cz + s * 0.5);
+            int ti = lx >= cx ? oi : oi - 1;
+            int tj = lz >= cz ? oj : oj - 1;
+            int sx = ti == oi ? -1 : 1, sy = tj == oj ? -1 : 1;
+            int a = (tj - j0) * w + (ti - i0);
+            double h0 = heights[a], h1 = heights[a + 1], h2 = heights[a + w + 1], h3 = heights[a + w];
+            int sa = storeys[a], sb = storeys[a + 1], sc = storeys[a + w + 1], sd = storeys[a + w];
+            double cb = System.Math.Abs(sa - sb) >= 2 ? 1.0 : 0.0;
+            double cr = System.Math.Abs(sb - sc) >= 2 ? 1.0 : 0.0;
+            double ct = System.Math.Abs(sd - sc) >= 2 ? 1.0 : 0.0;
+            double cl = System.Math.Abs(sa - sd) >= 2 ? 1.0 : 0.0;
+            return Eval(h0, h1, h2, h3, cb, cr, ct, cl, (lx - ti * s) / s, (lz - tj * s) / s, sx, sy, cliffEnd);
         }
 
         static double Eval(double h0, double h1, double h2, double h3, double cb, double cr, double ct, double cl,

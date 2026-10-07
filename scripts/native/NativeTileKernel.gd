@@ -1,7 +1,7 @@
 extends RefCounted
 
 ## C# version of TerrainTileField's tile evaluation over a dense window of
-## corner data (sample_owned). Used only once verified bit-identical to the
+## corner data (sample_owned, sample_grid, sample_grid32). Used only once verified bit-identical to the
 ## GDScript reference (setup()), and never under the standard editor.
 ## No class_name: preload it. TerrainTileField dispatches with
 ##   if NATIVE_TILE.enabled: return NATIVE_TILE.sample_owned(...)
@@ -20,6 +20,20 @@ static func sample_owned(window: Dictionary, xs: PackedFloat64Array, zs: PackedF
 	var lo: Vector2i = window.lo
 	return _native.SampleOwned(window.heights, window.storeys, window.w, window.h, lo.x, lo.y,
 		window.spacing, xs, zs, owner_i, owner_j, TILE.cliff_end)
+
+
+static func sample_grid(window: Dictionary, xs: PackedFloat64Array, zs: PackedFloat64Array,
+		owner_xs: PackedInt32Array, owner_zs: PackedInt32Array) -> PackedFloat64Array:
+	var lo: Vector2i = window.lo
+	return _native.SampleGrid(window.heights, window.storeys, window.w, window.h, lo.x, lo.y,
+		window.spacing, xs, zs, owner_xs, owner_zs, TILE.cliff_end)
+
+
+static func sample_grid32(window: Dictionary, xs: PackedFloat64Array, zs: PackedFloat64Array,
+		owner_xs: PackedInt32Array, owner_zs: PackedInt32Array) -> PackedFloat32Array:
+	var lo: Vector2i = window.lo
+	return _native.SampleGrid32(window.heights, window.storeys, window.w, window.h, lo.x, lo.y,
+		window.spacing, xs, zs, owner_xs, owner_zs, TILE.cliff_end)
 
 
 ## Main thread, once (harmless to repeat).
@@ -88,8 +102,26 @@ static func _parity() -> String:
 				o.x = clampi(o.x + rng.randi_range(-1, 1), 1, n - 2)
 				o.y = clampi(o.y + rng.randi_range(-1, 1), 1, n - 2)
 			oi.append(o.x); oj.append(o.y)
+		if not TILE._owners_inside(window, oi, oj):
+			result = "parity case %d: an owner's tiles leave the window" % case_index
+			break
+		# Grid samples: the first 17 x positions as columns, z positions as rows,
+		# each with its (possibly non-point_of) owner.
+		var gx := xs.slice(0, 17); var gz := zs.slice(0, 13)
+		var gox := oi.slice(0, 17); var goz := oj.slice(0, 13)
 		for mode in 3:
 			TILE.cliff_end = mode
+			var grid_expected: PackedFloat64Array = TILE._sample_grid_gd(window, gx, gz, gox, goz)
+			var grid_actual: PackedFloat64Array = _native.SampleGrid(heights, storeys, n, n, 0, 0, 12.0,
+				gx, gz, gox, goz, mode)
+			if grid_expected != grid_actual:
+				result = "sample_grid differs (case %d mode %d)" % [case_index, mode]
+				break
+			var grid32: PackedFloat32Array = _native.SampleGrid32(heights, storeys, n, n, 0, 0, 12.0,
+				gx, gz, gox, goz, mode)
+			if TILE._to_float32(grid_expected) != grid32:
+				result = "sample_grid32 differs (case %d mode %d)" % [case_index, mode]
+				break
 			var expected: PackedFloat64Array = TILE._sample_window_gd(window, xs, zs, oi, oj)
 			var actual: PackedFloat64Array = _native.SampleOwned(heights, storeys, n, n, 0, 0, 12.0,
 				xs, zs, oi, oj, mode)

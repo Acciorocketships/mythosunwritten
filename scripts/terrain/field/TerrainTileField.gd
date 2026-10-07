@@ -384,13 +384,46 @@ static func dense_window(region, lo: Vector2i, size: Vector2i) -> Dictionary:
 
 ## Ungraded surface height of each sample (x[k], z[k]) on the side of lattice
 ## point (owner_i[k], owner_j[k]); == surface_y_on_side without grading. The
-## window must hold every corner of the owners' four quadrant tiles.
+## window must hold every corner of the owners' four quadrant tiles (callers
+## assert _window_holds on the owners' bounds).
 static func sample_window(window: Dictionary, xs: PackedFloat64Array, zs: PackedFloat64Array,
 		owner_i: PackedInt32Array, owner_j: PackedInt32Array) -> PackedFloat64Array:
-	assert(_owners_inside(window, owner_i, owner_j), "sample_window: an owner's quadrant tiles leave the window")
 	if NATIVE_TILE.enabled:
 		return NATIVE_TILE.sample_owned(window, xs, zs, owner_i, owner_j)
 	return _sample_window_gd(window, xs, zs, owner_i, owner_j)
+
+
+## sample_window over the grid xs x zs (row-major, z outer) with one owner per
+## column (owner_xs[i]) and per row (owner_zs[k]); no flattened sample arrays.
+static func sample_grid_window(window: Dictionary, xs: PackedFloat64Array, zs: PackedFloat64Array,
+		owner_xs: PackedInt32Array, owner_zs: PackedInt32Array) -> PackedFloat64Array:
+	if NATIVE_TILE.enabled:
+		return NATIVE_TILE.sample_grid(window, xs, zs, owner_xs, owner_zs)
+	return _sample_grid_gd(window, xs, zs, owner_xs, owner_zs)
+
+
+## sample_grid_window rounded to float32 exactly as a PackedFloat32Array store
+## rounds each double.
+static func sample_grid_window32(window: Dictionary, xs: PackedFloat64Array, zs: PackedFloat64Array,
+		owner_xs: PackedInt32Array, owner_zs: PackedInt32Array) -> PackedFloat32Array:
+	if NATIVE_TILE.enabled:
+		return NATIVE_TILE.sample_grid32(window, xs, zs, owner_xs, owner_zs)
+	return _to_float32(_sample_grid_gd(window, xs, zs, owner_xs, owner_zs))
+
+
+static func _to_float32(values: PackedFloat64Array) -> PackedFloat32Array:
+	var out := PackedFloat32Array(); out.resize(values.size())
+	for n in values.size():
+		out[n] = values[n]
+	return out
+
+
+## O(1) debug check: owners in [owner_lo, owner_hi] keep [owner - 1, owner + 1]
+## inside the window on both axes.
+static func _window_holds(window: Dictionary, owner_lo: Vector2i, owner_hi: Vector2i) -> bool:
+	var lo: Vector2i = window.lo
+	return owner_lo.x - 1 >= lo.x and owner_lo.y - 1 >= lo.y \
+		and owner_hi.x + 1 < lo.x + int(window.w) and owner_hi.y + 1 < lo.y + int(window.h)
 
 
 ## Whether _apply_grade can change a height on this region (decided once per
@@ -403,40 +436,51 @@ static func grades(region) -> bool:
 
 ## surface_y over the grid xs x zs (row-major, z outer), each sample owned by
 ## point_of and graded exactly as sample_baked(..., region) grades it: one
-## dense window and one sample_window batch instead of a bake per point.
+## dense window and one batched grid sample instead of a bake per point.
 static func sample_grid(region, xs: PackedFloat64Array, zs: PackedFloat64Array) -> PackedFloat64Array:
-	var w := xs.size()
-	var h := zs.size()
-	if w == 0 or h == 0:
+	var grid := _grid_owners(region, xs, zs)
+	if grid.is_empty():
 		return PackedFloat64Array()
-	var pxs := PackedInt32Array(); pxs.resize(w)
-	var pzs := PackedInt32Array(); pzs.resize(h)
-	var lo := Vector2i(1 << 30, 1 << 30)
-	var hi := Vector2i(-(1 << 30), -(1 << 30))
-	for i in w:
-		pxs[i] = point_of(xs[i], region)
-		lo.x = mini(lo.x, pxs[i]); hi.x = maxi(hi.x, pxs[i])
-	for k in h:
-		pzs[k] = point_of(zs[k], region)
-		lo.y = mini(lo.y, pzs[k]); hi.y = maxi(hi.y, pzs[k])
-	var sx := PackedFloat64Array(); sx.resize(w * h)
-	var sz := PackedFloat64Array(); sz.resize(w * h)
-	var oi := PackedInt32Array(); oi.resize(w * h)
-	var oj := PackedInt32Array(); oj.resize(w * h)
-	for k in h:
-		var row := k * w
-		for i in w:
-			sx[row + i] = xs[i]; sz[row + i] = zs[k]
-			oi[row + i] = pxs[i]; oj[row + i] = pzs[k]
-	var window := dense_window(region, lo - Vector2i.ONE, hi - lo + Vector2i(3, 3))
-	var out := sample_window(window, sx, sz, oi, oj)
+	var out := sample_grid_window(grid.window, xs, zs, grid.owner_xs, grid.owner_zs)
 	if grades(region):
-		for n in out.size():
-			out[n] = _apply_grade(region, sx[n], sz[n], out[n])
+		var w := xs.size()
+		for k in zs.size():
+			for i in w:
+				out[k * w + i] = _apply_grade(region, xs[i], zs[k], out[k * w + i])
 	return out
 
 
-## Debug check for sample_window: [owner - 1, owner + 1] inside the window on both axes.
+## sample_grid stored as float32 (each value rounded like a PackedFloat32Array
+## store of the double); ungraded regions take the float32 native entry.
+static func sample_grid32(region, xs: PackedFloat64Array, zs: PackedFloat64Array) -> PackedFloat32Array:
+	if grades(region):
+		return _to_float32(sample_grid(region, xs, zs))
+	var grid := _grid_owners(region, xs, zs)
+	if grid.is_empty():
+		return PackedFloat32Array()
+	return sample_grid_window32(grid.window, xs, zs, grid.owner_xs, grid.owner_zs)
+
+
+## point_of owners per column / row and the dense window holding their tiles.
+static func _grid_owners(region, xs: PackedFloat64Array, zs: PackedFloat64Array) -> Dictionary:
+	if xs.is_empty() or zs.is_empty():
+		return {}
+	var pxs := PackedInt32Array(); pxs.resize(xs.size())
+	var pzs := PackedInt32Array(); pzs.resize(zs.size())
+	var lo := Vector2i(1 << 30, 1 << 30)
+	var hi := Vector2i(-(1 << 30), -(1 << 30))
+	for i in xs.size():
+		pxs[i] = point_of(xs[i], region)
+		lo.x = mini(lo.x, pxs[i]); hi.x = maxi(hi.x, pxs[i])
+	for k in zs.size():
+		pzs[k] = point_of(zs[k], region)
+		lo.y = mini(lo.y, pzs[k]); hi.y = maxi(hi.y, pzs[k])
+	var window := dense_window(region, lo - Vector2i.ONE, hi - lo + Vector2i(3, 3))
+	assert(_window_holds(window, lo, hi))
+	return {"window": window, "owner_xs": pxs, "owner_zs": pzs}
+
+
+## Per-sample check, for the parity gate and tests only (O(n)).
 static func _owners_inside(window: Dictionary, owner_i: PackedInt32Array, owner_j: PackedInt32Array) -> bool:
 	var lo: Vector2i = window.lo
 	var w: int = window.w
@@ -447,34 +491,56 @@ static func _owners_inside(window: Dictionary, owner_i: PackedInt32Array, owner_
 	return true
 
 
-## The GDScript reference (the native parity gate compares against this).
+## The GDScript references (the native parity gate compares against these).
 static func _sample_window_gd(window: Dictionary, xs: PackedFloat64Array, zs: PackedFloat64Array,
 		owner_i: PackedInt32Array, owner_j: PackedInt32Array) -> PackedFloat64Array:
 	var out := PackedFloat64Array(); out.resize(xs.size())
-	var w: int = window.w
-	var lo: Vector2i = window.lo
+	var params := PackedFloat32Array(); params.resize(8)
 	var heights: PackedFloat32Array = window.heights
 	var storeys: PackedInt32Array = window.storeys
-	var s: float = window.spacing
-	var params := PackedFloat32Array(); params.resize(8)
 	for k in xs.size():
-		var cx := float(owner_i[k]) * s
-		var cz := float(owner_j[k]) * s
-		var lx := clampf(xs[k], cx - s * 0.5, cx + s * 0.5)
-		var lz := clampf(zs[k], cz - s * 0.5, cz + s * 0.5)
-		var ti := owner_i[k] if lx >= cx else owner_i[k] - 1
-		var tj := owner_j[k] if lz >= cz else owner_j[k] - 1
-		var side := Vector2i(-1 if ti == owner_i[k] else 1, -1 if tj == owner_j[k] else 1)
-		var a := (tj - lo.y) * w + (ti - lo.x)
-		params[0] = heights[a]; params[1] = heights[a + 1]
-		params[2] = heights[a + w + 1]; params[3] = heights[a + w]
-		var sa := storeys[a]; var sb := storeys[a + 1]; var sc := storeys[a + w + 1]; var sd := storeys[a + w]
-		params[4] = 1.0 if absi(sa - sb) >= 2 else 0.0
-		params[5] = 1.0 if absi(sb - sc) >= 2 else 0.0
-		params[6] = 1.0 if absi(sd - sc) >= 2 else 0.0
-		params[7] = 1.0 if absi(sa - sd) >= 2 else 0.0
-		out[k] = eval_params(params, (lx - float(ti) * s) / s, (lz - float(tj) * s) / s, side)
+		out[k] = _window_sample(heights, storeys, window.w, window.lo, window.spacing, params,
+			xs[k], zs[k], owner_i[k], owner_j[k])
 	return out
+
+
+static func _sample_grid_gd(window: Dictionary, xs: PackedFloat64Array, zs: PackedFloat64Array,
+		owner_xs: PackedInt32Array, owner_zs: PackedInt32Array) -> PackedFloat64Array:
+	var w := xs.size()
+	var out := PackedFloat64Array(); out.resize(w * zs.size())
+	var params := PackedFloat32Array(); params.resize(8)
+	var heights: PackedFloat32Array = window.heights
+	var storeys: PackedInt32Array = window.storeys
+	var ww: int = window.w
+	var lo: Vector2i = window.lo
+	var sp: float = window.spacing
+	for k in zs.size():
+		for i in w:
+			out[k * w + i] = _window_sample(heights, storeys, ww, lo, sp, params,
+				xs[i], zs[k], owner_xs[i], owner_zs[k])
+	return out
+
+
+## One sample of the reference over the window's arrays: `params` is
+## caller-owned scratch (8 floats).
+static func _window_sample(heights: PackedFloat32Array, storeys: PackedInt32Array, w: int,
+		lo: Vector2i, s: float, params: PackedFloat32Array, x: float, z: float, oi: int, oj: int) -> float:
+	var cx := float(oi) * s
+	var cz := float(oj) * s
+	var lx := clampf(x, cx - s * 0.5, cx + s * 0.5)
+	var lz := clampf(z, cz - s * 0.5, cz + s * 0.5)
+	var ti := oi if lx >= cx else oi - 1
+	var tj := oj if lz >= cz else oj - 1
+	var side := Vector2i(-1 if ti == oi else 1, -1 if tj == oj else 1)
+	var a := (tj - lo.y) * w + (ti - lo.x)
+	params[0] = heights[a]; params[1] = heights[a + 1]
+	params[2] = heights[a + w + 1]; params[3] = heights[a + w]
+	var sa := storeys[a]; var sb := storeys[a + 1]; var sc := storeys[a + w + 1]; var sd := storeys[a + w]
+	params[4] = 1.0 if absi(sa - sb) >= 2 else 0.0
+	params[5] = 1.0 if absi(sb - sc) >= 2 else 0.0
+	params[6] = 1.0 if absi(sd - sc) >= 2 else 0.0
+	params[7] = 1.0 if absi(sa - sd) >= 2 else 0.0
+	return eval_params(params, (lx - float(ti) * s) / s, (lz - float(tj) * s) / s, side)
 
 
 # --- walls -----------------------------------------------------------------------

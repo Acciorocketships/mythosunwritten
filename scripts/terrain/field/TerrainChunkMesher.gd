@@ -386,9 +386,10 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 			corner_x[c + 3] = x0; corner_z[c + 3] = z1
 			for n in 4:
 				corner_oi[c + n] = owner.x; corner_oj[c + n] = owner.y
-	var corner_y := TerrainTileField.sample_window(
-		TerrainTileField.dense_window(region, owner_lo - Vector2i.ONE, owner_hi - owner_lo + Vector2i(3, 3)),
-		corner_x, corner_z, corner_oi, corner_oj)
+	var corner_window := TerrainTileField.dense_window(region, owner_lo - Vector2i.ONE,
+		owner_hi - owner_lo + Vector2i(3, 3))
+	assert(TerrainTileField._window_holds(corner_window, owner_lo, owner_hi))
+	var corner_y := TerrainTileField.sample_window(corner_window, corner_x, corner_z, corner_oi, corner_oj)
 	if TerrainTileField.grades(region):
 		for n in corner_y.size():
 			corner_y[n] = TerrainTileField._apply_grade(region, corner_x[n], corner_z[n], corner_y[n])
@@ -406,13 +407,12 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 			# land at different y and don't weld — a clean vertical gap the rock
 			# skirt (below) fills. On flats and slopes they match and weld.
 			var centre := Vector2((x0 + x1) * 0.5, (z0 + z1) * 0.5)
-			var owner := Vector2i(TerrainTileField.point_of(centre.x, region),
-				TerrainTileField.point_of(centre.y, region))
+			var quad_index := iz * GRID + ix
+			var owner := Vector2i(corner_oi[quad_index * 4], corner_oj[quad_index * 4])   # pass 1's centre owner
 			var baked: PackedFloat32Array = baked_cache.get(owner, PackedFloat32Array())
 			if baked.is_empty():
 				baked = TerrainTileField.bake_point(region, owner)
 				baked_cache[owner] = baked
-			var quad_index := iz * GRID + ix
 			var v00 := Vector3(x0, corner_y[quad_index * 4], z0)
 			var v10 := Vector3(x1, corner_y[quad_index * 4 + 1], z0)
 			var v11 := Vector3(x1, corner_y[quad_index * 4 + 2], z1)

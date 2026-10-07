@@ -42,3 +42,18 @@ The harness `region_ms` (plain `fields.region(chunk)`: heightfield
 planning, which touches none of the changed sites) varied 9.9-15.1 s across
 the four runs (two per side); the source solve's own inner `region_ms` was
 12.6 s before and 12.8 s after.
+
+### Fix round 1 (separable grid entry, O(1) window assert)
+
+`NativeTileKernel.SampleGrid` / `SampleGrid32` (owners per column and per row,
+no flattened sample arrays; float32 variant = `(float)` cast, parity-checked
+against a PackedFloat32Array store of the GDScript reference) back
+`sample_grid` / `sample_grid32`; the per-sample `_owners_inside` assert left
+`sample_window` (O(1) `_window_holds` at the call sites). Identity unchanged:
+mesh `HASH CHECK: IDENTICAL`, water digest `b6c965def22e7e93`.
+
+| measure | before Task 2 | Task 2 | fix round 1 |
+|---|---|---|---|
+| ground_ms, water (-4,-5) | 4269 | 269 | 158 |
+| d.slope_init(rocks), chunk (0,-2) | 14987 | 13492 | 13046 |
+| sheet (excl paths), chunk (0,-2) | 335 | 72 | 77 |

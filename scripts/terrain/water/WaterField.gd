@@ -645,10 +645,7 @@ static func _sample_ground_lattice(region: HeightfieldRegion, base: Vector2,
 	for i in side: xs[i] = base.x + i * step
 	var zs := PackedFloat64Array(); zs.resize(rows)
 	for j in rows: zs[j] = base.y + j * step
-	var heights := TerrainTileField.sample_grid(region, xs, zs)
-	var out := PackedFloat32Array(); out.resize(heights.size())
-	for n in heights.size(): out[n] = heights[n]
-	return out
+	return TerrainTileField.sample_grid32(region, xs, zs)
 
 
 ## Repairs only TOPOLOGY the 6m lattice demonstrably cannot see. Every
