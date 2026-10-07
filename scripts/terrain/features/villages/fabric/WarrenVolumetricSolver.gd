@@ -2540,12 +2540,21 @@ static func _maze_court_planting_cells(volume: WarrenVolumePlan) -> Dictionary:
 	var source := volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
 	var out := {}
 	if source == null: return out
+	var landings := {}
+	for plot: Dictionary in source.plots:
+		for cell: Vector3i in _fine_square(plot.door_walk): landings[cell] = true
 	for plot: Dictionary in source.plots:
 		if not WarrenPlotReservations.is_green_court(plot): continue
 		var floor_cells := {}
 		for column: Vector2i in WarrenMazeSourcePlan.deck_flat_columns(plot):
 			for cell: Vector3i in _fine_square(Vector3i(column.x,plot.floor,column.y)):
 				floor_cells[cell] = true
+		if not bool(plot.get("ring", true)):
+			var walk := _ringless_court_walk(source, floor_cells, landings)
+			if not walk.is_empty():
+				for cell: Vector3i in floor_cells:
+					if not walk.has(cell): out[cell] = true
+				continue
 		# Erode one fine cell from the complete court. The outer walk keeps
 		# every original entrance and a continuous player-width circuit: the
 		# eight-neighbour test keeps the ring 4-connected round a concave
@@ -2563,6 +2572,139 @@ static func _maze_court_planting_cells(volume: WarrenVolumePlan) -> Dictionary:
 		if not plot.has("door_walk"): continue
 		for cell: Vector3i in _fine_square(plot.door_walk): out.erase(cell)
 	return out
+
+
+static func _maze_ringless_court_cells(volume: WarrenVolumePlan) -> Dictionary:
+	## The fine floor cells of every green court that rolled no walking ring
+	## (`plot.ring`, Town taste knobs task 2). Their lawn may reach the court
+	## edge, so the planned-plaza declaration exempts exactly these cells from
+	## its interior-island rule.
+	var source := volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
+	var out := {}
+	if source == null: return out
+	for plot: Dictionary in source.plots:
+		if not WarrenPlotReservations.is_green_court(plot) or bool(plot.get("ring", true)):
+			continue
+		for column: Vector2i in WarrenMazeSourcePlan.deck_flat_columns(plot):
+			for cell: Vector3i in _fine_square(Vector3i(column.x,plot.floor,column.y)):
+				out[cell] = true
+	return out
+
+
+static func _ringless_court_walk(source: WarrenMazeSourcePlan, floor_cells: Dictionary,
+		landings: Dictionary) -> Dictionary:
+	## The walk a court keeps without its ring (Town taste knobs task 2).
+	##
+	## SEEDS. (1) Every landing square inside the court -- the door_walk of any
+	## plot (house doors facing the court, the court's own entrance when it lies
+	## inside). (2) Every edge cell with a face onto something that cannot hold
+	## the lawn's edge (`_court_edge_holds_lawn`): a street mouth, a stair, a
+	## roof, another deck, or a drop. Those cells keep their walk, so a raised
+	## court's fall edges still carry the ordinary guards and a lawn never ends
+	## at an unguarded drop; the lawn reaches edges backed by a house wall, rock,
+	## or level ground.
+	##
+	## STRIPS. The seeds are joined into one component by 1-cell shortest paths
+	## through the court: starting from the component holding the first seed in
+	## lattice order, a breadth-first search over the court (fixed neighbour
+	## order) reaches the nearest seed not yet joined and its path is kept; this
+	## repeats until every seed is joined. Deterministic, and every landing is
+	## connected to the court's street mouths through walk.
+	##
+	## Empty when there is no seed at all, and the caller then keeps the ring.
+	var walk := {}
+	for cell: Vector3i in floor_cells:
+		if landings.has(cell):
+			walk[cell] = true
+			continue
+		for step: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT, Vector3i.FORWARD, Vector3i.BACK]:
+			var outside := cell + step
+			if floor_cells.has(outside): continue
+			if not _court_edge_holds_lawn(source, Vector2i(floori(outside.x / 2.0),
+					floori(outside.z / 2.0)), cell.y):
+				walk[cell] = true
+				break
+	if walk.is_empty(): return walk
+	var seeds: Array[Vector3i] = []
+	seeds.assign(walk.keys())
+	seeds.sort_custom(WarrenExcavation._cell_less)
+	var joined := _court_component(seeds[0], walk)
+	for anchor: Vector3i in seeds:
+		if joined.has(anchor): continue
+		# Multi-source BFS from the joined walk to the nearest unjoined seed.
+		var parent := {}
+		var frontier: Array[Vector3i] = []
+		var starts: Array[Vector3i] = []
+		starts.assign(joined.keys())
+		starts.sort_custom(WarrenExcavation._cell_less)
+		for start: Vector3i in starts:
+			parent[start] = start
+			frontier.append(start)
+		var reached := Vector3i.ZERO
+		var found := false
+		var head := 0
+		while head < frontier.size() and not found:
+			var cell := frontier[head]
+			head += 1
+			for step: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT, Vector3i.FORWARD, Vector3i.BACK]:
+				var next := cell + step
+				if not floor_cells.has(next) or parent.has(next): continue
+				parent[next] = cell
+				if walk.has(next):
+					reached = next
+					found = true
+					break
+				frontier.append(next)
+		if not found: continue
+		var trace := parent[reached] as Vector3i
+		while not joined.has(trace):
+			walk[trace] = true
+			trace = parent[trace] as Vector3i
+		joined.merge(_court_component(reached, walk))
+	return walk
+
+
+static func _court_component(start: Vector3i, cells: Dictionary) -> Dictionary:
+	var out := {start: true}
+	var frontier: Array[Vector3i] = [start]
+	while not frontier.is_empty():
+		var cell: Vector3i = frontier.pop_back()
+		for step: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT, Vector3i.FORWARD, Vector3i.BACK]:
+			if cells.has(cell + step) and not out.has(cell + step):
+				out[cell + step] = true
+				frontier.append(cell + step)
+	return out
+
+
+static func _court_edge_holds_lawn(source: WarrenMazeSourcePlan, column: Vector2i,
+		band: int) -> bool:
+	## Whether a ringless court's lawn may run up to the edge facing `column`:
+	## true when that column is built mass at the court's band (a house storey,
+	## rock, terrain) or level ground whose top is the court's own walk plane,
+	## so the lawn edge is backed by a wall or continues onto ground and nobody
+	## can fall off it. Streets and stairs (they need the walk), another deck,
+	## a bridge, a tunnel cover, an asset envelope (its unused cells may be
+	## released to air), a house roof one band down, a drop, and any column
+	## outside the massif all answer false, so the edge keeps its walk -- and,
+	## on a raised court, the ordinary fall guards that walk carries.
+	## Reads the SEALED source's derived mass (`solid_at`), the same reading
+	## the volume adapter carves from, so every call agrees.
+	var cell := Vector3i(column.x, band, column.y)
+	if source.passage_kinds.has(cell) or (source.excavation != null \
+			and source.excavation.carved.has(cell)):
+		return false
+	if source.massif == null or not source.massif.has_column(column):
+		return false
+	for index: int in source.plots_at(column):
+		var plot := source.plots[index] as Dictionary
+		var low := int(plot.floor)
+		var high := WarrenMazeSourcePlan._plot_reserved_top(plot)
+		var is_house := StringName(plot.kind) == WarrenMazeSourcePlan.PLOT_HOUSE
+		if band >= low and band < high:
+			if not is_house: return false
+		elif band - 1 >= low and band - 1 < high:
+			return false
+	return source.solid_at(cell) or source.solid_at(cell + Vector3i.DOWN)
 
 
 static func _maze_deck_walk_cells(volume: WarrenVolumePlan) -> Dictionary:

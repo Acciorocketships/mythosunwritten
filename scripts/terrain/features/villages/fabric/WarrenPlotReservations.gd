@@ -363,6 +363,14 @@ static func is_green_court(plot: Dictionary) -> bool:
 		or StringName(plot.get("purpose", &"")) == &"green"
 
 
+static func _rolls_ring(plan: WarrenMazeSourcePlan, id: StringName, knob: StringName) -> bool:
+	## Whether a green court keeps its one-cell walking ring (Town taste knobs
+	## task 2), rolled once per plot id. Only green courts read the flag
+	## (`WarrenVolumetricSolver._maze_court_planting_cells`); a paved clearing
+	## carries it unused. Chance 1 (the default) always rings.
+	return TownCharacter.of(plan.scale_profile, plan.world_seed).chance(knob, id)
+
+
 static func is_clearing_plot(plot: Dictionary) -> bool:
 	return String(plot.get("id", &"")).begins_with(CLEARING_PREFIX)
 
@@ -383,7 +391,8 @@ static func _place_clearings(plan: WarrenMazeSourcePlan, blocked: Dictionary,
 		if plan.add_plot({"id": id, "kind": WarrenMazeSourcePlan.PLOT_DECK, "cells": cells,
 				"floor": int(clearing.floor), "top": int(clearing.floor),
 				"door_walk": clearing.door_walk as Vector3i, "building_id": id,
-				"purpose": StringName(clearing.purpose)}):
+				"purpose": StringName(clearing.purpose),
+				"ring": _rolls_ring(plan, id, &"clearing_ring_chance")}):
 			for column: Vector2i in cells:
 				blocked[column] = true
 		else:
@@ -1175,7 +1184,8 @@ static func _place_plaza(plan: WarrenMazeSourcePlan, streets: Dictionary,
 		var cells := site["cells"] as Array[Vector2i]
 		if plan.add_plot({"id": id, "kind": WarrenMazeSourcePlan.PLOT_DECK,
 				"cells": cells, "floor": datum, "top": datum,
-				"door_walk": site["door"], "building_id": id}):
+				"door_walk": site["door"], "building_id": id,
+				"ring": _rolls_ring(plan, id, &"plaza_ring_chance")}):
 			for column: Vector2i in cells:
 				blocked[column] = true
 			outcomes["plaza"] = {"id": id, "size": cells.size(),

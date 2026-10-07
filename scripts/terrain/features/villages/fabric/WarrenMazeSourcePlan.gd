@@ -340,6 +340,10 @@ func add_plot(plot: Dictionary) -> bool:
 		plots.back()["wall_room"] = true
 	if plot.has("purpose"):
 		plots.back()["purpose"] = StringName(plot["purpose"])
+	# Only a court that rolled NO walking ring carries the flag (readers use
+	# `plot.get("ring", true)`), so a ringed town's plots stay byte-identical.
+	if plot.has("ring") and not bool(plot["ring"]):
+		plots.back()["ring"] = false
 	for column: Vector2i in cells:
 		var indices: Array = _plot_columns.get(column, [])
 		indices.append(plots.size() - 1)

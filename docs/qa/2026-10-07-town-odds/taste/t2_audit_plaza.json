@@ -1,0 +1,50 @@
+[
+  {
+    "floating": 0,
+    "joins": 3,
+    "ms": 133792,
+    "profile": "grand",
+    "roof": {
+      "area": 0.0,
+      "gable_area": 0.0,
+      "gable_contacts": 0,
+      "intrusions": 0,
+      "triangles": 1409921
+    },
+    "seed": 53,
+    "valid_payload": true,
+    "walk_components": 1
+  },
+  {
+    "floating": 0,
+    "joins": 0,
+    "ms": 50159,
+    "profile": "large",
+    "roof": {
+      "area": 0.0,
+      "gable_area": 0.0,
+      "gable_contacts": 0,
+      "intrusions": 0,
+      "triangles": 417744
+    },
+    "seed": 31,
+    "valid_payload": true,
+    "walk_components": 1
+  },
+  {
+    "floating": 0,
+    "joins": 0,
+    "ms": 17112,
+    "profile": "standard",
+    "roof": {
+      "area": 0.0,
+      "gable_area": 0.0,
+      "gable_contacts": 0,
+      "intrusions": 0,
+      "triangles": 541150
+    },
+    "seed": 13,
+    "valid_payload": true,
+    "walk_components": 1
+  }
+]

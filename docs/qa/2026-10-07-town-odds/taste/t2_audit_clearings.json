@@ -1,0 +1,34 @@
+[
+  {
+    "floating": 0,
+    "joins": 2,
+    "ms": 129052,
+    "profile": "grand",
+    "roof": {
+      "area": 0.0,
+      "gable_area": 0.0,
+      "gable_contacts": 0,
+      "intrusions": 0,
+      "triangles": 1153813
+    },
+    "seed": 53,
+    "valid_payload": true,
+    "walk_components": 1
+  },
+  {
+    "floating": 0,
+    "joins": 0,
+    "ms": 13076,
+    "profile": "standard",
+    "roof": {
+      "area": 0.0,
+      "gable_area": 9.33924373121369,
+      "gable_contacts": 502,
+      "intrusions": 0,
+      "triangles": 211885
+    },
+    "seed": 103,
+    "valid_payload": true,
+    "walk_components": 1
+  }
+]

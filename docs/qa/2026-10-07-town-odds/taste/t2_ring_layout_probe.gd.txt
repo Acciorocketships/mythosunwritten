@@ -1,0 +1,38 @@
+extends SceneTree
+func _init(): call_deferred("run")
+func run():
+	var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
+	program.town_odds = program.town_odds.with_overrides({&"clearing_count": 3.0, &"clearing_ring_chance": 0.0, &"plaza_ring_chance": 0.0})
+	var spatial := WarrenVolumetricSolver.generate(103, {}, program, WarrenVillageScaleProfile.for_id(&"standard"))
+	var source := spatial.source_volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
+	var planting := WarrenVolumetricSolver._maze_court_planting_cells(spatial.source_volume)
+	var landings := {}
+	for p: Dictionary in source.plots:
+		for c: Vector3i in WarrenVolumetricSolver._fine_square(p.door_walk): landings[c] = String(p.id)
+	for plot: Dictionary in source.plots:
+		if not WarrenPlotReservations.is_green_court(plot): continue
+		var cells := {}
+		var seen := {}
+		var lo := Vector2i(999,999); var hi := Vector2i(-999,-999)
+		for col: Vector2i in WarrenMazeSourcePlan.deck_flat_columns(plot):
+			for c: Vector3i in WarrenVolumetricSolver._fine_square(Vector3i(col.x, plot.floor, col.y)):
+				cells[c] = true; lo = Vector2i(mini(lo.x,c.x),mini(lo.y,c.z)); hi = Vector2i(maxi(hi.x,c.x),maxi(hi.y,c.z))
+		print("COURT %s ring=%s floor=%d" % [plot.id, plot.get("ring"), plot.floor])
+		for z in range(lo.y-1, hi.y+2):
+			var line := ""
+			for x in range(lo.x-1, hi.x+2):
+				var c := Vector3i(x, plot.floor, z)
+				if not cells.has(c):
+					var col := Vector2i(floori(x/2.0), floori(z/2.0))
+					var mass := WarrenVolumetricSolver._court_edge_holds_lawn(source, col, plot.floor)
+					line += "#" if mass else "."
+					if not mass and not seen.has(col):
+						seen[col] = true
+						var kinds := []
+						for i: int in source.plots_at(col): kinds.append("%s[%d,%d)" % [source.plots[i].kind, source.plots[i].floor, source.plots[i].top])
+						print("  col %s passage=%s carved=%s base=%d top=%d shoulder=%d solid=%s plots=%s" % [col, source.passage_kinds.has(Vector3i(col.x,plot.floor,col.y)), source.excavation.carved.has(Vector3i(col.x,plot.floor,col.y)), source.massif.base_at(col) if source.massif.has_column(col) else -99, source.massif.top_at(col) if source.massif.has_column(col) else -99, source.rock_shoulder(col) if source.massif.has_column(col) else -99, source.solid_at(Vector3i(col.x,plot.floor,col.y)), kinds])
+				elif planting.has(c): line += "g"
+				elif landings.has(c): line += "D"
+				else: line += "w"
+			print(line)
+	quit()

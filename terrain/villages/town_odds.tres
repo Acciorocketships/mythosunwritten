@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="TownOddsTable" load_steps=13 format=3]
+[gd_resource type="Resource" script_class="TownOddsTable" load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://scripts/terrain/features/villages/odds/TownOddsTable.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/terrain/features/villages/odds/TownKnob.gd" id="2"]
@@ -114,6 +114,28 @@ clamp_min = 0.0
 clamp_max = 4.0
 notes = "Town taste knobs (Oct 7) task 1: a grown clearing is kept with probability max(0.05, ((1 + sides houses can front) / 5)^bias), rolled on its own stream; rejections have their own attempt budget and the last attempts accept regardless. 0 = always kept (today)."
 
+[sub_resource type="Resource" id="plaza_ring_chance"]
+script = ExtResource("2")
+name = &"plaza_ring_chance"
+kind = 0
+at_small = 1.0
+at_large = 1.0
+spread = 0.0
+clamp_min = 0.0
+clamp_max = 1.0
+notes = "Town taste knobs (Oct 7) task 2: chance the primary green plaza (plaza.00) keeps its one-cell walking ring round the lawn, rolled per plot id. Without a ring the lawn reaches every court edge that faces built mass; walk is kept only on edges facing a street, open air or a drop (those keep their guards), on every door/entrance landing, and on 1-cell strips joining them (WarrenVolumetricSolver._ringless_court_walk). 1 = always ringed (today)."
+
+[sub_resource type="Resource" id="clearing_ring_chance"]
+script = ExtResource("2")
+name = &"clearing_ring_chance"
+kind = 0
+at_small = 1.0
+at_large = 1.0
+spread = 0.0
+clamp_min = 0.0
+clamp_max = 1.0
+notes = "Town taste knobs (Oct 7) task 2: chance a green clearing court (clearing.NN, purpose green) keeps its walking ring, rolled per plot id; ringless greens as for plaza_ring_chance. 1 = always ringed (today)."
+
 [resource]
 script = ExtResource("1")
-knobs = Array[Resource]([SubResource("clearing_count"), SubResource("clearing_block_bias"), SubResource("clearing_ground_weight"), SubResource("clearing_area"), SubResource("clearing_shape"), SubResource("clearing_extra_link_chance"), SubResource("clearing_cover"), SubResource("clearing_purpose"), SubResource("clearing_lobe_bias"), SubResource("clearing_enclosure_bias")])
+knobs = Array[Resource]([SubResource("clearing_count"), SubResource("clearing_block_bias"), SubResource("clearing_ground_weight"), SubResource("clearing_area"), SubResource("clearing_shape"), SubResource("clearing_extra_link_chance"), SubResource("clearing_cover"), SubResource("clearing_purpose"), SubResource("clearing_lobe_bias"), SubResource("clearing_enclosure_bias"), SubResource("plaza_ring_chance"), SubResource("clearing_ring_chance")])

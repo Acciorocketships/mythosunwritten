@@ -209,7 +209,8 @@ func set_retained_terrace(cells: Dictionary) -> bool:
 	return true
 
 
-func set_planned_plaza(cells: Dictionary, planting: Dictionary = {}) -> bool:
+func set_planned_plaza(cells: Dictionary, planting: Dictionary = {},
+		ringless: Dictionary = {}) -> bool:
 	## Declared once before the public surface is solved. The square is a topology
 	## fact, not late dressing: its exact cells are required while guards are
 	## derived so every street mouth is open by construction. Cells name the solid
@@ -238,9 +239,13 @@ func set_planned_plaza(cells: Dictionary, planting: Dictionary = {}) -> bool:
 			return false
 	for cell: Vector3i in planting:
 		if not cells.has(cell): return false
-		# Islands may not consume an entrance or exterior edge of the court.
-		for step: Vector3i in [Vector3i.LEFT,Vector3i.RIGHT,Vector3i.FORWARD,Vector3i.BACK]:
-			if not cells.has(cell+step): return false
+		# Islands may not consume an entrance or exterior edge of the court --
+		# unless the court rolled no walking ring (`ringless`, Town taste knobs
+		# task 2): its lawn reaches the edges backed by built mass, and its
+		# walk (landings, open edges, joining strips) is still proved below.
+		if not ringless.has(cell):
+			for step: Vector3i in [Vector3i.LEFT,Vector3i.RIGHT,Vector3i.FORWARD,Vector3i.BACK]:
+				if not cells.has(cell+step): return false
 		if surface_plan != null and surface_plan.has_cell(cell+Vector3i.UP): return false
 	planned_plaza_planting_cells = planting.duplicate()
 	planned_plaza_cells = cells.duplicate()
