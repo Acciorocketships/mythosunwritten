@@ -302,13 +302,6 @@ static func _append_terrain_handoffs(result: VillageUrbanFabricPlan,
 			id, district_id, result.public_walk_network_id))
 
 
-static func _terrain_qualified_frontage_payload(terrain: VillageTerrainView,
-		fabric: SettlementFabricPlan, world_frame: Transform3D) \
-		-> EnvironmentInstancePayload:
-	return _terrain_qualified_frontage(terrain, fabric, world_frame).payload \
-		as EnvironmentInstancePayload
-
-
 static func _terrain_qualified_frontage(terrain: VillageTerrainView,
 		fabric: SettlementFabricPlan, world_frame: Transform3D) -> Dictionary:
 	## Perimeter stalls and props are optional dressing, so their complete
@@ -687,8 +680,6 @@ static func terrain_contact_local_geometry(spec: Dictionary) -> Dictionary:
 	}
 
 
-
-
 static func _append_physical_ground_clearance(result: VillageUrbanFabricPlan,
 		district_id: StringName) -> void:
 	# The district envelope excludes unrelated ambient placement, but is not
@@ -917,72 +908,6 @@ static func _append_ground_supports(payload: EnvironmentInstancePayload,
 					int(anchor.x2), surface_band, int(anchor.z2), segment]))
 
 
-static func _append_terrain_bearing_foundations(
-		payload: EnvironmentInstancePayload, terrain: VillageTerrainView,
-		fabric: SettlementFabricPlan, world_frame: Transform3D) -> void:
-	## A terrain-bearing room promises that its floorplate is carried by the
-	## immutable terrain field. On a continuous slope the conservative lattice
-	## datum can sit slightly above that field along one exposed facade even when
-	## every sampled point remains traversal-valid. Close that visible interval
-	## with the same complete authored foundation course used above retained
-	## stone. The course is selected from the exact bearing boundary; it is never
-	## a post, stretched mesh, or after-the-fact visual offset.
-	var bearing := fabric.transformed_cells(&"terrain_bearing")
-	if bearing.is_empty():
-		return
-	var solids := fabric.transformed_cells(&"solid")
-	var retained := fabric.retained_terrace_cells
-	var ordered: Array[Vector3i] = []
-	ordered.assign(bearing.keys())
-	ordered.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
-		if a.y != b.y:
-			return a.y < b.y
-		return a.z < b.z if a.z != b.z else a.x < b.x)
-	for cell: Vector3i in ordered:
-		# Retained stone already owns this foundation seam through the canonical
-		# plinth transaction. Emitting again would overlap identical courses.
-		if retained.has(cell - Vector3i.UP):
-			continue
-		for direction_index in SettlementFabricAssembler.FACE_DIRECTIONS.size():
-			var direction := SettlementFabricAssembler.FACE_DIRECTIONS[
-				direction_index]
-			if solids.has(cell + direction) or bearing.has(cell + direction):
-				continue
-			var outward := Vector3(direction)
-			var tangent := Vector3(-direction.z, 0.0, direction.x)
-			var local_face := Vector3(cell) * FabricRecipe.CELL_SIZE \
-				+ outward * FabricRecipe.CELL_SIZE * 0.5
-			var floor_world_y := (world_frame * (Vector3(cell) \
-				* FabricRecipe.CELL_SIZE)).y
-			var minimum_ground_y := INF
-			# Complete-edge support, not a centre sample: either terminal can expose
-			# a gap on sloping terrain even while the midpoint touches.
-			for along in [-0.48, 0.0, 0.48]:
-				var probe3 := world_frame * (local_face + tangent \
-					* FabricRecipe.CELL_SIZE * float(along))
-				minimum_ground_y = minf(minimum_ground_y, terrain.surface_y(
-					Vector2(probe3.x, probe3.z)))
-			if floor_world_y - minimum_ground_y \
-					<= OPTIONAL_FRONTAGE_GROUND_TOLERANCE:
-				continue
-			# Upper rooms can carry the semantic terrain-bearing tag through an
-			# elevated terrace. A single plinth is not a column: if its authored
-			# bottom cannot reach the ground, emitting it creates a floating stone
-			# box beside the lower roof. Structural terrace supports own that span.
-			var course_height := 3.0 * VillageWorldScale.vertical_scale_of(world_frame)
-			if floor_world_y - minimum_ground_y > course_height \
-					+ OPTIONAL_FRONTAGE_GROUND_TOLERANCE:
-				continue
-			var origin := local_face - outward \
-				* SettlementFabricAssembler.STONE_CAP_HALF_DEPTH
-			origin.y = float(cell.y) * FabricRecipe.CELL_SIZE - 3.0
-			var yaw := PI * 0.5 if direction.x != 0 else 0.0
-			payload.add(SettlementFabricAssembler.HOUSE_PLINTH,
-				Transform3D(Basis(Vector3.UP, yaw), origin), Color.WHITE,
-				StringName("terrain-foundation/%d/%d/%d/%d" % [cell.x,
-					cell.y, cell.z, direction_index]))
-
-
 static func _lowest_bearing_y_by_column(solids: Dictionary,
 		surface_cells: Dictionary) -> Dictionary:
 	var out: Dictionary = {}
@@ -1104,13 +1029,6 @@ static func _sample_ground_bands(terrain: VillageTerrainView,
 		"minimum_y": minimum_y,
 		"maximum_y": maximum_y,
 	}
-
-
-static func _all_zero(values: Dictionary) -> bool:
-	for value: Variant in values.values():
-		if int(value) != 0:
-			return false
-	return true
 
 
 static func _rejected(reason: StringName) -> VillageUrbanFabricPlan:
