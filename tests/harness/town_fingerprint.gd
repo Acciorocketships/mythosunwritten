@@ -61,6 +61,10 @@ func _run() -> void:
 			print("FINGERPRINT_NO_TOWN ", town)
 			continue
 		var source := spatial.source_volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
+		print("CLEARINGS ", town, " ", source.excavation.court_clearings.size(), " ", JSON.stringify(
+			source.excavation.court_clearings.map(func(c: Dictionary) -> Dictionary:
+				return {"floor": c.floor, "cells": (c.cells as Array).size(), "links": c.links,
+					"shape": c.shape, "purpose": c.purpose})))
 		var fabric := spatial.compiled_fabric_cache()
 		var source_hash := _hash_values([source.plots, source.passage_kinds,
 			source.feature_stamps, source.market_square_cells, source.summit_cell,

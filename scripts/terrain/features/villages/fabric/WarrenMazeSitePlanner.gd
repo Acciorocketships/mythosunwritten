@@ -109,7 +109,7 @@ static func finish_ground_streets(source: WarrenMazeSourcePlan) -> void:
 	var excavation := WarrenExcavation.new(old.world_seed)
 	for key: String in ["route","transitions","lanes","loop_edges","carved",
 			"covered","portals","bridge_spans","bridge_span_audit","bridge_bearing_columns","construction_reservations","bridge_directions",
-			"frontage_reservations","tunnel_cells","tunnel_attrition"]:
+			"frontage_reservations","tunnel_cells","tunnel_attrition","court_clearings"]:
 		excavation.set(key,old.get(key).duplicate(true))
 	for cell: Vector3i in additions:
 		var lane: Array[Vector3i] = [cell]
@@ -147,6 +147,10 @@ static func finish_public_destinations(source: WarrenMazeSourcePlan) -> void:
 	var destinations: Dictionary = {}
 	for cell: Vector3i in old.portals + source.market_zone + source.market_square_cells:
 		destinations[cell] = true
+	# A courtyard clearing is a destination: its doorstep keeps its access lane.
+	for clearing: Dictionary in old.court_clearings:
+		for door: Vector3i in clearing.doors:
+			destinations[door] = true
 	var edges := old.walk_edges()
 	# A doorway on a flight's treads is closed by construction: only landings
 	# are destinations. Bridges are allocated after this pruning, so a bridge
@@ -277,6 +281,11 @@ static func finish_public_destinations(source: WarrenMazeSourcePlan) -> void:
 	excavation.tunnel_cells = old.tunnel_cells.duplicate()
 	excavation.tunnel_attrition = old.tunnel_attrition.duplicate()
 	var pruned_tunnel_cells := 0
+	# A clearing whose doorstep was withdrawn goes with it (its reservations
+	# are not carried into the rebuilt excavation).
+	for clearing: Dictionary in old.court_clearings:
+		if not removed.has(clearing.door_walk):
+			excavation.court_clearings.append(clearing.duplicate(true))
 	excavation.bridge_span_audit = old.bridge_span_audit.duplicate(true)
 	excavation.bridge_bearing_columns = old.bridge_bearing_columns.duplicate()
 	excavation.bridge_directions = old.bridge_directions.duplicate()

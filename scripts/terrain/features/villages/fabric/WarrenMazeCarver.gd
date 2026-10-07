@@ -258,6 +258,7 @@ static func carve(world_seed: int, massif: WarrenMassif,
 		market_cells, profile)
 	_carve_loop_joins(world_seed, massif, excavation, thickness,
 		market_square, loop_target)
+	WarrenCourtClearings.carve(world_seed, massif, excavation, occupied, profile)
 	# The historical grammar stopped after cutting the one spine mouth, so three
 	# sides of an otherwise connected town could be solid wall. Extend existing
 	# at-grade public ground to one or two other perimeter cells before the plan
@@ -2779,7 +2780,7 @@ static func _preview_reserved_columns(world_seed: int, massif: WarrenMassif,
 	var streets := WarrenExcavation.new(world_seed)
 	for key: String in ["route", "transitions", "lanes", "loop_edges", "carved",
 			"covered", "portals", "bridge_spans", "bridge_span_audit",
-			"frontage_reservations", "tunnel_cells", "tunnel_attrition", "bridge_bearing_columns", "construction_reservations",
+			"frontage_reservations", "tunnel_cells", "tunnel_attrition", "court_clearings", "bridge_bearing_columns", "construction_reservations",
 			"bridge_directions"]:
 		streets.set(key, excavation.get(key).duplicate(true))
 	_finalize_excavation(massif, streets)
@@ -2884,7 +2885,7 @@ static func _perimeter_ring_cover(world_seed: int, massif: WarrenMassif,
 	## throwaway copy of the streets so far.
 	var copy := WarrenExcavation.new(world_seed)
 	for key: String in ["route", "transitions", "lanes", "loop_edges", "carved",
-			"covered", "portals", "frontage_reservations", "tunnel_cells", "tunnel_attrition", "bridge_bearing_columns", "construction_reservations",
+			"covered", "portals", "frontage_reservations", "tunnel_cells", "tunnel_attrition", "court_clearings", "bridge_bearing_columns", "construction_reservations",
 			"bridge_directions"]:
 		copy.set(key, excavation.get(key).duplicate(true))
 	_lay_perimeter_lanes(world_seed, massif, copy, blocked)
@@ -3161,7 +3162,10 @@ static func _perimeter_connector_rejoins(massif: WarrenMassif,
 
 static func _level_gate_connection(massif: WarrenMassif,
 		excavation: WarrenExcavation, public: Dictionary,
-		walk_nodes: Dictionary, candidate: Vector3i, direct := false) -> Dictionary:
+		walk_nodes: Dictionary, candidate: Vector3i, direct := false,
+		any_band := false) -> Dictionary:
+	# `any_band` walks the candidate's own band whatever the ground grade there
+	# (a raised courtyard's doorstep); by default the lane stays at ground grade.
 	# Search the legal route domain, including turn length and width. No
 	# completed connection is built and discarded by a later shape audit.
 	if not WarrenPassageLatticeRules.slot_is_borable(massif, excavation,
@@ -3196,7 +3200,7 @@ static func _level_gate_connection(massif: WarrenMassif,
 			var key := Vector4i(next.x, next.z, direction_index, run)
 			if visited.has(key) or path.has(next) or not massif.has_column(Vector2i(next.x, next.z)):
 				continue
-			if massif.base_at(Vector2i(next.x, next.z)) != candidate.y \
+			if (not any_band and massif.base_at(Vector2i(next.x, next.z)) != candidate.y) \
 					or not WarrenPassageLatticeRules.slot_is_borable(massif, excavation, next,
 						WarrenPassageLatticeRules.HEADROOM_BANDS) \
 					or WarrenPassageLatticeRules.completes_public_square(occupied, next):

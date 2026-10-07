@@ -3,7 +3,7 @@ extends RefCounted
 ## Trial streets are local copies; publish only a complete, realizable pair.
 const COPY_FIELDS := ["route", "transitions", "lanes", "loop_edges", "carved",
 	"covered", "portals", "bridge_spans", "bridge_span_audit", "frontage_reservations",
-	"tunnel_cells", "tunnel_attrition", "bridge_bearing_columns", "construction_reservations", "bridge_directions"]
+	"tunnel_cells", "tunnel_attrition", "court_clearings", "bridge_bearing_columns", "construction_reservations", "bridge_directions"]
 
 static func propose(massif: WarrenMassif, excavation: WarrenExcavation,
 		profile: WarrenVillageScaleProfile, district: Array, public: Dictionary,

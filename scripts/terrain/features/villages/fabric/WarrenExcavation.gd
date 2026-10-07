@@ -66,6 +66,11 @@ var construction_reservations: Dictionary = {}
 var tunnel_cells: Dictionary = {}
 ## Diagnostic counters of where eligible tunnel stretches drop out (measurement only).
 var tunnel_attrition: Dictionary = {}
+## Courtyard clearings carved by WarrenCourtClearings.carve: each
+## `{"cells", "floor", "shape", "purpose", "cover", "area", "door_walk", "doors", "links"}`.
+## Their columns are construction reservations; `doors` are the walk nodes
+## beside the clearing at its floor, one per link, `door_walk` the first.
+var court_clearings: Array[Dictionary] = []
 var carved: Dictionary = {}
 ## Housing beside an authored street is reserved before later streets grow.
 ## These cells define the remaining construction domain, not an audit result.

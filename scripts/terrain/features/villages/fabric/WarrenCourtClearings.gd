@@ -81,6 +81,116 @@ static func propose(world_seed: int, massif: WarrenMassif, excavation: WarrenExc
 	return out
 
 
+static func carve(world_seed: int, massif: WarrenMassif, excavation: WarrenExcavation,
+		occupied: Dictionary, profile: WarrenVillageScaleProfile) -> void:
+	## Realise the proposals as reserved open rooms, each joined to the street
+	## network by at least one level access lane from a doorstep beside it, plus
+	## further separated lanes by odds. Each clearing is reserved before its lanes
+	## are searched, so no lane bores through it; one an earlier lane already
+	## bored through, or no street reaches at its floor, is withdrawn whole
+	## (reservations released, nothing carved).
+	var proposals := propose(world_seed, massif, excavation, profile)
+	if proposals.is_empty():
+		return
+	var character := TownCharacter.of(profile, world_seed)
+	for proposal: Dictionary in proposals:
+		var floor_band := int(proposal.floor)
+		# Reserve this clearing before its own lanes are searched, so no lane
+		# bores through it. An earlier clearing's lane may already have bored
+		# through this one: then it is withdrawn whole.
+		var claims := {}
+		var bored := false
+		for column: Vector2i in proposal.cells:
+			for band in range(floor_band - 1, floor_band + WarrenMazeSourcePlan.MIN_HOUSE_BANDS):
+				var cell := Vector3i(column.x, band, column.y)
+				bored = bored or excavation.carved.has(cell)
+				if not excavation.construction_reservations.has(cell):
+					claims[cell] = true
+		if bored:
+			continue
+		for cell: Vector3i in claims:
+			excavation.construction_reservations[cell] = true
+		var inside := {}
+		for column: Vector2i in proposal.cells:
+			inside[column] = true
+		var public := {}
+		for cell: Vector3i in excavation.public_cells():
+			public[cell] = true
+		var walk_nodes := {}
+		for cell: Vector3i in WarrenMazeCarver._walk_nodes(excavation):
+			walk_nodes[cell] = true
+		var doorsteps: Array[Vector3i] = []
+		for column: Vector2i in proposal.cells:
+			for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+				var next := column + direction
+				if inside.has(next) or not massif.has_column(next):
+					continue
+				var step := Vector3i(next.x, floor_band, next.y)
+				if not doorsteps.has(step):
+					doorsteps.append(step)
+		doorsteps.sort_custom(WarrenExcavation._cell_less)
+		var connections: Array[Dictionary] = []
+		for step: Vector3i in doorsteps:
+			var connection: Dictionary = {"anchor": step, "cells": [] as Array[Vector3i]} \
+				if walk_nodes.has(step) \
+				else WarrenMazeCarver._level_gate_connection(massif, excavation, public,
+					walk_nodes, step, true, true)
+			if not connection.is_empty():
+				connections.append(connection)
+		if connections.is_empty():
+			# Guardrail: an unreachable clearing is withdrawn whole.
+			for cell: Vector3i in claims:
+				excavation.construction_reservations.erase(cell)
+			continue
+		connections.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+			var na := (a.cells as Array).size()
+			var nb := (b.cells as Array).size()
+			if na != nb:
+				return na < nb
+			return WarrenExcavation._cell_less(_door_of(a), _door_of(b)))
+		var chosen: Array[Dictionary] = [connections[0]]
+		for i in range(1, connections.size()):
+			var far_enough := true
+			for c: Dictionary in chosen:
+				var a := _door_of(c)
+				var b := _door_of(connections[i])
+				far_enough = far_enough and absi(a.x - b.x) + absi(a.z - b.z) > 3
+			if far_enough and character.chance(&"clearing_extra_link_chance",
+					Vector3i(i, floor_band, excavation.court_clearings.size())):
+				chosen.append(connections[i])
+		for connection: Dictionary in chosen:
+			var cells: Array[Vector3i] = []
+			cells.assign(connection.cells)
+			if cells.is_empty():
+				continue
+			var previous: Vector3i = connection.anchor
+			var transitions: Array[Dictionary] = []
+			for cell: Vector3i in cells:
+				transitions.append({"from": previous, "to": cell,
+					"kind": WarrenVolumeTransition.Kind.LEVEL})
+				occupied[cell] = true
+				for band in range(cell.y, cell.y + WarrenPassageLatticeRules.HEADROOM_BANDS):
+					excavation.carved[Vector3i(cell.x, band, cell.z)] = true
+				previous = cell
+			excavation.lanes.append({"anchor": connection.anchor, "cells": cells,
+				"transitions": transitions, "feature_kind": &"court_clearing_access"})
+		var record := proposal.duplicate()
+		var doors: Array[Vector3i] = []
+		for connection: Dictionary in chosen:
+			doors.append(_door_of(connection))
+		record["door_walk"] = doors[0]
+		record["doors"] = doors
+		record["links"] = chosen.size()
+		excavation.court_clearings.append(record)
+
+
+static func _door_of(connection: Dictionary) -> Vector3i:
+	## The doorstep beside the clearing: the lane's last cell, or the anchor
+	## itself when the doorstep already is a walk node.
+	var cells: Array = connection.cells
+	return connection.anchor if cells.is_empty() else cells.back()
+
+
 static func _candidates(plan: WarrenMazeSourcePlan, street: Dictionary, blocked: Dictionary,
 		character: TownCharacter, by_band: Dictionary) -> Array[Dictionary]:
 	## (column, floor) pairs weighted by street distance ^ bias, ground x weight.
