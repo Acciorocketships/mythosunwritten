@@ -43,6 +43,12 @@ var _flow_tex: ImageTexture
 var _flow_image: Image
 var _flow_refresh := 0.0
 var _samplers: Array[WaterSampler] = []
+## Flow texel per world 3 m lattice cell. The samplers are frozen per chunk,
+## so a texel only changes when the sampler set does (then this is cleared);
+## a moving origin resamples just the newly exposed rows and columns.
+var _flow_cells: Dictionary = {}
+var _sampler_ids := PackedInt64Array()
+const FLOW_CELL_LIMIT := 16384
 
 var _packet_vp: SubViewport
 var _packet_mat: ShaderMaterial
@@ -112,7 +118,8 @@ func _snapped_origin() -> Vector2:
 	return Vector2(snappedf(o.x, FLOW_STEP), snappedf(o.y, FLOW_STEP))
 
 
-func _refresh_samplers() -> void:
+## True when the set of loaded water samplers changed.
+func _refresh_samplers() -> bool:
 	_samplers.clear()
 	var seen: Dictionary = {}
 	for node: Node in get_tree().get_nodes_in_group("water_volume"):
@@ -124,6 +131,12 @@ func _refresh_samplers() -> void:
 			continue
 		seen[key] = true
 		_samplers.append(sampler)
+	var ids := PackedInt64Array(seen.keys())
+	ids.sort()
+	if ids == _sampler_ids:
+		return false
+	_sampler_ids = ids
+	return true
 
 
 func _sampler_at(p: Vector2) -> WaterSampler:
@@ -137,18 +150,27 @@ func _sampler_at(p: Vector2) -> WaterSampler:
 ## R/G are raw signed world-m/s velocity; B/A carry vorticity/compression for
 ## future GPU interaction work without another field reconstruction.
 func _refresh_flow_texture() -> void:
+	if _flow_cells.size() > FLOW_CELL_LIMIT:
+		_flow_cells.clear()
+	var base := Vector2i(roundi(_origin.x / FLOW_STEP), roundi(_origin.y / FLOW_STEP))
 	for j in FLOW_RES:
 		for i in FLOW_RES:
-			var p: Vector2 = _origin + (Vector2(i, j) + Vector2.ONE * 0.5) * FLOW_STEP
-			var sampler: WaterSampler = _sampler_at(p)
-			if sampler == null:
-				_flow_image.set_pixel(i, j, Color(0.0, 0.0, 0.0, 0.0))
-				continue
-			var velocity: Vector2 = sampler.velocity_at(p)
-			var diagnostics: Vector2 = sampler.flow_diagnostics_at(p)
-			_flow_image.set_pixel(i, j,
-				Color(velocity.x, velocity.y, diagnostics.x, diagnostics.y))
+			var cell := base + Vector2i(i, j)
+			var texel: Variant = _flow_cells.get(cell)
+			if texel == null:
+				texel = _flow_texel(_origin + (Vector2(i, j) + Vector2.ONE * 0.5) * FLOW_STEP)
+				_flow_cells[cell] = texel
+			_flow_image.set_pixel(i, j, texel)
 	_flow_tex.update(_flow_image)
+
+
+func _flow_texel(p: Vector2) -> Color:
+	var sampler: WaterSampler = _sampler_at(p)
+	if sampler == null:
+		return Color(0.0, 0.0, 0.0, 0.0)
+	var velocity: Vector2 = sampler.velocity_at(p)
+	var diagnostics: Vector2 = sampler.flow_diagnostics_at(p)
+	return Color(velocity.x, velocity.y, diagnostics.x, diagnostics.y)
 
 
 func _hash01(n: int) -> float:
@@ -341,10 +363,14 @@ func _process(delta: float) -> void:
 	_origin = new_origin
 	_packet_origin = new_origin-Vector2.ONE*((PACKET_DOMAIN-DOMAIN)*0.5)
 	_flow_refresh -= delta
-	if origin_changed or _flow_refresh <= 0.0:
-		_refresh_samplers()
-		_refresh_flow_texture()
+	var samplers_changed := false
+	if _flow_refresh <= 0.0:
 		_flow_refresh = 0.5
+		samplers_changed = _refresh_samplers()
+		if samplers_changed:
+			_flow_cells.clear()
+	if origin_changed or samplers_changed:
+		_refresh_flow_texture()
 
 	var mat: ShaderMaterial = _mat[nxt]
 	mat.set_shader_parameter("prev_tex", _vp[_cur].get_texture())
