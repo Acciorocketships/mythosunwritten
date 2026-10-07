@@ -39,13 +39,23 @@ static func rise_for(exposed: float) -> float:
 ## side of the lattice point owning it (so a cliff top stays flat to its wall;
 ## the drop is a separate skirt) and split along the same (0,0)-(1,1) diagonal.
 static func terrain_ground(region: HeightfieldRegion) -> Callable:
+	return _terrain_ground(region, {})
+
+## terrain_ground reading the quad corners `prefetch_corners` gathered for a
+## point (exactly the values it would sample), else sampling them itself.
+static func _terrain_ground(region: HeightfieldRegion, corners: Dictionary) -> Callable:
 	var step := TerrainChunkMesher.STEP
 	return func(p: Vector2) -> float:
-		var owner := Vector2i(TerrainTileField.point_of(p.x, region), TerrainTileField.point_of(p.y, region))
 		var x0 := floorf(p.x / step) * step
 		var z0 := floorf(p.y / step) * step
 		var fx := p.x / step - x0 / step
 		var fz := p.y / step - z0 / step
+		if corners.has(p):
+			var c: PackedFloat64Array = corners[p]
+			if fx >= fz:
+				return c[0] + fx * (c[1] - c[0]) + fz * (c[3] - c[1])
+			return c[0] + fz * (c[2] - c[0]) + fx * (c[3] - c[2])
+		var owner := Vector2i(TerrainTileField.point_of(p.x, region), TerrainTileField.point_of(p.y, region))
 		var h00 := TerrainTileField.surface_y_on_side(region, x0, z0, owner)
 		var h11 := TerrainTileField.surface_y_on_side(region, x0 + step, z0 + step, owner)
 		if fx >= fz:
@@ -53,6 +63,41 @@ static func terrain_ground(region: HeightfieldRegion) -> Callable:
 			return h00 + fx * (h10 - h00) + fz * (h11 - h10)
 		var h01 := TerrainTileField.surface_y_on_side(region, x0, z0 + step, owner)
 		return h00 + fz * (h01 - h00) + fx * (h11 - h01)
+
+## The four 2 m quad corners (0,0), (1,0), (0,1), (1,1) of every point, each
+## on the side of the point's owner, in one batched kernel call: exactly the
+## surface_y_on_side values terrain_ground and the terrain normal read.
+static func prefetch_corners(region: HeightfieldRegion, corners: Dictionary,
+		points: PackedVector2Array) -> void:
+	if points.is_empty():
+		return
+	var step := TerrainChunkMesher.STEP
+	var n := points.size() * 4
+	var xs := PackedFloat64Array(); xs.resize(n)
+	var zs := PackedFloat64Array(); zs.resize(n)
+	var oi := PackedInt32Array(); oi.resize(n)
+	var oj := PackedInt32Array(); oj.resize(n)
+	var lo := Vector2i(1 << 30, 1 << 30)
+	var hi := Vector2i(-(1 << 30), -(1 << 30))
+	for k in points.size():
+		var p := points[k]
+		var owner := Vector2i(TerrainTileField.point_of(p.x, region), TerrainTileField.point_of(p.y, region))
+		lo = lo.min(owner); hi = hi.max(owner)
+		var x0 := floorf(p.x / step) * step
+		var z0 := floorf(p.y / step) * step
+		for c in 4:
+			xs[k * 4 + c] = x0 + step if c & 1 else x0
+			zs[k * 4 + c] = z0 + step if c & 2 else z0
+			oi[k * 4 + c] = owner.x
+			oj[k * 4 + c] = owner.y
+	var window := TerrainTileField.dense_window(region, lo - Vector2i.ONE, hi - lo + Vector2i(3, 3))
+	assert(TerrainTileField._window_holds(window, lo, hi))
+	var heights := TerrainTileField.sample_window(window, xs, zs, oi, oj)
+	if TerrainTileField.grades(region):
+		for i in n:
+			heights[i] = TerrainTileField._apply_grade(region, xs[i], zs[i], heights[i])
+	for k in points.size():
+		corners[points[k]] = heights.slice(k * 4, k * 4 + 4)
 
 ## Contact radius in each of SIDES directions: the support function of the
 ## rock's world-space base outline about its centre.
@@ -78,7 +123,8 @@ static func ellipse_radii(semi: Vector2, axis_u: Vector2) -> PackedFloat32Array:
 ## The rendered terrain surface: height (`terrain_ground`), the mesher's
 ## field-gradient lattice normal and its bilinear 24 m tint-lattice biome tint.
 static func terrain_surface(region: HeightfieldRegion, world_seed: int) -> Dictionary:
-	var ground := terrain_ground(region)
+	var corners := {}
+	var ground := _terrain_ground(region, corners)
 	var step := TerrainChunkMesher.STEP
 	var tile := TerrainChunkMesher.CELL
 	# The sheet lights each vertex of its 2 m lattice with the exact field
@@ -88,6 +134,8 @@ static func terrain_surface(region: HeightfieldRegion, world_seed: int) -> Dicti
 	var baked := {}
 	return {
 		"height": ground,
+		"prefetch": func(points: PackedVector2Array) -> void:
+			prefetch_corners(region, corners, points),
 		"normal": func(p: Vector2) -> Vector3:
 			var owner := Vector2i(TerrainTileField.point_of(p.x, region), TerrainTileField.point_of(p.y, region))
 			var x0 := floorf(p.x / step) * step
@@ -95,10 +143,12 @@ static func terrain_surface(region: HeightfieldRegion, world_seed: int) -> Dicti
 			var fx := (p.x - x0) / step
 			var fz := (p.y - z0) / step
 			var nodes := PackedVector3Array()
-			for corner: Vector2 in [Vector2(0, 0), Vector2(1, 0), Vector2(0, 1), Vector2(1, 1)]:
-				var x := x0 + corner.x * step
-				var z := z0 + corner.y * step
-				nodes.append(Vector3(x, TerrainTileField.surface_y_on_side(region, x, z, owner), z))
+			var known: PackedFloat64Array = corners.get(p, PackedFloat64Array())
+			for k in 4:
+				var x := x0 + (step if k & 1 else 0.0)
+				var z := z0 + (step if k & 2 else 0.0)
+				nodes.append(Vector3(x, known[k] if not known.is_empty()
+					else TerrainTileField.surface_y_on_side(region, x, z, owner), z))
 			var normals := TerrainChunkMesher.field_normals(nodes, region, baked)
 			var n := Vector3.ZERO
 			for k in 4:
@@ -128,6 +178,23 @@ static func build(id: String, centre: Vector2, radii: PackedFloat32Array,
 	var rise := rise_for(exposed)
 	var width := clampf(WIDTH * mean, WIDTH_MIN, WIDTH_MAX)
 	var ground: Callable = surface.height
+	# Every point the skirt samples: the centre, the contacts, the rings.
+	var contacts := PackedVector2Array()
+	for k in SIDES:
+		contacts.append(centre + Vector2.from_angle(TAU * k / SIDES) * radii[k])
+	var ring_points := PackedVector2Array()
+	for j in RINGS.size():
+		var s: float = RINGS[j]
+		for k in SIDES:
+			ring_points.append(centre + Vector2.from_angle(TAU * k / SIDES) \
+				* (radii[k] * (1.0 + minf(s, 0.0)) + maxf(s, 0.0) * width))
+	# A surface that can sample its terrain in one batch gathers them all
+	# first; its height/normal/sheet then read exactly those values.
+	if surface.has("prefetch"):
+		var points := PackedVector2Array([centre])
+		points.append_array(contacts)
+		points.append_array(ring_points)
+		surface.prefetch.call(points)
 	# The mound meets the rock where it shows: in each direction it rises in
 	# proportion to the rock's visible height at that contact. On a slope the
 	# uphill contact can lie at or above the rock's top (the rock is buried
@@ -136,8 +203,7 @@ static func build(id: String, centre: Vector2, radii: PackedFloat32Array,
 	var top: float = float(ground.call(centre)) + exposed
 	var rises := PackedFloat32Array()
 	for k in SIDES:
-		var contact_point := centre + Vector2.from_angle(TAU * k / SIDES) * radii[k]
-		rises.append(rise_for(maxf(0.0, top - float(ground.call(contact_point)))))
+		rises.append(rise_for(maxf(0.0, top - float(ground.call(contacts[k])))))
 	# The mound over the covered surface, continuous in the plane.
 	var bump := func(p: Vector2) -> float:
 		var offset := p - centre
@@ -151,10 +217,8 @@ static func build(id: String, centre: Vector2, radii: PackedFloat32Array,
 	var colors := PackedColorArray()
 	var on_sheet := PackedByteArray()
 	for j in RINGS.size():
-		var s: float = RINGS[j]
 		for k in SIDES:
-			var p := centre + Vector2.from_angle(TAU * k / SIDES) \
-				* (radii[k] * (1.0 + minf(s, 0.0)) + maxf(s, 0.0) * width)
+			var p := ring_points[j * SIDES + k]
 			var rim := j == RINGS.size() - 1
 			vertices.append(Vector3(p.x, float(ground.call(p)) + (-RIM_SINK if rim else float(bump.call(p))), p.y))
 			# Lighting is the covered surface's own: a tilt by the mound's

@@ -526,6 +526,8 @@ func skirt(rock:Dictionary)->Dictionary:
   "height":func(p:Vector2)->float:return maxf(env.sample(p),float(terrain.height.call(p))),
   "normal":func(p:Vector2)->Vector3:return sheet_normal(p) if on_sheet.call(p) else terrain.normal.call(p),
   "tint":terrain.tint,"sheet":on_sheet}
+ # The terrain part samples in one batch (RockSkirt.prefetch_corners).
+ if terrain.has("prefetch"):surface["prefetch"]=terrain.prefetch
  var centre:=_base_centre(rock)
  var level:float=surface.height.call(centre)
  var half_height:=.5*bounds.y*t.basis.y.length()
