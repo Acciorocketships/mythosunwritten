@@ -12,6 +12,9 @@ const ATTEMPTS_PER_CLEARING := 24
 const SALT_CENTRE := 0x434C4552
 const SALT_FLOOR := 0x464C4F52
 const SALT_GROW := 0x47524F57
+const SALT_ANCHOR := 0x414E4348
+const SALT_SIZE := 0x53495A45
+const STREET_REACH := 6
 const FLOOR_STEP := 2
 const DECK_LEVEL_BANDS := 6
 
@@ -49,7 +52,12 @@ static func propose(world_seed: int, massif: WarrenMassif, excavation: WarrenExc
 	var empty := WarrenMazeSourcePlan.new(world_seed, profile, massif, excavation)
 	var blocked := WarrenPlotPlanner.blocked_columns(empty)
 	var street := street_distance(massif, excavation)
-	var candidates := _candidates(empty, street, blocked, character)
+	var by_band := {}
+	for cell: Vector3i in excavation.public_cells():
+		if not by_band.has(cell.y):
+			by_band[cell.y] = {}
+		by_band[cell.y][Vector2i(cell.x, cell.z)] = true
+	var candidates := _candidates(empty, street, blocked, character, by_band)
 	var taken := {}
 	var attempt := 0
 	while out.size() < wanted and attempt < wanted * ATTEMPTS_PER_CLEARING and not candidates.is_empty():
@@ -59,21 +67,22 @@ static func propose(world_seed: int, massif: WarrenMassif, excavation: WarrenExc
 			continue
 		var floor_band := int(centre.floor)
 		var shape := character.pick(&"clearing_shape", Vector2i(attempt, SALT_FLOOR))
-		var cells := _grow(empty, centre.column as Vector2i, floor_band, character.count(&"clearing_area"),
+		var area := character.count(&"clearing_area")
+		var cells := _grow(empty, centre.column as Vector2i, floor_band, area,
 			shape, blocked, taken, street, character, attempt)
-		if cells.size() < 4:
+		if cells.size() < maxi(4, area / 2):
 			continue
 		for column: Vector2i in cells:
 			taken[column] = true
 		var key := Vector2i(out.size(), floor_band)
-		out.append({"cells": cells, "floor": floor_band, "shape": shape,
+		out.append({"cells": cells, "floor": floor_band, "shape": shape, "area": area,
 			"purpose": character.pick(&"clearing_purpose", key),
 			"cover": character.pick(&"clearing_cover", key)})
 	return out
 
 
 static func _candidates(plan: WarrenMazeSourcePlan, street: Dictionary, blocked: Dictionary,
-		character: TownCharacter) -> Array[Dictionary]:
+		character: TownCharacter, by_band: Dictionary) -> Array[Dictionary]:
 	## (column, floor) pairs weighted by street distance ^ bias, ground x weight.
 	var out: Array[Dictionary] = []
 	var massif := plan.massif
@@ -89,10 +98,24 @@ static func _candidates(plan: WarrenMazeSourcePlan, street: Dictionary, blocked:
 		var high := massif.top_at(column)
 		var base_weight := pow(maxf(0.01, float(distance)), bias)
 		for floor_band in range(low, high + 1, FLOOR_STEP):
+			if floor_band != low and not _street_at_band(by_band, column, floor_band):
+				continue
 			if WarrenPlotReservations._deck_column_ok(plan, column, floor_band, {}, blocked, DECK_LEVEL_BANDS):
 				out.append({"column": column, "floor": floor_band,
 					"weight": base_weight * (ground if floor_band == low else 1.0)})
 	return out
+
+
+static func _street_at_band(by_band: Dictionary, column: Vector2i, floor_band: int) -> bool:
+	## A raised floor needs a public cell at exactly that band within reach, so a
+	## later stage can connect it.
+	var at: Dictionary = by_band.get(floor_band, {})
+	for dx in range(-STREET_REACH, STREET_REACH + 1):
+		var span := STREET_REACH - absi(dx)
+		for dz in range(-span, span + 1):
+			if at.has(column + Vector2i(dx, dz)):
+				return true
+	return false
 
 
 static func _weighted_pick(candidates: Array[Dictionary], r: float) -> Dictionary:
@@ -116,56 +139,66 @@ static func _legal(plan: WarrenMazeSourcePlan, column: Vector2i, floor_band: int
 static func _grow(plan: WarrenMazeSourcePlan, centre: Vector2i, floor_band: int, area: int,
 		shape: StringName, blocked: Dictionary, taken: Dictionary, street: Dictionary,
 		character: TownCharacter, attempt: int) -> Array[Vector2i]:
-	## 1-3 rectangles (each at least 2x2) or a blob of 2x2 blocks, grown from
-	## the centre. A piece is added whole or not at all, so every cell stays in
-	## a fully contained 2x2 block; the first piece must succeed.
-	var cells := {}
+	## The drawn shape caps the piece count: rect 1, two_rect 2, three_rect 3,
+	## blob up to area/4 2x2 blocks. Each piece (>= 2x2) is placed whole at the
+	## first legal offset of a seeded scan, the first containing the centre and
+	## later ones containing a cell beside the clearing. A piece that cannot be
+	## placed ends the growth; the caller judges the area reached.
 	var rect_count: int = {&"rect": 1, &"two_rect": 2, &"three_rect": 3}.get(shape, 0)
 	var pieces := rect_count if rect_count > 0 else maxi(1, area / 4)
-	var per_piece := maxi(4, area / (rect_count if rect_count > 0 else pieces)) if rect_count > 0 else 4
-	for piece in pieces * 3:
-		if piece >= pieces and (cells.size() >= area or cells.is_empty()):
-			break
-		var key := Vector3i(attempt, piece, SALT_GROW)
+	var per_piece := maxi(4, area / rect_count) if rect_count > 0 else 4
+	var memo := {}
+	var cells := {}
+	for piece in pieces:
+		var size_key := Vector4i(attempt, piece, SALT_GROW, SALT_SIZE)
+		var anchor_key := Vector4i(attempt, piece, SALT_GROW, SALT_ANCHOR)
 		var w := 2
 		var d := 2
 		if rect_count > 0:
-			w = 2 + int(character.roll(&"clearing_area", key) * maxf(1.0, sqrt(float(per_piece)) - 1.0))
+			w = 2 + int(character.roll(&"clearing_area", size_key) * maxf(1.0, sqrt(float(per_piece)) - 1.0))
 			d = maxi(2, per_piece / w)
-		var anchor := centre
+		var anchors: Array[Vector2i] = [centre]
 		if not cells.is_empty():
-			var keys := cells.keys()
+			anchors.clear()
+			var keys: Array = cells.keys()
 			keys.sort_custom(WarrenPlotPlanner.column_less)
-			anchor = keys[int(character.roll(&"clearing_shape", key) * float(keys.size())) % keys.size()]
-		# The rectangle's lower corner sits so the anchor is inside or touching it.
-		var lx := int(character.roll(&"clearing_cover", key) * float(w + 1)) - w
-		var lz := int(character.roll(&"clearing_purpose", key) * float(d + 1)) - d
-		var corner := anchor + Vector2i(lx, lz)
-		if not cells.is_empty() and rect_count == 0:
-			# Blobs grow by one 2x2 block touching the anchor cell's side.
-			var side := int(character.roll(&"clearing_extra_link_chance", key) * 4.0) % 4
-			var slide := int(character.roll(&"clearing_extra_link_chance", Vector3i(attempt, piece, SALT_FLOOR)) * 2.0) - 1
-			var offsets: Array[Vector2i] = [Vector2i(1, slide), Vector2i(slide, 1), Vector2i(-2, slide), Vector2i(slide, -2)]
-			corner = anchor + offsets[side]
-		var block: Array[Vector2i] = []
-		var legal := true
-		for x in w:
-			for z in d:
-				var column := corner + Vector2i(x, z)
-				if cells.has(column):
-					continue
-				if not _legal(plan, column, floor_band, blocked, taken, street):
-					legal = false
+			var start := int(character.roll(&"clearing_area", anchor_key) * float(keys.size()))
+			for i in keys.size():
+				var cell: Vector2i = keys[(start + i) % keys.size()]
+				for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+					if not cells.has(cell + direction):
+						anchors.append(cell + direction)
+		var placed := false
+		for anchor: Vector2i in anchors:
+			var offsets := w * d
+			var first := int(character.roll(&"clearing_area", Vector4i(anchor.x, anchor.y, piece, SALT_ANCHOR)) * float(offsets))
+			for i in offsets:
+				var o := (first + i) % offsets
+				var corner := anchor - Vector2i(o % w, o / w)
+				var block: Array[Vector2i] = []
+				var legal := true
+				for x in w:
+					for z in d:
+						var column := corner + Vector2i(x, z)
+						if cells.has(column):
+							continue
+						if not memo.has(column):
+							memo[column] = _legal(plan, column, floor_band, blocked, taken, street)
+						if not memo[column]:
+							legal = false
+							break
+						block.append(column)
+					if not legal:
+						break
+				if legal:
+					for column: Vector2i in block:
+						cells[column] = true
+					placed = true
 					break
-				block.append(column)
-			if not legal:
+			if placed:
 				break
-		if legal:
-			for column: Vector2i in block:
-				cells[column] = true
-		elif cells.is_empty():
-			if piece >= 6:
-				break
+		if not placed:
+			break
 	var out: Array[Vector2i] = []
 	out.assign(cells.keys())
 	out.sort_custom(WarrenPlotPlanner.column_less)

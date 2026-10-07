@@ -57,3 +57,24 @@ func test_thick_blocks_are_preferred() -> void:
 			all += float(street[column])
 			n += 1
 	assert_gt(chosen / maxf(1.0, float(count)), all / float(maxi(1, n)))
+
+func test_area_reached_and_floor_has_a_street_at_its_band() -> void:
+	for pair: Array in [[31, &"large"], [53, &"grand"], [12, &"compact"]]:
+		var s := _setup(pair[0], pair[1], 3.0)
+		var plan: WarrenMazeSourcePlan = s.plan
+		var by_band := {}
+		for cell: Vector3i in plan.excavation.public_cells():
+			if not by_band.has(cell.y):
+				by_band[cell.y] = {}
+			by_band[cell.y][Vector2i(cell.x, cell.z)] = true
+		for clearing: Dictionary in WarrenCourtClearings.propose(pair[0], plan.massif, plan.excavation, s.profile):
+			assert_gte(clearing.cells.size(), maxi(4, int(clearing.area) / 2), "%s area" % [pair])
+			var column: Vector2i = clearing.cells[0]
+			if int(clearing.floor) != plan.massif.bearing_at(column):
+				# The site's centre column is one of the cells and was the one checked.
+				var near := false
+				var at: Dictionary = by_band.get(int(clearing.floor), {})
+				for cell: Vector2i in clearing.cells:
+					for c: Vector2i in at:
+						near = near or absi(c.x - cell.x) + absi(c.y - cell.y) <= WarrenCourtClearings.STREET_REACH
+				assert_true(near, "raised floor has a street within reach")
