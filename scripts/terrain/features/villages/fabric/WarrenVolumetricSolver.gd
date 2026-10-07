@@ -2670,12 +2670,24 @@ static func maze_well_scale(volume: WarrenVolumePlan) -> float:
 	return TownCharacter.of(source.scale_profile, source.world_seed).value(WELL_SCALE_KNOB)
 
 
+## A green is raised when its floor stands more than this many bands above the
+## terrain on most of its columns (a plinth/deck; ordinary cut/fill is not).
+const RAISED_GREEN_BANDS := 1
+
+
+static func green_is_raised(floor_band: int, bearings: Array[int]) -> bool:
+	var high := 0
+	for bearing: int in bearings:
+		if floor_band - bearing > RAISED_GREEN_BANDS: high += 1
+	return high * 2 > bearings.size()
+
+
 static func maze_raised_green_cells(volume: WarrenVolumePlan) -> Dictionary:
 	## Town taste knobs task 4: the supporting cells (the cell under the walk
 	## plane, `_planned_plaza_support_cells`' convention) of every typed green
-	## -- the plaza and any clearing drawn as a green -- whose floor band is not
-	## the terrain bearing (`WarrenMassif.bearing_at`) on every one of its
-	## columns. A raised green is a deck, a terrace or a platform; a well only
+	## -- the plaza and any clearing drawn as a green -- whose floor stands more
+	## than RAISED_GREEN_BANDS above the terrain bearing (`WarrenMassif.bearing_at`)
+	## on more than half of its columns (cut/fill slopes stay ground). A raised green is a deck, a terrace or a platform; a well only
 	## makes sense on the ground, so it never gets one.
 	var out := {}
 	var source := volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
@@ -2686,10 +2698,9 @@ static func maze_raised_green_cells(volume: WarrenVolumePlan) -> Dictionary:
 			continue
 		var floor_band := int(plot["floor"])
 		var columns := WarrenMazeSourcePlan.deck_flat_columns(plot)
-		var ground := true
-		for column: Vector2i in columns:
-			if source.massif.bearing_at(column) != floor_band: ground = false
-		if ground: continue
+		var bearings: Array[int] = []
+		for column: Vector2i in columns: bearings.append(source.massif.bearing_at(column))
+		if not green_is_raised(floor_band, bearings): continue
 		for column: Vector2i in columns:
 			for offset: Vector3i in [Vector3i.ZERO, Vector3i.RIGHT, Vector3i.BACK, Vector3i(1, 0, 1)]:
 				out[Vector3i(column.x * 2, floor_band - 1, column.y * 2) + offset] = true

@@ -84,3 +84,11 @@ func test_well_scale_shrinks_the_well_and_stays_clear() -> void:
 func test_default_well_scale_is_one() -> void:
 	var profile := WarrenVillageScaleProfile.for_id(&"grand")
 	assert_eq(TownCharacter.of(profile, 53).value(&"well_scale"), 1.0)
+
+func test_sloped_ground_plaza_stays_eligible_and_a_plinth_is_raised() -> void:
+	# Floor 3 over a hillside: 2 columns at 3, 4 at 2, 2 cut to 0 -- only the
+	# two deepest cuts stand more than one band under the floor.
+	assert_false(WarrenVolumetricSolver.green_is_raised(3, [3, 3, 2, 2, 2, 2, 0, 0] as Array[int]))
+	assert_true(WarrenVolumetricSolver.green_is_raised(9, [0, 0, 0, 0, 0, 0, 0, 0, 0] as Array[int]))
+	assert_true(WarrenVolumetricSolver.green_is_raised(2, [0, 0, 0, 0] as Array[int]))
+	assert_false(WarrenVolumetricSolver.green_is_raised(2, [0, 0, 1, 1, 2, 2] as Array[int]), "exactly half is not more than half")
