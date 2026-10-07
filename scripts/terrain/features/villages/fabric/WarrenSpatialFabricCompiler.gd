@@ -138,10 +138,16 @@ static func _planned_plaza_support_cells(source: WarrenSpatialPlan) \
 		as WarrenMazeSourcePlan
 	if maze == null:
 		return out
+	# The primary plaza is declared first: `maze_green_components` keeps
+	# declaration order, so the plaza's centre feature is always chosen first.
+	var greens: Array[Dictionary] = []
 	for plot_value: Variant in maze.plots:
 		var plot := plot_value as Dictionary
-		if not WarrenPlotReservations.is_green_court(plot):
-			continue
+		if StringName(plot.get("id", &"")) == WarrenPlotReservations.PLAZA_PLOT_ID:
+			greens.push_front(plot)
+		elif WarrenPlotReservations.is_green_court(plot):
+			greens.append(plot)
+	for plot: Dictionary in greens:
 		var floor_band := int(plot["floor"])
 		for column: Vector2i in WarrenMazeSourcePlan.deck_flat_columns(plot):
 			var origin := Vector3i(column.x * 2, floor_band - 1,
@@ -2187,7 +2193,9 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		"maze_plaza_centre_feature_count": plaza_features.size(),
 		"maze_green_component_count": SettlementFabricAssembler.maze_green_components(plaza).size(),
 		"maze_plaza_centre_features": plaza_features.map(func(f: Dictionary) -> Dictionary:
-			return {"asset": StringName(f.asset), "cell": f.cell as Vector3i}),
+			return {"asset": StringName(f.asset), "cell": f.cell as Vector3i,
+				"boxes": SettlementFabricAssembler.maze_plaza_feature_boxes(f,
+					footprints, plan.world_seed)}),
 		"maze_plaza_centre_feature_asset": StringName(
 			plaza_feature.get("asset", &"")),
 		"maze_garden_planting_count": planting_instances,

@@ -5656,13 +5656,12 @@ static func maze_plaza_cells_for(plan: SettlementFabricPlan,
 
 static func maze_green_components(plaza: Dictionary) -> Array[Dictionary]:
 	## The separate greens of a plaza cell set: lateral (4-neighbour, one band)
-	## components, each a cell set, ordered by their lowest sorted cell.
+	## components, each a cell set, in DECLARATION order -- the order their
+	## first cell was inserted. The compiler declares the primary plaza first
+	## (`_planned_plaza_support_cells`), so it is always component 0.
 	var out: Array[Dictionary] = []
 	var seen: Dictionary = {}
-	var cells: Array[Vector3i] = []
-	cells.assign(plaza.keys())
-	cells.sort_custom(_cell_before)
-	for start: Vector3i in cells:
+	for start: Vector3i in plaza.keys():
 		if seen.has(start):
 			continue
 		var component := {start: true}
@@ -5690,12 +5689,42 @@ static func maze_plaza_centre_features(plaza: Dictionary,
 	## chosen inside its own cells by `maze_plaza_centre_feature` with its own
 	## cell-keyed roll, so the primary plaza keeps exactly the piece it has with
 	## no other green beside it and every green clearing gets one where it fits.
+	##
+	## Components are taken in declaration order (the primary plaza first, so
+	## its piece is chosen against exactly today's obstacles). Each chosen
+	## feature's measured boxes then join the obstacles of every later green,
+	## so no two centre features can overlap across a narrow gap or a stack.
 	var out: Array[Dictionary] = []
+	var obstacles := skin.duplicate()
 	for component: Dictionary in maze_green_components(plaza):
 		var feature := maze_plaza_centre_feature(component, entries, footprints,
-			skin, walked, planted_island, world_seed)
+			obstacles, walked, planted_island, world_seed)
 		if not feature.is_empty():
 			out.append(feature)
+			obstacles.append_array(maze_plaza_feature_boxes(feature, footprints,
+				world_seed))
+	return out
+
+
+static func maze_plaza_feature_boxes(feature: Dictionary,
+		footprints: Dictionary, world_seed: int) -> Array[AABB]:
+	## The measured world boxes `_maze_plaza_feature_is_clear` tests for one
+	## chosen centre feature: the piece itself and, for a stall, its goods.
+	var out: Array[AABB] = []
+	var asset_bounds := footprints.get("asset_bounds", {}) as Dictionary
+	var asset := StringName(feature.asset)
+	var origin := feature.origin as Vector3
+	var yaw := float(int(feature.quarter)) * PI * 0.5
+	if asset_bounds.has(asset):
+		out.append(Transform3D(Basis(Vector3.UP, yaw).scaled(Vector3.ONE \
+			* float(feature.get("scale", 1.0))), origin) * (asset_bounds[asset] as AABB))
+	if STALL_CANOPIES.has(asset):
+		var cell := feature.cell as Vector3i
+		for goods: Dictionary in maze_stall_goods(asset, origin, yaw,
+				Vector4i(cell.x, cell.y, cell.z, 2), world_seed):
+			if asset_bounds.has(StringName(goods.asset)):
+				out.append((goods.transform as Transform3D) \
+					* (asset_bounds[StringName(goods.asset)] as AABB))
 	return out
 
 

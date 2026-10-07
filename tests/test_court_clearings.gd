@@ -338,3 +338,22 @@ func test_every_green_gets_its_own_centre_feature_and_the_plaza_keeps_its_own() 
 	assert_false((off.plaza_feature as Dictionary).is_empty())
 	if on.plaza_columns == off.plaza_columns:
 		assert_eq(on.plaza_feature, off.plaza_feature, "the plaza keeps its own centrepiece")
+
+func _assert_centre_features_never_overlap(seed_value: int, scale: StringName) -> void:
+	var on := _green_features(seed_value, scale, 3.0)
+	var features: Array = (on.facts as Dictionary).get("maze_plaza_centre_features", [])
+	assert_gte(features.size(), 2, "%d/%s furnishes more than one green" % [seed_value, scale])
+	for i in features.size():
+		assert_false((features[i].boxes as Array).is_empty())
+		for j in range(i + 1, features.size()):
+			for a: AABB in features[i].boxes:
+				for b: AABB in features[j].boxes:
+					assert_false(SettlementFabricAssembler._boxes_share_volume(a, b),
+						"%d/%s centre features %s and %s overlap" % [seed_value, scale,
+							features[i].asset, features[j].asset])
+
+func test_centre_features_never_overlap_103_standard() -> void:
+	_assert_centre_features_never_overlap(103, &"standard")
+
+func test_centre_features_never_overlap_53_grand() -> void:
+	_assert_centre_features_never_overlap(53, &"grand")
