@@ -11,7 +11,7 @@ func test_small_islands_keep_open_ground_while_large_islands_allow_markets():
    var bed := {}
    for x in width:
     for z in width: bed[Vector3i(x+offset*8,0,z)] = true
-   var feature := SettlementFabricAssembler.maze_plaza_centre_feature(bed,{}, {'asset_bounds':bounds},[],{},true)
+   var feature := SettlementFabricAssembler.maze_plaza_centre_feature(bed,{}, {'asset_bounds':bounds},[],{},true,1)
    assert_false(feature.is_empty())
    if feature.get('asset', &'') == SettlementFabricAssembler.PLAZA_MARKET_STALL:
     if width == 3: fail_test('A canopy must not roof most of a small planting island')

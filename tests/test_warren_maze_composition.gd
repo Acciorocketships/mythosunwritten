@@ -6031,7 +6031,7 @@ func test_the_square_s_feature_stands_in_its_middle() -> void:
 		var entries := SettlementFabricAssembler.maze_plaza_entries(plaza,
 			walked)
 		var feature := SettlementFabricAssembler.maze_plaza_centre_feature(
-			plaza, entries)
+			plaza, entries, {}, [] as Array[AABB], {}, false, 1)
 		if feature.is_empty():
 			continue
 		checked += 1
@@ -6112,11 +6112,11 @@ func test_a_public_turf_square_cannot_gain_late_furniture_or_planting() -> void:
 			plaza[support] = true
 			walked[support + Vector3i.UP] = true
 	var feature := SettlementFabricAssembler.maze_plaza_centre_feature(plaza,
-		{}, {}, [] as Array[AABB], walked)
+		{}, {}, [] as Array[AABB], walked, false, 1)
 	assert_true(feature.is_empty(),
 		"a source-planned public square may not acquire a late centre obstacle")
 	var sites := SettlementFabricAssembler.maze_garden_planting_sites(plaza,
-		plaza, {}, {}, {}, {}, [] as Array[AABB], walked)
+		plaza, {}, {}, {}, {}, [] as Array[AABB], walked, 1)
 	assert_eq(sites.size(), 0,
 		"public turf cells may not acquire boundary planting after route proof")
 

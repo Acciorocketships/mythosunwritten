@@ -9,7 +9,7 @@ func test_tree_can_use_an_l_shaped_bed_without_occupying_the_door_approach():
 	for asset: StringName in SettlementFabricAssembler.PLAZA_COURT_TREES:
 		bounds[asset] = catalog.descriptor(asset).measured_aabb
 	var feature := SettlementFabricAssembler.maze_plaza_centre_feature(
-		bed, {}, {"asset_bounds": bounds}, [], {}, true
+		bed, {}, {"asset_bounds": bounds}, [], {}, true, 1
 	)
 	assert_false(
 		feature.is_empty(), "The doorway notch must not discard a tree whose measured roots fit"
@@ -39,7 +39,7 @@ func test_notched_bed_never_overrides_an_entrance_or_a_roof():
 	assert_true(
 		(
 			SettlementFabricAssembler
-			. maze_plaza_centre_feature(bed, {}, blocked, [], {}, true)
+			. maze_plaza_centre_feature(bed, {}, blocked, [], {}, true, 1)
 			. is_empty()
 		),
 		"A building can rule out every measured tree"
@@ -47,7 +47,7 @@ func test_notched_bed_never_overrides_an_entrance_or_a_roof():
 	assert_true(
 		(
 			SettlementFabricAssembler
-			. maze_plaza_centre_feature(bed, bed, {"asset_bounds": bounds}, [], {}, true)
+			. maze_plaza_centre_feature(bed, bed, {"asset_bounds": bounds}, [], {}, true, 1)
 			. is_empty()
 		),
 		"Public entrances own their cells even when the remaining planting has no tree"
@@ -68,7 +68,7 @@ func test_large_planted_islands_use_living_canopies_instead_of_the_bare_centre_t
 			for z in 3:
 				bed[Vector3i(x + offset * 4, 0, z)] = true
 		var feature := SettlementFabricAssembler.maze_plaza_centre_feature(
-			bed, {}, {"asset_bounds": bounds}, [], {}, true
+			bed, {}, {"asset_bounds": bounds}, [], {}, true, 1
 		)
 		assert_false(feature.is_empty())
 		if feature.is_empty():

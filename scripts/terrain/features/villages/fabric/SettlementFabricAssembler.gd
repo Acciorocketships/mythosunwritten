@@ -1210,9 +1210,9 @@ const SKYWALK_ENCLOSURE_HEAD_BANDS := 2
 const SKYWALK_UNDERCUT_BANDS := 1
 ## The salt the seeded order below is drawn with, in the same idiom the garden
 ## dressing uses (`_face_noise`).
-const SKYWALK_ORDER_SALT := 31
 ## Skywalk candidate order is LAYOUT, not dressing: its `_face_noise` calls pass
 ## seed 0 on purpose so source/layout hashes stay unchanged.
+const SKYWALK_ORDER_SALT := 31
 const LAMP_ORDER_SALT := 0x4C414D50
 const FURNITURE_ORDER_SALT := 0x46555252
 const FACADE_MODULE_SALT := 0x4D4F4455
@@ -4963,7 +4963,7 @@ static func maze_perimeter_frontage(retained: Dictionary, solids: Dictionary,
 
 
 static func maze_perimeter_frontage_from_sites(sites: Array[Dictionary],
-		world_seed: int = 0) \
+		world_seed: int) \
 		-> EnvironmentInstancePayload:
 	## Materialize an already-qualified optional frontage set.  Site selection,
 	## terrain qualification, and rendering remain separate transactions: the
@@ -5012,7 +5012,7 @@ static func maze_perimeter_frontage_transform(site: Dictionary) -> Transform3D:
 
 
 static func maze_stall_goods(canopy: StringName, anchor: Vector3, yaw: float,
-		key: Vector4i, world_seed: int = 0) -> Array[Dictionary]:
+		key: Vector4i, world_seed: int) -> Array[Dictionary]:
 	## TASK I4 ROUND 5, ITEM 2 -- "the market stall is not one of the stocked
 	## ones; it is empty. we should use the stocked ones."
 	##
@@ -5653,10 +5653,10 @@ static func maze_plaza_cells_for(plan: SettlementFabricPlan,
 
 
 static func maze_plaza_centre_feature(plaza: Dictionary,
-		entries: Dictionary, footprints: Dictionary = {},
-		skin: Array[AABB] = [] as Array[AABB],
-		walked: Dictionary = {}, planted_island := false,
-		world_seed: int = 0) -> Dictionary:
+		entries: Dictionary, footprints: Dictionary,
+		skin: Array[AABB],
+		walked: Dictionary, planted_island: bool,
+		world_seed: int) -> Dictionary:
 	## TASK I3 -- WHAT STANDS IN THE MIDDLE OF THE SQUARE, as
 	## `{asset, cell, origin, quarter, cells}`, or empty when the green has no
 	## room for one.
@@ -5893,7 +5893,7 @@ static func maze_plaza_underplants(feature: Dictionary, footprints: Dictionary,
 
 
 static func _maze_plaza_feature_is_clear(feature: Dictionary,
-		footprints: Dictionary, skin: Array[AABB], world_seed: int = 0) -> bool:
+		footprints: Dictionary, skin: Array[AABB], world_seed: int) -> bool:
 	if feature.is_empty():
 		return false
 	var asset := StringName(feature.asset)
@@ -6375,11 +6375,11 @@ static func maze_decor_fits(half_free: Vector2, asset: StringName,
 
 
 static func maze_garden_dressing(retained: Dictionary, solids: Dictionary,
-		paved: Dictionary = {}, plinths: Dictionary = {},
-		walked: Dictionary = {}, shell: Dictionary = {},
-		footprints: Dictionary = {}, planned_plaza: Dictionary = {},
-		skin: Array[AABB] = [] as Array[AABB],
-		selected_ground: Dictionary = {}, world_seed: int = 0) \
+		paved: Dictionary, plinths: Dictionary,
+		walked: Dictionary, shell: Dictionary,
+		footprints: Dictionary, planned_plaza: Dictionary,
+		skin: Array[AABB],
+		selected_ground: Dictionary, world_seed: int) \
 		-> EnvironmentInstancePayload:
 	## TASK I2 -- WHAT MAKES A BENCH TOP A YARD. The cap is the ground and the
 	## rim is its edge; this is what stands on it.
@@ -6512,9 +6512,9 @@ static func maze_garden_decor_id(site: Dictionary) -> StringName:
 
 static func maze_garden_planting_sites(garden: Dictionary, plaza: Dictionary,
 		entries: Dictionary, reserved: Dictionary, treatments: Dictionary,
-		footprints: Dictionary = {},
-		skin: Array[AABB] = [] as Array[AABB],
-		walked: Dictionary = {}, world_seed: int = 0) -> Array[Dictionary]:
+		footprints: Dictionary,
+		skin: Array[AABB],
+		walked: Dictionary, world_seed: int) -> Array[Dictionary]:
 	## TASK I4 ROUND 5 -- WHAT GROWS WHERE, as records rather than instances, so
 	## the audit and the payload count the same thing (the frontage channel's own
 	## shape). A refused site is the one this round added: a cell whose odds roll
@@ -6648,7 +6648,7 @@ static func _station_order(salt: int, world_seed: int) -> Callable:
 
 static func maze_garden_lamp_sites(garden: Dictionary, entries: Dictionary,
 		reserved: Dictionary, treatments: Dictionary, footprints: Dictionary,
-		skin: Array[AABB], walked: Dictionary, world_seed: int = 0) -> Array[Dictionary]:
+		skin: Array[AABB], walked: Dictionary, world_seed: int) -> Array[Dictionary]:
 	## One fixed native post per selected two-cell garden station beside a walk.
 	## These cells already own supporting ground; public floors, thresholds,
 	## centre features and occupied air never enter the available station domain.
@@ -6696,7 +6696,7 @@ static func maze_garden_lamp_sites(garden: Dictionary, entries: Dictionary,
 static func maze_garden_furniture_sites(garden: Dictionary, entries: Dictionary,
 		reserved: Dictionary, treatments: Dictionary, footprints: Dictionary,
 		skin: Array[AABB], walked: Dictionary, occupied: Dictionary,
-		world_seed: int = 0) -> Array[Dictionary]:
+		world_seed: int) -> Array[Dictionary]:
 	## Native seating/storage belongs to supported unwalked private garden edges.
 	## Each station claims its whole rectangular footprint before later planting.
 	## Fixed local arrangements are checked together; no prop is nudged into a path.

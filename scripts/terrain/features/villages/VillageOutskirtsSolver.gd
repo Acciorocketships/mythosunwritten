@@ -1902,10 +1902,11 @@ static func _market_stalls(terrain: VillageTerrainView,
 			Vector3.ONE * prefab_scale), Vector3(origin.x, base_y, origin.y))
 		entries.append({"asset_id": asset, "stable_id": stable_id,
 			"transform": transform})
+		# outskirts are off in production; no world seed reaches this solver
 		for goods: Dictionary in SettlementFabricAssembler.maze_stall_goods(
 				asset, Vector3.ZERO, 0.0, Vector4i(roundi(origin.x),
 					site_index, roundi(origin.y),
-					String(settlement_id).hash() & 0xffff)):
+					String(settlement_id).hash() & 0xffff), 0):
 			entries.append({"asset_id": StringName(goods.asset),
 				"stable_id": StringName("%s.%s" % [stable_id,
 					String(goods.station)]),

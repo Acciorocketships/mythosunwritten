@@ -45,7 +45,7 @@ func test_upper_square_reserves_a_supported_planting_island_inside_its_walk() ->
 	var ground := SettlementFabricAssembler.maze_ground_skin_transaction(fabric)
 	var entries := SettlementFabricAssembler.maze_plaza_entries(fabric.planned_plaza_cells,ground.walked)
 	var feature := SettlementFabricAssembler.maze_plaza_centre_feature(fabric.planned_plaza_cells,
-		entries,ground.footprints,SettlementFabricAssembler.maze_skin_panel_boxes_for(fabric),ground.walked,true)
+		entries,ground.footprints,SettlementFabricAssembler.maze_skin_panel_boxes_for(fabric),ground.walked,true,1)
 	assert_false(feature.is_empty(),"the reserved island receives a measured centre feature")
 	if not feature.is_empty():
 		assert_true(feature.asset in [&"lpfv.tree.01",&"lpfv.tree.02"],"new courtyard islands use leafy shade trees")

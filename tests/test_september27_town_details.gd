@@ -45,7 +45,7 @@ func test_a_stall_and_its_dressing_become_one_kit_stall() -> void:
 		var at := Transform3D(Basis.IDENTITY, Vector3(3.0, 0.0, -6.0))
 		source.add(canopy, at, Color.WHITE, &"stall")
 		for goods: Dictionary in SettlementFabricAssembler.maze_stall_goods(canopy,
-				at.origin, 0.0, Vector4i(1, 0, 2, 0)):
+				at.origin, 0.0, Vector4i(1, 0, 2, 0), 1):
 			source.add(StringName(goods.asset), goods.transform, Color.WHITE,
 				StringName("stall/%s" % goods.station))
 		var out := KitSubstitution.apply(source)

@@ -54,7 +54,7 @@ func _check_native_court(seed_value: int) -> void:
 	var transaction := SettlementFabricAssembler.maze_ground_skin_transaction(fabric)
 	var feature := SettlementFabricAssembler.maze_plaza_centre_feature(fabric.planned_plaza_cells,
 		SettlementFabricAssembler.maze_plaza_entries(fabric.planned_plaza_cells,transaction.walked),transaction.footprints,
-		SettlementFabricAssembler.maze_skin_panel_boxes_for(fabric),transaction.walked,true)
+		SettlementFabricAssembler.maze_skin_panel_boxes_for(fabric),transaction.walked,true,1)
 	assert_false(feature.is_empty(),"seed %d has no preliminary court tree" % seed_value)
 	if feature.is_empty(): return
 	# Validate the emitted tree after the final native roof-clearance pass.
