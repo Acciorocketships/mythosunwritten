@@ -34,7 +34,7 @@ const SUBURB_KNOB := &"suburb_house_count"
 ## stays under the 12-cell area of a one-storey house (see _classify_lobes).
 const SUBURB_BAND := Vector2(1.0, 1.4)
 const SUBURB_MAX_WIDTH := 3.6
-const SUBURB_TRIES := 4
+const SUBURB_TRIES := 8
 const SUBURB_STEP := 0.5
 ## Columns of open ground between a detached cottage and other town mass.
 const COTTAGE_CLEARANCE := 2
@@ -125,11 +125,12 @@ static func sample(seed_value: int, profile: WarrenVillageScaleProfile) -> Dicti
 	var raw_at: Dictionary = {}
 	var house_columns: Dictionary = {}
 	var extent := ceili(radius * BASE_EXTENT)
-	if central_green or reach_scale > 1.0:
+	var suburbs := lobes.any(func(lobe: Dictionary) -> bool: return bool(lobe.get("suburb", false)))
+	if central_green or reach_scale > 1.0 or suburbs:
 		for lobe: Dictionary in lobes:
 			var lobe_reach: float = (lobe.centre as Vector2).length() + (lobe.width as Vector2).length()
 			extent = maxi(extent,ceili(lobe_reach))
-		if reach_scale > 1.0:
+		if reach_scale > 1.0 or suburbs:
 			extent = mini(extent, maximum_sample_extent(radius))
 	for z in range(-extent, extent + 1):
 		for x in range(-extent, extent + 1):
@@ -272,9 +273,9 @@ static func _add_suburb_lobes(lobes: Array[Dictionary], clearings: Array[Diction
 				"suburb": true}
 			# Just outside the core edge: start in the 1.0-1.4 radius band and
 			# step outwards to the first spot with a clear ring round the
-			# cottage, never past the sampled box.
+			# cottage, never past the discovery bound (maximum_sample_extent).
 			var reach := float(ceili((lobe.width as Vector2).length() * 1.5) + 1)
-			var limit := radius * BASE_EXTENT - reach
+			var limit := float(maximum_sample_extent(radius)) - reach
 			var distance := radius * lerpf(SUBURB_BAND.x, SUBURB_BAND.y, roll.call(3))
 			var placed := false
 			while distance <= limit:
@@ -329,13 +330,18 @@ static func _has_clear_ring(lobe: Dictionary, lobes: Array[Dictionary]) -> bool:
 
 
 ## Admission of a detached cottage's site (task 6): no column within
-## COTTAGE_CLEARANCE of its house and garden belongs to another lobe's own
-## mass (owner by strongest influence, standing on its own height).
+## COTTAGE_CLEARANCE of its house and of its garden on its own mound belongs
+## to another lobe's own mass (owner by strongest influence, standing on its
+## own height).
 static func _site_ring_is_clear(site: Dictionary, garden: Dictionary,
 		lobes: Array[Dictionary], solid: Dictionary) -> bool:
-	var own: Dictionary = (site.cells as Dictionary).duplicate()
-	own.merge(garden)
+	# The garden as far as the cottage's own mound reaches: beyond it the
+	# garden runs along the low shoulder that joins the cottage to the town.
 	var lobe_index := int(site.lobe)
+	var own: Dictionary = (site.cells as Dictionary).duplicate()
+	var mound := _footprint(lobes[lobe_index])
+	for column: Vector2i in garden:
+		if mound.has(column): own[column] = true
 	for column: Vector2i in own:
 		for d in range(-COTTAGE_CLEARANCE, COTTAGE_CLEARANCE + 1):
 			for e in range(-COTTAGE_CLEARANCE, COTTAGE_CLEARANCE + 1):

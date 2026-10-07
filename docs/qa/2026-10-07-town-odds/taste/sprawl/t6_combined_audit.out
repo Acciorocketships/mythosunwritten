@@ -1,0 +1,3 @@
+RANGE_AUDIT {"floating":0,"joins":1,"ms":21147,"profile":"standard","roof":{"area":0.0,"gable_area":16.8063845503584,"gable_contacts":1156,"intrusions":0,"triangles":504669},"seed":13,"valid_payload":true}
+RANGE_AUDIT {"floating":0,"joins":0,"ms":136949,"profile":"grand","roof":{"area":0.0,"gable_area":13.4745054230702,"gable_contacts":1153,"intrusions":0,"triangles":1255812},"seed":53,"valid_payload":true}
+RANGE_AUDIT {"floating":0,"joins":0,"ms":16545,"profile":"compact","roof":{"area":0.0,"gable_area":8.66928418288649,"gable_contacts":585,"intrusions":0,"triangles":597264},"seed":7,"valid_payload":true}

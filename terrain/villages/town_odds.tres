@@ -167,7 +167,7 @@ at_large = 1.0
 spread = 0.0
 clamp_min = 0.3
 clamp_max = 1.5
-notes = "Town taste knobs (Oct 7) task 6: multiplies how far the town field's satellite lobes stand from the town centre (radius x spread x 0.75..1.2), the gap clearings between them, and (up to 1.0) the central-green ring (1.25..MAX_GREEN_REACH x radius). Applied after the field's own draws, so no other roll moves. Below 1 pulls satellite houses and districts in toward the core. 1 = today."
+notes = "Town taste knobs (Oct 7) task 6: multiplies how far the town field's satellite lobes stand from the town centre (radius x spread x 0.75..1.2), the gap clearings between them, and (up to 1.0) the central-green ring (1.25..MAX_GREEN_REACH x radius). Applied after the field's own draws, so no other roll moves, but the whole layout follows the lobes (shoulders, house/massif classification, terraces, streets), so a changed reach reshapes the town, not just its satellites. The central-green ring is capped at 1.0 (a wider ring would leave the discovery bound). A house lobe pushed against other mass (no clear 2-column ring) is refused as a cottage site, never the town. Below 1 pulls satellite houses and districts in toward the core. 1 = today."
 
 [sub_resource type="Resource" id="suburb_house_count"]
 script = ExtResource("2")
@@ -178,7 +178,7 @@ at_large = 0.0
 spread = 0.0
 clamp_min = 0.0
 clamp_max = 12.0
-notes = "Town taste knobs (Oct 7) task 6: up to this many small one-storey house lobes in an annulus 1.0-1.4 x radius round the town centre (a suburban band of detached cottages between the dense core and the countryside), drawn after every other lobe on this knob's own stream. A candidate overlapping another lobe is redrawn (4 tries); survivors become house sites through the ordinary house-site admission (a whole 2x2 block, a garden of 4+ columns, clear of the raised district), so steep, wet or crowded ground drops them. 0 = today."
+notes = "Town taste knobs (Oct 7) task 6: up to this many small one-storey house lobes in an annulus 1.0-1.4 x radius round the town centre (a suburban band of detached cottages between the dense core and the countryside), drawn after every other lobe on this knob's own stream. Each steps outward from its drawn 1.0-1.4 radius to the first spot with a clear 2-column (Chebyshev) ring between its footprint and every other lobe's, inside the sampled box; a direction with no such spot is redrawn (4 tries), then the cottage is dropped (never the town); survivors become house sites through the ordinary house-site admission (a whole 2x2 block, a garden of 4+ columns, clear of the raised district), so steep, wet or crowded ground drops them. 0 = today."
 
 [sub_resource type="Resource" id="lone_house_path_chance"]
 script = ExtResource("2")
