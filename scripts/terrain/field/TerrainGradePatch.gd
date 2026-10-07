@@ -29,6 +29,9 @@ class Controls extends RefCounted:
 	var search_radius := 0
 	var pitch: float
 	var fallback: float
+	## Guards `values` (claim_height memo) and the owning patch's bake cache;
+	## held only around dictionary get/put, never while computing.
+	var lock := Mutex.new()
 	func _init(p_values: Dictionary, p_pitch: float, p_fallback: float) -> void:
 		source_values = p_values
 		values = p_values.duplicate()
@@ -49,8 +52,11 @@ class Controls extends RefCounted:
 				result = minf(result, claim_height(lo + Vector2i(1, 1)))
 		return result
 	func claim_height(cell: Vector2i) -> float:
-		if values.has(cell):
-			return float(values[cell])
+		lock.lock()
+		var known: Variant = values.get(cell)
+		lock.unlock()
+		if known != null:
+			return float(known)
 		# Stable nearest-source extrapolation for the boundary controls only.
 		# Ghost controls are memoized on demand; unused house proposals no longer
 		# allocate the entire village's expanded collar.
@@ -61,9 +67,14 @@ class Controls extends RefCounted:
 						continue
 					var key := cell + Vector2i(dx,dz)
 					if source_values.has(key):
-						values[cell] = source_values[key]
-						return float(values[cell])
+						var found := float(source_values[key])
+						lock.lock()
+						values[cell] = found
+						lock.unlock()
+						return found
+		lock.lock()
 		values[cell] = fallback
+		lock.unlock()
 		return fallback
 	func is_carved(_x: int, _z: int) -> bool:
 		return false
@@ -86,8 +97,6 @@ const SURFACE_CACHE_LIMIT := 32768
 var _surface_cache: Dictionary = {}
 ## Shared by chunk tails on pool threads; held only around the memo access.
 var _surface_lock := Mutex.new()
-## Guards the per-instance `_target_cache` dictionaries (short critical sections).
-static var _cache_lock := Mutex.new()
 var native_control_cache: Dictionary = {}
 ## Construction cells (NativeTerrainGrade.construction_cells) per plan.
 var native_construction_cache: Dictionary = {}
@@ -432,12 +441,12 @@ static func _sample(controls: Controls, cache: Dictionary, point: Vector2) -> fl
 	var owner := Vector2i(TerrainTileField.point_of(point.x, controls),
 		TerrainTileField.point_of(point.y, controls))
 	# Lock only around the dictionary; a duplicate deterministic bake is fine.
-	_cache_lock.lock()
+	controls.lock.lock()
 	var baked: Variant = cache.get(owner)
-	_cache_lock.unlock()
+	controls.lock.unlock()
 	if baked == null:
 		baked = TerrainTileField.bake_point(controls, owner)
-		_cache_lock.lock()
+		controls.lock.lock()
 		cache[owner] = baked
-		_cache_lock.unlock()
+		controls.lock.unlock()
 	return TerrainTileField.sample_baked(baked, owner, point.x, point.y, controls)

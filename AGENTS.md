@@ -37,6 +37,9 @@
 > (run_turn dt p95 +2.5 ms, >10 ms frames) and fill-in lag 12-22 tiles, so they were not shipped.
 > `EnvironmentCommitQueue.visibility_range` fades sparse grass/flower dressing at `GRASS_RADIUS + 6`.
 > `frame_feel_profile` samples `pending_tiles()` every 10th frame (it sorts the ring).
+> `GrassWorkQueue.WORKERS` is 1 (N-worker path kept; raise if a wider ring ships). `set_radii` at
+> runtime only affects newly streamed tiles: use `--grass-radius` or set before the world starts.
+>
 > October 5 nature style (owner: try the Meadow and Farmlands packs; branch `meadow-nature`).
 > Ambient trees, bushes, flowers, plants, cliff tufts, toadstools, logs and stumps now come from
 > ANGRY MESH Meadow (`tools/environment_bake/manifests/angry_mesh_meadow_nature.json`, ids

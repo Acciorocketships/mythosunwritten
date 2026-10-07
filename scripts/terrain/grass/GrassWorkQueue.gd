@@ -1,12 +1,18 @@
 class_name GrassWorkQueue
 extends RefCounted
 
-## WORKERS visual workers consume detached sampling data only. They never enter
-## the canonical terrain, road or water planners and never create render
-## resources. Every static/lazy cache GrassField.compute reaches is either
-## pre-initialized in _init (BiomeRegistry) or locked (Helper noise corners,
-## HeightfieldRegion/WaterFieldContext memos); the rest is per-call.
-const WORKERS := 2
+## `workers` visual workers consume detached sampling data only. They never
+## enter the canonical terrain, road or water planners and never create render
+## resources. Shared caches GrassField.compute reaches are either
+## pre-initialized in _init (BiomeRegistry) or guarded by short get/put locks
+## (Helper noise corners, HeightfieldRegion/WaterFieldContext memos,
+## TerrainGradePatch bake/claim memos); the rest is per-call.
+## WORKERS is 1: at the shipped 60/84 m ring a second worker bought nothing.
+## Raise it (the N-worker path is exercised by tests) if a wider ring ships.
+const WORKERS := 1
+## Test hook: while true, workers park after claiming a job (tile is active).
+var hold_workers := false
+var _worker_count := WORKERS
 var _program: GrassProgram
 var _seed: int
 var _threads: Array[Thread] = []
@@ -21,12 +27,13 @@ var _done: Array[Dictionary] = []
 var _started := 0
 var _cancelled := 0
 
-func _init(program: GrassProgram, seed_value: int) -> void:
+func _init(program: GrassProgram, seed_value: int, workers: int = WORKERS) -> void:
+	_worker_count = workers
 	_program = program
 	_seed = seed_value
 	# All shared biome metadata is initialized before either worker reads it.
 	BiomeRegistry.max_foliage_density()
-	for index in WORKERS:
+	for index in _worker_count:
 		var thread := Thread.new()
 		var err := thread.start(_work)
 		assert(err == OK)
@@ -94,7 +101,7 @@ func stop() -> void:
 	_jobs.clear()
 	_queued.clear()
 	_mutex.unlock()
-	for index in WORKERS: _sem.post()
+	for index in _worker_count: _sem.post()
 	for thread: Thread in _threads:
 		if thread.is_started(): thread.wait_to_finish()
 	_done.clear()
@@ -122,6 +129,8 @@ func _work() -> void:
 		_active[job.tile] = true
 		_started += 1
 		_mutex.unlock()
+		while hold_workers and not _exit:
+			OS.delay_msec(1)
 		var started := Time.get_ticks_usec()
 		var sampling: GrassSamplingContext = job.sampling
 		var payload := GrassField.compute(_program,_seed,job.tile,

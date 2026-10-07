@@ -113,3 +113,56 @@ func test_the_lower_claim_stays_flat_and_owns_no_transition() -> void:
 	assert_eq(patch.surface_y(Vector2(3.0, 1.5), 0.0), 7.0)
 	assert_eq(patch.height_bounds(Rect2(-1.5, -1.5, 3.0, 6.0), Vector2(0, 9)), Vector2(4, 4),
 		"the lower claim's bounds are exact")
+
+
+func _nonuniform_patch() -> TerrainGradePatch:
+	return TerrainGradePatch.new(&"concurrent",
+		{Vector2i(-2,0): 4.0, Vector2i(2,0): 8.0, Vector2i(0,3): 12.0}, Vector2.ZERO, 3.0)
+
+
+func _concurrent_points() -> Array[Vector2]:
+	var points: Array[Vector2] = []
+	for z in range(-40, 41):
+		for x in range(-40, 41):
+			points.append(Vector2(x, z) * 0.9 + Vector2(0.13, 0.37))
+	return points
+
+
+func _concurrent_job(index: int, ctx: Dictionary) -> void:
+	var points: Array[Vector2] = ctx.points
+	var patch: TerrainGradePatch = ctx.patch
+	var out: PackedFloat64Array = ctx.results[index]
+	# Each task walks the points from a different offset so cold-cache misses
+	# (claim_height / bake memo) genuinely collide between threads.
+	var n := points.size()
+	for k in n:
+		var i := (k + index * 1237) % n
+		out[i] = patch.surface_y(points[i], 6.0)
+
+
+## Documents intent: Controls.claim_height and the bake cache are memoized
+## lazily and reached from grass workers and chunk tails at once. A shared COLD
+## patch sampled by several pool tasks must equal the serial reference.
+func test_shared_patch_is_thread_safe_and_matches_serial_reference() -> void:
+	var points := _concurrent_points()
+	var reference := _nonuniform_patch()
+	var expected := PackedFloat64Array()
+	for p in points:
+		expected.append(reference.surface_y(p, 6.0))
+	var shared := _nonuniform_patch()
+	var tasks := 4
+	var results: Array[PackedFloat64Array] = []
+	for t in tasks:
+		var arr := PackedFloat64Array()
+		arr.resize(points.size())
+		results.append(arr)
+	var ctx := {"points": points, "patch": shared, "results": results}
+	var group := WorkerThreadPool.add_group_task(
+		func(index: int) -> void: _concurrent_job(index, ctx), tasks, tasks, true)
+	WorkerThreadPool.wait_for_group_task_completion(group)
+	var mismatches := 0
+	for t in tasks:
+		for i in points.size():
+			if results[t][i] != expected[i]:
+				mismatches += 1
+	assert_eq(mismatches, 0, "concurrent surface_y must equal the serial reference")

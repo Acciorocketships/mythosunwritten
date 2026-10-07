@@ -76,7 +76,8 @@ func test_idle_worker_does_not_keep_the_last_evicted_ground_sampler() -> void:
 
 func test_two_tiles_compute_at_once() -> void:
 	var f := _fixture()
-	var work := GrassWorkQueue.new(f.program, 4242)
+	var work := GrassWorkQueue.new(f.program, 4242, 2)
+	work.hold_workers = true
 	work.update_origin(Vector2(12, 12))
 	assert_true(work.request(Vector2i(0, 0), 1, f.sampling))
 	assert_true(work.request(Vector2i(1, 0), 1, f.sampling))
@@ -85,5 +86,6 @@ func test_two_tiles_compute_at_once() -> void:
 	while peak < 2 and Time.get_ticks_msec() - began < 2000:
 		peak = maxi(peak, work.active_count())
 		await get_tree().create_timer(0.002).timeout
-	assert_eq(peak, 2, "both workers pick up a tile")
+	assert_eq(peak, 2, "both workers pick up a tile (parked, so deterministic)")
+	work.hold_workers = false
 	work.stop()

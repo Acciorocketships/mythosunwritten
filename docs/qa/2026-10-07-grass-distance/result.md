@@ -4,7 +4,7 @@ Windowed 1920x1080, no vsync, 8 s phases, seed 2697992464, `--grass-radius FULL,
 Raw data: `/private/tmp/grass-radius/feel_<pair>.json` / `.frames.json`, screenshots `/private/tmp/grass-radius/shots_<pair>/`.
 Single run per pair (noisy: run-to-run dt p95 differs by ~1-2 ms).
 
-| pair | run_turn dt p50/p95 | run_turn proc p95/max | frames >10 ms proc (run_turn) | run proc max | run grass_pending max | run_turn pending max | grass tiles p50 (run) | static mem MB |
+| pair | run_turn dt p50/p95 | run_turn proc p95/max | frames >10 ms proc (run_turn) | run proc max | run grass_pending max | run_turn pending max | grass tiles p50 (run) | static mem MB (unreliable: varies run to run, not a gate) |
 |---|---|---|---|---|---|---|---|---|
 | 60,84 (base) | 19.8 / 24.5 | 4.9 / 9.5 | 0 | 13.7 | 5 | 3 | 61 | 4709 |
 | 80,120 | 20.9 / 25.6 | **7.8** / 16.1 | 6 | 8.9 | 17 | 18 | 101 | 4102 |
@@ -17,7 +17,7 @@ Gates (vs baseline): run_turn dt p95 <= 26.0 ms; run_turn process p95 <= 6 ms; n
 - 90,140 and 100,170: pass all frame-time gates.
 - Pending gate: every candidate fails (12 and 26 tiles vs 6). One grass worker cannot keep fill-in near the player at running speed.
 
-## Chosen pair
+## Chosen pair (SUPERSEDED by the re-sweep Decision below; the shipped pair is 60,84)
 
 No pair passes every gate. Frame time is fine up to 100,170, so the frame-time-limited choice is **100,170** (largest), but it lags 26-29 tiles behind while running; 90,140 lags 12-15. Task 4 (second grass worker) is needed before adopting either; re-run this sweep for the pair after Task 4. (Memory fell vs baseline in later runs, so it is not a constraint.)
 
@@ -42,4 +42,7 @@ Gates: neither 90,140 nor 100,170 holds run_turn dt p95 within +1.5 ms of baseli
 
 ## Decision
 
-By the stated rules 90,140 fails the frame-time gates, so the shipped default stays **60,84**. The sparse-dressing coupling still ships (`EnvironmentCommitQueue` grass/flower range = `GrassStreamer.GRASS_RADIUS + 6`), so any later radius change moves it with the ring. Screenshots (`baseline_60-84_pitch12_resweep.png` vs `candidate_90-140_pitch12_resweep.png`) confirm the owner's complaint: at 60,84 grass visibly ends on the distant left slope; at 90,140 it does not. Reaching 90,140 needs a cheaper commit path first (run_turn process hitches, fill-in lag) and is a follow-up. Try it at runtime with `--grass-radius 90,140` in the harness or `GrassStreamer.set_radii(90, 140)`.
+By the stated rules 90,140 fails the frame-time gates, so the shipped default stays **60,84**. The sparse-dressing coupling still ships (`EnvironmentCommitQueue` grass/flower range = `GrassStreamer.GRASS_RADIUS + 6`), so any later radius change moves it with the ring. Screenshots (`baseline_60-84_pitch12_resweep.png` vs `candidate_90-140_pitch12_resweep.png`) confirm the owner's complaint: at 60,84 grass visibly ends on the distant left slope; at 90,140 it does not. Reaching 90,140 needs a cheaper commit path first (run_turn process hitches, fill-in lag) and is a follow-up. Try it at runtime with `--grass-radius 90,140` in the harness (applies to the whole world from the start). `GrassStreamer.set_radii(90, 140)` at runtime only affects tiles streamed afterwards; already-committed tiles keep their old extent, so set it before the world starts for a full effect.
+
+
+Raw summary data (frames.json omitted): `data/` (`grass-radius` sweep and `grass-radius2` re-sweep).

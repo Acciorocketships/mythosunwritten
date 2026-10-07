@@ -134,7 +134,7 @@ void vertex() {
 
 		vec2 trample_uv = (trample_xz - grass_trample_origin)
 			/ max(grass_trample_size, 0.0001);
-		// The 64 m trample window covers only a small fraction of the 84 m ring.
+		// The 64 m trample window covers only a small fraction of the grass ring.
 		// Keep the branch coherent and skip that texture read for the far majority
 		// of vertices; the default encodes a neutral direction and zero strength.
 		vec4 trample = vec4(0.5, 0.5, 0.0, grass_trample_epoch);
