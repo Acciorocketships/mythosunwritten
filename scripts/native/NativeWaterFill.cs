@@ -239,5 +239,120 @@ namespace Story.Native
             }
             return new Godot.Collections.Array { output, removed };
         }
+
+        // _cap_hydrostatic_fill with a dense `ground` (no INF) and, when
+        // `hasNatural`, a dense uncarved `naturalGround`. Returns
+        // [levels, ceilings] (both float32 lattices, like the GDScript's
+        // levels and levels.duplicate()).
+        public Godot.Collections.Array CapHydrostatic(int side, float[] levels, float[] ground,
+            float[] anchors, bool hasNatural, float[] naturalGround, float[] flowCeilings)
+        {
+            var output = (float[])levels.Clone();
+            var ceilings = (float[])levels.Clone();
+            var search = new SpillSearch(side, levels, ground, anchors);
+            bool useNatural = hasNatural && flowCeilings.Length != 0;
+            for (int index = 0; index < output.Length; index++)
+            {
+                if (!double.IsFinite(output[index]) || double.IsFinite(anchors[index])) continue;
+                double ceiling = search.HeightAt(index) - EPS;
+                if (useNatural && double.IsFinite(flowCeilings[index]))
+                {
+                    double uncarved = naturalGround[index];
+                    if (uncarved > ground[index] + EPS)
+                        ceiling = MaxF(ceiling, MinF(uncarved - EPS, flowCeilings[index]));
+                }
+                ceilings[index] = (float)ceiling;
+                double level = MinF(output[index], ceiling);
+                output[index] = level > ground[index] + EPS ? (float)level : float.NegativeInfinity;
+            }
+            return new Godot.Collections.Array { output, ceilings };
+        }
+
+        // WaterField.SpillSearch over a dense ground lattice (all anchors
+        // scanned, as with anchor_indices == null).
+        sealed class SpillSearch
+        {
+            readonly int _side, _rows;
+            readonly float[] _ground;
+            readonly double[] _escape, _distance;
+            readonly int[] _marks;
+            int _generation;
+            readonly GdPriorityQueue<int> _queue = new GdPriorityQueue<int>();
+            readonly System.Collections.Generic.List<int> _reached = new System.Collections.Generic.List<int>();
+
+            public SpillSearch(int side, float[] levels, float[] ground, float[] anchors)
+            {
+                _side = side;
+                _ground = ground;
+                _rows = levels.Length / side;
+                _escape = new double[levels.Length];
+                Array.Fill(_escape, double.PositiveInfinity);
+                _marks = new int[levels.Length];
+                _distance = new double[levels.Length];
+                for (int index = 0; index < levels.Length; index++)
+                    if (double.IsFinite(levels[index]) && double.IsFinite(anchors[index]))
+                        _escape[index] = MaxF(anchors[index] + EPS, ground[index]);
+                for (int x = 0; x < side; x++)
+                {
+                    SetBoundary(x);
+                    SetBoundary((_rows - 1) * side + x);
+                }
+                for (int z = 1; z < _rows - 1; z++)
+                {
+                    SetBoundary(z * side);
+                    SetBoundary(z * side + side - 1);
+                }
+            }
+
+            void SetBoundary(int index)
+            {
+                if (!double.IsFinite(_escape[index])) _escape[index] = _ground[index];
+            }
+
+            public double HeightAt(int target)
+            {
+                if (!double.IsFinite(_escape[target]))
+                {
+                    _generation++;
+                    _reached.Clear();
+                    double start = _ground[target];
+                    _marks[target] = _generation;
+                    _distance[target] = start;
+                    _queue.Push(target, start);
+                    double outlet = double.PositiveInfinity;
+                    while (!_queue.IsEmpty)
+                    {
+                        int index = _queue.Pop();
+                        double height = _distance[index];
+                        if (double.IsFinite(_escape[index]))
+                        {
+                            outlet = height;
+                            break;
+                        }
+                        _reached.Add(index);
+                        int x = index % _side;
+                        int z = index / _side;
+                        for (int d = 0; d < 4; d++)
+                        {
+                            Step(d, x, z, out int nx, out int nz);
+                            if (nx < 0 || nz < 0 || nx >= _side || nz >= _rows) continue;
+                            int next = nz * _side + nx;
+                            if (_marks[next] == _generation) continue;
+                            double cost = MaxF(height, _ground[next]);
+                            if (double.IsFinite(_escape[next])) cost = MaxF(cost, _escape[next]);
+                            _marks[next] = _generation;
+                            _distance[next] = cost;
+                            _queue.Push(next, cost);
+                        }
+                    }
+                    _queue.Clear();
+                    _escape[target] = outlet;
+                    foreach (int index in _reached)
+                        if (_distance[index] < outlet || _ground[index] >= outlet)
+                            _escape[index] = outlet;
+                }
+                return _escape[target];
+            }
+        }
     }
 }

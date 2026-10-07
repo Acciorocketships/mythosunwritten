@@ -2,7 +2,7 @@ extends RefCounted
 
 ## C# versions of WaterField's hydraulic fill kernels (_relax_fill,
 ## _reconcile_connected_surface, _smooth_fill_surface,
-## _retain_source_connected_fill) and of PriorityQueue.gd
+## _retain_source_connected_fill, _cap_hydrostatic_fill with its SpillSearch) and of PriorityQueue.gd
 ## (scripts/native/NativeWaterFill.cs, GdPriorityQueue.cs). Used only once
 ## verified bit-identical to the GDScript on random lattices (setup()), and
 ## never under the standard editor. No class_name: preload it.
@@ -13,7 +13,7 @@ extends RefCounted
 ## gate (about 0.3-0.4 s of GDScript reference runs) then happens lazily in the
 ## first on() call, on the worker that first solves water, never on the main
 ## thread. Tests and harnesses call setup() to load and gate at once.
-## Relax and smooth read ground only from their dense array, so WaterField uses
+## Relax, smooth and cap read ground only from their dense array, so WaterField uses
 ## them only when that array is complete (no INF, the "not sampled yet"
 ## sentinel of _ground_at); otherwise the GDScript runs.
 ## The GDScript kernels stay the reference: change them freely; a mismatch
@@ -83,6 +83,18 @@ static func retain(levels: PackedFloat32Array, side: int,
 	return result[1]
 
 
+## WaterField._cap_hydrostatic_fill (with its SpillSearch) over a dense
+## `ground`; `natural_ground` is the dense uncarved lattice or empty (none).
+## Caps `levels` in place and returns the ceilings.
+static func cap(side: int, levels: PackedFloat32Array, ground: PackedFloat32Array,
+		anchors: PackedFloat32Array, natural_ground: PackedFloat32Array,
+		flow_ceilings: PackedFloat32Array) -> PackedFloat32Array:
+	var result: Array = _native.CapHydrostatic(side, levels, ground, anchors,
+		not natural_ground.is_empty(), natural_ground, flow_ceilings)
+	_store(levels, result[0])
+	return result[1]
+
+
 ## The kernels mutate their caller's array (packed arrays are shared by
 ## reference); C# works on a copy, so write it back in place.
 static func _store(target: PackedFloat32Array, values: PackedFloat32Array) -> void:
@@ -120,7 +132,8 @@ static func _gate() -> void:
 	else:
 		push_warning("NativeWaterFill disabled: %s. Re-sync scripts/native/NativeWaterFill.cs " % mismatch
 			+ "(and GdPriorityQueue.cs) with scripts/terrain/water/WaterField.gd (_relax_fill, "
-			+ "_reconcile_connected_surface, _smooth_fill_surface, _retain_source_connected_fill) "
+			+ "_reconcile_connected_surface, _smooth_fill_surface, _retain_source_connected_fill, "
+			+ "_cap_hydrostatic_fill, SpillSearch) "
 			+ "and scripts/core/PriorityQueue.gd; the water fill uses GDScript until then.")
 
 
@@ -206,6 +219,26 @@ static func _parity() -> String:
 		pq_native.free()
 		if expected != actual:
 			return "relax differs (case %d, %dx%d)" % [case_index, m1, rows]
+		# Hydrostatic cap (SpillSearch): the relaxed flood plus a uniform
+		# high head on dry nodes (wet boundaries, many tied spill heights),
+		# river anchors, a dense uncarved ground and mixed flow ceilings.
+		var cap_levels := expected.duplicate()
+		var head := float(rng.randi_range(2, 8)) + shift
+		var natural := PackedFloat32Array(); natural.resize(n)
+		var flow := PackedFloat32Array(); flow.resize(n)
+		for idx in n:
+			if not is_finite(cap_levels[idx]) and rng.randf() < 0.6: cap_levels[idx] = head
+			natural[idx] = ground[idx] + (float(rng.randi_range(0, 6)) * 0.5 if rng.randf() < 0.5 else 0.0)
+			var roll := rng.randf()
+			flow[idx] = INF if roll < 0.1 else -INF if roll < 0.2 else ground[idx] + rng.randf_range(0.0, 4.0)
+		var cap_natural := case_index % 3 != 0
+		var capped_expected := cap_levels.duplicate()
+		var capped_actual := cap_levels.duplicate()
+		var cap_ceilings := WaterField._cap_hydrostatic_fill(null, Vector2.ZERO, m1, capped_expected,
+			ground, rivers, WaterField.FILL_STEP, null, natural if cap_natural else null, flow)
+		if cap(m1, capped_actual, ground, rivers, natural if cap_natural else PackedFloat32Array(),
+				flow) != cap_ceilings or capped_actual != capped_expected:
+			return "hydrostatic cap differs (case %d, %dx%d)" % [case_index, m1, rows]
 		# Source retention from a few of the filled seeds (and a dry one).
 		var sources := PackedInt32Array()
 		for _s in rng.randi_range(0, 5):

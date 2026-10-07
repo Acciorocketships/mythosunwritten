@@ -248,3 +248,45 @@ Godot_mono 4.5.1, headless, seed 2697992464, one process at a time.
 `test_september10_water_relaxation_work` 2/2,
 `test_september11_water_rounding` 1/1, `test_september15_water_drops` 8/8,
 `test_september15_water_source_connectivity` 5/5, `test_priority_queue` 2/2.
+
+## Task 7: native spill search and hydrostatic cap
+
+`WaterField._cap_hydrostatic_fill` dispatches to
+`NativeWaterFill.CapHydrostatic` (C#) when its `ground` is dense
+(`not ground.has(INF)`) and the uncarved ground is absent or dense. The C#
+holds a private port of `SpillSearch` (escape / marks / distance arrays,
+generation counter, reverse minimax search stopping at the first finite
+escape, the same memo writes) on `GdPriorityQueue<int>` (new `Clear()` =
+`heap.clear()`). Ceilings stay float32, like the GDScript's
+`levels.duplicate()`. The GDScript `SpillSearch` is unchanged and still serves
+the fine rescue (`_build_sub_lattice_rescue`) and the lazy (region) callers.
+
+`_source_fill` now samples the uncarved `natural` region once, densely
+(`_sample_ground_lattice` -> `TerrainTileField.sample_grid32`, one native call),
+instead of lazily through `_ground_at`'s baked path inside the cap.
+`_cap_hydrostatic_fill`'s `natural` accepts that dense array or a region (the
+lazy path, kept for tests and probes). Proof:
+`test_dense_natural_ground_equals_the_lazy_samples_on_a_real_domain` (seed
+2697992464, a 70 x 61 source lattice at the -4,-5 domain's base, carved
+channels present): every node equal.
+
+Gate: the twelve random lattices also run the cap (relaxed flood plus a
+uniform high head on 60% of dry nodes, river anchors, a dense uncarved ground
+on 8 of 12, mixed INF / -INF / finite flow ceilings). Gate cost about 0.53 s
+(was about 0.41). Falsification: `<` -> `<=` in the memo write disables it
+("hydrostatic cap differs (case 0)").
+
+| measure (`PROFILE_WATER_COST=1 water_block_cost --chunk=-4,-5 --no-disk`) | before (ba3d4ae46) | after |
+|---|---|---|
+| cap_ms | 3992 | 39-87 |
+| natural_ms (region + now the dense sample) | 1059 | 1068-1795 (noise) |
+| spill_ms (natural + flow + cap + retain) | 5906 | 1974-3408 |
+| harness water_ms | 28100 | 25055-27863 |
+| digest | `b6c965def22e7e93` | `b6c965def22e7e93` |
+
+`parallel_tail_check --rounds=2`: PASS failures=0. Tests:
+`test_native_water_fill` 5/5 (both binaries), `test_september9_water_containment`
+18/18 (both), `test_september15_water_source_connectivity` 5/5 (both),
+`test_water_field` 25/25 (mono). `test_september9_source_domain_cache` fails
+1/1 on both binaries, identically at ba3d4ae46 (its `CountedPlan.compute_region`
+count reads 0: pre-existing, unrelated to this task).

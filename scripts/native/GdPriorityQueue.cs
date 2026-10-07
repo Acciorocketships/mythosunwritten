@@ -24,6 +24,13 @@ namespace Story.Native
             _count = items.Length;
         }
 
+        // GDScript `heap.clear()`.
+        public void Clear()
+        {
+            Array.Clear(_items, 0, _count);
+            _count = 0;
+        }
+
         public void Push(T item, double priority)
         {
             Grow(_count + 1);

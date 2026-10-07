@@ -352,7 +352,10 @@ static func _source_fill(c: Dictionary, region) -> Dictionary:
 	# The owned region already sampled this exact raw domain. Reuse its
 	# original inputs, not a rounded add-back of the subtracted carve.
 	natural_plan.set_raw_height_override(owned.plan.uncarved_height)
-	var natural := natural_plan.compute_rect_region(control_domain)
+	# Sampled once, densely, where the cap used to sample it lazily (the
+	# same values: test_native_water_fill's dense-versus-lazy check).
+	var natural := _sample_ground_lattice(natural_plan.compute_rect_region(control_domain),
+		base, m1, FILL_STEP, rows)
 	var natural_finished := Time.get_ticks_usec() if profile_source_cost else 0
 	# Fixed river anchors are never capped. Only hydrostatic candidates
 	# need a second projected flow ceiling beside those anchors.
@@ -1294,22 +1297,32 @@ class SpillSearch extends RefCounted:
 		queue.free()
 
 
+## `natural` is the uncarved ground: a HeightfieldRegion (sampled lazily) or
+## its dense lattice (a PackedFloat32Array, as _source_fill passes it). With a
+## dense `ground` and no lazy region the C# port runs (NativeWaterFill.cap).
 static func _cap_hydrostatic_fill(region, base: Vector2, side: int,
 		levels: PackedFloat32Array, ground: PackedFloat32Array,
 		anchors: PackedFloat32Array, step: float = FILL_STEP, ground_bakes = null,
-		natural: HeightfieldRegion = null,
+		natural = null,
 		flow_ceilings: PackedFloat32Array = PackedFloat32Array()) -> PackedFloat32Array:
+	var dense_natural: bool = natural is PackedFloat32Array
+	if NATIVE_FILL.on() and (natural == null or dense_natural) and not ground.has(INF):
+		return NATIVE_FILL.cap(side, levels, ground, anchors,
+			natural if dense_natural else PackedFloat32Array(), flow_ceilings)
 	var search := SpillSearch.new(region, base, side, levels, ground, anchors, step, ground_bakes)
 	var ceilings := levels.duplicate()
+	var natural_region: HeightfieldRegion = null if dense_natural else natural
 	var natural_ground := PackedFloat32Array()
 	var natural_bakes: Dictionary = {}
-	if natural != null:
+	if dense_natural:
+		natural_ground = natural
+	elif natural != null:
 		natural_ground.resize(levels.size()); natural_ground.fill(INF)
 	for index in levels.size():
 		if not is_finite(levels[index]) or is_finite(anchors[index]): continue
 		var ceiling := search.height_at(index) - EPS
 		if natural != null and not flow_ceilings.is_empty() and is_finite(flow_ceilings[index]):
-			var uncarved := _ground_at(natural, base, side, natural_ground,
+			var uncarved := _ground_at(natural_region, base, side, natural_ground,
 				index % side, int(index / side), step, natural_bakes)
 			if uncarved > ground[index] + EPS:
 				ceiling = maxf(ceiling, minf(uncarved - EPS, flow_ceilings[index]))
