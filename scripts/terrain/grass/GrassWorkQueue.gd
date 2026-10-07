@@ -1,11 +1,15 @@
 class_name GrassWorkQueue
 extends RefCounted
 
-## One visual worker consumes detached sampling data only. It never enters the
-## canonical terrain, road or water planners and never creates render resources.
+## WORKERS visual workers consume detached sampling data only. They never enter
+## the canonical terrain, road or water planners and never create render
+## resources. Every static/lazy cache GrassField.compute reaches is either
+## pre-initialized in _init (BiomeRegistry) or locked (Helper noise corners,
+## HeightfieldRegion/WaterFieldContext memos); the rest is per-call.
+const WORKERS := 2
 var _program: GrassProgram
 var _seed: int
-var _thread := Thread.new()
+var _threads: Array[Thread] = []
 var _mutex := Mutex.new()
 var _sem := Semaphore.new()
 var _exit := false
@@ -22,7 +26,10 @@ func _init(program: GrassProgram, seed_value: int) -> void:
 	_seed = seed_value
 	# All shared biome metadata is initialized before either worker reads it.
 	BiomeRegistry.max_foliage_density()
-	assert(_thread.start(_work) == OK)
+	for index in WORKERS:
+		var thread := Thread.new()
+		assert(thread.start(_work) == OK)
+		_threads.append(thread)
 
 func update_origin(origin: Vector2) -> void:
 	_mutex.lock()
@@ -42,7 +49,7 @@ func update_origin(origin: Vector2) -> void:
 func request(tile: Vector2i, generation: int, sampling: GrassSamplingContext) -> bool:
 	_mutex.lock()
 	if _exit or GrassStreamer.distance_to_tile(_origin,tile) >= GrassStreamer.GRASS_RADIUS \
-		or (not _active.is_empty() and _active.tile == tile):
+		or _active.has(tile):
 		_mutex.unlock()
 		return false
 	if _queued.has(tile):
@@ -68,10 +75,17 @@ func drain_results() -> Array[Dictionary]:
 func stats() -> Dictionary:
 	_mutex.lock()
 	var result := {"queued":_jobs.size(),"started":_started,"cancelled":_cancelled,
-		"active_tile":str(_active.tile) if not _active.is_empty() else "",
+		"active_tile":",".join(_active.keys().map(func(t:Vector2i)->String:return str(t))),
+		"active":_active.size(),
 		"completed_waiting":_done.size()}
 	_mutex.unlock()
 	return result
+
+func active_count() -> int:
+	_mutex.lock()
+	var count := _active.size()
+	_mutex.unlock()
+	return count
 
 func stop() -> void:
 	_mutex.lock()
@@ -79,8 +93,9 @@ func stop() -> void:
 	_jobs.clear()
 	_queued.clear()
 	_mutex.unlock()
-	_sem.post()
-	if _thread.is_started(): _thread.wait_to_finish()
+	for index in WORKERS: _sem.post()
+	for thread: Thread in _threads:
+		if thread.is_started(): thread.wait_to_finish()
 	_done.clear()
 	_active.clear()
 
@@ -103,7 +118,7 @@ func _work() -> void:
 			continue
 		var job: Dictionary = _jobs.pop_front()
 		_queued.erase(job.tile)
-		_active = job
+		_active[job.tile] = true
 		_started += 1
 		_mutex.unlock()
 		var started := Time.get_ticks_usec()
@@ -114,9 +129,10 @@ func _work() -> void:
 			"compute_usec":Time.get_ticks_usec()-started}
 		# GDScript locals survive the next semaphore wait. Release the input
 		# before publishing completion so an idle worker cannot retain old ground.
+		var tile: Vector2i = job.tile
 		sampling = null
 		job = {}
 		_mutex.lock()
-		_active = {}
+		_active.erase(tile)
 		if not _exit: _done.append(result)
 		_mutex.unlock()

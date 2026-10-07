@@ -73,3 +73,17 @@ func test_idle_worker_does_not_keep_the_last_evicted_ground_sampler() -> void:
 	sampling = null
 	assert_null(witness.get_ref(),"an idle visual worker must release the detached source after publication")
 	work.stop()
+
+func test_two_tiles_compute_at_once() -> void:
+	var f := _fixture()
+	var work := GrassWorkQueue.new(f.program, 4242)
+	work.update_origin(Vector2(12, 12))
+	assert_true(work.request(Vector2i(0, 0), 1, f.sampling))
+	assert_true(work.request(Vector2i(1, 0), 1, f.sampling))
+	var began := Time.get_ticks_msec()
+	var peak := 0
+	while peak < 2 and Time.get_ticks_msec() - began < 2000:
+		peak = maxi(peak, work.active_count())
+		await get_tree().create_timer(0.002).timeout
+	assert_eq(peak, 2, "both workers pick up a tile")
+	work.stop()
