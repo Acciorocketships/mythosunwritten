@@ -1,0 +1,35 @@
+extends SceneTree
+# Throwaway: house-plot column counts and clearings, off vs on.
+func _init(): call_deferred("run")
+func run():
+	var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
+	var base_odds = program.town_odds
+	var towns := [[53,&"grand",2.5],[31,&"large",2.5],[43,&"large",2.5],[83,&"grand",2.5],[13,&"standard",1.0],[103,&"standard",1.0],[7,&"compact",1.0],[61,&"standard",1.0]]
+	var rows := []
+	for item: Array in towns:
+		for mode in ["off", "on"]:
+			program.town_odds = base_odds if mode == "off" else base_odds.with_overrides({&"clearing_count": item[2]})
+			var spatial := WarrenVolumetricSolver.generate(item[0], {}, program, WarrenVillageScaleProfile.for_id(item[1]))
+			if spatial == null:
+				rows.append({"seed": item[0], "profile": item[1], "mode": mode, "error": "no spatial"}); print("BLOCKS ", JSON.stringify(rows.back())); continue
+			var source: WarrenMazeSourcePlan = spatial.source_volume.mass_context.get(&"maze_source_plan")
+			var sizes: Array = []
+			var clearings: Array = []
+			for plot: Dictionary in source.plots:
+				if plot.kind == WarrenMazeSourcePlan.PLOT_HOUSE:
+					sizes.append((plot.cells as Array).size())
+				if String(plot.id).begins_with("clearing."):
+					var ground := true
+					for c in plot.cells:
+						if int(plot.floor) != source.massif.bearing_at(Vector2i(c.x, c.y if c is Vector2i else c.z)): ground = false
+					clearings.append({"id": String(plot.id), "cells": (plot.cells as Array).size(), "floor": int(plot.floor), "ground": ground, "purpose": String(plot.get("purpose", ""))})
+			sizes.sort()
+			var row := {"seed": item[0], "profile": item[1], "mode": mode, "houses": sizes.size(),
+				"largest": sizes.back() if not sizes.is_empty() else 0,
+				"median": sizes[sizes.size() / 2] if not sizes.is_empty() else 0,
+				"mean": snappedf(float(sizes.reduce(func(a, b): return a + b, 0)) / maxf(1.0, sizes.size()), 0.01),
+				"over_12": sizes.filter(func(s): return s > 12).size(), "clearings": clearings}
+			rows.append(row)
+			print("BLOCKS ", JSON.stringify(row))
+	FileAccess.open("/tmp/oct7/blocks.json", FileAccess.WRITE).store_string(JSON.stringify(rows, "  "))
+	quit()

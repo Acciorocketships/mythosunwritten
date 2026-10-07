@@ -1,0 +1,32 @@
+extends SceneTree
+# Production audit: payload, finished roof/public-air, floating masses, parallel joins.
+func _init():call_deferred('run')
+func run():
+	var program:=SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
+	var overrides:=TownOddsProgram.parse_overrides(OS.get_cmdline_user_args(),program.town_odds)
+	if overrides.has('error'):
+		quit(2); return
+	if not overrides.is_empty(): program.town_odds=program.town_odds.with_overrides(overrides)
+	var rows:=[]
+	var args:=OS.get_cmdline_user_args()
+	var towns:=[[53,&'grand'],[31,&'large'],[13,&'standard'],[43,&'large'],[83,&'grand'],[103,&'standard']]
+	if args.size()>0:
+		towns=[]
+		for t in args[0].split(','):
+			var p:=t.split(':'); towns.append([int(p[0]),StringName(p[1])])
+	for item:Array in towns:
+		var t0:=Time.get_ticks_msec()
+		var spatial:=WarrenVolumetricSolver.generate(item[0],{},program,WarrenVillageScaleProfile.for_id(item[1]))
+		if spatial==null:
+			print('RANGE_AUDIT ',JSON.stringify({"seed":item[0],"profile":item[1],"error":"no spatial"})); continue
+		var fabric:=spatial.compiled_fabric_cache()
+		var kit:=SuntailBuildingKit.create()
+		var built:=KitVillageBuildings.build(spatial,fabric,kit,true,true)
+		var roofs:=preload('res://tests/fixtures/kit_roof_public_air_audit.gd').audit(built,kit)
+		var floating:=KitFloatingMassAudit.audit(spatial,fabric,built.masses)
+		var row:={"seed":item[0],"profile":item[1],"roof":roofs,"floating":floating.count,"joins":built.roof_audit.get("parallel_joins",-1),"valid_payload":built.payload.validate(),"ms":Time.get_ticks_msec()-t0}
+		row.roof.erase("roles"); row.roof.erase("examples")
+		rows.append(row)
+		print('RANGE_AUDIT ',JSON.stringify(row))
+		FileAccess.open(args[1] if args.size()>1 else '/tmp/oct7/range_audit_prod.json',FileAccess.WRITE).store_string(JSON.stringify(rows,'  '))
+	quit()

@@ -1,0 +1,240 @@
+[
+  {
+    "clearings": [],
+    "houses": 48,
+    "largest": 10,
+    "mean": 2.42,
+    "median": 2,
+    "mode": "off",
+    "over_12": 0,
+    "profile": "grand",
+    "seed": 53
+  },
+  {
+    "clearings": [
+      {
+        "cells": 11,
+        "floor": 2,
+        "ground": false,
+        "id": "clearing.00",
+        "purpose": "green"
+      },
+      {
+        "cells": 10,
+        "floor": 0,
+        "ground": true,
+        "id": "clearing.01",
+        "purpose": "workyard"
+      }
+    ],
+    "houses": 50,
+    "largest": 6,
+    "mean": 1.98,
+    "median": 1,
+    "mode": "on",
+    "over_12": 0,
+    "profile": "grand",
+    "seed": 53
+  },
+  {
+    "clearings": [],
+    "houses": 21,
+    "largest": 29,
+    "mean": 4.1,
+    "median": 2,
+    "mode": "off",
+    "over_12": 1,
+    "profile": "large",
+    "seed": 31
+  },
+  {
+    "clearings": [],
+    "houses": 21,
+    "largest": 29,
+    "mean": 4.1,
+    "median": 2,
+    "mode": "on",
+    "over_12": 1,
+    "profile": "large",
+    "seed": 31
+  },
+  {
+    "clearings": [],
+    "houses": 43,
+    "largest": 6,
+    "mean": 1.93,
+    "median": 2,
+    "mode": "off",
+    "over_12": 0,
+    "profile": "large",
+    "seed": 43
+  },
+  {
+    "clearings": [
+      {
+        "cells": 6,
+        "floor": 2,
+        "ground": false,
+        "id": "clearing.00",
+        "purpose": "green"
+      },
+      {
+        "cells": 4,
+        "floor": 0,
+        "ground": true,
+        "id": "clearing.01",
+        "purpose": "paved"
+      }
+    ],
+    "houses": 36,
+    "largest": 6,
+    "mean": 1.97,
+    "median": 2,
+    "mode": "on",
+    "over_12": 0,
+    "profile": "large",
+    "seed": 43
+  },
+  {
+    "clearings": [],
+    "houses": 32,
+    "largest": 14,
+    "mean": 2.47,
+    "median": 2,
+    "mode": "off",
+    "over_12": 1,
+    "profile": "grand",
+    "seed": 83
+  },
+  {
+    "clearings": [
+      {
+        "cells": 12,
+        "floor": 0,
+        "ground": true,
+        "id": "clearing.00",
+        "purpose": "paved"
+      }
+    ],
+    "houses": 39,
+    "largest": 8,
+    "mean": 2.23,
+    "median": 2,
+    "mode": "on",
+    "over_12": 0,
+    "profile": "grand",
+    "seed": 83
+  },
+  {
+    "clearings": [],
+    "houses": 21,
+    "largest": 4,
+    "mean": 1.76,
+    "median": 1,
+    "mode": "off",
+    "over_12": 0,
+    "profile": "standard",
+    "seed": 13
+  },
+  {
+    "clearings": [],
+    "houses": 21,
+    "largest": 4,
+    "mean": 1.76,
+    "median": 1,
+    "mode": "on",
+    "over_12": 0,
+    "profile": "standard",
+    "seed": 13
+  },
+  {
+    "clearings": [],
+    "houses": 16,
+    "largest": 4,
+    "mean": 1.94,
+    "median": 1,
+    "mode": "off",
+    "over_12": 0,
+    "profile": "standard",
+    "seed": 103
+  },
+  {
+    "clearings": [
+      {
+        "cells": 4,
+        "floor": 0,
+        "ground": true,
+        "id": "clearing.00",
+        "purpose": "green"
+      }
+    ],
+    "houses": 15,
+    "largest": 4,
+    "mean": 1.8,
+    "median": 1,
+    "mode": "on",
+    "over_12": 0,
+    "profile": "standard",
+    "seed": 103
+  },
+  {
+    "clearings": [],
+    "houses": 8,
+    "largest": 2,
+    "mean": 1.38,
+    "median": 1,
+    "mode": "off",
+    "over_12": 0,
+    "profile": "compact",
+    "seed": 7
+  },
+  {
+    "clearings": [
+      {
+        "cells": 8,
+        "floor": 0,
+        "ground": true,
+        "id": "clearing.00",
+        "purpose": "paved"
+      }
+    ],
+    "houses": 13,
+    "largest": 4,
+    "mean": 1.69,
+    "median": 1,
+    "mode": "on",
+    "over_12": 0,
+    "profile": "compact",
+    "seed": 7
+  },
+  {
+    "clearings": [],
+    "houses": 18,
+    "largest": 6,
+    "mean": 2.33,
+    "median": 2,
+    "mode": "off",
+    "over_12": 0,
+    "profile": "standard",
+    "seed": 61
+  },
+  {
+    "clearings": [
+      {
+        "cells": 4,
+        "floor": 0,
+        "ground": true,
+        "id": "clearing.00",
+        "purpose": "green"
+      }
+    ],
+    "houses": 17,
+    "largest": 6,
+    "mean": 2.24,
+    "median": 2,
+    "mode": "on",
+    "over_12": 0,
+    "profile": "standard",
+    "seed": 61
+  }
+]
