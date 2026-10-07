@@ -31,7 +31,7 @@ func enqueue(chunk: Vector2i, generation: int, parent: Node3D,
 		assert(visual != null)
 		var tags := _render_cache.descriptor(asset_id).tags
 		var batches: Array = [payload.batches[asset_id]]
-		if &"tree" in tags or &"bush" in tags:
+		if &"tree" in tags or &"bush" in tags or &"nature" in tags or &"foliage" in tags:
 			batches = tile_batch(payload.batches[asset_id])
 		for batch: Dictionary in batches:
 			for piece_index in visual.pieces.size():
@@ -46,7 +46,8 @@ func enqueue(chunk: Vector2i, generation: int, parent: Node3D,
 					"visibility_owners": batch.get("visibility_owners", []),
 				})
 
-## Trees and bushes are batched per FOLIAGE_TILE world square, not per chunk:
+## Nature dressing (trees and bushes first) is batched per FOLIAGE_TILE world
+## square, not per chunk:
 ## the renderer culls and picks mesh LODs per MultiMesh, and a chunk-wide
 ## batch always touched the camera, so every crown in it drew all its leaf
 ## cards (October 6 dense forest: frame time doubled).
@@ -103,6 +104,26 @@ static func compose_transforms(transforms: Array,
 		out.append(transform * piece.local_transform)
 	return out
 
+## Small nature stops drawing where it is a few pixels: per tag, the content
+## distance plus the half diagonal of its FOLIAGE_TILE batch (the renderer
+## measures to the batch's centre). Trees, bushes and everything man-made keep
+## no range (0). A batch beyond range costs no draw call, culling or shadow.
+const VISIBILITY_MARGIN := 8.0
+const _TILE_HALF_DIAGONAL := FOLIAGE_TILE * 0.7071
+static func visibility_range(tags: Array, bounds: AABB) -> float:
+	if &"tree" in tags or &"bush" in tags or not (&"nature" in tags or &"foliage" in tags):
+		return 0.0
+	var content := 0.0
+	if &"grass" in tags or &"flower" in tags:
+		content = 90.0
+	elif &"plant" in tags or &"mushroom" in tags or &"reed" in tags or &"foliage" in tags:
+		content = 140.0
+	elif &"deadwood" in tags or &"rock" in tags:
+		content = 180.0 if bounds.get_longest_axis_size() < 1.5 else 380.0
+	else:
+		return 0.0
+	return content + _TILE_HALF_DIAGONAL
+
 func _commit_batch(parent: Node3D, item: Dictionary) -> void:
 	var visual := _render_cache.visual(item.asset_id)
 	var piece: EnvironmentVisualPiece = visual.pieces[item.piece_index]
@@ -147,6 +168,10 @@ func _commit_batch(parent: Node3D, item: Dictionary) -> void:
 	if &"cliff" in tags:
 		instance.add_to_group("tactical_solid_earth", true)
 	instance.material_override = LANTERN_LIGHTS.glass_material(item.asset_id, piece)
+	var view_range := visibility_range(tags, native_bounds)
+	if view_range > 0.0:
+		instance.visibility_range_end = view_range
+		instance.visibility_range_end_margin = VISIBILITY_MARGIN
 	container.add_child(instance)
 	if piece.shadow_mesh != null:
 		_attach_shadow_proxy(instance, piece.shadow_mesh)

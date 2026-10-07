@@ -60,16 +60,16 @@ func test_quality_changes_restore_grass_without_rebuilding_buffers() -> void:
 	for child: MultiMeshInstance3D in node.get_children():
 		var mesh := child.multimesh
 		var count := mesh.instance_count
-		assert_eq(mesh.visible_instance_count, ceili(count * 0.65), "New tiles inherit economical density")
+		assert_eq(mesh.visible_instance_count, GrassStreamer.visible_count(count, 0.65), "New tiles inherit economical density")
 		director.set_quality(1)
 		assert_same(child.multimesh, mesh, "Quality changes keep the existing GPU buffer")
 		assert_eq(mesh.visible_instance_count, count, "Standard restores every near instance")
 		director.set_quality(0)
 		grass.begin_frame(Vector2(90, 12))
 		var density := GrassStreamer.density(GrassStreamer.distance_to_tile(Vector2(90, 12), Vector2i.ZERO))
-		assert_eq(mesh.visible_instance_count, ceili(count * density * 0.65), "Moving LOD retains the quality cap")
+		assert_eq(mesh.visible_instance_count, GrassStreamer.visible_count(count, density * 0.65), "Moving LOD retains the quality cap")
 		director.set_quality(2)
-		assert_eq(mesh.visible_instance_count, ceili(count * density), "High restores the correct moving LOD")
+		assert_eq(mesh.visible_instance_count, GrassStreamer.visible_count(count, density), "High restores the correct moving LOD")
 	assert_eq(payload.batches, original, "Rendering quality never rewrites deterministic worker payloads")
 	director.streamer.free()
 	director.free()
@@ -208,3 +208,41 @@ func test_stale_result_cannot_clear_a_newer_request() -> void:
 		_payload(fixture.program)))
 	assert_false(streamer.needs_request(Vector2i.ZERO),
 		"the current generation remains tracked after the stale hand-off")
+
+
+## The CPU prefix only skips patches the shader certainly fades out: it never
+## drops below the exact density prefix, and it moves in quarter bands so a
+## walking player does not rewrite every fade-ring tile every frame.
+func test_visible_count_is_conservative_and_banded() -> void:
+	for count in [0, 1, 7, 289, 1000]:
+		var distinct := {}
+		for step in 101:
+			var density := step / 100.0
+			var visible := GrassStreamer.visible_count(count, density)
+			assert_true(visible >= ceili(count * density) and visible <= count,
+				"count=%d density=%.2f" % [count, density])
+			distinct[visible] = true
+		assert_lte(distinct.size(), 5, "At most one value per quarter band")
+
+
+## Distant patches draw fewer whole blades through the mesh's own LODs
+## (nested subsets of the full patch), never through a mesh swap.
+func test_blade_lods_are_nested_whole_blade_subsets() -> void:
+	var mesh: Mesh = load("res://terrain/environment/meshes/stylized_grass/stylized_grass_collection_05_piece_00.res")
+	var arrays := mesh.surface_get_arrays(0)
+	var full: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+	var previous := {}
+	for t in range(0, full.size(), 3): previous[Vector3i(full[t], full[t + 1], full[t + 2])] = true
+	for keep: float in GrassStreamer.BLADE_LOD_KEEP:
+		var kept := GrassStreamer.thinned_blade_indices(arrays, keep)
+		var triangles := {}
+		for t in range(0, kept.size(), 3):
+			var tri := Vector3i(kept[t], kept[t + 1], kept[t + 2])
+			assert_true(previous.has(tri), "LOD %.3f keeps a subset of the coarser-than-it level" % keep)
+			triangles[tri] = true
+		assert_almost_eq(float(kept.size()) / full.size(), keep, 0.12, "about %.3f of the triangles" % keep)
+		previous = triangles
+	var lod_mesh := GrassStreamer.blade_lod_mesh(mesh)
+	var surfaces: Array = lod_mesh.get("_surfaces")
+	assert_eq((surfaces[0] as Dictionary).get("lods", []).size(), GrassStreamer.BLADE_LOD_KEEP.size() * 2,
+		"one (edge, indices) pair per blade LOD")

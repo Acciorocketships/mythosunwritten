@@ -371,7 +371,53 @@ func startup_loading_progress() -> float:
 func startup_loading_complete() -> bool:
 	return _startup_completion_emitted or (
 		not _startup_support_chunks.is_empty()
-		and _startup_ready_chunks_count() == _startup_support_chunks.size())
+		and _startup_ready_chunks_count() == _startup_support_chunks.size()
+		and _warm_spin_done)
+
+## Behind the loading screen, once the spawn chunks (and, briefly, their
+## dressing) are in, the camera is turned through WARM_SPIN_DIRECTIONS
+## headings for a couple of frames each. Everything around spawn is drawn once
+## from every side, so its pipelines compile and its meshes and textures
+## become resident now: otherwise the first look in each direction stalled
+## (a 73 ms frame with fresh specialization compiles, then 30-37 ms frames).
+## The camera rig re-places the camera every frame from its own heading, so
+## turning it here (this node processes after the rig) leaves no state behind.
+const WARM_SPIN_DIRECTIONS := 8
+const WARM_SPIN_FRAMES_PER_DIRECTION := 2
+const WARM_SPIN_DRESSING_WAIT_MSEC := 4000
+var _warm_spin_done := Helper.is_headless()
+var _warm_spin_frame := -1
+var _warm_spin_wait_started := -1
+var _warm_spin_started := 0
+
+func _update_warm_spin() -> void:
+	if _warm_spin_done or _startup_support_chunks.is_empty() \
+			or _startup_ready_chunks_count() < _startup_support_chunks.size():
+		return
+	var camera := get_viewport().get_camera_3d()
+	if _headless or camera == null:
+		_warm_spin_done = true
+		return
+	if _warm_spin_frame < 0:
+		if _warm_spin_wait_started < 0:
+			_warm_spin_wait_started = Time.get_ticks_msec()
+		var settling := _dressing_queue.pending_count() > 0 \
+			or (_grass_runtime_enabled and (_grass_streamer.pending_count() > 0
+				or _grass_streamer.built_count() == 0)) \
+			or not _feature_queue.pending_chunks().is_empty()
+		if settling and Time.get_ticks_msec() - _warm_spin_wait_started < WARM_SPIN_DRESSING_WAIT_MSEC:
+			return
+		_warm_spin_frame = 0
+		_warm_spin_started = Time.get_ticks_msec()
+	var direction := _warm_spin_frame / WARM_SPIN_FRAMES_PER_DIRECTION
+	if direction >= WARM_SPIN_DIRECTIONS:
+		_warm_spin_done = true
+		print("[terrain-streamer] startup_warm_spin ms=%d dressing_wait_ms=%d" % [
+			Time.get_ticks_msec() - _warm_spin_started, _warm_spin_started - _warm_spin_wait_started])
+		return
+	camera.global_basis = camera.global_basis.rotated(Vector3.UP,
+		TAU * float(direction) / float(WARM_SPIN_DIRECTIONS))
+	_warm_spin_frame += 1
 
 
 func _emit_startup_loading_progress() -> void:
@@ -380,13 +426,14 @@ func _emit_startup_loading_progress() -> void:
 	var ready := _startup_ready_chunks_count()
 	var progress := startup_loading_progress()
 	if ready == _startup_ready_count \
-			and absf(progress - _startup_emitted_progress) < 0.0005:
+			and absf(progress - _startup_emitted_progress) < 0.0005 \
+			and not (ready == _startup_support_chunks.size() and _warm_spin_done):
 		return
 	_startup_ready_count = ready
 	_startup_emitted_progress = progress
 	var total := _startup_support_chunks.size()
 	startup_loading_progress_changed.emit(progress, ready, total)
-	if ready == total and not _startup_completion_emitted:
+	if ready == total and _warm_spin_done and not _startup_completion_emitted:
 		_startup_completion_emitted = true
 		_restore_startup_render_limit()
 		print("[terrain-streamer] startup_complete seed=%d elapsed_ms=%d chunks=%d" % [
@@ -905,12 +952,41 @@ func _build_fx(node: Node3D, fx_data: Dictionary) -> void:
 	node.add_child(fx)
 
 
+## Frame diagnostics. A _process call slower than SLOW_FRAME_USEC prints a
+## slow_frame line with the time of each of its sections, so a hitch names its
+## cause (a few Time.get_ticks_usec calls a frame; static so harnesses and the
+## console can switch it off).
+static var LOG_SLOW_FRAMES := true
+const SLOW_FRAME_USEC := 8000
+var _marks: Array = []
+
+func _mark(label: StringName) -> void:
+	if LOG_SLOW_FRAMES:
+		_marks.append([label, Time.get_ticks_usec()])
+
+func _report_slow_frame() -> void:
+	if not LOG_SLOW_FRAMES or _marks.size() < 2:
+		_marks.clear()
+		return
+	var total: int = _marks.back()[1] - _marks[0][1]
+	if total >= SLOW_FRAME_USEC:
+		var parts := PackedStringArray()
+		for i in range(1, _marks.size()):
+			var ms: float = (_marks[i][1] - _marks[i - 1][1]) / 1000.0
+			if ms >= 0.5:
+				parts.append("%s=%.1f" % [_marks[i][0], ms])
+		print("[terrain-streamer] slow_frame ms=%.1f built=%d %s" % [total / 1000.0,
+			_built.size(), " ".join(parts)])
+	_marks.clear()
+
 func _process(_delta: float) -> void:
 	var profile_started := Time.get_ticks_usec() if PROFILE_STREAMING else 0
 	if _plan == null or player == null:
 		return
+	_mark(&"start")
 	var centre := chunk_of(player.global_position)
 	_mutex.lock()
+	_mark(&"stream_lock")
 	_observe_stream_position(player.global_position)
 	_profile_player_chunk = centre
 	_queue_lod_origin = Vector2(player.global_position.x, player.global_position.z)
@@ -922,31 +998,41 @@ func _process(_delta: float) -> void:
 	var heading := Vector2i((_queue_travel_offset / PRIORITY_FOCUS_STEP).round())
 	_mutex.unlock()
 	var lod_origin := Vector2(player.global_position.x, player.global_position.z)
+	_mark(&"stream_state")
 	if _grass_runtime_enabled:
 		for node: Node3D in _grass_streamer.begin_frame(lod_origin):
 			if node != null:
 				node.queue_free()
+		_mark(&"grass_lod")
 		_grass_work.update_origin(lod_origin)
 		for result: Dictionary in _grass_work.drain_results():
 			_grass_streamer.accept_result(result.tile,int(result.generation),
 				result.grass,int(result.compute_usec))
+		_mark(&"grass_results")
 	var commit_started := Time.get_ticks_usec() if PROFILE_STREAMING else 0
 	_dressing_queue.drain(MAX_DRESSING_BATCHES_PER_FRAME)
+	_mark(&"dressing_visuals")
 	for event: Dictionary in _feature_queue.drain(
 			MAX_FEATURE_ASSET_LOADS_PER_FRAME,
 			MAX_FEATURE_COLLISION_SHAPES_PER_FRAME,
 			MAX_DRESSING_BATCHES_PER_FRAME, MAX_FEATURE_COMMIT_USEC):
 		_accept_feature_ready(event)
+	_mark(&"features")
 	_reap_tail_tasks()
 	_drain_results(centre)
+	_mark(&"drain_results")
 	_integrate_pending_terrain(centre)
+	_mark(&"integrate")
 	if _grass_runtime_enabled:
 		for item: Dictionary in _grass_streamer.drain_commits():
 			_grass_root.add_child(item.node)
+		_mark(&"grass_commits")
 	_telemetry.timing(&"main/commits", Time.get_ticks_usec() - commit_started)
+	_update_warm_spin()
 	_emit_startup_loading_progress()
 	_update_render_warmup()
 	_log_worker_diagnostics()
+	_mark(&"progress_warmup_log")
 	var focus := Vector2i((lod_origin / PRIORITY_FOCUS_STEP).floor())
 	if focus != _queue_focus or heading != _queue_heading:
 		_queue_focus = focus
@@ -954,14 +1040,17 @@ func _process(_delta: float) -> void:
 		_mutex.lock()
 		_refresh_job_priorities_locked(centre, lod_origin)
 		_mutex.unlock()
+	_mark(&"priorities")
 	var current_chunk_ready := _built.has(centre) and _feature_square_ready(centre)
 	var arrival_ready := _arrival_support_ready()
 	_settle_released_player()
 	_freeze_player(not current_chunk_ready or not startup_loading_complete() or not arrival_ready)
 	var startup_pending := not startup_loading_complete()
 	_request_neighborhood(centre, lod_origin, startup_pending)
+	_mark(&"request")
 	if _grass_runtime_enabled:
 		_queue_grass_jobs(lod_origin)
+		_mark(&"grass_jobs")
 	# Evict chunks beyond keep radius (Chebyshev).
 	for c: Vector2i in _built.keys():
 		if maxi(absi(c.x - centre.x), absi(c.y - centre.y)) > KEEP_RADIUS:
@@ -991,6 +1080,8 @@ func _process(_delta: float) -> void:
 		var static_started := Time.get_ticks_usec()
 		_refresh_static_dressing()
 		_telemetry.timing(&"main/static_dressing", Time.get_ticks_usec() - static_started)
+	_mark(&"evict_trample")
+	_report_slow_frame()
 	_telemetry.timing(&"main/streamer", Time.get_ticks_usec() - profile_started)
 
 
@@ -1215,22 +1306,38 @@ func _integrate_pending_terrain(centre: Vector2i) -> void:
 	var frame_started := Time.get_ticks_usec()
 	var integrated := 0
 	var stepped := false
+	var t_next := 0
+	var t_index := 0
+	var t_steps := 0
 	while true:
 		if _integrating.is_empty():
 			if integrated >= MAX_BUILD_PER_FRAME:
 				break
+			var next_started := Time.get_ticks_usec()
 			var next := _next_integration(centre)
+			t_next += Time.get_ticks_usec() - next_started
 			if next.is_empty():
 				break
+			var prepare_started := Time.get_ticks_usec()
 			_integrating = {"result": next, "steps": _integration_steps(next),
 				"index": 0, "usec": 0}
+			var prepare_usec := Time.get_ticks_usec() - prepare_started
+			if LOG_SLOW_FRAMES and prepare_usec >= SLOW_FRAME_USEC:
+				print("[terrain-streamer] slow_integrate_prepare chunk=%s ms=%.1f steps=%d" % [
+					next.chunk, prepare_usec / 1000.0, (_integrating.steps as Array).size()])
 		var result: Dictionary = _integrating.result
 		var c: Vector2i = result.chunk
+		var index_started := Time.get_ticks_usec()
 		var pending_index := _pending_index_of(result)
+		t_index += Time.get_ticks_usec() - index_started
 		if pending_index < 0 \
 				or int(_terrain_generation.get(c, 0)) != int(result.terrain_generation) \
 				or maxi(absi(c.x - centre.x), absi(c.y - centre.y)) > KEEP_RADIUS:
+			var abandon_started := Time.get_ticks_usec()
 			_abandon_integration()
+			if LOG_SLOW_FRAMES and Time.get_ticks_usec() - abandon_started >= SLOW_FRAME_USEC:
+				print("[terrain-streamer] slow_abandon chunk=%s ms=%.1f" % [c,
+					(Time.get_ticks_usec() - abandon_started) / 1000.0])
 			continue
 		if stepped and Time.get_ticks_usec() - frame_started >= INTEGRATE_BUDGET_USEC:
 			break
@@ -1240,8 +1347,9 @@ func _integrate_pending_terrain(centre: Vector2i) -> void:
 		step.call()
 		_integrating.index = int(_integrating.index) + 1
 		var step_usec := Time.get_ticks_usec() - step_started
+		t_steps += step_usec
 		_integrating.usec = int(_integrating.usec) + step_usec
-		if step_usec >= 50000:
+		if step_usec >= (SLOW_FRAME_USEC if LOG_SLOW_FRAMES else 50000):
 			print("[terrain-streamer] slow_integrate_step seed=%d chunk=%s step=%d/%d %s ms=%.1f" % [
 				world_seed, c, int(_integrating.index), steps.size(),
 				step.get_method(), step_usec / 1000.0])
@@ -1250,17 +1358,32 @@ func _integrate_pending_terrain(centre: Vector2i) -> void:
 			_pending_terrain.remove_at(_pending_index_of(result))
 			_telemetry.count(&"terrain_commits")
 			_telemetry.timing(&"main/terrain_commit", int(_integrating.usec))
+			var finished := _integrating
 			_integrating = {}
+			result = {}
+			steps = []
+			step = Callable()
+			_release_off_main(finished)
 			integrated += 1
 	# Drop results that can no longer integrate (stale or out of range).
 	var remaining: Array[Dictionary] = []
+	var stale: Array[Dictionary] = []
 	for result: Dictionary in _pending_terrain:
 		var c: Vector2i = result.chunk
 		if int(_terrain_generation.get(c, 0)) == int(result.terrain_generation) \
 				and not _built.has(c) \
 				and maxi(absi(c.x - centre.x), absi(c.y - centre.y)) <= KEEP_RADIUS:
 			remaining.append(result)
+		elif not (not _integrating.is_empty() and is_same(_integrating.result, result)):
+			stale.append(result)
 	_pending_terrain = remaining
+	if not stale.is_empty():
+		WorkerThreadPool.add_task(_drop.bind(stale))
+		stale = []
+	var frame_usec := Time.get_ticks_usec() - frame_started
+	if LOG_SLOW_FRAMES and frame_usec >= 3 * SLOW_FRAME_USEC:
+		print("[terrain-streamer] slow_integrate_frame ms=%.1f next=%.1f index=%.1f steps=%.1f pending=%d" % [
+			frame_usec / 1000.0, t_next / 1000.0, t_index / 1000.0, t_steps / 1000.0, _pending_terrain.size()])
 	_telemetry.timing(&"main/integrate_frame", Time.get_ticks_usec() - frame_started)
 
 ## Nearest pending result whose feature square is ready (_pending_terrain is
@@ -1287,7 +1410,24 @@ func _abandon_integration() -> void:
 	var node := _integrating_node_ref.get("node") as Node3D
 	if node != null and is_instance_valid(node) and node.get_parent() == null:
 		node.free()
+	var abandoned := _integrating
 	_integrating = {}
+	_release_off_main(abandoned)
+
+## A chunk's worker payload (collision faces, cliff tile arrays, dressing,
+## water and grass sampling data) is one large nested value; dropping its
+## last reference on the main thread cost ~100 ms when a chunk finished
+## integrating. The step lambdas were made on the main thread and die here;
+## the plain data, built on the worker, is released on a pool thread. Callers
+## clear their own references first, so the task holds the last one.
+func _release_off_main(integration: Dictionary) -> void:
+	if integration.is_empty():
+		return
+	integration.erase("steps")
+	WorkerThreadPool.add_task(_drop.bind(integration))
+
+static func _drop(_value: Variant) -> void:
+	pass
 
 func _integration_steps(result: Dictionary) -> Array[Callable]:
 	var c: Vector2i = result.chunk
@@ -1305,8 +1445,11 @@ func _integration_steps(result: Dictionary) -> Array[Callable]:
 		# Embedded rocks' ground skirts are ground: they commit with it.
 		RockSkirt.commit(node, result.dressing.ground_skirts))
 	steps.append(func() -> void:
+		var t0 := Time.get_ticks_usec()
 		terrain_parent.add_child(node)
+		var t1 := Time.get_ticks_usec()
 		_build_fx(node, result.fx)
+		var t2 := Time.get_ticks_usec()
 		if _grass_runtime_enabled:
 			node.set_meta(&"grass_sampling", result.grass_sampling)
 		_built[c] = node
@@ -1314,9 +1457,15 @@ func _integration_steps(result: Dictionary) -> Array[Callable]:
 		_point_snapshots[c] = result.get("points", PackedFloat32Array())
 		_dressing_trample_by_chunk[c] = _dressing_trample_stamps(result.dressing)
 		_static_trample_dirty = true
+		var t3 := Time.get_ticks_usec()
 		var generation: int = result.terrain_generation
 		_dressing_queue.register_chunk(c, generation)
-		_dressing_queue.enqueue(c, generation, node, result.dressing))
+		_dressing_queue.enqueue(c, generation, node, result.dressing)
+		var t4 := Time.get_ticks_usec()
+		if LOG_SLOW_FRAMES and t4 - t0 >= SLOW_FRAME_USEC:
+			print("[terrain-streamer] slow_attach chunk=%s add_child=%.1f fx=%.1f trample=%.1f dressing_enqueue=%.1f nodes=%d" % [
+				c, (t1 - t0) / 1000.0, (t2 - t1) / 1000.0, (t3 - t2) / 1000.0, (t4 - t3) / 1000.0,
+				node.get_child_count()]))
 	_integrating_node_ref = {"node": node}
 	return steps
 

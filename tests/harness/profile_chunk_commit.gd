@@ -243,6 +243,7 @@ func _process(_delta: float) -> bool:
 			return true
 		return false
 	var data: Dictionary = item.terrain
+	_time_cliff_tiles(data)
 	var t := Time.get_ticks_usec()
 	var steps := {}
 	var surface := mesher._mesh_from_arrays(data.surface_arrays, mesher._ground_tinted_mat())
@@ -363,3 +364,34 @@ func _apply_leaf_shadow_variant(variant: String) -> void:
 			var leaf := proxy.multimesh.mesh.surface_get_material(surface) as ShaderMaterial
 			if leaf != null:
 				leaf.set_shader_parameter("shadow_card_cascade_width", width)
+
+
+## Per cliff-sheet tile: packing the arrays into GPU format (CPU only,
+## RenderingServer.mesh_create_surface_data_from_arrays) against the whole
+## main-thread mesh build (pack + upload) the integration step does.
+func _time_cliff_tiles(data: Dictionary) -> void:
+	var crags := preload("res://scripts/terrain/field/CliffRockCrags.gd")
+	var pack_total := 0
+	var full_total := 0
+	var n := 0
+	var verts := 0
+	for p: Dictionary in (data.get("cliff_terraces", {}) as Dictionary).get("placements", []):
+		for tile: Dictionary in p.get("render_tiles", []):
+			var t0 := Time.get_ticks_usec()
+			var bare := ArrayMesh.new()
+			bare.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, tile.arrays)
+			var t1 := Time.get_ticks_usec()
+			var _m := crags.mesh(p, [tile.arrays], crags.sheet_material(), tile.lods)
+			var t2 := Time.get_ticks_usec()
+			pack_total += t1 - t0
+			full_total += t2 - t1
+			n += 1
+			verts += (tile.arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array).size()
+			if n == 1:
+				var fmt := PackedStringArray()
+				for a in Mesh.ARRAY_MAX:
+					if tile.arrays[a] != null: fmt.append("%d:%s" % [a, type_string(typeof(tile.arrays[a]))])
+				print("[commitprof] cliff_tile arrays ", ", ".join(fmt), " lods=", (tile.lods as Dictionary).size())
+	if n > 0:
+		print("[commitprof] cliff_tiles n=%d verts=%d no_lod_mesh_ms=%.1f full_mesh_ms=%.1f (per tile %.1f / %.1f)" % [
+			n, verts, pack_total / 1000.0, full_total / 1000.0, pack_total / 1000.0 / n, full_total / 1000.0 / n])

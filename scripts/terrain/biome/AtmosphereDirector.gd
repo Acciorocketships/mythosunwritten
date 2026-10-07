@@ -174,6 +174,31 @@ func set_quality(level: int) -> void:
 	if camera != null and camera.is_inside_tree():
 		camera.get_viewport().msaa_3d = [Viewport.MSAA_DISABLED, Viewport.MSAA_2X, Viewport.MSAA_4X][quality]
 		camera.get_viewport().screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if quality == 0 else Viewport.SCREEN_SPACE_AA_DISABLED
+		var viewport := camera.get_viewport()
+		if not viewport.size_changed.is_connected(_fit_render_scale):
+			viewport.size_changed.connect(_fit_render_scale)
+		_fit_render_scale()
+
+## The 3D scene renders at most RENDER_PIXELS[quality] pixels and FSR scales
+## it up to the window; HUD and UI stay native. The frame is pixel-bound
+## (half resolution saved ~8 of ~20 ms at 1920x1080), and a maximised Retina
+## window has ~3.7x those pixels, so without a cap frame time grew with the
+## window instead of staying where it was budgeted.
+const RENDER_PIXELS := [1600 * 900, 1920 * 1080, 2560 * 1440]
+
+func _fit_render_scale() -> void:
+	if camera == null or not camera.is_inside_tree():
+		return
+	var viewport := camera.get_viewport()
+	var size := viewport.get_visible_rect().size
+	var scale := clampf(sqrt(float(RENDER_PIXELS[quality]) / maxf(size.x * size.y, 1.0)), 0.5, 1.0)
+	if scale > 0.98:
+		scale = 1.0
+	if absf(scale - viewport.scaling_3d_scale) < 0.01:
+		return
+	viewport.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR if scale == 1.0 \
+		else Viewport.SCALING_3D_MODE_FSR
+	viewport.scaling_3d_scale = scale
 
 static func water_light_gain(mood: Dictionary) -> float:
 	# Only water's authored scattering/foam is lit here. Its screen transmission

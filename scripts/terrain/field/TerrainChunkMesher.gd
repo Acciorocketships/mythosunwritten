@@ -555,7 +555,10 @@ func commit_steps(data: Dictionary) -> Dictionary:
 	steps.append(func() -> void: _commit_cliff_faces(root, data))
 	return {"root": root, "steps": steps}
 
-const ROCK_COLLISION_PIECE_TRIANGLES := 12000
+## Each piece's BVH build is one integration step on the main thread:
+## ~1 ms per 1,000 triangles, so 3,000 keeps a step inside the streamer's
+## 6 ms frame budget (12,000 made every cliffy chunk a run of 10-15 ms frames).
+const ROCK_COLLISION_PIECE_TRIANGLES := 3000
 
 
 func _commit_surface(root: Node3D, data: Dictionary) -> void:

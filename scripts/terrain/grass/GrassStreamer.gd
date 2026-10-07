@@ -11,14 +11,19 @@ const WIND_IDLE_BEND := 0.055
 const WIND_GUST_SCALE := 110.0
 const WIND_GUST_SPEED := 4.2
 const WIND_GUST_BEND := 0.27
-## Blade LOD: a tile whose nearest point is beyond these distances draws a
-## patch mesh keeping 1/2, then 1/4, of the authored blade groups (whole
-## blades, hash-ranked, nested). Far grass is already shaded toward the
-## terrain colour, so the thinner carpet reads the same at a fraction of the
-## triangles. static var so profiling can switch it off.
-const BLADE_LOD_DISTANCES := [24.0, 44.0]
-const BLADE_LOD_KEEP := [0.5, 0.25]
+## Blade LOD: the patch mesh carries index LODs keeping 1/2, 1/4 and 1/8 of
+## its authored blade groups (whole blades, hash-ranked, nested), and the
+## renderer picks one per tile MultiMesh from the camera's distance to it. Far
+## grass is already shaded toward the terrain colour, so the thinner carpet
+## reads the same at a fraction of the triangles (the visible ring drew ~8 M
+## a frame). Engine LODs, never a mesh swap: changing a live MultiMesh's mesh
+## rebuilt its buffer and stalled ~18 ms. Edge lengths are calibrated to the
+## renderer's selection (edge / distance against its screen threshold, ~0.0015
+## at 1080p): the levels engage ~20 m, ~35 m and ~55 m from the tile.
+const BLADE_LOD_KEEP := [0.5, 0.25, 0.125]
+const BLADE_LOD_EDGE := [0.03, 0.054, 0.084]
 static var BLADE_LOD := true
+const VISIBLE_BANDS := 4.0
 
 var _program: GrassProgram
 var _render_cache: EnvironmentRenderCache
@@ -27,7 +32,6 @@ var _ground_palette_texture: Texture2D
 var _ground_palette_uv := Vector2.ZERO
 var _materials: Dictionary = {}
 var _meshes: Dictionary = {}
-var _lod_meshes: Dictionary = {}
 var _built: Dictionary = {}
 var _requested: Dictionary = {}
 var _pending_tiles: Dictionary = {}
@@ -237,17 +241,24 @@ func _prepare_asset(asset_id: StringName) -> void:
 	material.set_shader_parameter(&"local_base_y", float(metadata.local_base_y))
 	material.set_shader_parameter(&"local_height", float(metadata.local_height))
 	_materials[asset_id] = material
-	_meshes[asset_id] = piece.mesh
-	var lods: Array[Mesh] = [piece.mesh]
-	for keep: float in BLADE_LOD_KEEP:
-		lods.append(thinned_blades(piece.mesh, keep))
-	_lod_meshes[asset_id] = lods
+	_meshes[asset_id] = blade_lod_mesh(piece.mesh) if BLADE_LOD else piece.mesh
 
-## The same patch keeping only blade groups whose rank is below `keep`. A
-## blade group is the vertices sharing one root (UV2, written by the bake);
-## ranks are a hash of that root, so smaller keeps are subsets of larger ones.
-static func thinned_blades(mesh: Mesh, keep: float) -> ArrayMesh:
+## The patch with its blade LODs (see BLADE_LOD_KEEP).
+static func blade_lod_mesh(mesh: Mesh) -> ArrayMesh:
 	var arrays := mesh.surface_get_arrays(0)
+	var lods := {}
+	for level in BLADE_LOD_KEEP.size():
+		lods[BLADE_LOD_EDGE[level]] = thinned_blade_indices(arrays, BLADE_LOD_KEEP[level])
+	var out := ArrayMesh.new()
+	out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays, [], lods)
+	out.surface_set_material(0, mesh.surface_get_material(0))
+	out.custom_aabb = mesh.get_aabb()
+	return out
+
+## The patch's triangles whose blade group ranks below `keep`. A blade group is
+## the vertices sharing one root (UV2, written by the bake); ranks are a hash
+## of that root, so smaller keeps are subsets of larger ones.
+static func thinned_blade_indices(arrays: Array, keep: float) -> PackedInt32Array:
 	var roots: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV2]
 	var source: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
 	var kept := PackedInt32Array()
@@ -256,25 +267,12 @@ static func thinned_blades(mesh: Mesh, keep: float) -> ArrayMesh:
 			kept.append(source[t])
 			kept.append(source[t + 1])
 			kept.append(source[t + 2])
-	arrays[Mesh.ARRAY_INDEX] = kept
-	var out := ArrayMesh.new()
-	out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	out.surface_set_material(0, mesh.surface_get_material(0))
-	out.custom_aabb = mesh.get_aabb()
-	return out
+	return kept
 
 static func blade_rank(root: Vector2) -> float:
 	var h := hash(Vector2i(roundi(root.x * 1.0e6), roundi(root.y * 1.0e6)))
 	return float(h & 0xffff) / 65536.0
 
-static func blade_lod(distance: float) -> int:
-	if not BLADE_LOD:
-		return 0
-	var level := 0
-	for limit: float in BLADE_LOD_DISTANCES:
-		if distance > limit:
-			level += 1
-	return level
 
 func _prepare_wind() -> void:
 	var noise := FastNoiseLite.new()
@@ -301,6 +299,7 @@ func _new_tile_node(tile: Vector2i) -> Node3D:
 	return root
 
 func _add_batch(root: Node3D, asset_id: StringName, batch: Dictionary) -> void:
+	var upload_started := Time.get_ticks_usec()
 	var multimesh := MultiMesh.new()
 	multimesh.transform_format = MultiMesh.TRANSFORM_3D
 	multimesh.use_colors = true
@@ -318,6 +317,9 @@ func _add_batch(root: Node3D, asset_id: StringName, batch: Dictionary) -> void:
 	instance.set_meta(&"grass_count", int(batch.count))
 	instance.set_meta(&"grass_asset_id", asset_id)
 	root.add_child(instance)
+	var upload_usec := Time.get_ticks_usec() - upload_started
+	if upload_usec > 4000:
+		print("[grass] slow_batch_upload ms=%.1f instances=%d" % [upload_usec / 1000.0, int(batch.count)])
 
 func _batch_records(node: Node3D) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
@@ -328,27 +330,32 @@ func _batch_records(node: Node3D) -> Array[Dictionary]:
 		if instance != null:
 			out.append({"multimesh": instance.multimesh,
 				"count": int(instance.get_meta(&"grass_count", 0)),
-				"asset_id": instance.get_meta(&"grass_asset_id", &""),
-				"visible": -1, "lod": 0})
+				"visible": -1})
 	return out
+
+## The CPU prefix of a tile's instances drawn at this density: never fewer
+## than the exact ceil(count * density) the shader keeps, rounded up to a
+## quarter band so it changes rarely (see _update_tile_visible).
+static func visible_count(count: int, density_value: float) -> int:
+	var band := ceilf(density_value * VISIBLE_BANDS) / VISIBLE_BANDS
+	return mini(count, int(ceil(float(count) * band)))
 
 func _update_visible_counts() -> void:
 	for tile: Vector2i in _built:
 		_update_tile_visible(tile)
 
 func _update_tile_visible(tile: Vector2i) -> void:
-	var distance := distance_to_tile(_lod_origin, tile)
-	var tile_density := density(distance) * _density_scale
-	var lod := blade_lod(distance)
+	var tile_density := density(distance_to_tile(_lod_origin, tile)) * _density_scale
 	for batch: Dictionary in _built[tile].batches:
 		var count: int = batch.count
 		var multimesh: MultiMesh = batch.multimesh
-		if lod != int(batch.lod) and _lod_meshes.has(batch.asset_id):
-			multimesh.mesh = _lod_meshes[batch.asset_id][lod]
-			batch.lod = lod
-		var visible := mini(count, int(ceil(float(count) * tile_density)))
-		# The cap is still derived from this frame's player origin; only the
-		# redundant server write is skipped when the integer is unchanged.
+		# The shader fades each patch by its own distance (density_at); this
+		# CPU prefix only skips instances that are certainly faded out. It
+		# rounds UP to a quarter band, so it changes a few times per tile
+		# crossing instead of every frame: each visible-count write is an
+		# engine-side update that cost ~0.3 ms per tile (~20 ms a moving frame
+		# over the 60-84 m fade ring).
+		var visible := visible_count(count, tile_density)
 		if visible != int(batch.visible):
 			multimesh.visible_instance_count = visible
 			batch.visible = visible
