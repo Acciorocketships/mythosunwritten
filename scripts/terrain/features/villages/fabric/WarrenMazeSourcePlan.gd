@@ -338,6 +338,8 @@ func add_plot(plot: Dictionary) -> bool:
 	})
 	if bool(plot.get("wall_room",false)):
 		plots.back()["wall_room"] = true
+	if plot.has("purpose"):
+		plots.back()["purpose"] = StringName(plot["purpose"])
 	for column: Vector2i in cells:
 		var indices: Array = _plot_columns.get(column, [])
 		indices.append(plots.size() - 1)
@@ -375,6 +377,20 @@ func add_plot(plot: Dictionary) -> bool:
 ## base is zero and no plot floor is negative, so this is a no-op and the flat
 ## corpus is unchanged.
 ## Indices into `plots` of every plot standing on `column`.
+## Withdraws the plot with `id` from an open plan (a court whose clearing
+## was pruned). False when the plan is sealed or no such plot exists.
+func remove_plot(id: StringName) -> bool:
+	if _sealed:
+		return _reject("plan is sealed; no plot may be removed")
+	for index in plots.size():
+		if StringName((plots[index] as Dictionary)["id"]) == id:
+			plots.remove_at(index)
+			_rebuild_plot_columns()
+			_rock_shoulders.clear()
+			return true
+	return false
+
+
 func plots_at(column: Vector2i) -> Array:
 	return (_plot_columns.get(column, []) as Array).duplicate()
 

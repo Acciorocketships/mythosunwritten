@@ -126,10 +126,11 @@ static func _trace_stage(stage: String, started_ms: int) -> int:
 
 static func _planned_plaza_support_cells(source: WarrenSpatialPlan) \
 		-> Dictionary:
-	## Translate only the source plot planner's typed plaza rectangle. Macro
+	## Translate only the source plot planner's green courts (the typed plaza
+	## rectangle and any clearing drawn as a green). Macro
 	## columns expand to the same exact 2 x 2 fine lattice used by the volumetric
 	## solver; subtracting one band names the structural cell whose top is the
-	## public walk plane. Ordinary deck/court plots are deliberately excluded.
+	## public walk plane. Paved/timber deck and court plots are excluded.
 	var out: Dictionary = {}
 	if source == null or source.source_volume == null:
 		return out
@@ -139,8 +140,7 @@ static func _planned_plaza_support_cells(source: WarrenSpatialPlan) \
 		return out
 	for plot_value: Variant in maze.plots:
 		var plot := plot_value as Dictionary
-		if StringName(plot.get("id", &"")) \
-				!= WarrenPlotReservations.PLAZA_PLOT_ID:
+		if not WarrenPlotReservations.is_green_court(plot):
 			continue
 		var floor_band := int(plot["floor"])
 		for column: Vector2i in WarrenMazeSourcePlan.deck_flat_columns(plot):
@@ -149,7 +149,6 @@ static func _planned_plaza_support_cells(source: WarrenSpatialPlan) \
 			for offset: Vector3i in [Vector3i.ZERO, Vector3i.RIGHT,
 					Vector3i.BACK, Vector3i(1, 0, 1)]:
 				out[origin + offset] = true
-		break
 	return out
 
 

@@ -231,3 +231,69 @@ func test_clearing_doors_are_never_flight_treads() -> void:
 		for door: Vector3i in clearing.doors:
 			assert_false(flights.has(door), "a door is never a flight tread")
 			assert_eq(door.y, int(clearing.floor))
+
+func _clearing_plots(plan: WarrenMazeSourcePlan) -> Array:
+	return plan.plots.filter(func(p: Dictionary) -> bool: return String(p.id).begins_with("clearing."))
+
+func test_clearings_become_court_plots_and_greens_are_lawns() -> void:
+	# Seed 31 keeps no clearing after Task 9's guardrails; 103 standard keeps some.
+	var profile := WarrenVillageScaleProfile.for_id(&"standard")
+	var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
+	program.town_odds = program.town_odds.with_overrides({&"clearing_count": 3.0})
+	var spatial := WarrenVolumetricSolver.generate(103, {}, program, profile)
+	assert_not_null(spatial)
+	var source := spatial.source_volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
+	var courts := _clearing_plots(source)
+	assert_gt(courts.size(), 0)
+	assert_eq(courts.size(), source.excavation.court_clearings.size())
+	for plot: Dictionary in courts:
+		assert_eq(plot.kind, WarrenMazeSourcePlan.PLOT_DECK)
+		assert_eq(WarrenPlotReservations.is_green_court(plot), plot.purpose == &"green")
+
+func test_plaza_is_still_green() -> void:
+	assert_true(WarrenPlotReservations.is_green_court({"id": WarrenPlotReservations.PLAZA_PLOT_ID}))
+	assert_false(WarrenPlotReservations.is_green_court({"id": &"deck.00"}))
+
+func test_clearing_plots_match_kept_clearings_and_nothing_builds_on_them() -> void:
+	var profile := WarrenVillageScaleProfile.for_id(&"standard")
+	TownCharacter.attach(profile, TownOddsProgram.builtin().with_overrides({&"clearing_count": 3.0}), 103)
+	var plan := WarrenMazeSitePlanner.plan(103, {}, profile)
+	assert_not_null(plan)
+	var courts := _clearing_plots(plan)
+	assert_gt(courts.size(), 0)
+	assert_eq(courts.size(), plan.excavation.court_clearings.size())
+	for plot: Dictionary in courts:
+		var matched := false
+		for clearing: Dictionary in plan.excavation.court_clearings:
+			var cells: Array[Vector2i] = []
+			cells.assign(clearing.cells)
+			matched = matched or (cells == plot.cells and int(clearing.floor) == int(plot.floor))
+		assert_true(matched, "clearing plot %s has a kept clearing" % plot.id)
+		for column: Vector2i in plot.cells:
+			for index: int in plan.plots_at(column):
+				var other: Dictionary = plan.plots[index]
+				if other.id == plot.id: continue
+				# Only retained support (a wall room) may stand BELOW a court.
+				assert_true(int(WarrenMazeSourcePlan._plot_reserved_top(other)) <= int(plot.floor),
+					"%s stands on court %s" % [other.id, plot.id])
+	var records: Array = WarrenPlotPlanner.outcomes(plan).get("clearings", [])
+	assert_gt(records.size(), 0)
+
+func test_withdrawn_clearing_withdraws_its_plot() -> void:
+	var profile := WarrenVillageScaleProfile.for_id(&"standard")
+	TownCharacter.attach(profile, TownOddsProgram.builtin().with_overrides({&"clearing_count": 3.0}), 103)
+	var plan := WarrenMazeSitePlanner.plan(103, {}, profile, &"reserve")
+	var courts := _clearing_plots(plan)
+	assert_gt(courts.size(), 0)
+	var gone: Dictionary = courts[0]
+	var kept: Array[Dictionary] = []
+	for clearing: Dictionary in plan.excavation.court_clearings:
+		var cells: Array[Vector2i] = []
+		cells.assign(clearing.cells)
+		if cells != gone.cells: kept.append(clearing)
+	plan.excavation.court_clearings = kept
+	WarrenPlotReservations.withdraw_orphan_clearings(plan)
+	assert_eq(_clearing_plots(plan).size(), courts.size() - 1)
+	for column: Vector2i in gone.cells:
+		for index: int in plan.plots_at(column):
+			assert_ne(plan.plots[index].id, gone.id)

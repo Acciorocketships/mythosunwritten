@@ -245,6 +245,7 @@ const DECK_QUOTA_SALT := 0x4dec5
 ## `deck.%02d`: an id in that family would renumber the ordinary decks and make
 ## "which deck is this" a question about placement order.
 const PLAZA_PLOT_ID := &"plaza.00"
+const CLEARING_PREFIX := "clearing."
 const PLAZA_MIN_SIDE := 2
 const PLAZA_MAX_ASPECT := 2
 ## How deep the square may cut. The ordinary deck asks its columns to stand
@@ -317,6 +318,9 @@ static func reserve(plan: WarrenMazeSourcePlan,
 	# landmark's body or eave halo cannot consume their addressed frontage.
 	for column: Vector2i in plan.massif.columns:
 		if plan.massif.columns[column].has("house_site"): blocked[column] = true
+	# Carved courtyard clearings are courts first: their deck plots block the
+	# plaza, landmarks, decks and (through blocked_columns) house partition.
+	_place_clearings(plan, blocked, outcomes)
 	# Reserve a broad, supportable internal court before landmark envelopes
 	# consume its house frontages. Small fallback courts keep the old order.
 	var plaza := 0
@@ -350,6 +354,62 @@ static func reserve(plan: WarrenMazeSourcePlan,
 	blocked.merge(court_frontages)
 	_grow_decks(plan, streets, blocked, outcomes, plaza)
 	_reserve_deck_access(plan)
+
+
+static func is_green_court(plot: Dictionary) -> bool:
+	## Lawn courts: the primary plaza, and any clearing whose drawn purpose is
+	## a green. Everything else renders as a paved/timber court.
+	return StringName(plot.get("id", &"")) == PLAZA_PLOT_ID \
+		or StringName(plot.get("purpose", &"")) == &"green"
+
+
+static func is_clearing_plot(plot: Dictionary) -> bool:
+	return String(plot.get("id", &"")).begins_with(CLEARING_PREFIX)
+
+
+static func _place_clearings(plan: WarrenMazeSourcePlan, blocked: Dictionary,
+		outcomes: Dictionary) -> void:
+	## One flat deck plot per carved clearing, ahead of every other
+	## reservation. The plot itself is the blocking authority: the rebuilt
+	## excavation after destination pruning carries no construction
+	## reservations, and every later stage reads blocked_columns (plot cells).
+	var records: Array[Dictionary] = []
+	for index in plan.excavation.court_clearings.size():
+		var clearing: Dictionary = plan.excavation.court_clearings[index]
+		var id := StringName("%s%02d" % [CLEARING_PREFIX, index])
+		var cells: Array[Vector2i] = []
+		cells.assign(clearing.cells)
+		var record := {"id": id, "size": cells.size(), "floor": int(clearing.floor), "reason": ""}
+		if plan.add_plot({"id": id, "kind": WarrenMazeSourcePlan.PLOT_DECK, "cells": cells,
+				"floor": int(clearing.floor), "top": int(clearing.floor),
+				"door_walk": clearing.door_walk as Vector3i, "building_id": id,
+				"purpose": StringName(clearing.purpose)}):
+			for column: Vector2i in cells:
+				blocked[column] = true
+		else:
+			record["reason"] = plan.last_rejection
+		records.append(record)
+	if not records.is_empty():
+		outcomes["clearings"] = records
+
+
+static func withdraw_orphan_clearings(plan: WarrenMazeSourcePlan) -> void:
+	## A clearing withdrawn after its deck plot was placed (destination
+	## pruning) takes the plot with it; matched by footprint and floor.
+	var orphans: Array[StringName] = []
+	for plot: Dictionary in plan.plots:
+		if not is_clearing_plot(plot):
+			continue
+		var matched := false
+		for clearing: Dictionary in plan.excavation.court_clearings:
+			matched = matched or (int(clearing.floor) == int(plot.floor)
+				and Array(clearing.cells) == Array(plot.cells))
+		if not matched:
+			orphans.append(StringName(plot.id))
+	for id: StringName in orphans:
+		plan.remove_plot(id)
+		for record: Dictionary in WarrenPlotPlanner.outcomes(plan).get("clearings", []):
+			if record.id == id: record["reason"] = "withdrawn with its pruned clearing"
 
 
 static func _reserve_deck_access(plan: WarrenMazeSourcePlan) -> void:

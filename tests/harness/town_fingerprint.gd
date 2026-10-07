@@ -65,6 +65,13 @@ func _run() -> void:
 			source.excavation.court_clearings.map(func(c: Dictionary) -> Dictionary:
 				return {"floor": c.floor, "cells": (c.cells as Array).size(), "links": c.links,
 					"shape": c.shape, "purpose": c.purpose})))
+		var clearing_plots := source.plots.filter(func(p: Dictionary) -> bool:
+			return WarrenPlotReservations.is_clearing_plot(p))
+		print("CLEARING_PLOTS ", town, " ", clearing_plots.size(), " ", JSON.stringify(
+			clearing_plots.map(func(p: Dictionary) -> Dictionary:
+				return {"id": p.id, "floor": p.floor, "cells": (p.cells as Array).size(),
+					"purpose": p.get("purpose", &""), "green": WarrenPlotReservations.is_green_court(p)})),
+			" ", JSON.stringify(WarrenPlotPlanner.outcomes(source).get("clearings", [])))
 		var fabric := spatial.compiled_fabric_cache()
 		var source_hash := _hash_values([source.plots, source.passage_kinds,
 			source.feature_stamps, source.market_square_cells, source.summit_cell,

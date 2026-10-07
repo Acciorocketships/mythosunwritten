@@ -2542,17 +2542,21 @@ static func _maze_court_planting_cells(volume: WarrenVolumePlan) -> Dictionary:
 	var out := {}
 	if source == null: return out
 	for plot: Dictionary in source.plots:
-		if plot.id != WarrenPlotReservations.PLAZA_PLOT_ID: continue
+		if not WarrenPlotReservations.is_green_court(plot): continue
 		var floor_cells := {}
 		for column: Vector2i in WarrenMazeSourcePlan.deck_flat_columns(plot):
 			for cell: Vector3i in _fine_square(Vector3i(column.x,plot.floor,column.y)):
 				floor_cells[cell] = true
-		# Erode one fine cell from the complete square. The outer walk keeps
-		# every original entrance and a continuous player-width circuit.
+		# Erode one fine cell from the complete court. The outer walk keeps
+		# every original entrance and a continuous player-width circuit: the
+		# eight-neighbour test keeps the ring 4-connected round a concave
+		# corner of an irregular clearing (on a rectangle it equals the
+		# four-neighbour erosion).
 		for cell: Vector3i in floor_cells:
 			var interior := true
-			for step: Vector3i in [Vector3i.LEFT,Vector3i.RIGHT,Vector3i.FORWARD,Vector3i.BACK]:
-				interior = interior and floor_cells.has(cell+step)
+			for dx in [-1, 0, 1]:
+				for dz in [-1, 0, 1]:
+					interior = interior and floor_cells.has(cell+Vector3i(dx,0,dz))
 			if interior: out[cell] = true
 	# Doorways require a two-fine-cell-deep approach. Their source landing
 	# square takes precedence over an optional bed, including in compact courts.

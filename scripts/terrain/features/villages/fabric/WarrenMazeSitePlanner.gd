@@ -320,6 +320,8 @@ static func finish_public_destinations(source: WarrenMazeSourcePlan) -> void:
 	excavation.tunnel_attrition["pruned_cells"] = int(excavation.tunnel_attrition.get("pruned_cells", 0)) + pruned_tunnel_cells
 	excavation.finish_construction()
 	source.excavation = excavation
+	# A court plot placed for a clearing pruned above leaves with it.
+	WarrenPlotReservations.withdraw_orphan_clearings(source)
 	var stamps: Array[Dictionary] = []
 	for stamp: Dictionary in source.feature_stamps:
 		var cells: Array = stamp.get("cells", [])

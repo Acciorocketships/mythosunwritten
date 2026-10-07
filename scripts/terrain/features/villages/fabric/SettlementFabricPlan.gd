@@ -220,32 +220,13 @@ func set_planned_plaza(cells: Dictionary, planting: Dictionary = {}) -> bool:
 	## found no square, but no inferred garden may masquerade as this typed feature.
 	if _sealed or _plaza_declared:
 		return false
-	var first_band := 0
-	var first := true
+	# Several typed greens may be declared (the plaza and any clearing drawn as
+	# a green). Each is its own same-band component, so no band or single-run
+	# rule spans the set; every walking cell still needs its public claim.
 	for cell_value: Variant in cells.keys():
 		var cell := cell_value as Vector3i
 		if surface_plan != null and not planting.has(cell) and not surface_plan.has_cell(
 				cell + Vector3i.UP):
-			return false
-		if first:
-			first_band = cell.y
-			first = false
-		elif cell.y != first_band:
-			return false
-	if not cells.is_empty():
-		var unseen := cells.duplicate()
-		var starts: Array[Vector3i] = []
-		starts.assign(unseen.keys())
-		var frontier: Array[Vector3i] = [starts[0]]
-		unseen.erase(starts[0])
-		while not frontier.is_empty():
-			var cell: Vector3i = frontier.pop_back()
-			for step: Vector3i in [Vector3i.RIGHT, Vector3i.LEFT,
-					Vector3i.FORWARD, Vector3i.BACK]:
-				if unseen.has(cell + step):
-					unseen.erase(cell + step)
-					frontier.append(cell + step)
-		if not unseen.is_empty():
 			return false
 	for cell: Vector3i in planting:
 		if not cells.has(cell): return false
