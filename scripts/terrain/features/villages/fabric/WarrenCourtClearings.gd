@@ -3,7 +3,12 @@ extends RefCounted
 ## Courtyard clearings: open rooms reserved inside the massif while streets
 ## are bored. Placement is a biased draw, never a rule: columns far from any
 ## street (big uncut blocks) are more likely, ground level moderately
-## favoured, size/shape/purpose drawn from the town's character. Only
+## favoured, size/shape/purpose drawn from the town's character. Two more
+## pulls are knobs, both off by default: `clearing_lobe_bias` weights columns
+## deep inside the town field's Gaussian lobes (where houses end up), and
+## `clearing_enclosure_bias` keeps a grown clearing with a probability that
+## rises with the sides houses can front -- an open clearing is less likely,
+## never refused outright. Only
 ## guardrails are hard: a legal deck column at the floor, minimum width 2
 ## (every cell lies in a fully contained 2x2 block), and no overlap with other
 ## reservations or earlier clearings. Pure: nothing is carved here.
@@ -14,6 +19,11 @@ const SALT_SHAPE := 0x53484150  # "SHAP"; was SALT_FLOOR ("FLOR") until Oct 7 --
 const SALT_GROW := 0x47524F57
 const SALT_ANCHOR := 0x414E4348
 const SALT_SIZE := 0x53495A45
+const SALT_ENCLOSE := 0x454E434C
+const LOBE_FLOOR := 0.01
+const LOBE_REACH := 3
+## (1 + sides) / ENCLOSURE_SIDES: four fronted sides keep a clearing always.
+const ENCLOSURE_SIDES := 5.0
 const STREET_REACH := 6
 const FLOOR_STEP := 2
 const DECK_LEVEL_BANDS := 6
@@ -58,6 +68,8 @@ static func propose(world_seed: int, massif: WarrenMassif, excavation: WarrenExc
 			by_band[cell.y] = {}
 		by_band[cell.y][Vector2i(cell.x, cell.z)] = true
 	var candidates := _candidates(empty, street, blocked, character, by_band)
+	var enclosure_bias := character.value(&"clearing_enclosure_bias")
+	var streets := WarrenPlotPlanner.street_bands(empty) if enclosure_bias > 0.0 else {}
 	var taken := {}
 	var attempt := 0
 	while out.size() < wanted and attempt < wanted * ATTEMPTS_PER_CLEARING and not candidates.is_empty():
@@ -72,6 +84,14 @@ static func propose(world_seed: int, massif: WarrenMassif, excavation: WarrenExc
 			shape, blocked, taken, street, character, attempt)
 		if cells.size() < maxi(4, area / 2):
 			continue
+		# Enclosure pull: an acceptance roll on the knob's own stream, skipped
+		# at bias 0 so the default draw sequence is untouched.
+		if enclosure_bias > 0.0:
+			var sides := WarrenPlotReservations._plaza_buildable_frontages(
+				empty, cells, floor_band, streets, blocked)
+			var keep := pow((1.0 + float(sides)) / ENCLOSURE_SIDES, enclosure_bias)
+			if character.roll(&"clearing_enclosure_bias", Vector2i(attempt, SALT_ENCLOSE)) >= keep:
+				continue
 		for column: Vector2i in cells:
 			taken[column] = true
 		var key := Vector2i(out.size(), floor_band)
@@ -189,6 +209,35 @@ static func carve(world_seed: int, massif: WarrenMassif, excavation: WarrenExcav
 		excavation.court_clearings.append(record)
 
 
+static func lobe_depth(massif: WarrenMassif) -> Dictionary:
+	## Column -> how deep inside the town field's lobes it stands, in
+	## [LOBE_FLOOR, 1]. The massif's own layer over each column's ground
+	## (`layer_at`: the Gaussian bumps the town field stacked, independent of
+	## terrain relief) is averaged over a LOBE_REACH diamond -- columns off the
+	## massif count as 0 -- which rebuilds the lobe's smooth envelope from the
+	## terraced layer: a level shelf ringed by tall mass reads deep, a shelf at
+	## the town's rim shallow. Normalised by the deepest column. A town with no
+	## layer anywhere reads 1.0 throughout (uniform).
+	var raw := {}
+	var peak := 0.0
+	for column: Vector2i in massif.columns:
+		var sum := 0.0
+		var n := 0
+		for dx in range(-LOBE_REACH, LOBE_REACH + 1):
+			var span := LOBE_REACH - absi(dx)
+			for dz in range(-span, span + 1):
+				n += 1
+				var at := column + Vector2i(dx, dz)
+				if massif.has_column(at):
+					sum += float(massif.layer_at(at))
+		raw[column] = sum / float(n)
+		peak = maxf(peak, raw[column])
+	var out := {}
+	for column: Vector2i in massif.columns:
+		out[column] = maxf(LOBE_FLOOR, float(raw[column]) / peak) if peak > 0.0 else 1.0
+	return out
+
+
 static func _door_of(connection: Dictionary) -> Vector3i:
 	## The doorstep beside the clearing: the lane's last cell, or the anchor
 	## itself when the doorstep already is a walk node.
@@ -198,11 +247,15 @@ static func _door_of(connection: Dictionary) -> Vector3i:
 
 static func _candidates(plan: WarrenMazeSourcePlan, street: Dictionary, blocked: Dictionary,
 		character: TownCharacter, by_band: Dictionary) -> Array[Dictionary]:
-	## (column, floor) pairs weighted by street distance ^ bias, ground x weight.
+	## (column, floor) pairs weighted by street distance ^ bias x lobe depth ^
+	## lobe bias, ground x weight.
 	var out: Array[Dictionary] = []
 	var massif := plan.massif
 	var bias := character.value(&"clearing_block_bias")
 	var ground := character.value(&"clearing_ground_weight")
+	var lobe_bias := character.value(&"clearing_lobe_bias")
+	var depth := lobe_depth(massif) if lobe_bias > 0.0 else {}
+	var memo := {}
 	var columns: Array = massif.columns.keys()
 	columns.sort_custom(WarrenPlotPlanner.column_less)
 	for column: Vector2i in columns:
@@ -217,9 +270,37 @@ static func _candidates(plan: WarrenMazeSourcePlan, street: Dictionary, blocked:
 					or _reserved(plan.excavation, column, floor_band):
 				continue
 			if WarrenPlotReservations._deck_column_ok(plan, column, floor_band, {}, blocked, DECK_LEVEL_BANDS):
-				out.append({"column": column, "floor": floor_band,
-					"weight": base_weight * (ground if floor_band == low else 1.0)})
+				var weight := base_weight * (ground if floor_band == low else 1.0)
+				if lobe_bias > 0.0:
+					weight *= pow(_block_depth(plan, column, floor_band, blocked, street,
+						depth, memo), lobe_bias)
+				out.append({"column": column, "floor": floor_band, "weight": weight})
 	return out
+
+
+static func _block_depth(plan: WarrenMazeSourcePlan, column: Vector2i, floor_band: int,
+		blocked: Dictionary, street: Dictionary, depth: Dictionary, memo: Dictionary) -> float:
+	## The lobe depth a clearing centred here can actually have: the deepest
+	## mean over the legal 2x2 blocks holding the column (a clearing's smallest
+	## piece). A lobe core too steep for any 2x2 floor reads LOBE_FLOOR, so
+	## the pull favours buildable ground inside the lobes rather than drawing
+	## centres `_grow` can never open.
+	var best := LOBE_FLOOR
+	for corner: Vector2i in [column, column - Vector2i(1, 0), column - Vector2i(0, 1), column - Vector2i(1, 1)]:
+		var sum := 0.0
+		var legal := true
+		for offset: Vector2i in [Vector2i.ZERO, Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]:
+			var cell: Vector2i = corner + offset
+			var key := Vector3i(cell.x, floor_band, cell.y)
+			if not memo.has(key):
+				memo[key] = _legal(plan, cell, floor_band, blocked, {}, street)
+			if not memo[key]:
+				legal = false
+				break
+			sum += float(depth[cell])
+		if legal:
+			best = maxf(best, sum / 4.0)
+	return best
 
 
 static func _reserved(excavation: WarrenExcavation, column: Vector2i, floor_band: int) -> bool:

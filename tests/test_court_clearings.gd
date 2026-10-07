@@ -378,3 +378,102 @@ func test_greens_at_different_bands_are_separate_components_not_a_rejection() ->
 	assert_eq(SettlementFabricAssembler.maze_green_components(stack_plan.planned_plaza_cells).size(), 2)
 	# A genuinely malformed declaration is still refused: a second one.
 	assert_false(stack_plan.set_planned_plaza({}))
+
+# October 7 town taste knobs, task 1: lobe-depth and enclosure pulls.
+const PRE_KNOB_PROPOSALS := {
+	53: "daea87663fdda45665db651eed42b888e7e7a200185a3a43dbe8187c9eeddf51",
+	103: "0c13e9f6dc99da673b10738fd89c0e35a0467c740c15d66c0845f24c663d8684",
+}
+const PULL_TOWNS := [[53, &"grand"], [103, &"standard"]]
+
+func _pull_plan(seed_value: int, scale: StringName) -> Dictionary:
+	## Streets built with the default table; proposals then read `overrides`.
+	var profile := WarrenVillageScaleProfile.for_id(scale)
+	TownCharacter.attach(profile, TownOddsProgram.builtin(), seed_value)
+	var plan := WarrenMazeSitePlanner.plan(seed_value, {}, profile, &"carve")
+	return {"profile": profile, "plan": plan}
+
+func _propose_with(s: Dictionary, seed_value: int, overrides: Dictionary) -> Array[Dictionary]:
+	var profile: WarrenVillageScaleProfile = s.profile
+	var plan: WarrenMazeSourcePlan = s.plan
+	TownCharacter.attach(profile, TownOddsProgram.builtin().with_overrides(overrides), seed_value)
+	return WarrenCourtClearings.propose(seed_value, plan.massif, plan.excavation, profile)
+
+func test_zero_pulls_reproduce_the_pre_knob_proposals() -> void:
+	for spec: Array in PULL_TOWNS:
+		var s := _pull_plan(spec[0], spec[1])
+		var absent := _propose_with(s, spec[0], {&"clearing_count": 3.0})
+		var zero := _propose_with(s, spec[0], {&"clearing_count": 3.0,
+			&"clearing_lobe_bias": 0.0, &"clearing_enclosure_bias": 0.0})
+		assert_eq(var_to_str(absent).sha256_text(), PRE_KNOB_PROPOSALS[spec[0]], "%s default" % [spec])
+		assert_eq(var_to_str(zero).sha256_text(), PRE_KNOB_PROPOSALS[spec[0]], "%s zero biases" % [spec])
+
+func _mean_depth(clearings: Array[Dictionary], depth: Dictionary) -> float:
+	var sum := 0.0
+	var n := 0
+	for clearing: Dictionary in clearings:
+		for column: Vector2i in clearing.cells:
+			sum += float(depth[column])
+			n += 1
+	assert_gt(n, 0, "proposes")
+	return sum / float(maxi(1, n))
+
+func test_lobe_bias_pulls_clearings_into_the_lobes() -> void:
+	# clearing_area 6 (>= 4 cells) lets the small level shelves deep inside a
+	# lobe qualify; at the grand default (15, >= 7 cells) only the rim's broad
+	# flats are large enough, which is the area guard, not the placement pull.
+	for spec: Array in PULL_TOWNS:
+		var s := _pull_plan(spec[0], spec[1])
+		var plan: WarrenMazeSourcePlan = s.plan
+		var depth := WarrenCourtClearings.lobe_depth(plan.massif)
+		var open := _mean_depth(_propose_with(s, spec[0], {&"clearing_count": 3.0,
+			&"clearing_area": 6.0}), depth)
+		var pulled := _mean_depth(_propose_with(s, spec[0], {&"clearing_count": 3.0,
+			&"clearing_area": 6.0, &"clearing_lobe_bias": 3.0}), depth)
+		var empty := WarrenMazeSourcePlan.new(spec[0], s.profile, plan.massif, plan.excavation)
+		var by_band := {}
+		for cell: Vector3i in plan.excavation.public_cells():
+			if not by_band.has(cell.y):
+				by_band[cell.y] = {}
+			by_band[cell.y][Vector2i(cell.x, cell.z)] = true
+		var candidates := WarrenCourtClearings._candidates(empty,
+			WarrenCourtClearings.street_distance(plan.massif, plan.excavation),
+			WarrenPlotPlanner.blocked_columns(empty), TownCharacter.of(s.profile, spec[0]), by_band)
+		var pool := 0.0
+		for c: Dictionary in candidates:
+			pool += float(depth[c.column])
+		pool /= float(maxi(1, candidates.size()))
+		gut.p("%s lobe depth: candidates %.3f, bias 0 %.3f, bias 3 %.3f" % [spec, pool, open, pulled])
+		assert_gte(pulled, open, "%s the pull never moves clearings outward" % [spec])
+		if spec[0] == 53:
+			# 103:standard has three disjoint viable sites and takes all three
+			# at any bias; grand has room for the pull to choose.
+			assert_gt(pulled, pool, "%s deeper than the candidate mean" % [spec])
+
+func _mean_fronted_sides(s: Dictionary, seed_value: int, bias: float) -> Vector2:
+	var plan: WarrenMazeSourcePlan = s.plan
+	var empty := WarrenMazeSourcePlan.new(seed_value, s.profile, plan.massif, plan.excavation)
+	var blocked := WarrenPlotPlanner.blocked_columns(empty)
+	var streets := WarrenPlotPlanner.street_bands(empty)
+	var sides := 0.0
+	var n := 0
+	for clearing: Dictionary in _propose_with(s, seed_value, {&"clearing_count": 3.0,
+			&"clearing_enclosure_bias": bias}):
+		var cells: Array[Vector2i] = []
+		cells.assign(clearing.cells)
+		sides += float(WarrenPlotReservations._plaza_buildable_frontages(
+			empty, cells, int(clearing.floor), streets, blocked))
+		n += 1
+	return Vector2(sides, float(n))
+
+func test_enclosure_bias_prefers_clearings_houses_can_front() -> void:
+	var open := Vector2.ZERO
+	var enclosed := Vector2.ZERO
+	for spec: Array in PULL_TOWNS:
+		var s := _pull_plan(spec[0], spec[1])
+		open += _mean_fronted_sides(s, spec[0], 0.0)
+		enclosed += _mean_fronted_sides(s, spec[0], 3.0)
+	assert_gt(enclosed.y, 0.0, "the enclosure pull still places clearings")
+	gut.p("fronted sides: bias 0 %.2f over %d, bias 3 %.2f over %d" % [
+		open.x / maxf(1.0, open.y), int(open.y), enclosed.x / maxf(1.0, enclosed.y), int(enclosed.y)])
+	assert_gte(enclosed.x / maxf(1.0, enclosed.y), open.x / maxf(1.0, open.y))

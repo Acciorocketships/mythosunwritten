@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="TownOddsTable" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="TownOddsTable" load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://scripts/terrain/features/villages/odds/TownOddsTable.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/terrain/features/villages/odds/TownKnob.gd" id="2"]
@@ -92,6 +92,28 @@ options = PackedStringArray("green", "paved", "market", "workyard")
 weights_small = PackedFloat32Array(0.45, 0.3, 0.1, 0.15)
 weights_large = PackedFloat32Array(0.4, 0.3, 0.15, 0.15)
 
+[sub_resource type="Resource" id="clearing_lobe_bias"]
+script = ExtResource("2")
+name = &"clearing_lobe_bias"
+kind = 1
+at_small = 0.0
+at_large = 0.0
+spread = 0.0
+clamp_min = 0.0
+clamp_max = 4.0
+notes = "Town taste knobs (Oct 7) task 1: exponent on a clearing candidate's lobe depth (WarrenCourtClearings.lobe_depth: massif layer over its own ground averaged over a 3-column diamond, normalised to the deepest column, floor 0.01; taken over the best legal 2x2 block at the floor), pulling courtyards into the town field's Gaussian lobes where houses stand. 0 = off (today)."
+
+[sub_resource type="Resource" id="clearing_enclosure_bias"]
+script = ExtResource("2")
+name = &"clearing_enclosure_bias"
+kind = 1
+at_small = 0.0
+at_large = 0.0
+spread = 0.0
+clamp_min = 0.0
+clamp_max = 4.0
+notes = "Town taste knobs (Oct 7) task 1: a grown clearing is kept with probability ((1 + sides houses can front) / 5)^bias, rolled on its own stream; attempts stay bounded. 0 = always kept (today)."
+
 [resource]
 script = ExtResource("1")
-knobs = Array[Resource]([SubResource("clearing_count"), SubResource("clearing_block_bias"), SubResource("clearing_ground_weight"), SubResource("clearing_area"), SubResource("clearing_shape"), SubResource("clearing_extra_link_chance"), SubResource("clearing_cover"), SubResource("clearing_purpose")])
+knobs = Array[Resource]([SubResource("clearing_count"), SubResource("clearing_block_bias"), SubResource("clearing_ground_weight"), SubResource("clearing_area"), SubResource("clearing_shape"), SubResource("clearing_extra_link_chance"), SubResource("clearing_cover"), SubResource("clearing_purpose"), SubResource("clearing_lobe_bias"), SubResource("clearing_enclosure_bias")])
