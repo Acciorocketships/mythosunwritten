@@ -98,7 +98,7 @@ static func carve_nested_gates(world_seed: int, massif: WarrenMassif,
 			return a.size()<b.size() if a.size()!=b.size() else WarrenMazeCarver._cell_less(a.back(),b.back()))
 		const FIELDS := ["route","transitions","lanes","loop_edges","carved","covered","portals",
 			"bridge_spans","bridge_span_audit","bridge_bearing_columns","bridge_directions",
-			"construction_reservations","frontage_reservations","tunnel_cells"]
+			"construction_reservations","frontage_reservations","tunnel_cells","tunnel_attrition"]
 		for approach: Array in approaches:
 			if not gate.is_empty(): break
 			var trial := WarrenExcavation.new(world_seed)

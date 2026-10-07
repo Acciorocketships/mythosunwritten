@@ -1809,6 +1809,9 @@ static func _natural_tunnel_caps(seed_value: int, massif: WarrenMassif,
 		excavation: WarrenExcavation, excluded: Dictionary, bridged: Dictionary) -> Dictionary:
 	var caps := {}
 	excavation.tunnel_cells.clear()
+	excavation.tunnel_attrition = {"walk_cells": 0, "eligible": 0, "rolled_out": 0,
+		"daylight_gap": 0, "run_capped": 0, "bored_cells": 0}
+	var attrition := excavation.tunnel_attrition
 	for lane: Dictionary in excavation.lanes:
 		for cell: Vector3i in lane.get("gate_covers", {}):
 			if not lane.cells.has(cell): continue
@@ -1848,12 +1851,21 @@ static func _natural_tunnel_caps(seed_value: int, massif: WarrenMassif,
 		var daylight := MIN_DAYLIGHT_RUN
 		for i in range(1, walk.size() - 1):
 			var cell: Vector3i = walk[i]
+			attrition["walk_cells"] += 1
+			if run >= MAX_TUNNEL_RUN:
+				attrition["run_capped"] += 1
 			var bore := _tunnel_bore(massif, excavation, public_set, excluded,
 				bridged, walk[i - 1], cell, walk[i + 1]) \
 				if run < MAX_TUNNEL_RUN else {}
+			if not bore.is_empty():
+				attrition["eligible"] += 1
 			if not bore.is_empty() and run == 0:
 				var roll := float(WarrenPassageLatticeRules.hash_key(seed_value,
 					0x7A11, cell)) / 2147483646.0
+				if daylight < MIN_DAYLIGHT_RUN:
+					attrition["daylight_gap"] += 1
+				if roll >= TUNNEL_START_CHANCE:
+					attrition["rolled_out"] += 1
 				if daylight < MIN_DAYLIGHT_RUN or roll >= TUNNEL_START_CHANCE:
 					bore = {}
 			if bore.is_empty():
@@ -1868,6 +1880,7 @@ static func _natural_tunnel_caps(seed_value: int, massif: WarrenMassif,
 				_tighten_carve_cap(caps, c, int(bore.roof))
 			for jamb: Vector2i in bore.jambs:
 				_tighten_carve_cap(caps, jamb, cell.y)
+	attrition["bored_cells"] = excavation.tunnel_cells.size()
 	return caps
 
 
@@ -2766,7 +2779,7 @@ static func _preview_reserved_columns(world_seed: int, massif: WarrenMassif,
 	var streets := WarrenExcavation.new(world_seed)
 	for key: String in ["route", "transitions", "lanes", "loop_edges", "carved",
 			"covered", "portals", "bridge_spans", "bridge_span_audit",
-			"frontage_reservations", "tunnel_cells", "bridge_bearing_columns", "construction_reservations",
+			"frontage_reservations", "tunnel_cells", "tunnel_attrition", "bridge_bearing_columns", "construction_reservations",
 			"bridge_directions"]:
 		streets.set(key, excavation.get(key).duplicate(true))
 	_finalize_excavation(massif, streets)
@@ -2871,7 +2884,7 @@ static func _perimeter_ring_cover(world_seed: int, massif: WarrenMassif,
 	## throwaway copy of the streets so far.
 	var copy := WarrenExcavation.new(world_seed)
 	for key: String in ["route", "transitions", "lanes", "loop_edges", "carved",
-			"covered", "portals", "frontage_reservations", "tunnel_cells", "bridge_bearing_columns", "construction_reservations",
+			"covered", "portals", "frontage_reservations", "tunnel_cells", "tunnel_attrition", "bridge_bearing_columns", "construction_reservations",
 			"bridge_directions"]:
 		copy.set(key, excavation.get(key).duplicate(true))
 	_lay_perimeter_lanes(world_seed, massif, copy, blocked)

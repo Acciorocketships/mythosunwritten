@@ -48,7 +48,8 @@ static func plan(world_seed: int, ground_bands: Dictionary,
 	finish_public_destinations(source_plan)
 	WarrenPlotPlanner.fill_released_bridge_sites(source_plan)
 	WarrenPlotPlanner.allocate_bridges(source_plan)
-	WarrenPlotPlanner.cover_tunnels(source_plan)
+	var tunnel_covers: Array = WarrenPlotPlanner.cover_tunnels(source_plan)
+	source_plan.audit["tunnel_covers"] = tunnel_covers.size()
 	finish_ground_streets(source_plan)
 	# Only final streets may become a room's structural ceiling. Optional
 	# lanes removed by destination pruning must not leave roofless wall rooms.
@@ -108,7 +109,7 @@ static func finish_ground_streets(source: WarrenMazeSourcePlan) -> void:
 	var excavation := WarrenExcavation.new(old.world_seed)
 	for key: String in ["route","transitions","lanes","loop_edges","carved",
 			"covered","portals","bridge_spans","bridge_span_audit","bridge_bearing_columns","construction_reservations","bridge_directions",
-			"frontage_reservations","tunnel_cells"]:
+			"frontage_reservations","tunnel_cells","tunnel_attrition"]:
 		excavation.set(key,old.get(key).duplicate(true))
 	for cell: Vector3i in additions:
 		var lane: Array[Vector3i] = [cell]
@@ -274,6 +275,8 @@ static func finish_public_destinations(source: WarrenMazeSourcePlan) -> void:
 	excavation.covered = old.covered.duplicate()
 	excavation.portals.assign(old.portals)
 	excavation.tunnel_cells = old.tunnel_cells.duplicate()
+	excavation.tunnel_attrition = old.tunnel_attrition.duplicate()
+	var pruned_tunnel_cells := 0
 	excavation.bridge_span_audit = old.bridge_span_audit.duplicate(true)
 	excavation.bridge_bearing_columns = old.bridge_bearing_columns.duplicate()
 	excavation.bridge_directions = old.bridge_directions.duplicate()
@@ -302,8 +305,10 @@ static func finish_public_destinations(source: WarrenMazeSourcePlan) -> void:
 	for cell: Vector3i in removed:
 		source.passage_kinds.erase(cell)
 		excavation.covered.erase(cell)
-		excavation.tunnel_cells.erase(cell)
+		if excavation.tunnel_cells.erase(cell):
+			pruned_tunnel_cells += 1
 		excavation.bridge_directions.erase(cell)
+	excavation.tunnel_attrition["pruned_cells"] = int(excavation.tunnel_attrition.get("pruned_cells", 0)) + pruned_tunnel_cells
 	excavation.finish_construction()
 	source.excavation = excavation
 	var stamps: Array[Dictionary] = []

@@ -64,6 +64,8 @@ var bridge_directions: Dictionary = {}
 var construction_reservations: Dictionary = {}
 ## Short naturally bored passages retained independently of occupied skywalks.
 var tunnel_cells: Dictionary = {}
+## Diagnostic counters of where eligible tunnel stretches drop out (measurement only).
+var tunnel_attrition: Dictionary = {}
 var carved: Dictionary = {}
 ## Housing beside an authored street is reserved before later streets grow.
 ## These cells define the remaining construction domain, not an audit result.
