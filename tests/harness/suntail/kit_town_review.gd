@@ -564,6 +564,20 @@ func _run() -> void:
 				for side: float in [-1.0,1.0]:
 					await _shoot(stage,target+Vector3(8*side,3,12),target,
 						"%s_green_%s_side%d" % [tag,space.id,int(side)],70)
+		if _views.has("lamps"):
+			# Person-scale close-ups of the first lamp posts (kit lamps and path poles).
+			var lamp_shot := 0
+			for asset_id: StringName in payload.asset_ids():
+				if not (String(asset_id).contains("prop.lamp") or String(asset_id).contains("light_pole")):
+					continue
+				for pose: Transform3D in payload.batches[asset_id].transforms:
+					if lamp_shot >= 3:
+						break
+					var base := town.transform * pose.origin
+					print("LAMP_SITE ", tag, " ", asset_id, " at=", base)
+					await _shoot(stage, base + Vector3(3.2, 2.6, 3.2), base + Vector3(0, 2.2, 0),
+						"%s_lamp%d" % [tag, lamp_shot], 50)
+					lamp_shot += 1
 		if _views.has("dressing"):
 			var shot := 0
 			for entry: Dictionary in dressing_entries:

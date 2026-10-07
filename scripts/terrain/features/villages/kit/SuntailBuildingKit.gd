@@ -159,7 +159,7 @@ static func create() -> BuildingKit:
 	r[&"beam.floor"] = [&"suntail.floor.beam_1"]
 	r[&"prop.pot"] = [&"suntail.prop.pot_1", &"suntail.prop.pot_2", &"suntail.prop.pot_3"]
 	r[&"prop.shop"] = [&"suntail.prop.shop_1", &"suntail.prop.shop_2", &"suntail.prop.shop_3"]
-	r[&"prop.lamp"] = [&"suntail.prop.lamp_1"]
+	r[&"prop.lamp"] = [&"suntail.prop.lamp_1.dark_wood"]
 	r[&"prop.box"] = [&"suntail.prop.box_1", &"suntail.prop.box_2"]
 	r[&"prop.bucket"] = [&"suntail.prop.bucket"]
 	r[&"prop.bag"] = [&"suntail.prop.bag_1", &"suntail.prop.bag_2", &"suntail.prop.bag_3"]
