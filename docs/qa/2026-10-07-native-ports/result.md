@@ -57,3 +57,34 @@ mesh `HASH CHECK: IDENTICAL`, water digest `b6c965def22e7e93`.
 | ground_ms, water (-4,-5) | 4269 | 269 | 158 |
 | d.slope_init(rocks), chunk (0,-2) | 14987 | 13492 | 13046 |
 | sheet (excl paths), chunk (0,-2) | 335 | 72 | 77 |
+
+## Task 3: remaining per-sample callers (measured under Godot_mono)
+
+Method: temporary `Time.get_ticks_usec` accumulators around every
+`TerrainTileField.*` call site (timer pair 0.05 us; not committed).
+
+**GrassField.compute: not batched (share < 1%).** 192 real tiles (seed
+3046246887, chunks (0,-2), (0,-1), (1,-1), detached `GrassSamplingContext`
+with the chunks' cliff grass supports): 283 s total; `wall_segments` 0.58 s
+(193 calls), owner `point_of` 0.37 s (368k), `_surface_y` (point_of + bake +
+`sample_baked`, 229k calls, 1,039 bakes) 0.98 s: 0.7%. Chunk (0,-2) alone:
+0.75 s of 171.7 s; even without the support-surface time below the share is
+~9%. The stock `profile_grass_field.gd` (flat tile) computes in 29.9 ms.
+Where grass time really goes on cliff chunks: `GrassSupportSurfaces.at_index`
+57.8 s and `footprint_scale` 105.3 s (9,404 mesh-support candidates) of
+171.7 s for chunk (0,-2)'s 64 tiles, ~2.7 s per tile. Not a tile-kernel
+cost; left for a separate task.
+
+**RockSkirt.build: batched (share 61-66%).** `profile_mesh_phases --detail`:
+`terrain_ground` 51.2 s over 1.13M calls (~613 per skirt: centre, contacts,
+and three reads per ring vertex: height, sheet test, normal's sheet test) and
+the terrain normal 4.6 s, of 84.4 s in 1,846 builds. Micro-bench:
+`terrain_ground` ~42 us/call, `surface_y_on_side` ~14 us, `_apply_grade`
+0.2 us, a native `sample_window` sample 0.1-2.5 us. Each skirt now prefetches
+the four 2 m quad corners of its 225 points in one `sample_window` call
+(`RockSkirt.prefetch_corners`); `d.add_skirts` 45.8 -> 17.5 s, mesher total
+over the three chunks 151.2 -> 127.3 s. `HASH CHECK: IDENTICAL`;
+`test_rock_skirt_batch` (corners == `surface_y_on_side`, batched build ==
+per-sample build on ungraded/native-graded/listed-grade regions),
+`test_september27_rock_placement`, `test_dressing_field`, `test_grass_field`
+pass.
