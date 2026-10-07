@@ -81,7 +81,6 @@ func _build(frame: VillageFrame) -> VillageRecord:
 		_materialize_urban_fabric(urban_fabric, payload, surfaces,
 			clearances, occupancy)
 	_stats["materialize_usec"] = Time.get_ticks_usec() - stage_start
-	_stats["outskirts_usec"] = 0
 	var prop_results: Dictionary = {}
 	for slot: VillagePropSlotSpec in _program.prop_slots_for_tier(tier):
 		if not urban_fabric.accepted:
@@ -100,7 +99,6 @@ func _build(frame: VillageFrame) -> VillageRecord:
 	record.theme = theme
 	record.street_axis = street_axis
 	record.urban_fabric = urban_fabric
-	record.outskirts = null
 	record.prop_results = prop_results
 	record.discovery_bound = discovery_bound_for_cell(frame.cell)
 	return record

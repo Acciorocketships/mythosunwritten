@@ -29,14 +29,3 @@ func test_short_door_landing_does_not_extend_paint_beyond_its_end() -> void:
 				continue
 			assert_false(_contains(shapes, point),
 				"a rounded short landing must not paint inside the house past its endpoint")
-
-func test_frontage_connects_at_the_first_existing_street_without_an_unused_spur() -> void:
-	var gate: Array[Vector2] = [Vector2(264,290), Vector2(264,270), Vector2(312,270)]
-	var branch: Array[Vector2] = [Vector2(264,290), Vector2(264,276), Vector2(276,276)]
-	var contact := Vector2(275.6221,276)
-	var door := Vector2(275.6221,239.8379)
-	var actual := VillageOutskirtsConstruction._frontage_path(
-		[{"points":gate}] as Array[Dictionary], branch, contact, door)
-	assert_eq(actual, [Vector2(264,290), Vector2(264,270),
-		Vector2(275.6221,270), door] as Array[Vector2],
-		"the house connects to the nearer existing road, without extending a dead branch")

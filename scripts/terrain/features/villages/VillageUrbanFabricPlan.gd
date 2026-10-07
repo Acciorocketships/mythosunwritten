@@ -1,8 +1,8 @@
 class_name VillageUrbanFabricPlan
 extends RefCounted
 
-## Complete atomic replacement for the legacy fixed elevated district. The
-## record builder commits this payload only after massing, circulation,
+## The sealed urban transaction of one settlement. The record builder commits
+## this payload only after the volumetric warren's topology, construction,
 ## support, access, and 3D occupancy all validate together.
 enum GenerationKind {
 	LEGACY_TERRAIN_MASSING,
@@ -27,7 +27,6 @@ var ground_dressing_audit: Dictionary = {}
 ## common fabric above remains the sole render/collision transaction. The
 ## production lineage for the authoritative fine-grid town.
 var volumetric_spatial: WarrenSpatialPlan
-var ground_settlement: VillageOutskirtsPlan
 ## Canonical local-fabric to world transform chosen by the terrain adapter.
 ## Review, navigation, and future gameplay consumers use this same authored
 ## frame instead of trying to recover it from render placements or bounds.
@@ -42,11 +41,6 @@ var public_walk_network_id: StringName
 ## planned step; lower terrain elsewhere is handled by fixed supports.
 var terrain_entrance_lift_m := -1.0
 var terrain_relief_m := -1.0
-var massing: VillageMassingPlan
-var market: VillageMarketPlan
-var circulation: VillageCirculationPlan
-var timber: VillageTimberFabricPlan
-var route_stairs: VillageRouteStairFabricPlan
 var entries: Array[Dictionary] = []
 ## Exact generated collision primitives that replace overly broad source-mesh
 ## hulls for specialized structural uses such as occupied bridge houses.
@@ -69,69 +63,19 @@ var volumes: Array[VillageOccupancyVolume] = []
 var surfaces: Array[FeatureGroundShape] = []
 var clearances: Array[FeatureGroundShape] = []
 var buildings: Array[Dictionary] = []
-var supports: Array[VillageBuildingSupportPlan] = []
-var skirts: Array[VillageSkirtDeckPlan] = []
 var entrance_stair_count: int = 0
-var public_stair_count: int = 0
-var natural_building_count: int = 0
-var retained_building_count: int = 0
-var rock_piece_count: int = 0
-var foundation_piece_count: int = 0
-## Bounded frontier audit retained on the selected/rejected plan. It explains
-## which complete massings were tried without leaking partially built payloads.
-var candidate_audit: Array[Dictionary] = []
 
 
-func validate(program: VillageProgram, tier: StringName) -> bool:
+func validate(program: VillageProgram, _tier: StringName) -> bool:
+	## `_tier` is kept for the existing callers; no surviving branch reads it.
 	if not accepted:
 		return entries.is_empty() and volumes.is_empty() \
 			and surfaces.is_empty() and clearances.is_empty() \
 			and collision_boxes.is_empty()
-	if generation_kind == GenerationKind.SECTIONAL_WARREN:
-		return _validate_sectional_warren(program)
-	if generation_kind == GenerationKind.GROUND_HAMLET:
-		return reason == &"accepted" and tier == &"hamlet" \
-			and ground_settlement != null \
-			and ground_settlement.placements.size() >= 3 \
-			and ground_settlement.validate(program.outskirts_program, tier) \
-			and terrain_grade != null and volumetric_spatial == null \
-			and not entries.is_empty() \
-			and VillageOccupancy.new().first_conflict(volumes).is_empty()
-	if generation_kind == GenerationKind.VOLUMETRIC_WARREN:
-		return _validate_volumetric_warren(program)
-	if reason != &"accepted" or massing == null or circulation == null \
-			or market == null or not market.validate(program.market_program, tier) \
-			or timber == null or route_stairs == null \
-			or not massing.validate(program.massing_program,
-			tier) or not circulation.validate(massing) or not timber.validate():
-		return false
-	if not route_stairs.validate() \
-			or public_stair_count != route_stairs.stair_count:
-		return false
-	if buildings.size() != massing.placements.size() \
-			or supports.size() != buildings.size() \
-			or skirts.size() != buildings.size() \
-			or natural_building_count + retained_building_count \
-				!= buildings.size() or entries.is_empty() or volumes.is_empty():
-		return false
-	for support: VillageBuildingSupportPlan in supports:
-		if not support.validate():
-			return false
-	for index in skirts.size():
-		if not skirts[index].validate(
-				massing.placements[index].perch.is_naturally_supported()):
-			return false
-	return true
-
-
-func requires_outskirts() -> bool:
-	# Production source towns and ground hamlets own every building already.
-	# Only the historical terrain-massing diagnostic retains its separate edge.
-	return generation_kind == GenerationKind.LEGACY_TERRAIN_MASSING
-
-
-func _validate_sectional_warren(program: VillageProgram) -> bool:
-	return volumetric_spatial == null and _validate_compiled_fabric(program)
+	# Production builds only volumetric warrens. The terrain-massing, sectional
+	# and ground-hamlet branches were deleted October 7 with their generators.
+	return generation_kind == GenerationKind.VOLUMETRIC_WARREN \
+		and _validate_volumetric_warren(program)
 
 
 func _validate_volumetric_warren(program: VillageProgram) -> bool:

@@ -436,81 +436,16 @@ static func _entry(super_cell: Vector2i, frame: VillageFrame,
 		return String(a.stable_id) < String(b.stable_id))
 	var centre_y := TerrainTileField.surface_y(frame.region,
 		frame.centre.x, frame.centre.y)
-	var sectional := record.urban_fabric.generation_kind in [
-		VillageUrbanFabricPlan.GenerationKind.SECTIONAL_WARREN,
-		VillageUrbanFabricPlan.GenerationKind.VOLUMETRIC_WARREN]
+	# Production records are volumetric warrens; the terrain-massing branch
+	# and its views were deleted October 7 with that generator.
 	var views := _sectional_views(frame, record, program, buildings,
-		centre_y) if sectional \
-		else _views(frame, record, program, buildings, props, foundations,
-			centre_y)
+		centre_y)
 	var block_local := Vector2(fposmod(frame.centre.x,
 		TerrainChunkMesher.CHUNK_WORLD), fposmod(frame.centre.y,
 		TerrainChunkMesher.CHUNK_WORLD))
-	if sectional:
-		return _sectional_entry(super_cell, frame, record, index, world_seed,
-			program, assets, foundation_count, buildings, props, foundations,
-			urban_placements, views, block_local, centre_y)
-	return {
-		"review_index": index,
-		"seed": world_seed,
-		"settlement_id": String(record.stable_id),
-		"super_cell": [super_cell.x, super_cell.y],
-		"cell": [frame.cell.x, frame.cell.y],
-		"centre": [frame.centre.x, centre_y, frame.centre.y],
-		"tier": String(record.tier),
-		"theme": String(record.theme),
-		"incident_directions": frame.incident_directions.map(
-			func(value: Vector2i) -> Array: return [value.x, value.y]),
-		"block_local": [block_local.x, block_local.y],
-		"payload_instances": record.payload.instance_count,
-		"foundation_instances": foundation_count,
-		"street_axis": [record.street_axis.x, record.street_axis.y],
-		"prop_results": _string_dictionary(record.prop_results),
-		"accepted_prop_count": record.prop_results.values().count(&"accepted"),
-		"urban_status": String(record.urban_fabric.reason),
-		"urban_building_count": record.urban_fabric.buildings.size(),
-		"urban_building_design_count": _urban_design_count(
-			record.urban_fabric.buildings),
-		"urban_natural_building_count": \
-			record.urban_fabric.natural_building_count,
-		"urban_retained_building_count": \
-			record.urban_fabric.retained_building_count,
-		"urban_elevation_band_count": \
-			record.urban_fabric.massing.elevation_band_count,
-		"urban_half_rise_count": record.urban_fabric.massing.half_rise_count,
-		"urban_ground_street_count": \
-			record.urban_fabric.circulation.ground_street_count,
-		"urban_aerial_link_count": \
-			record.urban_fabric.circulation.aerial_link_count,
-		"urban_platform_count": \
-			record.urban_fabric.circulation.platforms.size(),
-		"urban_public_stair_count": record.urban_fabric.public_stair_count,
-		"urban_support_count": record.urban_fabric.timber.support_count,
-		"urban_support_piece_count": \
-			record.urban_fabric.timber.support_piece_count,
-		"urban_railing_count": record.urban_fabric.timber.railing_count,
-		"urban_timber_cell_count": record.urban_fabric.timber.cells.size(),
-		"urban_rock_piece_count": record.urban_fabric.rock_piece_count,
-		"urban_buildings": _urban_buildings_json(
-			record.urban_fabric.buildings),
-		"urban_links": _urban_links_json(
-			record.urban_fabric.circulation.links),
-		"urban_platforms": _urban_platforms_json(
-			record.urban_fabric.circulation.platforms),
-		"urban_stair_runs": _urban_stair_runs_json(
-			record.urban_fabric.route_stairs.runs),
-		"outskirts_shelter_count": record.outskirts.placements.size(),
-		"outskirts_route_stair_count": record.outskirts.route_stair_count,
-		"outskirts_shelters": _outskirts_shelters_json(record.outskirts,
-			program, record.stable_id),
-		"outskirts_audit": record.outskirts.audit,
-		"assets": assets,
-		"buildings": buildings,
-		"props": props,
-		"foundations": foundations,
-		"urban_placements": urban_placements,
-		"views": views,
-	}
+	return _sectional_entry(super_cell, frame, record, index, world_seed,
+		program, assets, foundation_count, buildings, props, foundations,
+		urban_placements, views, block_local, centre_y)
 
 
 static func _sectional_entry(super_cell: Vector2i, frame: VillageFrame,
@@ -527,14 +462,12 @@ static func _sectional_entry(super_cell: Vector2i, frame: VillageFrame,
 	var railing_count := int((record.payload.batches.get(
 		SettlementFabricAssembler.PLANK_RAILING, {}) as Dictionary).get(
 		"transforms", []).size())
-	var outskirts_count := record.outskirts.placements.size() \
-		if record.outskirts != null else 0
-	var outskirts_route_stair_count := record.outskirts.route_stair_count \
-		if record.outskirts != null else 0
-	var outskirts_houses := _outskirts_shelters_json(record.outskirts,
-		program, record.stable_id) if record.outskirts != null else []
-	var outskirts_audit := record.outskirts.audit \
-		if record.outskirts != null else []
+	# Records no longer carry outskirts houses (deleted October 7); the keys
+	# stay in the report schema at zero.
+	var outskirts_count := 0
+	var outskirts_route_stair_count := 0
+	var outskirts_houses := []
+	var outskirts_audit := []
 	return {
 		"review_index": index,
 		"seed": world_seed,
@@ -1076,79 +1009,6 @@ static func _urban_design_count(source: Array[Dictionary]) -> int:
 	return designs.size()
 
 
-static func _urban_links_json(
-		source: Array[VillageCirculationLink]) -> Array[Dictionary]:
-	var out: Array[Dictionary] = []
-	for link: VillageCirculationLink in source:
-		out.append({
-			"key": String(link.stable_key),
-			"kind": link.kind,
-			"from": String(link.from_key),
-			"to": String(link.to_key),
-			"length": link.length,
-			"stair_count": link.stair_count,
-			"control_points": link.control_points.map(
-				func(point: Vector3) -> Array[float]: return _v3(point)),
-		})
-	return out
-
-
-static func _urban_platforms_json(
-		source: Array[VillagePlatformRegion]) -> Array[Dictionary]:
-	var out: Array[Dictionary] = []
-	for platform: VillagePlatformRegion in source:
-		var centre := _platform_centre(platform)
-		out.append({
-			"key": String(platform.stable_key),
-			"centre": [centre.x, platform.surface_y, centre.y],
-			"yaw": platform.yaw,
-			"cells": platform.cell_centres.map(
-				func(cell: Vector2) -> Array[float]: return [cell.x, cell.y]),
-			"frontages": Array(platform.frontage_keys).map(
-				func(key: StringName) -> String: return String(key)),
-		})
-	return out
-
-
-static func _platform_centre(platform: VillagePlatformRegion) -> Vector2:
-	var centre := Vector2.ZERO
-	for cell: Vector2 in platform.cell_centres:
-		centre += cell
-	return centre / float(platform.cell_centres.size())
-
-
-static func _urban_stair_runs_json(
-		source: Array[VillageRouteStairRun]) -> Array[Dictionary]:
-	var out: Array[Dictionary] = []
-	for run: VillageRouteStairRun in source:
-		out.append({
-			"key": String(run.stable_key),
-			"link": String(run.link_key),
-			"start_distance": run.start_distance,
-			"end_distance": run.end_distance,
-			"from_y": run.from_y,
-			"to_y": run.to_y,
-			"stair_count": run.stair_count,
-		})
-	return out
-
-
-static func _outskirts_shelters_json(plan: VillageOutskirtsPlan,
-		program: VillageProgram,
-		settlement_id: StringName) -> Array[Dictionary]:
-	var out: Array[Dictionary] = []
-	for placement: VillageMassingPlacement in plan.placements:
-		var spec := program.assets[placement.asset_id] as VillageAssetSpec
-		var transform := placement.building_transform(spec)
-		out.append({"key": String(placement.stable_key),
-			"stable_id": "%s.%s" % [settlement_id, placement.stable_key],
-			"asset_id": String(placement.asset_id),
-			"origin": _v3(transform.origin),
-			"floor_y": placement.floor_y,
-			"entrance": [placement.entrance.x, placement.entrance.y]})
-	return out
-
-
 static func _street_segments_json(source: Array[Dictionary]) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for segment: Dictionary in source:
@@ -1335,7 +1195,6 @@ static func _sectional_views(frame: VillageFrame, record: VillageRecord,
 			xz_centre.y + cross.y * span * 0.35),
 		centre, 58.0, span)
 	_append_sectional_feature_views(out, record)
-	_append_outskirts_views(out, frame, record, buildings, program)
 	return out
 
 
@@ -1550,247 +1409,6 @@ static func _highest_route_point_index(points: Array[Vector3]) -> int:
 		if points[index].y > points[result].y:
 			result = index
 	return result
-
-
-static func _views(frame: VillageFrame, record: VillageRecord,
-		program: VillageProgram, buildings: Array[Dictionary],
-		props: Array[Dictionary],
-		foundations: Array[Dictionary],
-		ground_y: float) -> Array[Dictionary]:
-	var centre := Vector3(frame.centre.x, ground_y, frame.centre.y)
-	var main := _main_approach(frame)
-	var out: Array[Dictionary] = []
-	_add_view(out, "skyline", centre + Vector3(100.0, 82.0, 112.0),
-		centre + Vector3.UP * 5.0, 52.0, 42.0)
-	_add_view(out, "skyline_reverse", centre + Vector3(-104.0, 76.0, -96.0),
-		centre + Vector3.UP * 5.0, 52.0, 42.0)
-	_add_view(out, "plaza_eye", _terrain_eye(frame,
-		frame.centre + main * 24.0, 2.2),
-		centre + Vector3.UP * 2.0, 58.0)
-	_add_view(out, "main_approach", _terrain_eye(frame,
-		frame.centre + main * 70.0, 2.2),
-		centre + Vector3.UP * 2.4, 58.0)
-	var street := _longest_ground_link(record.urban_fabric.circulation.links)
-	if street != null:
-		var start := Vector2(street.samples[0].x, street.samples[0].z)
-		var last: Vector3 = street.samples[-1]
-		var end := Vector2(last.x, last.z)
-		var tangent := (end - start).normalized()
-		var inbound_xz := start - tangent * 8.0
-		var outbound_xz := end + tangent * 8.0
-		_add_view(out, "street_inbound", _terrain_eye(frame, inbound_xz, 2.2),
-			_terrain_eye(frame, end, 2.4), 64.0, 3.0)
-		_add_view(out, "street_outbound", _terrain_eye(frame, outbound_xz, 2.2),
-			_terrain_eye(frame, start, 2.4), 64.0, 3.0)
-	else:
-		var side := Vector2(-main.y, main.x)
-		var first := _safe_orbit_position(frame, side, main, 46.0, 2.2,
-			buildings, program)
-		var reverse := _safe_orbit_position(frame, -side, main, 46.0, 2.2,
-			buildings, program)
-		_add_view(out, "open_ring_lane_inbound", first,
-			centre + Vector3.UP * 2.2, 64.0)
-		_add_view(out, "open_ring_lane_reverse", reverse,
-			centre + Vector3.UP * 2.2, 64.0)
-	if not buildings.is_empty():
-		_append_door_views(out, buildings, program)
-		var structural_volumes: Array[VillageOccupancyVolume] = []
-		if record.urban_fabric != null and record.urban_fabric.accepted:
-			structural_volumes = record.urban_fabric.volumes
-		_append_foundation_view(out, frame, centre, buildings, foundations,
-			program, structural_volumes)
-	else:
-		_add_view(out, "empty_record_probe",
-			_terrain_eye(frame, frame.centre - main * 20.0, 2.0),
-			centre + Vector3.UP * 2.0, 58.0)
-	_append_prop_views(out, frame, props, program)
-	_append_urban_views(out, frame, record, buildings, program)
-	_append_outskirts_views(out, frame, record, buildings, program)
-	return out
-
-
-static func _append_outskirts_views(out: Array[Dictionary],
-		frame: VillageFrame, record: VillageRecord,
-		buildings: Array[Dictionary], program: VillageProgram) -> void:
-	if record.outskirts == null or not record.outskirts.accepted:
-		return
-	var structural_volumes: Array[VillageOccupancyVolume] = []
-	if record.urban_fabric != null and record.urban_fabric.accepted:
-		structural_volumes = record.urban_fabric.volumes
-	for placement: VillageMassingPlacement in record.outskirts.placements:
-		var house_centre := placement.solid_centre
-		var away := house_centre - frame.centre
-		away = away.normalized() if not away.is_zero_approx() \
-			else -placement.entrance_outward
-		var side := Vector2(-away.y, away.x)
-		# Review the relationship, not an isolated facade. Looking inward from
-		# outside the parcel keeps the prefab, its doorstep lane, and the dense
-		# town in one frame. The old front-on closeup looked away from the city and
-		# could fall back against the subject wall or into a nearby cliff.
-		var preferred_xz := house_centre + away * 24.0 + side * 8.0
-		var preferred := _terrain_eye(frame, preferred_xz, 7.0)
-		var context_target := house_centre - away * 7.0
-		var target := Vector3(context_target.x,
-			placement.floor_y + 3.0, context_target.y)
-		var stable_id := StringName("%s.%s" % [record.stable_id,
-			placement.stable_key])
-		_add_view(out, "outskirts_%s" % _safe_recipe_id(
-			String(placement.stable_key)),
-			_safe_elevated_camera(frame, preferred, target, buildings,
-				program, stable_id, structural_volumes), target, 64.0, 18.0)
-
-
-static func _append_urban_views(out: Array[Dictionary], frame: VillageFrame,
-		record: VillageRecord, buildings: Array[Dictionary],
-		program: VillageProgram) -> void:
-	var fabric := record.urban_fabric
-	if fabric == null or not fabric.accepted:
-		return
-	var top_y := -INF
-	for building: Dictionary in fabric.buildings:
-		top_y = maxf(top_y, float(building.floor_y))
-	var core := fabric.massing.core.anchor
-	var centre := Vector3(core.x, top_y, core.y)
-	var axis := record.street_axis
-	var cross := Vector2(-axis.y, axis.x)
-	_add_view(out, "urban_web_above",
-		centre + Vector3(cross.x * 24.0, 32.0, cross.y * 24.0),
-		centre - Vector3.UP * 3.0, 58.0, 38.0)
-	var ground_link := _longest_ground_link(fabric.circulation.links)
-	if ground_link != null:
-		var low_start: Vector3 = ground_link.samples[0]
-		var low_end: Vector3 = ground_link.samples[-1]
-		var low_direction := Vector2(low_end.x - low_start.x,
-			low_end.z - low_start.z).normalized()
-		_add_view(out, "urban_lower_street",
-			low_start + _xz(-low_direction * 5.0, 2.1),
-			low_end + Vector3.UP * 1.8, 66.0, 16.0)
-	for building: Dictionary in fabric.buildings:
-		var door := building.entrance as Vector2
-		var outward := building.entrance_outward as Vector2
-		var side := Vector2(-outward.y, outward.x)
-		var floor_y := float(building.floor_y)
-		var target := Vector3(door.x, floor_y - 0.8, door.y) \
-			- _xz(outward * 2.0, 0.0)
-		var preferred := Vector3(door.x, floor_y + 5.5, door.y) \
-			+ _xz(outward * 24.0 + side * 3.0, 0.0)
-		var subject_id := StringName(building.stable_id)
-		var placement := _placement_for_key(fabric.massing.placements,
-			StringName(building.key))
-		var subject_radius := 12.0 if placement == null else maxf(12.0,
-			placement.solid_half_extents.length() + 4.0)
-		_add_view(out, "urban_building_%s_overhang" \
-			% _safe_recipe_id(String(building.key)),
-			_safe_elevated_camera(frame, preferred, target, buildings, program,
-				subject_id, fabric.volumes),
-			target, 58.0, subject_radius)
-	for link: VillageCirculationLink in fabric.circulation.links:
-		if not link.is_aerial():
-			continue
-		var middle_index := link.samples.size() / 2
-		var point: Vector3 = link.samples[middle_index]
-		var prior: Vector3 = link.samples[maxi(0, middle_index - 1)]
-		var next: Vector3 = link.samples[mini(link.samples.size() - 1,
-			middle_index + 1)]
-		var direction := Vector2(next.x - prior.x, next.z - prior.z).normalized()
-		var side := Vector2(-direction.y, direction.x)
-		var aerial_target := point + Vector3.UP * 0.5
-		for side_index in 2:
-			var view_side := side if side_index == 0 else -side
-			var aerial_preferred := aerial_target \
-				+ _xz(view_side * 14.0, 8.0)
-			_add_view(out, "urban_aerial_%s_side_%s" \
-				% [_safe_recipe_id(String(link.stable_key)),
-					"a" if side_index == 0 else "b"],
-				_safe_elevated_camera(frame, aerial_preferred, aerial_target,
-					buildings, program, &"", fabric.volumes),
-				aerial_target, 55.0, 2.0)
-	for platform: VillagePlatformRegion in fabric.circulation.platforms:
-		var platform_side := Vector2.RIGHT.rotated(platform.yaw)
-		var platform_centre := _platform_centre(platform)
-		var platform_target := Vector3(platform_centre.x,
-			platform.surface_y + 0.5, platform_centre.y)
-		for side_index in 2:
-			var view_side := platform_side if side_index == 0 \
-				else -platform_side
-			var platform_preferred := platform_target \
-				+ _xz(view_side * 12.0, 8.0)
-			_add_view(out, "urban_platform_%s_side_%s" \
-				% [_safe_recipe_id(String(platform.stable_key)),
-					"a" if side_index == 0 else "b"],
-				_safe_elevated_camera(frame, platform_preferred,
-					platform_target, buildings, program, &"", fabric.volumes),
-				platform_target, 55.0, 2.0)
-	for run: VillageRouteStairRun in fabric.route_stairs.runs:
-		var link := _link_for_key(fabric.circulation.links, run.link_key)
-		if link == null:
-			continue
-		var start := _point_on_link(link, run.start_distance)
-		var end := _point_on_link(link, run.end_distance)
-		var stair_direction := Vector2(end.x - start.x, end.z - start.z)
-		if stair_direction.length_squared() <= 0.001:
-			continue
-		stair_direction = stair_direction.normalized()
-		var stair_side := Vector2(-stair_direction.y, stair_direction.x)
-		var stair_target := start.lerp(end, 0.5)
-		stair_target.y = (run.from_y + run.to_y) * 0.5 + 0.4
-		for side_index in 2:
-			var view_side := stair_side if side_index == 0 else -stair_side
-			var along := -stair_direction if side_index == 0 \
-				else stair_direction
-			var stair_preferred := stair_target \
-				+ _xz(view_side * 10.0 + along * 4.0, 7.0)
-			_add_view(out, "urban_stair_%s_side_%s" \
-				% [_safe_recipe_id(String(run.stable_key)),
-					"a" if side_index == 0 else "b"],
-				_safe_elevated_camera(frame, stair_preferred, stair_target,
-					buildings, program, &"", fabric.volumes),
-				stair_target, 55.0, 2.0)
-
-
-static func _placement_for_key(source: Array[VillageMassingPlacement],
-		key: StringName) -> VillageMassingPlacement:
-	for placement: VillageMassingPlacement in source:
-		if placement.stable_key == key:
-			return placement
-	return null
-
-
-static func _link_for_key(source: Array[VillageCirculationLink],
-		key: StringName) -> VillageCirculationLink:
-	for link: VillageCirculationLink in source:
-		if link.stable_key == key:
-			return link
-	return null
-
-
-static func _point_on_link(link: VillageCirculationLink,
-		distance: float) -> Vector3:
-	var travelled := 0.0
-	for index in range(1, link.samples.size()):
-		var a: Vector3 = link.samples[index - 1]
-		var b: Vector3 = link.samples[index]
-		var span := Vector2(a.x, a.z).distance_to(Vector2(b.x, b.z))
-		if travelled + span >= distance - 0.001:
-			var t := 0.0 if span <= 0.001 \
-				else clampf((distance - travelled) / span, 0.0, 1.0)
-			return a.lerp(b, t)
-		travelled += span
-	return link.samples[-1]
-
-
-static func _longest_ground_link(
-		links: Array[VillageCirculationLink]) -> VillageCirculationLink:
-	var selected: VillageCirculationLink
-	for link: VillageCirculationLink in links:
-		if link.kind != VillageCirculationLink.Kind.GROUND_STREET \
-				and link.kind != VillageCirculationLink.Kind.GROUND_STAIR:
-			continue
-		if selected == null or link.length > selected.length + 0.001 \
-				or (is_equal_approx(link.length, selected.length) \
-				and String(link.stable_key) < String(selected.stable_key)):
-			selected = link
-	return selected
 
 
 static func _longest_street(segments: Array[Dictionary]) -> Dictionary:

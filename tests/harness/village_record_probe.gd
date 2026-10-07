@@ -44,9 +44,7 @@ func _init() -> void:
 		var pinned := _record_report(world, fields, requested_super_cell,
 			catalog, not skip_projection)
 		print(JSON.stringify(pinned, "  "))
-		var disconnected := int((pinned.get("outskirts_street_connectivity", {})
-			as Dictionary).get("disconnected_from_main_road", 0))
-		quit(1 if pinned.is_empty() or disconnected > 0 else 0)
+		quit(1 if pinned.is_empty() else 0)
 		return
 	for distance in SEARCH_RADIUS * 2 + 1:
 		for z in range(-SEARCH_RADIUS, SEARCH_RADIUS + 1):
@@ -96,15 +94,10 @@ static func _record_report(world: WorldFeaturePlan,
 		"prop_results": record.prop_results,
 		"urban_status": String(record.urban_fabric.reason),
 		"urban_buildings": record.urban_fabric.buildings.size(),
-		"urban_candidate_audit": record.urban_fabric.candidate_audit,
 		"projected_blocks": _projection_counts(world, record) \
 			if include_projection else {},
 		"placement_origins": _placement_origins(record),
 	}
-	if record.outskirts != null:
-		report["outskirts_houses"] = record.outskirts.placements.size()
-		report["outskirts_audit"] = record.outskirts.audit
-		report["outskirts_street_connectivity"] = _street_connectivity(frame, record)
 	if record.urban_fabric.generation_kind in [
 			VillageUrbanFabricPlan.GenerationKind.SECTIONAL_WARREN,
 			VillageUrbanFabricPlan.GenerationKind.VOLUMETRIC_WARREN]:
@@ -126,61 +119,7 @@ static func _record_report(world: WorldFeaturePlan,
 			record.urban_fabric.terrain_entrance_lift_m
 		report["terrain_relief_m"] = \
 			record.urban_fabric.terrain_relief_m
-	else:
-		report["generation_kind"] = "legacy_terrain_massing"
-		report["urban_elevation_bands"] = \
-			record.urban_fabric.massing.elevation_band_count
-		report["urban_ground_streets"] = \
-			record.urban_fabric.circulation.ground_street_count
-		report["urban_aerial_links"] = \
-			record.urban_fabric.circulation.aerial_link_count
-		report["urban_platforms"] = \
-			record.urban_fabric.circulation.platforms.size()
-		report["urban_public_stairs"] = record.urban_fabric.public_stair_count
 	return report
-
-
-static func _street_connectivity(frame: VillageFrame, record: VillageRecord) -> Dictionary:
-	## Flood the actual painted primitives, not just their claimed route nodes.
-	## Touching the canonical main road seeds the component; town street paint
-	## can connect it through a gate, but private building mass cannot.
-	var shapes: Array[FeatureGroundShape] = []
-	for shape: FeatureGroundShape in record.urban_fabric.surfaces:
-		if shape.surface_id == FeatureGroundField.WORN_PATH:
-			shapes.append(shape)
-	var outskirts_begin := shapes.size()
-	shapes.append_array(record.outskirts.surfaces)
-	var reached: Dictionary = {}
-	for index in shapes.size():
-		if _overlaps_main_road(frame.path_ground, shapes[index]):
-			reached[index] = true
-	var queue: Array = reached.keys()
-	var cursor := 0
-	while cursor < queue.size():
-		var source: int = queue[cursor]
-		cursor += 1
-		for target in shapes.size():
-			if not reached.has(target) and shapes[source].intersects(shapes[target], 0.01):
-				reached[target] = true
-				queue.append(target)
-	var disconnected := 0
-	for index in range(outskirts_begin, shapes.size()):
-		if not reached.has(index):
-			disconnected += 1
-	return {"outskirts_paint_shapes": shapes.size() - outskirts_begin,
-		"disconnected_from_main_road": disconnected}
-
-
-static func _overlaps_main_road(field: FeatureGroundField,
-		shape: FeatureGroundShape) -> bool:
-	var bounds := shape.bounds()
-	# A positive sample proves actual paint overlap, not clearance proximity.
-	for iz in range(ceili(bounds.size.y / 0.5) + 1):
-		for ix in range(ceili(bounds.size.x / 0.5) + 1):
-			var point := bounds.position + Vector2(ix, iz) * 0.5
-			if shape.contains(point) and field.surface_at(point) == FeatureGroundField.WORN_PATH:
-				return true
-	return false
 
 
 static func _collision_enabled_instance_count(

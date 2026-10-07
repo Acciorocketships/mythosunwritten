@@ -1127,7 +1127,7 @@ static func _connect_world_roads(result: VillageUrbanFabricPlan,
 	var occupied := Rect2(centre, Vector2.ZERO)
 	for volume: VillageOccupancyVolume in result.volumes:
 		occupied = occupied.merge(volume.bounds_xz())
-	var contacts := VillageOutskirtsSolver._ground_contacts(terrain, centre, axis, result)
+	var contacts := VillageOutskirtsConstruction._ground_contacts(terrain, centre, axis, result)
 	var topology := preload("res://scripts/terrain/features/villages/VillageWarrenRoadConnections.gd").topology(
 		occupied, contacts, ground, stable_id)
 	result.surfaces.append(topology.domain)
@@ -1144,11 +1144,7 @@ static func _connect_world_roads(result: VillageUrbanFabricPlan,
 	result.terrain_grade = VillageOutskirtsConstruction._extend_street_grade(
 		result.terrain_grade, paths, datum)
 	var graded := terrain.with_terrain_grades([result.terrain_grade])
-	var streets := VillageOutskirtsPlan.new()
 	var seen: Dictionary = {}
 	for path: Dictionary in paths:
-		VillageOutskirtsConstruction._append_street(streets, path.points, path.owner,
-			result.public_walk_network_id, graded, PathProgram.PATH_HALF_WIDTH, seen)
-	result.surfaces.append_array(streets.surfaces)
-	result.clearances.append_array(streets.clearances)
-	result.volumes.append_array(streets.volumes)
+		VillageOutskirtsConstruction._append_street(result, path.points, path.owner,
+			result.public_walk_network_id, graded, seen)

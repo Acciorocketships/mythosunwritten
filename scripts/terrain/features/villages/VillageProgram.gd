@@ -36,9 +36,6 @@ var street_table: Dictionary = {}
 var slot_table: Dictionary = {}
 var prop_slot_table: Dictionary = {}
 var elevated_program: VillageElevatedProgram
-var massing_program: VillageMassingProgram
-var market_program: VillageMarketProgram
-var outskirts_program: VillageOutskirtsProgram
 ## Common sectional vocabulary used by the production warren solver.  It is
 ## compiled once beside the legacy terrain-led programs; runtime planning owns
 ## no resources and only consumes this immutable recipe table.
@@ -730,16 +727,6 @@ static func compile(authored: Dictionary = {},
 				local_aabb.position.z).length(), Vector2(local_aabb.end.x,
 				local_aabb.end.z).length())
 			program.max_asset_reach = maxf(program.max_asset_reach, local_reach)
-		program.market_program = VillageMarketProgram.compile(program.assets)
-		if program.market_program == null:
-			return null
-		program.outskirts_program = VillageOutskirtsProgram.compile(
-			program.assets)
-		if program.outskirts_program == null:
-			return null
-		program.massing_program = VillageMassingProgram.compile(program.assets)
-		if program.massing_program == null:
-			return null
 		program.elevated_program = VillageElevatedProgram.compile(catalog,
 			program.assets)
 		if program.elevated_program == null:
@@ -934,10 +921,6 @@ func slots_for_tier(tier: StringName) -> Array[VillageSlotSpec]:
 	var out: Array[VillageSlotSpec] = []
 	out.assign(slot_table.get(tier, []))
 	return out
-
-func massing_slots_for_tier(tier: StringName) -> Array[VillageMassingSlot]:
-	return [] if massing_program == null \
-		else massing_program.slots_for_tier(tier)
 
 func streets_for_tier(tier: StringName) -> Array[VillageStreetSpec]:
 	var out: Array[VillageStreetSpec] = []
