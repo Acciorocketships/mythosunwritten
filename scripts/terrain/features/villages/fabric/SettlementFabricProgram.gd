@@ -496,8 +496,7 @@ const RAILING := &"sfv.deck.railing.s.001"
 const RAILING_MEDIUM := &"sfv.deck.railing.m.001"
 
 ## Every reviewed stocked-stall prefab in the bake, not the seven that happened
-## to exist before the wave. WarrenMarketSolver picks a family per origin and
-## then walks this list, so its width IS how much two towns' bazaars differ.
+## to exist before the wave; its width is how much two towns' bazaars differ.
 ## The first seven entries are the pre-wave pool in its pre-wave order, which
 ## keeps `market.stall.00`..`.06` naming the same assets they always named.
 const MARKET_STALLS: Array[StringName] = [
