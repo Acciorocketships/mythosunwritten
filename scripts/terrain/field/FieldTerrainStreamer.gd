@@ -293,6 +293,7 @@ func _ready() -> void:
 	_mesher.prepare_resources()
 	# C# grid kernels for the cliff sheet, when verified (no-op otherwise).
 	preload("res://scripts/native/NativeGridKernels.gd").setup()
+	preload("res://scripts/native/NativeTileKernel.gd").setup()
 	for index in TAIL_THREADS:
 		var tail_mesher := TerrainChunkMesher.new()
 		tail_mesher.profile_enabled = PROFILE_STREAMING

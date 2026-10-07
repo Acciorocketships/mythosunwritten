@@ -27,6 +27,7 @@
 class_name TerrainTileField
 extends RefCounted
 
+const NATIVE_TILE := preload("res://scripts/native/NativeTileKernel.gd")
 const SPACING := 12.0
 const STOREY := 4.0
 ## A neighbour surface this far below a point's flat top exposes the border.
@@ -366,6 +367,59 @@ static func sample_baked(baked: PackedFloat32Array, p: Vector2i, x: float, z: fl
 	var side := Vector2i(-1 if qx == 1 else 1, -1 if qz == 1 else 1)
 	return _apply_grade(region, x, z, eval_params(baked, (lx - float(ti) * s) / s,
 		(lz - float(tj) * s) / s, side, 2 + (qz * 2 + qx) * 8))
+
+
+## Corner data for every lattice point in [lo, lo + size): what tile_params
+## reads, gathered once. heights are float32 exactly as tile_params stores them.
+static func dense_window(region, lo: Vector2i, size: Vector2i) -> Dictionary:
+	var heights := PackedFloat32Array(); heights.resize(size.x * size.y)
+	var storeys := PackedInt32Array(); storeys.resize(size.x * size.y)
+	for j in size.y:
+		for i in size.x:
+			heights[j * size.x + i] = region.surface_height(lo.x + i, lo.y + j)
+			storeys[j * size.x + i] = int(region.storey_at(lo.x + i, lo.y + j))
+	return {"lo": lo, "w": size.x, "h": size.y, "heights": heights, "storeys": storeys,
+		"spacing": spacing(region)}
+
+
+## Ungraded surface height of each sample (x[k], z[k]) on the side of lattice
+## point (owner_i[k], owner_j[k]); == surface_y_on_side without grading. The
+## window must hold every corner of the owners' four quadrant tiles.
+static func sample_window(window: Dictionary, xs: PackedFloat64Array, zs: PackedFloat64Array,
+		owner_i: PackedInt32Array, owner_j: PackedInt32Array) -> PackedFloat64Array:
+	if NATIVE_TILE.enabled:
+		return NATIVE_TILE.sample_owned(window, xs, zs, owner_i, owner_j)
+	return _sample_window_gd(window, xs, zs, owner_i, owner_j)
+
+
+## The GDScript reference (the native parity gate compares against this).
+static func _sample_window_gd(window: Dictionary, xs: PackedFloat64Array, zs: PackedFloat64Array,
+		owner_i: PackedInt32Array, owner_j: PackedInt32Array) -> PackedFloat64Array:
+	var out := PackedFloat64Array(); out.resize(xs.size())
+	var w: int = window.w
+	var lo: Vector2i = window.lo
+	var heights: PackedFloat32Array = window.heights
+	var storeys: PackedInt32Array = window.storeys
+	var s: float = window.spacing
+	var params := PackedFloat32Array(); params.resize(8)
+	for k in xs.size():
+		var cx := float(owner_i[k]) * s
+		var cz := float(owner_j[k]) * s
+		var lx := clampf(xs[k], cx - s * 0.5, cx + s * 0.5)
+		var lz := clampf(zs[k], cz - s * 0.5, cz + s * 0.5)
+		var ti := owner_i[k] if lx >= cx else owner_i[k] - 1
+		var tj := owner_j[k] if lz >= cz else owner_j[k] - 1
+		var side := Vector2i(-1 if ti == owner_i[k] else 1, -1 if tj == owner_j[k] else 1)
+		var a := (tj - lo.y) * w + (ti - lo.x)
+		params[0] = heights[a]; params[1] = heights[a + 1]
+		params[2] = heights[a + w + 1]; params[3] = heights[a + w]
+		var sa := storeys[a]; var sb := storeys[a + 1]; var sc := storeys[a + w + 1]; var sd := storeys[a + w]
+		params[4] = 1.0 if absi(sa - sb) >= 2 else 0.0
+		params[5] = 1.0 if absi(sb - sc) >= 2 else 0.0
+		params[6] = 1.0 if absi(sd - sc) >= 2 else 0.0
+		params[7] = 1.0 if absi(sa - sd) >= 2 else 0.0
+		out[k] = eval_params(params, (lx - float(ti) * s) / s, (lz - float(tj) * s) / s, side)
+	return out
 
 
 # --- walls -----------------------------------------------------------------------

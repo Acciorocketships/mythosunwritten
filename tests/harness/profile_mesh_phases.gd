@@ -68,6 +68,7 @@ func _init() -> void:
 		SEED = int(args[args.find("--seed") + 1])
 	# As the streamer does: the C# grid kernels when the .NET build has them.
 	preload("res://scripts/native/NativeGridKernels.gd").setup()
+	preload("res://scripts/native/NativeTileKernel.gd").setup()
 	print("native grid kernels: ", preload("res://scripts/native/NativeGridKernels.gd").enabled)
 	# The baseline's default cliff style was not the game's (`sheet_bedrock`,
 	# set by world.tscn); pass --style sheet_bedrock there for a fair comparison.
