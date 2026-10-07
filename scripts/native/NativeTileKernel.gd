@@ -61,6 +61,8 @@ static func _parity() -> String:
 			var h := float(st * 4 + rng.randi_range(0, 3))
 			if rng.randf() < 0.1:
 				h += 0.5
+			elif rng.randf() < 0.15:
+				h += rng.randf_range(0.0, 3.999)   # float32-rounded off-grid heights
 			heights[k] = h
 			storeys[k] = st
 		var window := {"lo": Vector2i.ZERO, "w": n, "h": n, "heights": heights, "storeys": storeys, "spacing": 12.0}
@@ -79,7 +81,13 @@ static func _parity() -> String:
 			if k % 13 == 0:
 				z = 12.0 * rng.randi_range(1, n - 3) + 6.0
 			xs.append(x); zs.append(z)
-			oi.append(TILE.point_of(x)); oj.append(TILE.point_of(z))
+			var o := Vector2i(TILE.point_of(x), TILE.point_of(z))
+			if k % 3 == 0:
+				# Non-point_of owners (the mesher passes a quad's centre owner for
+				# its corners): clamp into a neighbour's cell, side -1 at u == 0.5.
+				o.x = clampi(o.x + rng.randi_range(-1, 1), 1, n - 2)
+				o.y = clampi(o.y + rng.randi_range(-1, 1), 1, n - 2)
+			oi.append(o.x); oj.append(o.y)
 		for mode in 3:
 			TILE.cliff_end = mode
 			var expected: PackedFloat64Array = TILE._sample_window_gd(window, xs, zs, oi, oj)

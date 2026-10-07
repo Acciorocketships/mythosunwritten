@@ -633,32 +633,21 @@ static func _ground_at(region, base: Vector2, m1: int, gnd: PackedFloat32Array,
 	return gnd[idx]
 
 
-## Source-owned natural ground has no construction grades. Reuse the terrain
-## kernel's per-point bakes across this dense water lattice. Every sample is
-## owned by TerrainTileField.point_of, so a sample exactly on a dual-cell wall
-## resolves to the same side surface_y does.
+## Source-owned natural ground has no construction grades. The dense water
+## lattice is one batched window sample (TerrainTileField.sample_grid). Every
+## sample is owned by TerrainTileField.point_of, so a sample exactly on a
+## dual-cell wall resolves to the same side surface_y does.
 static func _sample_ground_lattice(region: HeightfieldRegion, base: Vector2,
 		side: int, step: float, rows: int = 0) -> PackedFloat32Array:
 	if rows == 0: rows = side
 	assert(region.terrain_grades.is_empty())
-	var out := PackedFloat32Array(); out.resize(side * rows)
-	var first_x := TerrainTileField.point_of(base.x, region)
-	var last_x := TerrainTileField.point_of(base.x + (side - 1) * step, region)
-	var previous_z := 2147483647
-	var points: Array[PackedFloat32Array] = []
-	for j in rows:
-		var z := base.y + j * step
-		var pz := TerrainTileField.point_of(z, region)
-		if pz != previous_z:
-			points.clear()
-			for px in range(first_x, last_x + 1):
-				points.append(TerrainTileField.bake_point(region, Vector2i(px, pz)))
-			previous_z = pz
-		for i in side:
-			var x := base.x + i * step
-			var px := TerrainTileField.point_of(x, region)
-			# No grades (asserted above): sample the bake without the grade hook.
-			out[j * side + i] = TerrainTileField.sample_baked(points[px - first_x], Vector2i(px, pz), x, z)
+	var xs := PackedFloat64Array(); xs.resize(side)
+	for i in side: xs[i] = base.x + i * step
+	var zs := PackedFloat64Array(); zs.resize(rows)
+	for j in rows: zs[j] = base.y + j * step
+	var heights := TerrainTileField.sample_grid(region, xs, zs)
+	var out := PackedFloat32Array(); out.resize(heights.size())
+	for n in heights.size(): out[n] = heights[n]
 	return out
 
 

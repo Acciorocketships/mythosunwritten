@@ -387,9 +387,64 @@ static func dense_window(region, lo: Vector2i, size: Vector2i) -> Dictionary:
 ## window must hold every corner of the owners' four quadrant tiles.
 static func sample_window(window: Dictionary, xs: PackedFloat64Array, zs: PackedFloat64Array,
 		owner_i: PackedInt32Array, owner_j: PackedInt32Array) -> PackedFloat64Array:
+	assert(_owners_inside(window, owner_i, owner_j), "sample_window: an owner's quadrant tiles leave the window")
 	if NATIVE_TILE.enabled:
 		return NATIVE_TILE.sample_owned(window, xs, zs, owner_i, owner_j)
 	return _sample_window_gd(window, xs, zs, owner_i, owner_j)
+
+
+## Whether _apply_grade can change a height on this region (decided once per
+## batch instead of per sample).
+static func grades(region) -> bool:
+	if region is HeightfieldRegion:
+		return not region.terrain_grades.is_empty()
+	return region != null and region.has_method("graded_height")
+
+
+## surface_y over the grid xs x zs (row-major, z outer), each sample owned by
+## point_of and graded exactly as sample_baked(..., region) grades it: one
+## dense window and one sample_window batch instead of a bake per point.
+static func sample_grid(region, xs: PackedFloat64Array, zs: PackedFloat64Array) -> PackedFloat64Array:
+	var w := xs.size()
+	var h := zs.size()
+	if w == 0 or h == 0:
+		return PackedFloat64Array()
+	var pxs := PackedInt32Array(); pxs.resize(w)
+	var pzs := PackedInt32Array(); pzs.resize(h)
+	var lo := Vector2i(1 << 30, 1 << 30)
+	var hi := Vector2i(-(1 << 30), -(1 << 30))
+	for i in w:
+		pxs[i] = point_of(xs[i], region)
+		lo.x = mini(lo.x, pxs[i]); hi.x = maxi(hi.x, pxs[i])
+	for k in h:
+		pzs[k] = point_of(zs[k], region)
+		lo.y = mini(lo.y, pzs[k]); hi.y = maxi(hi.y, pzs[k])
+	var sx := PackedFloat64Array(); sx.resize(w * h)
+	var sz := PackedFloat64Array(); sz.resize(w * h)
+	var oi := PackedInt32Array(); oi.resize(w * h)
+	var oj := PackedInt32Array(); oj.resize(w * h)
+	for k in h:
+		var row := k * w
+		for i in w:
+			sx[row + i] = xs[i]; sz[row + i] = zs[k]
+			oi[row + i] = pxs[i]; oj[row + i] = pzs[k]
+	var window := dense_window(region, lo - Vector2i.ONE, hi - lo + Vector2i(3, 3))
+	var out := sample_window(window, sx, sz, oi, oj)
+	if grades(region):
+		for n in out.size():
+			out[n] = _apply_grade(region, sx[n], sz[n], out[n])
+	return out
+
+
+## Debug check for sample_window: [owner - 1, owner + 1] inside the window on both axes.
+static func _owners_inside(window: Dictionary, owner_i: PackedInt32Array, owner_j: PackedInt32Array) -> bool:
+	var lo: Vector2i = window.lo
+	var w: int = window.w
+	var h: int = window.h
+	for k in owner_i.size():
+		if owner_i[k] - 1 < lo.x or owner_i[k] + 1 >= lo.x + w or owner_j[k] - 1 < lo.y or owner_j[k] + 1 >= lo.y + h:
+			return false
+	return true
 
 
 ## The GDScript reference (the native parity gate compares against this).

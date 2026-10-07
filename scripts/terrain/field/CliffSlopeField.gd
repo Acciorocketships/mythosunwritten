@@ -806,28 +806,19 @@ func _ground_sampler()->Callable:
   return TerrainTileField.sample_baked(baked[key],key,q.x,q.y,region)
 
 ## The same samples over a whole envelope grid (node (i, k) at
-## origin + (i, k) H), each point's bake looked up once per run of nodes.
+## origin + (i, k) H), as one batched window sample (TerrainTileField.sample_grid).
 var _ground_baked:Dictionary={}
 func _ground_grid()->Callable:
  if _region==null:return Callable()
- var baked:=_ground_baked;var region:=_region
+ var region:=_region
  return func(origin:Vector2,w:int,h:int)->PackedFloat64Array:
-  var out:=PackedFloat64Array();out.resize(w*h)
-  # A node's x (its point column) depends on i alone, its z on k alone (the
-  # same single-precision sums as origin + Vector2(i, k) H).
-  var xs:=PackedFloat64Array();xs.resize(w);var pxs:=PackedInt32Array();pxs.resize(w)
-  for i in w:xs[i]=(origin+Vector2(i,0)*ENVELOPE.H).x;pxs[i]=TerrainTileField.point_of(xs[i],region)
-  var key:=Vector2i(1<<30,1<<30);var current:=PackedFloat32Array()
-  for k in h:
-   var z:=(origin+Vector2(0,k)*ENVELOPE.H).y;var pz:=TerrainTileField.point_of(z,region)
-   for i in w:
-    var at:=Vector2i(pxs[i],pz)
-    if at!=key:
-     key=at
-     if not baked.has(key):baked[key]=TerrainTileField.bake_point(region,key)
-     current=baked[key]
-    out[k*w+i]=TerrainTileField.sample_baked(current,key,xs[i],z,region)
-  return out
+  # A node's x depends on i alone, its z on k alone (the same single-precision
+  # sums as origin + Vector2(i, k) H).
+  var xs:=PackedFloat64Array();xs.resize(w)
+  for i in w:xs[i]=(origin+Vector2(i,0)*ENVELOPE.H).x
+  var zs:=PackedFloat64Array();zs.resize(h)
+  for k in h:zs[k]=(origin+Vector2(0,k)*ENVELOPE.H).y
+  return TerrainTileField.sample_grid(region,xs,zs)
 
 ## Water level at a point (NAN where dry), queried only in or beside a carved
 ## channel or basin: the slope runs into water and sinks under it.

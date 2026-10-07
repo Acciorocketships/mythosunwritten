@@ -360,6 +360,38 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 			var a := (corner_tints[cz0 * cn + cx0] as Color).lerp(corner_tints[cz0 * cn + cx0 + 1], dx)
 			var b := (corner_tints[(cz0 + 1) * cn + cx0] as Color).lerp(corner_tints[(cz0 + 1) * cn + cx0 + 1], dx)
 			tints[tz * (GRID + 1) + tx] = a.lerp(b, dz)
+	# Pass 1: every quad corner on the side of its quad's centre owner (see
+	# the PIN note below), sampled as one batch over the chunk's dense window.
+	var corner_x := PackedFloat64Array(); corner_x.resize(GRID * GRID * 4)
+	var corner_z := PackedFloat64Array(); corner_z.resize(GRID * GRID * 4)
+	var corner_oi := PackedInt32Array(); corner_oi.resize(GRID * GRID * 4)
+	var corner_oj := PackedInt32Array(); corner_oj.resize(GRID * GRID * 4)
+	var owner_lo := Vector2i(1 << 30, 1 << 30)
+	var owner_hi := Vector2i(-(1 << 30), -(1 << 30))
+	for iz in GRID:
+		for ix in GRID:
+			var x0 := o.x + ix * STEP
+			var x1 := x0 + STEP
+			var z0 := o.y + iz * STEP
+			var z1 := z0 + STEP
+			var centre := Vector2((x0 + x1) * 0.5, (z0 + z1) * 0.5)
+			var owner := Vector2i(TerrainTileField.point_of(centre.x, region),
+				TerrainTileField.point_of(centre.y, region))
+			owner_lo = owner_lo.min(owner)
+			owner_hi = owner_hi.max(owner)
+			var c := (iz * GRID + ix) * 4
+			corner_x[c] = x0; corner_z[c] = z0
+			corner_x[c + 1] = x1; corner_z[c + 1] = z0
+			corner_x[c + 2] = x1; corner_z[c + 2] = z1
+			corner_x[c + 3] = x0; corner_z[c + 3] = z1
+			for n in 4:
+				corner_oi[c + n] = owner.x; corner_oj[c + n] = owner.y
+	var corner_y := TerrainTileField.sample_window(
+		TerrainTileField.dense_window(region, owner_lo - Vector2i.ONE, owner_hi - owner_lo + Vector2i(3, 3)),
+		corner_x, corner_z, corner_oi, corner_oj)
+	if TerrainTileField.grades(region):
+		for n in corner_y.size():
+			corner_y[n] = TerrainTileField._apply_grade(region, corner_x[n], corner_z[n], corner_y[n])
 	for iz in GRID:
 		for ix in GRID:
 			var x0 := o.x + ix * STEP
@@ -380,12 +412,12 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 			if baked.is_empty():
 				baked = TerrainTileField.bake_point(region, owner)
 				baked_cache[owner] = baked
-			var v00 := Vector3(x0, TerrainTileField.sample_baked(baked, owner, x0, z0, region), z0)
-			var v10 := Vector3(x1, TerrainTileField.sample_baked(baked, owner, x1, z0, region), z0)
-			var v11 := Vector3(x1, TerrainTileField.sample_baked(baked, owner, x1, z1, region), z1)
-			var v01 := Vector3(x0, TerrainTileField.sample_baked(baked, owner, x0, z1, region), z1)
-			var graded := region.has_grade_in(Rect2(Vector2(x0, z0), Vector2.ONE * STEP))
 			var quad_index := iz * GRID + ix
+			var v00 := Vector3(x0, corner_y[quad_index * 4], z0)
+			var v10 := Vector3(x1, corner_y[quad_index * 4 + 1], z0)
+			var v11 := Vector3(x1, corner_y[quad_index * 4 + 2], z1)
+			var v01 := Vector3(x0, corner_y[quad_index * 4 + 3], z1)
+			var graded := region.has_grade_in(Rect2(Vector2(x0, z0), Vector2.ONE * STEP))
 			quad_heights[quad_index * 4] = v00.y
 			quad_heights[quad_index * 4 + 1] = v10.y
 			quad_heights[quad_index * 4 + 2] = v11.y
