@@ -25,6 +25,10 @@ var _texture: ImageTexture
 var _static_image: Image
 var _static_texture: ImageTexture
 var _static_stamps: Array[Dictionary] = []
+## World-XZ bounds of each static stamp's polygon: a rebuild (every scroll)
+## rasterizes only the few stamps that reach the 64 m domain, not every
+## structural asset in the loaded chunks.
+var _static_bounds: Array[Rect2] = []
 var _origin := Vector2.ZERO
 # The GPU texture and its world origin are one render-state snapshot. Scrolling
 # changes the CPU image immediately, but the published origin must keep matching
@@ -138,8 +142,15 @@ func effective_strength(world_xz: Vector2) -> float:
 ## the visible bend and then blend back without a periodic reset.
 func set_static_stamps(stamps: Array[Dictionary]) -> void:
 	_static_stamps.clear()
+	_static_bounds.clear()
 	for stamp: Dictionary in stamps:
-		_static_stamps.append(stamp.duplicate(true))
+		# Shallow: the packed point array is a copy-on-write value.
+		_static_stamps.append(stamp.duplicate())
+		var points: PackedVector2Array = stamp.get("points", PackedVector2Array())
+		var bounds := Rect2(points[0], Vector2.ZERO) if not points.is_empty() else Rect2()
+		for point: Vector2 in points:
+			bounds = bounds.expand(point)
+		_static_bounds.append(bounds)
 	if _static_image != null:
 		_rebuild_static_image()
 
@@ -206,7 +217,11 @@ func _scroll_if_needed(centre: Vector2) -> void:
 func _rebuild_static_image() -> void:
 	_static_image = Image.create(RESOLUTION, RESOLUTION, false, Image.FORMAT_RGBAH)
 	_static_image.fill(NEUTRAL)
-	for stamp: Dictionary in _static_stamps:
+	var domain := Rect2(_origin, Vector2.ONE * DOMAIN_SIZE)
+	for index in _static_stamps.size():
+		if not _static_bounds[index].intersects(domain, true):
+			continue
+		var stamp: Dictionary = _static_stamps[index]
 		var points: PackedVector2Array = stamp.get("points", PackedVector2Array())
 		if points.size() < 3:
 			continue

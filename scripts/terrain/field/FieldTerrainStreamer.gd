@@ -70,6 +70,8 @@ var _profile_player_chunk := Vector2i.ZERO
 var _queue_lod_origin := Vector2.ZERO
 var _queue_travel_offset := Vector2.ZERO
 var _queue_heading := Vector2i.ZERO
+const HEADING_REBASE_MSEC := 200
+var _queue_rebase_msec := -HEADING_REBASE_MSEC
 var _requested_centre := Vector2i(2147483647, 2147483647)
 var _requested_startup := true
 
@@ -1090,9 +1092,16 @@ func _process(_delta: float) -> void:
 	_log_worker_diagnostics()
 	_mark(&"progress_warmup_log")
 	var focus := Vector2i((lod_origin / PRIORITY_FOCUS_STEP).floor())
-	if focus != _queue_focus or heading != _queue_heading:
+	# Turning while running changes the heading every few frames, and a full
+	# rebase of ~75 queued jobs cost ~6 ms each time (October 7 feel profile).
+	# A new focus cell rebases at once; a heading-only change at most every
+	# HEADING_REBASE_MSEC (jobs take seconds, a stale tier for 0.2 s is moot).
+	var now_msec := Time.get_ticks_msec()
+	if focus != _queue_focus or (heading != _queue_heading
+			and now_msec - _queue_rebase_msec >= HEADING_REBASE_MSEC):
 		_queue_focus = focus
 		_queue_heading = heading
+		_queue_rebase_msec = now_msec
 		_mutex.lock()
 		_refresh_job_priorities_locked(centre, lod_origin)
 		_mutex.unlock()
@@ -1711,7 +1720,24 @@ func _travel_entry_distance(chunk:Vector2i,origin:Vector2)->float:
 
 ## Only committed ground supplies grass sampling data. The visual worker
 ## consumes private copies while terrain continues planning independently.
+## Rescanned when the player has moved a metre, a chunk was integrated, or a
+## quarter second passed (an evicted tile becomes requestable again): the
+## work queue keeps its own nearest-first order, and scanning the ~170 tiles
+## every frame was a steady main-thread cost.
+const GRASS_RESCAN_MOVE := 1.0
+const GRASS_RESCAN_MSEC := 250
+var _grass_scan_origin := Vector2.INF
+var _grass_scan_built := -1
+var _grass_scan_msec := 0
+
 func _queue_grass_jobs(lod_origin: Vector2) -> void:
+	var now := Time.get_ticks_msec()
+	if lod_origin.distance_to(_grass_scan_origin) < GRASS_RESCAN_MOVE \
+			and _built.size() == _grass_scan_built and now - _grass_scan_msec < GRASS_RESCAN_MSEC:
+		return
+	_grass_scan_origin = lod_origin
+	_grass_scan_built = _built.size()
+	_grass_scan_msec = now
 	for tile: Vector2i in GrassStreamer.desired_tiles(lod_origin):
 		if not _grass_streamer.needs_request(tile):
 			continue
