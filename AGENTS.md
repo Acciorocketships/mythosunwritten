@@ -1,3 +1,36 @@
+> October 7 frame smoothness (branch `perf/frame-smoothness`; owner: "running and moving the
+> mouse feels laggy; camera must feel instant"). Profile under the .NET binary
+> (`Godot_mono`): the standard binary has no C# heights and is ~12x slower at planning.
+> CAMERA: `camera.gd` moves in `_process`; the character's drawn body and the camera follow
+> point interpolate between physics ticks (`_drawn_body`, `Engine.get_physics_interpolation_fraction`;
+> the project-wide setting broke other cameras). Running speed deviation 40% -> 2.4%.
+> GRASS: engine mesh LODs keep whole blade groups (`GrassStreamer.blade_lod_mesh`, 1/2, 1/4,
+> 1/8 by UV2 root hash; never swap a live MultiMesh mesh: 18 ms stall); per-blade ground
+> shading is computed per vertex. THREADS: chunk tails run on the pool again
+> (`PARALLEL_TAILS` true): every memo reachable from `_run_tail` (HeightfieldPlan._samples,
+> WaterPlan memos, HeightfieldRegion views, FeatureContext._graded, TerrainGradePatch surfaces,
+> WaterFieldContext shore curves, CliffSlopeRocks depth maps) is read and written under a lock
+> held only around the dictionary, never while computing; a new lazily filled cache there must
+> do the same (`parallel_tail_check.gd` proves payloads identical). Cold planning fans out:
+> `HeightfieldPlan._prefetch_samples` (4 pool tasks) and `WaterPlan.prefetch_sources` (raw
+> river walks per ring), never from a pool thread (`WaterPlan.on_pool_thread`); identity via
+> `tests/harness/water_block_cost.gd --serial` (digest). MAIN THREAD: chunk payloads are freed
+> off-thread; integration steps stay short (cliff tiles, slope-rock batches and their
+> collision 64 rocks a step, ground trimesh and dressing collision in pieces;
+> `profile_chunk_commit.gd` prints every step); the slope rocks' collision is held from
+> `prepare()` (it was reloaded from disk per chunk, 8-27 ms). Queue re-prioritisation on a
+> heading-only change runs at most every 200 ms; grass tile scans after 1 m / a new chunk /
+> 250 ms; the water flow texture resamples only new 3 m cells; static trample stamps keep
+> their bounds; payload validation range-checks indices with a native sort.
+> `FirstViewWarmer` pre-draws new chunks and the player's other headings in a tiny viewport;
+> a warm spin and feature-asset warm run behind the loading screen. `LOG_SLOW_FRAMES`
+> prints `slow_frame` (per streamer section), `slow_integrate_step` (labelled: terrain#N,
+> water, dressing_collision, rock_skirts, attach, fx). Harness: `frame_feel_profile.tscn`
+> (idle/turn/run/run_turn phases, per-frame process/dt/turn error). 1080p no-vsync result:
+> run_turn main-thread p50/p95 5.7/13.8 -> 1.6/4.7 ms, no frame over 10 ms of process time
+> in any phase; frames are GPU-bound at ~17-18 ms. Remaining freezes when outrunning
+> generation are cold water solves (30-60 s a block on the single planning thread).
+
 > October 5 nature style (owner: try the Meadow and Farmlands packs; branch `meadow-nature`).
 > Ambient trees, bushes, flowers, plants, cliff tufts, toadstools, logs and stumps now come from
 > ANGRY MESH Meadow (`tools/environment_bake/manifests/angry_mesh_meadow_nature.json`, ids
@@ -62,8 +95,9 @@
 > (over-the-shoulder) view is the default (`world.tscn` `tactical_view = false`; F7 still
 > toggles); it skips the visibility bubble. `WaterSampler` memoizes surface frames on a 0.25 m
 > lattice and `covers_wet` picks a packet's chunk (wave packets were ~3/4 of the main thread).
-> `FieldTerrainStreamer.PARALLEL_TAILS` is OFF: tails shared unlocked LRU caches with the
-> planner (heap corruption in `Dictionary::erase`). GEOMETRY: the cliff sheet renders as 48 m
+> `FieldTerrainStreamer.PARALLEL_TAILS` was OFF here (tails shared unlocked LRU caches with
+> the planner: heap corruption in `Dictionary::erase`); ON again since October 7 (see that
+> entry). GEOMETRY: the cliff sheet renders as 48 m
 > tiles (`CliffRockCrags.split_tiles`, on the worker: welded by position, which is exact since
 > every attribute comes from `native_roots[point]`, plus importer LODs) and slope rocks as 32 m
 > per-piece batches (`CliffSlopeRocks.ROCK_TILE`; pebbles <= 1.3 m cast no shadow and fade
