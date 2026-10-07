@@ -5,6 +5,7 @@ extends GutTest
 ## lawn up to the court edges that face built mass while every landing stays
 ## walk and joined.
 
+const LawnEdgeAudit := preload("res://tests/fixtures/court_lawn_edge_audit.gd")
 const FOUR := [Vector3i.LEFT, Vector3i.RIGHT, Vector3i.FORWARD, Vector3i.BACK]
 
 static var _cache: Dictionary = {}
@@ -116,12 +117,25 @@ func _assert_ringless(seed_value: int, scale: StringName, overrides: Dictionary,
 		var door_fine := WarrenVolumetricSolver._fine_square(plot.door_walk)
 		var meets_door := false
 		for cell: Vector3i in walk:
+			if door_fine.has(cell):
+				meets_door = true
 			for step: Vector3i in FOUR:
-				meets_door = meets_door or door_fine.has(cell + step) or walk.has(cell) and door_fine.has(cell)
+				if door_fine.has(cell + step):
+					meets_door = true
 		assert_true(meets_door, "%s walk meets its entrance" % plot.id)
 	assert_true(reaches_edge, "%d/%s plants a court edge" % [seed_value, scale])
 	# The fabric compiles: the plaza declaration and surface plan accept it.
-	assert_not_null(spatial.compiled_fabric_cache(), "%d/%s ringless fabric compiles" % [seed_value, scale])
+	var fabric := spatial.compiled_fabric_cache()
+	assert_not_null(fabric, "%d/%s ringless fabric compiles" % [seed_value, scale])
+	if fabric == null: return
+	# Final fabric: no lawn edge beside an unguarded drop, no rail between a
+	# walk and the lawn it borders.
+	var edges := LawnEdgeAudit.audit(spatial, fabric)
+	assert_gt(int(edges.edge_lawn_faces), 0)
+	assert_eq(edges.unguarded, [], "%d/%s lawn edge over a drop" % [seed_value, scale])
+	assert_eq(edges.railed_walk, [], "%d/%s rail between walk and lawn" % [seed_value, scale])
+	gut.p("%d/%s lawn edge faces %d, on walk %d" % [seed_value, scale,
+		int(edges.edge_lawn_faces), int(edges.edge_lawn_on_walk)])
 
 
 func test_ringless_clearings_103_standard() -> void:

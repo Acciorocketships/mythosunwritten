@@ -1,0 +1,28 @@
+COURT clearing.00 ring=false floor=0
+sss###
+swwgg#
+sgggg#
+sgggg#
+sgggg#
+sssss#
+COURT clearing.01 ring=false floor=0
+#ssss#
+#DDgg#
+#DDgg#
+.wggg#
+.wwww#
+.....#
+COURT clearing.02 ring=false floor=0
+######
+sgggg#
+sgggg#
+sgggg#
+sggww#
+sssss#
+COURT plaza.00 ring=false floor=4
+s.....
+swwDD#
+swgDD#
+.wggg#
+.wwww#
+......

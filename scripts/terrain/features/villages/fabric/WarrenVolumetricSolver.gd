@@ -2542,6 +2542,7 @@ static func _maze_court_planting_cells(volume: WarrenVolumePlan) -> Dictionary:
 	if source == null: return out
 	var landings := {}
 	for plot: Dictionary in source.plots:
+		if not plot.has("door_walk"): continue
 		for cell: Vector3i in _fine_square(plot.door_walk): landings[cell] = true
 	for plot: Dictionary in source.plots:
 		if not WarrenPlotReservations.is_green_court(plot): continue
@@ -2550,7 +2551,7 @@ static func _maze_court_planting_cells(volume: WarrenVolumePlan) -> Dictionary:
 			for cell: Vector3i in _fine_square(Vector3i(column.x,plot.floor,column.y)):
 				floor_cells[cell] = true
 		if not bool(plot.get("ring", true)):
-			var walk := _ringless_court_walk(source, floor_cells, landings)
+			var walk := _ringless_court_walk(source, plot, floor_cells, landings)
 			if not walk.is_empty():
 				for cell: Vector3i in floor_cells:
 					if not walk.has(cell): out[cell] = true
@@ -2591,18 +2592,23 @@ static func _maze_ringless_court_cells(volume: WarrenVolumePlan) -> Dictionary:
 	return out
 
 
-static func _ringless_court_walk(source: WarrenMazeSourcePlan, floor_cells: Dictionary,
-		landings: Dictionary) -> Dictionary:
+static func _ringless_court_walk(source: WarrenMazeSourcePlan, plot: Dictionary,
+		floor_cells: Dictionary, landings: Dictionary) -> Dictionary:
 	## The walk a court keeps without its ring (Town taste knobs task 2).
 	##
 	## SEEDS. (1) Every landing square inside the court -- the door_walk of any
 	## plot (house doors facing the court, the court's own entrance when it lies
 	## inside). (2) Every edge cell with a face onto something that cannot hold
-	## the lawn's edge (`_court_edge_holds_lawn`): a street mouth, a stair, a
-	## roof, another deck, or a drop. Those cells keep their walk, so a raised
-	## court's fall edges still carry the ordinary guards and a lawn never ends
-	## at an unguarded drop; the lawn reaches edges backed by a house wall, rock,
-	## or level ground.
+	## the lawn's edge: a STREET MOUTH (`_court_street_mouth`: a same-band
+	## passage cell that enters the court -- the court's own entrance, a street
+	## arriving head-on, a dead end, a flight's landing), or, through
+	## `_court_edge_holds_lawn`, a stair, a roof, another deck, a drop, a lower
+	## street or a column outside the massif. Those cells keep their walk, so a
+	## raised court's fall edges still carry the ordinary guards and a lawn never
+	## ends at an unguarded drop. The lawn reaches edges backed by a house wall,
+	## rock, level ground, or a same-band street running ALONG the court (the
+	## street stays the walk there; lawn is only ever on court cells, and the
+	## green-threshold openings leave no rail between that street and the lawn).
 	##
 	## STRIPS. The seeds are joined into one component by 1-cell shortest paths
 	## through the court: starting from the component holding the first seed in
@@ -2611,8 +2617,10 @@ static func _ringless_court_walk(source: WarrenMazeSourcePlan, floor_cells: Dict
 	## repeats until every seed is joined. Deterministic, and every landing is
 	## connected to the court's street mouths through walk.
 	##
-	## Empty when there is no seed at all, and the caller then keeps the ring.
+	## Empty when there is no seed at all or a seed cannot be joined (warned);
+	## the caller then keeps the ring, so no landing is ever cut off.
 	var walk := {}
+	var landing_ends := _court_flight_landings(source)
 	for cell: Vector3i in floor_cells:
 		if landings.has(cell):
 			walk[cell] = true
@@ -2620,8 +2628,13 @@ static func _ringless_court_walk(source: WarrenMazeSourcePlan, floor_cells: Dict
 		for step: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT, Vector3i.FORWARD, Vector3i.BACK]:
 			var outside := cell + step
 			if floor_cells.has(outside): continue
-			if not _court_edge_holds_lawn(source, Vector2i(floori(outside.x / 2.0),
-					floori(outside.z / 2.0)), cell.y):
+			var column := Vector2i(floori(outside.x / 2.0), floori(outside.z / 2.0))
+			var passage := Vector3i(column.x, cell.y, column.y)
+			var holds := not _court_street_mouth(source, plot, passage,
+				Vector2i(step.x, step.z), landing_ends) \
+				if source.passage_kinds.has(passage) \
+				else _court_edge_holds_lawn(source, column, cell.y)
+			if not holds:
 				walk[cell] = true
 				break
 	if walk.is_empty(): return walk
@@ -2655,13 +2668,52 @@ static func _ringless_court_walk(source: WarrenMazeSourcePlan, floor_cells: Dict
 					found = true
 					break
 				frontier.append(next)
-		if not found: continue
+		if not found:
+			push_warning("ringless court %s: landing %s cannot be joined; keeping the ring" \
+				% [plot.get("id", &""), anchor])
+			return {}
 		var trace := parent[reached] as Vector3i
 		while not joined.has(trace):
 			walk[trace] = true
 			trace = parent[trace] as Vector3i
 		joined.merge(_court_component(reached, walk))
 	return walk
+
+
+static func _court_flight_landings(source: WarrenMazeSourcePlan) -> Dictionary:
+	## Every endpoint of a vertical transition (stair or ramp), main network and
+	## lanes: a flight arriving beside a court enters it there.
+	var out := {}
+	if source.excavation == null: return out
+	var specs: Array = source.excavation.transitions.duplicate()
+	for lane: Dictionary in source.excavation.lanes:
+		specs.append_array(lane.get("transitions", []) as Array)
+	for spec: Dictionary in specs:
+		var a := spec.from as Vector3i
+		var b := spec.to as Vector3i
+		if a.y != b.y:
+			out[a] = true
+			out[b] = true
+	return out
+
+
+static func _court_street_mouth(source: WarrenMazeSourcePlan, plot: Dictionary,
+		passage: Vector3i, outward: Vector2i, landing_ends: Dictionary) -> bool:
+	## Whether the same-band passage cell `passage`, beside a court across
+	## `outward` (court -> passage), ENTERS the court rather than running along
+	## it: the court's own entrance, a flight's landing, a street that carries on
+	## straight away from the court (it arrives head-on, or a branch leaves at a
+	## junction), or a dead end (no street continues along the court either way).
+	if plot.has("door_walk") and passage == (plot["door_walk"] as Vector3i):
+		return true
+	if landing_ends.has(passage):
+		return true
+	var away := passage + Vector3i(outward.x, 0, outward.y)
+	if source.passage_kinds.has(away):
+		return true
+	var side := Vector3i(outward.y, 0, outward.x)
+	return not source.passage_kinds.has(passage + side) \
+		and not source.passage_kinds.has(passage - side)
 
 
 static func _court_component(start: Vector3i, cells: Dictionary) -> Dictionary:
@@ -2678,15 +2730,18 @@ static func _court_component(start: Vector3i, cells: Dictionary) -> Dictionary:
 
 static func _court_edge_holds_lawn(source: WarrenMazeSourcePlan, column: Vector2i,
 		band: int) -> bool:
-	## Whether a ringless court's lawn may run up to the edge facing `column`:
-	## true when that column is built mass at the court's band (a house storey,
-	## rock, terrain) or level ground whose top is the court's own walk plane,
-	## so the lawn edge is backed by a wall or continues onto ground and nobody
-	## can fall off it. Streets and stairs (they need the walk), another deck,
-	## a bridge, a tunnel cover, an asset envelope (its unused cells may be
-	## released to air), a house roof one band down, a drop, and any column
-	## outside the massif all answer false, so the edge keeps its walk -- and,
-	## on a raised court, the ordinary fall guards that walk carries.
+	## Whether a ringless court's lawn may run up to the edge facing `column`
+	## (a column that is not a same-band street; see `_court_street_mouth`).
+	## True only when nothing on that column is BUILT below the court's walk
+	## plane -- every plot there stands at or above `band` -- and rock or
+	## terrain reaches the plane (`solid_at(band - 1)`). Whatever the later
+	## room composition keeps of a house standing there, the lawn edge then
+	## meets a wall or level rock, never a drop. A house rising from lower down
+	## does NOT qualify: composition may leave its column empty, which would put
+	## an unguarded drop beside the lawn (measured on 53 grand). Streets and
+	## stairs, carved air (a lower street's headroom), anything built below the
+	## plane, a drop, and any column outside the massif answer false, so the
+	## edge keeps its walk and, on a raised court, the ordinary fall guards.
 	## Reads the SEALED source's derived mass (`solid_at`), the same reading
 	## the volume adapter carves from, so every call agrees.
 	var cell := Vector3i(column.x, band, column.y)
@@ -2696,15 +2751,9 @@ static func _court_edge_holds_lawn(source: WarrenMazeSourcePlan, column: Vector2
 	if source.massif == null or not source.massif.has_column(column):
 		return false
 	for index: int in source.plots_at(column):
-		var plot := source.plots[index] as Dictionary
-		var low := int(plot.floor)
-		var high := WarrenMazeSourcePlan._plot_reserved_top(plot)
-		var is_house := StringName(plot.kind) == WarrenMazeSourcePlan.PLOT_HOUSE
-		if band >= low and band < high:
-			if not is_house: return false
-		elif band - 1 >= low and band - 1 < high:
+		if int((source.plots[index] as Dictionary).floor) < band:
 			return false
-	return source.solid_at(cell) or source.solid_at(cell + Vector3i.DOWN)
+	return source.solid_at(cell + Vector3i.DOWN)
 
 
 static func _maze_deck_walk_cells(volume: WarrenVolumePlan) -> Dictionary:

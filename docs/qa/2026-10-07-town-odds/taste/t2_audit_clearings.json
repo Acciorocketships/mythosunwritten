@@ -2,7 +2,13 @@
   {
     "floating": 0,
     "joins": 2,
-    "ms": 129052,
+    "lawn_edges": {
+      "edge_lawn_faces": 0,
+      "edge_lawn_on_walk": 0,
+      "railed_walk": [],
+      "unguarded": []
+    },
+    "ms": 118660,
     "profile": "grand",
     "roof": {
       "area": 0.0,
@@ -18,7 +24,13 @@
   {
     "floating": 0,
     "joins": 0,
-    "ms": 13076,
+    "lawn_edges": {
+      "edge_lawn_faces": 31,
+      "edge_lawn_on_walk": 15,
+      "railed_walk": [],
+      "unguarded": []
+    },
+    "ms": 11820,
     "profile": "standard",
     "roof": {
       "area": 0.0,

@@ -1,0 +1,28 @@
+extends SceneTree
+func _init(): call_deferred("run")
+func run():
+	var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
+	program.town_odds = program.town_odds.with_overrides({&"plaza_ring_chance": 0.0})
+	var spatial := WarrenVolumetricSolver.generate(53, {}, program, WarrenVillageScaleProfile.for_id(&"grand"))
+	var source := spatial.source_volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
+	var fabric := spatial.compiled_fabric_cache()
+	for col: Vector2i in [Vector2i(1,6), Vector2i(1,5)]:
+		for band in [7,8,9,10]:
+			var c := Vector3i(col.x, band, col.y)
+			var kinds := []
+			for i: int in source.plots_at(col): kinds.append("%s:%s[%d,%d)" % [source.plots[i].id, source.plots[i].kind, source.plots[i].floor, source.plots[i].top])
+			print("col %s band %d passage=%s carved=%s solid=%s base=%d holds=%s plots=%s" % [col, band, source.passage_kinds.get(c, "-"), source.excavation.carved.has(c), source.solid_at(c), source.massif.base_at(col), WarrenVolumetricSolver._court_edge_holds_lawn(source, col, band), kinds])
+	var solid := fabric.transformed_cells(&"solid"); var inh := fabric.transformed_cells(&"inhabited")
+	for f in [Vector3i(2,9,12), Vector3i(3,9,12), Vector3i(2,8,12), Vector3i(2,10,12), Vector3i(2,7,12)]:
+		print("fine %s solid=%s %s inhabited=%s retained=%s surface=%s" % [f, solid.has(f), solid.get(f,""), inh.has(f), fabric.retained_terrace_cells.has(f), fabric.surface_plan.has_cell(f)])
+	for k in spatial.audit.keys():
+		if String(k).contains("uncomposed_parcels") and not String(k).ends_with("count"):
+			for e in spatial.audit[k]:
+				if String(e.parcel_id).contains("064"): print("UNCOMPOSED ", e)
+	var col_cells := []
+	for f in solid.keys():
+		if f.x in [2,3] and f.z in [12,13]: col_cells.append(f)
+	for f in fabric.retained_terrace_cells.keys():
+		if f.x in [2,3] and f.z in [12,13]: col_cells.append(["ret", f])
+	print("COLUMN ", col_cells)
+	quit()

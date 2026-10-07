@@ -2,14 +2,20 @@
   {
     "floating": 0,
     "joins": 3,
-    "ms": 133792,
+    "lawn_edges": {
+      "edge_lawn_faces": 3,
+      "edge_lawn_on_walk": 0,
+      "railed_walk": [],
+      "unguarded": []
+    },
+    "ms": 128780,
     "profile": "grand",
     "roof": {
       "area": 0.0,
-      "gable_area": 0.0,
-      "gable_contacts": 0,
+      "gable_area": 8.39626317747229,
+      "gable_contacts": 578,
       "intrusions": 0,
-      "triangles": 1409921
+      "triangles": 1405142
     },
     "seed": 53,
     "valid_payload": true,
@@ -18,7 +24,13 @@
   {
     "floating": 0,
     "joins": 0,
-    "ms": 50159,
+    "lawn_edges": {
+      "edge_lawn_faces": 3,
+      "edge_lawn_on_walk": 2,
+      "railed_walk": [],
+      "unguarded": []
+    },
+    "ms": 47478,
     "profile": "large",
     "roof": {
       "area": 0.0,
@@ -34,7 +46,13 @@
   {
     "floating": 0,
     "joins": 0,
-    "ms": 17112,
+    "lawn_edges": {
+      "edge_lawn_faces": 2,
+      "edge_lawn_on_walk": 1,
+      "railed_walk": [],
+      "unguarded": []
+    },
+    "ms": 15301,
     "profile": "standard",
     "roof": {
       "area": 0.0,

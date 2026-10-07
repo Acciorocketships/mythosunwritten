@@ -24,7 +24,7 @@ func run():
 		var built:=KitVillageBuildings.build(spatial,fabric,kit,true,true)
 		var roofs:=preload('res://tests/fixtures/kit_roof_public_air_audit.gd').audit(built,kit)
 		var floating:=KitFloatingMassAudit.audit(spatial,fabric,built.masses)
-		var row:={"seed":item[0],"profile":item[1],"roof":roofs,"floating":floating.count,"joins":built.roof_audit.get("parallel_joins",-1),"valid_payload":built.payload.validate(),"walk_components":int(SettlementFabricSolver.audit_plan(fabric,{}).get("walk_surface_component_count",-1)),"ms":Time.get_ticks_msec()-t0}
+		var row:={"seed":item[0],"profile":item[1],"roof":roofs,"floating":floating.count,"joins":built.roof_audit.get("parallel_joins",-1),"valid_payload":built.payload.validate(),"lawn_edges":preload("res://tests/fixtures/court_lawn_edge_audit.gd").audit(spatial,fabric),"walk_components":int(SettlementFabricSolver.audit_plan(fabric,{}).get("walk_surface_component_count",-1)),"ms":Time.get_ticks_msec()-t0}
 		row.roof.erase("roles"); row.roof.erase("examples")
 		rows.append(row)
 		print('RANGE_AUDIT ',JSON.stringify(row))

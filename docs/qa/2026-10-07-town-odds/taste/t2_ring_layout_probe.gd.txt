@@ -24,13 +24,9 @@ func run():
 				var c := Vector3i(x, plot.floor, z)
 				if not cells.has(c):
 					var col := Vector2i(floori(x/2.0), floori(z/2.0))
-					var mass := WarrenVolumetricSolver._court_edge_holds_lawn(source, col, plot.floor)
-					line += "#" if mass else "."
-					if not mass and not seen.has(col):
-						seen[col] = true
-						var kinds := []
-						for i: int in source.plots_at(col): kinds.append("%s[%d,%d)" % [source.plots[i].kind, source.plots[i].floor, source.plots[i].top])
-						print("  col %s passage=%s carved=%s base=%d top=%d shoulder=%d solid=%s plots=%s" % [col, source.passage_kinds.has(Vector3i(col.x,plot.floor,col.y)), source.excavation.carved.has(Vector3i(col.x,plot.floor,col.y)), source.massif.base_at(col) if source.massif.has_column(col) else -99, source.massif.top_at(col) if source.massif.has_column(col) else -99, source.rock_shoulder(col) if source.massif.has_column(col) else -99, source.solid_at(Vector3i(col.x,plot.floor,col.y)), kinds])
+					if source.passage_kinds.has(Vector3i(col.x, plot.floor, col.y)): line += "s"
+					elif WarrenVolumetricSolver._court_edge_holds_lawn(source, col, plot.floor): line += "#"
+					else: line += "."
 				elif planting.has(c): line += "g"
 				elif landings.has(c): line += "D"
 				else: line += "w"
