@@ -20,13 +20,21 @@ func _payload(program: GrassProgram) -> GrassPayload:
 
 func test_intersection_ring_has_no_square_holes_inside_the_fade() -> void:
 	var tiles := GrassStreamer.desired_tiles(Vector2.ZERO)
-	assert_eq(tiles.size(), 52)
+	var expected := 0
+	var reach := int(ceil(GrassStreamer.GRASS_RADIUS / GrassField.TILE_WORLD)) + 1
+	for dz in range(-reach, reach + 1):
+		for dx in range(-reach, reach + 1):
+			if GrassStreamer.distance_to_tile(Vector2.ZERO, Vector2i(dx, dz)) < GrassStreamer.GRASS_RADIUS:
+				expected += 1
+	assert_eq(tiles.size(), expected)
+	assert_eq(expected, 52, "60/84 m ring (update with the default radius)")
 	var requested: Dictionary = {}
 	for tile: Vector2i in tiles:
 		requested[tile] = true
 	var all_covered := true
-	for z in range(-144, 145, 3):
-		for x in range(-144, 145, 3):
+	var span := int(GrassStreamer.GRASS_RADIUS) + 48
+	for z in range(-span, span + 1, 3):
+		for x in range(-span, span + 1, 3):
 			var point := Vector2(x, z)
 			if point.length() >= GrassStreamer.GRASS_RADIUS:
 				continue
@@ -246,3 +254,23 @@ func test_blade_lods_are_nested_whole_blade_subsets() -> void:
 	var surfaces: Array = lod_mesh.get("_surfaces")
 	assert_eq((surfaces[0] as Dictionary).get("lods", []).size(), GrassStreamer.BLADE_LOD_KEEP.size() * 2,
 		"one (edge, indices) pair per blade LOD")
+
+func test_radii_have_one_source_of_truth() -> void:
+	var code := (load("res://terrain/grass/grass.gdshader") as Shader).code
+	assert_false(code.contains("const float GRASS_RADIUS"), "the shader reads the streamer's radius")
+	assert_false(code.contains("const float FULL_RADIUS"), "the shader reads the streamer's radius")
+	assert_true(code.contains("global uniform float grass_radius"))
+	assert_true(code.contains("global uniform float grass_full_radius"))
+	assert_true(ProjectSettings.has_setting("shader_globals/grass_radius"))
+	assert_true(ProjectSettings.has_setting("shader_globals/grass_full_radius"))
+
+func test_set_radii_moves_the_whole_ring() -> void:
+	var full := GrassStreamer.FULL_RADIUS
+	var edge := GrassStreamer.GRASS_RADIUS
+	GrassStreamer.set_radii(90.0, 140.0)
+	assert_eq(GrassStreamer.density(90.0), 1.0)
+	assert_eq(GrassStreamer.density(140.0), 0.0)
+	assert_eq(GrassStreamer.keep_radius(), 140.0 + GrassField.TILE_WORLD)
+	for tile: Vector2i in GrassStreamer.desired_tiles(Vector2.ZERO):
+		assert_lt(GrassStreamer.distance_to_tile(Vector2.ZERO, tile), 140.0)
+	GrassStreamer.set_radii(full, edge)

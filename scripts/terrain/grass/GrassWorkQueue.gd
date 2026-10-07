@@ -32,7 +32,7 @@ func update_origin(origin: Vector2) -> void:
 	_origin = origin
 	for index in range(_jobs.size()-1,-1,-1):
 		var job: Dictionary = _jobs[index]
-		if GrassStreamer.distance_to_tile(origin,job.tile) > GrassStreamer.KEEP_RADIUS:
+		if GrassStreamer.distance_to_tile(origin,job.tile) > GrassStreamer.keep_radius():
 			_queued.erase(job.tile)
 			_jobs.remove_at(index)
 			_cancelled += 1

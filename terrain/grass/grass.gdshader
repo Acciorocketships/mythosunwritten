@@ -31,8 +31,8 @@ uniform vec2 ground_palette_uv = vec2(0.125, 0.125);
 uniform float local_base_y = 0.0;
 uniform float local_height = 1.0;
 
-const float FULL_RADIUS = 60.0;
-const float GRASS_RADIUS = 84.0;
+global uniform float grass_full_radius;
+global uniform float grass_radius;
 // Distant partial-scale leaves alias into bright moving specks. Keep each
 // accepted patch whole, then remove sub-pixel normal and motion detail before
 // the spatial prefix removes it.
@@ -64,7 +64,7 @@ float hash21(vec2 value) {
 }
 
 float density_at(float distance_to_origin) {
-	return 1.0 - smoothstep(FULL_RADIUS, GRASS_RADIUS, distance_to_origin);
+	return 1.0 - smoothstep(grass_full_radius, grass_radius, distance_to_origin);
 }
 
 vec2 world_to_local_tangent(vec2 direction, vec3 tangent_x, vec3 tangent_z) {

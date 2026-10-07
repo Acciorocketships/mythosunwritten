@@ -137,6 +137,14 @@ biome_ground_origin={
 "type": "vec2",
 "value": Vector2(0, 0)
 }
+grass_full_radius={
+"type": "float",
+"value": 60.0
+}
+grass_radius={
+"type": "float",
+"value": 84.0
+}
 grass_lod_origin={
 "type": "vec2",
 "value": Vector2(0, 0)

@@ -1,9 +1,21 @@
 class_name GrassStreamer
 extends RefCounted
 
-const FULL_RADIUS := 60.0
-const GRASS_RADIUS := 84.0
-const KEEP_RADIUS := GRASS_RADIUS + GrassField.TILE_WORLD
+## Full density to FULL_RADIUS, gone by GRASS_RADIUS (player distance). One
+## source of truth: set_radii() mirrors both into the grass shader's globals.
+static var FULL_RADIUS := 60.0
+static var GRASS_RADIUS := 84.0
+
+static func keep_radius() -> float:
+	return GRASS_RADIUS + GrassField.TILE_WORLD
+
+static func set_radii(full: float, edge: float) -> void:
+	assert(edge - full >= 24.0, "the fade band hides the edge; keep it at least one tile wide")
+	FULL_RADIUS = full
+	GRASS_RADIUS = edge
+	RenderingServer.global_shader_parameter_set(&"grass_full_radius", full)
+	RenderingServer.global_shader_parameter_set(&"grass_radius", edge)
+
 const COMMIT_BUDGET_USEC := 500
 const MAX_DEFORMATION_RATIO := 1.65
 const WIND_DIRECTION := Vector2(0.94, 0.34)
@@ -67,6 +79,7 @@ func _init(program: GrassProgram, render_cache: EnvironmentRenderCache) -> void:
 	for asset_id: StringName in _program.referenced_asset_ids:
 		_prepare_asset(asset_id)
 	_prepare_wind()
+	set_radii(FULL_RADIUS, GRASS_RADIUS)
 
 static func distance_to_tile(origin: Vector2, tile: Vector2i) -> float:
 	var rect := Rect2(Vector2(tile) * GrassField.TILE_WORLD,
@@ -370,7 +383,7 @@ func _evict_far() -> Array[Node3D]:
 	for tile: Vector2i in _pending_tiles:
 		candidates[tile] = true
 	for tile: Vector2i in candidates:
-		if distance_to_tile(_lod_origin, tile) <= KEEP_RADIUS:
+		if distance_to_tile(_lod_origin, tile) <= keep_radius():
 			continue
 		_generations[tile] = generation(tile) + 1
 		_requested.erase(tile)
