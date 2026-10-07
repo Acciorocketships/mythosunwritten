@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="TownOddsTable" load_steps=16 format=3]
+[gd_resource type="Resource" script_class="TownOddsTable" load_steps=17 format=3]
 
 [ext_resource type="Script" path="res://scripts/terrain/features/villages/odds/TownOddsTable.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/terrain/features/villages/odds/TownKnob.gd" id="2"]
@@ -147,6 +147,17 @@ clamp_min = 0.0
 clamp_max = 1.0
 notes = "Town taste knobs (Oct 7) task 3: how fully a courtyard clearing (clearing.NN) is furnished for its purpose -- each clearing places up to round(density x capacity) prop groups (capacity = deco cells / 6, clamped 2..6) on its non-walk cells (green: the lawn island; paved/market/workyard: the court minus its kept walk of landings, street mouths and joining strips). Green: benches, planters, plants, a lantern post; paved: a stocked stall, crates, barrels, a bench; market: stocked stalls and goods; workyard: anvil, work table, firewood, crates. Order rolled per plot id; every piece passes the optional-dressing clearance gate and never overlaps the centre features or another piece (SettlementFabricAssembler.maze_clearing_decor). 0 = bare (today)."
 
+[sub_resource type="Resource" id="well_scale"]
+script = ExtResource("2")
+name = &"well_scale"
+kind = 1
+at_small = 1.0
+at_large = 1.0
+spread = 0.0
+clamp_min = 0.4
+clamp_max = 1.25
+notes = "Town taste knobs (Oct 7) task 4: size factor of a green's well (sfv.well.001 -> suntail well), applied to the placement's scale before the clearance check so a smaller well also frees room. Wells only ever stand on ground-level greens (a hard rule, not a knob: a raised green gets the next piece in its seeded rotation). 1 = the authored kit fit (today)."
+
 [resource]
 script = ExtResource("1")
-knobs = Array[Resource]([SubResource("clearing_count"), SubResource("clearing_block_bias"), SubResource("clearing_ground_weight"), SubResource("clearing_area"), SubResource("clearing_shape"), SubResource("clearing_extra_link_chance"), SubResource("clearing_cover"), SubResource("clearing_purpose"), SubResource("clearing_lobe_bias"), SubResource("clearing_enclosure_bias"), SubResource("plaza_ring_chance"), SubResource("clearing_ring_chance"), SubResource("clearing_deco_density")])
+knobs = Array[Resource]([SubResource("clearing_count"), SubResource("clearing_block_bias"), SubResource("clearing_ground_weight"), SubResource("clearing_area"), SubResource("clearing_shape"), SubResource("clearing_extra_link_chance"), SubResource("clearing_cover"), SubResource("clearing_purpose"), SubResource("clearing_lobe_bias"), SubResource("clearing_enclosure_bias"), SubResource("plaza_ring_chance"), SubResource("clearing_ring_chance"), SubResource("clearing_deco_density"), SubResource("well_scale")])

@@ -330,6 +330,8 @@ static func generate(source: WarrenSpatialPlan,
 		return null
 	if source.source_volume != null:
 		result.clearing_decor = WarrenVolumetricSolver.maze_clearing_decor(source.source_volume)
+		result.raised_green_cells = WarrenVolumetricSolver.maze_raised_green_cells(source.source_volume)
+		result.well_scale = WarrenVolumetricSolver.maze_well_scale(source.source_volume)
 	var surfaces := PublicRealmSurfaceSolver.solve(
 		StringName("%s.surfaces" % result.stable_id), realm, result,
 		source.source_volume)
@@ -1994,7 +1996,8 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	var planting := SettlementFabricAssembler.maze_garden_dressing(retained,
 		solids, paved, plinths, walked, shell, footprints,
 		plan.planned_plaza_cells, decor_skin,
-		ground_skin.capped_ground as Dictionary, plan.world_seed)
+		ground_skin.capped_ground as Dictionary, plan.world_seed,
+		plan.raised_green_cells, plan.well_scale)
 	# TASK I3. The square's own three facts, derived exactly as the dressing
 	# derives them: the run a street can actually reach, the mouths it reaches it
 	# by, and what stands in the clearing.
@@ -2004,7 +2007,7 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		walked)
 	var plaza_features := SettlementFabricAssembler.maze_plaza_centre_features(
 		plaza, plaza_entries, footprints, decor_skin, walked,not plan.planned_plaza_cells.is_empty(),
-		plan.world_seed)
+		plan.world_seed, plan.raised_green_cells, plan.well_scale)
 	var plaza_feature: Dictionary = plaza_features[0] if not plaza_features.is_empty() else {}
 	# TASK I3. `maze_garden_planting_count` stays what it has always meant --
 	# what GROWS on the yards -- so it is counted off the `maze-garden/` ids

@@ -1964,7 +1964,7 @@ static func terrace_retaining_payload(plan: SettlementFabricPlan,
 	dressing_footprints["native_surfaces"] = native_dressing.get("native_surfaces",[])
 	out.append_from(maze_garden_dressing(retained, solids, paved, plinths,
 		walked, shell, dressing_footprints, plan.planned_plaza_cells, skin_boxes,
-		capped_ground_cells, plan.world_seed))
+		capped_ground_cells, plan.world_seed, plan.raised_green_cells, plan.well_scale))
 	# Town taste knobs task 3: courtyard clearings furnished for their purpose,
 	# after (and clear of) everything the garden pass already stood there.
 	if not plan.clearing_decor.is_empty():
@@ -5770,7 +5770,8 @@ static func maze_plaza_centre_features(plaza: Dictionary,
 		entries: Dictionary, footprints: Dictionary,
 		skin: Array[AABB],
 		walked: Dictionary, planted_island: bool,
-		world_seed: int) -> Array[Dictionary]:
+		world_seed: int, raised_greens: Dictionary = {},
+		well_scale: float = 1.0) -> Array[Dictionary]:
 	## One centre feature per separate green (`maze_green_components`), each
 	## chosen inside its own cells by `maze_plaza_centre_feature` with its own
 	## cell-keyed roll, so the primary plaza keeps exactly the piece it has with
@@ -5783,8 +5784,11 @@ static func maze_plaza_centre_features(plaza: Dictionary,
 	var out: Array[Dictionary] = []
 	var obstacles := skin.duplicate()
 	for component: Dictionary in maze_green_components(plaza):
+		var grounded := true
+		for cell: Vector3i in component:
+			if raised_greens.has(cell): grounded = false
 		var feature := maze_plaza_centre_feature(component, entries, footprints,
-			obstacles, walked, planted_island, world_seed)
+			obstacles, walked, planted_island, world_seed, grounded, well_scale)
 		if not feature.is_empty():
 			out.append(feature)
 			obstacles.append_array(maze_plaza_feature_boxes(feature, footprints,
@@ -5818,7 +5822,12 @@ static func maze_plaza_centre_feature(plaza: Dictionary,
 		entries: Dictionary, footprints: Dictionary,
 		skin: Array[AABB],
 		walked: Dictionary, planted_island: bool,
-		world_seed: int) -> Dictionary:
+		world_seed: int, on_ground: bool = true,
+		well_scale: float = 1.0) -> Dictionary:
+	## Town taste knobs task 4: a well stands only on a green at ground level
+	## (`on_ground`; a raised green falls through to the next piece, the
+	## seeded start unchanged), and `well_scale` sizes it.
+	##
 	## TASK I3 -- WHAT STANDS IN THE MIDDLE OF THE SQUARE, as
 	## `{asset, cell, origin, quarter, cells}`, or empty when the green has no
 	## room for one.
@@ -5890,6 +5899,9 @@ static func maze_plaza_centre_feature(plaza: Dictionary,
 			var feature := {"asset": PLAZA_WIDE_FEATURES[
 				posmod(pick + offset, PLAZA_WIDE_FEATURES.size())], "cell": cell,
 				"origin": origin, "quarter": quarter, "cells": wide.cells}
+			if feature.asset == PLAZA_WELL:
+				if not on_ground: continue
+				if well_scale != 1.0: feature["scale"] = well_scale
 			if planted_island and STALL_CANOPIES.has(feature.asset) and not _plaza_canopy_proportional(feature, plaza, occupied, footprints):
 				continue
 			if planted_island and feature.asset == PLAZA_TREE:
@@ -6541,7 +6553,8 @@ static func maze_garden_dressing(retained: Dictionary, solids: Dictionary,
 		walked: Dictionary, shell: Dictionary,
 		footprints: Dictionary, planned_plaza: Dictionary,
 		skin: Array[AABB],
-		selected_ground: Dictionary, world_seed: int) \
+		selected_ground: Dictionary, world_seed: int,
+		raised_greens: Dictionary = {}, well_scale: float = 1.0) \
 		-> EnvironmentInstancePayload:
 	## TASK I2 -- WHAT MAKES A BENCH TOP A YARD. The cap is the ground and the
 	## rim is its edge; this is what stands on it.
@@ -6605,7 +6618,7 @@ static func maze_garden_dressing(retained: Dictionary, solids: Dictionary,
 	var entries := maze_plaza_entries(plaza, walked)
 	# One centre feature per separate green: the plaza and each green clearing.
 	var features := maze_plaza_centre_features(plaza, entries, footprints, skin,
-		walked,not planned_plaza.is_empty(), world_seed)
+		walked,not planned_plaza.is_empty(), world_seed, raised_greens, well_scale)
 	var reserved: Dictionary = {}
 	for feature: Dictionary in features:
 		for cell_value: Variant in (feature.get("cells", {}) as Dictionary).keys():

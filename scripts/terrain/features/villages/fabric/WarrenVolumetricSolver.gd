@@ -2660,6 +2660,42 @@ static func maze_clearing_decor(volume: WarrenVolumePlan) -> Array[Dictionary]:
 	return out
 
 
+const WELL_SCALE_KNOB := &"well_scale"
+
+
+static func maze_well_scale(volume: WarrenVolumePlan) -> float:
+	## The town's `well_scale` knob (1.0 = today's authored fit).
+	var source := volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
+	if source == null or source.scale_profile == null: return 1.0
+	return TownCharacter.of(source.scale_profile, source.world_seed).value(WELL_SCALE_KNOB)
+
+
+static func maze_raised_green_cells(volume: WarrenVolumePlan) -> Dictionary:
+	## Town taste knobs task 4: the supporting cells (the cell under the walk
+	## plane, `_planned_plaza_support_cells`' convention) of every typed green
+	## -- the plaza and any clearing drawn as a green -- whose floor band is not
+	## the terrain bearing (`WarrenMassif.bearing_at`) on every one of its
+	## columns. A raised green is a deck, a terrace or a platform; a well only
+	## makes sense on the ground, so it never gets one.
+	var out := {}
+	var source := volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
+	if source == null or source.massif == null: return out
+	for plot: Dictionary in source.plots:
+		if StringName(plot.get("id", &"")) != WarrenPlotReservations.PLAZA_PLOT_ID \
+				and not WarrenPlotReservations.is_green_court(plot):
+			continue
+		var floor_band := int(plot["floor"])
+		var columns := WarrenMazeSourcePlan.deck_flat_columns(plot)
+		var ground := true
+		for column: Vector2i in columns:
+			if source.massif.bearing_at(column) != floor_band: ground = false
+		if ground: continue
+		for column: Vector2i in columns:
+			for offset: Vector3i in [Vector3i.ZERO, Vector3i.RIGHT, Vector3i.BACK, Vector3i(1, 0, 1)]:
+				out[Vector3i(column.x * 2, floor_band - 1, column.y * 2) + offset] = true
+	return out
+
+
 static func _maze_ringless_court_cells(volume: WarrenVolumePlan) -> Dictionary:
 	## The fine floor cells of every green court that rolled no walking ring
 	## (`plot.ring`, Town taste knobs task 2). Their lawn may reach the court

@@ -706,6 +706,18 @@ func _run() -> void:
 					await _shoot(stage, eye, target, "%s_passage%d" % [tag, shots], 75)
 					shots += 1
 			print("PASSAGES ", tag, " ", shots, " covered=", covered.size())
+		if _views.has("plaza"):
+			# Town taste knobs task 4: person-scale views of the plaza centre piece.
+			var greens := SettlementFabricAssembler.maze_green_components(fabric.planned_plaza_cells)
+			if not greens.is_empty():
+				var sum := Vector3.ZERO
+				for cell: Vector3i in greens[0]: sum += Vector3(cell)
+				var mid := sum / float(greens[0].size())
+				var at: Vector3 = town.transform * (Vector3(mid.x, float(mid.y + 1), mid.z) * FabricRecipe.CELL_SIZE)
+				for k in 3:
+					var side := Vector3(cos(k * PI * 2.0 / 3.0 + 0.6), 0, sin(k * PI * 2.0 / 3.0 + 0.6))
+					await _shoot(stage, at + side * 9.0 + Vector3.UP * 1.7, at + Vector3.UP * 1.0,
+						"%s_plaza_%d" % [tag, k], 70)
 		if _views.has("courtyard"):
 			for plot: Dictionary in source.plots:
 				if plot.kind != WarrenMazeSourcePlan.PLOT_DECK: continue

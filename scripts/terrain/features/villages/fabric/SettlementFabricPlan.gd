@@ -51,6 +51,13 @@ var planned_plaza_planting_cells: Dictionary = {}
 ## `clearing_deco_density` 0. Rides outside `construction_signature()`: it is
 ## optional dressing, never topology.
 var clearing_decor: Array[Dictionary] = []
+## Town taste knobs task 4: the supporting cells (planned-plaza convention) of
+## every typed green whose floor is not the terrain bearing -- a raised court.
+## A well never stands on one (`SettlementFabricAssembler.maze_plaza_centre_features`).
+## Placement-only, outside `construction_signature()`.
+var raised_green_cells: Dictionary = {}
+## The `well_scale` knob: the well's size factor (1.0 = the authored fit).
+var well_scale: float = 1.0
 ## TASK I2. The town's own world seed, carried here because the retained-mass
 ## skin now has to answer a question only the seed can answer: WHICH TIMBER
 ## FAMILY a clad mass face belongs to. A fake storey and the real house beside
