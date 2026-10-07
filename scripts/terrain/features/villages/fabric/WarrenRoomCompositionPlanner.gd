@@ -27,9 +27,6 @@ const THREE_STOREY_TOWER_ANNEXES := 1
 const TALL_TOWER_ANNEXES := 2
 const MAX_IDENTICAL_TOWER_FLOORPLATE_RUN_STOREYS := 2
 const MIN_BEARING_OVERLAP_COLUMNS := 2
-const MAX_PAIRED_RELIEF_FRONTIER := 12
-const MAX_PAIRED_RELIEF_COLUMN_DISTANCE := 1
-const MAX_PAIRED_RELIEF_PAIR_CHECKS := 24
 const MAX_STRUCTURAL_VARIANT_FRONTIER := 72
 
 # A changed area is not enough to break a vertical tower silhouette.  A room
@@ -71,7 +68,6 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 		forced_offsets_by_parcel: Dictionary, market_reservation: Dictionary,
 		protected_owners: Dictionary, skywalk_forced_offsets: Dictionary,
 		skywalk_reservations: Array[Dictionary], world_seed: int,
-		enable_paired_registration_relief: bool = true,
 		collect_diagnostics: bool = true) -> Dictionary:
 	last_failure = ""
 	last_audit = {}

@@ -234,7 +234,7 @@ static func _solve_maze(world_seed: int, ground_bands: Dictionary,
 	# The maze partitioner is deterministic and ignores the variant index, so
 	# the eight-variant rotation is meaningless here: pass -1 for "the one".
 	# Compose the source once, without a speculative paired rebuild.
-	var plan := from_volume(volume, -1, construction_program, false, collect_diagnostics)
+	var plan := from_volume(volume, -1, construction_program, collect_diagnostics)
 	var spatial_ms := Time.get_ticks_msec() - spatial_started_ms
 	if plan == null:
 		last_failure = "maze composition rejected: %s" % last_failure
@@ -380,7 +380,6 @@ static func solve_selected(world_seed: int, selected: WarrenSpatialPlan,
 static func from_volume(volume: WarrenVolumePlan,
 		partition_variant: int = 0,
 		construction_program: SettlementFabricProgram = null,
-		enable_paired_registration_relief: bool = true,
 		collect_diagnostics: bool = true) -> WarrenSpatialPlan:
 	last_failure = ""
 	if volume == null or not volume.is_sealed() or construction_program == null:
@@ -454,7 +453,7 @@ static func from_volume(volume: WarrenVolumePlan,
 			courtyard_parcel_sides
 	var partition_started_ms := Time.get_ticks_msec()
 	var partition := _partition_rooms(grid, volume, parcel_plan,
-		construction_program, enable_paired_registration_relief, collect_diagnostics)
+		construction_program, collect_diagnostics)
 	_stamp_maze_stage(volume, &"partition_rooms", partition_started_ms)
 	if partition.is_empty():
 		if last_failure.is_empty():
@@ -2722,7 +2721,6 @@ static func _pave_open_bridge_decks(grid: WarrenSpatialGrid,
 static func _partition_rooms(grid: WarrenSpatialGrid,
 		volume: WarrenVolumePlan, parcels: WarrenParcelPlan,
 		construction_program: SettlementFabricProgram,
-		enable_paired_registration_relief: bool = true,
 		collect_diagnostics: bool = true) -> Dictionary:
 	# Breadcrumb: several stages below call helpers that reset last_failure on
 	# entry, so a real rejection reason could be cleared before it reached the
@@ -2968,8 +2966,7 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	# beam used to commit, and control rejoins the shared code below it.
 	var maze_features := _maze_feature_pass(grid, volume, parcels,
 		proposals, construction_program, protected_owners,
-		court_fixed_blocks_by_parcel, public_air, market_candidates,
-		enable_paired_registration_relief)
+		court_fixed_blocks_by_parcel, public_air, market_candidates)
 	market_reservation = maze_features.market_reservation as Dictionary
 	courtyard_bridge_candidate = \
 		maze_features.courtyard_bridge_candidate as Dictionary
@@ -3285,8 +3282,7 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	var composition := WarrenRoomCompositionPlanner.solve(grid, volume,
 		proposals, solved_offsets_by_parcel, exact_forced_offsets_by_parcel,
 		market_reservation, protected_owners, forced_offsets_by_parcel,
-		skywalk_reservations, volume.world_seed,
-		enable_paired_registration_relief, collect_diagnostics)
+		skywalk_reservations, volume.world_seed, collect_diagnostics)
 	if diagnostic_trace_skywalk_timing:
 		print("SKYWALK_TIMING final_composition_lineages displaced_present=",
 			_any_key_overlap(composition.get("lineages", {}) as Dictionary,
@@ -3908,8 +3904,7 @@ static func _maze_feature_pass(grid: WarrenSpatialGrid,
 		proposals: Array[Dictionary], program: SettlementFabricProgram,
 		protected_owners: Dictionary,
 		court_fixed_blocks_by_parcel: Dictionary, public_air: Dictionary,
-		market_candidates: Array[Dictionary],
-		enable_paired_registration_relief: bool) -> Dictionary:
+		market_candidates: Array[Dictionary]) -> Dictionary:
 	## The one-pass replacement for the joint hero-feature beam.
 	##
 	## A maze town's features are not something composition discovers: the plot

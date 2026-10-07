@@ -157,10 +157,9 @@ func test_final_village_feature_contract_is_scale_aware() -> void:
 			"%s must survive the production validator with its own budget" % id)
 		var old_large_contract := audit.duplicate(true)
 		old_large_contract["elevated_courtyard_count"] = 1
-		old_large_contract["prefab_landmark_count"] = \
-			WarrenSpatialFeatureSolver.TARGET_PREFAB_LANDMARKS
-		old_large_contract["enclosed_skywalk_count"] = \
-			WarrenSpatialFeatureSolver.TARGET_SKYWALKS
+		# The retired showcase targets: four landmarks, three skywalks.
+		old_large_contract["prefab_landmark_count"] = 4
+		old_large_contract["enclosed_skywalk_count"] = 3
 		if id in [WarrenVillageScaleProfile.COMPACT,
 				WarrenVillageScaleProfile.STANDARD]:
 			assert_false(VillageUrbanFabricPlan \

@@ -50,7 +50,7 @@ func _run() -> void:
 			failures.append([job, "volume"])
 			print("FAIL ", job, " volume")
 			continue
-		var result := WarrenVolumetricSolver.from_volume(volume, -1, program, false, true)
+		var result := WarrenVolumetricSolver.from_volume(volume, -1, program, true)
 		if result == null:
 			failures.append([job, "solve: " + WarrenVolumetricSolver.last_failure])
 			print("FAIL ", job, " solve ", WarrenVolumetricSolver.last_failure)

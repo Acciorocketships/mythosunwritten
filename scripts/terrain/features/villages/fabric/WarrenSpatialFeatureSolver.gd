@@ -5,16 +5,12 @@ extends RefCounted
 ## Each accepted feature owns one atomic reservation and, where appropriate,
 ## its exact private/structural cells and construction transform. Generic room
 ## and roof compilation may respond to these facts but never recreate them.
-const TARGET_SKYWALKS := 3
-const TARGET_PREFAB_LANDMARKS := 4
 const MIN_TOWER_ANNEXES_PER_THREE_STOREY_LINEAGE := \
 	WarrenRoomCompositionPlanner.THREE_STOREY_TOWER_ANNEXES
 const MIN_TOWER_ANNEXES_PER_TALL_LINEAGE := \
 	WarrenRoomCompositionPlanner.TALL_TOWER_ANNEXES
-const TARGET_BALCONIES := 6
 const MIN_BALCONY_BUILDINGS := 3
 const MAX_BALCONIES_PER_BUILDING := 2
-const TARGET_ROOM_OUTCROPPINGS := 6
 ## TASK E3 RULING 1 MEASURED THE MAZE OUTCROPPING FAMILY AND SHIPPED NOTHING.
 ##
 ## `WarrenVillageScaleProfile.cantilever_range` is `Vector2i.ZERO` on every
@@ -2585,8 +2581,8 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 		buildings: Array[WarrenBuildingVolume], supports: WarrenSupportGraph,
 		world_seed: int, program: SettlementFabricProgram,
 		existing_features: Array[WarrenFeatureReservation],
-		target_count: int = TARGET_BALCONIES,
-		plot_model_source: bool = false) \
+		target_count: int,
+		plot_model_source: bool) \
 		-> Array[WarrenFeatureReservation]:
 	## Search the actual three-dimensional residual void around upper room
 	## sockets. A candidate is a complete measured recipe and owns its deck,
@@ -4395,8 +4391,8 @@ static func _courtyard_side_endpoints(grid: WarrenSpatialGrid,
 static func _reserve_room_outcroppings(grid: WarrenSpatialGrid,
 		buildings: Array[WarrenBuildingVolume], supports: WarrenSupportGraph,
 		world_seed: int, program: SettlementFabricProgram,
-		existing_features: Array[WarrenFeatureReservation] = [],
-		_target_count: int = TARGET_ROOM_OUTCROPPINGS) \
+		existing_features: Array[WarrenFeatureReservation],
+		_target_count: int) \
 		-> Array[WarrenFeatureReservation]:
 	if program == null or program.recipe(&"outcrop.support.bracketed.2") == null \
 			or program.recipe(&"outcrop.support.diagonal.2") == null \

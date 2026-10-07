@@ -2,6 +2,11 @@ extends WarrenRoomCompositionPlanner
 
 ## Historical repair algorithms retained only for their existing regression
 ## fixtures. Production constructs complete rooms without these cleanup passes.
+## The paired-relief budgets moved here from WarrenRoomCompositionPlanner
+## (October 7): only these historical passes ever read them.
+const MAX_PAIRED_RELIEF_FRONTIER := 12
+const MAX_PAIRED_RELIEF_COLUMN_DISTANCE := 1
+const MAX_PAIRED_RELIEF_PAIR_CHECKS := 24
 
 static func _truncate_unroofable_crowns(lineages: Dictionary) -> int:
 	## The anti-box gate participates in the composition transaction. If a bad

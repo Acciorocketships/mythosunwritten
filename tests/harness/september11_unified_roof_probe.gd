@@ -13,7 +13,7 @@ func _init() -> void:
 		quit()
 		return
 	var volume := WarrenMazeVolumeAdapter.to_volume_plan(source)
-	var spatial := WarrenVolumetricSolver.from_volume(volume, -1, program, false, true)
+	var spatial := WarrenVolumetricSolver.from_volume(volume, -1, program, true)
 	FileAccess.open("res://docs/qa/2026-09-11-manual/10-unified-city/roof-case-source.txt", FileAccess.WRITE).store_string(var_to_str(source.plots))
 	print("ROOF_SPATIAL ", spatial != null, " ", WarrenVolumetricSolver.last_failure)
 	if spatial != null and "--domains" in OS.get_cmdline_user_args():

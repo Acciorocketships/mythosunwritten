@@ -6,7 +6,7 @@ func test_complete_crown_realizes_the_tight_options_reserved_before_selection() 
 	var source := preload("res://tests/fixtures/frozen_maze_source.gd").read(
 		"res://tests/fixtures/september11-unified-roof-source.txt")
 	var volume := WarrenMazeVolumeAdapter.to_volume_plan(source)
-	var spatial := WarrenVolumetricSolver.from_volume(volume, -1, program, false, true)
+	var spatial := WarrenVolumetricSolver.from_volume(volume, -1, program, true)
 	assert_not_null(spatial, WarrenVolumetricSolver.last_failure)
 	if spatial == null:
 		return

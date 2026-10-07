@@ -31,7 +31,7 @@ static func read(path: String, finish: bool = true) -> WarrenMazeSourcePlan:
 static func spatial(source: WarrenMazeSourcePlan,
 		program: SettlementFabricProgram) -> WarrenSpatialPlan:
 	var volume := WarrenMazeVolumeAdapter.to_volume_plan(source)
-	var result := WarrenVolumetricSolver.from_volume(volume, -1, program, false, true)
+	var result := WarrenVolumetricSolver.from_volume(volume, -1, program, true)
 	assert(result != null, WarrenVolumetricSolver.last_failure)
 	var fabric := WarrenSpatialFabricCompiler.generate(result, program, true)
 	assert(fabric != null, WarrenSpatialFabricCompiler.last_failure)

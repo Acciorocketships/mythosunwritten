@@ -29,7 +29,7 @@ func _run() -> void:
 					print("VOLUME_FAIL ", seed_value, " ", scale, " ", WarrenMazeVolumeAdapter.last_failure)
 					failures += 1
 					continue
-				var spatial := WarrenVolumetricSolver.from_volume(volume, -1, program, false, true)
+				var spatial := WarrenVolumetricSolver.from_volume(volume, -1, program, true)
 				if spatial != null:
 					var fabric := WarrenSpatialFabricCompiler.generate(spatial, program, true)
 					if fabric == null:

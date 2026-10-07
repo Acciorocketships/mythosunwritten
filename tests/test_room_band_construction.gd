@@ -8,7 +8,7 @@ func _check_source(seed_value: int, profile: String) -> void:
 		_program = SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
 	var source := FrozenSource.read("res://tests/fixtures/room-construction-%d-%s-source.txt" % [seed_value, profile])
 	var volume := WarrenMazeVolumeAdapter.to_volume_plan(source)
-	var spatial := WarrenVolumetricSolver.from_volume(volume, -1, _program, false, true)
+	var spatial := WarrenVolumetricSolver.from_volume(volume, -1, _program, true)
 	assert_not_null(spatial, WarrenVolumetricSolver.last_failure)
 	if spatial == null: return
 	var fabric := WarrenSpatialFabricCompiler.generate(spatial, _program, true)

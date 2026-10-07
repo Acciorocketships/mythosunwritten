@@ -25,7 +25,7 @@ func test_p07_deck_has_full_width_orthogonal_stair_to_existing_upper_landing() -
 			original = true
 	assert_true(original,"The original full-width flight also reaches the common landing")
 	var spatial := WarrenVolumetricSolver.from_volume(volume,-1,
-		SettlementFabricProgram.compile(EnvironmentCatalog.load_default()),false,true)
+		SettlementFabricProgram.compile(EnvironmentCatalog.load_default()),true)
 	assert_not_null(spatial,WarrenVolumetricSolver.last_failure)
 	if spatial != null:
 		var fabric := WarrenSpatialFabricCompiler.generate(spatial,

@@ -4,7 +4,7 @@ func _init() -> void:
 	var seed_value := VillagePlan.warren_seed_for_cell(2697992464,Vector2i(-10,-9))
 	var maze := WarrenMazeSitePlanner.plan(seed_value,{},WarrenVillageScaleProfile.select(seed_value))
 	var volume := WarrenMazeVolumeAdapter.to_volume_plan(maze)
-	var spatial := WarrenVolumetricSolver.from_volume(volume,-1,program,false)
+	var spatial := WarrenVolumetricSolver.from_volume(volume,-1,program)
 	var rooms: Array[WarrenRoomStamp] = []
 	var target: WarrenRoomStamp
 	for building: WarrenBuildingVolume in spatial.buildings:
