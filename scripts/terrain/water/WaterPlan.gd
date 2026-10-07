@@ -204,6 +204,38 @@ func _cache_put(cache: Dictionary, key: Variant, value: Variant, limit: int) -> 
 	_lock.unlock()
 
 
+## Pool tasks the raw walks of one ring are traced on (leaves cores for the
+## main thread and the chunk tails).
+const WALK_TASKS := 4
+
+## True on a WorkerThreadPool thread: prefetch only fans out from ordinary
+## threads (the streamer's planning worker, the main thread), never nests.
+static func on_pool_thread() -> bool:
+	return WorkerThreadPool.get_caller_task_id() != -1 \
+		or WorkerThreadPool.get_caller_group_id() != -1
+
+## Settle has_source (and with it the raw contour walk) for every cell of
+## `cells` on the thread pool. Both are pure functions of (seed, cell) that
+## read only the natural and smooth fields, so the caches end up exactly as a
+## serial pass leaves them; the serial callers then find every raw walk ready.
+func prefetch_sources(cells: Array[Vector2i]) -> void:
+	if not HeightfieldPlan.prefetch_enabled or on_pool_thread():
+		return
+	var missing: Array[Vector2i] = []
+	_lock.lock()
+	for sc: Vector2i in cells:
+		if not _has_source_cache.has(sc):
+			missing.append(sc)
+	_lock.unlock()
+	if missing.size() < 2:
+		return
+	var job := func(index: int) -> void:
+		has_source(missing[index])
+	var group := WorkerThreadPool.add_group_task(job, missing.size(),
+		mini(WALK_TASKS, missing.size()), true, "river walks")
+	WorkerThreadPool.wait_for_group_task_completion(group)
+
+
 func _init(p_world_seed: int, p_amplitude: float, p_max_storeys: int) -> void:
 	world_seed = p_world_seed
 	amplitude = p_amplitude
@@ -774,6 +806,13 @@ func _neighbour_rivers(sc: Vector2i, depth: int,
 	var side := REACH_SUPERS * 4 + 1
 	var total := side * side
 	var done := 0
+	var higher: Array[Vector2i] = []
+	for dz in range(-REACH_SUPERS * 2, REACH_SUPERS * 2 + 1):
+		for dx in range(-REACH_SUPERS * 2, REACH_SUPERS * 2 + 1):
+			var nb: Vector2i = sc + Vector2i(dx, dz)
+			if nb != sc and priority_of(nb) > mine:
+				higher.append(nb)
+	prefetch_sources(higher)
 	for dz in range(-REACH_SUPERS * 2, REACH_SUPERS * 2 + 1):
 		for dx in range(-REACH_SUPERS * 2, REACH_SUPERS * 2 + 1):
 			var nb: Vector2i = sc + Vector2i(dx, dz)
@@ -888,6 +927,11 @@ func _region_for(rc: Vector2i) -> Dictionary:
 	var candidate_side := (REACH_SUPERS + 1) * 2 + 1
 	var candidate_total := candidate_side * candidate_side
 	var candidate_done := 0
+	var candidates: Array[Vector2i] = []
+	for dz in range(-(REACH_SUPERS + 1), REACH_SUPERS + 2):
+		for dx in range(-(REACH_SUPERS + 1), REACH_SUPERS + 2):
+			candidates.append(rc + Vector2i(dx, dz))
+	prefetch_sources(candidates)
 	_planning_progress_last = -1.0
 	_report_planning_progress(0.0, true)
 	for dz in range(-(REACH_SUPERS + 1), REACH_SUPERS + 2):

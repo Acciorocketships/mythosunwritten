@@ -479,6 +479,53 @@ func compute_region(center_cx: int, center_cz: int, radius: int) -> HeightfieldR
 	return compute_rect_region(Rect2i(Vector2i(center_cx-radius,center_cz-radius),Vector2i.ONE*(radius*2+1)))
 
 
+## Below this many missing samples a rectangle is sampled serially.
+const PREFETCH_MIN := 4096
+## Pool tasks a large rectangle's samples are split across: leaves cores for
+## the main thread and the chunk tails.
+const PREFETCH_TASKS := 4
+## Off only for A/B checks (tests/harness/water_block_cost.gd --serial).
+static var prefetch_enabled := true
+
+## Fill the sample memo for a large rectangle on the thread pool. _sample is a
+## pure function of the point and the memo is locked, so the result is the
+## serial one. Each river carve region (one per WaterPlan.SUPER cell) is built
+## first, serially, from one point in it, so the tasks never build the same
+## region side by side.
+func _prefetch_samples(lo: Vector2i, width: int, rows: int) -> void:
+	if not prefetch_enabled or _raw_override.is_valid() or width * rows < PREFETCH_MIN \
+			or WaterPlan.on_pool_thread():
+		return
+	var missing := PackedInt32Array()
+	_samples_lock.lock()
+	for z in rows:
+		for x in width:
+			if not _samples.has(Vector2i(lo.x + x, lo.y + z)):
+				missing.append(z * width + x)
+	_samples_lock.unlock()
+	if missing.size() < PREFETCH_MIN:
+		return
+	if _water_plan != null:
+		var step := int(WaterPlan.SUPER / POINT)
+		var xs: Array[int] = []
+		for x in range(0, width, step): xs.append(x)
+		xs.append(width - 1)
+		var zs: Array[int] = []
+		for z in range(0, rows, step): zs.append(z)
+		zs.append(rows - 1)
+		for z: int in zs:
+			for x: int in xs:
+				_sample(lo.x + x, lo.y + z)
+	var band := ceili(float(missing.size()) / PREFETCH_TASKS)
+	var job := func(task: int) -> void:
+		for k in range(task * band, mini(missing.size(), (task + 1) * band)):
+			var index := missing[k]
+			_sample(lo.x + index % width, lo.y + index / width)
+	var group := WorkerThreadPool.add_group_task(job, PREFETCH_TASKS, PREFETCH_TASKS, true,
+		"heightfield prefetch")
+	WorkerThreadPool.wait_for_group_task_completion(group)
+
+
 ## Same certified terrain computation on a rectangular requested interior.
 ## Long river corridors need the complete clamp halo, not an unrelated square
 ## extending equally far in the narrow direction. Square callers retain their
@@ -492,6 +539,7 @@ func compute_rect_region(interior: Rect2i) -> HeightfieldRegion:
 	var rows := outer_rect.size.y
 	var count := width * rows
 	var lo := outer_rect.position
+	_prefetch_samples(lo, width, rows)
 	var storeys := PackedInt32Array()
 	storeys.resize(count)
 	for z in rows:

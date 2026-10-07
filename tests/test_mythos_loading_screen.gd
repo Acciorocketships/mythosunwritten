@@ -97,11 +97,11 @@ func test_bar_progress_reads_integrated_spawn_support_not_elapsed_time() -> void
 	add_child_autofree(integrated_chunk)
 	streamer._built[streamer._startup_support_chunks[0]] = integrated_chunk
 	screen._poll_spawn_loading()
-	var quarter := MythosLoadingScreen.RESOURCE_LOAD_WEIGHT \
-		+ 0.25 * MythosLoadingScreen.STREAMER_LOAD_WEIGHT
-	assert_almost_eq(screen._requested_progress, quarter, 0.0001,
-		"one of four support chunks advances the actual streamer slice")
-	assert_almost_eq(screen._progress_bar.progress, quarter, 0.0001)
+	var one_chunk := MythosLoadingScreen.RESOURCE_LOAD_WEIGHT \
+		+ MythosLoadingScreen.STREAMER_LOAD_WEIGHT / streamer._startup_support_chunks.size()
+	assert_almost_eq(screen._requested_progress, one_chunk, 0.0001,
+		"one integrated support chunk advances the actual streamer slice")
+	assert_almost_eq(screen._progress_bar.progress, one_chunk, 0.0001)
 	screen._on_startup_loading_progress_changed(0.5, 2, 4)
 	var halfway := MythosLoadingScreen.RESOURCE_LOAD_WEIGHT \
 		+ 0.5 * MythosLoadingScreen.STREAMER_LOAD_WEIGHT
