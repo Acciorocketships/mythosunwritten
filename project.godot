@@ -185,3 +185,7 @@ wind_idle_bend={
 "type": "float",
 "value": 0.055
 }
+
+[rendering]
+
+lights_and_shadows/directional_shadow/size=2048

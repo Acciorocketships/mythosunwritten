@@ -128,7 +128,11 @@ func _process(delta: float) -> void:
 			"draws": Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),
 			"prims": Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME),
 			"objects": Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME),
-			"pipe": _pipelines()})
+			"pipe": _pipelines(),
+			"warmed": _streamer._first_view.warmed if _streamer._first_view != null else 0,
+			"grass_tiles": _streamer._grass_streamer.built_count() if _streamer._grass_streamer != null else 0,
+			"chunks": _streamer._built.size(),
+			"dressing_pending": _streamer._dressing_queue.pending_count()})
 	if _phase in _all_phases and now - _last_usec > 40000:
 		print("FEEL spike frame dt=%.1f process=%.1f physics=%.1f ticks=%d phase=%s pipelines=%s draws=%d" % [
 			(now - _last_usec) / 1000.0, _process_usec / 1000.0, _physics_usec / 1000.0, _ticks, _phase,

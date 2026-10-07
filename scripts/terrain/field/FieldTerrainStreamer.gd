@@ -396,7 +396,7 @@ func startup_loading_complete() -> bool:
 ## (FEATURE_WARM_USEC); the render warm-up is then rebuilt to include them.
 ## Main thread only, like every visual load (threaded loads raced material
 ## RIDs on October 5).
-const FEATURE_WARM_USEC := 25000
+const FEATURE_WARM_USEC := 12000
 ## Newly attached chunks are drawn once off-screen (FirstViewWarmer) once their
 ## dressing has committed (or FIRST_VIEW_WAIT_MSEC later), so the first look
 ## at them does not stall; feature blocks when they become ready.
@@ -1015,7 +1015,9 @@ func _mark(label: StringName) -> void:
 		_marks.append([label, Time.get_ticks_usec()])
 
 func _report_slow_frame() -> void:
-	if not LOG_SLOW_FRAMES or _marks.size() < 2:
+	# Gameplay frames only: behind the loading screen the main thread loads
+	# visuals on purpose.
+	if not LOG_SLOW_FRAMES or _marks.size() < 2 or not _startup_completion_emitted:
 		_marks.clear()
 		return
 	var total: int = _marks.back()[1] - _marks[0][1]

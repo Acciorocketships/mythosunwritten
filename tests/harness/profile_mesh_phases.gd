@@ -4,7 +4,7 @@
 # every payload so a performance change can be proved output-identical.
 #   godot --headless --path . -s res://tests/harness/profile_mesh_phases.gd -- \
 #     [--chunks "0,-1;1,-1"] [--detail] [--style sheet_bedrock]
-#     [--hash-out f.txt] [--hash-check f.txt]
+#     [--hash-out f.txt] [--hash-check f.txt] [--seed N]
 # Without --chunks it runs the 3x3 block x 0..2, z -1..1 of the profiler's seed.
 # --detail re-runs the cliff dressing step by step (branch layout) after the
 # timed mesher call; it does not affect the mesher timings or the hashes.
@@ -12,7 +12,7 @@
 # mesher's own profile dictionary and phase callback are read.
 extends SceneTree
 
-const SEED := 3046246887
+var SEED := 3046246887
 const AMP := TerrainWorldTuning.HEIGHTFIELD_AMPLITUDE
 const MAX_STOREYS := TerrainWorldTuning.HEIGHTFIELD_MAX_STOREYS
 const MAX_STEP := TerrainWorldTuning.MAX_CLIFF_STEP
@@ -64,6 +64,11 @@ func _chunks(args: PackedStringArray) -> Array[Vector2i]:
 
 func _init() -> void:
 	var args := OS.get_cmdline_user_args()
+	if args.find("--seed") >= 0:
+		SEED = int(args[args.find("--seed") + 1])
+	# As the streamer does: the C# grid kernels when the .NET build has them.
+	preload("res://scripts/native/NativeGridKernels.gd").setup()
+	print("native grid kernels: ", preload("res://scripts/native/NativeGridKernels.gd").enabled)
 	# The baseline's default cliff style was not the game's (`sheet_bedrock`,
 	# set by world.tscn); pass --style sheet_bedrock there for a fair comparison.
 	var style_at := args.find("--style")

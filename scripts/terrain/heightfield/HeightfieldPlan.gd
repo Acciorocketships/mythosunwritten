@@ -60,7 +60,7 @@ var _water_plan = null
 # neighbouring chunks are sampled once. The raw carve amount is cached too so
 # compute_region can apply the water threshold without a third carve sweep.
 # Evict one oldest sample at capacity, preserving the overlapping warm windows.
-const _SAMPLE_CACHE_MAX := 200_000
+const _SAMPLE_CACHE_MAX := 1_000_000
 var _samples: Dictionary = {}
 var _sample_keys: Array[Vector2i] = []
 var _sample_cursor: int = 0

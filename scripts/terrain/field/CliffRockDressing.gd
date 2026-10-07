@@ -110,7 +110,7 @@ static func build_steps(data:Dictionary,seed_value:int)->Dictionary:
   var material:=[null]
   for tile:Dictionary in tiles:
    steps.append(func()->void:
-    if material[0]==null:material[0]=CRAGS.sheet_material()
+    if material[0]==null:material[0]=CRAGS.shared_sheet_material()
     var mm:=MultiMesh.new();mm.transform_format=MultiMesh.TRANSFORM_3D;mm.mesh=CRAGS.mesh(p,[tile.arrays],material[0],tile.lods);mm.use_colors=true;mm.instance_count=1
     # The slope sheet carries its biome tint per vertex (as the terrain does);
     # the instance colour multiplies COLOR, so it stays white.

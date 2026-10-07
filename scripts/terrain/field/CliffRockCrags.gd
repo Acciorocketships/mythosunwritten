@@ -47,6 +47,18 @@ static func mesh(rock:Dictionary,surfaces:Array=[],material:ShaderMaterial=null,
   result.surface_set_material(surface,material if material!=null else sheet_material())
  return result
 
+## One sheet material for every chunk while the style holds (each chunk made
+## its own: a new material and uniform set per streamed chunk, in an
+## integration step that reached 20-27 ms). Review tools that switch the style
+## get a fresh one.
+static var _shared_sheet:ShaderMaterial
+static var _shared_sheet_key:=""
+static func shared_sheet_material()->ShaderMaterial:
+ var key:="%s|%s"%[STYLE.moss_texture,STYLE.sheet_study]
+ if _shared_sheet==null or key!=_shared_sheet_key:
+  _shared_sheet=sheet_material();_shared_sheet_key=key
+ return _shared_sheet
+
 static func sheet_material()->ShaderMaterial:
  var material:=ShaderMaterial.new();material.shader=load("res://terrain/materials/cliff_crag.gdshader")
  material.set_shader_parameter("moss_upward",.45)

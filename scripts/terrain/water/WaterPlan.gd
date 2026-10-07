@@ -1134,7 +1134,17 @@ func carve_at(x: float, z: float) -> float:
 		# the original bank, never raise it or import a higher source.
 		var crest := ceilf((bed+WaterField.SURFACE_RIDE+.75)/STOREY)*STOREY
 		var bar_carve := maxf(0.0,ground-crest)
-		best = maxf(best,lerpf(carve,minf(carve,bar_carve),t.retained_ground_weight(p)))
+		# The retained-bar blend lies between min(carve, bar_carve) and carve,
+		# so it cannot raise best when carve does not, and it is exactly carve
+		# when the bar does not lower it: only then is the (pond-footprint
+		# and bar-loop) retained weight needed. Identical results; the weight
+		# was ~9 M calls per cold water domain.
+		if carve <= best:
+			continue
+		if bar_carve >= carve:
+			best = carve
+			continue
+		best = maxf(best,lerpf(carve,bar_carve,t.retained_ground_weight(p)))
 	return best
 
 ## Water bodies overlapping a cell window (for surface meshing + volumes).
