@@ -952,7 +952,12 @@ func _nearby_neighbour_points(index: Dictionary, p: Vector2,
 # Carve field (hot path: called for every cell of every region window)
 # ---------------------------------------------------------------
 
-var _region_cache: Dictionary = {}   # Vector2i super_cell -> {"rivers", "buckets", "ponds", "segments"[, "native"]}
+var _region_cache: Dictionary = {}   # Vector2i super_cell -> {"rivers", "buckets", "ponds", "segments"}
+## Verified C# copies of carve regions (NativeCarve.region_for), built lazily
+## when HeightfieldPlan's batched prefetch first needs one: rc -> [region, obj].
+## A separate cache under _lock: the published region dictionaries are read by
+## other threads and are never mutated.
+var _native_regions: Dictionary = {}
 
 ## Rivers (full depth) whose bounds overlap super-cell `rc`, plus a bucket
 ## index: tile cell -> Array of [RiverTrace, sample_index] for fast carve
@@ -1020,10 +1025,6 @@ func _region_for(rc: Vector2i) -> Dictionary:
 			ponds.append(t.pond)
 	var out: Dictionary = {"rivers": rivers, "buckets": buckets, "ponds": ponds,
 		"segments": segment_index(buckets)}
-	# A verified C# copy under "native" (HeightfieldPlan's batched prefetch),
-	# attached before the region is published. Only a plain WaterPlan.
-	if get_script() == WaterPlan:
-		NATIVE_CARVE.attach(self, rc, out)
 	_cache_put(_region_cache, rc, out, CARVE_REGION_CACHE_LIMIT)
 	_report_planning_progress(1.0, true)
 	return out
@@ -1224,13 +1225,14 @@ func carve_at(x: float, z: float) -> float:
 
 ## carve_at in a given carve region (the owner of (x, z)'s cell; NativeCarve's
 ## parity gate also probes a region here before it is published).
-func _carve_region(region: Dictionary, x: float, z: float) -> float:
+## `known_ground` (when finite) is noise_h(Vector2(x, z)), already computed.
+func _carve_region(region: Dictionary, x: float, z: float, known_ground := -INF) -> float:
 	var p: Vector2 = Vector2(x, z)
 	if p.length() < SPAWN_WATER_RADIUS:
 		return 0.0
 	var cx: int = floori(x / TILE + 0.5)
 	var cz: int = floori(z / TILE + 0.5)
-	var ground: float = -INF   # evaluated on first real hit
+	var ground: float = known_ground   # -INF: evaluated on first real hit
 	var best: float = 0.0
 	for pond: PondStamp in region.ponds:
 		var bound: float = pond.bound_radius()

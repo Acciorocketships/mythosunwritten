@@ -142,20 +142,28 @@ window takes the unchanged GDScript prefetch. The serial `_sample` path is
 unchanged. `carve_at`'s body after the region lookup moved, unchanged, into
 `WaterPlan._carve_region(region, x, z)`.
 
-Each carve region is flattened once in `WaterPlan._region_for`: traces
-(points, beds, widths, bank strengths, land bars, terminal pond), ponds, and
-the segment index as CSR over the region's 32 x 32 cells. The C# region is its
-own `NativeCarve` object stored in the region dictionary, so it lives as long
-as the dictionary or any batch using it. No handle table and no release on
-eviction, so there is no use-after-release race.
+Each carve region is flattened lazily, the first time the batched prefetch
+needs it (`NativeCarve.region_for`). The flattened form holds the traces
+(points, beds, widths, bank strengths, land bars, terminal pond), the ponds,
+and the segment index as CSR over the region's 32 x 32 cells. The C# copy is
+its own `NativeCarve` object, kept in `WaterPlan._native_regions`
+(rc -> [region, copy], under the plan's lock). The published region
+dictionaries are never mutated. If two threads build the same copy, the first
+one stored wins. There is no handle table and no release, so an in-flight
+batch keeps its regions alive.
 
-Parity gate: it runs per region at build, on the planning worker, and only
-on regions the plan builds anyway. The C# region must equal `_carve_region`
+Parity gate: it runs as copies are built. A copy must equal `_carve_region`
 (`!=`) on probes in the region's own cells: 12 m lattice and quarter-metre
-points on segment cells, points round ponds, and random points. The first 3
-regions of a seed get 2000 probes and every later region gets 200. One
-mismatch turns the seed off with a warning. `setup()` on the main thread only
-loads C# and its constants.
+points on segment cells, points round ponds, and random points. Probe ground
+comes from `HeightfieldPlan.natural01` directly, so `WaterPlan`'s field memo
+is untouched. Probe counts per seed:
+
+- the first 3 copies get 2000 probes each;
+- the next 8 get 32 each;
+- later copies get none.
+
+One mismatch turns the seed off with a warning. `setup()` on the main thread
+only loads C# and its constants.
 
 | check | result |
 |---|---|
@@ -177,6 +185,25 @@ loads C# and its constants.
 | harness region_ms | 2440 | 2464-3014 (run to run) |
 | harness water_ms | 42388 | 31205-32186 |
 
-Region attach cost: 111 regions, 1.48 s in total on the planning worker. Of
-that, 0.62 s is GDScript flattening plus the C# build, and 0.86 s is the
-parity gate. The main thread pays nothing beyond loading the script.
+In the first version every region was flattened, built and gated when it
+was built, even regions only the serial path uses: 111 regions cost 1.48 s on
+the worker (0.62 s flatten and build, 0.86 s gate), and the gate's `noise_h`
+calls polluted the field memo. Fix round 1 made copies lazy, capped the gate
+and read probe ground without the memo. A/B of the same tree, with
+`NativeCarve.force_off` set from an environment variable for the
+measurement only:
+
+| run | harness region_ms | inner region_ms | seeds_ms | water_ms | digest |
+|---|---|---|---|---|---|
+| carve off #1 | 2894 | 10206 | 16642 | 44678 | b6c965def22e7e93 |
+| carve off #2 | 3621 | 11059 | 17116 | 47264 | b6c965def22e7e93 |
+| carve on #1 | 2470 | 7974 | 15117 | 41010 | b6c965def22e7e93 |
+| carve on #2 | 2849 | 4936 | 13252 | 38777 | b6c965def22e7e93 |
+
+These runs are noisy, about +-20%. The harness region_ms (the cold first
+block region, dominated by river tracing) does not regress. The 8758 ms
+seeds_ms of the first version came from the eager gate warming `noise_h`'s
+memo, not from the carve. After the fix round: `test_native_carve` passes on
+mono (1/1, 6016 asserts; each window's added samples equal the count the C#
+batch filled) and on standard Godot; `test_water_plan` 29/29;
+`test_heightfield_plan` 47/47; `parallel_tail_check` PASS.

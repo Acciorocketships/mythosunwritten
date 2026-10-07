@@ -28,8 +28,14 @@ func test_native_carve_prefetch_matches_serial_samples_or_stays_off() -> void:
 	var native_regions := 0
 	for corner: Vector2i in corners:
 		var interior := Rect2i(corner, Vector2i(WINDOW, WINDOW))
+		var filled_before := N.samples_filled
+		var size_before := batched._samples.size()
 		batched.compute_rect_region(interior)
 		native_regions = N.regions_served
+		# Every sample this window added was filled by the C# batch.
+		var added := batched._samples.size() - size_before
+		assert_gt(added, HeightfieldPlan.PREFETCH_MIN, "window %s prefetched" % corner)
+		assert_eq(N.samples_filled - filled_before, added, "window %s filled natively" % corner)
 		# 500 points per window: random within the window plus its whole
 		# central lattice row.
 		var points: Array[Vector2i] = []

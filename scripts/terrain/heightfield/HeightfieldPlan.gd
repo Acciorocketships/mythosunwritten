@@ -536,8 +536,9 @@ func _prefetch_samples(lo: Vector2i, width: int, rows: int) -> void:
 ## The prefetch in C# (NativeCarve.SampleBatch: native height, the height01
 ## wrapper and the carve, [h - carve, carve, h] per point), when the seed's
 ## height field and carve are verified and every carve region the window needs
-## carries its verified native copy. False leaves the window to the GDScript
-## prefetch. Only plain plans (test subclasses override field reads).
+## has its verified native copy (NativeCarve.region_for, built on first use).
+## False leaves the window to the GDScript prefetch. Only plain plans (test
+## subclasses override field reads).
 func _prefetch_native(lo: Vector2i, width: int, rows: int, missing: PackedInt32Array) -> bool:
 	if _water_plan == null or get_script() != HeightfieldPlan or _water_plan.get_script() != WaterPlan \
 			or not NativeHeightField.ready_for(world_seed) \
@@ -555,10 +556,11 @@ func _prefetch_native(lo: Vector2i, width: int, rows: int, missing: PackedInt32A
 	var keys := PackedInt32Array()
 	for rz in range(rc_lo.y, rc_hi.y + 1):
 		for rx in range(rc_lo.x, rc_hi.x + 1):
-			var region: Dictionary = _water_plan._region_for(Vector2i(rx, rz))
-			if not region.has("native"):
+			var rc := Vector2i(rx, rz)
+			var native: Object = WaterPlan.NATIVE_CARVE.region_for(_water_plan, rc, _water_plan._region_for(rc))
+			if native == null:
 				return false
-			regions.append(region.native)
+			regions.append(native)
 			keys.append(rx)
 			keys.append(rz)
 	var band := ceili(float(missing.size()) / PREFETCH_TASKS)
@@ -573,6 +575,7 @@ func _prefetch_native(lo: Vector2i, width: int, rows: int, missing: PackedInt32A
 			_store_sample(Vector2i(lo.x + index % width, lo.y + index / width),
 				[out[3 * k], out[3 * k + 1], out[3 * k + 2]])
 		_samples_lock.unlock()
+		WaterPlan.NATIVE_CARVE.count_filled(part.size())
 	var group := WorkerThreadPool.add_group_task(job, PREFETCH_TASKS, PREFETCH_TASKS, true,
 		"heightfield prefetch")
 	WorkerThreadPool.wait_for_group_task_completion(group)

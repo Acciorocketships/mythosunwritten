@@ -5,25 +5,28 @@ extends RefCounted
 ## ([h - carve, carve, h]) in one call per pool task, only where verified
 ## bit-identical to the GDScript reference. No class_name: preload it.
 ##
-## setup(seed) (WaterPlan._init) only loads C# and hands it the constants. The
-## parity gate runs per carve region, as WaterPlan._region_for builds it
-## (attach): the C# region carves probe points (on every segment cell, round
-## every pond, and at random in the region) and must equal
-## WaterPlan._carve_region exactly (!=). The first GATE_REGIONS regions of a
-## seed take GATE_POINTS probes, every later one SPOT_POINTS. A mismatch turns
-## the seed off for good (a warning names the files to re-sync); a region
-## without a verified "native" entry is never carved natively, so a window
-## touching one is sampled by the GDScript path. The gate runs where the
-## region is built (the planning worker), on regions the plan builds anyway.
-## Lifetime: each region is its own NativeCarve object held by the region
-## dictionary, so eviction needs no release and an in-flight batch keeps the
-## region alive.
+## setup(seed) (WaterPlan._init) only loads C# and hands it the constants.
+## region_for(plan, rc, region) builds a carve region's C# copy lazily, the
+## first time the batched prefetch needs it, and keeps it in the plan's
+## _native_regions cache (under the plan's lock; the published region
+## dictionary is never mutated; two threads building the same copy is
+## harmless, the first stored wins). The parity gate runs as copies are built:
+## the C# region carves probe points (on segment cells, round ponds, at random
+## in the region) and must equal WaterPlan._carve_region exactly (!=). The
+## first GATE_REGIONS copies of a seed take GATE_POINTS probes, the next
+## SPOT_REGIONS take SPOT_POINTS, later ones none. A mismatch turns the seed
+## off for good (a warning names the files to re-sync) and the window falls
+## back to the GDScript prefetch. Probe ground comes straight from
+## HeightfieldPlan.natural01, so WaterPlan's field memo is untouched.
+## Lifetime: each region is its own NativeCarve object held by the cache, so
+## eviction needs no release and an in-flight batch keeps its regions alive.
 
 const _CS_PATH := "res://scripts/native/NativeCarve.cs"
 const NATIVE_HEIGHT := preload("res://scripts/native/NativeHeightField.gd")
 const GATE_REGIONS := 3
 const GATE_POINTS := 2000
-const SPOT_POINTS := 200
+const SPOT_REGIONS := 8
+const SPOT_POINTS := 32
 
 ## Tests: force the GDScript reference.
 static var force_off := false
@@ -34,8 +37,10 @@ static var seeds: Dictionary = {}
 static var failed: Dictionary = {}
 ## Regions verified per seed (tests, gate sizing).
 static var regions_checked: Dictionary = {}
-## Regions verified and attached, all seeds (tests, QA).
+## Native copies built, all seeds (tests, QA).
 static var regions_served := 0
+## Samples the batched prefetch filled natively, all plans (tests, QA).
+static var samples_filled := 0
 static var _native: Object = null
 static var _script: Script = null
 static var _native_failed := false
@@ -43,8 +48,18 @@ static var _mutex := Mutex.new()
 
 
 static func ready_for(seed: int) -> bool:
-	return enabled and not force_off and seeds.has(seed) and not failed.has(seed) \
-		and HeightfieldPlan.LOWPASS_M <= 0.0 and NATIVE_HEIGHT.ready_for(seed)
+	if not enabled or force_off or HeightfieldPlan.LOWPASS_M > 0.0 or not NATIVE_HEIGHT.ready_for(seed):
+		return false
+	_mutex.lock()
+	var ok := seeds.has(seed) and not failed.has(seed)
+	_mutex.unlock()
+	return ok
+
+
+static func count_filled(n: int) -> void:
+	_mutex.lock()
+	samples_filled += n
+	_mutex.unlock()
 
 
 static func setup(seed: int) -> void:
@@ -70,13 +85,17 @@ static func reset() -> void:
 	_mutex.unlock()
 
 
-## Build, check and attach the native form of a freshly built carve region
-## (before WaterPlan publishes it). Leaves `region` untouched when off or on
-## any mismatch.
-static func attach(plan: WaterPlan, rc: Vector2i, region: Dictionary) -> void:
+## The verified C# copy of carve region `region` (super-cell rc), built on
+## first use; null when the seed is off or the copy failed its check.
+static func region_for(plan: WaterPlan, rc: Vector2i, region: Dictionary) -> Object:
 	var seed := plan.world_seed
 	if not ready_for(seed):
-		return
+		return null
+	plan._lock.lock()
+	var entry = plan._native_regions.get(rc)
+	plan._lock.unlock()
+	if entry != null and is_same(entry[0], region):
+		return entry[1]
 	var obj: Object = _script.new()
 	var err: String = obj.Build(_flatten(plan, rc, region))
 	var mismatch := "C# build failed: " + err if err != "" else ""
@@ -84,7 +103,10 @@ static func attach(plan: WaterPlan, rc: Vector2i, region: Dictionary) -> void:
 		_mutex.lock()
 		var done: int = regions_checked.get(seed, 0)
 		_mutex.unlock()
-		mismatch = _parity(plan, rc, region, obj, GATE_POINTS if done < GATE_REGIONS else SPOT_POINTS)
+		var probes := GATE_POINTS if done < GATE_REGIONS \
+			else (SPOT_POINTS if done < GATE_REGIONS + SPOT_REGIONS else 0)
+		if probes > 0:
+			mismatch = _parity(plan, rc, region, obj, probes)
 	_mutex.lock()
 	if mismatch != "":
 		var next := failed.duplicate()
@@ -93,13 +115,20 @@ static func attach(plan: WaterPlan, rc: Vector2i, region: Dictionary) -> void:
 		_mutex.unlock()
 		push_warning("NativeCarve disabled for seed %d: region %s %s. Re-sync scripts/native/NativeCarve.cs " % [seed, rc, mismatch]
 			+ "with WaterPlan._carve_region / PondStamp / RiverTrace.retained_ground_weight. Using the GDScript carve.")
-		return
+		return null
 	var counts := regions_checked.duplicate()
 	counts[seed] = int(counts.get(seed, 0)) + 1
 	regions_checked = counts
 	regions_served += 1
 	_mutex.unlock()
-	region["native"] = obj
+	plan._lock.lock()
+	entry = plan._native_regions.get(rc)
+	if entry != null and is_same(entry[0], region):
+		obj = entry[1]   # another thread stored the same region's copy first
+	else:
+		WaterPlan._memo_insert(plan._native_regions, rc, [region, obj], WaterPlan.CARVE_REGION_CACHE_LIMIT)
+	plan._lock.unlock()
+	return obj
 
 
 ## [h - carve, carve, h] for lattice points lo + (index % width, index / width),
@@ -235,12 +264,13 @@ static func _parity(plan: WaterPlan, rc: Vector2i, region: Dictionary, obj: Obje
 			continue
 		xs.append(p.x)
 		zs.append(p.y)
+	# noise_h without its memo: the same natural01 at the same float32 point.
 	var grounds := PackedFloat64Array()
 	for k in xs.size():
-		grounds.append(plan.noise_h(Vector2(xs[k], zs[k])))
+		grounds.append(HeightfieldPlan.natural01(Vector3(xs[k], 0.0, zs[k]), plan.world_seed) * plan.amplitude)
 	var cs: PackedFloat64Array = obj.CarveBatch(xs, zs, grounds)
 	for k in xs.size():
-		var gd := plan._carve_region(region, xs[k], zs[k])
+		var gd := plan._carve_region(region, xs[k], zs[k], grounds[k])
 		if cs[k] != gd:
 			return "at (%s, %s): gd %s, cs %s" % [xs[k], zs[k], var_to_str(gd), var_to_str(cs[k])]
 	return ""
