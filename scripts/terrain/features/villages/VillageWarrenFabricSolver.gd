@@ -363,7 +363,7 @@ static func _terrain_qualified_frontage(terrain: VillageTerrainView,
 		})
 	return {
 		"payload": SettlementFabricAssembler.maze_perimeter_frontage_from_sites(
-			accepted),
+			accepted, fabric.world_seed),
 		"records": records,
 	}
 

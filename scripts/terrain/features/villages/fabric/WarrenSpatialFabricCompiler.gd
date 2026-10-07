@@ -1983,7 +1983,7 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	var planting := SettlementFabricAssembler.maze_garden_dressing(retained,
 		solids, paved, plinths, walked, shell, footprints,
 		plan.planned_plaza_cells, decor_skin,
-		ground_skin.capped_ground as Dictionary)
+		ground_skin.capped_ground as Dictionary, plan.world_seed)
 	# TASK I3. The square's own three facts, derived exactly as the dressing
 	# derives them: the run a street can actually reach, the mouths it reaches it
 	# by, and what stands in the clearing.
@@ -1992,7 +1992,8 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	var plaza_entries := SettlementFabricAssembler.maze_plaza_entries(plaza,
 		walked)
 	var plaza_feature := SettlementFabricAssembler.maze_plaza_centre_feature(
-		plaza, plaza_entries, footprints, decor_skin, walked,not plan.planned_plaza_cells.is_empty())
+		plaza, plaza_entries, footprints, decor_skin, walked,not plan.planned_plaza_cells.is_empty(),
+		plan.world_seed)
 	# TASK I3. `maze_garden_planting_count` stays what it has always meant --
 	# what GROWS on the yards -- so it is counted off the `maze-garden/` ids
 	# rather than off the dressing payload's whole instance count, which now
@@ -2043,7 +2044,8 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		planting_reserved[cell_value as Vector3i] = true
 	for site: Dictionary in SettlementFabricAssembler \
 			.maze_garden_planting_sites(garden, plaza, plaza_entries,
-				planting_reserved, treatments, footprints, decor_skin, walked):
+				planting_reserved, treatments, footprints, decor_skin, walked,
+				plan.world_seed):
 		planting_refused += int(bool(site.refused))
 	var paved_bench_caps := 0
 	for key_value: Variant in treatments.keys():
