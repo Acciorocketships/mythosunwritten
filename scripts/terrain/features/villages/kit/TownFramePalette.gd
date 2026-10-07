@@ -6,6 +6,8 @@ const FINISHES := {
 	&"oak": Color(.9, .74, .53),
 	&"native": Color.WHITE,
 }
+## Assets carrying their own fixed dark-wood finish (lamp posts).
+const DARK_WOOD_SUFFIX := ".dark_wood"
 const WOOD_MATERIALS := [
 	"Wood_1",
 	"Wood_2",
@@ -54,6 +56,10 @@ static func apply(kit: BuildingKit, finish: StringName) -> void:
 	for role: StringName in kit.roles:
 		var replacements: Array[StringName] = []
 		for id: StringName in kit.roles[role]:
+			if String(id).ends_with(DARK_WOOD_SUFFIX):
+				# Already finished (lamp posts): no frame-finish variant exists.
+				replacements.append(id)
+				continue
 			var variant := variant_id(id, finish)
 			replacements.append(variant)
 			kit.geometry_aliases[variant] = id
@@ -73,7 +79,8 @@ static func source_ids() -> Array[StringName]:
 			var kit := pure.roof_study(style)
 			roofs.apply(kit, family)
 			for id: StringName in kit.all_asset_ids():
-				unique[id] = true
+				if not String(id).ends_with(DARK_WOOD_SUFFIX):
+					unique[id] = true
 	for id: StringName in (
 		preload("res://scripts/terrain/features/villages/kit/KitTowerAssembly.gd").asset_ids()
 	):

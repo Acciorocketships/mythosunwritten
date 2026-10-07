@@ -338,8 +338,6 @@ static func generate(source: WarrenSpatialPlan,
 	if surfaces == null or not result.set_surface_plan(surfaces):
 		last_failure = "spatial public-surface closure failed: %s" % result.last_rejection
 		return null
-	if source.source_volume != null:
-		surfaces.footway_columns = WarrenVolumetricSolver.maze_footway_columns(source.source_volume)
 	stage_ms = _trace_stage("surfaces", stage_ms)
 	# TASK I4 ROUND 7. The two withdrawals that need the WHOLE town: a dressing
 	# module buried in the retained skin, and a brace standing its collider in the

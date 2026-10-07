@@ -22,6 +22,9 @@ static func solve(stable_id: StringName, realm: SectionalPublicRealmPlan,
 			or (realm != null and not realm.is_sealed()):
 		return null
 	var result := PublicRealmSurfacePlan.new(stable_id)
+	# Task 6: cottage footways stay walk but carry no worn-path paint.
+	if volume != null:
+		result.set_footway_columns(WarrenVolumetricSolver.maze_footway_columns(volume))
 	if realm != null:
 		for node_value: PublicRealmNode in realm.nodes:
 			for cell: Vector3i in node_value.surface_cells:

@@ -37,3 +37,13 @@ func test_no_town_lamp_still_points_at_the_untinted_kit_lamp() -> void:
 	var kit = SUNTAIL.create()
 	for role: StringName in kit.roles:
 		assert_false((kit.roles[role] as Array).has(&"suntail.prop.lamp_1"), "role %s" % role)
+
+
+func test_frame_finishes_never_derive_a_lamp_variant() -> void:
+	var pure := preload("res://scripts/terrain/features/villages/kit/PureVillageBuildingKit.gd")
+	var palette := preload("res://scripts/terrain/features/villages/kit/TownFramePalette.gd")
+	for finish: StringName in [&"walnut", &"oak"]:
+		var kit = pure.roof_study(1)
+		palette.apply(kit, finish)
+		for id: StringName in kit.all_asset_ids():
+			assert_true(_catalog.has(id), "%s (%s)" % [id, finish])

@@ -67,7 +67,7 @@ func test_suburb_band_adds_cottages_near_the_core_edge() -> void:
 			if not bool(lobe.get("suburb", false)): continue
 			added += 1
 			var distance := (site.centre as Vector2).length()
-			assert_between(distance, radius * 0.95, radius * 1.45)
+			assert_between(distance, radius * 0.95, radius * FIELD.BASE_EXTENT)
 			assert_eq(int(lobe.storeys), 1, "suburb cottages are small")
 		gut.p("%d:%s house sites %d -> %d (suburb %d)" % [town[0], town[1],
 			base.house_sites.size(), field.house_sites.size(), added])
@@ -134,3 +134,29 @@ func test_footways_are_not_painted() -> void:
 	assert_lt(painted.size(), streets.size())
 	for cell: Vector3i in painted:
 		assert_false(surfaces.footway_columns.has(Vector2i(cell.x, cell.z)))
+
+
+const COMBINED := {&"satellite_reach_scale": 0.6, &"suburb_house_count": 4.0,
+	&"lone_house_path_chance": 0.0}
+
+
+func _generate(seed_value: int, scale: StringName, overrides: Dictionary) -> WarrenSpatialPlan:
+	var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
+	if not overrides.is_empty():
+		program.town_odds = program.town_odds.with_overrides(overrides)
+	return WarrenVolumetricSolver.generate(seed_value, {}, program,
+		WarrenVillageScaleProfile.for_id(scale))
+
+
+func test_all_three_knobs_together_never_reject_a_town() -> void:
+	# A cottage that cannot be placed is refused; the town always builds.
+	for town: Array in [[7, &"compact"], [13, &"standard"], [53, &"grand"]]:
+		var spatial := _generate(town[0], town[1], COMBINED)
+		assert_not_null(spatial, "%d:%s %s" % [town[0], town[1], WarrenVolumetricSolver.last_failure])
+
+
+func test_defaults_have_no_footways() -> void:
+	var spatial := _generate(13, &"standard", {})
+	assert_not_null(spatial)
+	if spatial == null: return
+	assert_true(spatial.compiled_fabric_cache().surface_plan.footway_columns.is_empty())

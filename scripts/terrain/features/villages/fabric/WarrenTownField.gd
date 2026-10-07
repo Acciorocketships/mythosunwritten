@@ -29,11 +29,15 @@ const MAX_SATELLITE_WIDTH := 0.8
 const MIN_SATELLITE_WIDTH := 3.0
 const SATELLITE_REACH_KNOB := &"satellite_reach_scale"
 const SUBURB_KNOB := &"suburb_house_count"
-## Suburb cottages stand 1.0-1.4 radii from the centre; their widest lobe
+## Suburb cottages start 1.0-1.4 radii from the centre and step out to a
+## clear ring (COTTAGE_CLEARANCE); their widest lobe
 ## stays under the 12-cell area of a one-storey house (see _classify_lobes).
 const SUBURB_BAND := Vector2(1.0, 1.4)
 const SUBURB_MAX_WIDTH := 3.6
 const SUBURB_TRIES := 4
+const SUBURB_STEP := 0.5
+## Columns of open ground between a detached cottage and other town mass.
+const COTTAGE_CLEARANCE := 2
 
 ## The same limits used below bound the sampling box, including a green
 ## whose centre and satellite both move away from the original crown.
@@ -107,6 +111,12 @@ static func sample(seed_value: int, profile: WarrenVillageScaleProfile) -> Dicti
 				"strength": rng.randf_range(0.7, 1.0)})
 	if central_green:
 		clearings = [{"centre":green_centre,"radius":radius*0.6,"strength":1.0}]
+	# A cottage the reach scaling pushed against other mass is refused (it
+	# stays low cottage ground, never a site); the town is never rejected.
+	if reach_scale != 1.0:
+		for index in range(1, lobes.size()):
+			if lobes[index].kind == &"house" and not _has_clear_ring(lobes[index], lobes):
+				lobes[index]["refused"] = true
 	_add_suburb_lobes(lobes, clearings, radius, core, character)
 	var openness := 0.0
 	for clearing: Dictionary in clearings:
@@ -196,6 +206,9 @@ static func sample(seed_value: int, profile: WarrenVillageScaleProfile) -> Dicti
 					preserves_crown = false
 			if preserves_crown and solid.has(column): garden[column] = true
 		if garden.size() < 4: continue
+		if (reach_scale != 1.0 or bool(lobes[int(site.lobe)].get("suburb", false))) \
+				and not _site_ring_is_clear(site, garden, lobes, solid):
+			continue
 		if bool(lobes[int(site.lobe)].get("suburb", false)):
 			suburb_columns.merge(garden)
 		admitted_sites.append(site)
@@ -251,24 +264,94 @@ static func _add_suburb_lobes(lobes: Array[Dictionary], clearings: Array[Diction
 			var roll := func(part: int) -> float:
 				return character.roll(SUBURB_KNOB, Vector3i(i, attempt, part))
 			var size := lerpf(MIN_SATELLITE_WIDTH, SUBURB_MAX_WIDTH, roll.call(1))
-			var lobe := {"centre": Vector2.from_angle(roll.call(2) * TAU) * radius
-					* lerpf(SUBURB_BAND.x, SUBURB_BAND.y, roll.call(3)),
+			var direction := Vector2.from_angle(roll.call(2) * TAU)
+			var lobe := {"centre": Vector2.ZERO,
 				"width": Vector2(size, maxf(2.5, size * lerpf(0.55, 0.9, roll.call(4)))),
 				"height": lerpf(low_height, maxf(low_height, core * 0.6), roll.call(5)),
 				"angle": roll.call(6) * TAU, "kind": &"house", "storeys": 1,
 				"suburb": true}
-			var clear := true
-			for other: Dictionary in lobes:
-				if _lobe_height(other, lobe.centre) > float(lobe.height) * 0.3 \
-						or _lobe_height(lobe, other.centre) > float(other.height) * 0.3:
-					clear = false
-			for clearing: Dictionary in clearings:
-				var d := (lobe.centre as Vector2).distance_to(clearing.centre) / float(clearing.radius)
-				if float(clearing.strength) * exp(-pow(d, 4.0)) > 0.5:
-					clear = false
-			if clear:
+			# Just outside the core edge: start in the 1.0-1.4 radius band and
+			# step outwards to the first spot with a clear ring round the
+			# cottage, never past the sampled box.
+			var reach := float(ceili((lobe.width as Vector2).length() * 1.5) + 1)
+			var limit := radius * BASE_EXTENT - reach
+			var distance := radius * lerpf(SUBURB_BAND.x, SUBURB_BAND.y, roll.call(3))
+			var placed := false
+			while distance <= limit:
+				lobe.centre = direction * distance
+				if _suburb_spot_is_clear(lobe, lobes, clearings):
+					placed = true
+					break
+				distance += SUBURB_STEP
+			if placed:
 				lobes.append(lobe)
 				break
+
+
+static func _suburb_spot_is_clear(lobe: Dictionary, lobes: Array[Dictionary],
+		clearings: Array[Dictionary]) -> bool:
+	for other: Dictionary in lobes:
+		if _lobe_height(other, lobe.centre) > float(lobe.height) * 0.3 \
+				or _lobe_height(lobe, other.centre) > float(other.height) * 0.3:
+			return false
+	for clearing: Dictionary in clearings:
+		var d := (lobe.centre as Vector2).distance_to(clearing.centre) / float(clearing.radius)
+		if float(clearing.strength) * exp(-pow(d, 4.0)) > 0.5:
+			return false
+	return _has_clear_ring(lobe, lobes)
+
+
+## The columns a lobe raises to at least a building column on its own,
+## taking the boundary noise at its strongest (x1.18).
+static func _footprint(lobe: Dictionary) -> Dictionary:
+	var out := {}
+	var centre: Vector2 = lobe.centre
+	var reach := ceili((lobe.width as Vector2).length() * 1.5) + 1
+	for z in range(floori(centre.y) - reach, ceili(centre.y) + reach + 1):
+		for x in range(floori(centre.x) - reach, ceili(centre.x) + reach + 1):
+			if _lobe_height(lobe, Vector2(x, z)) * 1.18 >= float(WarrenMassifBuilder.MIN_COLUMN_BANDS):
+				out[Vector2i(x, z)] = true
+	return out
+
+
+## A detached cottage (task 6) keeps COTTAGE_CLEARANCE columns (Chebyshev,
+## an eave's reach) between its own footprint and every other lobe's.
+## Shoulders are not lobes: the low ridge joining it to the town stays.
+static func _has_clear_ring(lobe: Dictionary, lobes: Array[Dictionary]) -> bool:
+	var own := _footprint(lobe)
+	for other: Dictionary in lobes:
+		if other == lobe: continue
+		for column: Vector2i in _footprint(other):
+			for d in range(-COTTAGE_CLEARANCE, COTTAGE_CLEARANCE + 1):
+				for e in range(-COTTAGE_CLEARANCE, COTTAGE_CLEARANCE + 1):
+					if own.has(column + Vector2i(d, e)): return false
+	return true
+
+
+## Admission of a detached cottage's site (task 6): no column within
+## COTTAGE_CLEARANCE of its house and garden belongs to another lobe's own
+## mass (owner by strongest influence, standing on its own height).
+static func _site_ring_is_clear(site: Dictionary, garden: Dictionary,
+		lobes: Array[Dictionary], solid: Dictionary) -> bool:
+	var own: Dictionary = (site.cells as Dictionary).duplicate()
+	own.merge(garden)
+	var lobe_index := int(site.lobe)
+	for column: Vector2i in own:
+		for d in range(-COTTAGE_CLEARANCE, COTTAGE_CLEARANCE + 1):
+			for e in range(-COTTAGE_CLEARANCE, COTTAGE_CLEARANCE + 1):
+				var near := column + Vector2i(d, e)
+				if own.has(near) or not solid.has(near): continue
+				var strongest := -1.0
+				var owner := 0
+				for index in lobes.size():
+					var influence := _lobe_height(lobes[index], Vector2(near))
+					if influence > strongest:
+						strongest = influence
+						owner = index
+				if owner != lobe_index and strongest * 1.18 \
+						>= float(WarrenMassifBuilder.MIN_COLUMN_BANDS):
+					return false
+	return true
 
 
 static func _house_sites(lobes: Array[Dictionary], columns: Dictionary,
@@ -276,6 +359,7 @@ static func _house_sites(lobes: Array[Dictionary], columns: Dictionary,
 	var out: Array[Dictionary] = []
 	for index in range(1,lobes.size()):
 		if lobes[index].get("kind",&"massif") != &"house": continue
+		if bool(lobes[index].get("refused",false)): continue
 		var centre: Vector2 = lobes[index].centre
 		var best := {}
 		var score := INF
