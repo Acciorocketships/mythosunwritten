@@ -1593,7 +1593,8 @@ func _market_cell_count() -> int:
 ## districts directly. Through-wall routes have their own bounded bore and
 ## bearing proof; adding bends to satisfy an alley cadence would be spurious.
 const DISTRICT_LANE_KINDS: Array[StringName] = [&"citadel_gate", &"upper_town",
-	&"wall_street", &"district_access", &"house_site_access", &"wall_tunnel"]
+	&"wall_street", &"district_access", &"house_site_access", &"house_site_footway",
+	&"wall_tunnel"]
 
 
 func _max_alley_straight_run() -> int:

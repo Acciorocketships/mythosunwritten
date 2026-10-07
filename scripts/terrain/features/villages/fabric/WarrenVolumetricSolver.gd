@@ -2663,6 +2663,20 @@ static func maze_clearing_decor(volume: WarrenVolumePlan) -> Array[Dictionary]:
 const WELL_SCALE_KNOB := &"well_scale"
 
 
+static func maze_footway_columns(volume: WarrenVolumePlan) -> Dictionary:
+	## Town taste knobs (task 6): the fine XZ columns of every cottage footway
+	## (`house_site_footway` lanes, see WarrenMazeCarver._carve_house_site_access).
+	var out := {}
+	var source := volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
+	if source == null: return out
+	for lane: Dictionary in source.excavation.lanes:
+		if StringName(lane.get("feature_kind", &"")) != &"house_site_footway": continue
+		for cell: Vector3i in lane.cells:
+			for fine: Vector3i in _fine_square(cell):
+				out[Vector2i(fine.x, fine.z)] = true
+	return out
+
+
 static func maze_well_scale(volume: WarrenVolumePlan) -> float:
 	## The town's `well_scale` knob (1.0 = today's authored fit).
 	var source := volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan

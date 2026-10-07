@@ -27,6 +27,13 @@ const BASE_EXTENT := 2.5
 const MAX_DENSITY := 1.05
 const MAX_SATELLITE_WIDTH := 0.8
 const MIN_SATELLITE_WIDTH := 3.0
+const SATELLITE_REACH_KNOB := &"satellite_reach_scale"
+const SUBURB_KNOB := &"suburb_house_count"
+## Suburb cottages stand 1.0-1.4 radii from the centre; their widest lobe
+## stays under the 12-cell area of a one-storey house (see _classify_lobes).
+const SUBURB_BAND := Vector2(1.0, 1.4)
+const SUBURB_MAX_WIDTH := 3.6
+const SUBURB_TRIES := 4
 
 ## The same limits used below bound the sampling box, including a green
 ## whose centre and satellite both move away from the original crown.
@@ -41,6 +48,10 @@ static func sample(seed_value: int, profile: WarrenVillageScaleProfile) -> Dicti
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash([seed_value, &"town-field"])
 	var radius := float(profile.radius_cells)
+	# Town taste knobs (task 6). Read from the town's character, never from
+	# `rng`, and applied after each draw: the defaults change nothing.
+	var character := TownCharacter.of(profile, seed_value)
+	var reach_scale := character.value(SATELLITE_REACH_KNOB)
 	var spread := rng.randf_range(0.7, 1.5)
 	var density := rng.randf_range(0.45, MAX_DENSITY)
 	var core := rng.randf_range(profile.core_target_band_range.x,
@@ -57,7 +68,7 @@ static func sample(seed_value: int, profile: WarrenVillageScaleProfile) -> Dicti
 	for i in count:
 		var angle := phase + TAU * (float(i) + rng.randf_range(-0.2, 0.2)) / float(count)
 		var size := maxf(MIN_SATELLITE_WIDTH, radius * density * rng.randf_range(0.45, MAX_SATELLITE_WIDTH))
-		lobes.append({"centre": Vector2.from_angle(angle) * radius * spread * rng.randf_range(0.75, 1.2),
+		lobes.append({"centre": Vector2.from_angle(angle) * radius * spread * rng.randf_range(0.75, 1.2) * reach_scale,
 			"width": Vector2(size, maxf(2.5, size * rng.randf_range(0.55, 0.9))),
 			"height": rng.randf_range(maxf(5.0, core * 0.45), core),
 			"angle": angle + rng.randf_range(-0.8, 0.8)})
@@ -72,11 +83,14 @@ static func sample(seed_value: int, profile: WarrenVillageScaleProfile) -> Dicti
 	var central_green := green_rng.randf() < 0.3 and lobes.size() >= 4
 	var green_centre := Vector2.ZERO
 	if central_green:
-		var crown_reach := radius * green_rng.randf_range(1.25,MAX_GREEN_REACH)
+		# The ring only shrinks: a wider one would leave the discovery bound
+		# (maximum_sample_extent).
+		var green_scale := minf(reach_scale, 1.0)
+		var crown_reach := radius * green_rng.randf_range(1.25,MAX_GREEN_REACH) * green_scale
 		green_centre = crown - Vector2.from_angle(phase)*crown_reach
 		for index in range(1,lobes.size()):
 			var angle := phase + TAU * float(index)/float(lobes.size())
-			lobes[index].centre = green_centre + Vector2.from_angle(angle) * radius * green_rng.randf_range(1.25,MAX_GREEN_REACH)
+			lobes[index].centre = green_centre + Vector2.from_angle(angle) * radius * green_rng.randf_range(1.25,MAX_GREEN_REACH) * green_scale
 	# Clearings: sometimes a square right beside the crown (the middle of the
 	# town opens up), and 0-2 greens in the gaps between satellites. None
 	# lands on the crown itself.
@@ -87,12 +101,13 @@ static func sample(seed_value: int, profile: WarrenVillageScaleProfile) -> Dicti
 			"radius": radius * rng.randf_range(0.3, 0.5), "strength": rng.randf_range(0.85, 1.0)})
 	for i: int in [1, 1, 2, 2, 3][rng.randi_range(0, 4)]:
 		var gap := phase + TAU * (float(rng.randi_range(0, count - 1)) + 0.5) / float(count)
-		var centre := Vector2.from_angle(gap) * radius * spread * rng.randf_range(0.55, 0.95)
+		var centre := Vector2.from_angle(gap) * radius * spread * rng.randf_range(0.55, 0.95) * reach_scale
 		if centre.distance_to(crown) >= reach:
 			clearings.append({"centre": centre, "radius": radius * rng.randf_range(0.2, 0.4),
 				"strength": rng.randf_range(0.7, 1.0)})
 	if central_green:
 		clearings = [{"centre":green_centre,"radius":radius*0.6,"strength":1.0}]
+	_add_suburb_lobes(lobes, clearings, radius, core, character)
 	var openness := 0.0
 	for clearing: Dictionary in clearings:
 		openness = maxf(openness, float(clearing.strength))
@@ -100,10 +115,12 @@ static func sample(seed_value: int, profile: WarrenVillageScaleProfile) -> Dicti
 	var raw_at: Dictionary = {}
 	var house_columns: Dictionary = {}
 	var extent := ceili(radius * BASE_EXTENT)
-	if central_green:
+	if central_green or reach_scale > 1.0:
 		for lobe: Dictionary in lobes:
 			var lobe_reach: float = (lobe.centre as Vector2).length() + (lobe.width as Vector2).length()
 			extent = maxi(extent,ceili(lobe_reach))
+		if reach_scale > 1.0:
+			extent = mini(extent, maximum_sample_extent(radius))
 	for z in range(-extent, extent + 1):
 		for x in range(-extent, extent + 1):
 			var p := Vector2(x, z)
@@ -160,6 +177,12 @@ static func sample(seed_value: int, profile: WarrenVillageScaleProfile) -> Dicti
 		for cell: Vector2i in space.cells: solid.erase(cell)
 	var house_sites := _house_sites(lobes, house_columns, solid)
 	var admitted_sites: Array[Dictionary] = []
+	# Suburb cottage territory (task 6): its own lobe's columns and garden.
+	# The town gate never opens there (WarrenMazeCarver._portal_cells).
+	var suburb_columns := {}
+	for column: Vector2i in house_columns:
+		if bool(lobes[int(house_columns[column].lobe)].get("suburb", false)):
+			suburb_columns[column] = true
 	for site: Dictionary in house_sites:
 		var garden := {}
 		for column: Vector2i in house_columns:
@@ -173,6 +196,8 @@ static func sample(seed_value: int, profile: WarrenVillageScaleProfile) -> Dicti
 					preserves_crown = false
 			if preserves_crown and solid.has(column): garden[column] = true
 		if garden.size() < 4: continue
+		if bool(lobes[int(site.lobe)].get("suburb", false)):
+			suburb_columns.merge(garden)
 		admitted_sites.append(site)
 		open_spaces.append({"id":StringName("house.garden.%d" % int(site.lobe)),
 			"centre":site.centre,"kind":&"garden","cells":garden,"purpose":&"grove"})
@@ -206,9 +231,44 @@ static func sample(seed_value: int, profile: WarrenVillageScaleProfile) -> Dicti
 	# The raised district (a separate roll, so towns without one are unchanged).
 	return {"central_green":central_green,"green_centre":green_centre,"solid": solid, "air": air, "lobes": lobes, "clearings": clearings,
 		"height_domain": height_domain, "house_columns": house_columns, "house_sites": house_sites,
-		"open_spaces": open_spaces,
+		"open_spaces": open_spaces, "suburb_columns": suburb_columns,
 		"spread": spread, "density": density, "openness": openness,
 		"platform": platform}
+
+
+## Town taste knobs (task 6): small one-storey cottages in an annulus just
+## outside the core edge. Drawn on the knob's own stream after every other
+## lobe and clearing, so the field's own draws never move; a candidate that
+## would merge with another lobe (the `_classify_lobes` overlap test, both
+## ways) or sit in a clearing is redrawn, at most SUBURB_TRIES times. The
+## ordinary house-site admission (2x2 block, garden, platform) then decides.
+static func _add_suburb_lobes(lobes: Array[Dictionary], clearings: Array[Dictionary],
+		radius: float, core: float, character: TownCharacter) -> void:
+	var count := character.count(SUBURB_KNOB)
+	var low_height := maxf(5.0, core * 0.45)
+	for i in count:
+		for attempt in SUBURB_TRIES:
+			var roll := func(part: int) -> float:
+				return character.roll(SUBURB_KNOB, Vector3i(i, attempt, part))
+			var size := lerpf(MIN_SATELLITE_WIDTH, SUBURB_MAX_WIDTH, roll.call(1))
+			var lobe := {"centre": Vector2.from_angle(roll.call(2) * TAU) * radius
+					* lerpf(SUBURB_BAND.x, SUBURB_BAND.y, roll.call(3)),
+				"width": Vector2(size, maxf(2.5, size * lerpf(0.55, 0.9, roll.call(4)))),
+				"height": lerpf(low_height, maxf(low_height, core * 0.6), roll.call(5)),
+				"angle": roll.call(6) * TAU, "kind": &"house", "storeys": 1,
+				"suburb": true}
+			var clear := true
+			for other: Dictionary in lobes:
+				if _lobe_height(other, lobe.centre) > float(lobe.height) * 0.3 \
+						or _lobe_height(lobe, other.centre) > float(other.height) * 0.3:
+					clear = false
+			for clearing: Dictionary in clearings:
+				var d := (lobe.centre as Vector2).distance_to(clearing.centre) / float(clearing.radius)
+				if float(clearing.strength) * exp(-pow(d, 4.0)) > 0.5:
+					clear = false
+			if clear:
+				lobes.append(lobe)
+				break
 
 
 static func _house_sites(lobes: Array[Dictionary], columns: Dictionary,

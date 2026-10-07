@@ -203,7 +203,7 @@ static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 	result.clearances.append(envelope)
 	# Paint only the ground-level public union, with rounded exterior corners.
 	result.surfaces.append_array(preload("res://scripts/terrain/features/villages/TownStreetPaint.gd").shapes(
-		fabric.surface_plan.cells_for_kind(PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET),
+		fabric.surface_plan.painted_street_cells(),
 		world_frame,district_id))
 	_append_terrain_handoffs(result, contact_specs, district_id)
 	var top_y := (world_frame * Vector3(local_centre.x,

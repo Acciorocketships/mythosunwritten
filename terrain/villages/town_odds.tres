@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="TownOddsTable" load_steps=17 format=3]
+[gd_resource type="Resource" script_class="TownOddsTable" load_steps=20 format=3]
 
 [ext_resource type="Script" path="res://scripts/terrain/features/villages/odds/TownOddsTable.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/terrain/features/villages/odds/TownKnob.gd" id="2"]
@@ -158,6 +158,39 @@ clamp_min = 0.4
 clamp_max = 1.25
 notes = "Town taste knobs (Oct 7) task 4: size factor of a green's well (sfv.well.001 -> suntail well), applied to the placement's scale before the clearance check so a smaller well also frees room. Wells only ever stand on ground-level greens (a hard rule, not a knob: a raised green gets the next piece in its seeded rotation). 1 = the authored kit fit (today)."
 
+[sub_resource type="Resource" id="satellite_reach_scale"]
+script = ExtResource("2")
+name = &"satellite_reach_scale"
+kind = 1
+at_small = 1.0
+at_large = 1.0
+spread = 0.0
+clamp_min = 0.3
+clamp_max = 1.5
+notes = "Town taste knobs (Oct 7) task 6: multiplies how far the town field's satellite lobes stand from the town centre (radius x spread x 0.75..1.2), the gap clearings between them, and (up to 1.0) the central-green ring (1.25..MAX_GREEN_REACH x radius). Applied after the field's own draws, so no other roll moves. Below 1 pulls satellite houses and districts in toward the core. 1 = today."
+
+[sub_resource type="Resource" id="suburb_house_count"]
+script = ExtResource("2")
+name = &"suburb_house_count"
+kind = 2
+at_small = 0.0
+at_large = 0.0
+spread = 0.0
+clamp_min = 0.0
+clamp_max = 12.0
+notes = "Town taste knobs (Oct 7) task 6: up to this many small one-storey house lobes in an annulus 1.0-1.4 x radius round the town centre (a suburban band of detached cottages between the dense core and the countryside), drawn after every other lobe on this knob's own stream. A candidate overlapping another lobe is redrawn (4 tries); survivors become house sites through the ordinary house-site admission (a whole 2x2 block, a garden of 4+ columns, clear of the raised district), so steep, wet or crowded ground drops them. 0 = today."
+
+[sub_resource type="Resource" id="lone_house_path_chance"]
+script = ExtResource("2")
+name = &"lone_house_path_chance"
+kind = 0
+at_small = 1.0
+at_large = 1.0
+spread = 0.0
+clamp_min = 0.0
+clamp_max = 1.0
+notes = "Town taste knobs (Oct 7) task 6: chance a reserved cottage (house site) not already on the street network gets a painted access road, rolled per site id. When the roll fails and the cottage stands on its own ground with its whole approach over open ground at that grade, its approach is a footway (feature_kind house_site_footway): still walk for the door and the audits, but no worn-path paint (PublicRealmSurfacePlan.footway_columns). Otherwise the road is carved regardless. 1 = always a road (today)."
+
 [resource]
 script = ExtResource("1")
-knobs = Array[Resource]([SubResource("clearing_count"), SubResource("clearing_block_bias"), SubResource("clearing_ground_weight"), SubResource("clearing_area"), SubResource("clearing_shape"), SubResource("clearing_extra_link_chance"), SubResource("clearing_cover"), SubResource("clearing_purpose"), SubResource("clearing_lobe_bias"), SubResource("clearing_enclosure_bias"), SubResource("plaza_ring_chance"), SubResource("clearing_ring_chance"), SubResource("clearing_deco_density"), SubResource("well_scale")])
+knobs = Array[Resource]([SubResource("clearing_count"), SubResource("clearing_block_bias"), SubResource("clearing_ground_weight"), SubResource("clearing_area"), SubResource("clearing_shape"), SubResource("clearing_extra_link_chance"), SubResource("clearing_cover"), SubResource("clearing_purpose"), SubResource("clearing_lobe_bias"), SubResource("clearing_enclosure_bias"), SubResource("plaza_ring_chance"), SubResource("clearing_ring_chance"), SubResource("clearing_deco_density"), SubResource("well_scale"), SubResource("satellite_reach_scale"), SubResource("suburb_house_count"), SubResource("lone_house_path_chance")])

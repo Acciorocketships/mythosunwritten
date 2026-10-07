@@ -48,6 +48,11 @@ var _sealed := false
 var _omitted_guard_post_count := 0
 var _guard_wall_boxes: Array[AABB] = []
 var last_rejection := ""
+## Town taste knobs (task 6): fine XZ columns of cottage footways (lanes
+## `house_site_footway`). They stay terrain-street walk and collision; only
+## the worn-path paint skips them (`painted_street_cells`). Presentation, not
+## topology: outside the sealed claims and signature.
+var footway_columns: Dictionary = {}
 
 
 func _init(p_stable_id: StringName) -> void:
@@ -321,6 +326,16 @@ func cells_for_kind(kind: SurfaceKind) -> Array[Vector3i]:
 			out.append(claim.cell as Vector3i)
 	out.sort_custom(_cell_less)
 	return out
+
+
+## The ground streets that carry worn-path paint: every terrain street but a
+## cottage footway.
+func painted_street_cells() -> Array[Vector3i]:
+	var out := cells_for_kind(SurfaceKind.TERRAIN_STREET)
+	if footway_columns.is_empty():
+		return out
+	return out.filter(func(cell: Vector3i) -> bool:
+		return not footway_columns.has(Vector2i(cell.x, cell.z)))
 
 
 func cells_owned_by_prefix(owner_prefix: String) -> Array[Vector3i]:

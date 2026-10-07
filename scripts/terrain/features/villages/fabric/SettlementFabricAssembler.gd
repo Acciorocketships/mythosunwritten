@@ -9251,8 +9251,7 @@ static func production_surface_bundle(plan: PublicRealmSurfacePlan,
 		if int(mesh.get("kind", -1)) \
 				== PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET:
 			var street := mesh.duplicate(true)
-			var street_cells := plan.cells_for_kind(
-				PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET)
+			var street_cells := plan.painted_street_cells()
 			assert(not street_cells.is_empty())
 			street.merge(preload("res://scripts/terrain/features/villages/TownStreetPaint.gd").mesh(street_cells),true)
 			street["logical_cells"] = street_cells

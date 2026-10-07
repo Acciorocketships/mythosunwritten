@@ -91,6 +91,8 @@ static func build(world_seed: int, ground_bands: Dictionary = {},
 	for site: Dictionary in field.house_sites:
 		for column: Vector2i in site.cells:
 			massif.columns[column]["house_site"] = site.lobe
+	for column: Vector2i in field.suburb_columns:
+		if massif.columns.has(column): massif.columns[column]["suburb"] = true
 	var platform := WarrenTownPlatform.clear_forecourt(
 		field.get("platform", {}) as Dictionary, massif, profile, world_seed)
 	_raise_platform(massif, platform)

@@ -9,6 +9,7 @@ const MIN_HOUSE_BANDS := WarrenMazeSourcePlan.MIN_HOUSE_BANDS
 const MAX_SPINE_STRAIGHT_RUN := WarrenMazeSourcePlan.MAX_SPINE_STRAIGHT_RUN
 const MAX_ALLEY_STRAIGHT_RUN := WarrenMazeSourcePlan.MAX_ALLEY_STRAIGHT_RUN
 const MIN_ALLEY_CELLS := 3
+const LONE_HOUSE_PATH_KNOB := &"lone_house_path_chance"
 const MAX_ALLEY_CELLS := 8
 const SPINE_VISIT_BUDGET := 40000
 const COURT_ENTRANCE_ATTEMPTS := 21
@@ -197,7 +198,7 @@ static func carve(world_seed: int, massif: WarrenMassif,
 	var early_gates := _carve_secondary_gate_lanes(world_seed, massif,
 		excavation, portal, profile)
 	for cell: Vector3i in excavation.public_cells(): occupied[cell] = true
-	_carve_house_site_access(massif, excavation, occupied)
+	_carve_house_site_access(massif, excavation, occupied, profile, world_seed)
 	# A second preview replaces the first. Keep the earlier gate/court owners
 	# separate from the provisional landmark masks so an obsolete site cannot
 	# permanently block later alleys. Bridge bearings use their own map.
@@ -3230,6 +3231,9 @@ static func _portal_cells(massif: WarrenMassif, market_cells: int,
 		# A town gate opens on real ground, never into a raised plinth.
 		if massif.bearing_at(column) != base:
 			continue
+		# Nor beside a suburb cottage (task 6): the gate is the dense town's.
+		if bool(massif.columns[column].get("suburb", false)):
+			continue
 		var exposed := false
 		for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
 			if WarrenPassageLatticeRules.exterior_approach_is_clear(massif,
@@ -3476,7 +3480,10 @@ static func _carve_district_access(massif: WarrenMassif,
 ## A reserved cottage needs one addressed entrance, not a ring around its
 ## garden. Join the closest legal frontage to the existing ground network.
 static func _carve_house_site_access(massif: WarrenMassif,
-		excavation: WarrenExcavation, occupied: Dictionary) -> void:
+		excavation: WarrenExcavation, occupied: Dictionary,
+		profile: WarrenVillageScaleProfile = null, world_seed := 0) -> void:
+	# Town taste knobs (task 6): `lone_house_path_chance`, rolled per site id.
+	var character := TownCharacter.of(profile, world_seed) if profile != null else null
 	var sites := {}
 	for column: Vector2i in massif.columns:
 		var record: Dictionary = massif.columns[column]
@@ -3520,8 +3527,33 @@ static func _carve_house_site_access(massif: WarrenMassif,
 			for band in range(cell.y,cell.y+WarrenPassageLatticeRules.HEADROOM_BANDS):
 				excavation.carved[Vector3i(cell.x,band,cell.z)] = true
 			previous = cell
+		# A failed road roll leaves a footway (walk, but no worn-path paint) --
+		# only for a cottage on its own ground whose whole approach crosses
+		# open ground at that grade. Anything else keeps its road.
+		var kind := &"house_site_access"
+		if character != null and not character.chance(LONE_HOUSE_PATH_KNOB, id) \
+				and _site_on_ground(massif, sites[id]) and _is_open_footway(massif, cells):
+			kind = &"house_site_footway"
 		excavation.lanes.append({"anchor":best.anchor,"cells":cells,
-			"transitions":transitions,"feature_kind":&"house_site_access"})
+			"transitions":transitions,"feature_kind":kind})
+
+
+static func _site_on_ground(massif: WarrenMassif, columns: Dictionary) -> bool:
+	for column: Vector2i in columns:
+		if massif.bearing_at(column) != massif.base_at(column): return false
+	return true
+
+
+## Every cell of a cottage approach lies on the terrain itself (at its
+## column's ground grade, with no plinth or raised district under it), so the
+## door is reached on foot over natural ground: walking there needs no road.
+static func _is_open_footway(massif: WarrenMassif, cells: Array) -> bool:
+	for cell: Vector3i in cells:
+		var column := Vector2i(cell.x, cell.z)
+		if not massif.has_column(column) or cell.y != massif.base_at(column) \
+				or massif.bearing_at(column) != massif.base_at(column):
+			return false
+	return true
 
 static func _lay_tower_house_address(massif: WarrenMassif,
 		excavation: WarrenExcavation, occupied: Dictionary,
