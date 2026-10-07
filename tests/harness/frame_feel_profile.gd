@@ -15,7 +15,7 @@ extends Node
 ## ablate_full phases before and after.
 const WORLD := preload("res://scenes/world.tscn")
 const PHASES := ["idle", "turn", "run", "run_turn", "idle_end"]
-const ABLATIONS := ["full", "no_shadows", "shadow_2048", "shadow_2_splits", "no_fog", "no_ssao", "no_msaa", "no_glow", "no_grass", "grass_lod_bias_half", "grass_lod_bias_quarter", "grass_density_half",
+const ABLATIONS := ["full", "no_shadows", "shadow_2048", "shadow_2_splits", "no_fog", "no_ssao", "no_msaa", "no_glow", "no_grass", "grass_flat_material", "grass_lod_bias_half", "grass_lod_bias_quarter", "grass_density_half",
 	"no_water", "no_dressing", "no_cliff_sheet", "no_terrain_mesh", "half_res", "full_end"]
 
 var _world: Node3D
@@ -39,6 +39,7 @@ var _x := 0.5
 var _z := 0.5
 var _ablate := false
 var _shots_dir := ""
+var _prespin := false
 # Exact per-frame spans: this node runs first (priority -1000) and a tail
 # node runs last, so their difference is every script's _process (resp.
 # _physics_process) time this frame. The Performance monitors are not usable
@@ -69,6 +70,7 @@ func _ready() -> void:
 			"--z": _z = float(next)
 			"--ablate": _ablate = true
 			"--grass-shots": _shots_dir = next
+			"--prespin": _prespin = true
 	if size != Vector2i.ZERO: get_window().size = size
 	if not vsync: DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	RenderingServer.viewport_set_measure_render_time(get_viewport().get_viewport_rid(), true)
@@ -162,6 +164,16 @@ func _pipelines() -> Array:
 		Performance.get_monitor(Performance.PIPELINE_COMPILATIONS_SPECIALIZATION)]
 
 
+var _flat: StandardMaterial3D
+func _flat_grass() -> StandardMaterial3D:
+	if _flat == null:
+		_flat = StandardMaterial3D.new()
+		_flat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_flat.cull_mode = BaseMaterial3D.CULL_DISABLED
+		_flat.albedo_color = Color(0.45, 0.62, 0.25)
+	return _flat
+
+
 func _gain() -> float:
 	return _rig.drag_radians_per_pixel(get_viewport().get_visible_rect().size, _camera.fov,
 		_camera.keep_aspect == Camera3D.KEEP_WIDTH) * _rig.mouse_sensitivity
@@ -174,6 +186,12 @@ func _run() -> void:
 	await get_tree().create_timer(3.0).timeout
 	if not _shots_dir.is_empty(): await _grass_shots()
 	for phase: String in PHASES:
+		if phase == "turn" and _prespin:
+			_phase = "prespin"
+			_all_phases.append("prespin")
+			for frame in 48:
+				_rig._yaw += TAU / 48.0
+				await get_tree().process_frame
 		_phase = phase
 		_turning = phase in ["turn", "run_turn"]
 		if phase.begins_with("run"): Input.action_press(&"forward")
@@ -205,17 +223,25 @@ func _grass_shots() -> void:
 			plain_meshes[mm.mesh] = plain
 	var original := {}
 	for mm: MultiMesh in multimeshes: original[mm] = mm.mesh
-	for pitch_deg: float in [12.7, 3.0]:
+	var instances: Array[GeometryInstance3D] = []
+	for tile: Node in _streamer._grass_root.get_children():
+		for child: Node in tile.get_children():
+			if child is GeometryInstance3D: instances.append(child)
+	for pitch_deg: float in [12.7, 3.0, 30.0]:
 		_rig._pitch = deg_to_rad(pitch_deg)
-		for lod: bool in [false, true]:
+		for variant: String in ["off", "on", "bias05"]:
 			for mm: MultiMesh in multimeshes:
-				mm.mesh = original[mm] if lod else plain_meshes[original[mm]]
+				mm.mesh = plain_meshes[original[mm]] if variant == "off" else original[mm]
+			for instance: GeometryInstance3D in instances:
+				instance.lod_bias = 0.5 if variant == "bias05" else 1.0
 			await get_tree().create_timer(1.0).timeout
 			await RenderingServer.frame_post_draw
 			get_viewport().get_texture().get_image().save_png("%s/grass_pitch%d_lod_%s.png"
-				% [_shots_dir, int(pitch_deg), "on" if lod else "off"])
-			print("FEEL shot lod=%s pitch=%d prims=%d" % [lod, int(pitch_deg),
+				% [_shots_dir, int(pitch_deg), variant])
+			print("FEEL shot lod=%s pitch=%d prims=%d" % [variant, int(pitch_deg),
 				Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)])
+	for instance: GeometryInstance3D in instances:
+		instance.lod_bias = 1.0
 	_rig._pitch = 0.22131444
 
 
@@ -246,6 +272,15 @@ func _run_ablations() -> void:
 			for child: Node in tile.get_children():
 				if child is GeometryInstance3D: (child as GeometryInstance3D).lod_bias = bias
 		_streamer._grass_streamer.set_density_scale(0.5 if name == "grass_density_half" else 1.0)
+		for tile: Node in _streamer._grass_root.get_children():
+			for child: Node in tile.get_children():
+				if child is GeometryInstance3D:
+					var g := child as GeometryInstance3D
+					if name == "grass_flat_material":
+						if not g.has_meta(&"feel_material"): g.set_meta(&"feel_material", g.material_override)
+						g.material_override = _flat_grass()
+					elif g.has_meta(&"feel_material"):
+						g.material_override = g.get_meta(&"feel_material")
 		for chunk: Node3D in _streamer._built.values():
 			for child: Node in chunk.get_children():
 				if child is Node3D:

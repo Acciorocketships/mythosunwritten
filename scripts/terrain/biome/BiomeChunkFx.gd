@@ -161,6 +161,23 @@ static func _emitter(recipe: StringName, density: float, surf_lo := 0.0, surf_hi
 	var scl: Vector2 = r.get("scale", Vector2.ONE)
 	m.scale_min = scl.x
 	m.scale_max = scl.y
+	if recipe == &"petals" or recipe == &"leaves":
+		m.angle_min = -180.0
+		m.angle_max = 180.0
+		m.angular_velocity_min = -35.0
+		m.angular_velocity_max = 35.0
+	e.process_material = m
+	e.draw_pass_1 = _draw_pass(recipe, r)
+	return e
+
+## The sprite quad and material depend only on the recipe, so every chunk's
+## emitter of one recipe shares them (a new material per emitter per chunk was
+## main-thread work and another uniform set for each streamed chunk).
+static var _draw_passes: Dictionary = {}
+
+static func _draw_pass(recipe: StringName, r: Dictionary) -> QuadMesh:
+	if _draw_passes.has(recipe):
+		return _draw_passes[recipe]
 	# One soft radial sprite for every recipe: additive glows melt into the
 	# scene with no silhouette; petals keep plain alpha (a solid soft puff).
 	var mat := StandardMaterial3D.new()
@@ -180,68 +197,77 @@ static func _emitter(recipe: StringName, density: float, surf_lo := 0.0, surf_hi
 	var qm := QuadMesh.new()
 	qm.size = Vector2(size, size)
 	qm.material = mat
-	if recipe == &"petals" or recipe == &"leaves":
-		m.angle_min = -180.0
-		m.angle_max = 180.0
-		m.angular_velocity_min = -35.0
-		m.angular_velocity_max = 35.0
-	e.process_material = m
-	e.draw_pass_1 = qm
-	return e
+	_draw_passes[recipe] = qm
+	return qm
 
 # Production uses this spatial payload; the profile-only builder above remains
 # available for isolated recipe/asset previews.
 static func build_field(data: Dictionary) -> Node3D:
+	var build := build_field_steps(data)
+	for step: Callable in build.steps:
+		step.call()
+	return build.root
+
+## build_field as one root and a list of main-thread steps (fog volume, wisps,
+## each particle emitter, the orbs), so the streamer can spread a chunk's
+## effects across frames: built in one call they held a frame 10-25 ms.
+static func build_field_steps(data: Dictionary) -> Dictionary:
 	var root := Node3D.new()
 	root.name = "BiomeFx"
+	var steps: Array[Callable] = []
 	var density_max := 0.0
 	for atmosphere: Color in data.fog:
 		density_max = maxf(density_max, atmosphere.a)
 	if density_max > 0.0001:
-		# Clear chunks and orb-only previews need no fog textures or shape data.
-		var fog_image := Image.create_empty(13, 13, false, Image.FORMAT_RGBAF)
-		var ground_image := Image.create_empty(13, 13, false, Image.FORMAT_RF)
-		var shape_image := Image.create_empty(13, 13, false, Image.FORMAT_RGBAF)
-		for i in 169:
-			fog_image.set_pixel(i % 13, i / 13, data.fog[i])
-			shape_image.set_pixel(i % 13, i / 13, data.mist_shape[i])
-			ground_image.set_pixel(i % 13, i / 13, Color(data.ground[i], 0, 0))
-		var volume := FogVolume.new()
-		volume.name = "WorldMist"
-		volume.shape = RenderingServer.FOG_VOLUME_SHAPE_BOX
-		volume.size = Vector3(CHUNK, data.hi - data.lo + 160.0, CHUNK)
-		volume.position = Vector3(CHUNK * 0.5, (data.lo + data.hi) * 0.5 + 60.0, CHUNK * 0.5)
-		var material := ShaderMaterial.new()
-		material.shader = load("res://terrain/materials/biome_mist.gdshader")
-		material.set_shader_parameter("atmosphere_field", ImageTexture.create_from_image(fog_image))
-		material.set_shader_parameter("ground_field", ImageTexture.create_from_image(ground_image))
-		material.set_shader_parameter("mist_shape_field", ImageTexture.create_from_image(shape_image))
-		material.set_shader_parameter("chunk_origin", Vector2(data.origin.x, data.origin.z))
-		volume.material = material
-		root.add_child(volume)
-	preload("res://scripts/terrain/biome/BiomeMistWisps.gd").attach(root, data)
+		steps.append(func() -> void: root.add_child(_mist_volume(data)))
+	steps.append(func() -> void: preload("res://scripts/terrain/biome/BiomeMistWisps.gd").attach(root, data))
 	for recipe: StringName in data.points:
 		var points: PackedVector3Array = data.points[recipe]
 		if points.is_empty():
 			continue
-		if recipe == &"fireflies":
-			var batch := SmallOrbRenderer.new()
-			batch.setup(points)
-			root.add_child(batch)
-			continue
-		var emitter := _emitter(recipe, 1.0, data.lo, data.hi)
-		emitter.amount = clampi(points.size() * 5, 8, 240)
-		emitter.preprocess = 5.0
-		emitter.fixed_fps = 30
-		var process := emitter.process_material as ParticleProcessMaterial
-		process.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_POINTS
-		process.emission_shape_offset = Vector3.ZERO
-		process.emission_point_count = points.size()
-		var positions := Image.create_empty(points.size(), 1, false, Image.FORMAT_RGBF)
-		for i in points.size():
-			positions.set_pixel(i, 0, Color(points[i].x, points[i].y, points[i].z))
-		process.emission_point_texture = ImageTexture.create_from_image(positions)
-		root.add_child(emitter)
+		steps.append(func() -> void: root.add_child(_point_effect(recipe, points, data)))
 	for point: Vector3 in data.orbs:
-		root.add_child(SpiritOrb.create(point))
-	return root
+		steps.append(func() -> void: root.add_child(SpiritOrb.create(point)))
+	return {"root": root, "steps": steps}
+
+static func _mist_volume(data: Dictionary) -> FogVolume:
+	# Clear chunks and orb-only previews need no fog textures or shape data.
+	var fog_image := Image.create_empty(13, 13, false, Image.FORMAT_RGBAF)
+	var ground_image := Image.create_empty(13, 13, false, Image.FORMAT_RF)
+	var shape_image := Image.create_empty(13, 13, false, Image.FORMAT_RGBAF)
+	for i in 169:
+		fog_image.set_pixel(i % 13, i / 13, data.fog[i])
+		shape_image.set_pixel(i % 13, i / 13, data.mist_shape[i])
+		ground_image.set_pixel(i % 13, i / 13, Color(data.ground[i], 0, 0))
+	var volume := FogVolume.new()
+	volume.name = "WorldMist"
+	volume.shape = RenderingServer.FOG_VOLUME_SHAPE_BOX
+	volume.size = Vector3(CHUNK, data.hi - data.lo + 160.0, CHUNK)
+	volume.position = Vector3(CHUNK * 0.5, (data.lo + data.hi) * 0.5 + 60.0, CHUNK * 0.5)
+	var material := ShaderMaterial.new()
+	material.shader = load("res://terrain/materials/biome_mist.gdshader")
+	material.set_shader_parameter("atmosphere_field", ImageTexture.create_from_image(fog_image))
+	material.set_shader_parameter("ground_field", ImageTexture.create_from_image(ground_image))
+	material.set_shader_parameter("mist_shape_field", ImageTexture.create_from_image(shape_image))
+	material.set_shader_parameter("chunk_origin", Vector2(data.origin.x, data.origin.z))
+	volume.material = material
+	return volume
+
+static func _point_effect(recipe: StringName, points: PackedVector3Array, data: Dictionary) -> Node3D:
+	if recipe == &"fireflies":
+		var batch := SmallOrbRenderer.new()
+		batch.setup(points)
+		return batch
+	var emitter := _emitter(recipe, 1.0, data.lo, data.hi)
+	emitter.amount = clampi(points.size() * 5, 8, 240)
+	emitter.preprocess = 5.0
+	emitter.fixed_fps = 30
+	var process := emitter.process_material as ParticleProcessMaterial
+	process.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_POINTS
+	process.emission_shape_offset = Vector3.ZERO
+	process.emission_point_count = points.size()
+	var positions := Image.create_empty(points.size(), 1, false, Image.FORMAT_RGBF)
+	for i in points.size():
+		positions.set_pixel(i, 0, Color(points[i].x, points[i].y, points[i].z))
+	process.emission_point_texture = ImageTexture.create_from_image(positions)
+	return emitter

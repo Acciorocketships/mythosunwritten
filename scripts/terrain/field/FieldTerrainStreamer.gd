@@ -272,9 +272,17 @@ func _ready() -> void:
 	assert(active_prepared)
 	_dressing_queue = EnvironmentCommitQueue.new(_environment_cache, &"Dressing")
 	_feature_queue = FeatureCommitQueue.new(_environment_cache)
+	for asset_id: StringName in _feature_program.referenced_asset_ids:
+		if not _environment_cache.is_prepared(asset_id):
+			_feature_warm.append(asset_id)
 	_features_root = Node3D.new()
 	_features_root.name = &"ManmadeFeatures"
 	add_child(_features_root)
+	if not _headless:
+		_first_view = preload("res://scripts/terrain/field/FirstViewWarmer.gd").new()
+		_first_view.name = &"FirstViewWarmer"
+		add_child(_first_view)
+		_first_view.setup(get_world_3d(), get_viewport().msaa_3d)
 	# Warm the one shared terrain palette before constructing grass materials;
 	# grass binds its live texture/UV instead of copying a sampled colour.
 	CliffDressing.prepare(_environment_cache)
@@ -382,6 +390,56 @@ func startup_loading_complete() -> bool:
 ## (a 73 ms frame with fresh specialization compiles, then 30-37 ms frames).
 ## The camera rig re-places the camera every frame from its own heading, so
 ## turning it here (this node processes after the rig) leaves no state behind.
+## Village and road visuals load on demand when a feature block commits, and
+## one load held a frame 100-200 ms whenever a town came into range. Behind the
+## loading screen, while the worker plans, they load a few per frame
+## (FEATURE_WARM_USEC); the render warm-up is then rebuilt to include them.
+## Main thread only, like every visual load (threaded loads raced material
+## RIDs on October 5).
+const FEATURE_WARM_USEC := 25000
+## Newly attached chunks are drawn once off-screen (FirstViewWarmer) once their
+## dressing has committed (or FIRST_VIEW_WAIT_MSEC later), so the first look
+## at them does not stall; feature blocks when they become ready.
+const FIRST_VIEW_WAIT_MSEC := 3000
+var _first_view: Node
+var _first_view_waiting: Dictionary = {}
+
+func _queue_first_views() -> void:
+	if _first_view == null or _first_view_waiting.is_empty():
+		return
+	var settled := _dressing_queue.pending_count() == 0
+	var now := Time.get_ticks_msec()
+	for c: Vector2i in _first_view_waiting.keys():
+		if not _built.has(c):
+			_first_view_waiting.erase(c)
+		elif settled or now - int(_first_view_waiting[c]) >= FIRST_VIEW_WAIT_MSEC:
+			_first_view_waiting.erase(c)
+			_first_view.warm(_chunk_centre(c))
+
+func _chunk_centre(c: Vector2i) -> Vector3:
+	var half := TerrainChunkMesher.POINTS_PER_CHUNK / 2
+	var point: Variant = loaded_point_at(c * TerrainChunkMesher.POINTS_PER_CHUNK + Vector2i(half, half))
+	var y := (point as Vector2).x if point != null else player.global_position.y
+	return Vector3((c.x + 0.5) * CHUNK_WORLD, y, (c.y + 0.5) * CHUNK_WORLD)
+var _feature_warm: Array[StringName] = []
+var _feature_warm_done := Helper.is_headless()
+var _feature_warm_usec := 0
+
+func _warm_feature_assets() -> void:
+	if _feature_warm_done:
+		return
+	var started := Time.get_ticks_usec()
+	while not _feature_warm.is_empty() and Time.get_ticks_usec() - started < FEATURE_WARM_USEC:
+		_environment_cache.visual(_feature_warm.pop_back())
+	_feature_warm_usec += Time.get_ticks_usec() - started
+	if _feature_warm.is_empty():
+		_feature_warm_done = true
+		print("[terrain-streamer] feature_assets_warm ms=%d" % (_feature_warm_usec / 1000))
+		# Rebuilt by _update_render_warmup with every prepared visual.
+		if _render_warmup != null:
+			_render_warmup.queue_free()
+			_render_warmup = null
+
 const WARM_SPIN_DIRECTIONS := 8
 const WARM_SPIN_FRAMES_PER_DIRECTION := 2
 const WARM_SPIN_DRESSING_WAIT_MSEC := 4000
@@ -391,7 +449,7 @@ var _warm_spin_wait_started := -1
 var _warm_spin_started := 0
 
 func _update_warm_spin() -> void:
-	if _warm_spin_done or _startup_support_chunks.is_empty() \
+	if _warm_spin_done or not _feature_warm_done or _startup_support_chunks.is_empty() \
 			or _startup_ready_chunks_count() < _startup_support_chunks.size():
 		return
 	var camera := get_viewport().get_camera_3d()
@@ -944,14 +1002,6 @@ func _biome_fx_data(c: Vector2i, region, water: WaterFieldContext = null) -> Dic
 		return {}
 	return BiomeAtmosphereField.compute(c, region, world_seed, water)
 
-func _build_fx(node: Node3D, fx_data: Dictionary) -> void:
-	if fx_data.is_empty():
-		return
-	var fx := BiomeChunkFx.build_field(fx_data)
-	fx.position = fx_data.origin
-	node.add_child(fx)
-
-
 ## Frame diagnostics. A _process call slower than SLOW_FRAME_USEC prints a
 ## slow_frame line with the time of each of its sections, so a hitch names its
 ## cause (a few Time.get_ticks_usec calls a frame; static so harnesses and the
@@ -1028,6 +1078,8 @@ func _process(_delta: float) -> void:
 			_grass_root.add_child(item.node)
 		_mark(&"grass_commits")
 	_telemetry.timing(&"main/commits", Time.get_ticks_usec() - commit_started)
+	_warm_feature_assets()
+	_queue_first_views()
 	_update_warm_spin()
 	_emit_startup_loading_progress()
 	_update_render_warmup()
@@ -1282,6 +1334,8 @@ func _commit_feature_result(result: Dictionary, centre: Vector2i) -> void:
 func _accept_feature_ready(event: Dictionary) -> void:
 	var c: Vector2i = event.chunk
 	var generation := int(event.generation)
+	if _first_view != null and event.node != null:
+		_first_view_waiting[c] = Time.get_ticks_msec()
 	if int(_feature_generation.get(c, 0)) != generation:
 		var stale := event.node as Node3D
 		if stale != null and is_instance_valid(stale):
@@ -1444,11 +1498,21 @@ func _integration_steps(result: Dictionary) -> Array[Callable]:
 			&"DressingCollision")
 		# Embedded rocks' ground skirts are ground: they commit with it.
 		RockSkirt.commit(node, result.dressing.ground_skirts))
+	# The chunk's effects (mist, particles, orbs) build one element per step,
+	# after the chunk is attached; built in the attach step they held it 10-25 ms.
+	var fx_steps: Array[Callable] = []
+	var fx_root: Node3D = null
+	if not (result.fx as Dictionary).is_empty():
+		var fx := BiomeChunkFx.build_field_steps(result.fx)
+		fx_root = fx.root
+		fx_root.position = result.fx.origin
+		fx_steps = fx.steps
 	steps.append(func() -> void:
 		var t0 := Time.get_ticks_usec()
 		terrain_parent.add_child(node)
 		var t1 := Time.get_ticks_usec()
-		_build_fx(node, result.fx)
+		if fx_root != null:
+			node.add_child(fx_root)
 		var t2 := Time.get_ticks_usec()
 		if _grass_runtime_enabled:
 			node.set_meta(&"grass_sampling", result.grass_sampling)
@@ -1461,11 +1525,13 @@ func _integration_steps(result: Dictionary) -> Array[Callable]:
 		var generation: int = result.terrain_generation
 		_dressing_queue.register_chunk(c, generation)
 		_dressing_queue.enqueue(c, generation, node, result.dressing)
+		_first_view_waiting[c] = Time.get_ticks_msec()
 		var t4 := Time.get_ticks_usec()
 		if LOG_SLOW_FRAMES and t4 - t0 >= SLOW_FRAME_USEC:
 			print("[terrain-streamer] slow_attach chunk=%s add_child=%.1f fx=%.1f trample=%.1f dressing_enqueue=%.1f nodes=%d" % [
 				c, (t1 - t0) / 1000.0, (t2 - t1) / 1000.0, (t3 - t2) / 1000.0, (t4 - t3) / 1000.0,
 				node.get_child_count()]))
+	steps.append_array(fx_steps)
 	_integrating_node_ref = {"node": node}
 	return steps
 

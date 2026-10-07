@@ -67,9 +67,12 @@ static func compute(region:HeightfieldRegion,chunk:Vector2i,seed_value:int,
   if not slope_rocks.has(rock.piece):slope_rocks[rock.piece]=[]
   # A skirted rock grows the ground's colour up from its mound, not from the
   # buried ground under it.
-  var entry:=rock
+  var entry:=rock.duplicate()
   if skirted.has(rock):
-   entry=rock.duplicate();entry.point=Vector3(rock.point.x,float(skirted[rock].top),rock.point.z)
+   entry.point=Vector3(rock.point.x,float(skirted[rock].top),rock.point.z)
+  # The lawn tint is a noise field: evaluated here on the worker, not per
+  # rock in the main-thread batch build (it held integration steps 30-40 ms).
+  entry.tint=BiomeRegistry.ground_tint_at((rock.transform as Transform3D).origin,seed_value).clamp()
   slope_rocks[rock.piece].append(entry)
  # Every rock skirt reaching this chunk lends grass support; its owner
  # renders it (the sheet and terrain parts).

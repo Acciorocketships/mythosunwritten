@@ -104,7 +104,8 @@ static func _batch(name: String, rocks: Array, seed_value: int) -> MultiMeshInst
 		# tint and rock exposure, its plane and moss grade. The rock's
 		# base takes that surface's own colour, bare stone or lawn. The
 		# tint is clamped as the sheet's and terrain's 8-bit vertex tints are.
-		var tint := BiomeRegistry.ground_tint_at(t.origin, seed_value).clamp()
+		var tint: Color = rocks[i].tint if rocks[i].has("tint") \
+			else BiomeRegistry.ground_tint_at(t.origin, seed_value).clamp()
 		mm.set_instance_color(i, Color(tint.r, tint.g, tint.b, float(rocks[i].get("exposure", 0.0))))
 		# The contact plane: the surface under the rock, lifted to its
 		# skirt's mound top, where the rock actually meets the ground.

@@ -52,6 +52,12 @@ const float NORMAL_UP_BIAS = 0.82;
 varying float grass_detail;
 varying float blade_height01;
 varying float blade_tone;
+// Per blade, so per vertex: every input is the blade's root (UV2), constant
+// over its triangles, so evaluating the ground field in the fragment repeated
+// identical work for every covered pixel (~6 ms of a frame at 1080p).
+varying vec3 blade_ground;
+varying vec2 blade_finish;
+varying float blade_transmission;
 
 float hash21(vec2 value) {
 	return fract(sin(dot(value, vec2(127.1, 311.7))) * 43758.5453);
@@ -96,6 +102,11 @@ void vertex() {
 	tactical_grass_root = blade_root_world;
 	vec2 trample_xz = blade_root_world.xz;
 	ground_style_position = blade_root_world.xz;
+	// fwidth of the constant root is zero inside a blade, so detail is 1.
+	vec3 ground_base = textureLod(ground_palette_texture, ground_palette_uv, 0.0).rgb;
+	blade_ground = ground_style_detail(blade_root_world.xz, ground_base * COLOR.rgb, 1.0);
+	blade_finish = substrate_finish(blade_root_world.xz, support_normal_up);
+	blade_transmission = biome_surface(blade_root_world.xz).g;
 	float inside = step(grass_trample_origin.x, trample_xz.x)
 		* step(grass_trample_origin.y, trample_xz.y)
 		* step(trample_xz.x, grass_trample_origin.x + grass_trample_size)
@@ -220,14 +231,11 @@ void fragment() {
 	vec3 far_tint = vec3(1.0);
 	vec3 height_tint = mix(far_tint, near_tint, grass_detail);
 	height_tint = mix(height_tint, vec3(1.0), root_match);
-	vec3 ground_base = textureLod(ground_palette_texture,
-		ground_palette_uv, 0.0).rgb;
-	ALBEDO = ground_style(ground_style_position, ground_base * COLOR.rgb) * height_tint * blade_value;
-	vec2 finish = substrate_finish(ground_style_position, support_normal_up);
-	ROUGHNESS = finish.x;
-	SPECULAR = finish.y * mix(1.0, 0.4, lower_gradient * grass_detail);
+	ALBEDO = blade_ground * height_tint * blade_value;
+	ROUGHNESS = blade_finish.x;
+	SPECULAR = blade_finish.y * mix(1.0, 0.4, lower_gradient * grass_detail);
 	// Transmission belongs to the blade tips. Fade it with geometric detail
 	// so the finite grass ring still converges to its supporting lawn.
-	BACKLIGHT = ALBEDO * biome_surface(ground_style_position).g
+	BACKLIGHT = ALBEDO * blade_transmission
 		* tip_gradient * grass_detail * (1.0 - root_match);
 }
