@@ -86,6 +86,8 @@ const SURFACE_CACHE_LIMIT := 32768
 var _surface_cache: Dictionary = {}
 ## Shared by chunk tails on pool threads; held only around the memo access.
 var _surface_lock := Mutex.new()
+## Guards the per-instance `_target_cache` dictionaries (short critical sections).
+static var _cache_lock := Mutex.new()
 var native_control_cache: Dictionary = {}
 ## Construction cells (NativeTerrainGrade.construction_cells) per plan.
 var native_construction_cache: Dictionary = {}
@@ -284,15 +286,21 @@ func _collar_weight(local: Vector2, cell: Vector2i) -> float:
 
 
 func _nearby(cell: Vector2i) -> Array:
-	if not _nearby_claims.has(cell):
+	_surface_lock.lock()
+	var cached: Variant = _nearby_claims.get(cell)
+	_surface_lock.unlock()
+	if cached == null:
 		var keys: Array[Vector2i] = []
 		for z in range(-_collar_cells, _collar_cells + 1):
 			for x in range(-_collar_cells, _collar_cells + 1):
 				var key := cell + Vector2i(x,z)
 				if _claims.has(key):
 					keys.append(key)
+		_surface_lock.lock()
 		_nearby_claims[cell] = keys
-	return _nearby_claims[cell]
+		_surface_lock.unlock()
+		return keys
+	return cached
 
 
 func _weight_bounds(area: Rect2) -> Vector2:
@@ -423,6 +431,13 @@ static func _control_bounds(controls: Controls, cache: Dictionary,
 static func _sample(controls: Controls, cache: Dictionary, point: Vector2) -> float:
 	var owner := Vector2i(TerrainTileField.point_of(point.x, controls),
 		TerrainTileField.point_of(point.y, controls))
-	if not cache.has(owner):
-		cache[owner] = TerrainTileField.bake_point(controls, owner)
-	return TerrainTileField.sample_baked(cache[owner], owner, point.x, point.y, controls)
+	# Lock only around the dictionary; a duplicate deterministic bake is fine.
+	_cache_lock.lock()
+	var baked: Variant = cache.get(owner)
+	_cache_lock.unlock()
+	if baked == null:
+		baked = TerrainTileField.bake_point(controls, owner)
+		_cache_lock.lock()
+		cache[owner] = baked
+		_cache_lock.unlock()
+	return TerrainTileField.sample_baked(baked, owner, point.x, point.y, controls)

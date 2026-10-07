@@ -28,7 +28,8 @@ func _init(program: GrassProgram, seed_value: int) -> void:
 	BiomeRegistry.max_foliage_density()
 	for index in WORKERS:
 		var thread := Thread.new()
-		assert(thread.start(_work) == OK)
+		var err := thread.start(_work)
+		assert(err == OK)
 		_threads.append(thread)
 
 func update_origin(origin: Vector2) -> void:
