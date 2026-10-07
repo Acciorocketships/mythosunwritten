@@ -3,7 +3,7 @@ extends SceneTree
 
 ## Deterministic editor-side importer for source-pack visuals. Runtime code is
 ## intentionally unaware of every source path named by the manifests.
-const TOOL_VERSION := 38
+const TOOL_VERSION := 39
 const RoofEnvelope = preload("res://tools/environment_bake/EnvironmentRoofEnvelope.gd")
 const DESCRIPTOR_DIR := "res://terrain/environment/catalog/descriptors"
 const INDEX_PATH := "res://terrain/environment/catalog/index.tres"
@@ -12,12 +12,19 @@ const RIGID_NATURE_TAGS: Array[String] = ["tree", "rock", "deadwood"]
 
 var _texture_cache: Dictionary = {}
 var _canopy_assets: Dictionary = {}
+## Baked mesh path -> its shadow-only proxy (painted-leaf trees and bushes).
+var _shadow_meshes: Dictionary = {}
 ## Manifest-level art direction: source material name -> albedo colour.
 ## Packs whose vendor shaders tinted greyscale textures (Suntail) restore
 ## their palette here instead of per-asset tints.
 var _material_palette: Dictionary = {}
 ## Source material name -> roughness (removes converter mirror finishes).
 var _material_roughness: Dictionary = {}
+## Manifest roughness floor (0 = off). Converted painted packs carry
+## smoothness masks that read as gloss in Godot; the floor drops the mask.
+var _roughness_floor := 0.0
+## Vendor material names (regex) drawn with the painted alpha-card leaf shader.
+var _leaf_materials: RegEx = null
 ## Explicit source-texture replacement, keyed by vendor material name.
 var _material_textures: Dictionary = {}
 ## Manifest-level cap on baked texture edges (0 = keep source size). Painted
@@ -79,6 +86,10 @@ func _bake_manifest(path: String) -> void:
 	_material_roughness.clear()
 	_material_textures = manifest.get("material_textures", {})
 	_max_texture_size = int(manifest.get("max_texture_size", 0))
+	_roughness_floor = float(manifest.get("roughness_floor", 0.0))
+	_leaf_materials = null
+	if manifest.has("painted_leaf_materials"):
+		_leaf_materials = RegEx.create_from_string(String(manifest["painted_leaf_materials"]))
 	var roughness: Dictionary = manifest.get("material_roughness", {})
 	for material_name: String in roughness:
 		_material_roughness[StringName(material_name)] = float(roughness[material_name])
@@ -520,6 +531,8 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 			return {}
 		var piece := EnvironmentVisualPiece.new()
 		piece.mesh = baked_mesh
+		if _shadow_meshes.has(baked_mesh.resource_path):
+			piece.shadow_mesh = load(_shadow_meshes[baked_mesh.resource_path]) as ArrayMesh
 		piece.local_transform = Transform3D.IDENTITY
 		_configure_visual_piece(piece, material_override, entry, supports_color)
 		pieces.append(piece)
@@ -571,6 +584,8 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 			return {}
 		var piece := EnvironmentVisualPiece.new()
 		piece.mesh = baked_mesh
+		if _shadow_meshes.has(baked_mesh.resource_path):
+			piece.shadow_mesh = load(_shadow_meshes[baked_mesh.resource_path]) as ArrayMesh
 		piece.local_transform = correction
 		_configure_visual_piece(piece, material_override, entry, supports_color)
 		pieces.append(piece)
@@ -593,6 +608,8 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 			return {}
 		var piece := EnvironmentVisualPiece.new()
 		piece.mesh = baked_mesh
+		if _shadow_meshes.has(baked_mesh.resource_path):
+			piece.shadow_mesh = load(_shadow_meshes[baked_mesh.resource_path]) as ArrayMesh
 		piece.local_transform = local
 		_configure_visual_piece(piece, material_override, entry, supports_color)
 		pieces.append(piece)
@@ -2200,14 +2217,195 @@ func _bake_mesh(source: Mesh, pack: String, asset_id: String, piece_index: int,
 			fallback_albedo, fallback_albedos_by_material)
 		if baked_material == null:
 			return null
+		if baked_material is ShaderMaterial and (baked_material as ShaderMaterial).shader \
+				.resource_path.ends_with("painted_leaf.gdshader"):
+			# The crown's own extent drives its interior shading.
+			var crown := AABB()
+			var crown_vertices := mesh.surface_get_arrays(surface_index)[Mesh.ARRAY_VERTEX] \
+				as PackedVector3Array
+			crown.position = crown_vertices[0]
+			for vertex in crown_vertices:
+				crown = crown.expand(vertex)
+			var leaf := baked_material as ShaderMaterial
+			leaf.set_shader_parameter("crown_centre", crown.get_center())
+			leaf.set_shader_parameter("crown_half_extents", crown.size * 0.5)
+			if ResourceSaver.save(leaf, leaf.resource_path) != OK:
+				_fail("Cannot save crown material for %s" % asset_id)
+				return null
 		mesh.surface_set_material(surface_index, baked_material)
+	var shadow := _painted_leaf_shadow_mesh(mesh)
+	mesh = _with_painted_leaf_lods(mesh)
 	var mesh_path := "res://terrain/environment/meshes/%s/%s_piece_%02d.res" % [
 		_slug(pack), _slug(asset_id), piece_index]
 	_ensure_parent(mesh_path)
 	if ResourceSaver.save(mesh, mesh_path) != OK:
 		_fail("Cannot save mesh: %s" % mesh_path)
 		return null
+	if shadow != null:
+		var shadow_path := mesh_path.get_basename() + "_shadow.res"
+		if ResourceSaver.save(shadow, shadow_path) != OK:
+			_fail("Cannot save shadow mesh: %s" % shadow_path)
+			return null
+		_shadow_meshes[mesh_path] = shadow_path
 	return load(mesh_path) as ArrayMesh
+
+## Painted-leaf trees and bushes (October 6, owner: keep the dense forest).
+## Leaf LOD k keeps the cards ranked under LEAF_LOD_KEEP[k-1] (interior cards
+## go first, outer shell last) and switches where an edge of
+## LEAF_LOD_EDGE * 2^(k-1) metres covers one pixel; painted_leaf.gdshader
+## shrinks each card to nothing before its LOD drops it and grows the
+## survivors, so the crown neither pops nor thins. CUSTOM0 = card centre and
+## drop rank. Bark and other surfaces take Godot's own simplified LODs.
+const LEAF_LOD_EDGE := 0.08
+const LEAF_LOD_KEEP: Array[float] = [0.5, 0.25, 0.125]
+
+func _with_painted_leaf_lods(mesh: ArrayMesh) -> ArrayMesh:
+	var leaves: Array[int] = []
+	for surface in mesh.get_surface_count():
+		var material := mesh.surface_get_material(surface) as ShaderMaterial
+		if material != null and material.shader.resource_path.ends_with("painted_leaf.gdshader"):
+			leaves.append(surface)
+	if leaves.is_empty():
+		return mesh
+	var importer := ImporterMesh.new()
+	for surface in mesh.get_surface_count():
+		var arrays := mesh.surface_get_arrays(surface)
+		var material := mesh.surface_get_material(surface)
+		var lods := {}
+		var flags := 0
+		if surface in leaves:
+			var leaf := material as ShaderMaterial
+			lods = _leaf_card_lods(arrays, leaf.get_shader_parameter("crown_centre"),
+				leaf.get_shader_parameter("crown_half_extents"))
+			flags = Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM0_SHIFT
+		else:
+			var wood := ImporterMesh.new()
+			wood.add_surface(Mesh.PRIMITIVE_TRIANGLES, arrays, [], {}, material)
+			wood.generate_lods(60.0, 25.0, [])
+			for lod in wood.get_surface_lod_count(0):
+				lods[wood.get_surface_lod_size(0, lod)] = wood.get_surface_lod_indices(0, lod)
+		importer.add_surface(Mesh.PRIMITIVE_TRIANGLES, arrays, [], lods, material,
+			mesh.surface_get_name(surface), flags)
+	return importer.get_mesh()
+
+## The sun's shadow cascades draw a shadow-only proxy: the leaf cards the
+## last leaf LOD keeps (painted_leaf.gdshader grows exactly these in the
+## orthographic pass, shadow_keep) and each wood surface's coarsest LOD.
+## Four cascades of full crowns cost a dense forest most of its frame.
+func _painted_leaf_shadow_mesh(mesh: ArrayMesh) -> ArrayMesh:
+	var has_leaves := false
+	for surface in mesh.get_surface_count():
+		var material := mesh.surface_get_material(surface) as ShaderMaterial
+		has_leaves = has_leaves or (material != null
+			and material.shader.resource_path.ends_with("painted_leaf.gdshader"))
+	if not has_leaves:
+		return null
+	var shadow := ArrayMesh.new()
+	for surface in mesh.get_surface_count():
+		var arrays := mesh.surface_get_arrays(surface)
+		var material := mesh.surface_get_material(surface)
+		var flags := 0
+		var leaf := material as ShaderMaterial
+		if leaf != null and leaf.shader.resource_path.ends_with("painted_leaf.gdshader"):
+			var lods := _leaf_card_lods(arrays, leaf.get_shader_parameter("crown_centre"),
+				leaf.get_shader_parameter("crown_half_extents"))
+			arrays[Mesh.ARRAY_INDEX] = lods[LEAF_LOD_EDGE * pow(2.0, LEAF_LOD_KEEP.size() - 1)]
+			flags = Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM0_SHIFT
+		else:
+			var wood := ImporterMesh.new()
+			wood.add_surface(Mesh.PRIMITIVE_TRIANGLES, arrays, [], {}, material)
+			wood.generate_lods(60.0, 25.0, [])
+			var last := wood.get_surface_lod_count(0) - 1
+			if last >= 0:
+				arrays[Mesh.ARRAY_INDEX] = wood.get_surface_lod_indices(0, last)
+		shadow.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays, [], {}, flags)
+		shadow.surface_set_material(surface, material)
+		if leaf != null and leaf.shader.resource_path.ends_with("painted_leaf.gdshader"):
+			_add_crown_blob(shadow, leaf.get_shader_parameter("crown_centre"),
+				leaf.get_shader_parameter("crown_half_extents"))
+	return shadow
+
+## Opaque ellipsoid inside the crown (CROWN_BLOB_SCALE of its bounds): the far
+## sun cascades' stand-in for the leaf cards (leaf_shadow_blob.gdshader).
+const CROWN_BLOB_SCALE := Vector3(0.85, 0.7, 0.85)
+
+func _add_crown_blob(shadow: ArrayMesh, centre: Vector3, half: Vector3) -> void:
+	var sphere := SphereMesh.new()
+	sphere.radial_segments = 12
+	sphere.rings = 6
+	var arrays := sphere.get_mesh_arrays()
+	var vertices := arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array
+	for i in vertices.size():
+		vertices[i] = centre + vertices[i] * 2.0 * half * CROWN_BLOB_SCALE
+	arrays[Mesh.ARRAY_VERTEX] = vertices
+	shadow.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	var blob := ShaderMaterial.new()
+	blob.shader = load("res://terrain/environment/materials/leaf_shadow_blob.gdshader") as Shader
+	shadow.surface_set_material(shadow.get_surface_count() - 1, blob)
+
+## Writes the card centre/rank into `arrays` (CUSTOM0) and returns the
+## thinned index buffers keyed by their switch edge length.
+func _leaf_card_lods(arrays: Array, crown_centre: Vector3, crown_half: Vector3) -> Dictionary:
+	var vertices := arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array
+	var indices := arrays[Mesh.ARRAY_INDEX] as PackedInt32Array
+	# Cards are the connected components of the index buffer.
+	var parent := PackedInt32Array()
+	parent.resize(vertices.size())
+	for v in vertices.size():
+		parent[v] = v
+	var find := func(v: int) -> int:
+		while parent[v] != v:
+			parent[v] = parent[parent[v]]
+			v = parent[v]
+		return v
+	for t in range(0, indices.size(), 3):
+		var a: int = find.call(indices[t])
+		for k in [1, 2]:
+			var b: int = find.call(indices[t + k])
+			if a != b:
+				parent[maxi(a, b)] = mini(a, b)
+				a = mini(a, b)
+	var card_of := PackedInt32Array()
+	card_of.resize(vertices.size())
+	var cards: Dictionary = {}
+	for v in vertices.size():
+		var root: int = find.call(v)
+		if not cards.has(root):
+			cards[root] = {"sum": Vector3.ZERO, "count": 0}
+		cards[root].sum += vertices[v]
+		cards[root].count += 1
+		card_of[v] = root
+	# Keep order: outer-shell cards and a stable hash; interior cards drop first.
+	var order: Array = []
+	for root: int in cards:
+		var centre: Vector3 = cards[root].sum / float(cards[root].count)
+		cards[root]["centre"] = centre
+		var shell := clampf((centre - crown_centre).length()
+			/ maxf(crown_half.length() / sqrt(3.0), 0.01), 0.0, 1.0)
+		var noise := float(hash(root) % 10007) / 10007.0
+		order.append([0.6 * noise + 0.4 * (1.0 - shell), root])
+	order.sort_custom(func(a: Array, b: Array) -> bool:
+		return a[0] < b[0] or (a[0] == b[0] and a[1] < b[1]))
+	for i in order.size():
+		cards[order[i][1]]["rank"] = float(i) / float(order.size())
+	var custom := PackedFloat32Array()
+	custom.resize(vertices.size() * 4)
+	for v in vertices.size():
+		var card: Dictionary = cards[card_of[v]]
+		var centre: Vector3 = card.centre
+		custom[v * 4] = centre.x
+		custom[v * 4 + 1] = centre.y
+		custom[v * 4 + 2] = centre.z
+		custom[v * 4 + 3] = card.rank
+	arrays[Mesh.ARRAY_CUSTOM0] = custom
+	var lods := {}
+	for k in LEAF_LOD_KEEP.size():
+		var kept := PackedInt32Array()
+		for t in range(0, indices.size(), 3):
+			if float(cards[card_of[indices[t]]].rank) < LEAF_LOD_KEEP[k]:
+				kept.append_array([indices[t], indices[t + 1], indices[t + 2]])
+		lods[LEAF_LOD_EDGE * pow(2.0, k)] = kept
+	return lods
 
 func _remap_mesh_green_hue(source: ArrayMesh, green_hue: float) -> ArrayMesh:
 	var mesh := ArrayMesh.new()
@@ -2250,6 +2448,12 @@ func _bake_material(source: Material, pack: String, asset_id: String, piece_inde
 		var finish := material as StandardMaterial3D
 		finish.roughness = _material_roughness[StringName(source.resource_name)]
 		finish.roughness_texture = null
+	if _roughness_floor > 0.0 and material is StandardMaterial3D:
+		var matte := material as StandardMaterial3D
+		if matte.roughness_texture != null:
+			matte.roughness_texture = null
+			matte.roughness = _roughness_floor
+		matte.roughness = maxf(matte.roughness, _roughness_floor)
 	var selected_fallback := fallback_albedos_by_material.get(
 		StringName(source.resource_name), fallback_albedo) as Texture2D
 	if selected_fallback != null:
@@ -2300,6 +2504,15 @@ func _bake_material(source: Material, pack: String, asset_id: String, piece_inde
 		canopy.set_shader_parameter("albedo_texture", standard.albedo_texture)
 		canopy.set_shader_parameter("base_color", standard.albedo_color)
 		material = canopy
+	if _leaf_materials != null and material is StandardMaterial3D \
+			and _leaf_materials.search(source.resource_name) != null:
+		var card := material as StandardMaterial3D
+		var leaf := ShaderMaterial.new()
+		leaf.shader = load("res://terrain/environment/materials/painted_leaf.gdshader") as Shader
+		leaf.set_shader_parameter("albedo_texture", card.albedo_texture)
+		leaf.set_shader_parameter("base_color", card.albedo_color)
+		leaf.set_shader_parameter("alpha_scissor", card.alpha_scissor_threshold)
+		material = leaf
 	var material_path := "res://terrain/environment/materials/%s/%s_piece_%02d_surface_%02d.tres" % [
 		_slug(pack), _slug(asset_id), piece_index, surface_index]
 	_ensure_parent(material_path)

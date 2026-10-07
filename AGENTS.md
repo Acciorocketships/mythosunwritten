@@ -9,9 +9,38 @@
 > Winter in Opal Highlands. Painted foliage takes the new `foliage` tint group
 > (`BiomeRegistry.FOLIAGE_CAST` 0.75: the biome canopy hue, normalized, 75% toward white); the
 > absolute `tree`/`bush` colours belong to the LPFV hue-replacement canopy shader and would stain
-> painted leaves. Meadow logs/stumps are Summer meshes recoloured by `material_tint` to the LPFV
-> dark brown (render-matched, owner request); LPFV keeps only the fallen branch and reeds, SFV
-> the lily pads. Old LPFV/KayKit nature stays baked (revert = the set files). Bake: manifest
+> painted leaves. Meadow logs/stumps keep the pack's own Summer wood (`identity` tint; the
+> October 5 LPFV-brown recolour was reverted October 6); LPFV keeps only the fallen branch and
+> reeds, SFV the lily pads. October 6 owner review (neon, two-tone, glossy trunks, sparse): the
+> manifests' `painted_leaf_materials` regex bakes leaf cards to `painted_leaf.gdshader` (cards keep
+> their crown-radial normal on both faces -- Godot's double-sided flip split every crown into a
+> lit and a black shade; interior/underside shading from the bake-written crown bounds,
+> desaturated vendor tint, tint noise, translucency) and `roughness_floor` 0.85 drops the
+> converted smoothness masks (bark ~0.29 roughness, Meadow grass 0.05). Trees: choice spacing
+> = crown radius (3.5-9 m, was 6-12), fill per 24 m cell deep_forest 4.0 (was 1.15), others up
+> ~1.5-2x, scale 1.0-1.3, `max_grade` 0.8 / support span 1.3 m so slopes carry trees.
+> That density doubled frame time; the owner kept it and asked for LODs. LEAF LODS: the bake
+> (`_with_painted_leaf_lods`) splits each painted-leaf surface into cards (index-buffer
+> components), ranks them (interior first, hashed) into CUSTOM0 (card centre, rank) and writes
+> three index LODs keeping 1/2, 1/4, 1/8 of the cards at edge lengths `LEAF_LOD_EDGE` 0.08 x 2^k
+> (shader const must match; test); bark takes Godot's generated LODs. `painted_leaf.gdshader`
+> shrinks each card to nothing before its LOD drops it and grows survivors (`survivor_growth`
+> 0.33) from the main camera's distance (`leaf_lod_camera` global, set by AtmosphereDirector), so
+> crowns neither pop nor thin (dolly harness: coverage within ~10%). Trees/bushes batch per
+> `EnvironmentCommitQueue.FOLIAGE_TILE` 48 m square (one chunk-wide batch always touched the
+> camera, so it never left LOD0). SHADOWS were the real cost: alpha-tested leaf cards in the
+> four sun cascades (discard defeats Apple's hidden-surface removal) were half a forest frame.
+> Painted trees cast from a baked shadow-only proxy (`EnvironmentVisualPiece.shadow_mesh`:
+> the 1/8 cards, coarsest bark, and a crown ellipsoid at `CROWN_BLOB_SCALE` of the crown
+> bounds); cascades wider than `shadow_card_cascade_width` 30 m (same const in both shaders,
+> test) draw the ellipsoid (`leaf_shadow_blob.gdshader`: gaps cut in sun-projected space so
+> front and back faces open on one sun ray; two layers deep instead of a dozen), narrower ones
+> the cards. Grove: 92 -> 33.5 ms (no leaf shadows 14.9), forest-floor brightness within 2%
+> of card shadows. The visible batch casts no shadow. Godot 4.5's
+> `RenderingServer.mesh_get_surface` nests its LOD list in itself: read LODs from the mesh's
+> `_surfaces` property. Review: `profile_chunk_commit.gd --look=... (repeatable) --leaf-shadow=
+> hybrid,w100000,none` times each photo pose per shadow variant under the game grade (it forces
+> draws: macOS skips occluded windows, which had saved stale frames). Old LPFV/KayKit nature stays baked (revert = the set files). Bake: manifest
 > `max_texture_size` (1024 here; sources are 2-4K) and alpha-tested surfaces count as foliage
 > when fitting trunk capsules (autumn/winter leaves are not green). Towns: plaza tree
 > `meadow.town_birch` (birch 05 at 0.9, half-extents 1.479/1.327 in the 2x2 block), hamlet focal

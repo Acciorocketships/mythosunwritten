@@ -1,14 +1,21 @@
-[gd_resource type="StandardMaterial3D" load_steps=2 format=3]
+[gd_resource type="ShaderMaterial" load_steps=3 format=3]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/polyart_farmlands/6a97231d314f76766630.res" id="1_csaxw"]
+[ext_resource type="Shader" path="res://terrain/environment/materials/painted_leaf.gdshader" id="1_k1i0r"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/polyart_farmlands/6a97231d314f76766630.res" id="2_ndqgy"]
 
 [resource]
-resource_name = "MI_Farm_GenericTree_Leaves_Close"
-transparency = 2
-alpha_scissor_threshold = 0.538
-alpha_antialiasing_mode = 0
-cull_mode = 2
-vertex_color_use_as_albedo = true
-albedo_color = Color(0.23163135, 0.6608029, 0.00082324864, 1)
-albedo_texture = ExtResource("1_csaxw")
-roughness = 0.905
+render_priority = 0
+shader = ExtResource("1_k1i0r")
+shader_parameter/albedo_texture = ExtResource("2_ndqgy")
+shader_parameter/base_color = Color(0.23163135, 0.6608029, 0.00082324864, 1)
+shader_parameter/alpha_scissor = 0.538
+shader_parameter/crown_centre = Vector3(0.14999127, 7.099387, -0.17432976)
+shader_parameter/crown_half_extents = Vector3(3.7562866, 4.569867, 4.4286804)
+shader_parameter/saturation = null
+shader_parameter/value_scale = null
+shader_parameter/interior = null
+shader_parameter/underside = null
+shader_parameter/translucency = null
+shader_parameter/survivor_growth = null
+shader_parameter/shadow_keep = null
+shader_parameter/shadow_card_cascade_width = null

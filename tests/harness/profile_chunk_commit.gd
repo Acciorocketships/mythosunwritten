@@ -27,6 +27,13 @@ var _shot := ""
 var _look_from := Vector3.ZERO
 var _look_at := Vector3.ZERO
 var _has_look := false
+## Every --look (repeatable) is captured as <shot>_look<N>.png in review lighting
+## when --ground-view is also given.
+var _looks: Array = []
+var _look_frame_ms: Array = []
+var _look_last_usec := 0
+## --leaf-shadow=hybrid,wN,opaque,none: painted-leaf shadow variants per pose.
+var _shadow_variants: Array = ["hybrid"]
 var _ground_view := ""
 var _dressing_index := "res://terrain/dressing/index.tres"
 var _warmup_node: Node3D
@@ -65,7 +72,9 @@ func _init() -> void:
 			_look_from = Vector3(float(v[0]), float(v[1]), float(v[2]))
 			_look_at = Vector3(float(v[3]), float(v[4]), float(v[5]))
 			_has_look = true
+			_looks.append([_look_from, _look_at])
 		elif arg.begins_with("--dressing-index="): _dressing_index = arg.trim_prefix("--dressing-index=")
+		elif arg.begins_with("--leaf-shadow="): _shadow_variants = Array(arg.trim_prefix("--leaf-shadow=").split(","))
 		elif arg.begins_with("--ground-view="): _ground_view = arg.trim_prefix("--ground-view=")
 		elif arg.begins_with("--skip="): _skip = arg.trim_prefix("--skip=").split(",")
 		elif arg.begins_with("--chunks="):
@@ -113,6 +122,19 @@ func _init() -> void:
 	_camera = Camera3D.new()
 	_camera.far = 2000.0
 	_root.add_child(_camera)
+	if not _looks.is_empty():
+		# Photo poses render under the game's own grade and biome mood.
+		env.environment.background_mode = Environment.BG_SKY
+		env.environment.sky = Sky.new()
+		env.environment.sky.sky_material = ProceduralSkyMaterial.new()
+		var director := AtmosphereDirector.new()
+		director.environment_node = env
+		director.sun = sun
+		director.camera = _camera
+		_root.add_child(director)
+		var p: Vector3 = _looks[0][0]
+		var mood := BiomeRegistry.blend_atmosphere(Helper.biome_weights5(p, _seed))
+		director.ready.connect(func() -> void: director._apply_mood(mood))
 	var c := Vector3(_centre.x * 192.0 + 96.0, 0.0, _centre.y * 192.0 + 96.0)
 	_camera.look_at_from_position(c + Vector3(-180, 160, -180), c, Vector3.UP)
 	if _has_look:
@@ -197,7 +219,7 @@ func _process(_delta: float) -> bool:
 			if not _ground_view.is_empty():
 				_ground_view_step(_idle_frames.size())
 			_idle_frames.append(frame_ms)
-			if _idle_frames.size() < 240:
+			if _idle_frames.size() < maxi(240, _looks.size() * _shadow_variants.size() * 40 + 1):
 				return false
 			_thread.wait_to_finish()
 			if not _shot.is_empty() and _ground_view != "both":
@@ -286,6 +308,36 @@ func _frame_ground_view(view: String = "") -> void:
 ## Idle-frame schedule for the art-review views. Single views frame once;
 ## `both` saves the close view at frame 60 and the wide one at frame 120.
 func _ground_view_step(frame: int) -> void:
+	if not _looks.is_empty():
+		# Each pose renders every --leaf-shadow variant (alpha proxy, opaque
+		# proxy, none) for 40 frames: same scene, same pose, timed in turn.
+		var per_look := 40 * _shadow_variants.size()
+		var index := frame / per_look
+		if index >= _looks.size():
+			return
+		var variant: String = _shadow_variants[(frame % per_look) / 40]
+		if frame % 40 == 0:
+			_apply_leaf_shadow_variant(variant)
+		_camera.fov = 70.0
+		_camera.look_at_from_position(_looks[index][0], _looks[index][1], Vector3.UP)
+		# macOS skips drawing an occluded window; review shots draw regardless.
+		RenderingServer.force_draw(false)
+		var now := Time.get_ticks_usec()
+		if frame % 40 >= 10 and _look_last_usec > 0:
+			_look_frame_ms.append((now - _look_last_usec) / 1000.0)
+		_look_last_usec = now
+		if frame % 40 == 39:
+			_look_frame_ms.sort()
+			print("[commitprof] look%d %s median_ms=%.1f prims=%d draws=%d" % [index, variant,
+				_look_frame_ms[_look_frame_ms.size() / 2],
+				Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME),
+				Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)])
+			_look_frame_ms.clear()
+			var suffix := "" if variant == "hybrid" else "_" + variant
+			var path := "%s_look%d%s.png" % [_shot.get_basename(), index, suffix]
+			root.get_texture().get_image().save_png(path)
+			print("[commitprof] shot ", path)
+		return
 	if _ground_view != "both":
 		if frame == 0:
 			_frame_ground_view()
@@ -299,3 +351,15 @@ func _ground_view_step(frame: int) -> void:
 		print("[commitprof] shot ", path)
 		if frame == 60:
 			_frame_ground_view("wide")
+
+func _apply_leaf_shadow_variant(variant: String) -> void:
+	for node in root.find_children("LeafShadow", "MultiMeshInstance3D", true, false):
+		var proxy := node as MultiMeshInstance3D
+		proxy.visible = variant != "none"
+		proxy.material_override = StandardMaterial3D.new() if variant == "opaque" else null
+		# wN: leaf cards in cascades up to N m wide (null = the shaders' default).
+		var width: Variant = float(variant.trim_prefix("w")) if variant.begins_with("w") else null
+		for surface in proxy.multimesh.mesh.get_surface_count():
+			var leaf := proxy.multimesh.mesh.surface_get_material(surface) as ShaderMaterial
+			if leaf != null:
+				leaf.set_shader_parameter("shadow_card_cascade_width", width)

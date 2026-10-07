@@ -29,18 +29,48 @@ func enqueue(chunk: Vector2i, generation: int, parent: Node3D,
 	for asset_id: StringName in payload.asset_ids():
 		var visual := _render_cache.visual(asset_id)
 		assert(visual != null)
-		var batch: Dictionary = payload.batches[asset_id]
-		for piece_index in visual.pieces.size():
-			_items.append({
-				"chunk": chunk,
-				"generation": generation,
-				"parent": weakref(parent),
-				"asset_id": asset_id,
-				"piece_index": piece_index,
-				"transforms": batch.transforms,
-				"colors": batch.colors,
-				"visibility_owners": batch.get("visibility_owners", []),
-			})
+		var tags := _render_cache.descriptor(asset_id).tags
+		var batches: Array = [payload.batches[asset_id]]
+		if &"tree" in tags or &"bush" in tags:
+			batches = tile_batch(payload.batches[asset_id])
+		for batch: Dictionary in batches:
+			for piece_index in visual.pieces.size():
+				_items.append({
+					"chunk": chunk,
+					"generation": generation,
+					"parent": weakref(parent),
+					"asset_id": asset_id,
+					"piece_index": piece_index,
+					"transforms": batch.transforms,
+					"colors": batch.colors,
+					"visibility_owners": batch.get("visibility_owners", []),
+				})
+
+## Trees and bushes are batched per FOLIAGE_TILE world square, not per chunk:
+## the renderer culls and picks mesh LODs per MultiMesh, and a chunk-wide
+## batch always touched the camera, so every crown in it drew all its leaf
+## cards (October 6 dense forest: frame time doubled).
+const FOLIAGE_TILE := 48.0
+
+static func tile_batch(batch: Dictionary) -> Array:
+	var tiles: Dictionary = {}
+	var transforms: Array = batch.transforms
+	var owners: Array = batch.get("visibility_owners", [])
+	for index in transforms.size():
+		var origin := (transforms[index] as Transform3D).origin
+		var key := Vector2i(floori(origin.x / FOLIAGE_TILE), floori(origin.z / FOLIAGE_TILE))
+		if not tiles.has(key):
+			tiles[key] = {"transforms": [], "colors": [], "visibility_owners": []}
+		tiles[key].transforms.append(transforms[index])
+		tiles[key].colors.append(batch.colors[index])
+		if index < owners.size():
+			tiles[key].visibility_owners.append(owners[index])
+	var keys: Array = tiles.keys()
+	keys.sort()
+	var out: Array = []
+	for key: Vector2i in keys:
+		out.append(tiles[key])
+	return out
 
 func drain(max_batches: int, max_usec: int = 0) -> int:
 	assert(OS.get_thread_caller_id() == OS.get_main_thread_id())
@@ -118,6 +148,34 @@ func _commit_batch(parent: Node3D, item: Dictionary) -> void:
 		instance.add_to_group("tactical_solid_earth", true)
 	instance.material_override = LANTERN_LIGHTS.glass_material(item.asset_id, piece)
 	container.add_child(instance)
+	if piece.shadow_mesh != null:
+		_attach_shadow_proxy(instance, piece.shadow_mesh)
 	preload("res://scripts/terrain/biome/CanopyShadows.gd").attach(instance)
 	if int(item.piece_index) == 0:
 		LANTERN_LIGHTS.attach(container,item.asset_id,transforms)
+
+## Painted-leaf trees cast their sun shadow from a baked stand-in (an eighth
+## of the leaf cards, coarsest bark) with the batch's instances.
+static func _attach_shadow_proxy(instance: MultiMeshInstance3D, shadow_mesh: Mesh) -> void:
+	var source := instance.multimesh
+	var multimesh := MultiMesh.new()
+	multimesh.transform_format = source.transform_format
+	multimesh.use_colors = source.use_colors
+	multimesh.use_custom_data = source.use_custom_data
+	multimesh.mesh = shadow_mesh
+	multimesh.instance_count = source.instance_count
+	for index in source.instance_count:
+		multimesh.set_instance_transform(index, source.get_instance_transform(index))
+		if source.use_colors:
+			multimesh.set_instance_color(index, source.get_instance_color(index))
+		if source.use_custom_data:
+			multimesh.set_instance_custom_data(index, source.get_instance_custom_data(index))
+	var proxy := MultiMeshInstance3D.new()
+	proxy.name = "LeafShadow"
+	proxy.multimesh = multimesh
+	proxy.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+	proxy.layers = instance.layers
+	# Shadow-only geometry cannot obstruct the camera (CanopyShadows).
+	proxy.add_to_group("tactical_preserve_surface", true)
+	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	instance.add_child(proxy)

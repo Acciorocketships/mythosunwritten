@@ -1,14 +1,21 @@
-[gd_resource type="StandardMaterial3D" load_steps=2 format=3]
+[gd_resource type="ShaderMaterial" load_steps=3 format=3]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/angry_mesh_meadow/a88ddce63597b97d22ca.res" id="1_3l4u4"]
+[ext_resource type="Shader" path="res://terrain/environment/materials/painted_leaf.gdshader" id="1_jlxgv"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/angry_mesh_meadow/a88ddce63597b97d22ca.res" id="2_4udsg"]
 
 [resource]
-resource_name = "M_OakTree_Leaf_01_Autumn"
-transparency = 2
-alpha_scissor_threshold = 0.3
-alpha_antialiasing_mode = 0
-cull_mode = 2
-vertex_color_use_as_albedo = true
-albedo_color = Color(1, 0.65123266, 0.32941177, 1)
-albedo_texture = ExtResource("1_3l4u4")
-roughness = 0.9
+render_priority = 0
+shader = ExtResource("1_jlxgv")
+shader_parameter/albedo_texture = ExtResource("2_4udsg")
+shader_parameter/base_color = Color(1, 0.65123266, 0.32941177, 1)
+shader_parameter/alpha_scissor = 0.3
+shader_parameter/crown_centre = Vector3(1.2013018, 4.9216557, -0.8865156)
+shader_parameter/crown_half_extents = Vector3(3.521686, 4.9675846, 3.4135776)
+shader_parameter/saturation = null
+shader_parameter/value_scale = null
+shader_parameter/interior = null
+shader_parameter/underside = null
+shader_parameter/translucency = null
+shader_parameter/survivor_growth = null
+shader_parameter/shadow_keep = null
+shader_parameter/shadow_card_cascade_width = null

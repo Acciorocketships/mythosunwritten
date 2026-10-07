@@ -19,7 +19,7 @@
             8.32251739501953
           ]
         },
-        "mesh_bytes": 294183,
+        "mesh_bytes": 389084,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 5652
@@ -38,7 +38,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_BirchTree_01_Autumn.glb",
       "source_sha256": "83697810fc9235d9d3fbc18d466568ccdc8c060f76aa9e19441959e13acdc391",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_01_autumn.tres"
     },
     {
@@ -60,7 +60,7 @@
             8.32251739501953
           ]
         },
-        "mesh_bytes": 294183,
+        "mesh_bytes": 389084,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 5652
@@ -79,7 +79,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_BirchTree_01_Summer.glb",
       "source_sha256": "b47ac88993e994b1db77d3cf6fc6c7b9aa31f4f91f7e5d3f5f485ed1c69442e1",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_01_summer.tres"
     },
     {
@@ -101,7 +101,7 @@
             8.32251739501953
           ]
         },
-        "mesh_bytes": 294183,
+        "mesh_bytes": 389084,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 5652
@@ -120,7 +120,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_BirchTree_01_Winter.glb",
       "source_sha256": "ec559bdcc84e0d234416cf9d3d020ee8778b147a39d0ed0d01a999ee09af57bc",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_01_winter.tres"
     },
     {
@@ -142,7 +142,7 @@
             6.80919170379639
           ]
         },
-        "mesh_bytes": 255183,
+        "mesh_bytes": 356808,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 5186
@@ -161,7 +161,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_BirchTree_02_Autumn.glb",
       "source_sha256": "bed3c54470d08e5d0e8edb963c0baa8f2b57464b613a25fd2eb33a231ca349f0",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_02_autumn.tres"
     },
     {
@@ -183,7 +183,7 @@
             6.80919170379639
           ]
         },
-        "mesh_bytes": 255183,
+        "mesh_bytes": 356808,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 5186
@@ -202,7 +202,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_BirchTree_02_Summer.glb",
       "source_sha256": "0ced3fc0a75b0ce7a09a8fe8ec05602550eb81a60df60ced8f598cbc2ccd529a",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_02_summer.tres"
     },
     {
@@ -224,7 +224,7 @@
             6.80919170379639
           ]
         },
-        "mesh_bytes": 255183,
+        "mesh_bytes": 356808,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 5186
@@ -243,7 +243,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_BirchTree_02_Winter.glb",
       "source_sha256": "4b9293d27d744f38b9d22329cfedb1ee3b4246153c6b309df821b0501a92d085",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_02_winter.tres"
     },
     {
@@ -265,7 +265,7 @@
             5.85230827331543
           ]
         },
-        "mesh_bytes": 235223,
+        "mesh_bytes": 321524,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 4770
@@ -284,7 +284,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_BirchTree_03_Autumn.glb",
       "source_sha256": "c38688be54185d2f50bc7cdb8b0f4f1af78a31abe9d89077fe5066648e666d37",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_03_autumn.tres"
     },
     {
@@ -306,7 +306,7 @@
             5.85230827331543
           ]
         },
-        "mesh_bytes": 235223,
+        "mesh_bytes": 321524,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 4770
@@ -325,7 +325,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_BirchTree_03_Summer.glb",
       "source_sha256": "87d8a22902ab0c0d26fc6a4719128dd20d8f99b790bd837942c6cfbbd40968ea",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_03_summer.tres"
     },
     {
@@ -347,7 +347,7 @@
             5.85230827331543
           ]
         },
-        "mesh_bytes": 235223,
+        "mesh_bytes": 321524,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 4770
@@ -366,7 +366,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_BirchTree_03_Winter.glb",
       "source_sha256": "082ebd6148660fb460d252fd294b22e8c544e36f4d2c998b11d05a9c9ee362ed",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_03_winter.tres"
     },
     {
@@ -388,7 +388,7 @@
             6.24455547332764
           ]
         },
-        "mesh_bytes": 254423,
+        "mesh_bytes": 330872,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 4882
@@ -407,7 +407,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_BirchTree_04_Autumn.glb",
       "source_sha256": "f1542db43c1dbb0397489a161c4b41eb05e811ae73412e0c22162559a240d4ce",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_04_autumn.tres"
     },
     {
@@ -429,7 +429,7 @@
             6.24455547332764
           ]
         },
-        "mesh_bytes": 254423,
+        "mesh_bytes": 330872,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 4882
@@ -448,7 +448,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_BirchTree_04_Summer.glb",
       "source_sha256": "78115f3fb6748df14266b510c37fe52aa2b6c90d92ee461700b308aa21619d40",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_04_summer.tres"
     },
     {
@@ -470,7 +470,7 @@
             6.24455547332764
           ]
         },
-        "mesh_bytes": 254423,
+        "mesh_bytes": 330872,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 4882
@@ -489,7 +489,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_BirchTree_04_Winter.glb",
       "source_sha256": "5288d4e372415da3bb50d494e7e22eacfe3c4cf4ca9cfc0a178784377b4ecbc6",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_04_winter.tres"
     },
     {
@@ -511,7 +511,7 @@
             3.71965360641479
           ]
         },
-        "mesh_bytes": 209323,
+        "mesh_bytes": 236340,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 4006
@@ -530,7 +530,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_BirchTree_05_Autumn.glb",
       "source_sha256": "44b29593566fad76a92ffa33d8a1d26cc8720c98ee255f8773b021ee4f500543",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_05_autumn.tres"
     },
     {
@@ -552,7 +552,7 @@
             3.71965360641479
           ]
         },
-        "mesh_bytes": 209323,
+        "mesh_bytes": 236340,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 4006
@@ -571,7 +571,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_BirchTree_05_Summer.glb",
       "source_sha256": "50ff683e61c5827d51816037c8fb5fd1b12481a30b9bfc4b6b29ef4819d8afd8",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_05_summer.tres"
     },
     {
@@ -593,7 +593,7 @@
             3.71965360641479
           ]
         },
-        "mesh_bytes": 209323,
+        "mesh_bytes": 236340,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 4006
@@ -612,7 +612,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_BirchTree_05_Winter.glb",
       "source_sha256": "f01ffc16912afc3462b3a5367e073cf4a7349de41f4c13cb9f134a911ba13457",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_05_winter.tres"
     },
     {
@@ -634,7 +634,7 @@
             6.05417919158936
           ]
         },
-        "mesh_bytes": 464455,
+        "mesh_bytes": 624948,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 9681
@@ -653,7 +653,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_BirchTree_06_Autumn.glb",
       "source_sha256": "cff56d57fe5daf58aa7b6d443aea6919d171cf2574a52f5e3e0c827de9f34fff",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_06_autumn.tres"
     },
     {
@@ -675,7 +675,7 @@
             6.05417919158936
           ]
         },
-        "mesh_bytes": 464455,
+        "mesh_bytes": 624948,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 9681
@@ -694,7 +694,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_BirchTree_06_Summer.glb",
       "source_sha256": "125ee53d3a262f7049f8c4303cda6be5faad0ac10cfda471a4aebeb632ffb4eb",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_06_summer.tres"
     },
     {
@@ -716,7 +716,7 @@
             6.05417919158936
           ]
         },
-        "mesh_bytes": 464455,
+        "mesh_bytes": 624948,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 9681
@@ -735,7 +735,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_BirchTree_06_Winter.glb",
       "source_sha256": "841feb8cce341baf499a683b2ef88e894a54d8e0a5f218fffc95f70eb4fec4b4",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_06_winter.tres"
     },
     {
@@ -757,7 +757,7 @@
             6.09346008300781
           ]
         },
-        "mesh_bytes": 344191,
+        "mesh_bytes": 452072,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 6470
@@ -776,7 +776,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_BirchTree_07_Autumn.glb",
       "source_sha256": "85853a84f36fee4b41a51159fe1a7a478ae64309264a1e0bfcf12c82f6b72a6d",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_07_autumn.tres"
     },
     {
@@ -798,7 +798,7 @@
             6.09346008300781
           ]
         },
-        "mesh_bytes": 344191,
+        "mesh_bytes": 452072,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 6470
@@ -817,7 +817,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_BirchTree_07_Summer.glb",
       "source_sha256": "6fc457a098513cf086d7cdce8af0c6c3f80bc26a836f2e2b2e26e4a377e68f05",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_07_summer.tres"
     },
     {
@@ -839,7 +839,7 @@
             6.09346008300781
           ]
         },
-        "mesh_bytes": 344191,
+        "mesh_bytes": 452072,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 6470
@@ -858,7 +858,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_BirchTree_07_Winter.glb",
       "source_sha256": "c58dfebedfd12b2a3a5c7ad1c1cf98e4c2cebda44cca39a45dba82b6fa8b5f3b",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_07_winter.tres"
     },
     {
@@ -880,7 +880,7 @@
             2.12700414657593
           ]
         },
-        "mesh_bytes": 24009,
+        "mesh_bytes": 34710,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 402
@@ -898,7 +898,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_BirchBush_01_Autumn.glb",
       "source_sha256": "e51d738ee2303819fef6fa9cbb9f09c0815a75f03a635a2dacae0e5682d203b6",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_bush_01_autumn.tres"
     },
     {
@@ -920,7 +920,7 @@
             2.12700414657593
           ]
         },
-        "mesh_bytes": 24009,
+        "mesh_bytes": 34710,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 402
@@ -938,7 +938,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_BirchBush_01_Summer.glb",
       "source_sha256": "a4ed9ddcd0ca8f9e525b4b23689a93cee536805f01b5a03e0b24a06a7dceeb67",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_bush_01_summer.tres"
     },
     {
@@ -960,7 +960,7 @@
             2.12700414657593
           ]
         },
-        "mesh_bytes": 24009,
+        "mesh_bytes": 34710,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 402
@@ -978,7 +978,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_BirchBush_01_Winter.glb",
       "source_sha256": "32c9fc84d3e99aa6c6d7f1cb4c2d9dc4d696a30f5eea6bbec613e9d12d896446",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_bush_01_winter.tres"
     },
     {
@@ -1000,7 +1000,7 @@
             3.00049495697021
           ]
         },
-        "mesh_bytes": 47809,
+        "mesh_bytes": 70726,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 856
@@ -1018,7 +1018,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_BirchBush_02_Autumn.glb",
       "source_sha256": "9d8c6253b51d35bd766c0c7f627263b2aebf89c94d12dc10f5f14eb0e5647643",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_bush_02_autumn.tres"
     },
     {
@@ -1040,7 +1040,7 @@
             3.00049495697021
           ]
         },
-        "mesh_bytes": 47809,
+        "mesh_bytes": 70726,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 856
@@ -1058,7 +1058,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_BirchBush_02_Summer.glb",
       "source_sha256": "cc523f8fc14b3547f039bbad30302c5273883f5111605ea8ed2235acd4bb89f0",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_bush_02_summer.tres"
     },
     {
@@ -1080,7 +1080,7 @@
             3.00049495697021
           ]
         },
-        "mesh_bytes": 47809,
+        "mesh_bytes": 70726,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 856
@@ -1098,7 +1098,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_BirchBush_02_Winter.glb",
       "source_sha256": "6949960aacd472d6c936def09bffc57bbebfc7445dcc78dfd148ec6e99d8cf45",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_bush_02_winter.tres"
     },
     {
@@ -1120,7 +1120,7 @@
             3.90531659126282
           ]
         },
-        "mesh_bytes": 105593,
+        "mesh_bytes": 148810,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 1994
@@ -1138,7 +1138,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_BirchBush_03_Autumn.glb",
       "source_sha256": "2682dd0c356c8c938befb79cfd5726be221896041bbeedf13e6b8d528e2e9f79",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_bush_03_autumn.tres"
     },
     {
@@ -1160,7 +1160,7 @@
             3.90531659126282
           ]
         },
-        "mesh_bytes": 105593,
+        "mesh_bytes": 148810,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 1994
@@ -1178,7 +1178,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_BirchBush_03_Summer.glb",
       "source_sha256": "37d9fd2c680931bc500c152cf6a797b28812a5383c8f25e8841dbf961efeed0c",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_bush_03_summer.tres"
     },
     {
@@ -1200,7 +1200,7 @@
             3.90531659126282
           ]
         },
-        "mesh_bytes": 105593,
+        "mesh_bytes": 148810,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 1994
@@ -1218,7 +1218,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_BirchBush_03_Winter.glb",
       "source_sha256": "0e9b607a261a6d284aac25935bff167e8de478bea14d8bc290fa92b7282152c6",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_bush_03_winter.tres"
     },
     {
@@ -1240,7 +1240,7 @@
             4.69188213348389
           ]
         },
-        "mesh_bytes": 114081,
+        "mesh_bytes": 162378,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 2114
@@ -1258,7 +1258,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_BirchBush_04_Autumn.glb",
       "source_sha256": "ae7dc66739cecf8b4c30260e80e18ceef9ef41014e964e2f45e49d68705a3e0f",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_bush_04_autumn.tres"
     },
     {
@@ -1280,7 +1280,7 @@
             4.69188213348389
           ]
         },
-        "mesh_bytes": 114081,
+        "mesh_bytes": 162378,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 2114
@@ -1298,7 +1298,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_BirchBush_04_Summer.glb",
       "source_sha256": "7cffacdc959a8cba73ce7479e370c1e3d85b7d99bdfc3879d2e6315ed13dc656",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_bush_04_summer.tres"
     },
     {
@@ -1320,7 +1320,7 @@
             4.69188213348389
           ]
         },
-        "mesh_bytes": 114081,
+        "mesh_bytes": 162378,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 2114
@@ -1338,7 +1338,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_BirchBush_04_Winter.glb",
       "source_sha256": "64855e391c08bffa232f7d2b376734aa49c79bf2ff649c243c0604c3163985b4",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_bush_04_winter.tres"
     },
     {
@@ -1360,7 +1360,7 @@
             4.51128530502319
           ]
         },
-        "mesh_bytes": 118713,
+        "mesh_bytes": 169438,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 2184
@@ -1378,7 +1378,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_BirchBush_05_Autumn.glb",
       "source_sha256": "62bc9645593ef2c18280957c7479d1bca9924c747b1dca0011d920e8c776b3bb",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_bush_05_autumn.tres"
     },
     {
@@ -1400,7 +1400,7 @@
             4.51128530502319
           ]
         },
-        "mesh_bytes": 118713,
+        "mesh_bytes": 169438,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 2184
@@ -1418,7 +1418,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_BirchBush_05_Summer.glb",
       "source_sha256": "77e92d658b7efce0fe2bbc0f27fc4ac6e906be4b416baf9b3fb3a5fc3dd986cf",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_bush_05_summer.tres"
     },
     {
@@ -1440,7 +1440,7 @@
             4.51128530502319
           ]
         },
-        "mesh_bytes": 118713,
+        "mesh_bytes": 169438,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 2184
@@ -1458,7 +1458,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_BirchBush_05_Winter.glb",
       "source_sha256": "9af29d8adb4689bb2cde9495b4fba798a23782c5a792b78394e4c0801021f239",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_bush_05_winter.tres"
     },
     {
@@ -1503,7 +1503,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Autumn/P_CoverPlant_01_Autumn.glb",
       "source_sha256": "8a495fb3e63566eecc226487312d59d8778b8a15f1dccf8db97cdc85394cbeeb",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_cover_01_autumn.tres"
     },
     {
@@ -1548,7 +1548,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Summer/P_CoverPlant_01_Summer.glb",
       "source_sha256": "016b16abe3e63bf13e939a80eff09001cfe7885ea4a24e7f341b8ea4c2431b0f",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_cover_01_summer.tres"
     },
     {
@@ -1593,7 +1593,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Winter/P_CoverPlant_01_Winter.glb",
       "source_sha256": "b298f8fd3cb9908199861f7530b17bd1959b6565ac2be3b9a22e2e1f552dbb37",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_cover_01_winter.tres"
     },
     {
@@ -1638,7 +1638,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Autumn/P_CoverPlant_02_Autumn.glb",
       "source_sha256": "d0e074f8f262592d64d76d892ee28d5e300c5adf34e55e490df8049009d62442",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_cover_02_autumn.tres"
     },
     {
@@ -1683,7 +1683,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Summer/P_CoverPlant_02_Summer.glb",
       "source_sha256": "d0d9f9fc3ebbb6e062ca8bdafe5bd439e13848b10e9507a6d82095c736fb873a",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_cover_02_summer.tres"
     },
     {
@@ -1728,7 +1728,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Winter/P_CoverPlant_02_Winter.glb",
       "source_sha256": "a39647d3bd28b1015d763c8f3f431a67a616a6e4c2457f9bb1d7a57f0b5d29af",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_cover_02_winter.tres"
     },
     {
@@ -1773,7 +1773,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Autumn/P_CoverPlant_03_Autumn.glb",
       "source_sha256": "152815c9e5835d21e0f4205d01555c55713bea7d8db30dd24ec5a7d32e3588ec",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_cover_03_autumn.tres"
     },
     {
@@ -1818,7 +1818,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Summer/P_CoverPlant_03_Summer.glb",
       "source_sha256": "aaa7383c5be370d7c3652739786777a848a0ace9a7b998d82105aad8cf02a572",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_cover_03_summer.tres"
     },
     {
@@ -1863,7 +1863,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Winter/P_CoverPlant_03_Winter.glb",
       "source_sha256": "4dde49a7c0d9cdbea0db4e4d564e5f82bfadc15615e27430901c63d3c597d504",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_cover_03_winter.tres"
     },
     {
@@ -1908,7 +1908,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Autumn/P_CoverPlant_04_Autumn.glb",
       "source_sha256": "bc864374fa983afa1f90ace4314c343f552141711125bf17375f16b46bef597d",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_cover_04_autumn.tres"
     },
     {
@@ -1953,7 +1953,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Summer/P_CoverPlant_04_Summer.glb",
       "source_sha256": "8af61dfd4860cab99ffe4a1fb054d72b3cdab2833bb048d8c351c529ba1a2f1d",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_cover_04_summer.tres"
     },
     {
@@ -1998,7 +1998,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Winter/P_CoverPlant_04_Winter.glb",
       "source_sha256": "3e5b3b670c0f9b1e0b1274af0dfa29e5083f4d3c75bd012c1084680f0577250d",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_cover_04_winter.tres"
     },
     {
@@ -2043,7 +2043,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Autumn/P_CoverPlant_05_Autumn.glb",
       "source_sha256": "2aa98c1cf7a813d1cca1b2ab0fbfdafd46247081ef01c1baa4b8d7f44dbf891e",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_cover_05_autumn.tres"
     },
     {
@@ -2088,7 +2088,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Summer/P_CoverPlant_05_Summer.glb",
       "source_sha256": "691d406c05de5c138393e149a1b4c4228845a5a67de5f9955268cf192813c4e8",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_cover_05_summer.tres"
     },
     {
@@ -2133,7 +2133,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Winter/P_CoverPlant_05_Winter.glb",
       "source_sha256": "ee52eeacf486880bc9fe098ccf88e2f4b3418a4c58696bd8e9d2a439128b9446",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_cover_05_winter.tres"
     },
     {
@@ -2178,7 +2178,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Autumn/P_CoverPlant_06_Autumn.glb",
       "source_sha256": "460764434415b6c19b89b97a28b7f8121705e8e1e201b27c24af35e07c1ad38c",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_cover_06_autumn.tres"
     },
     {
@@ -2223,7 +2223,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Summer/P_CoverPlant_06_Summer.glb",
       "source_sha256": "8b83c7a04c2ade947fb05a3ffd523c607233bb275391364d22b8c6be47f20e68",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_cover_06_summer.tres"
     },
     {
@@ -2268,7 +2268,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/CoverPlants/CoverPlants_-_Winter/P_CoverPlant_06_Winter.glb",
       "source_sha256": "5359de69251e6e88eef6d166070aee13ca6316e30df5b9cfb2d8b04b7307656f",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_cover_06_winter.tres"
     },
     {
@@ -2313,7 +2313,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_01_01.glb",
       "source_sha256": "b12c399af32f82ba2f581fa0b81e4c45bb69ef76e5fe4551c1917d5490aa76b7",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_01_1.tres"
     },
     {
@@ -2358,7 +2358,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_01_02.glb",
       "source_sha256": "b4db6d42300dab783e90ad71cb0f73af6c08928b19dd6cf0a910e832f2bac1ae",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_01_2.tres"
     },
     {
@@ -2403,7 +2403,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_01_03.glb",
       "source_sha256": "05deda5dd752a76f7902e483f0250012c64677876f7a1796b1c8ef22e9812c25",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_01_3.tres"
     },
     {
@@ -2448,7 +2448,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_02_01.glb",
       "source_sha256": "e4fb7741ebf65d873483853b8a5b35efe8f9aded9e14573f4b9124f15341b56f",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_02_1.tres"
     },
     {
@@ -2493,7 +2493,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_02_02.glb",
       "source_sha256": "85b7387e883c4f97bccb2874eaea82158c70caf38087897f8ac9c779f799ccff",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_02_2.tres"
     },
     {
@@ -2538,7 +2538,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_02_03.glb",
       "source_sha256": "dcdc1b558a0ca5d37e892d9f7531a95b9326ffee1b78c13053604540c86dabbb",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_02_3.tres"
     },
     {
@@ -2583,7 +2583,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_03_01.glb",
       "source_sha256": "01682a4fbf8f5ba73c972a64cacffa43f12ed1742de6ef8a8f71bcf5af60b842",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_03_1.tres"
     },
     {
@@ -2628,7 +2628,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_03_02.glb",
       "source_sha256": "f9e310cbda7380479fdce0f51bea09e76423ec3a8755d726ac14419b8629d87f",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_03_2.tres"
     },
     {
@@ -2673,7 +2673,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_03_03.glb",
       "source_sha256": "de91609025019fdea05a46cb8a82ec1e0095f19038cfbc9fd67f7c7280538bae",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_03_3.tres"
     },
     {
@@ -2718,7 +2718,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_04_01.glb",
       "source_sha256": "f9f2d12eededceebed6b4bfd65d15e0a2cd4002d79420ac0944bfbe6a9022b4b",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_04_1.tres"
     },
     {
@@ -2763,7 +2763,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_04_02.glb",
       "source_sha256": "a9d03eb899c6fe574d81fd02cc7b6bb7f64532a4135454d460f9f647d16589fa",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_04_2.tres"
     },
     {
@@ -2808,7 +2808,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_04_03.glb",
       "source_sha256": "ae9b4648ca365be1994069617e7bd27863b3f1c4690822e823b22669daedf1cb",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_04_3.tres"
     },
     {
@@ -2853,7 +2853,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_05_01.glb",
       "source_sha256": "84489bc3eda7d47241924ee587ad5d3d26c9c2f08dcbce158cb4519017293da1",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_05_1.tres"
     },
     {
@@ -2898,7 +2898,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_05_02.glb",
       "source_sha256": "f2264b7acce27d25f610313fa211a4b6ca093a14f8e0f182e7c777072f8dc216",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_05_2.tres"
     },
     {
@@ -2943,7 +2943,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_05_03.glb",
       "source_sha256": "f6815e498fe915b5c8e131f519f5bce5fb06746a122fc0125b20445dea812006",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_05_3.tres"
     },
     {
@@ -2988,7 +2988,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_06_01.glb",
       "source_sha256": "07d672d01282df2c3aac5c7d9101371d9db9dd61ffbcae74dea392df9fd46c2f",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_06_1.tres"
     },
     {
@@ -3033,7 +3033,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_06_02.glb",
       "source_sha256": "f30a5a73f4eceedb38b4698cd17e30f49113d36b6d971b5a5020651cec7c46e0",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_06_2.tres"
     },
     {
@@ -3078,7 +3078,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_06_03.glb",
       "source_sha256": "2ccae14daa230ce7e07c989f1bd5fa5440712629ad1a8e3eb4436acb19de33b7",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_06_3.tres"
     },
     {
@@ -3123,7 +3123,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_07_01.glb",
       "source_sha256": "ae7197029351ade0ec2c7a6be641f0a71fa69644edf95477426b5355eb8e2796",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_07_1.tres"
     },
     {
@@ -3168,7 +3168,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_07_02.glb",
       "source_sha256": "75a744ef27cfae2a253a2bbd11c4d86457f09419a279422877cdd252ddf08c05",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_07_2.tres"
     },
     {
@@ -3213,7 +3213,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_07_03.glb",
       "source_sha256": "9bd1942ac20101ab34aa88bab910109e379ddf5011816a67f225bc8d51b8a798",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_07_3.tres"
     },
     {
@@ -3258,7 +3258,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_08_01.glb",
       "source_sha256": "e276fa25e08c1710dde1a98996dde0cf068de1f018fa734c7c4af496a9331d09",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_08_1.tres"
     },
     {
@@ -3303,7 +3303,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_08_02.glb",
       "source_sha256": "89d59316c79de146975ecef321c745885a1c72d19ba9db0b9cbd45d6bc1302d3",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_08_2.tres"
     },
     {
@@ -3348,7 +3348,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_08_03.glb",
       "source_sha256": "7e1ed659252da89687e63f857e42244387c99642286474ccdc844b960f3b22bd",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_08_3.tres"
     },
     {
@@ -3393,7 +3393,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_09_01.glb",
       "source_sha256": "c2ed67e749112532a71eacd25ff443bb55cffaa044d7929a5bfe17a8a73ffc34",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_09_1.tres"
     },
     {
@@ -3438,7 +3438,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_09_02.glb",
       "source_sha256": "6c4f27e5d0bc523c255700292b391d17ec5023dd62c2c6f8baa397c1316a9be1",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_09_2.tres"
     },
     {
@@ -3483,7 +3483,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_09_03.glb",
       "source_sha256": "6c921b26ac6bd44372c15c4fc47ffe722e0a9b9b2c046670a351bb5dee324780",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_09_3.tres"
     },
     {
@@ -3528,7 +3528,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_10_01.glb",
       "source_sha256": "faf181b597a4f1fd454a20c1fa1300f5a91d1035aaa56d3acfff6882c3b2e7d9",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_10_1.tres"
     },
     {
@@ -3573,7 +3573,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_10_02.glb",
       "source_sha256": "9f30fcd885716b5fe6bf42b4d17987a0717d89fc7e749967630cb6e311066025",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_10_2.tres"
     },
     {
@@ -3618,7 +3618,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Flowers/P_Flower_10_03.glb",
       "source_sha256": "e92f20d6708e604b6c9903aebeae3ddb624a2d9ba4e5acd60dc87c36dfbfb277",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_flower_10_3.tres"
     },
     {
@@ -3663,7 +3663,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Autumn/P_Grass_01_Autumn_01.glb",
       "source_sha256": "8e75968f744cbbc4d207d4fda2c15b76c2203ac1eabfa2950a722964cbc680e9",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_grass_01_1_autumn.tres"
     },
     {
@@ -3708,7 +3708,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Summer/P_Grass_01_Summer_01.glb",
       "source_sha256": "4181b38d3e5f4d2cb35d92ab53812fdf2fbd91d7ccd0fc5ef1af5772adbde8f2",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_grass_01_1_summer.tres"
     },
     {
@@ -3753,7 +3753,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Winter/P_Grass_01_Winter_01.glb",
       "source_sha256": "9053d0dc93a4011a652db825d896f64fd8f90a4df5eb7cd462230ae4021ff245",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_grass_01_1_winter.tres"
     },
     {
@@ -3798,7 +3798,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Autumn/P_Grass_01_Autumn_02.glb",
       "source_sha256": "c38d129534fae59808cd5408be37a4d2a3aa119526261edccc6a13e9e81e2412",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_grass_01_2_autumn.tres"
     },
     {
@@ -3843,7 +3843,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Summer/P_Grass_01_Summer_02.glb",
       "source_sha256": "1de4aa1fb7cdba76b7d557b7fa5da98584d04e133360d559eda5fd5b0e03d836",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_grass_01_2_summer.tres"
     },
     {
@@ -3888,7 +3888,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Winter/P_Grass_01_Winter_02.glb",
       "source_sha256": "53c2934f25790d439a1d3e47b0c1e46c5d31126a3b3c9892bb6a6954e4333081",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_grass_01_2_winter.tres"
     },
     {
@@ -3933,7 +3933,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Autumn/P_Grass_01_Autumn_03.glb",
       "source_sha256": "23afe9f100d9a7922fc0fa29cc826d724aad97d69c838b6c2d59088d562aa3dc",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_grass_01_3_autumn.tres"
     },
     {
@@ -3978,7 +3978,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Summer/P_Grass_01_Summer_03.glb",
       "source_sha256": "9c7bfa9e5765e74795ae30c89a8fc14aad01c215cb717de6829a33a989479749",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_grass_01_3_summer.tres"
     },
     {
@@ -4023,7 +4023,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Winter/P_Grass_01_Winter_03.glb",
       "source_sha256": "6e5c427ce8f59168712621f10de42b024ed601ee6c80a8a16d13f6004f8a863c",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_grass_01_3_winter.tres"
     },
     {
@@ -4068,7 +4068,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Autumn/P_Grass_02_Autumn_01.glb",
       "source_sha256": "c02683b1b3af961b71baf039922932dad3c81e247876d6a3fa93b95eddc8ece1",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_grass_02_1_autumn.tres"
     },
     {
@@ -4113,7 +4113,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Summer/P_Grass_02_Summer_01.glb",
       "source_sha256": "c10fb9514bb8e221e4935f986edb6d4507cd838e9a92c612bad92a3cef2467e3",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_grass_02_1_summer.tres"
     },
     {
@@ -4158,7 +4158,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Winter/P_Grass_02_Winter_01.glb",
       "source_sha256": "ea23d88f0fc9363a752ec33eaa4ae7836802e85284f3fd4888820297af5de248",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_grass_02_1_winter.tres"
     },
     {
@@ -4203,7 +4203,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Autumn/P_Grass_02_Autumn_02.glb",
       "source_sha256": "f5797f0a6f6bca22b3d1160a055166fd9abb9c9beec9524cd197d79d8b7fe709",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_grass_02_2_autumn.tres"
     },
     {
@@ -4248,7 +4248,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Summer/P_Grass_02_Summer_02.glb",
       "source_sha256": "33cb79b89209f751899abd0583f3c070096430370a576922a2727c49b212735c",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_grass_02_2_summer.tres"
     },
     {
@@ -4293,7 +4293,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Winter/P_Grass_02_Winter_02.glb",
       "source_sha256": "b5068197973566eb27316e877c5056e0c46fe4c0c02b2ddee783959ad990cd2f",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_grass_02_2_winter.tres"
     },
     {
@@ -4338,7 +4338,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Autumn/P_Grass_02_Autumn_03.glb",
       "source_sha256": "64d539da61021396d0157989644d560020547b54a377f6f0862cf814bc79d99e",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_grass_02_3_autumn.tres"
     },
     {
@@ -4383,7 +4383,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Summer/P_Grass_02_Summer_03.glb",
       "source_sha256": "b450c015c30e02cac3fdd31620b12fc6e6561cd3ba7943f44e5e5279d42cf069",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_grass_02_3_summer.tres"
     },
     {
@@ -4428,7 +4428,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Winter/P_Grass_02_Winter_03.glb",
       "source_sha256": "f77000374505f6155c0e0a0134f12a420d2d1efca49a22c7e94e4c1514cf0e12",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_grass_02_3_winter.tres"
     },
     {
@@ -4473,7 +4473,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Autumn/P_Grass_03_Autumn_01.glb",
       "source_sha256": "72441ca826ae7e24b3374247bcb51cf89d4e717433177b25aef9a8b83c242714",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_grass_03_1_autumn.tres"
     },
     {
@@ -4518,7 +4518,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Summer/P_Grass_03_Summer_01.glb",
       "source_sha256": "e64b4fde1d93028511a51eae47915eb356dfb01f356dc41b9ec26b67e99e01e7",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_grass_03_1_summer.tres"
     },
     {
@@ -4563,7 +4563,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Winter/P_Grass_03_Winter_01.glb",
       "source_sha256": "0cc7b103b794c4ef8b107cd2d92e675764763251a7cb172b69f79057d7b9dbc2",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_grass_03_1_winter.tres"
     },
     {
@@ -4608,7 +4608,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Autumn/P_Grass_03_Autumn_02.glb",
       "source_sha256": "b0412f53cdbc0254420b660c585bca076b7b954f71ab623842b3f4f97f007461",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_grass_03_2_autumn.tres"
     },
     {
@@ -4653,7 +4653,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Summer/P_Grass_03_Summer_02.glb",
       "source_sha256": "1986d0be53ebe52b9cc708730cb884f04ce805df745ea548d6c6fbbba64e660c",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_grass_03_2_summer.tres"
     },
     {
@@ -4698,7 +4698,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Winter/P_Grass_03_Winter_02.glb",
       "source_sha256": "b4557100d6d708f560d7a61a688408adcce3f75f0738618744bfc0279a275a28",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_grass_03_2_winter.tres"
     },
     {
@@ -4743,7 +4743,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Autumn/P_Grass_03_Autumn_03.glb",
       "source_sha256": "05f254817d7e88959e7a49676f7dc6fb7943ad0c44145598741420bd9c0fe996",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_grass_03_3_autumn.tres"
     },
     {
@@ -4788,7 +4788,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Summer/P_Grass_03_Summer_03.glb",
       "source_sha256": "0f81c2cc5eae8a58f700b536475cd9a3aa34d59119d92134e74853c008174f8c",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_grass_03_3_summer.tres"
     },
     {
@@ -4833,7 +4833,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Grass/Grass_-_Winter/P_Grass_03_Winter_03.glb",
       "source_sha256": "56e01f20c2fc3eb3d7d40198b6eeaceb9ffcee58a1ac8a988cdc43f17a8ca4c3",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_grass_03_3_winter.tres"
     },
     {
@@ -4865,23 +4865,17 @@
         "collision_profile": "oriented_cylinder",
         "collision_radius_fraction": 0.42,
         "id": "meadow.log.01",
-        "material_tint": [
-          0.492,
-          0.498,
-          0.215,
-          1.0
-        ],
         "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Props/Props_-_Summer/P_Log_01_Summer.glb",
         "supports_instance_color": true,
         "tags": [
           "deadwood",
           "nature"
         ],
-        "tint_group": "tree"
+        "tint_group": "identity"
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Props/Props_-_Summer/P_Log_01_Summer.glb",
       "source_sha256": "ffc5791ab7e8eacd410be7853518136df38de151a06c9f9e4df3066210629198",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_log_01.tres"
     },
     {
@@ -4913,23 +4907,17 @@
         "collision_profile": "oriented_cylinder",
         "collision_radius_fraction": 0.42,
         "id": "meadow.log.02",
-        "material_tint": [
-          0.492,
-          0.498,
-          0.215,
-          1.0
-        ],
         "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Props/Props_-_Summer/P_Log_02_Summer.glb",
         "supports_instance_color": true,
         "tags": [
           "deadwood",
           "nature"
         ],
-        "tint_group": "tree"
+        "tint_group": "identity"
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Props/Props_-_Summer/P_Log_02_Summer.glb",
       "source_sha256": "952790db5a3ad8b814cc3356105d259d943b5d2b28fe1ccb68efc91aaa3ed2ce",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_log_02.tres"
     },
     {
@@ -4951,7 +4939,7 @@
             16.3612670898438
           ]
         },
-        "mesh_bytes": 643423,
+        "mesh_bytes": 858828,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 13198
@@ -4970,7 +4958,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_OakTree_01_Autumn.glb",
       "source_sha256": "0c033b7a677d761b84258e6bdff577d0d6327079dd7439702b14da0423d93725",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_01_autumn.tres"
     },
     {
@@ -4992,7 +4980,7 @@
             16.3612670898438
           ]
         },
-        "mesh_bytes": 643423,
+        "mesh_bytes": 858828,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 13198
@@ -5011,7 +4999,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_OakTree_01_Summer.glb",
       "source_sha256": "cc48c0a0b7ceb77b2e69941428708c1b2b06c299c8e315bec7a655ae85f259a3",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_01_summer.tres"
     },
     {
@@ -5033,7 +5021,7 @@
             16.3612670898438
           ]
         },
-        "mesh_bytes": 643423,
+        "mesh_bytes": 858828,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 13198
@@ -5052,7 +5040,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_OakTree_01_Winter.glb",
       "source_sha256": "95d374aac07ee9b31efa65126b65d8091f2172f5b9baf29f5ca5cde496e0be77",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_01_winter.tres"
     },
     {
@@ -5074,7 +5062,7 @@
             14.6190061569214
           ]
         },
-        "mesh_bytes": 585223,
+        "mesh_bytes": 785832,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 11817
@@ -5093,7 +5081,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_OakTree_02_Autumn.glb",
       "source_sha256": "65e4a4432cf4d81090bee3ddb1fd128d078cd7d93cc1f6f2af4857c9b3241dcd",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_02_autumn.tres"
     },
     {
@@ -5115,7 +5103,7 @@
             14.6190061569214
           ]
         },
-        "mesh_bytes": 585223,
+        "mesh_bytes": 785832,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 11817
@@ -5134,7 +5122,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_OakTree_02_Summer.glb",
       "source_sha256": "a8d42c6a47dbf4280928f146ec05c99f3e926cd5d814eaee40f1dcdf4406da8a",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_02_summer.tres"
     },
     {
@@ -5156,7 +5144,7 @@
             14.6190061569214
           ]
         },
-        "mesh_bytes": 585223,
+        "mesh_bytes": 785832,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 11817
@@ -5175,7 +5163,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_OakTree_02_Winter.glb",
       "source_sha256": "71c6c1e647ab9d24f9b450e49b5bc6be0c2f3247a1056a38749f1d459b50337a",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_02_winter.tres"
     },
     {
@@ -5197,7 +5185,7 @@
             11.2685031890869
           ]
         },
-        "mesh_bytes": 532279,
+        "mesh_bytes": 708544,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 10995
@@ -5216,7 +5204,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_OakTree_03_Autumn.glb",
       "source_sha256": "ce500ac26a03d770dc82bb38c407d51b4c274b5bb7bcdb85d99a5649c4c8d6b3",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_03_autumn.tres"
     },
     {
@@ -5238,7 +5226,7 @@
             11.2685031890869
           ]
         },
-        "mesh_bytes": 532279,
+        "mesh_bytes": 708544,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 10995
@@ -5257,7 +5245,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_OakTree_03_Summer.glb",
       "source_sha256": "8706272f2ca4b1e15d44cf330d6939e52e5582864352c61fc65a1334f5c62d51",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_03_summer.tres"
     },
     {
@@ -5279,7 +5267,7 @@
             11.2685031890869
           ]
         },
-        "mesh_bytes": 532279,
+        "mesh_bytes": 708544,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 10995
@@ -5298,7 +5286,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_OakTree_03_Winter.glb",
       "source_sha256": "6a7e737366b5b852b5780d5d89f41cadb25e4bb967587fc739ec4f7ec841f0f0",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_03_winter.tres"
     },
     {
@@ -5320,7 +5308,7 @@
             10.1718759536743
           ]
         },
-        "mesh_bytes": 427303,
+        "mesh_bytes": 556684,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 9151
@@ -5339,7 +5327,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_OakTree_04_Autumn.glb",
       "source_sha256": "6bc05b8ab3f528debab42ae9c8658aae9e9676a338f1ef343769d9208c9ebae8",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_04_autumn.tres"
     },
     {
@@ -5361,7 +5349,7 @@
             10.1718759536743
           ]
         },
-        "mesh_bytes": 427303,
+        "mesh_bytes": 556684,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 9151
@@ -5380,7 +5368,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_OakTree_04_Summer.glb",
       "source_sha256": "477d1414b6d1a8eb8b14405c5a7bd663dbea31592bb28a2906103bb74345eb44",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_04_summer.tres"
     },
     {
@@ -5402,7 +5390,7 @@
             10.1718759536743
           ]
         },
-        "mesh_bytes": 427303,
+        "mesh_bytes": 556684,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 9151
@@ -5421,7 +5409,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_OakTree_04_Winter.glb",
       "source_sha256": "11287eb3e5929420d1a6bb76d55e2bcbaf89f561ed09d512e97185513d8dcc0f",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_04_winter.tres"
     },
     {
@@ -5443,7 +5431,7 @@
             8.08304786682129
           ]
         },
-        "mesh_bytes": 252919,
+        "mesh_bytes": 361876,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 4720
@@ -5462,7 +5450,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_OakTree_05_Autumn.glb",
       "source_sha256": "f46d4052e64f78f8aa194a85cc324f00c1a4b9a92c79a5b161b2d690f4b4c8a7",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_05_autumn.tres"
     },
     {
@@ -5484,7 +5472,7 @@
             8.08304786682129
           ]
         },
-        "mesh_bytes": 252919,
+        "mesh_bytes": 361876,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 4720
@@ -5503,7 +5491,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_OakTree_05_Summer.glb",
       "source_sha256": "a8fcd565cf6a87dcde2ac292be51a59e8cd02b628c8f3532b7081a3283bc52b0",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_05_summer.tres"
     },
     {
@@ -5525,7 +5513,7 @@
             8.08304786682129
           ]
         },
-        "mesh_bytes": 252919,
+        "mesh_bytes": 361876,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 4720
@@ -5544,7 +5532,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_OakTree_05_Winter.glb",
       "source_sha256": "ba4d84e1eb32974be4a061a80678c96b35b846c2e07bfbdecc64a8742cee3b65",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_05_winter.tres"
     },
     {
@@ -5566,7 +5554,7 @@
             7.94663906097412
           ]
         },
-        "mesh_bytes": 207351,
+        "mesh_bytes": 293304,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 3846
@@ -5585,7 +5573,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_OakTree_06_Autumn.glb",
       "source_sha256": "ca66f3f7d1132db525d06cc05c633437ff9301054bb29236bdfbc46665227422",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_06_autumn.tres"
     },
     {
@@ -5607,7 +5595,7 @@
             7.94663906097412
           ]
         },
-        "mesh_bytes": 207351,
+        "mesh_bytes": 293304,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 3846
@@ -5626,7 +5614,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_OakTree_06_Summer.glb",
       "source_sha256": "1d286e9016f74a86965cb60885ad7495c2d876367bd41d946435255380b18ba2",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_06_summer.tres"
     },
     {
@@ -5648,7 +5636,7 @@
             7.94663906097412
           ]
         },
-        "mesh_bytes": 207351,
+        "mesh_bytes": 293304,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 3846
@@ -5667,7 +5655,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_OakTree_06_Winter.glb",
       "source_sha256": "cf36dd6e252f04b9315c04a0b2d4cc490cf507f7c8256d62aa980a0f57148308",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_06_winter.tres"
     },
     {
@@ -5689,7 +5677,7 @@
             8.87530136108398
           ]
         },
-        "mesh_bytes": 414823,
+        "mesh_bytes": 596824,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 7802
@@ -5708,7 +5696,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_OakTree_07_Autumn.glb",
       "source_sha256": "de21296ade4df71c16c73dc676c7d86b7b3e1a54388b78fbd4eaf1bc29a06b0c",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_07_autumn.tres"
     },
     {
@@ -5730,7 +5718,7 @@
             8.87530136108398
           ]
         },
-        "mesh_bytes": 414823,
+        "mesh_bytes": 596824,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 7802
@@ -5749,7 +5737,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_OakTree_07_Summer.glb",
       "source_sha256": "686336d1e5dd016155b34a6dd17ffdf3336eb643345b15d030e1b4b96a5d6f9f",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_07_summer.tres"
     },
     {
@@ -5771,7 +5759,7 @@
             8.87530136108398
           ]
         },
-        "mesh_bytes": 414823,
+        "mesh_bytes": 596824,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 7802
@@ -5790,7 +5778,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_OakTree_07_Winter.glb",
       "source_sha256": "9ece36ce251a1c6ee09b75c83a0c1caee4116cfd3a837532fb0d04f933b907f9",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_07_winter.tres"
     },
     {
@@ -5812,7 +5800,7 @@
             16.3612670898438
           ]
         },
-        "mesh_bytes": 831510,
+        "mesh_bytes": 1024066,
         "surface_count": 3,
         "visual_piece_count": 1,
         "visual_triangles": 17276
@@ -5831,7 +5819,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_OakTree_01_Autumn_Ivy.glb",
       "source_sha256": "9bf11ca34911ba57c518b5132b4e73c97a502adca645a00eef537efdafa7b5d7",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_ivy_01_autumn.tres"
     },
     {
@@ -5853,7 +5841,7 @@
             16.3612670898438
           ]
         },
-        "mesh_bytes": 831510,
+        "mesh_bytes": 1024066,
         "surface_count": 3,
         "visual_piece_count": 1,
         "visual_triangles": 17276
@@ -5872,7 +5860,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_OakTree_01_Summer_Ivy.glb",
       "source_sha256": "d43cf8f89528a4fd99efd17e090f55659e32b959ca341e9e9f853eb452166312",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_ivy_01_summer.tres"
     },
     {
@@ -5894,7 +5882,7 @@
             16.3612670898438
           ]
         },
-        "mesh_bytes": 831510,
+        "mesh_bytes": 1024066,
         "surface_count": 3,
         "visual_piece_count": 1,
         "visual_triangles": 17276
@@ -5913,7 +5901,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_OakTree_01_Winter_Ivy.glb",
       "source_sha256": "d86957cb8df1adc4769478dd593f1a217cc6da13fdb5bc0899f1ee8baf0bc2a1",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_ivy_01_winter.tres"
     },
     {
@@ -5935,7 +5923,7 @@
             14.6190061569214
           ]
         },
-        "mesh_bytes": 780358,
+        "mesh_bytes": 959542,
         "surface_count": 3,
         "visual_piece_count": 1,
         "visual_triangles": 16109
@@ -5954,7 +5942,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_OakTree_02_Autumn_Ivy.glb",
       "source_sha256": "41c0a81889a41edca7d1619d595482c738e94db3beaeef4f027d0ea63021ea90",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_ivy_02_autumn.tres"
     },
     {
@@ -5976,7 +5964,7 @@
             14.6190061569214
           ]
         },
-        "mesh_bytes": 780358,
+        "mesh_bytes": 959542,
         "surface_count": 3,
         "visual_piece_count": 1,
         "visual_triangles": 16109
@@ -5995,7 +5983,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_OakTree_02_Summer_Ivy.glb",
       "source_sha256": "b020f4b5807af5ae38aed2c4eb04c447ee02cd66437ab397327df24d363b4b04",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_ivy_02_summer.tres"
     },
     {
@@ -6017,7 +6005,7 @@
             14.6190061569214
           ]
         },
-        "mesh_bytes": 780358,
+        "mesh_bytes": 959542,
         "surface_count": 3,
         "visual_piece_count": 1,
         "visual_triangles": 16109
@@ -6036,7 +6024,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_OakTree_02_Winter_Ivy.glb",
       "source_sha256": "a629df0495699dd6205f35949a29ad74abed13a81cccbfc3fa78d94ff3f1b5e4",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_ivy_02_winter.tres"
     },
     {
@@ -6058,7 +6046,7 @@
             10.1718759536743
           ]
         },
-        "mesh_bytes": 564126,
+        "mesh_bytes": 677750,
         "surface_count": 3,
         "visual_piece_count": 1,
         "visual_triangles": 12209
@@ -6077,7 +6065,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Autumn/P_OakTree_04_Autumn_Ivy.glb",
       "source_sha256": "85f5ae9514e67d4c74ec83ff97f9221d496c21f0b012e1ebe981bd7cda917acd",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_ivy_04_autumn.tres"
     },
     {
@@ -6099,7 +6087,7 @@
             10.1718759536743
           ]
         },
-        "mesh_bytes": 564126,
+        "mesh_bytes": 677750,
         "surface_count": 3,
         "visual_piece_count": 1,
         "visual_triangles": 12209
@@ -6118,7 +6106,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_OakTree_04_Summer_Ivy.glb",
       "source_sha256": "2709b10a45dd02940da1339dff3455809ebcef7b031e59abd3e870e08ef0a5c1",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_ivy_04_summer.tres"
     },
     {
@@ -6140,7 +6128,7 @@
             10.1718759536743
           ]
         },
-        "mesh_bytes": 564126,
+        "mesh_bytes": 677750,
         "surface_count": 3,
         "visual_piece_count": 1,
         "visual_triangles": 12209
@@ -6159,7 +6147,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Winter/P_OakTree_04_Winter_Ivy.glb",
       "source_sha256": "4940a850c6f40f47c19ea09bb517fd8d240376a835ba1a673ccc07393da1eda7",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_ivy_04_winter.tres"
     },
     {
@@ -6204,7 +6192,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Autumn/P_Plant_01_Autumn_01.glb",
       "source_sha256": "4931de4f7cbba0d72f1e4bcc60e1f63ac5f9225fdf59208f1fbf18d22380f4a5",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_plant_01_1_autumn.tres"
     },
     {
@@ -6249,7 +6237,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Summer/P_Plant_01_Summer_01.glb",
       "source_sha256": "7205aba5d8d91c82f958366d3ddc4d5ce2cf22301caa679714a50f6d7db410bd",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_plant_01_1_summer.tres"
     },
     {
@@ -6294,7 +6282,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Winter/P_Plant_01_Winter_01.glb",
       "source_sha256": "f1af1126ac74da8dab4ee495092086f0f5c0e78ac226d4b430adc2153dd43e6b",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_plant_01_1_winter.tres"
     },
     {
@@ -6339,7 +6327,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Autumn/P_Plant_01_Autumn_02.glb",
       "source_sha256": "ec677d11961af3e3ac5dd2fc1cebd2bfd3ca380338554a45eed03e4936a4fffb",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_plant_01_2_autumn.tres"
     },
     {
@@ -6384,7 +6372,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Summer/P_Plant_01_Summer_02.glb",
       "source_sha256": "128f9c7cf1b9f195aa09f4f96f1336e6bc02a5d3e2879a015ade1e560059a0c6",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_plant_01_2_summer.tres"
     },
     {
@@ -6429,7 +6417,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Winter/P_Plant_01_Winter_02.glb",
       "source_sha256": "afeb1a119ff1357bc5fd9c20965267bb94686197bb934c35dd189caf054e6500",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_plant_01_2_winter.tres"
     },
     {
@@ -6474,7 +6462,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Autumn/P_Plant_01_Autumn_03.glb",
       "source_sha256": "3ad5625642947f7369a73458e737bedb8a4e1937b83e6774d2896497f659e012",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_plant_01_3_autumn.tres"
     },
     {
@@ -6519,7 +6507,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Summer/P_Plant_01_Summer_03.glb",
       "source_sha256": "50e55953695c47256f7453db98694ac7291589f396e97b7a6d00eb17671db95b",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_plant_01_3_summer.tres"
     },
     {
@@ -6564,7 +6552,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Winter/P_Plant_01_Winter_03.glb",
       "source_sha256": "4086f4f0a2d91d8ab20a19d98df1f6e667cb5b9abbd32bd7806af1759d12c54b",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_plant_01_3_winter.tres"
     },
     {
@@ -6609,7 +6597,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Autumn/P_Plant_02_Autumn_01.glb",
       "source_sha256": "d05d1071085c32e956c51b5b14464f9a9fce506b8a7b2fac4c9f64e6e02f8066",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_plant_02_1_autumn.tres"
     },
     {
@@ -6654,7 +6642,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Summer/P_Plant_02_Summer_01.glb",
       "source_sha256": "5959358b899a8c028676bfced884c3c66d598798ce0caaf229abff84548c3d14",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_plant_02_1_summer.tres"
     },
     {
@@ -6699,7 +6687,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Winter/P_Plant_02_Winter_01.glb",
       "source_sha256": "10d19317a256d67aee7b286f279442aff354d31726c5d46fc61b56d650a89e95",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_plant_02_1_winter.tres"
     },
     {
@@ -6744,7 +6732,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Autumn/P_Plant_02_Autumn_02.glb",
       "source_sha256": "f1627dea51aa38bd17095b74854c6b198eda45e2fc0f9a6db480d93461b2e719",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_plant_02_2_autumn.tres"
     },
     {
@@ -6789,7 +6777,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Summer/P_Plant_02_Summer_02.glb",
       "source_sha256": "d2550e960c892bad010cb3b3e477d3ba23cf0dd78c2b4ce57c0fdae6a887540f",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_plant_02_2_summer.tres"
     },
     {
@@ -6834,7 +6822,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Winter/P_Plant_02_Winter_02.glb",
       "source_sha256": "453b7edc885f0a639eebd9ce97b63656d14075edb06e417bc7f02714b827c8b5",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_plant_02_2_winter.tres"
     },
     {
@@ -6879,7 +6867,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Autumn/P_Plant_02_Autumn_03.glb",
       "source_sha256": "53151f6d277373bdbb2db414f9992fa47caf89c67ed4bd98e7ec4188816d4c7d",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_plant_02_3_autumn.tres"
     },
     {
@@ -6924,7 +6912,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Summer/P_Plant_02_Summer_03.glb",
       "source_sha256": "dd57b66a6bede60c13548bea621f1c585180cf477fd6c3c00fc48659eaffc481",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_plant_02_3_summer.tres"
     },
     {
@@ -6969,7 +6957,7 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Plants/Plants_-_Winter/P_Plant_02_Winter_03.glb",
       "source_sha256": "8f120296ddff5dfaca4b0f27c5849b513bc14d98d59658de111265fa376650ca",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_plant_02_3_winter.tres"
     },
     {
@@ -7000,23 +6988,17 @@
       "parameters": {
         "collision_profile": "stump_cylinder",
         "id": "meadow.stump.01",
-        "material_tint": [
-          0.607,
-          0.664,
-          0.43,
-          1.0
-        ],
         "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Props/Props_-_Summer/P_Stump_01_Summer.glb",
         "supports_instance_color": true,
         "tags": [
           "deadwood",
           "nature"
         ],
-        "tint_group": "tree"
+        "tint_group": "identity"
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Props/Props_-_Summer/P_Stump_01_Summer.glb",
       "source_sha256": "4f5e70e8dee8078f4fd1722f42e91317c8d05ef99dbe75cf446e9fd8da6a0199",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_stump_01.tres"
     },
     {
@@ -7047,23 +7029,17 @@
       "parameters": {
         "collision_profile": "stump_cylinder",
         "id": "meadow.stump.02",
-        "material_tint": [
-          0.607,
-          0.664,
-          0.43,
-          1.0
-        ],
         "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Props/Props_-_Summer/P_Stump_02_Summer.glb",
         "supports_instance_color": true,
         "tags": [
           "deadwood",
           "nature"
         ],
-        "tint_group": "tree"
+        "tint_group": "identity"
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Props/Props_-_Summer/P_Stump_02_Summer.glb",
       "source_sha256": "f549092d17c921987c2eabb060863140d5fdfb64ed87d4731f4389373abcd9f2",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_stump_02.tres"
     },
     {
@@ -7085,7 +7061,7 @@
             2.57514476776123
           ]
         },
-        "mesh_bytes": 209313,
+        "mesh_bytes": 236330,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 4006
@@ -7109,11 +7085,11 @@
       },
       "source": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Trees/Trees_-_Summer/P_BirchTree_05_Summer.glb",
       "source_sha256": "50ff683e61c5827d51816037c8fb5fd1b12481a30b9bfc4b6b29ef4819d8afd8",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/angry_mesh_meadow/meadow_town_birch.tres"
     }
   ],
   "license": "ANGRY MESH Stylized Pack - Meadow Environment, Unity Asset Store EULA",
   "pack": "angry_mesh_meadow",
-  "tool_version": 38
+  "tool_version": 39
 }

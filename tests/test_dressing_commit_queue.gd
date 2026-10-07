@@ -99,3 +99,73 @@ func test_stable_ids_are_validated_and_ignored_by_render_commit() -> void:
 		"transforms": [Transform3D.IDENTITY], "colors": [Color.WHITE], "ids": [&"a", &"b"]}
 	malformed.instance_count = 1
 	assert_false(malformed.validate())
+
+func test_trees_batch_per_foliage_tile_so_each_tile_culls_and_picks_its_lod() -> void:
+	## October 6: a chunk-wide tree batch always touched the camera, so every
+	## crown in the chunk drew all its leaf cards. Trees and bushes batch per
+	## 48 m world square; other dressing keeps one batch per chunk.
+	var cache := _cache_for(&"meadow.oak.04.summer")
+	var queue := EnvironmentCommitQueue.new(cache, &"Dressing")
+	var parent := Node3D.new()
+	add_child_autofree(parent)
+	var payload := EnvironmentInstancePayload.new()
+	for x: float in [5.0, 20.0, 60.0, 100.0, 150.0]:
+		payload.add(&"meadow.oak.04.summer", Transform3D(Basis(), Vector3(x, 0.0, 10.0)), Color.WHITE)
+	queue.register_chunk(Vector2i.ZERO, 1)
+	queue.enqueue(Vector2i.ZERO, 1, parent, payload)
+	var pieces := cache.visual(&"meadow.oak.04.summer").pieces.size()
+	# x 5 and 20 share tile 0; 60, 100 and 150 fall in tiles 1, 2 and 3.
+	assert_eq(queue.pending_count(), 4 * pieces)
+	var total := 0
+	for item: Dictionary in queue._items:
+		var xs: Array = item.transforms.map(func(t: Transform3D) -> int:
+			return floori(t.origin.x / EnvironmentCommitQueue.FOLIAGE_TILE))
+		assert_eq(xs.min(), xs.max(), "one batch holds one tile")
+		total += item.transforms.size()
+	assert_eq(total, 5 * pieces)
+
+func test_painted_trees_cast_their_sun_shadow_from_the_baked_stand_in() -> void:
+	## October 6: four shadow cascades of full crowns cost a dense forest most
+	## of its frame. The visible batch casts none; a shadow-only proxy with an
+	## eighth of the leaf cards repeats its instances.
+	var cache := _cache_for(&"meadow.oak.04.summer")
+	var queue := EnvironmentCommitQueue.new(cache, &"Dressing")
+	var parent := Node3D.new()
+	add_child_autofree(parent)
+	var payload := EnvironmentInstancePayload.new()
+	payload.add(&"meadow.oak.04.summer", Transform3D(Basis(), Vector3(4.0, 0.0, 4.0)), Color.WHITE)
+	payload.add(&"meadow.oak.04.summer", Transform3D(Basis(), Vector3(9.0, 0.0, 2.0)), Color.WHITE)
+	queue.register_chunk(Vector2i.ZERO, 1)
+	queue.enqueue(Vector2i.ZERO, 1, parent, payload)
+	queue.drain(16)
+	var instance := parent.get_node("Dressing").get_child(0) as MultiMeshInstance3D
+	assert_eq(instance.cast_shadow, GeometryInstance3D.SHADOW_CASTING_SETTING_OFF)
+	var proxy := instance.get_node_or_null("LeafShadow") as MultiMeshInstance3D
+	assert_not_null(proxy)
+	if proxy == null:
+		return
+	assert_eq(proxy.cast_shadow, GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY)
+	assert_eq(proxy.multimesh.instance_count, 2)
+	for index in 2:
+		assert_eq(proxy.multimesh.get_instance_transform(index),
+			instance.multimesh.get_instance_transform(index), "same instances")
+		assert_eq(proxy.multimesh.get_instance_color(index),
+			instance.multimesh.get_instance_color(index), "same tints")
+	var visible_leaf := instance.multimesh.mesh.surface_get_arrays(1)[Mesh.ARRAY_INDEX] as PackedInt32Array
+	var shadow_leaf := proxy.multimesh.mesh.surface_get_arrays(1)[Mesh.ARRAY_INDEX] as PackedInt32Array
+	assert_almost_eq(float(shadow_leaf.size()) / float(visible_leaf.size()), 0.125, 0.04,
+		"the stand-in keeps the last leaf LOD's eighth of the cards")
+	var shadow_mesh := proxy.multimesh.mesh
+	assert_eq(shadow_mesh.get_surface_count(), instance.multimesh.mesh.get_surface_count() + 1,
+		"plus one opaque crown blob for the wide cascades")
+	var blob := shadow_mesh.surface_get_material(shadow_mesh.get_surface_count() - 1) as ShaderMaterial
+	assert_eq(blob.shader.resource_path, "res://terrain/environment/materials/leaf_shadow_blob.gdshader")
+	var leaf := instance.multimesh.mesh.surface_get_material(1) as ShaderMaterial
+	var width := RegEx.create_from_string("shadow_card_cascade_width = ([0-9.]+);")
+	var blob_width := width.search(blob.shader.code)
+	var leaf_width := width.search(leaf.shader.code)
+	assert_not_null(blob_width)
+	assert_not_null(leaf_width)
+	if blob_width != null and leaf_width != null:
+		assert_eq(blob_width.get_string(1), leaf_width.get_string(1),
+			"cards and blob split the cascades at one width")

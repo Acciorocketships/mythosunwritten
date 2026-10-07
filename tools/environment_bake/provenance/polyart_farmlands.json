@@ -19,7 +19,7 @@
             7.08588886260986
           ]
         },
-        "mesh_bytes": 155801,
+        "mesh_bytes": 185973,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 3358
@@ -38,7 +38,7 @@
       },
       "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/PF_Farm_GenTree_Sapling_01.glb",
       "source_sha256": "597c266090579e7be8330877c46f32ef028637133db77497e3d8a494eef6ba7a",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/polyart_farmlands/farm_sapling_01.tres"
     },
     {
@@ -60,7 +60,7 @@
             5.86469745635986
           ]
         },
-        "mesh_bytes": 124769,
+        "mesh_bytes": 146889,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 2648
@@ -79,7 +79,7 @@
       },
       "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/PF_Farm_GenTree_Sapling_02.glb",
       "source_sha256": "227405ae2fd1cc4ac176d8e01f56139da6ee8bbc278e7da0fd153a0d8ed1b994",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/polyart_farmlands/farm_sapling_02.tres"
     },
     {
@@ -101,7 +101,7 @@
             8.10848617553711
           ]
         },
-        "mesh_bytes": 217321,
+        "mesh_bytes": 249327,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 4601
@@ -120,7 +120,7 @@
       },
       "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/Bushes/PF_Farm_GenTree_Bush_01.glb",
       "source_sha256": "1b97098301e05dc592cf6b00b8a55e4e935fe6b842063c5be5914787b0716038",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/polyart_farmlands/farm_small_tree_01.tres"
     },
     {
@@ -142,7 +142,7 @@
             6.00234174728394
           ]
         },
-        "mesh_bytes": 127993,
+        "mesh_bytes": 160527,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 2726
@@ -161,7 +161,7 @@
       },
       "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/Bushes/PF_Farm_GenTree_Bush_02.glb",
       "source_sha256": "fa07dadd3dacec13919b04614978a04e31270044efef830dbb66c449b530e547",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/polyart_farmlands/farm_small_tree_02.tres"
     },
     {
@@ -183,7 +183,7 @@
             6.0310173034668
           ]
         },
-        "mesh_bytes": 110345,
+        "mesh_bytes": 132823,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 2279
@@ -202,7 +202,7 @@
       },
       "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/Bushes/PF_Farm_GenTree_Bush_03.glb",
       "source_sha256": "a513a8e2e1643cc48e213fbcc9e5bd6d33a86cf607cab5a628f3b64f786924dd",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/polyart_farmlands/farm_small_tree_03.tres"
     },
     {
@@ -224,7 +224,7 @@
             5.43781328201294
           ]
         },
-        "mesh_bytes": 81833,
+        "mesh_bytes": 95599,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 1685
@@ -243,7 +243,7 @@
       },
       "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/Bushes/PF_Farm_GenTree_Bush_04.glb",
       "source_sha256": "92ff7e163bb774bee5eb8a45a7f67c32f42f3569f74c0add92cd5b0cdd42835a",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/polyart_farmlands/farm_small_tree_04.tres"
     },
     {
@@ -288,7 +288,7 @@
       },
       "source": "res://assets/Polyart/Models/Farmlands/Props/LogsMushrooms/PF_Farm_Mushroom_01.glb",
       "source_sha256": "6fd64449d9081b69de1ad5ec77c8474481093edaa34af07dcc81c57ad4016f64",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/polyart_farmlands/farm_toadstool_01.tres"
     },
     {
@@ -333,7 +333,7 @@
       },
       "source": "res://assets/Polyart/Models/Farmlands/Props/LogsMushrooms/PF_Farm_Mushroom_05.glb",
       "source_sha256": "fdcb8e21afdd3e183af16359c4a601556b3baca2c7801258262f29dc4075580c",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/polyart_farmlands/farm_toadstool_05.tres"
     },
     {
@@ -378,7 +378,7 @@
       },
       "source": "res://assets/Polyart/Models/Farmlands/Props/LogsMushrooms/PF_Farm_Mushroom_06.glb",
       "source_sha256": "42f8b993e90136bcab968c6d719f0e44b3ce44b59c891d4372a22b459263828f",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/polyart_farmlands/farm_toadstool_06.tres"
     },
     {
@@ -423,7 +423,7 @@
       },
       "source": "res://assets/Polyart/Models/Farmlands/Props/LogsMushrooms/PF_Farm_Mushroom_07.glb",
       "source_sha256": "562a4679aa7c9fb87129aecdb068b2d4756e72f5b87da735fb258c038ecf3919",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/polyart_farmlands/farm_toadstool_07.tres"
     },
     {
@@ -468,7 +468,7 @@
       },
       "source": "res://assets/Polyart/Models/Farmlands/Props/LogsMushrooms/PF_Farm_Mushroom_08.glb",
       "source_sha256": "7907f5eab05287efa15b113f0bc72f7238a66b7792f2e366765f1e100c782e63",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/polyart_farmlands/farm_toadstool_08.tres"
     },
     {
@@ -513,7 +513,7 @@
       },
       "source": "res://assets/Polyart/Models/Farmlands/Props/LogsMushrooms/PF_Farm_Mushroom_09.glb",
       "source_sha256": "f2cd95b73f72ac5feec2e89f9aa6fe2410baede4827720001695195cc7b84ef7",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/polyart_farmlands/farm_toadstool_09.tres"
     },
     {
@@ -558,7 +558,7 @@
       },
       "source": "res://assets/Polyart/Models/Farmlands/Props/LogsMushrooms/PF_Farm_Mushroom_10.glb",
       "source_sha256": "f24486a4c483cd8872af9109633d4bbc3c709a8a2e42cb555b1198da00dd4a55",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/polyart_farmlands/farm_toadstool_10.tres"
     },
     {
@@ -580,7 +580,7 @@
             14.145320892334
           ]
         },
-        "mesh_bytes": 527089,
+        "mesh_bytes": 641107,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 11003
@@ -599,7 +599,7 @@
       },
       "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/PF_Farm_GenTree_A_FullTree_01.glb",
       "source_sha256": "95b0c14090adaa900a26916c90408a5425243ff87c40db21b6026ecbcb5e9d37",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/polyart_farmlands/farm_tree_a_full.tres"
     },
     {
@@ -621,7 +621,7 @@
             11.9960689544678
           ]
         },
-        "mesh_bytes": 342605,
+        "mesh_bytes": 406169,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 7390
@@ -640,7 +640,7 @@
       },
       "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/PF_Farm_GenTree_A_Young_01.glb",
       "source_sha256": "b954d0ee89514963e1e2d071c73e38ef66eb336c7ac0842d1895a39542f88822",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/polyart_farmlands/farm_tree_a_young.tres"
     },
     {
@@ -662,7 +662,7 @@
             9.56946277618408
           ]
         },
-        "mesh_bytes": 320081,
+        "mesh_bytes": 369987,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 6876
@@ -681,7 +681,7 @@
       },
       "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/PF_Farm_GenTree_B_FullTree_01.glb",
       "source_sha256": "e328810b950e465e2ad444bafdfcefc3a4292c9bb39c018cb6ac518a0378dc67",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/polyart_farmlands/farm_tree_b_full.tres"
     },
     {
@@ -703,7 +703,7 @@
             8.33523750305176
           ]
         },
-        "mesh_bytes": 218197,
+        "mesh_bytes": 236345,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 4879
@@ -722,7 +722,7 @@
       },
       "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/PF_Farm_GenTree_B_Young_01.glb",
       "source_sha256": "54727898ee3c8d64c3a44c901a1d8341ca351f6381df74a7fbc77c6aacc378a4",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/polyart_farmlands/farm_tree_b_young.tres"
     },
     {
@@ -744,7 +744,7 @@
             15.4638481140137
           ]
         },
-        "mesh_bytes": 992985,
+        "mesh_bytes": 1229715,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 20586
@@ -763,7 +763,7 @@
       },
       "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/PF_Farm_GenTree_C_FullTree_01.glb",
       "source_sha256": "db0bc01b9202b7c161164b0664e5aff6519c532d430010599535ffbb208f2ce2",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/polyart_farmlands/farm_tree_c_full.tres"
     },
     {
@@ -785,7 +785,7 @@
             15.4638481140137
           ]
         },
-        "mesh_bytes": 993005,
+        "mesh_bytes": 1229727,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 20586
@@ -804,7 +804,7 @@
       },
       "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/PF_Farm_GenTree_C_FullTree_01_Red.glb",
       "source_sha256": "92dcc6336b691e43e8e62f9bc84c548315adc012cfadc0c0e8b7f5a50984a855",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/polyart_farmlands/farm_tree_c_full_red.tres"
     },
     {
@@ -826,7 +826,7 @@
             12.002534866333
           ]
         },
-        "mesh_bytes": 543813,
+        "mesh_bytes": 648009,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 11662
@@ -845,7 +845,7 @@
       },
       "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/PF_Farm_GenTree_C_Young_01.glb",
       "source_sha256": "f82a8c46ef70463c84e4ad046cade7e58e13dac3b0643de4602b5e7ae4b72132",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/polyart_farmlands/farm_tree_c_young.tres"
     },
     {
@@ -867,7 +867,7 @@
             12.002534866333
           ]
         },
-        "mesh_bytes": 543833,
+        "mesh_bytes": 648021,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 11662
@@ -886,7 +886,7 @@
       },
       "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/PF_Farm_GenTree_C_Young_01_Red.glb",
       "source_sha256": "d175bbb6b342360cc824ce55b9d0e48002d4ea17ee74690fe70a7615d030d431",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/polyart_farmlands/farm_tree_c_young_red.tres"
     },
     {
@@ -908,7 +908,7 @@
             14.3028163909912
           ]
         },
-        "mesh_bytes": 799281,
+        "mesh_bytes": 995023,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 16696
@@ -927,7 +927,7 @@
       },
       "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/PF_Farm_GenTree_D_FullTree_01.glb",
       "source_sha256": "d7de1e22a372b41853326eef0af298b7e6c02b9dcc73d8b2a62b623dc0f5472f",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/polyart_farmlands/farm_tree_d_full.tres"
     },
     {
@@ -949,7 +949,7 @@
             12.3085308074951
           ]
         },
-        "mesh_bytes": 478325,
+        "mesh_bytes": 578045,
         "surface_count": 2,
         "visual_piece_count": 1,
         "visual_triangles": 10178
@@ -968,11 +968,11 @@
       },
       "source": "res://assets/Polyart/Models/Farmlands/Foliage/Trees/PF_Farm_GenTree_D_Young_01.glb",
       "source_sha256": "5273eb8c08a8674c1e64e69df1585fb6ce6e027ae634c59a65a51c51c59dfac9",
-      "tool_version": 38,
+      "tool_version": 39,
       "visual": "res://terrain/environment/visuals/polyart_farmlands/farm_tree_d_young.tres"
     }
   ],
   "license": "Polyart Studio Farmlands, Unity Asset Store EULA",
   "pack": "polyart_farmlands",
-  "tool_version": 38
+  "tool_version": 39
 }

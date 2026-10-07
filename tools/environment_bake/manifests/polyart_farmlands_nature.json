@@ -7,6 +7,8 @@
   0.8
  ],
  "max_texture_size": 1024,
+ "roughness_floor": 0.85,
+ "painted_leaf_materials": "Leaves",
  "assets": [
   {
    "id": "farm.sapling.01",
