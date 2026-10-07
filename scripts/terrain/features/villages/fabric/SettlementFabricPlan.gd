@@ -45,6 +45,12 @@ var passage_crown_cells: Dictionary = {}
 var planned_plaza_cells: Dictionary = {}
 ## Supporting cells of intentionally unwalked planting islands within the square.
 var planned_plaza_planting_cells: Dictionary = {}
+## Town taste knobs task 3: the furnishing brief of each courtyard clearing
+## (`WarrenVolumetricSolver.maze_clearing_decor`), placed by
+## `SettlementFabricAssembler.maze_clearing_decor`. Empty at the default
+## `clearing_deco_density` 0. Rides outside `construction_signature()`: it is
+## optional dressing, never topology.
+var clearing_decor: Array[Dictionary] = []
 ## TASK I2. The town's own world seed, carried here because the retained-mass
 ## skin now has to answer a question only the seed can answer: WHICH TIMBER
 ## FAMILY a clad mass face belongs to. A fake storey and the real house beside

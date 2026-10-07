@@ -2575,6 +2575,77 @@ static func _maze_court_planting_cells(volume: WarrenVolumePlan) -> Dictionary:
 	return out
 
 
+## Town taste knobs task 3: how fully a courtyard clearing is furnished.
+const CLEARING_DECO_KNOB := &"clearing_deco_density"
+## Fine deco cells per prop group a clearing can hold, and the group bounds.
+const CLEARING_DECO_CELLS_PER_GROUP := 6
+const CLEARING_DECO_MIN_GROUPS := 2
+const CLEARING_DECO_MAX_GROUPS := 6
+
+
+static func maze_clearing_decor(volume: WarrenVolumePlan) -> Array[Dictionary]:
+	## The furnishing brief of every courtyard clearing (`clearing.NN`), as
+	## `{id, purpose, cells, budget, rolls}`, or empty when the town's
+	## `clearing_deco_density` is 0 (the default: no roll is consumed and
+	## nothing is placed).
+	##
+	## `cells` are the clearing's DECO cells in the fabric's solid convention
+	## (the cell under the walk plane), in the plot's own seeded order: a green
+	## offers its lawn island (`_maze_court_planting_cells`), a paved, market or
+	## workyard court everything but the walk it must keep -- every landing,
+	## every edge facing a street mouth, stair or drop, and the one-cell strips
+	## joining them (`_ringless_court_walk`, the ringless green's own rule). A
+	## court whose walk cannot be derived is left bare. `budget` is
+	## round(density x capacity) prop groups and `rolls` one vocabulary roll
+	## per group; the assembler places them (`SettlementFabricAssembler.
+	## maze_clearing_decor`) against the finished town.
+	var out: Array[Dictionary] = []
+	var source := volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
+	if source == null or source.scale_profile == null: return out
+	var character := TownCharacter.of(source.scale_profile, source.world_seed)
+	var density := character.value(CLEARING_DECO_KNOB)
+	if density <= 0.0: return out
+	var planting := _maze_court_planting_cells(volume)
+	var landings := {}
+	for plot: Dictionary in source.plots:
+		if not plot.has("door_walk"): continue
+		for cell: Vector3i in _fine_square(plot.door_walk): landings[cell] = true
+	for plot: Dictionary in source.plots:
+		if not WarrenPlotReservations.is_clearing_plot(plot): continue
+		var floor_cells := {}
+		for column: Vector2i in WarrenMazeSourcePlan.deck_flat_columns(plot):
+			for cell: Vector3i in _fine_square(Vector3i(column.x, plot.floor, column.y)):
+				floor_cells[cell] = true
+		var deco := {}
+		if WarrenPlotReservations.is_green_court(plot):
+			for cell: Vector3i in floor_cells:
+				if planting.has(cell): deco[cell] = true
+		else:
+			var walk := _ringless_court_walk(source, plot, floor_cells, landings)
+			if walk.is_empty(): continue
+			for cell: Vector3i in floor_cells:
+				if not walk.has(cell) and not landings.has(cell): deco[cell] = true
+		if deco.is_empty(): continue
+		var id := String(plot.id)
+		var budget := roundi(density * float(clampi(deco.size() / CLEARING_DECO_CELLS_PER_GROUP,
+			CLEARING_DECO_MIN_GROUPS, CLEARING_DECO_MAX_GROUPS)))
+		if budget <= 0: continue
+		var ranked: Array = []
+		for cell: Vector3i in deco:
+			ranked.append([character.roll(CLEARING_DECO_KNOB, "%s/%d/%d/%d" % [id, cell.x, cell.y, cell.z]),
+				cell + Vector3i.DOWN])
+		ranked.sort_custom(func(a: Array, b: Array) -> bool:
+			return a[0] < b[0] if a[0] != b[0] else _cell_less(a[1], b[1]))
+		var cells: Array[Vector3i] = []
+		for entry: Array in ranked: cells.append(entry[1])
+		var rolls: Array[float] = []
+		for index in budget:
+			rolls.append(character.roll(CLEARING_DECO_KNOB, "%s/group/%d" % [id, index]))
+		out.append({"id": plot.id, "purpose": StringName(plot.get("purpose", &"")),
+			"cells": cells, "budget": budget, "rolls": rolls})
+	return out
+
+
 static func _maze_ringless_court_cells(volume: WarrenVolumePlan) -> Dictionary:
 	## The fine floor cells of every green court that rolled no walking ring
 	## (`plot.ring`, Town taste knobs task 2). Their lawn may reach the court

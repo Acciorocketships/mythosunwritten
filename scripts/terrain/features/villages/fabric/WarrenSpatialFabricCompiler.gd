@@ -328,6 +328,8 @@ static func generate(source: WarrenSpatialPlan,
 	if not result.set_planned_plaza(planned_plaza,planting,ringless):
 		last_failure = "planned village green topology is invalid"
 		return null
+	if source.source_volume != null:
+		result.clearing_decor = WarrenVolumetricSolver.maze_clearing_decor(source.source_volume)
 	var surfaces := PublicRealmSurfaceSolver.solve(
 		StringName("%s.surfaces" % result.stable_id), realm, result,
 		source.source_volume)

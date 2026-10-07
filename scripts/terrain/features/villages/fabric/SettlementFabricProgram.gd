@@ -1289,7 +1289,9 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 			SettlementFabricAssembler.PLAZA_WIDE_FEATURES,
 			SettlementFabricAssembler.PLAZA_COURT_TREES,
 			SettlementFabricAssembler.PLAZA_UNDERPLANTS,
-			[SettlementFabricAssembler.GARDEN_PLANTER] as Array[StringName]]:
+			[SettlementFabricAssembler.GARDEN_PLANTER] as Array[StringName],
+			[SettlementFabricAssembler.CLEARING_DECO_ANVIL,
+				SettlementFabricAssembler.CLEARING_DECO_WORKBENCH] as Array[StringName]]:
 		for asset_id: StringName in pool:
 			if not adapter_assets.has(asset_id):
 				adapter_assets.append(asset_id)

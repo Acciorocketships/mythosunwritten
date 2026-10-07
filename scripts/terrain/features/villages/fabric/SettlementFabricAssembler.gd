@@ -622,6 +622,69 @@ const PLAZA_CANOPY_AREA_SHARE := 1.0 / 3.0
 const PLAZA_WIDE_BLOCK := 3
 const PLAZA_NARROW_BLOCK := 2
 const PLAZA_FEATURE_SALT := 53
+## Town taste knobs task 3 -- WHAT A COURTYARD IS FOR. The prop groups a
+## clearing may hold, by purpose, in vocabulary order (the clearing's own roll
+## picks where each group starts; a group that fits nowhere yields to the
+## next). Offsets are authored metres in the group's frame; `world` marks a
+## world-metre catalog piece that the kit does not rescale, drawn at that
+## uniform world scale.
+const CLEARING_DECO_ANVIL := &"forge.anvil.001"
+const CLEARING_DECO_WORKBENCH := &"crafting.herbalism.table.001"
+const CLEARING_DECO_PREFIX := "maze-clearing-deco/"
+## Where in its cell a group may stand: the centre, the corner it shares with
+## three neighbours (wide pieces), then quarter-cell nudges into a crowded bed.
+const CLEARING_DECO_ANCHORS: Array[Vector3] = [Vector3.ZERO, Vector3(0.5, 0.0, 0.5),
+	Vector3(-0.25, 0.0, -0.25), Vector3(0.25, 0.0, -0.25), Vector3(-0.25, 0.0, 0.25),
+	Vector3(0.25, 0.0, 0.25)]
+const TOWN_COURT_TREES := preload("res://scripts/terrain/features/villages/TownCourtTrees.gd")
+const CLEARING_DECO_GROUPS := {
+	&"green": [
+		[{"asset": SettlementFabricProgram.TERRACE_BENCH, "offset": Vector2.ZERO},
+			{"asset": SettlementFabricProgram.TERRACE_PLANT_MID, "offset": Vector2(1.6, 0.0)}],
+		[{"asset": COURTYARD_PLANTER, "offset": Vector2.ZERO},
+			{"asset": SettlementFabricProgram.TERRACE_PLANT_BROAD, "offset": Vector2(-1.3, 0.0)}],
+		[{"asset": SettlementFabricProgram.TERRACE_LANTERN_POST, "offset": Vector2.ZERO}],
+		[{"asset": SettlementFabricProgram.TERRACE_BENCH_ALT, "offset": Vector2.ZERO},
+			{"asset": SettlementFabricProgram.ROOF_FLOWER_WARM, "offset": Vector2(-1.4, 0.0)}],
+		[{"asset": SettlementFabricProgram.TERRACE_PLANT_TALL, "offset": Vector2.ZERO},
+			{"asset": SettlementFabricProgram.ROOF_FLOWER_BLUE, "offset": Vector2(0.9, 0.2)}],
+		# A small bed under a crowded green's tree.
+		[{"asset": SettlementFabricProgram.ROOF_FLOWER_SMALL, "offset": Vector2.ZERO, "scale": 0.6}],
+		[{"asset": SettlementFabricProgram.TERRACE_PLANT_LOW, "offset": Vector2.ZERO, "scale": 0.6}],
+	],
+	&"paved": [
+		[{"asset": PLAZA_MARKET_STALL, "offset": Vector2.ZERO}],
+		[{"asset": SettlementFabricProgram.TERRACE_CRATE, "offset": Vector2.ZERO},
+			{"asset": SettlementFabricProgram.TERRACE_CRATE, "offset": Vector2(0.85, 0.0)},
+			{"asset": SettlementFabricProgram.TERRACE_BARREL_A, "offset": Vector2(0.4, 0.95)}],
+		[{"asset": SettlementFabricProgram.TERRACE_BENCH, "offset": Vector2.ZERO},
+			{"asset": SettlementFabricProgram.TERRACE_BARREL_B, "offset": Vector2(1.6, 0.0)}],
+		[{"asset": SettlementFabricProgram.TERRACE_BARREL_A, "offset": Vector2.ZERO},
+			{"asset": SettlementFabricProgram.TERRACE_BARREL_B, "offset": Vector2(0.95, 0.0)},
+			{"asset": SettlementFabricProgram.TERRACE_BAG, "offset": Vector2(0.45, -0.85)}],
+	],
+	&"market": [
+		[{"asset": PLAZA_MARKET_STALL, "offset": Vector2.ZERO}],
+		[{"asset": SettlementFabricProgram.TERRACE_CRATE, "offset": Vector2.ZERO},
+			{"asset": SettlementFabricProgram.TERRACE_BAG, "offset": Vector2(0.8, 0.0)},
+			{"asset": SettlementFabricProgram.TERRACE_CRATE, "offset": Vector2(0.0, 0.85)}],
+		[{"asset": PLAZA_MARKET_STALL, "offset": Vector2.ZERO}],
+		[{"asset": SettlementFabricProgram.TERRACE_BARREL_A, "offset": Vector2.ZERO},
+			{"asset": SettlementFabricProgram.TERRACE_CRATE, "offset": Vector2(0.9, 0.0)}],
+	],
+	&"workyard": [
+		[{"asset": CLEARING_DECO_ANVIL, "offset": Vector2.ZERO, "world": 1.5},
+			{"asset": SettlementFabricProgram.TERRACE_FIREWOOD, "offset": Vector2(1.8, 0.0)}],
+		[{"asset": CLEARING_DECO_WORKBENCH, "offset": Vector2.ZERO, "world": 1.0},
+			{"asset": SettlementFabricProgram.TERRACE_CRATE, "offset": Vector2(1.5, 0.0)}],
+		[{"asset": SettlementFabricProgram.TERRACE_FIREWOOD, "offset": Vector2.ZERO},
+			{"asset": SettlementFabricProgram.TERRACE_CRATE, "offset": Vector2(1.5, 0.0)},
+			{"asset": SettlementFabricProgram.TERRACE_BUCKET, "offset": Vector2(1.5, 0.9)}],
+		[{"asset": SettlementFabricProgram.TERRACE_CRATE, "offset": Vector2.ZERO},
+			{"asset": SettlementFabricProgram.TERRACE_CRATE, "offset": Vector2(0.85, 0.0)},
+			{"asset": SettlementFabricProgram.TERRACE_BARREL_B, "offset": Vector2(0.0, 0.9)}],
+	],
+}
 ## TASK I4 ROUND 5, ITEM 1 -- "one of the plants is glitched into the wall", and
 ## the cause is that A LATTICE CELL IS NOT FREE SPACE.
 ##
@@ -1885,6 +1948,11 @@ static func terrace_retaining_payload(plan: SettlementFabricPlan,
 	out.append_from(maze_garden_dressing(retained, solids, paved, plinths,
 		walked, shell, dressing_footprints, plan.planned_plaza_cells, skin_boxes,
 		capped_ground_cells, plan.world_seed))
+	# Town taste knobs task 3: courtyard clearings furnished for their purpose,
+	# after (and clear of) everything the garden pass already stood there.
+	if not plan.clearing_decor.is_empty():
+		out.append_from(maze_clearing_decor(plan.clearing_decor, dressing_footprints,
+			skin_boxes, out, plan.world_seed))
 	if not plan.planned_plaza_planting_cells.is_empty():
 		var garden_obstacles: Array[AABB] = []
 		garden_obstacles.assign(footprints.get("boxes",[]))
@@ -1894,7 +1962,8 @@ static func terrace_retaining_payload(plan: SettlementFabricPlan,
 			if not footprints.asset_bounds.has(asset): continue
 			for index in batch.ids.size():
 				var id := String(batch.ids[index])
-				if id.begins_with("maze-plaza-seat/") or id.begins_with("maze-plaza-centre/"):
+				if id.begins_with("maze-plaza-seat/") or id.begins_with("maze-plaza-centre/") \
+						or id.begins_with(CLEARING_DECO_PREFIX):
 					garden_obstacles.append_array(TownGardenGrass.asset_obstacles(asset,
 						batch.transforms[index],footprints.asset_bounds[asset]))
 		for mesh: Dictionary in out.surface_meshes:
@@ -6569,6 +6638,176 @@ static func maze_garden_dressing(retained: Dictionary, solids: Dictionary,
 			float(site.yaw)), site.origin as Vector3), Color.WHITE,
 			maze_garden_decor_id(site))
 	return out
+
+
+static func maze_clearing_decor(records: Array[Dictionary], footprints: Dictionary,
+		skin: Array[AABB], placed: EnvironmentInstancePayload,
+		world_seed: int) -> EnvironmentInstancePayload:
+	## Town taste knobs task 3 -- each courtyard clearing furnished for what it
+	## is for. `records` is the plan's `clearing_decor` brief (deco cells in the
+	## clearing's seeded order, a group budget, one roll per group). A group is
+	## placed WHOLE or not at all: every piece stands only over its clearing's
+	## deco cells (never a walk strip, landing or street mouth), on that
+	## cell's finished floor, passes `optional_dressing_is_clear` (built
+	## modules, skin, public floors) and clears every piece already standing --
+	## the centre features, seats, garden planting and earlier groups. A group
+	## that fits nowhere yields to the next in its purpose's vocabulary.
+	var out := EnvironmentInstancePayload.new()
+	var bounds := footprints.get("asset_bounds", {}) as Dictionary
+	var obstacles: Array[AABB] = []
+	for asset: StringName in placed.batches:
+		if not bounds.has(asset): continue
+		var batch: Dictionary = placed.batches[asset]
+		for index in (batch.transforms as Array).size():
+			var pose := batch.transforms[index] as Transform3D
+			# A court tree is its measured trunk and crown bands, as the plaza
+			# seats read it: a bench may stand beneath the canopy.
+			if TOWN_COURT_TREES.PROFILES.has(asset):
+				for band: AABB in TOWN_COURT_TREES.PROFILES[asset]: obstacles.append(pose * band)
+				continue
+			obstacles.append(pose * (bounds[asset] as AABB))
+	for record: Dictionary in records:
+		var vocabulary: Array = CLEARING_DECO_GROUPS.get(StringName(record.purpose), [])
+		if vocabulary.is_empty(): continue
+		var deco := {}
+		for cell: Vector3i in record.cells: deco[cell] = true
+		var floors := {}
+		var rolls: Array = record.rolls
+		for group_index in int(record.budget):
+			var roll := float(rolls[group_index])
+			var start := int(roll * float(vocabulary.size())) % vocabulary.size()
+			for attempt in vocabulary.size():
+				var group: Array = vocabulary[(start + group_index + attempt) % vocabulary.size()]
+				var pieces := _clearing_deco_group(group, record, deco, floors, roll,
+					footprints, skin, obstacles, world_seed)
+				if pieces.is_empty(): continue
+				for piece: Dictionary in pieces:
+					out.add(StringName(piece.asset), piece.transform as Transform3D, Color.WHITE,
+						StringName("%s%s/%d/%s" % [CLEARING_DECO_PREFIX, String(record.id),
+							group_index, String(piece.part)]))
+					obstacles.append(piece.box as AABB)
+				break
+	return out
+
+
+static func _clearing_deco_group(group: Array, record: Dictionary, deco: Dictionary,
+		floors: Dictionary, roll: float, footprints: Dictionary, skin: Array[AABB],
+		obstacles: Array[AABB], world_seed: int) -> Array[Dictionary]:
+	## The first anchor (deco cells in the clearing's seeded order, on the
+	## cell centre or its corner) and quarter turn at which the whole group
+	## stands, as `{asset, transform, box, part}` per piece (a stall's goods
+	## included), or empty.
+	var bounds := footprints.get("asset_bounds", {}) as Dictionary
+	for item: Dictionary in group:
+		if not bounds.has(StringName(item.asset)): return []
+	var first_quarter := int(fposmod(roll * 37.0, 1.0) * 4.0) % 4
+	for cell: Vector3i in record.cells:
+		for corner: Vector3 in CLEARING_DECO_ANCHORS:
+			var anchor := (Vector3(cell) + corner) * FabricRecipe.CELL_SIZE
+			for turn in 4:
+				var yaw := float((first_quarter + turn) % 4) * PI * 0.5
+				var pieces: Array[Dictionary] = []
+				var whole := true
+				for index in group.size():
+					var item: Dictionary = group[index]
+					var asset := StringName(item.asset)
+					var offset := item.offset as Vector2
+					var origin := anchor + Vector3(offset.x, 0.0, offset.y).rotated(Vector3.UP, yaw)
+					var basis := Basis(Vector3.UP, yaw)
+					basis = basis.scaled(Vector3.ONE * float(item.get("scale", 1.0)))
+					if item.has("world"):
+						basis = basis.scaled(Vector3.ONE * float(item.world) / VillageWorldScale.frame_scale())
+					var pose := _clearing_deco_pose(asset, basis, origin, cell.y, deco, floors, footprints)
+					if pose.is_empty():
+						whole = false
+						break
+					var parts: Array[Dictionary] = [{"asset": asset, "transform": pose.transform,
+						"box": pose.box, "part": str(index)}]
+					if STALL_CANOPIES.has(asset):
+						var stall := pose.transform as Transform3D
+						for goods: Dictionary in maze_stall_goods(asset, stall.origin, yaw,
+								Vector4i(cell.x, cell.y, cell.z, 3), world_seed):
+							var goods_asset := StringName(goods.asset)
+							if not bounds.has(goods_asset): continue
+							parts.append({"asset": goods_asset, "transform": goods.transform,
+								"box": (goods.transform as Transform3D) * (bounds[goods_asset] as AABB),
+								"part": "%d.goods.%s" % [index, String(goods.station)]})
+					for part: Dictionary in parts:
+						var box := (part.box as AABB).grow(0.05)
+						whole = whole and optional_dressing_is_clear(StringName(part.asset),
+							part.transform as Transform3D, footprints, skin)
+						for other: AABB in obstacles:
+							whole = whole and not box.intersects(other)
+						for other: Dictionary in pieces:
+							whole = whole and not box.intersects(other.box as AABB)
+						if not whole: break
+					if not whole: break
+					pieces.append_array(parts)
+				if whole:
+					return pieces
+	return []
+
+
+static func _clearing_deco_pose(asset: StringName, basis: Basis, origin: Vector3,
+		band: int, deco: Dictionary, floors: Dictionary,
+		footprints: Dictionary) -> Dictionary:
+	## `{transform, box}` with the piece's measured foot on its clearing's
+	## floor, or empty when its footprint leaves the deco cells or straddles
+	## floors of different heights.
+	var local: AABB = (footprints.asset_bounds as Dictionary)[asset]
+	var pose := Transform3D(basis, origin)
+	var box := pose * local
+	var floor_y := NAN
+	var inset := 0.02
+	for x in range(floori((box.position.x + inset) / FabricRecipe.CELL_SIZE + 0.5),
+			floori((box.end.x - inset) / FabricRecipe.CELL_SIZE + 0.5) + 1):
+		for z in range(floori((box.position.z + inset) / FabricRecipe.CELL_SIZE + 0.5),
+				floori((box.end.z - inset) / FabricRecipe.CELL_SIZE + 0.5) + 1):
+			var covered := Vector3i(x, band, z)
+			if not deco.has(covered): return {}
+			if not floors.has(covered):
+				floors[covered] = _clearing_floor_top(covered, footprints)
+			var top := float(floors[covered])
+			if is_nan(floor_y): floor_y = top
+			elif absf(top - floor_y) > 0.02: return {}
+	pose.origin.y += floor_y - box.position.y
+	return {"transform": pose, "box": pose * local}
+
+
+static func _clearing_floor_top(cell: Vector3i, footprints: Dictionary) -> float:
+	## The finished floor over a clearing's solid `cell`: the public surface's
+	## own triangles at the cell centre where it is paved, else the green turf.
+	var nominal := float(cell.y + 1) * FabricRecipe.CELL_SIZE
+	var point := Vector2(cell.x, cell.z) * FabricRecipe.CELL_SIZE
+	var best := -INF
+	for surface: Dictionary in footprints.get("public_surfaces", []):
+		var area := surface.bounds as AABB
+		if point.x < area.position.x or point.x > area.end.x \
+				or point.y < area.position.z or point.y > area.end.z \
+				or area.position.y > nominal + 0.75 or area.end.y < nominal - 0.75:
+			continue
+		var faces := surface.faces as PackedVector3Array
+		for index in range(0, faces.size(), 3):
+			var a := faces[index]
+			var b := faces[index + 1]
+			var c := faces[index + 2]
+			# Barycentric with a tolerance: a cell centre lies on its quad's diagonal.
+			var weights := _barycentric_xz(point, a, b, c)
+			if weights.x < -1e-4 or weights.y < -1e-4 or weights.z < -1e-4: continue
+			var y := a.y * weights.x + b.y * weights.y + c.y * weights.z
+			if absf(y - nominal) <= 0.75: best = maxf(best, y)
+	return best if best > -INF else nominal + GREEN_CAP_LIFT
+
+
+static func _barycentric_xz(point: Vector2, a: Vector3, b: Vector3, c: Vector3) -> Vector3:
+	var v0 := Vector2(b.x - a.x, b.z - a.z)
+	var v1 := Vector2(c.x - a.x, c.z - a.z)
+	var v2 := point - Vector2(a.x, a.z)
+	var denominator := v0.x * v1.y - v1.x * v0.y
+	if absf(denominator) < 1e-9: return Vector3(-1.0, -1.0, -1.0)
+	var v := (v2.x * v1.y - v1.x * v2.y) / denominator
+	var w := (v0.x * v2.y - v2.x * v0.y) / denominator
+	return Vector3(1.0 - v - w, v, w)
 
 
 static func maze_garden_decor_id(site: Dictionary) -> StringName:
