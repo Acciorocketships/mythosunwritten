@@ -118,7 +118,9 @@ static func build_steps(data:Dictionary,seed_value:int)->Dictionary:
     var node:=MultiMeshInstance3D.new();node.multimesh=mm;node.set_meta("cliff_asset",p.asset)
     node.add_to_group("tactical_solid_earth",true);root.add_child(node))
  if not (data.get("slope_rocks",{}) as Dictionary).is_empty():
-  steps.append(func()->void:root.add_child(SLOPE_ROCKS.build(data.slope_rocks,seed_value)))
+  var rocks:=SLOPE_ROCKS.build_steps(data.slope_rocks,seed_value)
+  steps.append(func()->void:root.add_child(rocks.root))
+  steps.append_array(rocks.steps)
  # Terrain-covering parts of the basal rocks' ground skirts.
  steps.append(func()->void:RockSkirt.commit(root,data.get("rock_skirts",[])))
  return {"root":root,"steps":steps}

@@ -82,7 +82,8 @@ func test_heightmap_tiles_and_residual_equal_the_full_sheet() -> void:
 		for child: Node in composite.get_children():
 			var shape := child as CollisionShape3D
 			if shape != null and shape.name != "CollisionShape3D" \
-					and not String(shape.name).begins_with("GroundTile"):
+					and not String(shape.name).begins_with("GroundTile") \
+					and not String(shape.name).begins_with("GroundTrimesh"):
 				shape.disabled = true
 		composite.collision_layer = 1 << 19
 		var points: Array[Vector2] = []

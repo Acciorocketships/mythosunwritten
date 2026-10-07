@@ -23,6 +23,10 @@ const PIECES := {
 "face_meadow_05": [ANGRY + "P_Rock_05_Summer.glb", Vector3(2.835713,1.6161067,2.6579242)],
 }
 static var _pieces: Dictionary = {}
+## Catalog collision of each colliding (angry_*) piece. Held here: the visual
+## resource it comes from had no other owner, so every rocky chunk reloaded it
+## from disk on the main thread (8-27 ms an integration step).
+static var _collisions: Dictionary = {}
 const STYLE = preload("res://scripts/terrain/field/CliffRockStyle.gd")
 
 
@@ -48,6 +52,9 @@ static func prepare() -> void:
 		if name.begins_with("face_"):
 			mesh=_with_lods(_buried_ends(mesh,local,box.size));local=Transform3D.IDENTITY
 		_pieces[name] = [mesh, local, material]
+		if name.begins_with("angry_"):
+			var visual := load("res://terrain/environment/visuals/meadow/rock_%s.res" % name.right(2)) as EnvironmentVisual
+			_collisions[name] = visual.collisions.duplicate()
 		root.free()
 
 
@@ -67,9 +74,22 @@ const SMALL_ROCK_FADE := 10.0
 ## the slope point and normal under it, the skirt's mound rise there, and that
 ## surface's rock exposure and moss grade.
 static func build(entries: Dictionary, seed_value: int) -> Node3D:
+	var steps := build_steps(entries, seed_value)
+	for step: Callable in steps.steps:
+		step.call()
+	return steps.root
+
+
+## build as main-thread steps: one per tile batch and one per COLLISION_STEP
+## rocks of collision, so a rocky chunk spreads over frames (built in one
+## step it was a 10 ms integration frame). Run in order they build build().
+const COLLISION_STEP := 64
+
+static func build_steps(entries: Dictionary, seed_value: int) -> Dictionary:
 	prepare()
 	var root := Node3D.new()
 	root.name = "CliffSlopeRocks"
+	var steps: Array[Callable] = []
 	for name: String in entries:
 		# Study `stamp`: face rocks live in the slope solid, not as meshes.
 		if STYLE.sheet_study == "stamp" and name.begins_with("face_"):
@@ -84,9 +104,10 @@ static func build(entries: Dictionary, seed_value: int) -> Node3D:
 		var keys: Array = tiles.keys()
 		keys.sort()
 		for key: Vector2i in keys:
-			root.add_child(_batch(name, tiles[key], seed_value))
-	_add_collision(root, entries)
-	return root
+			var rocks: Array = tiles[key]
+			steps.append(func() -> void: root.add_child(_batch(name, rocks, seed_value)))
+	_add_collision_steps(root, entries, steps)
+	return {"root": root, "steps": steps}
 
 
 static func _batch(name: String, rocks: Array, seed_value: int) -> MultiMeshInstance3D:
@@ -142,24 +163,28 @@ static func _with_lods(mesh: ArrayMesh) -> ArrayMesh:
 ## Ground rocks collide like the same Meadow rocks placed as ambient dressing
 ## (owner, September 27: their ground skirt collides, so must the rock). The
 ## catalog hull sits on the rock's base; these pieces pivot at their centre.
-static func _add_collision(root: Node3D, entries: Dictionary) -> void:
+static func _add_collision_steps(root: Node3D, entries: Dictionary, steps: Array[Callable]) -> void:
+	var colliding: Array = []   # [name, rock]
+	for name: String in entries:
+		if name.begins_with("angry_"):
+			for rock: Dictionary in entries[name]:
+				colliding.append([name, rock])
+	if colliding.is_empty():
+		return
 	var body := StaticBody3D.new()
 	body.name = "CliffSlopeRockCollision"
-	for name: String in entries:
-		if not name.begins_with("angry_"):
-			continue
-		var visual := load("res://terrain/environment/visuals/meadow/rock_%s.res" % name.right(2)) as EnvironmentVisual
-		var lift := Transform3D(Basis(), Vector3(0, -0.5 * (PIECES[name][1] as Vector3).y, 0))
-		for rock: Dictionary in entries[name]:
-			for piece: EnvironmentCollisionPiece in visual.collisions:
-				var shape := CollisionShape3D.new()
-				shape.shape = piece.shape
-				shape.transform = (rock.transform as Transform3D) * lift * piece.local_transform
-				body.add_child(shape)
-	if body.get_child_count() > 0:
-		root.add_child(body)
-	else:
-		body.free()
+	steps.append(func() -> void: root.add_child(body))
+	for first in range(0, colliding.size(), COLLISION_STEP):
+		steps.append(func() -> void:
+			for index in range(first, mini(first + COLLISION_STEP, colliding.size())):
+				var name: String = colliding[index][0]
+				var rock: Dictionary = colliding[index][1]
+				var lift := Transform3D(Basis(), Vector3(0, -0.5 * (PIECES[name][1] as Vector3).y, 0))
+				for piece: EnvironmentCollisionPiece in _collisions[name]:
+					var shape := CollisionShape3D.new()
+					shape.shape = piece.shape
+					shape.transform = (rock.transform as Transform3D) * lift * piece.local_transform
+					body.add_child(shape))
 
 ## Only the hidden end bands tuck into the backing. The visible middle keeps
 ## the original Meadow vertices; there is no whole-body bend or width taper.

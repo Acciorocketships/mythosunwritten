@@ -259,7 +259,20 @@ func _process(_delta: float) -> bool:
 		rock_shape.set_faces(rock_faces)
 	steps["rock_collision(%d tris)" % (rock_faces.size() / 3)] = Time.get_ticks_usec() - t; t = Time.get_ticks_usec()
 	var full := mesher.commit_chunk(data)
-	steps["commit_chunk_total"] = Time.get_ticks_usec() - t; t = Time.get_ticks_usec()
+	steps["commit_chunk_total"] = Time.get_ticks_usec() - t
+	# Each integration step on its own (the streamer runs one or more a frame;
+	# one step is the floor of a chunk's worst frame).
+	var timed := mesher.commit_steps(data)
+	var per_step: Array[float] = []
+	for step: Callable in timed.steps:
+		var step_started := Time.get_ticks_usec()
+		step.call()
+		per_step.append(snappedf((Time.get_ticks_usec() - step_started) / 1000.0, 0.1))
+	timed.root.free()
+	print("[commitprof] chunk=%s integration steps ms=%s slope_rocks=%s" % [str(item.chunk), str(per_step),
+		str(((data.get("cliff_terraces", {}) as Dictionary).get("slope_rocks", {}) as Dictionary).keys().map(
+			func(k): return [k, data.cliff_terraces.slope_rocks[k].size()]))])
+	t = Time.get_ticks_usec()
 	var water_node := water_builder.commit_chunk(item.water)
 	if water_node != null: full.add_child(water_node)
 	steps["water"] = Time.get_ticks_usec() - t; t = Time.get_ticks_usec()

@@ -537,6 +537,19 @@ func commit_steps(data: Dictionary) -> Dictionary:
 	steps.append_array(cliffs.steps)
 	steps.append(func() -> void: _commit_arches(root, data))
 	steps.append(func() -> void: _commit_collision(root, data))
+	# The residual ground trimesh (cliffy ground the heightmap tiles cannot
+	# carry; 18k triangles on a cliffy chunk, ~10 ms of BVH) joins the body in
+	# pieces after its first, one step each, like the cliff sheet's below.
+	var ground_faces: PackedVector3Array = data.get("collision_trimesh_faces", data["collision_faces"])
+	var ground_floats := ROCK_COLLISION_PIECE_TRIANGLES * 3
+	for piece in range(1, ceili(float(ground_faces.size()) / float(ground_floats))):
+		steps.append(func() -> void:
+			var shape := ConcavePolygonShape3D.new()
+			shape.set_faces(ground_faces.slice(piece * ground_floats, (piece + 1) * ground_floats))
+			var ground_collision := CollisionShape3D.new()
+			ground_collision.name = "GroundTrimesh%d" % (piece + 1)
+			ground_collision.shape = shape
+			(root.get_node("Body") as StaticBody3D).add_child(ground_collision))
 	# The cliff sheet's own collision is often 10-50k triangles; it joins the
 	# body as several shapes (the same triangles) so no one step builds it all.
 	var rock_faces: PackedVector3Array = (data.get("cliff_terraces", {}) as Dictionary) \
@@ -588,7 +601,10 @@ func _commit_collision(root: Node3D, data: Dictionary) -> void:
 	cs.name = "CollisionShape3D"
 	cs.add_to_group("tactical_terrain_volume", true)
 	var col_shape := ConcavePolygonShape3D.new()
-	col_shape.set_faces(data.get("collision_trimesh_faces", data["collision_faces"]))
+	# The first ROCK_COLLISION_PIECE_TRIANGLES; commit_steps adds the rest as
+	# GroundTrimesh<N> shapes (same triangles).
+	var ground_faces: PackedVector3Array = data.get("collision_trimesh_faces", data["collision_faces"])
+	col_shape.set_faces(ground_faces.slice(0, ROCK_COLLISION_PIECE_TRIANGLES * 3))
 	cs.shape = col_shape
 	# The ground-depth pass draws the complete sheet, heightmap tiles included.
 	cs.set_meta(&"terrain_faces", data["collision_faces"])

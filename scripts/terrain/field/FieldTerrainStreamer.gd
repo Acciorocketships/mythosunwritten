@@ -1520,11 +1520,10 @@ func _integration_steps(result: Dictionary) -> Array[Callable]:
 		var water_node: Node3D = _water_builder.commit_chunk(result.water)
 		if water_node != null:
 			node.add_child(water_node))
-	steps.append(func() -> void:
-		EnvironmentCollisionBuilder.commit(node, result.dressing, _environment_cache,
-			&"DressingCollision")
-		# Embedded rocks' ground skirts are ground: they commit with it.
-		RockSkirt.commit(node, result.dressing.ground_skirts))
+	steps.append_array(EnvironmentCollisionBuilder.commit_steps(node, result.dressing,
+		_environment_cache, &"DressingCollision").steps)
+	# Embedded rocks' ground skirts are ground: they commit with it.
+	steps.append(func() -> void: RockSkirt.commit(node, result.dressing.ground_skirts))
 	# The chunk's effects (mist, particles, orbs) build one element per step,
 	# after the chunk is attached; built in the attach step they held it 10-25 ms.
 	var fx_steps: Array[Callable] = []
