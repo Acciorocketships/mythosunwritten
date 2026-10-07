@@ -11,6 +11,9 @@
 class_name WaterPlan
 extends RefCounted
 
+## Verified C# source search and raw walk (scripts/native/NativeRiverWalk.cs).
+const NATIVE_WALK := preload("res://scripts/native/NativeRiverWalk.gd")
+
 const SUPER := 768.0              # source super-grid pitch (32 tiles)
 # 24 m route/bucket cell (HeightfieldPlan.CELL): the carve index, source and
 # path-planning windows. The terrain lattice itself is 12 m points
@@ -240,6 +243,14 @@ func _init(p_world_seed: int, p_amplitude: float, p_max_storeys: int) -> void:
 	world_seed = p_world_seed
 	amplitude = p_amplitude
 	max_storeys = p_max_storeys
+	NATIVE_WALK.setup(world_seed)
+
+
+## True when the source search and raw walk run in verified C#. A subclass
+## (tests) may override the field reads or the climb, so only a plain WaterPlan
+## is served natively.
+func _native_walk() -> bool:
+	return NATIVE_WALK.ready_for(world_seed) and get_script() == WaterPlan
 
 
 func set_planning_progress_callback(callback: Callable) -> void:
@@ -416,7 +427,8 @@ func source_pos(sc: Vector2i) -> Vector2:
 	var cached: Variant = _cache_get(_source_pos_cache, sc)
 	if not (cached is StringName and cached == _MISSING):
 		return cached
-	var p: Vector2 = _ascend(_jitter_pos(sc))
+	var p: Vector2 = NATIVE_WALK.source_pos(self, sc) if _native_walk() \
+		else _ascend(_jitter_pos(sc))
 	_cache_put(_source_pos_cache, sc, p, SOURCE_MEMO_LIMIT)
 	return p
 
@@ -436,6 +448,14 @@ func has_source(sc: Vector2i) -> bool:
 
 
 func _has_source_uncached(sc: Vector2i) -> bool:
+	if _native_walk():
+		var gate: Dictionary = NATIVE_WALK.source_gate(self, sc)
+		if gate.has_source_pos:
+			_cache_put(_source_pos_cache, sc, gate.source_pos, SOURCE_MEMO_LIMIT)
+		if not gate.passes_gates:
+			return false
+		var native_walk := _walk(sc)
+		return native_walk.points[-1].distance_to(native_walk.points[0]) > SUMMIT_REACH
 	if Helper._hash01(_hash_cell(sc, 103)) >= SOURCE_PROB:
 		return false   # density roll before the summit survey
 	var j: Vector2 = _jitter_pos(sc)
@@ -566,6 +586,8 @@ func _make_pond(p: Vector2, arc: float, incoming_bed := INF) -> PondStamp:
 ## and spilled a waterfall on every side (summit tarns especially).
 ## Floor of 1 keeps beds above y=0.
 func _pond_level(center: Vector2, radius: float) -> int:
+	if _native_walk():
+		return NATIVE_WALK.pond_level(self, center, radius)
 	var pitch := HeightfieldPlan.POINT
 	var bound: float = radius * (1.0 + PondStamp.WOBBLE) + TILE
 	var r_points: int = int(ceil(bound / pitch))
@@ -598,6 +620,12 @@ func _walk(sc: Vector2i, progress_start := -1.0, progress_end := -1.0) -> RiverT
 	var cached: Variant = _cache_get(_walk_cache, sc)
 	if not (cached is StringName and cached == _MISSING):
 		return cached
+	if _native_walk():
+		var native := _trace_from_native(sc, NATIVE_WALK.walk(self, sc))
+		_cache_put(_walk_cache, sc, native, SOURCE_MEMO_LIMIT)
+		if progress_start >= 0.0:
+			_report_planning_progress(progress_end)
+		return native
 	var t: RiverTrace = RiverTrace.new()
 	t.source_cell = sc
 	t.priority = priority_of(sc)
@@ -641,6 +669,23 @@ func _walk(sc: Vector2i, progress_start := -1.0, progress_end := -1.0) -> RiverT
 	t.pond = _make_pond(p, arc, t.beds[-1])
 	_fit_terminal_land(t)
 	_cache_put(_walk_cache, sc, t, SOURCE_MEMO_LIMIT)
+	return t
+
+
+## A raw walk from NativeRiverWalk's arrays, finished as _walk finishes one.
+func _trace_from_native(sc: Vector2i, w: Dictionary) -> RiverTrace:
+	var t: RiverTrace = RiverTrace.new()
+	t.source_cell = sc
+	t.priority = priority_of(sc)
+	var source: Vector2 = w.source
+	t.source_pool = PondStamp.new(source, SOURCE_POOL_R,
+		_hash_cell(Vector2i(roundi(source.x), roundi(source.y)), 7), int(w.pool_level), POOL_DEPTH)
+	t.points = w.points
+	t.beds = w.beds
+	t.widths = w.widths
+	_shape_alluvial_reach(t)
+	t.pond = _make_pond(w.end, float(w.arc), t.beds[-1])
+	_fit_terminal_land(t)
 	return t
 
 

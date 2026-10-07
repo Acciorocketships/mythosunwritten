@@ -32,6 +32,10 @@ namespace Story.Native
             }
         }
 
+        /// The verified field of a seed, shared with the other native ports
+        /// (NativeRiverWalk). Built on first use.
+        internal static SeedField FieldFor(long seed) => Field(seed);
+
         static SeedField Field(long seed)
         {
             if (_fields.TryGetValue(seed, out var f)) return f;

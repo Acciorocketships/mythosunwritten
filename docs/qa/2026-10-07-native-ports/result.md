@@ -88,3 +88,43 @@ over the three chunks 151.2 -> 127.3 s. `HASH CHECK: IDENTICAL`;
 per-sample build on ungraded/native-graded/listed-grade regions),
 `test_september27_rock_placement`, `test_dressing_field`, `test_grass_field`
 pass.
+
+## Task 4: native source search and raw contour walk
+
+`WaterPlan.source_pos`, `_has_source_uncached` (all gates before the walk),
+`_pond_level` and the raw `_walk` loop (`_contour_step`, `_contained_bed`,
+`grad`, `_ascend`, `_ring_prominence`, `_jitter_pos`) run in C#
+(`scripts/native/NativeRiverWalk.cs`) once `NativeRiverWalk.setup(seed)` has
+verified them bit-identical for the seed (40 super-cells in +-12 cells:
+source position, source gate, has_source, every walk point/bed, priority,
+spring-pool level, the finished trace's widths/terminal pond/land bars, and
+the native terminal-pond level; `!=` throughout). Only a plain `WaterPlan`
+(not a test subclass), with the native height field ready and
+`HeightfieldPlan.LOWPASS_M == 0`, is served natively. `_shape_alluvial_reach`,
+`_make_pond`, `_fit_terminal_land` and the caches stay GDScript.
+
+All timings: Godot_mono 4.5.1, headless, seed 2697992464, one process at a time.
+
+### Identity
+
+| check | result |
+|---|---|
+| parity gate, seed 2697992464 | 40 cells, 28 walks (7865 steps) identical |
+| scratch sweep, 3 seeds x 225 cells (2697992464, 3046246887, 12345) | 448 walks, 0 mismatches |
+| `water_block_cost --chunk=-4,-5 --no-disk` digest | `b6c965def22e7e93` (unchanged) |
+| `parallel_tail_check --rounds=2` | `PASS failures=0` |
+| `test_native_river_walk` | mono 1/1 (30 asserts), standard 1/1 (stays off) |
+| `test_water_plan` (mono) | 29/29, 109686 asserts, 133.6 s |
+
+### Water source solve for chunk (-4, -5) (`PROFILE_WATER_COST=1 water_block_cost --no-disk`, ms)
+
+| stage | before (30aa163af) | after |
+|---|---|---|
+| harness region_ms | 11351 | 2990 |
+| source solve inner region_ms | 18638 | 6990 |
+| seeds_ms | 16208 | 13919 |
+| harness water_ms | 52867 | 43559 |
+
+Raw walks alone (30 cold super-cells, 22 sources): GDScript 578 ms, C# 203 ms.
+The parity gate costs 1.76 s on the main thread at `WaterPlan._init` (after
+the 2.17 s native height-field gate).
