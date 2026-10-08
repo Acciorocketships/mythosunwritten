@@ -210,6 +210,18 @@ static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 		else:
 			tower["cutters"] = preload("res://scripts/terrain/features/villages/kit/KitTowerAssembly.gd").placed_cutters(
 				(FileAccess.open(tower.cap_core_path,FileAccess.READ).get_var() as Array) if tower.has("cap_core_path") else tower_core,tower.pose*tower.parts[-1].transform)
+	# Growing upper floors (after roof joins and towers, before projections and
+	# bays): accepted leans cut roofs like any wall and are fitted around later.
+	var growth := GROWTH.fit(masses,house_kits,kit,tower_catalog,growth_character,ornament_air,towers,
+		func(own: StringName,cell: Vector2i,band: int) -> bool:
+			var at := Vector3i(cell.x,band,cell.y)
+			if passages.has(at) or podium.has(at): return true
+			if owner_at.has(at): return owner_at[at] != own
+			return grid.contains(at) and grid.use_at(at) in [WarrenSpatialGrid.Use.STRUCTURAL_VOLUME,
+				WarrenSpatialGrid.Use.SERVICE_VOID,WarrenSpatialGrid.Use.PRIVATE_VOLUME],
+		growth_solid,growth_street)
+	for lean: Dictionary in growth.leans:
+		walls.append(union_script.box_volume(lean.bounds))
 	var room_projections := preload("res://scripts/terrain/features/villages/kit/KitRoomProjections.gd").fit(
 		masses,house_kits,kit,tower_catalog,public_air,towers,
 		func(own:StringName,cell:Vector2i,band:int)->bool:
@@ -263,9 +275,8 @@ static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 				if box.intersects(tower.bounds): return false
 			for bay: Dictionary in facade_bays:
 				if box.intersects(bay.bounds): return false
-			for projection:Dictionary in room_projections:
-				if projection.host!=mass.stable_id and box.intersects(projection.bounds):return false
-			return true
+			return _clear_of_others(box,mass.stable_id,room_projections) \
+				and _clear_of_others(box,mass.stable_id,growth.leans)
 		roof_blocked_windows += facade_contacts.fit(mass,assembler,facade_context,tower_catalog)
 		var parts := assembler.assemble(mass)
 		fitted_window_boxes += preload("res://scripts/terrain/features/villages/kit/KitWindowBoxes.gd").fit(
@@ -303,6 +314,7 @@ static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 	roof_audit["towers"] = tower_audit
 	roof_audit["facade_bays"] = facade_bays.size()
 	roof_audit["room_projections"] = room_projections.size()
+	roof_audit["growth_faces"] = growth.leans.size()
 	roof_audit["retaining_relief"] = retaining_relief.size()
 	roof_audit["retaining_flight_joints"] = retaining_flight_joints
 	roof_audit["retaining_windows"] = retaining_windows.size()
@@ -319,7 +331,15 @@ static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 	roof_audit["roof_fitted_windows"] = int(facade_context.get("substituted",0))
 	return {"payload": payload, "replaced_units": replaced, "masses": masses, "houses": house_masses,
 		"house_kits": house_kits, "roof_kits": roof_kits, "towers": towers, "facade_bays": facade_bays,
-		"room_projections":room_projections,"roof_audit": roof_audit, "placements": placements, "roofs": roofs, "walls": walls}
+		"room_projections":room_projections,"growth":growth.leans,"roof_audit": roof_audit, "placements": placements, "roofs": roofs, "walls": walls}
+
+
+## True when `box` misses every fitted front (`bounds`) another house hosts.
+static func _clear_of_others(box: AABB, host: StringName, fronts: Array) -> bool:
+	for front: Dictionary in fronts:
+		if front.host != host and box.intersects(front.bounds):
+			return false
+	return true
 
 
 ## Balconies, overhang supports and skywalks as kit masses. Balconies also

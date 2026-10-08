@@ -27,6 +27,9 @@ var prop_scale := 1.0
 ## The town supplies finished route and neighbour geometry; isolated studies
 ## may leave this unset.
 var ornament_clear: Callable = Callable()
+## A leaned or projected storey's walls stand this far below its floor so the
+## panels overlap the jetty beam (shared by growth guardrails).
+const OFFSET_WALL_DROP := 0.14
 
 
 func _init(p_kit: BuildingKit) -> void:
@@ -79,12 +82,23 @@ func _emit_inhabited_floor(ctx: Dictionary, storey: Dictionary) -> void:
 	var y := float(storey.floor_band)*kit.band_height()
 	for cell: Vector2i in storey.cells:
 		_emit(ctx,&"deck.board",Vector2(cell)+Vector2(0.5,0.5),y,0.0)
+	_emit_front_floors(ctx,storey)
 
+
+func _emit_front_floors(ctx: Dictionary, storey: Dictionary) -> void:
+	var y := float(storey.floor_band)*kit.band_height()
 	for projection:Dictionary in storey.get("projections",[]):
 		var dir:=int(projection.dir)
 		var out:=Vector2(BuildingMass.DIRS[dir])
 		for centre:Vector2 in projection.centres:
-			_emit(ctx,&"frontage.floor",centre+out*float(projection.depth)*.5/kit.module_width,y,yaw_for_dir(dir))
+			_emit(ctx,_front_role(&"frontage.floor",projection),centre+out*float(projection.depth)*.5/kit.module_width,y,yaw_for_dir(dir))
+
+
+## Growth fronts use the baked piece for their cumulative depth.
+func _front_role(role: StringName, projection: Dictionary) -> StringName:
+	if not bool(projection.get("growth", false)):
+		return role
+	return StringName("%s.%s" % [role, lean_suffix(float(projection.depth))])
 
 
 func _emit_projected_front(ctx:Dictionary,storey:Dictionary)->void:
@@ -92,22 +106,57 @@ func _emit_projected_front(ctx:Dictionary,storey:Dictionary)->void:
 	for projection:Dictionary in storey.get("projections",[]):
 		var dir:=int(projection.dir)
 		var depth:=float(projection.depth)
+		# A growing storey's brackets bear on the leaned face of the storey below.
+		var base:=float(projection.get("base",0.0))
 		var out:=Vector2(BuildingMass.DIRS[dir])
 		var right:=Vector2(right_of(dir))
 		var centres:Array=projection.centres
 		for centre:Vector2 in centres:
-			_emit(ctx,&"frontage.floor",centre+out*depth*.5/kit.module_width,y+kit.storey_height-.12772,yaw_for_dir(dir))
+			_emit(ctx,_front_role(&"frontage.floor",projection),centre+out*depth*.5/kit.module_width,y+kit.storey_height-.12772,yaw_for_dir(dir))
 			_emit(ctx,&"trim.floor_beam",centre+out*depth/kit.module_width,y,yaw_for_dir(dir))
 		for side:int in [-1,1]:
 			var centre:Vector2=centres.front() if side<0 else centres.back()
 			var at:=centre+right*.5*side+out*depth*.5/kit.module_width
 			var yaw:=yaw_for_dir(dir)+PI*.5*side
-			_emit(ctx,&"frontage.return",at,y,yaw,0,Transform3D.IDENTITY,storey.get("tint",Color.WHITE))
-			_emit(ctx,&"frontage.return_beam",at,y,yaw)
-			_emit(ctx,&"frontage.return_beam",at,y+kit.storey_height-.143,yaw)
+			_emit(ctx,_front_role(&"frontage.return",projection),at,y,yaw,0,Transform3D.IDENTITY,storey.get("tint",Color.WHITE))
+			_emit(ctx,_front_role(&"frontage.return_beam",projection),at,y,yaw)
+			_emit(ctx,_front_role(&"frontage.return_beam",projection),at,y+kit.storey_height-.143,yaw)
+		if depth<=base+.001:
+			continue # a held storey adds no overhang: nothing to bracket
 		for joint in range(centres.size()+1):
-			var at:Vector2=centres.front()+right*(joint-.5)-out*.15/kit.module_width
+			var at:Vector2=centres.front()+right*(joint-.5)-out*(.15-base)/kit.module_width
 			_emit(ctx,&"bracket.small",at,y-.706295,yaw_for_dir(dir))
+
+
+## The pieces one candidate front adds (its moved wall slots, corner post,
+## floor/ceiling strips, beams, returns, brackets), for fitters to test before
+## committing. The storey itself is not changed.
+func face_parts(mass: BuildingMass, index: int, projection: Dictionary) -> Array[Dictionary]:
+	var storey: Dictionary = mass.storeys[index]
+	var probe := storey.duplicate()
+	var offsets: Dictionary = (storey.get("wall_offsets", {}) as Dictionary).duplicate()
+	var edges := {}
+	for edge: Vector3i in projection.edges:
+		offsets[edge] = float(projection.depth) / kit.module_width
+		edges[edge] = true
+	probe["wall_offsets"] = offsets
+	probe["projections"] = [projection]
+	var out: Array[Dictionary] = []
+	var ctx := {"mass": mass, "out": out, "serial": 0}
+	var y := float(probe.floor_band) * kit.band_height()
+	var bands := int(probe.get("bands", 2))
+	for slot: Dictionary in storey_slots(probe, _edge_exposure(mass, int(probe.floor_band), bands)):
+		if not edges.has(slot.edge):
+			continue
+		var kind := StringName(probe.openings.get(slot.edge, probe.default_opening))
+		var role := StringName("wall.%s.%s" % [probe.material, kind])
+		if not kit.has_role(role):
+			role = StringName("wall.%s.window" % probe.material)
+		_emit(ctx, role, slot.centre, y - OFFSET_WALL_DROP, yaw_for_dir(int(slot.dir)))
+		_emit_corner_post(ctx, slot, y - OFFSET_WALL_DROP, bands, kit.wall_face)
+	_emit_front_floors(ctx, probe)
+	_emit_projected_front(ctx, probe)
+	return out
 
 
 ## Maps native placements into an EnvironmentInstancePayload. `native_to_frame`
@@ -424,7 +473,7 @@ func _assemble_storey(ctx: Dictionary, index: int) -> void:
 			above_openings = other.openings
 	for slot: Dictionary in storey_slots(storey,
 			_edge_exposure(mass, floor_band, bands)):
-		var wall_y := y - (0.14 if float(slot.get("wall_offset",0.0))>0.0 else 0.0)
+		var wall_y := y - (OFFSET_WALL_DROP if float(slot.get("wall_offset",0.0))>0.0 else 0.0)
 		var jettied := below_inset.has(slot.edge)
 		if not _slot_exposed(mass, slot, floor_band, bands):
 			continue

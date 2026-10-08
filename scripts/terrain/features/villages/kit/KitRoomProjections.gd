@@ -75,8 +75,11 @@ static func fit(
 				if not embedded and out.size() > first_projection:
 					break
 				var storey: Dictionary = mass.storeys[index]
-				if storey.has("projections"):
+				# Growth fronts leave the storey's other faces free for one projection.
+				if (storey.get("projections", []) as Array).any(
+						func(p: Dictionary) -> bool: return not bool(p.get("growth", false))):
 					continue
+				var leaning: Dictionary = storey.get("growth", {})
 				var band := int(storey.floor_band)
 				if (
 					band <= mass.ground_band
@@ -89,6 +92,9 @@ static func fit(
 					if int(run.end) - int(run.start) < 2:
 						continue
 					var dir := int(run.dir)
+					# Not on a leaning face, nor beside its returns.
+					if leaning.has(dir) or leaning.has((dir + 1) % 4) or leaning.has((dir + 3) % 4):
+						continue
 					if pass_index == 1 and relieved_faces.has(dir):
 						continue
 					var first := int(run.start)
@@ -178,10 +184,13 @@ static func fit(
 					var projection := {
 						"edges": edges, "centres": centres, "dir": dir, "depth": DEPTH, "band": band
 					}
-					storey["projections"] = [projection]
-					storey["wall_offsets"] = {}
+					var fronts: Array = storey.get("projections", [])
+					fronts.append(projection)
+					storey["projections"] = fronts
+					var offsets: Dictionary = storey.get("wall_offsets", {})
+					storey["wall_offsets"] = offsets
 					for edge: Vector3i in edges:
-						storey.wall_offsets[edge] = DEPTH / kit.module_width
+						offsets[edge] = DEPTH / kit.module_width
 					# A new inhabited front needs an opening. Its final native pane
 					# still goes through the ordinary roof/floor obstruction fitter.
 					var window: Vector3i = edges[posmod(hash([mass.seed, band, dir]), edges.size())]

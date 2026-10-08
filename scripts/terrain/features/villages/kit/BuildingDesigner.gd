@@ -86,7 +86,7 @@ func articulate(mass: BuildingMass, context: Dictionary) -> void:
 	# timber village, never a stone fortress); plinths stay on every house.
 	var stone_ground := rng.randf() < float(context.get("stone_chance", 0.4))
 	_assign_materials(mass, terrain_storey, stone_ground)
-	_assign_jetties(mass, terrain_storey, rng)
+	_assign_jetties(mass, terrain_storey, rng, bool(context.get("grows", false)))
 	_assign_finish(mass, rng, colour)
 	_assign_roofs(mass, rng, colour, bool(context.get("terraced", false)),
 		int(context.get("roof_axis", -1)))
@@ -111,7 +111,7 @@ func _assign_materials(mass: BuildingMass, terrain_storey: int,
 ## footprint stands directly on it and every part stays at least one module
 ## wide after the half-module erosion.
 func _assign_jetties(mass: BuildingMass, terrain_storey: int,
-		rng: RandomNumberGenerator) -> void:
+		rng: RandomNumberGenerator, grows := false) -> void:
 	if not kit.has_role(&"bracket.jetty"):
 		return
 	for index in mass.storeys.size():
@@ -147,7 +147,10 @@ func _assign_jetties(mass: BuildingMass, terrain_storey: int,
 		var below := _storey_at(mass, int(storey.floor_band) - 2)
 		if not below.is_empty() and bool(below.get("inset", false)):
 			chance = 0.0
-		storey.inset = rng.randf() < chance
+		# Growth replaces the single jetty on a growing house (inset is storey-wide);
+		# the roll is still drawn so every later choice of the house is unchanged.
+		var jetty := rng.randf() < chance
+		storey.inset = jetty and not grows
 
 
 func _assign_facades(mass: BuildingMass, rng: RandomNumberGenerator,
@@ -1171,8 +1174,11 @@ func _assign_dressing(mass: BuildingMass, rng: RandomNumberGenerator,
 					and (above.cells as Dictionary).has(Vector2i(slot.edge.x, slot.edge.y)) \
 					and StringName((above.openings as Dictionary).get(slot.edge, &"")) \
 						!= BuildingMass.OPENING_BAY
+				# A growing house's front leans over its door instead (the 0.9
+				# roll is still drawn, so later rolls are unchanged).
 				if not sheltered and flush_above and rng.randf() < 0.9 \
-						and _awning_room(slot, int(storey.floor_band)):
+						and _awning_room(slot, int(storey.floor_band)) \
+						and not bool(context.get("grows", false)):
 					_add_awning(mass, {"kind": &"awning", "centre": centre,
 						"dir": dir, "y": y, "proud": proud}, int(storey.floor_band))
 				if rng.randf() < 0.45 and _front_open(slot, int(storey.floor_band)) \

@@ -20,10 +20,12 @@ static func fit(masses: Array[BuildingMass], kits: Dictionary, base: BuildingKit
 		var kit: BuildingKit = kits[own]
 		for index in range(1,mass.storeys.size()):
 			var storey: Dictionary = mass.storeys[index]
-			if storey.material != BuildingMass.MATERIAL_TIMBER or not storey.get("projections",[]).is_empty(): continue
+			if storey.material != BuildingMass.MATERIAL_TIMBER or (storey.get("projections",[]) as Array).any(
+					func(p: Dictionary) -> bool: return not bool(p.get("growth",false))): continue
 			var band := int(storey.floor_band)
 			var slots := BuildingDesigner.new(kit).slots_of(mass,storey)
 			for slot: Dictionary in slots:
+				if (storey.get("growth",{}) as Dictionary).has(int(slot.dir)): continue
 				if int(slot.count) < 4 or int(slot.index) in [0,int(slot.count)-1]: continue
 				var phase := posmod(hash([mass.seed,band,slot.dir,"facade.relief"]),3)
 				if posmod(int(slot.index)-1,3) != phase: continue
