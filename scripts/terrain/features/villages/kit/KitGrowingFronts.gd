@@ -11,11 +11,19 @@ const STEP_KNOB := &"growth_step"
 const CAP_KNOB := &"growth_max_lean"
 const GAP_KNOB := &"lane_sky_gap"
 const BOOST_KNOB := &"growth_gable_front_boost"
-## Baked step sizes and the cumulative depths 1-4 steps of each produce (native m).
-const STEP_SIZES: Array[float] = [0.25, 0.5]
+## Baked step sizes (native m): 0.5 on bracket.small, 1.0 = the kit jetty on bracket.jetty.
+const STEP_SIZES: Array[float] = [0.5, 1.0]
 const MAX_STEPS := 4
 const LEAN_DEPTHS: Array[float] = [0.25, 0.5, 0.75, 1.0, 1.5, 2.0]
 const FRONT_ROLES: Array[StringName] = [&"frontage.floor", &"frontage.return", &"frontage.return_beam"]
+
+
+## The step this kit can carry: a kit-sized step needs the kit's own jetty brace
+## spanning exactly that depth; otherwise the light step.
+static func carried_step(kit: BuildingKit, step: float) -> float:
+	if step > 0.5 and not (kit.has_role(&"bracket.jetty") and is_equal_approx(kit.jetty_depth, step)):
+		return 0.5
+	return step
 
 
 static func _own(mass: BuildingMass) -> StringName:
@@ -82,13 +90,21 @@ static func face_chains(mass: BuildingMass, solid: Callable, street: Callable) -
 	var first := _storey_at(mass, int(ground.floor_band) + int(ground.get("bands", 2)))
 	if first.is_empty():
 		return chains
-	var below := _exposed_runs(mass, ground, solid)
 	# Exposed runs per storey band, computed once for every chain key.
 	var runs_at := {}
-	for key: String in _exposed_runs(mass, first, solid):
-		if not below.has(key):
+	var first_runs := _exposed_runs(mass, first, solid)
+	for key: String in first_runs:
+		var run: Dictionary = first_runs[key]
+		# Guardrail 5 per edge: every edge of the face is also a boundary edge of the
+		# storey below (exposed there or not: a lower neighbour or roof may cover it).
+		var matching := true
+		for along in range(int(run.start), int(run.end)):
+			var cell := BuildingKitAssembler._inside_cell(int(run.dir), int(run.line), along)
+			if not (ground.cells as Dictionary).has(cell) \
+					or (ground.cells as Dictionary).has(cell + BuildingMass.DIRS[int(run.dir)]):
+				matching = false
+		if not matching:
 			continue
-		var run: Dictionary = below[key]
 		var storeys: Array[int] = [mass.storeys.find(first)]
 		var band := int(first.floor_band) + int(first.get("bands", 2))
 		while true:
@@ -104,19 +120,17 @@ static func face_chains(mass: BuildingMass, solid: Callable, street: Callable) -
 		chains.append({"dir": int(run.dir), "line": int(run.line), "start": int(run.start),
 			"end": int(run.end), "storeys": storeys,
 			"street": _is_street(mass, run, int(first.floor_band), street),
+			"first_band": int(first.floor_band), "start_convex": bool(run.start_convex),
+			"end_convex": bool(run.end_convex),
 			"key": "%s|%s" % [mass.stable_id, key]})
 	chains.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return String(a.key) < String(b.key))
 	return chains
 
 
-## At least one storey above the ground storey on a street face (2+ storeys total).
+## Two stacked storeys (ground + one above) and at least one exposed face.
 static func house_eligible(mass: BuildingMass, solid: Callable, street: Callable) -> bool:
-	if String(mass.stable_id).contains("wall-room"):
-		return false
-	for chain: Dictionary in face_chains(mass, solid, street):
-		if bool(chain.street) and (chain.storeys as Array).size() >= 1:
-			return true
-	return false
+	return not String(mass.stable_id).contains("wall-room") \
+		and not face_chains(mass, solid, street).is_empty()
 
 
 ## Eligibility first, so an ineligible house consumes no roll (rolls are keyed,
@@ -149,9 +163,9 @@ static func fit(masses: Array[BuildingMass], kits: Dictionary, base: BuildingKit
 		street: Callable) -> Dictionary:
 	var leans: Array[Dictionary] = []
 	var ctx := {"catalog": catalog, "air": air, "towers": towers, "reserved": reserved,
-		"solid": solid, "registry": {}, "obstacles": [], "gap": 0.0, "kit": base}
+		"solid": solid, "registry": {}, "obstacles": [], "gap": 0.0, "kit": base, "rejections": []}
 	if character == null or not masses.any(func(m: BuildingMass) -> bool: return m.grows):
-		return {"leans": leans, "registry": ctx.registry}
+		return {"leans": leans, "registry": ctx.registry, "rejections": ctx.rejections}
 	ctx.gap = character.value(GAP_KNOB)
 	ctx.obstacles = _obstacles(masses, kits, base, catalog, towers, solid)
 	for mass: BuildingMass in masses:
@@ -164,13 +178,14 @@ static func fit(masses: Array[BuildingMass], kits: Dictionary, base: BuildingKit
 		var step := float(String(character.pick(STEP_KNOB, String(mass.stable_id))))
 		if not STEP_SIZES.has(step):
 			continue
+		step = carried_step(kit, step)
 		var cap := step * float(mini(MAX_STEPS, floori(character.value(CAP_KNOB) / step + 0.0001)))
 		for chain: Dictionary in face_chains(mass, solid, street):
 			var knob := STREET_FACE_KNOB if bool(chain.street) else OTHER_FACE_KNOB
 			if not character.chance(knob, String(chain.key)):
 				continue
 			_commit(mass, kit, chain, _profile(mass, chain, step, cap, ctx), ctx, leans)
-	return {"leans": leans, "registry": ctx.registry}
+	return {"leans": leans, "registry": ctx.registry, "rejections": ctx.rejections}
 
 
 ## Monotone cumulative leans for one face (index k = k-th storey of the chain):
@@ -189,18 +204,23 @@ static func _profile(mass: BuildingMass, chain: Dictionary, step: float, cap: fl
 	while k < n:
 		var held := 0.0 if k == 0 else leans[k - 1]
 		var want := minf(float(k + 1) * step, face_cap)
-		if want > held and _fits(mass, chain, k, want, held, ctx):
+		var fault := _fault(mass, chain, k, want, held, ctx) if want > held else &"held"
+		if fault == &"":
 			leans[k] = want
 			k += 1
 			continue
 		# Withdraw this storey's step: it and every storey above keep the last accepted lean.
+		if fault != &"held":
+			ctx.rejections.append({"chain": String(chain.key), "storey": k, "lean": want, "cause": fault})
 		face_cap = held
 		if held <= 0.0:
 			break
-		if _fits(mass, chain, k, held, held, ctx):
+		var hold := _fault(mass, chain, k, held, held, ctx)
+		if hold == &"":
 			leans[k] = held
 			k += 1
 			continue
+		ctx.rejections.append({"chain": String(chain.key), "storey": k, "lean": held, "cause": hold})
 		# This storey cannot hold even the lean below it: an inward step would leave
 		# an open ledge, so the whole face drops one step and is fitted again.
 		face_cap = held - step
@@ -209,21 +229,24 @@ static func _profile(mass: BuildingMass, chain: Dictionary, step: float, cap: fl
 	return leans
 
 
-## Guardrails for storey k of a face at `lean` over `base` (Task 5 extends).
-static func _fits(mass: BuildingMass, chain: Dictionary, k: int, lean: float, base: float,
-		ctx: Dictionary) -> bool:
+## The first guardrail storey k fails at `lean` over `base`, or &"" when it fits.
+static func _fault(mass: BuildingMass, chain: Dictionary, k: int, lean: float, base: float,
+		ctx: Dictionary) -> StringName:
 	var storey: Dictionary = mass.storeys[chain.storeys[k]]
 	if storey.material != BuildingMass.MATERIAL_TIMBER or bool(storey.get("inset", false)) \
 			or bool(storey.get("retaining", false)) or bool(storey.get("fortified", false)):
-		return false
-	if not _no_portal(mass, chain, k) or not _ends_clear(mass, chain, k, ctx) \
-			or not _columns_free(mass, chain, k, ctx):
-		return false
+		return &"material"
+	if not _no_portal(mass, chain, k):
+		return &"portal"
+	if not _ends_clear(mass, chain, k, ctx):
+		return &"ends"
+	if not _columns_free(mass, chain, k, ctx):
+		return &"columns"
 	if not gap_ok(ctx.registry, ctx.solid, _own(mass), _edges(chain), int(chain.dir),
 			int(storey.floor_band), lean, ctx.kit, float(ctx.gap)):
-		return false
+		return &"gap"
 	var candidate := _candidate(mass, ctx.kit, chain, k, lean, base, ctx.solid)
-	return _parts_clear(mass, candidate, crown_index(mass, chain, k), ctx)
+	return _parts_fault(mass, candidate, crown_index(mass, chain, k), ctx)
 
 
 ## One storey's leaned front: its projection record, outer body box and pieces.
@@ -246,7 +269,7 @@ static func _candidate(mass: BuildingMass, kit: BuildingKit, chain: Dictionary, 
 		Vector3(at.x, band * kit.band_height(), at.y))
 	var body := AABB(Vector3(-kit.module_width * .5, 0, 0),
 		Vector3(centres.size() * kit.module_width, kit.storey_height, lean + kit.wall_face))
-	return {"index": index, "projection": projection, "edges": edges, "centres": centres,
+	return {"index": index, "k": k, "projection": projection, "edges": edges, "centres": centres,
 		"band": band, "pose": pose, "bounds": pose * body,
 		"parts": _assembler(mass, kit, solid).face_parts(mass, index, projection)}
 
@@ -263,6 +286,17 @@ static func _assembler(mass: BuildingMass, kit: BuildingKit, solid: Callable) ->
 
 static func _commit(mass: BuildingMass, kit: BuildingKit, chain: Dictionary,
 		profile: Array[float], ctx: Dictionary, out: Array[Dictionary]) -> void:
+	# Own ornaments the new braces/strips meet yield: remove them and their parts.
+	for k in profile.size():
+		if profile[k] <= 0.0:
+			continue
+		var probe := _candidate(mass, kit, chain, k, profile[k], 0.0 if k == 0 else profile[k - 1], ctx.solid)
+		_parts_fault(mass, probe, crown_index(mass, chain, k), ctx)
+		for obstacle: Dictionary in probe.yields:
+			(obstacle.host as BuildingMass).decor.erase(obstacle.decor)
+			for other: Dictionary in ctx.obstacles:
+				if other.has("decor") and other.decor == obstacle.decor:
+					other["gone"] = true
 	var dir := int(chain.dir)
 	for k in profile.size():
 		var lean := profile[k]
@@ -281,10 +315,11 @@ static func _commit(mass: BuildingMass, kit: BuildingKit, chain: Dictionary,
 		var leaning: Dictionary = storey.get("growth", {})
 		leaning[dir] = lean
 		storey["growth"] = leaning
-		# Window boxes on the face move out with it (as projections do).
+		# Decor on the face of this storey moves out with it (as projections do).
 		for item: Dictionary in mass.decor:
 			if not item.has("dir") or int(item.dir) != dir \
-					or absf(float(item.get("y", -INF)) - candidate.band * kit.band_height()) > .01:
+					or float(item.get("y", -INF)) < candidate.band * kit.band_height() - .01 \
+					or float(item.get("y", -INF)) >= (candidate.band + 2) * kit.band_height():
 				continue
 			if (candidate.centres as Array).has(item.centre):
 				item.centre += Vector2(BuildingMass.DIRS[dir]) * lean / kit.module_width
@@ -313,13 +348,30 @@ static func _obstacles(masses: Array[BuildingMass], kits: Dictionary, base: Buil
 		catalog: EnvironmentCatalog, towers: Array[Dictionary], solid: Callable) -> Array:
 	var out: Array = []
 	for mass: BuildingMass in masses:
-		for part: Dictionary in _assembler(mass, kits.get(_own(mass), base), solid).assemble(mass):
-			out.append({"owner": mass.stable_id, "role": String(part.role),
-				"roof_index": int(part.get("roof_index", -1)),
-				"bounds": part.transform * catalog.descriptor(part.asset_id).measured_aabb})
+		var assembler := _assembler(mass, kits.get(_own(mass), base), solid)
+		var decor := mass.decor.duplicate()
+		mass.decor.clear()
+		var parts := assembler.assemble(mass)
+		mass.decor.assign(decor)
+		for part: Dictionary in parts:
+			out.append(_obstacle(mass, part, catalog))
+		for item: Dictionary in decor:
+			var ctx := {"mass": mass, "out": [] as Array[Dictionary], "serial": 0}
+			assembler._assemble_decor(ctx, item)
+			for part: Dictionary in ctx.out:
+				var obstacle := _obstacle(mass, part, catalog)
+				obstacle["decor"] = item
+				obstacle["host"] = mass
+				out.append(obstacle)
 	for tower: Dictionary in towers:
 		out.append({"owner": &"", "role": "tower", "roof_index": -1, "bounds": tower.bounds})
 	return out
+
+
+static func _obstacle(mass: BuildingMass, part: Dictionary, catalog: EnvironmentCatalog) -> Dictionary:
+	return {"owner": mass.stable_id, "role": String(part.role),
+		"roof_index": int(part.get("roof_index", -1)),
+		"bounds": part.transform * catalog.descriptor(part.asset_id).measured_aabb}
 
 
 ## union_index of the roof wing whose eave or gable closes this storey's face (else -1).
@@ -360,19 +412,66 @@ static func clear_of(box: AABB, obstacles: Array, blocks: Callable) -> bool:
 	return true
 
 
-# G1 + G3: no leaned piece enters public walking air or a skywalk's air (G1), nor
-# another building, skywalk, tower, balcony, canopy or own roof/ornament (G3).
-static func _parts_clear(mass: BuildingMass, candidate: Dictionary, crown: int,
-		ctx: Dictionary) -> bool:
+## Contact this shallow (native m) is touching, not a collision.
+const TOUCH := 0.05
+## The house's own ornaments that yield (are removed) where a new step's pieces meet them.
+const YIELD_DECOR: Array[StringName] = [&"ivy", &"ivy_corner", &"window_box", &"awning"]
+
+
+static func contact_clear(box: AABB, other: AABB) -> bool:
+	if not box.intersects(other):
+		return true
+	var overlap := box.intersection(other).size
+	return minf(overlap.x, minf(overlap.y, overlap.z)) <= TOUCH
+
+
+## The stepping storey's own face: its pieces (and a bay or ornament on it) move out with it.
+## Its stepping storeys below (same face, same profile) carry theirs out too, so the
+## slab spans the face from the chain's first storey up to this one.
+static func _face_slab(candidate: Dictionary, kit: BuildingKit) -> AABB:
+	var n := (candidate.centres as Array).size()
+	var below := int(candidate.get("k", 0)) * kit.storey_height
+	return candidate.pose * AABB(Vector3(-kit.module_width * .5 - .3, -below, -.6),
+		Vector3(n * kit.module_width + .6, kit.storey_height + below,
+			float(candidate.projection.depth) + 1.8))
+
+
+static func _obstacle_cause(obstacle: Dictionary, mass: BuildingMass) -> StringName:
+	if obstacle.owner == mass.stable_id:
+		return &"obstacle.own"
+	if obstacle.owner == &"":
+		return &"obstacle.tower" if String(obstacle.role) == "tower" else &"obstacle.lean"
+	var token := String(obstacle.owner).trim_prefix("kit.")
+	return StringName("obstacle.%s" % token.get_slice(".", 0))
+
+
+# G1 + G3 with the false blockers removed: touching contact is clear, the face's own
+# bay/ornaments ride out with it, the house's own lower ornaments yield.
+static func _parts_fault(mass: BuildingMass, candidate: Dictionary, crown: int,
+		ctx: Dictionary) -> StringName:
 	var catalog: EnvironmentCatalog = ctx.catalog
-	var blocks := func(obstacle: Dictionary) -> bool: return _blocks(obstacle, mass, crown)
+	var slab := _face_slab(candidate, ctx.kit)
+	var yields: Array = []
+	candidate["yields"] = yields
 	for part: Dictionary in candidate.parts:
 		var local: AABB = catalog.descriptor(part.asset_id).measured_aabb
 		if CLEARANCE.intersects_air(local, part.transform, ctx.air):
-			return false
-		if not clear_of((part.transform * local).grow(-0.002), ctx.obstacles, blocks):
-			return false
-	return true
+			return &"air"
+		var box: AABB = (part.transform * local).grow(-0.002)
+		for obstacle: Dictionary in ctx.obstacles:
+			if bool(obstacle.get("gone", false)) or not _blocks(obstacle, mass, crown) \
+					or contact_clear(box, obstacle.bounds):
+				continue
+			if obstacle.owner == mass.stable_id:
+				var rides := String(obstacle.role).begins_with("bay.") or obstacle.has("decor")
+				if rides and slab.has_point((obstacle.bounds as AABB).get_center()):
+					continue
+				if obstacle.has("decor") and StringName(obstacle.decor.kind) in YIELD_DECOR:
+					if not yields.has(obstacle):
+						yields.append(obstacle)
+					continue
+			return _obstacle_cause(obstacle, mass)
+	return &""
 
 
 # G2: distance to the facing facade across the lane, minus both leans, keeps the sky gap.

@@ -123,6 +123,12 @@ func _emit_projected_front(ctx:Dictionary,storey:Dictionary)->void:
 			_emit(ctx,_front_role(&"frontage.return_beam",projection),at,y+kit.storey_height-.143,yaw)
 		if depth<=base+.001:
 			continue # a held storey adds no overhang: nothing to bracket
+		if absf(depth-base-kit.jetty_depth)<.001 and kit.has_role(&"bracket.jetty"):
+			# A kit-sized step rides the kit's own jetty brace: one per module, on the
+			# storey below's (stepped) face, as _emit_jetty_trim places it.
+			for centre:Vector2 in centres:
+				_emit(ctx,&"bracket.jetty",centre+out*base/kit.module_width,y-kit.jetty_depth,yaw_for_dir(dir))
+			continue
 		for joint in range(centres.size()+1):
 			var at:Vector2=centres.front()+right*(joint-.5)-out*(.15-base)/kit.module_width
 			_emit(ctx,&"bracket.small",at,y-.706295,yaw_for_dir(dir))
@@ -149,6 +155,11 @@ func face_parts(mass: BuildingMass, index: int, projection: Dictionary) -> Array
 		if not edges.has(slot.edge):
 			continue
 		var kind := StringName(probe.openings.get(slot.edge, probe.default_opening))
+		if kind == BuildingMass.OPENING_BAY and _emit_bay(ctx, probe, slot, y - OFFSET_WALL_DROP,
+				yaw_for_dir(int(slot.dir)), _hash(mass, index, int(slot.centre.x * 2.0), int(slot.centre.y * 2.0)),
+				probe.get("tint", Color.WHITE)):
+			_emit_corner_post(ctx, slot, y - OFFSET_WALL_DROP, bands, kit.wall_face)
+			continue
 		var role := StringName("wall.%s.%s" % [probe.material, kind])
 		if not kit.has_role(role):
 			role = StringName("wall.%s.window" % probe.material)
@@ -507,12 +518,9 @@ func _assemble_storey(ctx: Dictionary, index: int) -> void:
 				and pick % plain_every == 0:
 			kind = BuildingMass.OPENING_PLAIN
 		if kind == BuildingMass.OPENING_BAY:
-			var colour := StringName(storey.get("bay_colour", &"red"))
-			var bay_role := StringName((storey.get("bay_roles",{}) as Dictionary).get(slot.edge,StringName("bay.%s" % colour)))
-			if kit.has_role(bay_role):
-				var offset: Vector2 = (storey.get("bay_offsets",{}) as Dictionary).get(slot.edge,Vector2.ZERO)
-				# The bay replaces this wall panel and belongs to the same house finish.
-				_emit(ctx, bay_role, centre+offset, wall_y + kit.band_height() * 2.0 / 3.0, yaw, pick, Transform3D.IDENTITY, tint)
+			# The bay replaces this wall panel and belongs to the same house finish.
+			if _emit_bay(ctx, storey, slot, wall_y, yaw, pick, tint):
+				var bay_role := StringName((storey.get("bay_roles",{}) as Dictionary).get(slot.edge,StringName("bay.%s" % StringName(storey.get("bay_colour", &"red")))))
 				if bay_role!=&"bay.spire":
 					_emit_jetty_trim(ctx, slot, wall_y, yaw, jettied, pick)
 					continue
@@ -879,6 +887,18 @@ func _covered_above(mass: BuildingMass, slot: Dictionary, band: int) -> bool:
 			return false
 		if external_blocked.is_valid() and bool(external_blocked.call(cell, band)):
 			return false
+	return true
+
+
+## A bay replacing this wall panel (true when one was placed).
+func _emit_bay(ctx: Dictionary, storey: Dictionary, slot: Dictionary, wall_y: float, yaw: float,
+		pick: int, tint: Color) -> bool:
+	var colour := StringName(storey.get("bay_colour", &"red"))
+	var bay_role := StringName((storey.get("bay_roles",{}) as Dictionary).get(slot.edge,StringName("bay.%s" % colour)))
+	if not kit.has_role(bay_role):
+		return false
+	var offset: Vector2 = (storey.get("bay_offsets",{}) as Dictionary).get(slot.edge,Vector2.ZERO)
+	_emit(ctx, bay_role, (slot.centre as Vector2)+offset, wall_y + kit.band_height() * 2.0 / 3.0, yaw, pick, Transform3D.IDENTITY, tint)
 	return true
 
 

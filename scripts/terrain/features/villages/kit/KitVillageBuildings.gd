@@ -332,7 +332,7 @@ static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 	roof_audit["roof_fitted_windows"] = int(facade_context.get("substituted",0))
 	return {"payload": payload, "replaced_units": replaced, "masses": masses, "houses": house_masses,
 		"house_kits": house_kits, "roof_kits": roof_kits, "towers": towers, "facade_bays": facade_bays,
-		"room_projections":room_projections,"growth":growth.leans,"roof_audit": roof_audit, "placements": placements, "roofs": roofs, "walls": walls}
+		"room_projections":room_projections,"growth":growth.leans,"growth_rejections":growth.rejections,"roof_audit": roof_audit, "placements": placements, "roofs": roofs, "walls": walls}
 
 
 ## True when `box` misses every fitted front (`bounds`) another house hosts.

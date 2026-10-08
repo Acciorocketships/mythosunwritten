@@ -14,16 +14,19 @@ func test_growth_knobs_are_in_the_table_with_their_shipped_values() -> void:
 	for size: float in [0.0, 1.0]:
 		var c := TownCharacter.draw(program, 53, size)
 		assert_eq(c.value(GROWTH.HOUSE_KNOB), 0.0)
-		assert_eq(c.weights(GROWTH.STEP_KNOB).keys(), [&"0.25", &"0.5"])
 		assert_almost_eq(c.value(GROWTH.STREET_FACE_KNOB), 0.85, 1e-6)
-		assert_almost_eq(c.value(GROWTH.OTHER_FACE_KNOB), 0.1, 1e-6)
+		assert_eq(c.weights(GROWTH.STEP_KNOB).keys(), [&"0.5", &"1.0"])
+		assert_gt(float(c.weights(GROWTH.STEP_KNOB)[&"1.0"]), float(c.weights(GROWTH.STEP_KNOB)[&"0.5"]),
+			"the kit jetty is the usual step")
+		assert_almost_eq(c.value(GROWTH.OTHER_FACE_KNOB), 0.85, 1e-6)
+		assert_almost_eq(c.value(GROWTH.OTHER_FACE_KNOB), c.value(GROWTH.STREET_FACE_KNOB), 1e-6,
+			"every exposed face is treated alike")
+		assert_almost_eq(c.value(GROWTH.CAP_KNOB), 2.0, 1e-6)
 		assert_almost_eq(c.value(GROWTH.GAP_KNOB), 0.75, 1e-6)
 		assert_almost_eq(c.value(GROWTH.BOOST_KNOB), 2.0, 1e-6)
-	assert_almost_eq(TownCharacter.draw(program, 53, 0.0).value(GROWTH.CAP_KNOB), 1.0, 1e-6)
-	assert_almost_eq(TownCharacter.draw(program, 53, 1.0).value(GROWTH.CAP_KNOB), 1.5, 1e-6)
 
 
-func test_eligible_house_needs_an_upper_storey_on_a_street_face() -> void:
+func test_eligible_house_needs_two_stacked_storeys_and_an_exposed_face() -> void:
 	var street := Callable(FIXTURE, "street")
 	var none := Callable(FIXTURE, "nothing_solid")
 	assert_true(GROWTH.house_eligible(FIXTURE.house(&"kit.a", Rect2i(0, 0, 3, 2), 3, 3), none, street))
@@ -31,8 +34,12 @@ func test_eligible_house_needs_an_upper_storey_on_a_street_face() -> void:
 		"one storey above the ground can grow")
 	assert_false(GROWTH.house_eligible(FIXTURE.house(&"kit.d", Rect2i(0, 0, 3, 2), 1, 3), none, street),
 		"a ground-only house cannot grow")
-	assert_false(GROWTH.house_eligible(FIXTURE.house(&"kit.c", Rect2i(0, 2, 3, 2), 3, 3), none, street),
-		"no face fronts the lane")
+	assert_true(GROWTH.house_eligible(FIXTURE.house(&"kit.c", Rect2i(0, 2, 3, 2), 3, 3), none, street),
+		"any exposed face counts, not only street faces")
+	var walled := func(_own: StringName, cell: Vector2i, _band: int) -> bool:
+		return not Rect2i(0, 2, 3, 2).has_point(cell)
+	assert_false(GROWTH.house_eligible(FIXTURE.house(&"kit.e", Rect2i(0, 2, 3, 2), 3, 3), walled, street),
+		"a house touching other buildings on every face has nothing to step out")
 
 
 func test_house_roll_is_keyed_by_house_and_untouched_by_other_growth_knobs() -> void:
@@ -81,3 +88,11 @@ func test_build_marks_houses_growing_only_when_the_chance_is_positive() -> void:
 			assert_eq(growing, 0)
 		else:
 			assert_gt(growing, 0, "the two towns have eligible street houses")
+
+
+func test_a_kit_without_the_jetty_brace_steps_half_a_jetty() -> void:
+	var kit := SuntailBuildingKit.create()
+	assert_eq(GROWTH.carried_step(kit, 1.0), 1.0, "Suntail carries a 1.0 step on bracket.jetty")
+	assert_eq(GROWTH.carried_step(kit, 0.5), 0.5)
+	kit.jetty_depth = 0.0
+	assert_eq(GROWTH.carried_step(kit, 1.0), 0.5, "no matching jetty brace: the light step")

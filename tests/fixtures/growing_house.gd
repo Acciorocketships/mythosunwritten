@@ -19,14 +19,15 @@ static func house(id: StringName, rect: Rect2i, storeys: int, door_dir: int) -> 
 	return mass
 
 
-## Builtin odds with growth forced on for the house under test; `step` fixes growth_step.
-static func character(values: Dictionary = {}, step := &"0.25") -> TownCharacter:
+## Builtin odds with growth forced on for the house under test; `step` fixes
+## growth_step ("1.0" = the kit jetty, the default; "0.5" = the light step).
+static func character(values: Dictionary = {}, step := &"1.0") -> TownCharacter:
 	var fixed := {&"growing_house_chance": 1.0, &"growth_street_face_chance": 1.0,
-		&"growth_other_face_chance": 0.0, &"growth_max_lean": 1.0, &"lane_sky_gap": 0.75}
+		&"growth_other_face_chance": 0.0, &"growth_max_lean": 2.0, &"lane_sky_gap": 0.75}
 	fixed.merge(values, true)
 	var c := TownCharacter.draw(TownOddsProgram.builtin().with_overrides(fixed), 1, 0.5)
-	c.values[&"growth_step"] = {&"0.25": 1.0 if step == &"0.25" else 0.0,
-		&"0.5": 1.0 if step == &"0.5" else 0.0}
+	c.values[&"growth_step"] = {&"0.5": 1.0 if step == &"0.5" else 0.0,
+		&"1.0": 1.0 if step == &"1.0" else 0.0}
 	return c
 
 
