@@ -1,3 +1,8 @@
+> ROOF PROPORTION (Oct 8, `docs/qa/2026-10-08-roof-proportion/result.md`): `BuildingDesigner.roof_proportion_ok` is a guardrail on every kit pitched roof: at most
+> `MAX_GABLE_STOREYS` 2 storeys of gable and at most `MAX_ROOF_SLENDERNESS` 3x as tall as its ridge is long. A house wing that fails turns, becomes a double pile
+> (`pile_rects`) or a terrace; a one-module bridge-house whose transverse gatehouse roof fails (gap >= 5: 31/large with clearings had a 12 m roof on a 2 m ridge)
+> takes a row of 2-3-module transverse piles. Gap <= 4 gatehouses and every default fingerprint town are unchanged (`test_roof_proportion`).
+>
 > TASTE KNOBS (Oct 7, plan `.superpowers/sdd/2026-10-07-town-taste-knobs`; defaults in `town_odds.tres`, each knob's notes name its task): `clearing_lobe_bias` 2.0 /
 > `clearing_enclosure_bias` 2.0 (courtyards kept with probability by lobe depth / fronted sides, never a hard reject), `plaza_ring_chance` 1.0 and `clearing_ring_chance` 0.25
 > (ringless greens), `clearing_deco_density` 0.7 (clearing furnishing), `well_scale` 0.7 (wells only on ground greens, hard rule), `satellite_reach_scale` 0.7 spread 0.15,

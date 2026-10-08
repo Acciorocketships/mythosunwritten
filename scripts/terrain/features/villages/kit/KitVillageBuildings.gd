@@ -66,7 +66,7 @@ static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 	var spans: Array[Dictionary] = exterior.spans
 	var public_crowns: Dictionary = exterior.terrace_cells
 	var passages := _passage_house_claims(spans, houses, owner_at)
-	var feature_masses := _feature_masses(spatial, fabric, houses, grid, spans)
+	var feature_masses := _feature_masses(spatial, fabric, houses, grid, spans, kit)
 	var seated_balcony_brackets := preload("res://scripts/terrain/features/villages/kit/KitBalconySupports.gd").seat(feature_masses,houses,grid)
 	var bracket_bearings := preload("res://scripts/terrain/features/villages/kit/KitBracketBearings.gd").cells(feature_masses)
 	# Adjacent lots on one ground become one building (after the balconies
@@ -312,7 +312,7 @@ static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 ## open a door in their owner house, so this runs before houses are designed.
 static func _feature_masses(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 		houses: Dictionary, grid: WarrenSpatialGrid,
-		spans: Array[Dictionary]) -> Array[BuildingMass]:
+		spans: Array[Dictionary], kit: BuildingKit = null) -> Array[BuildingMass]:
 	var out: Array[BuildingMass] = []
 	for feature: WarrenFeatureReservation in spatial.features:
 		match feature.kind:
@@ -323,7 +323,7 @@ static func _feature_masses(spatial: WarrenSpatialPlan, fabric: SettlementFabric
 			&"room_overhang_support":
 				out.append(_support_mass(feature, grid, spatial.world_seed))
 	for span: Dictionary in spans:
-		out.append(_skywalk_mass(span, spatial.world_seed))
+		out.append(_skywalk_mass(span, spatial.world_seed, kit))
 	# The legacy fabric can classify a passage crown as a flat roof and
 	# subtract it from retained-terrain skin. Every crown -- a bored tunnel's
 	# ceiling or a rock shoulder left over a street -- gets its own kit closure
@@ -692,7 +692,8 @@ static func _support_mass(feature: WarrenFeatureReservation, grid: WarrenSpatial
 
 ## An enclosed span is a timber bridge-house: windowed walls, open ends, a
 ## roof along the span and a boarded underside. Open spans are railed decks.
-static func _skywalk_mass(span: Dictionary, world_seed: int) -> BuildingMass:
+static func _skywalk_mass(span: Dictionary, world_seed: int,
+		roof_kit: BuildingKit = null) -> BuildingMass:
 	var cell := span.cell as Vector3i
 	var step := span.step as Vector3i
 	var gap := int(span.gap)
@@ -732,7 +733,20 @@ static func _skywalk_mass(span: Dictionary, world_seed: int) -> BuildingMass:
 		# inside its walls; one standing clear of a lower endpoint stays a
 		# finished gable (an unconditionally open end was see-through).
 		# KitRoofJunctions still opens an end into a same-eave host roof.
-		mass.add_roof(rect, axis, cell.y + 2, colour)
+		# A long one-module bridge would raise that transverse roof far above
+		# its 2 m ridge (31/large: 12 m over an eight-module span, its gable
+		# infill four storeys of windows). Out of proportion, the span takes a
+		# row of transverse piles instead (BuildingDesigner.roof_proportion_ok).
+		var kit := roof_kit if roof_kit != null else SuntailBuildingKit.create()
+		var rects: Array[Rect2i] = [rect]
+		if not BuildingDesigner.roof_proportion_ok(kit, rect, axis):
+			rects = BuildingDesigner.pile_rects(rect, axis)
+			if rects.is_empty() or rects.any(func(pile: Rect2i) -> bool:
+					return not BuildingDesigner.roof_proportion_ok(kit, pile, axis)):
+				axis = along
+				rects = [rect]
+		for roof_rect: Rect2i in rects:
+			mass.add_roof(roof_rect, axis, cell.y + 2, colour)
 		# Timber portal posts frame each open end.
 		for key: Vector3i in open_edges:
 			var c := Vector2(key.x, key.y) + Vector2(0.5, 0.5) \

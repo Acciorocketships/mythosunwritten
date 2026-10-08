@@ -418,10 +418,14 @@ func _assign_roofs(mass: BuildingMass, rng: RandomNumberGenerator,
 					and _gable_abuts(mass, rect, axis, top_band) \
 					and not _gable_abuts(mass, rect, 1 - axis, top_band):
 				axis = 1 - axis
-			var fits := _roof_fits(mass, rect, axis, top_band)
+			# A roof out of proportion (see roof_proportion_ok) does not fit:
+			# it turns its ridge, becomes a double pile, or a terrace.
+			var fits := _roof_fits(mass, rect, axis, top_band) \
+				and (shed or roof_proportion_ok(kit, rect, axis))
 			if not fits and not cross and not shed:
 				axis = 1 - axis
-				fits = _roof_fits(mass, rect, axis, top_band)
+				fits = _roof_fits(mass, rect, axis, top_band) \
+					and roof_proportion_ok(kit, rect, axis)
 			if not fits and not cross and not shed:
 				# A deep crown (a merged range) whose tall roof would enter
 				# kept-clear space above: a double pile of shallower parallel
@@ -485,23 +489,52 @@ func _assign_roofs(mass: BuildingMass, rng: RandomNumberGenerator,
 ## piles or a pile's roof does not fit either.
 func _double_pile(mass: BuildingMass, rect: Rect2i, axis: int, band: int) -> Dictionary:
 	for ridge: int in [axis, 1 - axis]:
-		var side := 1 - ridge
-		if rect.size[side] < 4:
+		var piles := pile_rects(rect, ridge)
+		if piles.is_empty():
 			continue
-		var piles: Array[Rect2i] = []
-		var at := rect.position[side]
-		while at < rect.end[side]:
-			var pile := rect
-			pile.position[side] = at
-			pile.size[side] = 3 if rect.end[side] - at == 3 else 2
-			piles.append(pile)
-			at += pile.size[side]
 		var fits := true
 		for pile: Rect2i in piles:
-			fits = fits and _roof_fits(mass, pile, ridge, band)
+			fits = fits and _roof_fits(mass, pile, ridge, band) \
+				and roof_proportion_ok(kit, pile, ridge)
 		if fits:
 			return {"axis": ridge, "rects": piles}
 	return {}
+
+
+## `rect` split across its ridge `axis` into parallel piles two modules deep
+## (the last one three when the depth is odd); [] when it is shallower than
+## two piles.
+static func pile_rects(rect: Rect2i, ridge: int) -> Array[Rect2i]:
+	var side := 1 - ridge
+	var piles: Array[Rect2i] = []
+	if rect.size[side] < 4:
+		return piles
+	var at := rect.position[side]
+	while at < rect.end[side]:
+		var pile := rect
+		pile.position[side] = at
+		pile.size[side] = 3 if rect.end[side] - at == 3 else 2
+		piles.append(pile)
+		at += pile.size[side]
+	return piles
+
+
+## Roof proportion guardrail (October 8 owner review: a bridge-house roof
+## "way too tall and too short lengthwise" whose gable "looks like an
+## apartment building"). A pitched roof over `rect` with its ridge along
+## `axis` may expose at most MAX_GABLE_STOREYS storeys of gable, and stand at
+## most MAX_ROOF_SLENDERNESS times as tall as its ridge is long. Pure
+## geometry; a roof that fails turns, splits into piles or becomes a terrace,
+## never rejects the town.
+const MAX_GABLE_STOREYS := 2
+const MAX_ROOF_SLENDERNESS := 3.0
+
+
+static func roof_proportion_ok(roof_kit: BuildingKit, rect: Rect2i, axis: int) -> bool:
+	var height := float(roof_kit.roof_profile(rect.size[1 - axis]).height)
+	var ridge := float(rect.size[axis]) * roof_kit.module_width
+	return height <= MAX_GABLE_STOREYS * roof_kit.storey_height + 0.001 \
+		and height <= MAX_ROOF_SLENDERNESS * ridge + 0.001
 
 
 ## Crown rectangles whose gable, taller than one storey, would face another
