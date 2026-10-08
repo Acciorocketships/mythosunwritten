@@ -63,7 +63,12 @@
 > catches its exceptions (`NativeFault.cs`) and returns a sentinel; the loader reads the
 > thread's error (`NativeGates.faulted`), turns the port (or seed) off with a warning and runs
 > the GDScript for that call, so a throw can no longer abort a chunk tail and stall streaming.
-> Tests force one with `<loader>.arm_fault()`. Port float32 vs double exactly as Godot stores it (`snapped` is double;
+> Tests force one with `<loader>.arm_fault()`. GATE STATE (October 8 startup SIGSEGV in
+> `NativeRiverWalk.ready_for`, `Dictionary::has` at 0x38): never read a static Dictionary/Array
+> unlocked while another thread may assign it, even "replaced, never mutated": assignment frees
+> and nulls the old pointer before storing the new one. Seed sets live under a short state
+> mutex, gates under a separate try_lock-only mutex; the hot path compares an int
+> (`_fast_seed`). `test_native_gate_threads` crashed 3/3 before. Port float32 vs double exactly as Godot stores it (`snapped` is double;
 > Vector2/3 math float32, no FMA). Debug knobs `NATIVE_CLIFF_ENVELOPE_OFF=1`,
 > `NATIVE_CLIFF_SOLID_OFF=1`. Changes to `KEY_SOURCES` files force a cold planning run.
 > Identity gates: `water_block_cost --chunk=-4,-5 --no-disk` digest `b6c965def22e7e93`,
