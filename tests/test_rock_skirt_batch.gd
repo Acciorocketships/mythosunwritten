@@ -60,3 +60,28 @@ func test_batched_skirt_equals_the_per_sample_skirt() -> void:
 			if heights.size() > 0 and Array(heights).max() - Array(heights).min() > 6.0:
 				walls += 1
 	assert_gt(walls, 0, "some skirts straddle a storey change (owner-side sampling exercised)")
+
+## The tint reads the 24 m lattice corners once each per skirt surface (it
+## used to call ground_tint_at four times per vertex), with identical colours.
+func test_skirt_tints_read_each_lattice_corner_once() -> void:
+	K.setup()
+	var region: HeightfieldRegion = _regions()[0]
+	var tile := TerrainChunkMesher.CELL
+	var calls := [0]
+	var counting := func(pos: Vector3, world_seed: int) -> Color:
+		calls[0] += 1
+		return BiomeRegistry.ground_tint_at(pos, world_seed)
+	var radii := RockSkirt.ellipse_radii(Vector2(9.0, 7.0), Vector2(0.8, 0.6))
+	var centre := Vector2(190.0, 182.0)
+	var surface := RockSkirt.terrain_surface(region, 2697992464, counting)
+	var skirt := RockSkirt.build("a", centre, radii, 1.3, surface)
+	var touched := {}
+	for v: Vector3 in skirt.vertices:
+		var gx := floorf(v.x / tile)
+		var gz := floorf(v.z / tile)
+		for c in 4:
+			touched[Vector2(gx + (c & 1), gz + (c >> 1))] = true
+	assert_gt(touched.size(), 4, "the skirt spans several tint cells")
+	assert_lte(calls[0], touched.size(), "one ground_tint_at per lattice corner touched")
+	var plain := RockSkirt.build("a", centre, radii, 1.3, RockSkirt.terrain_surface(region, 2697992464))
+	assert_eq(skirt.colors, plain.colors, "memoized tints are the per-vertex ones")

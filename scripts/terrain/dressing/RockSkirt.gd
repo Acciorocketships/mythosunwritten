@@ -122,7 +122,10 @@ static func ellipse_radii(semi: Vector2, axis_u: Vector2) -> PackedFloat32Array:
 
 ## The rendered terrain surface: height (`terrain_ground`), the mesher's
 ## field-gradient lattice normal and its bilinear 24 m tint-lattice biome tint.
-static func terrain_surface(region: HeightfieldRegion, world_seed: int) -> Dictionary:
+## `corner_tint(pos, seed)` is the lattice tint (BiomeRegistry.ground_tint_at;
+## tests count its calls).
+static func terrain_surface(region: HeightfieldRegion, world_seed: int,
+		corner_tint: Callable = BiomeRegistry.ground_tint_at) -> Dictionary:
 	var corners := {}
 	var ground := _terrain_ground(region, corners)
 	var step := TerrainChunkMesher.STEP
@@ -132,6 +135,14 @@ static func terrain_surface(region: HeightfieldRegion, world_seed: int) -> Dicti
 	# the quad. The quad's corners lie on the side of the lattice point owning
 	# the point being shaded (a cliff's upper and lower quads never weld).
 	var baked := {}
+	# Lattice corner tints, read once each (one surface is built and read by
+	# one thread: a skirt's or a candidate's own, never shared).
+	var tints := {}
+	var lattice_tint := func(x: float, z: float) -> Color:
+		var key := Vector2(x, z)
+		if not tints.has(key):
+			tints[key] = corner_tint.call(Vector3(x, 0, z), world_seed)
+		return tints[key]
 	return {
 		"height": ground,
 		"prefetch": func(points: PackedVector2Array) -> void:
@@ -159,10 +170,8 @@ static func terrain_surface(region: HeightfieldRegion, world_seed: int) -> Dicti
 			var z0 := floorf(p.y / tile) * tile
 			var fx := (p.x - x0) / tile
 			var fz := (p.y - z0) / tile
-			var a := BiomeRegistry.ground_tint_at(Vector3(x0, 0, z0), world_seed).lerp(
-				BiomeRegistry.ground_tint_at(Vector3(x0 + tile, 0, z0), world_seed), fx)
-			var b := BiomeRegistry.ground_tint_at(Vector3(x0, 0, z0 + tile), world_seed).lerp(
-				BiomeRegistry.ground_tint_at(Vector3(x0 + tile, 0, z0 + tile), world_seed), fx)
+			var a: Color = lattice_tint.call(x0, z0).lerp(lattice_tint.call(x0 + tile, z0), fx)
+			var b: Color = lattice_tint.call(x0, z0 + tile).lerp(lattice_tint.call(x0 + tile, z0 + tile), fx)
 			return a.lerp(b, fz),
 	}
 
