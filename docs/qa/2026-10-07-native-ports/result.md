@@ -711,3 +711,100 @@ the last reference to a discarded worker result (a stale/out-of-range terrain
 payload is skipped and freed there, not off-thread). Not investigated
 further; follow-up: free skipped results off-thread like committed payloads.
 Spikes over 40 ms (harness threshold): idle 5, turn 1, run 3, idle_end 2.
+
+## Final review fixes (October 8; commits fb56ea845, ff9defaa4, 0f96ff08a)
+
+Godot_mono 4.5.1 / standard 4.5, seed 2697992464.
+
+**C# faults (item 1).** Every public C# entry (tile kernel, carve, river
+walk, height field, water fill/seed/profile, cliff envelope, cliff solid, grid
+kernels) catches its own exceptions (`NativeFault.cs`) and returns a sentinel;
+the loader reads the thread's error (`NativeGates.faulted`), turns the port
+(or seed) off with a warning and returns the GDScript result for that call.
+Gates treat a faulted call as a failure (`_faulted`). One test per loader
+forces a throw (`arm_fault()`, port-targeted) and asserts the GDScript result
+and the disabled port.
+
+**Deferred gates (item 2).** `FieldTerrainStreamer._ready` sets
+`NativeGates.deferred` before any plan exists: `NativeHeightField`,
+`NativeRiverWalk` and `NativeTileKernel` then only load C# on the main thread;
+the first call on a non-main thread gates under `try_lock` (the river walk
+gates the height field first), every other caller uses GDScript meanwhile.
+Not deferred (tests, harnesses): `setup()` gates synchronously as before.
+`NativeGridKernels` (80 small random grids) still gates in `_ready`. Tests:
+`test_deferred_gate_runs_on_a_worker_not_the_main_thread` (height field, river
+walk, tile kernel).
+
+**Main-thread payload frees (item 3). Hypothesis confirmed.**
+`tests/harness/task_release_probe.gd` (task added from a helper so no GDScript
+temporary holds the Callable; task already finished; main thread times
+`wait_for_task_completion`):
+
+| binary | bound directly: wait / freed | boxed and cleared by the task |
+|---|---|---|
+| standard | 180 / 127 / 126 ms, 150 MB freed in the wait | 0.0 ms, 0 MB |
+| mono | 173 / 108 / 102 ms, 150 MB | 0.0 ms, 0 MB |
+
+Fix: `_run_tail(inputs)` clears its box; released results go to `_drop_box`
+(integrated, abandoned, stale, and everything `_drain_results` does not keep)
+and `_flush_drops` hands the box to one pool task at the end of `_process`;
+`reap_tails` / `reap_drops` are separate slow_frame sections. No
+`drain_results` / `reap_*` section appears in any slow_frame line of the two
+runs below.
+
+**Integration steps (item 4).** Labelled `slow_integrate_step` in a probe run
+named the offenders: `RockSkirt.commit` (8.3-19.4 ms) and biome point emitters
+(`fx:points:*` 9-21 ms). `fx_step_probe.gd` (windowed, quiet): motes 5 ms,
+leaves 3.3 ms, all in assigning the ParticleProcessMaterial (shader built for
+a transient box configuration). Now: skirts gather 24 a step, then mesh, then
+collision; emitters are configured before the material is assigned and one
+material per configuration stays alive (motes 0.17 ms, leaves 0.05 ms), and
+`BiomeChunkFx.warm()` pays the first-use cost behind the loading screen.
+`test_chunk_commit_steps` (chunk (1,-1)): stepped terrain/fx trees equal
+`commit_chunk` / `build_field`; split skirts equal the pre-split commit
+(collision triangles included); emitters keep every material property.
+Remaining steps over 6 ms in the runs below: the skirts' and the cliff sheet's
+collision `set_faces` (8.1-9.9 ms; one shape each, splitting would change the
+node set).
+
+**Cheap items (item 5).** Envelope stages are captured into a per-call
+dictionary (`CliffSlopeEnvelope._build(..., capture)`), no statics; the water
+fill gate's cone cases use `12 * max_step` storeys (24 / 36 for steps 2 / 3);
+the tile kernel parity passes the cliff-end mode down `_sample_window_gd` /
+`_sample_grid_gd` / `eval_params` instead of setting `TerrainTileField.cliff_end`.
+
+### Verification
+
+Tests (each file alone): mono and standard all green for test_native_* (9
+files), test_terrain_tile_field 33/33, test_chunk_commit_steps 4/4,
+test_cliff_sheet_ends/normals/tiles, test_cliff_envelope_shortcuts 4/4,
+test_september9_water_containment 18/18, test_rock_skirt_batch 3/3 (standard
+829 s), test_water_dual_grid 17/17 (standard 598 s); mono test_water_field
+25/25, test_water_plan 29/29, test_field_streamer 16/17 (the known
+test_background_builds_populate_radius).
+
+Identity: `water_block_cost --chunk=-4,-5 --no-disk` digest `b6c965def22e7e93`
+(region_ms 2843, water_ms 19598); `profile_mesh_phases` hashes 3c960e38 /
+b7871a95 / 356b34c1 (total 58.8 s); `parallel_tail_check --rounds=2` PASS.
+
+Frame feel, two runs (`--no-vsync --size 1920x1080 --phase-seconds 8`):
+
+| phase | dt p50/p95/p99/max (run 1; run 2) | process p95 / max | frames >10 ms process | dt > 33 ms |
+|---|---|---|---|---|
+| idle | 17.2/19.2/23.4/43.2; 17.0/19.2/22.6/44.2 | 2.10/11.9; 1.90/12.8 | 6; 2 | 3; 3 |
+| turn | 19.4/22.9/25.6/53.9; 19.3/22.3/26.7/34.7 | 7.98/10.2; 8.23/11.9 | 1; 7 | 2; 1 |
+| run | 19.2/24.2/32.9/62.4; 18.8/22.7/26.4/38.6 | 11.27/15.0; 10.75/19.5 | 46; 35 | 4; 2 |
+| run_turn | 20.9/25.1/31.0/94.1; 20.7/25.8/31.1/85.1 | 8.72/13.2; 10.20/15.5 | 11; 21 | 4; 3 |
+| idle_end | 21.6/23.5/27.4/97.2; 22.0/23.7/27.7/28.9 | 3.38/5.9; 1.76/3.9 | 0; 0 | 2; 0 |
+
+Main-thread maximum 15.0 / 19.5 ms (was 182.8 ms). The remaining dt spikes
+(up to 94-97 ms) carry 1-3 ms of process time (two with 10-11 ms): render /
+GPU side (draw counts jump to 1,400-1,550), not script work. Frames over
+10 ms of process are integration frames (6 ms budget plus the last step,
+11-16 ms); there are more of them than in the October 8 baseline (36 -> 64 /
+65 over all phases), most likely because startup finishes twice as fast and
+more of the radius integrates during the measured phases. Startup ("FEEL ready
+after"): 69.2 s (planning cache cold) and 67.2 s (warm) versus 138 s in the
+final verification (taken with the owner's editor open) and 141 s in a probe
+run here that overlapped headless tests, so the share due to the deferred
+gates (~4 s of main-thread gate work removed from `_ready`) is not isolated.

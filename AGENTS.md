@@ -15,7 +15,12 @@
 > `HeightfieldPlan._prefetch_samples` (4 pool tasks) and `WaterPlan.prefetch_sources` (raw
 > river walks per ring), never from a pool thread (`WaterPlan.on_pool_thread`); identity via
 > `tests/harness/water_block_cost.gd --serial` (digest). MAIN THREAD: chunk payloads are freed
-> off-thread; integration steps stay short (cliff tiles, slope-rock batches and their
+> off-thread. `WorkerThreadPool.wait_for_task_completion` frees the task's Callable, bound
+> arguments included, on the waiting (main) thread (`tests/harness/task_release_probe.gd`:
+> 100-180 ms for a 150 MB payload bound directly, 0 ms boxed), so a task bound to a payload
+> must take a box it empties itself: `_run_tail(inputs)` clears its inputs, and every
+> released result (integrated, abandoned, stale, rejected in `_drain_results`) goes to
+> `_drop_box`, handed to one pool task by `_flush_drops` at the end of `_process`; integration steps stay short (cliff tiles, slope-rock batches and their
 > collision 64 rocks a step, ground trimesh and dressing collision in pieces;
 > `profile_chunk_commit.gd` prints every step); the slope rocks' collision is held from
 > `prepare()` (it was reloaded from disk per chunk, 8-27 ms). Queue re-prioritisation on a
@@ -24,8 +29,10 @@
 > their bounds; payload validation range-checks indices with a native sort.
 > `FirstViewWarmer` pre-draws new chunks and the player's other headings in a tiny viewport;
 > a warm spin and feature-asset warm run behind the loading screen. `LOG_SLOW_FRAMES`
-> prints `slow_frame` (per streamer section), `slow_integrate_step` (labelled: terrain#N,
-> water, dressing_collision, rock_skirts, attach, fx). Harness: `frame_feel_profile.tscn`
+> prints `slow_frame` (per streamer section, `reap_tails`/`reap_drops` separate from
+> `drain_results`), `slow_integrate_step` (labelled per step: `terrain#N:<step>` from
+> `TerrainChunkMesher.commit_steps`' labels, water, dressing_collision, rock_skirts, attach,
+> `fx:<mist|wisps|points:recipe|orb>`). Harness: `frame_feel_profile.tscn`
 > (idle/turn/run/run_turn phases, per-frame process/dt/turn error). 1080p no-vsync result:
 > run_turn main-thread p50/p95 5.7/13.8 -> 1.6/4.7 ms, no frame over 10 ms of process time
 > in any phase; frames are GPU-bound at ~17-18 ms. Remaining freezes when outrunning
@@ -44,9 +51,19 @@
 > `NativeHeightField` / `NativeGridKernels`. RULE: a port is bit-identical or it is off. The
 > GDScript stays the reference and fallback (the standard binary and test subclasses always use
 > it); each loader runs a parity gate (`!=` on every output) and one mismatch disables it for
-> the seed. Gates are lazy (`prepare()` only loads C# on the main thread; the first `on()` on
-> a worker runs the gate under `try_lock`, other threads take GDScript meanwhile), never on the
-> main thread in game. Port float32 vs double exactly as Godot stores it (`snapped` is double;
+> the seed. In game no gate runs on the main thread: `FieldTerrainStreamer._ready` sets
+> `NativeGates.deferred` before building any plan, so `setup()`/`prepare()` only load C# (and
+> register the seed), and the first call on a non-main thread runs the gate under `try_lock`
+> while every other caller (the main thread always) takes the identical GDScript meanwhile.
+> This covers `NativeHeightField` (~2.2 s), `NativeRiverWalk` (~1.8 s, gates the height field
+> first), `NativeTileKernel` (60 cases; the parity passes the cliff-end mode as a parameter,
+> never through the shared `TerrainTileField.cliff_end`), and the always-lazy water fill /
+> envelope / solid; only `NativeGridKernels` (80 small cases) still gates in `_ready`. Tests and
+> harnesses (not deferred) gate synchronously in `setup()`. FAULTS: every public C# entry
+> catches its exceptions (`NativeFault.cs`) and returns a sentinel; the loader reads the
+> thread's error (`NativeGates.faulted`), turns the port (or seed) off with a warning and runs
+> the GDScript for that call, so a throw can no longer abort a chunk tail and stall streaming.
+> Tests force one with `<loader>.arm_fault()`. Port float32 vs double exactly as Godot stores it (`snapped` is double;
 > Vector2/3 math float32, no FMA). Debug knobs `NATIVE_CLIFF_ENVELOPE_OFF=1`,
 > `NATIVE_CLIFF_SOLID_OFF=1`. Changes to `KEY_SOURCES` files force a cold planning run.
 > Identity gates: `water_block_cost --chunk=-4,-5 --no-disk` digest `b6c965def22e7e93`,
@@ -58,6 +75,9 @@
 > 7.3, `d.add_skirts` 10.3 -> 4.6 s); three-chunk mesher total 151 -> 49 s. 240 s walk:
 > 1024 m, 107 s frozen (was 121-135 s), startup 138 s; the remaining freezes are cold water
 > solves (17-29 s each) reached from `water_context` and from village/path feature planning.
+> October 8 fixes: frame feel main-thread max 15-19.5 ms (was 182.8: `_drain_results`
+> spikes were payloads freed in the task reap), startup 67-69 s in the feel harness (was
+> 138-141 s under other load); see `docs/qa/2026-10-07-native-ports/result.md`.
 
 > October 7 grass render distance: radii are runtime values (`GrassStreamer.set_radii(full, edge)`,
 > shader globals `grass_full_radius`/`grass_radius`), still 60/84 m. A re-sweep with two grass workers
