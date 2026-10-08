@@ -22,6 +22,8 @@ var _world: Node3D
 var _player: CharacterBody3D
 var _streamer: FieldTerrainStreamer
 var _memory_idle_end := 0.0
+var _texture_mem_idle_end := 0.0
+var _video_mem_idle_end := 0.0
 var _rig: Node
 var _camera: Camera3D
 var _seed := 2697992464
@@ -226,7 +228,10 @@ func _run() -> void:
 				_rig._yaw += TAU / 48.0
 				await get_tree().process_frame
 		_phase = phase
-		if phase == "idle_end": _memory_idle_end = Performance.get_monitor(Performance.MEMORY_STATIC) / 1048576.0
+		if phase == "idle_end":
+			_memory_idle_end = Performance.get_monitor(Performance.MEMORY_STATIC) / 1048576.0
+			_texture_mem_idle_end = Performance.get_monitor(Performance.RENDER_TEXTURE_MEM_USED) / 1048576.0
+			_video_mem_idle_end = Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED) / 1048576.0
 		_turning = phase in ["turn", "run_turn"]
 		if phase.begins_with("run"): Input.action_press(&"forward")
 		else: Input.action_release(&"forward")
@@ -390,6 +395,7 @@ func _finish() -> void:
 		"scaling_3d": get_viewport().scaling_3d_scale,
 		"interpolation": ProjectSettings.get_setting("physics/common/physics_interpolation", false),
 		"memory_static_mb": _memory_idle_end,
+		"texture_mem_mb": _texture_mem_idle_end, "video_mem_mb": _video_mem_idle_end,
 		"adapter": RenderingServer.get_video_adapter_name(), "summary": summary}
 	var file := FileAccess.open(_report_path, FileAccess.WRITE)
 	file.store_string(JSON.stringify(result, "  "))
