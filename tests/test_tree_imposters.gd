@@ -17,11 +17,28 @@ func test_a_rebake_without_the_pass_keeps_the_baked_imposter() -> void:
 	old.imposter.frames = 6
 	ResourceSaver.save(old, path)
 	var fresh := EnvironmentVisual.new()
+	old.imposter.geometry_signature = EnvironmentImposter.geometry_signature_of(fresh)
+	ResourceSaver.save(old, path)
 	BAKE._carry_imposter(path, fresh)
 	assert_not_null(fresh.imposter, "a headless re-bake must not drop every imposter")
 	assert_eq(fresh.imposter.frames, 6)
+	# The same tree re-baked at another scale is a different card: drop it.
+	var rescaled := EnvironmentVisual.new()
+	var piece := EnvironmentVisualPiece.new()
+	piece.mesh = BoxMesh.new()
+	piece.local_transform = Transform3D.IDENTITY.scaled(Vector3.ONE * 1.3)
+	rescaled.pieces = [piece]
+	BAKE._carry_imposter(path, rescaled)
+	assert_null(rescaled.imposter, "a stale imposter (geometry changed) must not be carried")
 	DirAccess.remove_absolute(path)
 	DirAccess.remove_absolute(dir)
+
+## The baked atlases are BC7: decompress before reading texels.
+func _image(texture: Texture2D) -> Image:
+	var image := texture.get_image()
+	if image.is_compressed():
+		image.decompress()
+	return image
 
 func _headless() -> bool:
 	return DisplayServer.get_name() == "headless"
@@ -36,12 +53,12 @@ func _dump(imposter: EnvironmentImposter, name: String) -> void:
 	if OS.get_environment("IMPOSTER_DUMP") != "1":
 		return
 	DirAccess.make_dir_recursive_absolute(REVIEW_DIR)
-	imposter.albedo.get_image().save_png("%s/%s_albedo.png" % [REVIEW_DIR, name])
-	imposter.normal.get_image().save_png("%s/%s_normal.png" % [REVIEW_DIR, name])
+	_image(imposter.albedo).save_png("%s/%s_albedo.png" % [REVIEW_DIR, name])
+	_image(imposter.normal).save_png("%s/%s_normal.png" % [REVIEW_DIR, name])
 
 ## Fewest empty pixels between any frame's covered texels and its border.
 func _min_margin(imposter: EnvironmentImposter, px: int) -> int:
-	var albedo := imposter.albedo.get_image()
+	var albedo := _image(imposter.albedo)
 	var margin := px
 	for f in imposter.frames:
 		for y in px:
@@ -52,8 +69,8 @@ func _min_margin(imposter: EnvironmentImposter, px: int) -> int:
 
 ## Mean tint response (normal alpha) over covered texels of frame 0 in a box.
 func _response(imposter: EnvironmentImposter, box: Rect2i) -> float:
-	var albedo := imposter.albedo.get_image()
-	var normal := imposter.normal.get_image()
+	var albedo := _image(imposter.albedo)
+	var normal := _image(imposter.normal)
 	var total := 0.0
 	var count := 0
 	for y in range(box.position.y, box.end.y):
@@ -72,7 +89,7 @@ func test_capture_keeps_full_crowns_and_measures_tint_response() -> void:
 	var visual := load(OAK) as EnvironmentVisual
 	var imposter: EnvironmentImposter = await CAPTURE.capture(get_tree(), visual, 128)
 	assert_eq(imposter.frames, 8)
-	var albedo := imposter.albedo.get_image()
+	var albedo := _image(imposter.albedo)
 	_dump(imposter, "oak")
 	assert_eq(albedo.get_width(), 128 * 8)
 	assert_eq(albedo.get_height(), 128)
@@ -109,7 +126,7 @@ func test_capture_frames_a_tall_tree_about_its_vertical_axis() -> void:
 	assert_gte(_min_margin(imposter, 128), 8, "every frame keeps an empty border")
 	# The trunk base sits on the axis the runtime billboard turns about, so it
 	# stays at the frame's centre column from every azimuth.
-	var albedo := imposter.albedo.get_image()
+	var albedo := _image(imposter.albedo)
 	for f in imposter.frames:
 		var low := -1
 		var sum := 0
@@ -180,14 +197,12 @@ func _render_imposter(imposter: EnvironmentImposter, azimuth: float, elevation: 
 	var multimesh := MultiMesh.new()
 	multimesh.transform_format = MultiMesh.TRANSFORM_3D
 	multimesh.use_colors = true
-	multimesh.use_custom_data = true
 	var quad := QuadMesh.new()
 	quad.size = Vector2.ONE
 	multimesh.mesh = quad
 	multimesh.instance_count = 1
 	multimesh.set_instance_transform(0, Transform3D(Basis(Vector3.UP, INSTANCE_YAW).scaled(Vector3.ONE * INSTANCE_SCALE), Vector3.ZERO))
 	multimesh.set_instance_color(0, tint)
-	multimesh.set_instance_custom_data(0, Color(9.0, 9.0, 9.0, 9.0))
 	var instance := MultiMeshInstance3D.new()
 	instance.multimesh = multimesh
 	instance.material_override = _imposter_material(imposter)
@@ -248,7 +263,7 @@ func _coverage(image: Image) -> Vector3:
 
 ## The lowest covered texel of frame 0, in asset metres above the origin.
 func _baked_base(imposter: EnvironmentImposter) -> float:
-	var albedo := imposter.albedo.get_image()
+	var albedo := _image(imposter.albedo)
 	var px := albedo.get_height()
 	for y in range(px - 1, -1, -1):
 		for x in px:

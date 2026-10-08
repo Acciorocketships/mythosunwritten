@@ -125,10 +125,13 @@ func _attach_imposter(visual: EnvironmentVisual, pack_slug: String, asset_slug: 
 func _save_imposter_texture(pack_slug: String, name: String, image: Image) -> Texture2D:
 	var texture := PortableCompressedTexture2D.new()
 	texture.keep_compressed_buffer = true
-	texture.create_from_image(image, PortableCompressedTexture2D.COMPRESSION_MODE_LOSSLESS)
+	# BC7: a quarter of the uncompressed upload, alpha (coverage / tint
+	# response) kept at full precision; every placed tree's two atlases load.
+	texture.create_from_image(image, PortableCompressedTexture2D.COMPRESSION_MODE_BPTC)
 	var path := "res://terrain/environment/textures/%s/imposter_%s.res" % [pack_slug, name]
 	_ensure_parent(path)
-	if ResourceSaver.save(texture, path) != OK:
+	# zstd over the BC7 blocks: ~40% of the raw block size on disk.
+	if ResourceSaver.save(texture, path, ResourceSaver.FLAG_COMPRESS) != OK:
 		_fail("Cannot save imposter texture: %s" % path)
 		return null
 	return ResourceLoader.load(path, "Texture2D", ResourceLoader.CACHE_MODE_REPLACE) as Texture2D
@@ -2798,10 +2801,16 @@ func _fail(message: String) -> void:
 	printerr(message)
 
 
-## A headless re-bake has no imposter pass; keep the one already on disk.
+## A headless re-bake has no imposter pass; keep the one already on disk,
+## but only while it still shows this geometry: a tree whose meshes, pieces or
+## scale changed loses its imposter (recapture with --imposters-only).
 static func _carry_imposter(path: String, visual: EnvironmentVisual) -> void:
 	if visual.imposter != null or not ResourceLoader.exists(path):
 		return
 	var previous := ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE) as EnvironmentVisual
-	if previous != null:
-		visual.imposter = previous.imposter
+	if previous == null or previous.imposter == null:
+		return
+	if previous.imposter.geometry_signature != EnvironmentImposter.geometry_signature_of(visual):
+		print("WARNING: stale imposter dropped (geometry changed; run the bake windowed with --imposters-only): %s" % path)
+		return
+	visual.imposter = previous.imposter

@@ -15,13 +15,14 @@ script = ExtResource("1_36o34")
 shape = ExtResource("2_6sq62")
 local_transform = Transform3D(-0.6396822, -0.04311956, -1.1309056, 0, 1.299056, -0.04953086, 1.1317272, -0.024372315, -0.63921773, -0.081624374, 1.4857471, 0.08638044)
 
-[sub_resource type="Resource" id="Resource_ekwme"]
+[sub_resource type="Resource" id="Resource_b03hi"]
 script = ExtResource("5_k6mwc")
 albedo = ExtResource("3_b03hi")
 normal = ExtResource("4_kdyef")
 size = Vector2(16.484257, 16.484257)
 pivot_height = -1.386355912685394
 crown_centre = Vector3(-0.62303114, 6.8557715, 0.24674034)
+geometry_signature = "40d7ab62c52f092ad60fa2778bae1034"
 
 [sub_resource type="Resource" id="Resource_5jxqm"]
 script = ExtResource("3_h3nk8")
@@ -33,4 +34,4 @@ shadow_mesh = ExtResource("5_kdyef")
 script = ExtResource("6_k6mwc")
 pieces = Array[ExtResource("3_h3nk8")]([SubResource("Resource_5jxqm")])
 collisions = Array[ExtResource("1_36o34")]([SubResource("Resource_jgxt0")])
-imposter = SubResource("Resource_ekwme")
+imposter = SubResource("Resource_b03hi")

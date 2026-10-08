@@ -700,3 +700,20 @@ func test_painted_leaves_thin_by_card_and_the_shader_matches_the_bake() -> void:
 					"%s LOD %d keeps its share of cards" % [asset_id, k + 1])
 				assert_almost_eq(float(lods[2 * k]), bake.LEAF_LOD_EDGE * pow(2.0, k), 0.0001)
 		assert_eq(leaf_surfaces, 1, "%s has one painted leaf surface" % asset_id)
+
+## Every tree's baked imposter was captured from its current geometry: a
+## re-bake that changes a tree's meshes, pieces or scale must recapture
+## (run the bake windowed with --imposters-only).
+func test_every_tree_imposter_matches_its_current_geometry() -> void:
+	var catalog := EnvironmentCatalog.load_default()
+	var stale: Array[String] = []
+	for id: StringName in catalog.ids():
+		var descriptor := catalog.descriptor(id)
+		if not descriptor.tags.has(&"tree"):
+			continue
+		var visual := load(descriptor.visual_path) as EnvironmentVisual
+		if visual.imposter == null:
+			continue
+		if visual.imposter.geometry_signature != EnvironmentImposter.geometry_signature_of(visual):
+			stale.append(String(id))
+	assert_eq(stale, [], "trees whose imposter shows older geometry (run --imposters-only)")

@@ -118,6 +118,7 @@ static func capture(tree: SceneTree, visual: EnvironmentVisual, frame_px: int = 
 	out.size = Vector2(side, side)
 	out.pivot_height = axis_centre.y - 0.5 * side
 	out.crown_centre = aabb.get_center()
+	out.geometry_signature = EnvironmentImposter.geometry_signature_of(visual)
 	return out
 
 ## The visual drawn as production does (EnvironmentCommitQueue._commit_batch):
