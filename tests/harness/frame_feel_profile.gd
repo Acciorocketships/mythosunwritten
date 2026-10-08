@@ -79,6 +79,8 @@ func _ready() -> void:
 			"--prespin": _prespin = true
 			# Tree imposter switch distance (1e6 = never; before/after checks).
 			"--imposter-distance": EnvironmentCommitQueue.set_imposter_distance(float(next))
+			# Bark crossfade ablation (off = trunks without the dither discard).
+			"--bark-dither": EnvironmentCommitQueue.BARK_DITHER = next != "off"
 			"--grass-radius":
 				var pair := next.split(",")
 				GrassStreamer.set_radii(float(pair[0]), float(pair[1]))

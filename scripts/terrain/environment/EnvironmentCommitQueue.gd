@@ -285,7 +285,7 @@ static func crossfade_material(material: Material, origin_offset := Vector3.ZERO
 	var bark := ShaderMaterial.new()
 	bark.resource_name = source.resource_name
 	bark.shader = _bark_cutout_shader() if cutout \
-		else preload("res://terrain/environment/materials/tree_bark.gdshader")
+		else (preload("res://terrain/environment/materials/tree_bark.gdshader") if BARK_DITHER else _bark_solid_shader())
 	bark.set_shader_parameter("imposter_origin_offset", origin_offset)
 	bark.set_shader_parameter("albedo_color", source.albedo_color)
 	bark.set_shader_parameter("albedo_texture", source.albedo_texture)
@@ -300,6 +300,20 @@ static func crossfade_material(material: Material, origin_offset := Vector3.ZERO
 	return bark
 
 static var _bark_cutout: Shader
+static var _bark_solid: Shader
+## ABLATION (frame_feel_profile --bark-dither off): opaque bark without the
+## crossfade discard (Apple HSR stays on for trunks); the card still dithers in.
+static var BARK_DITHER := true
+
+static func _bark_solid_shader() -> Shader:
+	if _bark_solid == null:
+		var code := preload("res://terrain/environment/materials/tree_bark.gdshader").code
+		var start := code.find("	if (near_fade < 1.0")
+		var end := code.find("}", code.find("discard;", start)) + 1
+		_bark_solid = Shader.new()
+		_bark_solid.code = code.substr(0, start) + code.substr(end)
+		assert(not _bark_solid.code.contains("discard"))
+	return _bark_solid
 
 ## tree_bark.gdshader, alpha-tested and double-sided (Farmlands leaf cutouts).
 static func _bark_cutout_shader() -> Shader:
