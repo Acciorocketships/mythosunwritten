@@ -1,15 +1,26 @@
-[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3 uid="uid://rsu1cviinmun"]
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=12 format=3]
 
-[ext_resource type="Script" uid="uid://camt41jgcwvtj" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_meye4"]
-[ext_resource type="Shape3D" uid="uid://bc6h8u67wodn3" path="res://terrain/environment/collisions/kaykit/kaykit_tree_05_piece_00.res" id="2_vqffm"]
-[ext_resource type="Script" uid="uid://cnclg6ri5afbe" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_fv5jc"]
-[ext_resource type="ArrayMesh" uid="uid://blsket7x4r3g" path="res://terrain/environment/meshes/kaykit/kaykit_tree_05_piece_00.res" id="4_vqc27"]
-[ext_resource type="Script" uid="uid://dm72bncnoday5" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_w6fe2"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_meye4"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/kaykit/kaykit_tree_05_piece_00.res" id="2_vqffm"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_fv5jc"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/kaykit/imposter_kaykit_tree_05_albedo.res" id="3_vqc27"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/kaykit/kaykit_tree_05_piece_00.res" id="4_vqc27"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/kaykit/imposter_kaykit_tree_05_normal.res" id="4_w6fe2"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentImposter.gd" id="5_ryw3v"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_w6fe2"]
 
 [sub_resource type="Resource" id="Resource_ryw3v"]
 script = ExtResource("1_meye4")
 shape = ExtResource("2_vqffm")
 local_transform = Transform3D(2.5, 0, 0, 0, 2.5, 0, 0, 0, 2.5, 0, 2.46698, 0)
+
+[sub_resource type="Resource" id="Resource_yp52c"]
+script = ExtResource("5_ryw3v")
+albedo = ExtResource("3_vqc27")
+normal = ExtResource("4_w6fe2")
+size = Vector2(21.241577, 21.241577)
+pivot_height = -2.4026390492916097
+crown_centre = Vector3(0.25644875, 8.218149, 0.24763727)
 
 [sub_resource type="Resource" id="Resource_gmt7l"]
 script = ExtResource("3_fv5jc")
@@ -20,3 +31,4 @@ local_transform = Transform3D(2.5, 0, 0, 0, 2.5, 0, 0, 0, 2.5, 0, 0, 0)
 script = ExtResource("5_w6fe2")
 pieces = Array[ExtResource("3_fv5jc")]([SubResource("Resource_gmt7l")])
 collisions = Array[ExtResource("1_meye4")]([SubResource("Resource_ryw3v")])
+imposter = SubResource("Resource_yp52c")

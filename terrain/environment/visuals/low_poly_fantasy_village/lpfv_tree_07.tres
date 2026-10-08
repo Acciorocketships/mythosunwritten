@@ -1,15 +1,26 @@
-[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3 uid="uid://bjg6eynx7np5r"]
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=12 format=3]
 
-[ext_resource type="Script" uid="uid://camt41jgcwvtj" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_kcp75"]
-[ext_resource type="Shape3D" uid="uid://dlv5gqw0vm2a" path="res://terrain/environment/collisions/low_poly_fantasy_village/lpfv_tree_07_piece_00.res" id="2_wgpv6"]
-[ext_resource type="Script" uid="uid://cnclg6ri5afbe" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_3urg4"]
-[ext_resource type="ArrayMesh" uid="uid://dns375vvnpmjf" path="res://terrain/environment/meshes/low_poly_fantasy_village/lpfv_tree_07_piece_00.res" id="4_ixnnq"]
-[ext_resource type="Script" uid="uid://dm72bncnoday5" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_d6010"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_kcp75"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/low_poly_fantasy_village/lpfv_tree_07_piece_00.res" id="2_wgpv6"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_3urg4"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/low_poly_fantasy_village/imposter_lpfv_tree_07_albedo.res" id="3_ixnnq"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/low_poly_fantasy_village/imposter_lpfv_tree_07_normal.res" id="4_d6010"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/low_poly_fantasy_village/lpfv_tree_07_piece_00.res" id="4_ixnnq"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_d6010"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentImposter.gd" id="5_vxkrn"]
 
 [sub_resource type="Resource" id="Resource_vxkrn"]
 script = ExtResource("1_kcp75")
 shape = ExtResource("2_wgpv6")
 local_transform = Transform3D(3.25, -6.958055e-08, 0, 0, 3.2499874, -0.008999062, 0, 0.008999061, 3.2499876, 2.4214387e-08, 1.4801874, -0.07286882)
+
+[sub_resource type="Resource" id="Resource_om6lp"]
+script = ExtResource("5_vxkrn")
+albedo = ExtResource("3_ixnnq")
+normal = ExtResource("4_d6010")
+size = Vector2(19.192944, 19.192944)
+pivot_height = -1.4442054592072964
+crown_centre = Vector3(-0.012532234, 8.1522665, 0.0048298836)
 
 [sub_resource type="Resource" id="Resource_o5odp"]
 script = ExtResource("3_3urg4")
@@ -20,3 +31,4 @@ local_transform = Transform3D(3.25, 0, 0, 0, 3.25, 0, 0, 0, 3.25, 0, 0, 0)
 script = ExtResource("5_d6010")
 pieces = Array[ExtResource("3_3urg4")]([SubResource("Resource_o5odp")])
 collisions = Array[ExtResource("1_kcp75")]([SubResource("Resource_vxkrn")])
+imposter = SubResource("Resource_om6lp")

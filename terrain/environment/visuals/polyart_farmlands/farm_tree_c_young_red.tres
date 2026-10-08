@@ -1,16 +1,27 @@
-[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=9 format=3]
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_31nhn"]
 [ext_resource type="Shape3D" path="res://terrain/environment/collisions/polyart_farmlands/farm_tree_c_young_red_piece_00.res" id="2_6jmi5"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/polyart_farmlands/imposter_farm_tree_c_young_red_albedo.res" id="3_boqyi"]
 [ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_quwfb"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/polyart_farmlands/imposter_farm_tree_c_young_red_normal.res" id="4_74slr"]
 [ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/polyart_farmlands/farm_tree_c_young_red_piece_00.res" id="4_boqyi"]
 [ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/polyart_farmlands/farm_tree_c_young_red_piece_00_shadow.res" id="5_74slr"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentImposter.gd" id="5_imvic"]
 [ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="6_imvic"]
 
 [sub_resource type="Resource" id="Resource_wiml2"]
 script = ExtResource("1_31nhn")
 shape = ExtResource("2_6jmi5")
 local_transform = Transform3D(0.3811847, -0.2724097, -0.64845294, 0, 0.7375616, -0.30984345, 0.7033479, 0.14763449, 0.35143393, -0.010783911, 0.87086785, 0.16104029)
+
+[sub_resource type="Resource" id="Resource_rkb83"]
+script = ExtResource("5_imvic")
+albedo = ExtResource("3_boqyi")
+normal = ExtResource("4_74slr")
+size = Vector2(18.633585, 18.633585)
+pivot_height = -2.8835564
+crown_centre = Vector3(0.5213394, 6.433236, 0.16334295)
 
 [sub_resource type="Resource" id="Resource_n07cb"]
 script = ExtResource("3_quwfb")
@@ -22,3 +33,4 @@ shadow_mesh = ExtResource("5_74slr")
 script = ExtResource("6_imvic")
 pieces = Array[ExtResource("3_quwfb")]([SubResource("Resource_n07cb")])
 collisions = Array[ExtResource("1_31nhn")]([SubResource("Resource_wiml2")])
+imposter = SubResource("Resource_rkb83")

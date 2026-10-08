@@ -1,16 +1,27 @@
-[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=9 format=3]
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_yppgk"]
 [ext_resource type="Shape3D" path="res://terrain/environment/collisions/angry_mesh_meadow/meadow_oak_01_winter_piece_00.res" id="2_ymr5s"]
 [ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_js2ud"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_01_winter_albedo.res" id="3_ujg04"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_01_winter_normal.res" id="4_l41e7"]
 [ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/angry_mesh_meadow/meadow_oak_01_winter_piece_00.res" id="4_ujg04"]
 [ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/angry_mesh_meadow/meadow_oak_01_winter_piece_00_shadow.res" id="5_l41e7"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentImposter.gd" id="5_mxj1m"]
 [ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="6_mxj1m"]
 
 [sub_resource type="Resource" id="Resource_b4who"]
 script = ExtResource("1_yppgk")
 shape = ExtResource("2_ymr5s")
 local_transform = Transform3D(0.22848299, 0.08575184, 1.2768877, 0, 1.2970783, -0.087107785, -1.2797638, 0.01530973, 0.22796951, 0.14333633, 1.6166848, 0.015720038)
+
+[sub_resource type="Resource" id="Resource_vuksq"]
+script = ExtResource("5_mxj1m")
+albedo = ExtResource("3_ujg04")
+normal = ExtResource("4_l41e7")
+size = Vector2(21.43625, 21.43625)
+pivot_height = -2.4850763797760003
+crown_centre = Vector3(0.10886288, 8.233049, 0.3706107)
 
 [sub_resource type="Resource" id="Resource_wrcdj"]
 script = ExtResource("3_js2ud")
@@ -22,3 +33,4 @@ shadow_mesh = ExtResource("5_l41e7")
 script = ExtResource("6_mxj1m")
 pieces = Array[ExtResource("3_js2ud")]([SubResource("Resource_wrcdj")])
 collisions = Array[ExtResource("1_yppgk")]([SubResource("Resource_b4who")])
+imposter = SubResource("Resource_vuksq")
