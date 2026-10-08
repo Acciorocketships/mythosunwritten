@@ -750,77 +750,40 @@ static func _build_sub_lattice_rescue(region, base: Vector2,
 	var prof_nodes := {}   # per-stage node visits (PROFILE_WATER_COST only)
 	if profile_source_cost:
 		_fine_counts = {}
-		_fine_stage = "seed"
-	# Only mixed coarse cells own a shoreline. Seed every 3m point in those
-	# cells that the existing field itself already considers wet. Neighbouring
-	# mixed cells duplicate candidates harmlessly; `queued` keeps one offer.
-	for cj in coarse_rows - 1:
-		for ci in coarse_n - 1:
-			var corner := cj * coarse_n + ci
-			var nw := coarse_levels[corner] != -INF
-			var ne := coarse_levels[corner + 1] != -INF
-			var sw := coarse_levels[corner + coarse_n] != -INF
-			var se := coarse_levels[corner + coarse_n + 1] != -INF
-			if (not nw and not ne and not sw and not se) or (nw and ne and sw and se):
-				continue
-			for sj in range(cj * 2, cj * 2 + 3):
-				for si in range(ci * 2, ci * 2 + 3):
-					var sidx: int = sj * sub_n + si
-					if queued[sidx] == 1:
-						continue
-					if profile_source_cost: prof_nodes["seed_visits"] = prof_nodes.get("seed_visits", 0) + 1
-					var p: Vector2 = base + Vector2(si, sj) * FILL_SUB_STEP
-					var lvl: float = _rescue_coarse_level(coarse_ctx, p)
-					var ground: float = _ground_at(region, base, sub_n, sub_ground, si, sj, FILL_SUB_STEP, ground_bakes)
-					sub_ground[sidx] = ground
-					if lvl == -INF or lvl <= ground + EPS:
-						continue
-					# The signed-depth shoreline value locates the old boundary;
-					# it is not a new hydraulic datum for a connected pocket.
-					var head := _fill_untapered_level(coarse_ctx, p)
-					queued[sidx] = 1
-					pq.push([sidx, head], head)
-	var seed_finished := Time.get_ticks_usec() if profile_source_cost else 0
+	# Seed and anchor stages: C# when it serves this region (ungraded, its
+	# ground the tile kernel's), else the GDScript reference below.
+	var stages := {}
+	if NATIVE_FILL.on() and region is HeightfieldRegion and region.terrain_grades.is_empty():
+		stages = NATIVE_FILL.rescue_seed_anchors(region, base, coarse_levels, coarse_n, sub_ground)
+	if stages.is_empty():
+		stages = _rescue_seed_anchors(region, base, coarse_levels, coarse_n, sub_ground,
+			coarse_ctx, queued, pq, ground_bakes, prof_nodes)
+	else:
+		sub_ground = stages.ground
+		queued = stages.queued
+		coarse_ctx.surface_samples = stages.samples
+		coarse_ctx.node_ground = stages.node_ground
+		NATIVE_FILL.fill_queue(pq, stages)
+		if profile_source_cost:
+			prof_nodes["native"] = true
+			prof_nodes["seed_visits"] = stages.seed_visits
+			prof_nodes["anchor_visits"] = stages.anchor_visits
+			prof_nodes["native_ground_ms"] = stages.ground_usec / 1000.0
+			prof_nodes["native_window_ms"] = stages.window_usec / 1000.0
+	# Stage overheads (C#: window, marshalling, heap) count toward the seed.
+	var anchor_finished := Time.get_ticks_usec() if profile_source_cost else 0
+	var seed_finished := anchor_finished - int(stages.anchor_usec) if profile_source_cost else 0
 	if profile_source_cost:
-		print("WATER_FINE_STAGE seeded ",pq.size()," ",Time.get_ticks_msec())
 		prof_nodes["seed_pushed"] = pq.size()
-		prof_nodes["ground_after_seed"] = sub_ground.size() - sub_ground.count(INF)
-		_fine_stage = "anchors"
+		prof_nodes["anchors"] = (stages.anchor_indices as PackedInt32Array).size()
+		prof_nodes["ground_after_anchors"] = sub_ground.size() - sub_ground.count(INF)
 	if pq.is_empty():
 		if profile_source_cost: _fine_stage = ""
 		pq.free()
 		return {"levels": sub_levels, "ground": sub_ground}
-	var fine_anchor_indices := PackedInt32Array()
-	var fine_anchors := PackedFloat32Array()
-	fine_anchors.resize(sub_levels.size())
-	fine_anchors.fill(-INF)
-	var anchor_seen := PackedByteArray(); anchor_seen.resize(sub_levels.size())
-	# Only a 3m vertex adjacent to an originally wet 6m node can have a
-	# coarse hydraulic head. Visit that exact support instead of interpolating
-	# every dry vertex across kilometres of source terrain.
-	for coarse_index in coarse_levels.size():
-		if not is_finite(coarse_levels[coarse_index]): continue
-		var cx := coarse_index % coarse_n
-		var cz := int(coarse_index / coarse_n)
-		for sj in range(maxi(0, cz * 2 - 1), mini(sub_rows, cz * 2 + 2)):
-			for si in range(maxi(0, cx * 2 - 1), mini(sub_n, cx * 2 + 2)):
-				var idx := sj * sub_n + si
-				if anchor_seen[idx] == 1: continue
-				anchor_seen[idx] = 1
-				if profile_source_cost: prof_nodes["anchor_visits"] = prof_nodes.get("anchor_visits", 0) + 1
-				var p := base + Vector2(si, sj) * FILL_SUB_STEP
-				var level := _rescue_coarse_level(coarse_ctx, p)
-				if not is_finite(level): continue
-				var ground := _ground_at(region, base, sub_n, sub_ground, si, sj, FILL_SUB_STEP, ground_bakes)
-				if level <= ground + EPS: continue
-				var head := _fill_untapered_level(coarse_ctx, p)
-				fine_anchors[idx] = head
-				fine_anchor_indices.append(idx)
-	var anchor_finished := Time.get_ticks_usec() if profile_source_cost else 0
+	var fine_anchors: PackedFloat32Array = stages.anchors
+	var fine_anchor_indices: PackedInt32Array = stages.anchor_indices
 	if profile_source_cost:
-		print("WATER_FINE_STAGE anchored ",fine_anchor_indices.size()," ",Time.get_ticks_msec())
-		prof_nodes["anchors"] = fine_anchor_indices.size()
-		prof_nodes["ground_after_anchors"] = sub_ground.size() - sub_ground.count(INF)
 		_fine_stage = "spill_init"
 	# Establish physical outlets before expansion. A rejected high head must
 	# not travel across a dry saddle to seed a disconnected pocket beyond it.
@@ -975,6 +938,92 @@ static func _build_sub_lattice_rescue(region, base: Vector2,
 			var row: Array = _fine_counts[key]
 			print("WATER_FINE_HELPER ",key," calls=",row[0]," ms=",row[1]/1000.0," misses=",row[2])
 	return {"levels": sub_levels, "ground": sub_ground}
+
+
+## The seed and anchor stages of _build_sub_lattice_rescue (GDScript
+## reference of NativeWaterFill.rescue_seed_anchors). Seeds every wet 3 m point
+## of a mixed coarse cell into `pq` (marking `queued`), samples `sub_ground`
+## through `coarse_ctx`'s memos, and returns the anchors (the 3 m ring of each
+## wet coarse node whose coarse level clears its ground) as {"anchors",
+## "anchor_indices", "seed_usec", "anchor_usec"} (no anchors when nothing was
+## seeded; the usec only under PROFILE_WATER_COST).
+static func _rescue_seed_anchors(region, base: Vector2, coarse_levels: PackedFloat32Array,
+		coarse_n: int, sub_ground: PackedFloat32Array, coarse_ctx: Dictionary,
+		queued: PackedByteArray, pq: PriorityQueue, ground_bakes: Dictionary,
+		prof_nodes: Dictionary) -> Dictionary:
+	var started := Time.get_ticks_usec() if profile_source_cost else 0
+	var coarse_rows := int(coarse_levels.size() / coarse_n)
+	var sub_rows := (coarse_rows - 1) * 2 + 1
+	var sub_n := (coarse_n - 1) * 2 + 1
+	if profile_source_cost: _fine_stage = "seed"
+	# Only mixed coarse cells own a shoreline. Seed every 3m point in those
+	# cells that the existing field itself already considers wet. Neighbouring
+	# mixed cells duplicate candidates harmlessly; `queued` keeps one offer.
+	for cj in coarse_rows - 1:
+		for ci in coarse_n - 1:
+			var corner := cj * coarse_n + ci
+			var nw := coarse_levels[corner] != -INF
+			var ne := coarse_levels[corner + 1] != -INF
+			var sw := coarse_levels[corner + coarse_n] != -INF
+			var se := coarse_levels[corner + coarse_n + 1] != -INF
+			if (not nw and not ne and not sw and not se) or (nw and ne and sw and se):
+				continue
+			for sj in range(cj * 2, cj * 2 + 3):
+				for si in range(ci * 2, ci * 2 + 3):
+					var sidx: int = sj * sub_n + si
+					if queued[sidx] == 1:
+						continue
+					if profile_source_cost: prof_nodes["seed_visits"] = prof_nodes.get("seed_visits", 0) + 1
+					var p: Vector2 = base + Vector2(si, sj) * FILL_SUB_STEP
+					var lvl: float = _rescue_coarse_level(coarse_ctx, p)
+					var ground: float = _ground_at(region, base, sub_n, sub_ground, si, sj, FILL_SUB_STEP, ground_bakes)
+					sub_ground[sidx] = ground
+					if lvl == -INF or lvl <= ground + EPS:
+						continue
+					# The signed-depth shoreline value locates the old boundary;
+					# it is not a new hydraulic datum for a connected pocket.
+					var head := _fill_untapered_level(coarse_ctx, p)
+					queued[sidx] = 1
+					pq.push([sidx, head], head)
+	var seed_finished := Time.get_ticks_usec() if profile_source_cost else 0
+	if profile_source_cost:
+		print("WATER_FINE_STAGE seeded ",pq.size()," ",Time.get_ticks_msec())
+		prof_nodes["ground_after_seed"] = sub_ground.size() - sub_ground.count(INF)
+		_fine_stage = "anchors"
+	if pq.is_empty():
+		return {"anchors": PackedFloat32Array(), "anchor_indices": PackedInt32Array(),
+			"seed_usec": seed_finished - started, "anchor_usec": 0}
+	var fine_anchor_indices := PackedInt32Array()
+	var fine_anchors := PackedFloat32Array()
+	fine_anchors.resize(sub_ground.size())
+	fine_anchors.fill(-INF)
+	var anchor_seen := PackedByteArray(); anchor_seen.resize(sub_ground.size())
+	# Only a 3m vertex adjacent to an originally wet 6m node can have a
+	# coarse hydraulic head. Visit that exact support instead of interpolating
+	# every dry vertex across kilometres of source terrain.
+	for coarse_index in coarse_levels.size():
+		if not is_finite(coarse_levels[coarse_index]): continue
+		var cx := coarse_index % coarse_n
+		var cz := int(coarse_index / coarse_n)
+		for sj in range(maxi(0, cz * 2 - 1), mini(sub_rows, cz * 2 + 2)):
+			for si in range(maxi(0, cx * 2 - 1), mini(sub_n, cx * 2 + 2)):
+				var idx := sj * sub_n + si
+				if anchor_seen[idx] == 1: continue
+				anchor_seen[idx] = 1
+				if profile_source_cost: prof_nodes["anchor_visits"] = prof_nodes.get("anchor_visits", 0) + 1
+				var p := base + Vector2(si, sj) * FILL_SUB_STEP
+				var level := _rescue_coarse_level(coarse_ctx, p)
+				if not is_finite(level): continue
+				var ground := _ground_at(region, base, sub_n, sub_ground, si, sj, FILL_SUB_STEP, ground_bakes)
+				if level <= ground + EPS: continue
+				var head := _fill_untapered_level(coarse_ctx, p)
+				fine_anchors[idx] = head
+				fine_anchor_indices.append(idx)
+	var anchor_finished := Time.get_ticks_usec() if profile_source_cost else 0
+	if profile_source_cost:
+		print("WATER_FINE_STAGE anchored ",fine_anchor_indices.size()," ",Time.get_ticks_msec())
+	return {"anchors": fine_anchors, "anchor_indices": fine_anchor_indices,
+		"seed_usec": seed_finished - started, "anchor_usec": anchor_finished - seed_finished}
 
 
 ## Fine rescue repeatedly visits the same lattice vertices. Cache only these

@@ -80,6 +80,14 @@
 > 7.3, `d.add_skirts` 10.3 -> 4.6 s); three-chunk mesher total 151 -> 49 s. 240 s walk:
 > 1024 m, 107 s frozen (was 121-135 s), startup 138 s; the remaining freezes are cold water
 > solves (17-29 s each) reached from `water_context` and from village/path feature planning.
+> October 8 fine rescue, Step 2a: the rescue's seed and anchor stages run in C#
+> (`NativeFineRescue.cs`, part of `NativeWaterFill` and its gate: `rescue_parity` on random
+> terraced regions with spills, wet/dry walls and submerged walls; GDScript reference
+> `WaterField._rescue_seed_anchors`) with their coarse query (`_fill_bilinear_coarse` wall
+> branches, `_shore_support_level`, `_fill_untapered_level`) over a `dense_window` and
+> `NativeTileKernel.Sample`; ungraded `HeightfieldRegion`s only. Visited nodes' ground is
+> sampled in one batch; the memos, `queued` and the seed heap go back to the GDScript flood.
+> Cold block (-4,-5): seed 9.1 s -> 0.22 s (0.15 s of it the window), anchors 8.0 s -> 0.02 s.
 > October 8 fixes: frame feel main-thread max 15-19.5 ms (was 182.8: `_drain_results`
 > spikes were payloads freed in the task reap), startup 67-69 s in the feel harness (was
 > 138-141 s under other load); see `docs/qa/2026-10-07-native-ports/result.md`.

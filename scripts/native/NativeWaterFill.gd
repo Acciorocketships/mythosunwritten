@@ -7,7 +7,8 @@ extends RefCounted
 ## NativeWaterSeed.cs, GdPond.cs), of profile()'s terrain-shaped branch with
 ## the trace's natural terrain corridor (NativeWaterProfile.cs: the corridor
 ## is compute_rect_region's certified values on just the lattice points a
-## profile reads, so no trace region is built) and of PriorityQueue.gd
+## profile reads, so no trace region is built), of the fine rescue's seed and
+## anchor stages with their coarse queries (NativeFineRescue.cs) and of PriorityQueue.gd
 ## (scripts/native/NativeWaterFill.cs, GdPriorityQueue.cs). Used only once
 ## verified bit-identical to the GDScript on random lattices (setup()), and
 ## never under the standard editor. No class_name: preload it.
@@ -164,6 +165,42 @@ static func seed_sources(claims: Array, ponds: Array, base: Vector2, m1: int,
 		"priority": PackedFloat64Array(result[4]), "margins": PackedFloat32Array(result[1]),
 		"claim_usec": int(result[5]), "contain_usec": int(result[6])}
 
+
+## WaterField._rescue_seed_anchors over an ungraded HeightfieldRegion: the
+## fine rescue's seed and anchor stages with the coarse queries they share.
+## `sub_ground` is the rescue's ground (INF = unsampled), read only. Returns
+## {"ground", "queued", "samples" (the 3 m coarse-level memo), "node_ground",
+## "index"/"level"/"priority" (the seed queue in heap order, for fill_queue),
+## "anchors", "anchor_indices", "seed_usec", "anchor_usec", "ground_usec",
+## "window_usec", "seed_visits", "anchor_visits"}; {} when the C# call failed.
+static func rescue_seed_anchors(region: HeightfieldRegion, base: Vector2,
+		coarse_levels: PackedFloat32Array, coarse_n: int,
+		sub_ground: PackedFloat32Array) -> Dictionary:
+	var started := Time.get_ticks_usec()
+	var sub_rows := (int(coarse_levels.size() / coarse_n) - 1) * 2 + 1
+	var far := base + Vector2((coarse_n - 1) * 2, sub_rows - 1) * WaterField.FILL_SUB_STEP
+	# Every probe (lattice points, walls +-1 mm inside a cell, shore edges
+	# 1 mm past a cell edge) is owned within one point of the lattice span;
+	# the window holds those owners' tiles with one point to spare.
+	var lo := Vector2i(TerrainTileField.point_of(base.x, region),
+		TerrainTileField.point_of(base.y, region)) - Vector2i(2, 2)
+	var hi := Vector2i(TerrainTileField.point_of(far.x, region),
+		TerrainTileField.point_of(far.y, region)) + Vector2i(2, 2)
+	var window := TerrainTileField.dense_window(region, lo, hi - lo + Vector2i.ONE)
+	var window_usec := Time.get_ticks_usec() - started
+	var r = _native.RescueSeedAnchors(window.heights, window.storeys, window.w, window.h,
+		lo.x, lo.y, window.spacing, TerrainTileField.cliff_end, base.x, base.y,
+		coarse_levels, coarse_n, sub_ground)
+	if _fault(r) or not r is Array or (r as Array).size() != 10:
+		return {}
+	var stats := PackedInt64Array(r[9])
+	return {"ground": PackedFloat32Array(r[0]), "samples": PackedFloat64Array(r[1]),
+		"node_ground": PackedFloat64Array(r[2]), "queued": PackedByteArray(r[3]),
+		"index": PackedInt32Array(r[4]), "level": PackedFloat64Array(r[5]),
+		"priority": PackedFloat64Array(r[6]), "anchors": PackedFloat32Array(r[7]),
+		"anchor_indices": PackedInt32Array(r[8]), "seed_usec": stats[0] + window_usec,
+		"anchor_usec": stats[1], "ground_usec": stats[2], "window_usec": window_usec,
+		"seed_visits": stats[3], "anchor_visits": stats[4]}
 
 ## WaterField._profile_compute's terrain-shaped branch for `trace` (level0 =
 ## levels[0]). Corner heights come from `source` (a region the GDScript would
@@ -348,6 +385,9 @@ static func _gate() -> void:
 			+ "_reconcile_connected_surface, _smooth_fill_surface, _retain_source_connected_fill, "
 			+ "_cap_hydrostatic_fill, SpillSearch, _claim_river_segment, _claim_rivers, "
 			+ "_contain_rivers, _seed_ponds; NativeWaterSeed.cs, GdPond.cs with PondStamp; "
+			+ "NativeFineRescue.cs with _rescue_seed_anchors, _rescue_coarse_level, "
+			+ "_fill_bilinear_coarse, _node_ground, _may_straddle_a_cliff, _wall_span, "
+			+ "_shore_support_level, _fill_untapered_level; "
 			+ "NativeWaterProfile.cs with profile()'s _descend_segment, _shape_descent_span, "
 			+ "_dense_span_curve, _find_descent_knots, _eval_descent_knots, _descent_knot_tangents, "
 			+ "_dense_span_points and HeightfieldPlan.region_kernel) "
@@ -502,7 +542,122 @@ static func _parity() -> String:
 	var seeded := _seed_parity(rng)
 	if not seeded.is_empty():
 		return seeded
-	return _profile_parity(rng)
+	var profiled := _profile_parity(rng)
+	if not profiled.is_empty():
+		return profiled
+	return rescue_parity(12)
+
+
+
+## Fine rescue seed + anchor stages on random terraced regions with cliffs
+## (storey steps of two and three), slopes and level steps, and random coarse
+## levels from two water planes chosen by terrace height: wet/dry pairs across
+## walls, spills (upper water over a crown, lower below it), submerged walls,
+## near-EPS depths and dry holes; some cases start with part of the 3 m ground
+## already sampled. Every output is compared with `!=`. Own RNG, so the other
+## parity draws are unchanged. Public for tests (`cases` random lattices).
+static func rescue_parity(cases: int, rng_seed: int = 20261008) -> String:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = rng_seed
+	for case_index in cases:
+		var made := rescue_case(rng, case_index)
+		var region: HeightfieldRegion = made.region
+		var base: Vector2 = made.base
+		var coarse: PackedFloat32Array = made.coarse
+		var coarse_n: int = made.coarse_n
+		var coarse_rows: int = made.coarse_rows
+		var sub_n := (coarse_n - 1) * 2 + 1
+		var sub_rows := (coarse_rows - 1) * 2 + 1
+		var ground := PackedFloat32Array(); ground.resize(sub_n * sub_rows); ground.fill(INF)
+		if case_index % 4 == 1:
+			for idx in ground.size():
+				if rng.randf() < 0.3:
+					var q := base + Vector2(idx % sub_n, idx / sub_n) * WaterField.FILL_SUB_STEP
+					ground[idx] = TerrainTileField.surface_y(region, q.x, q.y) \
+						+ (rng.randf_range(-1.0, 1.0) if rng.randf() < 0.3 else 0.0)
+		var expected_ground := ground.duplicate()
+		var samples := PackedFloat64Array(); samples.resize(ground.size()); samples.fill(INF)
+		var node_ground := PackedFloat64Array(); node_ground.resize(coarse.size()); node_ground.fill(INF)
+		var ctx := {"fill_base": base, "fill_size": coarse_n, "surface_samples": samples,
+			"node_ground": node_ground, "fill": {"levels": coarse}, "region": region}
+		var queued := PackedByteArray(); queued.resize(ground.size())
+		var pq := PriorityQueue.new()
+		var expected := WaterField._rescue_seed_anchors(region, base, coarse, coarse_n,
+			expected_ground, ctx, queued, pq, {}, {})
+		var heap_index := PackedInt32Array()
+		var heap_level := PackedFloat64Array()
+		var heap_priority := PackedFloat64Array()
+		for entry: Dictionary in pq.heap:
+			heap_index.append(entry.item[0])
+			heap_level.append(entry.item[1])
+			heap_priority.append(entry.priority)
+		pq.free()
+		var actual := rescue_seed_anchors(region, base, coarse, coarse_n, ground)
+		var where := "case %d, %dx%d coarse, %d seeded" % [case_index, coarse_n, coarse_rows, heap_index.size()]
+		if actual.is_empty():
+			return "rescue seed/anchors failed in C# (%s)" % where
+		if actual.index != heap_index or actual.level != heap_level or actual.priority != heap_priority:
+			return "rescue seed queue differs (%s)" % where
+		if actual.queued != queued:
+			return "rescue queued marks differ (%s)" % where
+		if actual.ground != expected_ground:
+			return "rescue ground differs (%s)" % where
+		if actual.anchors != expected.anchors or actual.anchor_indices != expected.anchor_indices:
+			return "rescue anchors differ (%s)" % where
+		# The memos: every level C# evaluated equals the GDScript's (the sets
+		# agree; the coarse query is a pure function of the point).
+		if actual.samples != samples:
+			return "rescue coarse levels differ (%s)" % where
+		if actual.node_ground != node_ground:
+			return "rescue node ground differs (%s)" % where
+	return ""
+
+## One random rescue lattice (rescue_parity, tests): a terraced region with
+## cliffs and its coarse levels. {"region", "base", "coarse", "coarse_n",
+## "coarse_rows"}.
+static func rescue_case(rng: RandomNumberGenerator, case_index: int) -> Dictionary:
+	var step := WaterField.FILL_STEP
+	var coarse_n := rng.randi_range(8, 22)
+	var coarse_rows := coarse_n if case_index % 3 == 0 else rng.randi_range(8, 22)
+	var base := Vector2(rng.randi_range(-30, 30), rng.randi_range(-30, 30)) * step \
+		+ Vector2.ONE * WaterField.FILL_OFFSET
+	var far := base + Vector2(coarse_n - 1, coarse_rows - 1) * step
+	var plo := Vector2i(TerrainTileField.point_of(base.x), TerrainTileField.point_of(base.y)) - Vector2i(4, 4)
+	var phi := Vector2i(TerrainTileField.point_of(far.x), TerrainTileField.point_of(far.y)) + Vector2i(4, 4)
+	# Terraces: a raised blob or two (walls of 2-3 storeys at their rims,
+	# one-storey slopes where a rim is lower) over a gently stepped floor.
+	var blobs := []
+	for _b in rng.randi_range(1, 3):
+		blobs.append([Vector2(rng.randf_range(plo.x, phi.x), rng.randf_range(plo.y, phi.y)),
+			rng.randf_range(1.5, 5.0), rng.randi_range(1, 3)])
+	var storeys := {}
+	var levels := {}
+	for j in range(plo.y, phi.y + 1):
+		for i in range(plo.x, phi.x + 1):
+			var st := 3 + (1 if rng.randf() < 0.15 else 0)
+			for blob: Array in blobs:
+				if Vector2(i, j).distance_to(blob[0]) <= blob[1]:
+					st = maxi(st, 3 + int(blob[2]))
+			storeys[Vector2i(i, j)] = st
+			levels[Vector2i(i, j)] = rng.randi_range(0, 3) if rng.randf() < 0.4 else 0
+	var region := HeightfieldRegion.new(storeys, levels)
+	var low_plane := 12.0 + rng.randf_range(0.5, 4.5)
+	var high_plane := 16.0 + rng.randf_range(-1.0, 8.0)
+	var coarse := PackedFloat32Array(); coarse.resize(coarse_n * coarse_rows)
+	for j in coarse_rows:
+		for i in coarse_n:
+			var q := base + Vector2(i, j) * step
+			var g := TerrainTileField.surface_y(region, q.x, q.y)
+			var plane := high_plane if g >= 16.0 else low_plane
+			var roll := rng.randf()
+			var lvl := plane + (rng.randf_range(-0.3, 0.3) if roll < 0.3 else 0.0)
+			if roll > 0.92 or lvl <= g + WaterField.EPS:
+				lvl = -INF
+			elif roll > 0.85:
+				lvl = g + WaterField.EPS + rng.randf_range(0.0, 0.02)   # near-EPS depth
+			coarse[j * coarse_n + i] = lvl
+	return {"region": region, "base": base, "coarse": coarse, "coarse_n": coarse_n,
+		"coarse_rows": coarse_rows}
 
 
 ## Random traces (12 m-ish steps, zero and near-zero segments, storey drops,
