@@ -99,13 +99,19 @@
 > MultiMesh instance) vs the card. `EnvironmentRenderCache` swaps those copies onto the
 > visible mesh (meta `baked_material` = original); the shadow proxy keeps the baked
 > materials. Node visibility ranges only cull (FADE_DISABLED): GeometryInstance3D
-> FADE_SELF draws a ranged batch in the alpha pass at every distance (trunks vanished).
+> FADE_SELF draws a ranged batch in the alpha pass at every distance (trunks vanished). The
+> near batch and its cards share pinned CPU bounds (`custom_aabb`) and cull with a slack of
+> half that box's 3D diagonal (`imposter_cull_slack`; height counts on steep tall tiles). The
+> cards carry colour but no custom data (the visibility bubble skips them,
+> `tactical_preserve_surface`); `RenderWarmup` warms them in that same instance format.
 > Legacy biome_canopy trees keep no imposter. Measured: `tests/harness/imposter_review.gd`,
 > `frame_feel_profile --imposter-distance M --view-shots DIR`;
 > `docs/qa/2026-10-07-tree-imposters/result.md`.
 >
 > October 7 tree imposters, bake and capture (`tools/environment_bake/imposter_capture.gd`, 83
-> tree visuals, 51 MB of atlases). WINDOWED only: `environment_bake.gd -- --manifest M
+> tree visuals; atlases are BC7 `PortableCompressedTexture2D` (BPTC, alpha kept for coverage and
+> tint response) saved zstd-compressed: 41 MB on disk, ~0.7 MB VRAM each with mips; the
+> former lossless RGBA8 upload cost ~360 MB of texture memory at the forest site). WINDOWED only: `environment_bake.gd -- --manifest M
 > --imposters` captures every new `tree`-tagged visual in a normal bake; `-- --imposters-only`
 > walks the existing catalogue and re-saves only each tree's visual plus its textures (no
 > mesh/material/descriptor/index/provenance change, prunes nothing; a manifest re-bake without
@@ -123,8 +129,15 @@
 > crossfade copies reproduce; the bark swap in `EnvironmentRenderCache._crossfade_tree` is
 > process-wide and idempotent; anything unsupported keeps no imposter (safe fallback). Imposter
 > casts no shadow and its material is warmed. Measured (seed 2697992464, `imposter_review.gd`):
-> 60-300 m coverage within 10% and dE < 2 against the meshes; forest idle dt p50 16.1 -> 14.1
-> ms, primitives -7..-10%; running phases within noise. Limits: the 14 legacy canopy
+> 60-300 m coverage within 10% and dE < 2 against the meshes (unchanged after BC7); forest idle
+> dt p50 -2.9 ms against the pre-branch build (8a6441058; 1920x1080, no vsync, forest
+> (-672, 672), 10 base / 11 head runs in three batches under heavy, drifting background load).
+> Moving phases: the strictly alternating batch has head run/run_turn p95 33.9/30.6 vs base
+> 37.8/36.6 ms, an earlier batch +1.2/-1.5, a batch hit by new background load +0.3/+6; i.e.
+> no regression separable from the machine's drift. Head shows slightly more single 75-140 ms
+> frames (about one per 40 s run; base 0-1, max 122). They stay with the cards never drawn
+> (`--imposter-distance 1e6`) and without the bark discard (`--bark-dither off`, which also
+> measured no better), so the bark keeps its dither; cause open (see the QA result). Limits: the 14 legacy canopy
 > trees keep none (approximate tint, unplaced); the dither crawls on screen while moving in the
 > 88-112 m band; cards read rounder and darker backlit at 100-200 m; elevations above 60 deg
 > can open a hole (latent, unseen).
@@ -4996,6 +5009,12 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
   where they fit: the owner's original three-cylinder proxy remains on KayKit rock 1, while
   rock 2's oversized sphere is replaced by a mesh-derived flat-topped hull. KayKit trees 2 and 4
   are intentionally absent from the catalogue.
+  Painted trees also carry `EnvironmentVisual.imposter` (`EnvironmentImposter`: two BC7 atlases
+  of 8 azimuth frames, framing, and the `geometry_signature` of the visual it was captured
+  from). At load `EnvironmentRenderCache` swaps each tree's visible-mesh materials for crossfade
+  copies, process-wide: painted leaves get `imposter_crossfade`, the bake's bark/cutout
+  StandardMaterial3D becomes `tree_bark.gdshader` (same features, plus the per-tree dither
+  discard); the shadow proxy keeps the baked materials. See the October 7 tree imposter entries.
   LPFV rigid assets normally use one snag-free primitive per disconnected hard component. Trees use
   a rotated capsule around only the grounded lower trunk, fitted from true mesh cross-sections so
   sparse/leaning low-poly vertices cannot pull it off-centre. The strongly curved LPFV tree 2 uses
@@ -5468,7 +5487,7 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
 
 ## Adding terrain content
 
-- **Tree imposter**: a new `tree`-tagged visual gets its distant card from a WINDOWED bake with `--imposters` (or `--imposters-only` afterwards); a headless bake keeps the old one.
+- **Tree imposter**: a new `tree`-tagged visual gets its distant card from a WINDOWED bake with `--imposters` (or `--imposters-only` afterwards); a headless bake keeps the old one only while `EnvironmentImposter.geometry_signature` still matches the tree. A geometry or scale change drops it (warning) and needs a WINDOWED `--imposters-only` rerun; `test_environment_catalog` fails on any stale signature.
 - **New environment visual**: add a stable-ID entry to the relevant manifest under
   `tools/environment_bake/manifests/`, including its canonical bake scale and either
   `collision_source`, a supported `collision_profile`, or intentionally neither. `tree`, `rock`,
