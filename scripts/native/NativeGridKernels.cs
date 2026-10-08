@@ -49,6 +49,9 @@ namespace Story.Native
 
         // _envelope_axis(f, w, h, a, columns, only)
         public double[] EnvelopeAxis(double[] f, int w, int h, double a, bool columns, byte[] only)
+            => EnvelopeAxisS(f, w, h, a, columns, only);
+
+        internal static double[] EnvelopeAxisS(double[] f, int w, int h, double a, bool columns, byte[] only)
         {
             int n = Math.Max(w, h);
             var result = new double[n];
@@ -126,7 +129,9 @@ namespace Story.Native
         }
 
         // _blur(f, w, h, r): box blur of radius r nodes, rows then columns.
-        public double[] Blur(double[] f, int w, int h, int r)
+        public double[] Blur(double[] f, int w, int h, int r) => BlurS(f, w, h, r);
+
+        internal static double[] BlurS(double[] f, int w, int h, int r)
         {
             var tmp = (double[])f.Clone();
             for (int k = 0; k < h; k++)

@@ -474,3 +474,58 @@ Walk frame p50 6.8 ms, p95 15.6 ms, p99 28.3 ms.
   `test_native_water_fill` 7/7 on mono and standard (native off there),
   `test_water_field` 25/25 mono. Digest `b6c965def22e7e93`;
   `parallel_tail_check --rounds=2` PASS failures=0.
+
+## Task 10: native cliff envelope (the whole numeric build in C#)
+
+`CliffSlopeEnvelope.build` keeps its inputs in GDScript, unchanged: the ground
+grid (native `sample_grid`), the keep-out mask with its coarse-then-edge
+refinement, and `_levels` (adaptive water queries). New: `_wall_lines` gathers
+the ground on both sides (+-0.001) of every 12 m wall line `_walls` scans, as
+the same float32 points, in two batched `TerrainTileField.sample_grid` calls
+(`CliffSlopeField._ground_points`; a `ground_at` loop only for callable-only
+callers such as tests). Everything after that runs in
+`scripts/native/NativeCliffEnvelope.cs` when `NativeCliffEnvelope.on()`:
+`_walls`, `_close_walls` (x4, with `_channel_scale` and the corner rounding),
+`_lips` (insertion-ordered map, float32 run values as the Vector2 stores
+them), the transforms, `_ridges`, blend, fillet, caps, `_distance`,
+`_bedrock`/`_bench`/`_bench_profile`, `_level_outward`, `_moss_grade` (the
+no-wall shortcut too). `always_transform` (tests) stays GDScript.
+
+One numeric trap: `Vector2.snapped` runs Godot's `Math::snapped` in double; in
+float32 a tie at x/step + 0.5 rounds up (0.12499999 snapped to 0.25 instead
+of 0). Found by the per-stage comparison ("stage ridges differs").
+
+Gate: lazy, like NativeWaterFill (`prepare()` in the streamer, first `on()`
+on the first chunk tail, try_lock): constants list + 4 synthetic 28 m sites
+(storeyed walls with corners, a wall ending in a slope, a jump off the wall
+lines, a road, a channel fitted between two walls (1702 channel nodes), the
+plain sheet, ground without walls; 290/187 carved bedrock nodes). 0.45 s
+cold. Debug knob: `NATIVE_CLIFF_ENVELOPE_OFF=1` keeps the GDScript build in
+the .NET binary. Test `test_native_cliff_envelope.gd`: P03 fixture (bedrock
+and plain), 12 synthetic point regions through the real tile kernel (half with
+the batched grid/line samples), the dispatch; every stage's arrays compared
+(`CliffSlopeEnvelope.capture_stages`).
+
+| check | result |
+|---|---|
+| `profile_mesh_phases --chunks "0,-2;0,-1;1,-1"` vs HEAD | `HASH CHECK: IDENTICAL` |
+| `--seed 2697992464 --chunks "2,4;1,4;1,3"` (cliffy) vs `NATIVE_CLIFF_ENVELOPE_OFF=1` | `HASH CHECK: IDENTICAL` |
+| `parallel_tail_check --rounds=2` | PASS failures=0 |
+| tests (mono / standard) | shortcuts 4/4, sheet_ends 8/8, sheet_normals 2/2, sept26_bedrock 5/5, sept28_ground_seams 5/5, native_cliff_envelope 4/4 (standard: enabled == false), native_grid_kernels 1/1 |
+
+`d.slope_init` (`--detail`, Godot_mono, ms):
+
+| chunk | before | Task 10 |
+|---|---|---|
+| (0,-2) | 12812 | 5664 |
+| (0,-1) | 5099 | 1118 |
+| (1,-1) | 11205 | 3588 |
+| seed 2697992464 (2,4) | 10506 | 4755 |
+| (1,4) | 13049 | 5393 |
+| (1,3) | 6326 | 1525 |
+
+What remains in `slope_init` is the GDScript input stage: `SLOPE_ENV_PROFILE`
+on (1,4) (625x625 grid) shows exclusion + water levels 15.7 s on the cold
+timed build (water contexts) and 1.35 s warm, against 0.39 s for the whole
+native rest (wall-line samples included). Next target: `_exclusion` /
+`_water_level` queries.

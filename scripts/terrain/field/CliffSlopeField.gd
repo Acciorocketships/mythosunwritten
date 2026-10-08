@@ -785,7 +785,7 @@ var _env:ENVELOPE
 func envelope()->ENVELOPE:
  if _env==null:
   var rect:=_focus.grow(ENVELOPE_GROW) if _focus.size.x<1e8 else _line_bounds().grow(30.0)
-  _env=ENVELOPE.build(rect,_ground_sampler(),_exclusion(rect.grow(ENVELOPE.PAD+1.0)),_seed,_water_level(),_ground_grid()) as ENVELOPE
+  _env=ENVELOPE.build(rect,_ground_sampler(),_exclusion(rect.grow(ENVELOPE.PAD+1.0)),_seed,_water_level(),_ground_grid(),_ground_points()) as ENVELOPE
  return _env
 
 func _line_bounds()->Rect2:
@@ -820,6 +820,14 @@ func _ground_grid()->Callable:
   for i in w:xs[i]=(origin+Vector2(i,0)*ENVELOPE.H).x
   var zs:=PackedFloat64Array();zs.resize(h)
   for k in h:zs[k]=(origin+Vector2(0,k)*ENVELOPE.H).y
+  return TerrainTileField.sample_grid(region,xs,zs)
+
+## The same samples over any grid xs x zs (row-major, z outer): the
+## envelope's wall-line samples (TerrainTileField.sample_grid).
+func _ground_points()->Callable:
+ if _region==null:return Callable()
+ var region:=_region
+ return func(xs:PackedFloat64Array,zs:PackedFloat64Array)->PackedFloat64Array:
   return TerrainTileField.sample_grid(region,xs,zs)
 
 ## Water level at a point (NAN where dry), queried only in or beside a carved

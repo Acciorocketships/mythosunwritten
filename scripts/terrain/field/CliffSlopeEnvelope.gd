@@ -106,6 +106,10 @@ const STYLE=preload("res://scripts/terrain/field/CliffRockStyle.gd")
 ## Native (C#) versions of _envelope_axis, _window and _blur under .NET Godot,
 ## parity-checked against these GDScript kernels at startup (perf session).
 const NativeGridKernels := preload("res://scripts/native/NativeGridKernels.gd")
+## Native (C#) build of everything after the presampled inputs (ground,
+## keep-out mask, water levels, wall-line ground samples), under .NET Godot,
+## parity-gated lazily against this GDScript (NativeCliffEnvelope.gd).
+const NativeCliffEnvelope := preload("res://scripts/native/NativeCliffEnvelope.gd")
 
 ## Water (owner, September 28: spikes, sharp corners and cut-outs where the
 ## slope met water). The water never cuts the slope: planar cuts from a 2 m
@@ -126,10 +130,20 @@ const BEDROCK_RECESS:=.25
 ## Tests only: run every transform even where the result is known to be the
 ## ground (build's no-wall shortcut), to prove the shortcut exact.
 static var always_transform:=false
+## Tests only: record each stage's arrays in `stages` (single-threaded use).
+static var capture_stages:=false
+static var stages:Dictionary={}
 ## `ground_grid`, when given, returns ground_at over the whole grid at once
 ## (origin, w, h -> the w*h node values, row by row): the same values, without
-## a call per node.
-static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:int,water_at:Callable=Callable(),ground_grid:=Callable())->RefCounted:
+## a call per node. `ground_points`, when given, returns ground_at over the
+## grid xs x zs (row-major, z outer) at once: the wall-line samples the native
+## build takes.
+static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:int,water_at:Callable=Callable(),ground_grid:=Callable(),ground_points:=Callable())->RefCounted:
+ return _build(rect,ground_at,excluded_at,seed_value,water_at,ground_grid,ground_points,STYLE.sheet_study=="bedrock",0)
+
+## mode: 0 native when available (NativeCliffEnvelope.on()), 1 GDScript,
+## 2 native (the parity gate and tests).
+static func _build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:int,water_at:Callable,ground_grid:Callable,ground_points:Callable,bedrock:bool,mode:int)->RefCounted:
  var env:=new()
  var grid:=rect.grow(PAD)
  env.origin=(grid.position/H).floor()*H
@@ -177,6 +191,10 @@ static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:
  var wet_level:=_levels(env,water_at)
  var any_wet:=not wet_level.is_empty()
  mark.call("exclusion")
+ if mode==2 or (mode==0 and not always_transform and NativeCliffEnvelope.on()):
+  NativeCliffEnvelope.build_rest(env,wet_level,_wall_lines(env,ground_at,ground_points),seed_value,bedrock,capture_stages)
+  mark.call("native")
+  return env
  var g:=env.ground
  var sh:=SHOULDER
  var foot:=FOOT
@@ -184,13 +202,17 @@ static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:
  var tight_foot:=TIGHT.y
  var walls:=_walls(env,g,ground_at,wet_level)
  mark.call("walls")
+ if capture_stages:
+  stages={}
+  for a in 2:
+   stages["crest%d"%a]=walls[a][0];stages["drop%d"%a]=walls[a][1];stages["lead%d"%a]=walls[a][4]
  # Ground with no wall crest anywhere in the grid: every closing below
  # returns the ground itself (an erosion never rises over its input, and each
  # blend of equal surfaces is that surface), the fillet's gate is closed, no
  # rock is exposed and no cap lowers it. Only the moss grade remains to compute.
  if not always_transform and walls[0][0].count(-INF)==n and walls[1][0].count(-INF)==n:
   env.surface=g.duplicate()
-  if STYLE.sheet_study=="bedrock":
+  if bedrock:
    env.moss_grade=_moss_grade(env,env.surface)
    env.rock.resize(n)
   mark.call("done (no walls)")
@@ -211,6 +233,8 @@ static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:
  var tight:=_close_walls(g,walls,env.w,env.h,tight_sh,tight_foot,channel,along_tight,ground_rows)
  var tight_wide:=_close_walls(g,walls,env.w,env.h,6.4,tight_foot,channel,along_tight_wide,ground_rows)
  mark.call("close all four")
+ if capture_stages:
+  stages.merge({"narrow":narrow,"wide":wide,"tight":tight,"tight_wide":tight_wide,"along_narrow":along_narrow,"channel":channel})
  # Local relief: highest reach minus lowest reach nearby; continuous even
  # across the terrain's own cliffs, so the blend never opens a step.
  var floor_level:=_erode(g,env.w,env.h,SHOULDER.y+FOOT)
@@ -233,6 +257,7 @@ static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:
  mark.call("transforms")
  var t:=_ridges(env,narrow,wide,wide_dilated,seed_value)
  mark.call("ridges")
+ if capture_stages:stages.merge({"relief":relief,"drop":drop,"ridges":t})
  env.surface.resize(n)
  var along:=PackedFloat64Array();along.resize(n)
  for idx in n:
@@ -254,15 +279,18 @@ static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:
  # opposing banks dammed the channel they were fitted to leave open.
  # The fillet never stands over the lip across a wall line (see _lips).
  mark.call("blend")
+ if capture_stages:stages["blend"]=env.surface.duplicate()
  var filleted:=_erode(_dilate(env.surface,env.w,env.h,FOOT),env.w,env.h,FOOT)
  var lips:=_lips(walls,g,env.w,n)
  mark.call("fillet transform")
+ if capture_stages:stages["lips"]=lips
  for idx in n:
   var fill:=filleted[idx]
   if lips[idx]>-INF:fill=minf(fill,maxf(lips[idx],env.surface[idx]))
   if channel[idx] and _deep(wet_level,env.ground,idx):fill=minf(fill,wet_level[idx]-.3)
   env.surface[idx]=lerpf(env.surface[idx],maxf(env.surface[idx],fill),smoothstep(0.0,.5,maxf(env.surface[idx]-g[idx],along[idx])))
  var uncut:=env.surface.duplicate()
+ if capture_stages:stages["fillet"]=uncut
  # Only a road's cut face is bare rock: the underwater bank keeps its moss.
  var shaped:=env.surface.duplicate()
  # Keep-out caps: a steep cut rising from roads and graded ground.
@@ -285,7 +313,8 @@ static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:
   if rock_lips[idx]>-INF:rock_caps[idx]=minf(rock_caps[idx],maxf(rock_lips[idx],uncut[idx])+7.5*smoothstep(0.0,1.0,uncut[idx]-rock_lips[idx]))
  for idx in n:env.surface[idx]=minf(env.surface[idx],maxf(env.ground[idx],caps[idx]))
  mark.call("fillet and caps")
- if STYLE.sheet_study=="bedrock":
+ if capture_stages:stages.merge({"caps":env.surface.duplicate(),"rock_caps":rock_caps.duplicate()})
+ if bedrock:
   # A dry rock face can stand proud; a submerged point must stay submerged.
   # Fade its available relief in above the actual bank/water contact.
   if any_wet:
@@ -307,9 +336,50 @@ static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:
     if _deep(wet_level,env.ground,idx):cliff[idx]*=1.0-smoothstep(-.5,0.0,wet_level[idx]-env.surface[idx])
   # Only a keep-out cap cuts the slope back.
   _bedrock(env,floor_level,wide_dilated,cliff,seed_value,cut,any_excluded)
+  if capture_stages:stages.merge({"cliff":cliff,"bedrock":env.surface.duplicate()})
   for idx in n:env.surface[idx]=minf(env.surface[idx],maxf(env.ground[idx],rock_caps[idx]))
  mark.call("done")
  return env
+
+## The ground on both sides (at -/+ 0.001) of every 12 m wall line _walls
+## scans, per axis: [line node indices kb, line coordinates at, samples]
+## (axis 0: row 2l before and 2l+1 after, w wide; axis 1: per node row t,
+## columns 2l before and 2l+1 after). The same lines and points _walls
+## queries, through `ground_points` in two batched calls when given.
+static func _wall_lines(env,ground_at:Callable,ground_points:Callable)->Array:
+ var out:=[]
+ for axis in 2:
+  var o:float=env.origin.y if axis==0 else env.origin.x
+  var count:int=env.h if axis==0 else env.w
+  var length:int=env.w if axis==0 else env.h
+  var kbs:=PackedInt32Array();var ats:=PackedFloat64Array()
+  var b:=ceili((o-CELL*.5)/CELL)
+  while true:
+   var at:=CELL*.5+CELL*b
+   var kb:=roundi((at-o)/H)
+   b+=1
+   if kb>=count:break
+   if kb<1:continue
+   kbs.append(kb);ats.append(at)
+  var samples:=PackedFloat64Array()
+  if not kbs.is_empty():
+   # The float32 coordinates of the Vector2 points _walls queries.
+   var start:float=env.origin.x if axis==0 else env.origin.y
+   var nodes:=PackedFloat64Array();nodes.resize(length)
+   for t in length:nodes[t]=Vector2(start+t*H,0.0).x
+   var sides:=PackedFloat64Array();sides.resize(2*kbs.size())
+   for l in kbs.size():
+    sides[2*l]=Vector2(ats[l]-.001,0.0).x;sides[2*l+1]=Vector2(ats[l]+.001,0.0).x
+   if ground_points.is_valid():
+    samples=ground_points.call(nodes,sides) if axis==0 else ground_points.call(sides,nodes)
+   else:
+    samples.resize(length*sides.size())
+    for r in sides.size():
+     for t in length:
+      if axis==0:samples[r*length+t]=ground_at.call(Vector2(nodes[t],sides[r]))
+      else:samples[t*sides.size()+r]=ground_at.call(Vector2(sides[r],nodes[t]))
+  out.append_array([kbs,ats,samples])
+ return out
 
 ## Water level per node (NAN where dry). Queried on the coarse lattice (water
 ## queries are far dearer than the ground); blocks on the wet outline or at a
