@@ -273,22 +273,58 @@ static var _basin_lock := Mutex.new()
 ## does not change cache identity, hydraulic labels or the returned payload.
 static var profile_source_cost := OS.get_environment("PROFILE_WATER_COST") == "1"
 static var profile_fine_input := Callable()
-## Fine-rescue helper counters (PROFILE_WATER_COST only). `_fine_stage` names
-## the rescue stage running on this solve; helpers record only while it is
-## set, so coarse-field use elsewhere is not counted. Each key holds
+## Fine-rescue helper counters (PROFILE_WATER_COST only). One rescue at a
+## time owns them: `_fine_begin` claims them for the calling thread (none
+## while another rescue holds them), and helpers record only on that thread
+## while `_fine_stage` names a stage, so coarse-field use elsewhere (other
+## solves, the native parity gate on a worker) is not counted. Each key holds
 ## [calls, inclusive usec, misses] (misses = real work behind a memo).
-## Single-threaded profiling only (`--serial`); the counters are unlocked.
-static var _fine_stage := ""
+## THREADS (NativeGates.gd): the lock-free reads are plain ints (`_fine_stage`
+## indexes FINE_STAGES, `_fine_owner` is a thread id); the Dictionary is
+## touched only under `_fine_lock`.
+const FINE_STAGES := ["", "seed", "anchors", "spill_init", "flood", "finish"]
+static var _fine_stage := 0
+static var _fine_owner := -1
+static var _fine_lock := Mutex.new()
 static var _fine_counts: Dictionary = {}
 
 static func _fine_tick(helper: String, started: int, miss: bool = false) -> void:
-	if _fine_stage == "": return
-	var key := _fine_stage + "/" + helper
+	if _fine_stage == 0 or OS.get_thread_caller_id() != _fine_owner: return
+	var elapsed := Time.get_ticks_usec() - started
+	_fine_lock.lock()
+	var key: String = FINE_STAGES[_fine_stage] + "/" + helper
 	var row: Array = _fine_counts.get(key, [0, 0, 0])
 	row[0] += 1
-	row[1] += Time.get_ticks_usec() - started
+	row[1] += elapsed
 	if miss: row[2] += 1
 	_fine_counts[key] = row
+	_fine_lock.unlock()
+
+## Claims the counters for this thread (true) unless another rescue holds them.
+static func _fine_begin() -> bool:
+	_fine_lock.lock()
+	var mine := _fine_owner == -1
+	if mine:
+		_fine_owner = OS.get_thread_caller_id()
+		_fine_counts = {}
+	_fine_lock.unlock()
+	return mine
+
+## Names the running stage, on the owning thread only.
+static func _fine_set(stage: int) -> void:
+	if OS.get_thread_caller_id() == _fine_owner: _fine_stage = stage
+
+## Releases the counters and returns their rows (owner only; {} otherwise).
+static func _fine_end() -> Dictionary:
+	_fine_lock.lock()
+	var rows := {}
+	if OS.get_thread_caller_id() == _fine_owner:
+		_fine_stage = 0
+		rows = _fine_counts
+		_fine_counts = {}
+		_fine_owner = -1
+	_fine_lock.unlock()
+	return rows
 
 static func cache_counts() -> Dictionary:
 	_profiles_lock.lock()
@@ -348,7 +384,9 @@ static func _source_fill(c: Dictionary, region) -> Dictionary:
 	# The 6m hydraulic solve needs its complete terrain domain. Fine rescue
 	# samples only the shore/pocket vertices it visits; unrelated dry terrain
 	# does not need a second, denser ground array prepared in advance.
-	ground = _sample_ground_lattice(owned, base, m1, FILL_STEP, rows)
+	# One terrain window serves this lattice and the fine rescue's probes.
+	var rescue_window := _rescue_window(owned, base, m1, rows)
+	ground = _sample_ground_lattice(owned, base, m1, FILL_STEP, rows, rescue_window)
 	var ground_finished := Time.get_ticks_usec() if profile_source_cost else 0
 	if profile_source_cost: print("WATER_SOURCE_STAGE ground ",Time.get_ticks_msec())
 	var queue := PriorityQueue.new()
@@ -409,7 +447,8 @@ static func _source_fill(c: Dictionary, region) -> Dictionary:
 		profile_fine_input.call({"base":base,"side":m1,
 			"coarse":levels,"river":dry_banks,"storeys":owned._storeys,
 			"levels":owned._levels,"carved":owned._carved})
-	var refined := _build_sub_lattice_rescue(owned, base, levels, dry_banks, m1)
+	var refined := _build_sub_lattice_rescue(owned, base, levels, dry_banks, m1,
+		PackedFloat32Array(), rescue_window)
 	if profile_source_cost:
 		print("WATER_SOURCE_COST ", JSON.stringify({"side": m1, "rows": rows, "base": str(base),
 			"request_chunk": str(Vector2i(((c.fill_base + Vector2.ONE * (FILL_MARGIN * FILL_STEP + FILL_OFFSET)) / CHUNK).round())) if c.has("fill_base") else "direct_source_query",
@@ -685,16 +724,43 @@ static func _ground_at(region, base: Vector2, m1: int, gnd: PackedFloat32Array,
 ## Source-owned natural ground has no construction grades. The dense water
 ## lattice is one batched window sample (TerrainTileField.sample_grid). Every
 ## sample is owned by TerrainTileField.point_of, so a sample exactly on a
-## dual-cell wall resolves to the same side surface_y does.
+## dual-cell wall resolves to the same side surface_y does. `window` (a
+## TerrainTileField.dense_window of `region`, e.g. _rescue_window's, shared
+## with the fine rescue) is used when it holds every owner; else one is built.
 static func _sample_ground_lattice(region: HeightfieldRegion, base: Vector2,
-		side: int, step: float, rows: int = 0) -> PackedFloat32Array:
+		side: int, step: float, rows: int = 0, window: Dictionary = {}) -> PackedFloat32Array:
 	if rows == 0: rows = side
 	assert(region.terrain_grades.is_empty())
 	var xs := PackedFloat64Array(); xs.resize(side)
 	for i in side: xs[i] = base.x + i * step
 	var zs := PackedFloat64Array(); zs.resize(rows)
 	for j in rows: zs[j] = base.y + j * step
+	if not window.is_empty():
+		var pxs := PackedInt32Array(); pxs.resize(side)
+		var pzs := PackedInt32Array(); pzs.resize(rows)
+		for i in side: pxs[i] = TerrainTileField.point_of(xs[i], region)
+		for j in rows: pzs[j] = TerrainTileField.point_of(zs[j], region)
+		# point_of is monotone, so the first and last owners bound them all.
+		if TerrainTileField._window_holds(window, Vector2i(pxs[0], pzs[0]),
+				Vector2i(pxs[side - 1], pzs[rows - 1])):
+			return TerrainTileField.sample_grid_window32(window, xs, zs, pxs, pzs)
 	return TerrainTileField.sample_grid32(region, xs, zs)
+
+
+## The dense terrain window (TerrainTileField.dense_window) of the fine rescue
+## of a coarse lattice (`coarse_n` x `coarse_rows` nodes from `base`): every
+## probe it makes (3 m points, wall probes 1 mm inside a cell, shore probes
+## 1 mm past a cell edge) is owned within one point of the lattice span, and
+## the window holds those owners' tiles with one point to spare. It also holds
+## the coarse lattice's own owners, so _source_fill samples its ground from it.
+static func _rescue_window(region, base: Vector2, coarse_n: int, coarse_rows: int) -> Dictionary:
+	var sub_rows := (coarse_rows - 1) * 2 + 1
+	var far := base + Vector2((coarse_n - 1) * 2, sub_rows - 1) * FILL_SUB_STEP
+	var lo := Vector2i(TerrainTileField.point_of(base.x, region),
+		TerrainTileField.point_of(base.y, region)) - Vector2i(2, 2)
+	var hi := Vector2i(TerrainTileField.point_of(far.x, region),
+		TerrainTileField.point_of(far.y, region)) + Vector2i(2, 2)
+	return TerrainTileField.dense_window(region, lo, hi - lo + Vector2i.ONE)
 
 
 ## Repairs only TOPOLOGY the 6m lattice demonstrably cannot see. Every
@@ -711,32 +777,30 @@ static func _sample_ground_lattice(region: HeightfieldRegion, base: Vector2,
 ## actual rescue. `sub_ground` is populated for the rescued cell's complete
 ## one-ring so WaterSampler can freeze the identical signed-depth evaluation
 ## without retaining the terrain region.
+##
+## Seed, anchors, spill init and flood run in C# (NativeWaterFill.rescue_flood)
+## on an ungraded HeightfieldRegion, else in GDScript (_rescue_seed_anchors,
+## _rescue_flood: the reference); the finish is GDScript. `window`: the
+## region's _rescue_window when the caller already built it.
 static func _build_sub_lattice_rescue(region, base: Vector2,
 		coarse_levels: PackedFloat32Array,
 		river_levels: PackedFloat32Array = PackedFloat32Array(),
 		coarse_n: int = FILL_M + 1,
-		ground_samples: PackedFloat32Array = PackedFloat32Array()) -> Dictionary:
+		ground_samples: PackedFloat32Array = PackedFloat32Array(),
+		window: Dictionary = {}) -> Dictionary:
 	var ground_bakes: Dictionary = {}
 	var profile_started := Time.get_ticks_usec() if profile_source_cost else 0
 	var coarse_rows := int(coarse_levels.size() / coarse_n)
 	var sub_rows := (coarse_rows - 1) * 2 + 1
 	var sub_n := (coarse_n - 1) * 2 + 1
 	var sub_levels := PackedFloat32Array()
-	sub_levels.resize(sub_n * sub_rows)
-	sub_levels.fill(-INF)
 	var sub_ground := ground_samples
 	if sub_ground.is_empty():
 		sub_ground.resize(sub_n * sub_rows)
 		sub_ground.fill(INF)
-	# Queue levels interpolate in 64-bit floats. Keep the settled labels at
-	# that precision: rounding one upward to float32 makes the identical
-	# queued level appear lower forever when a bank can be revisited.
-	var settled := PackedFloat64Array()
-	settled.resize(sub_n * sub_rows)
-	settled.fill(-INF)
 	var queued := PackedByteArray()
 	queued.resize(sub_n * sub_rows)
-	var surface_samples := PackedFloat64Array(); surface_samples.resize(sub_levels.size()); surface_samples.fill(INF)
+	var surface_samples := PackedFloat64Array(); surface_samples.resize(sub_n * sub_rows); surface_samples.fill(INF)
 	var node_ground := PackedFloat64Array(); node_ground.resize(coarse_levels.size()); node_ground.fill(INF)
 	var coarse_ctx := {
 		"fill_base": base,
@@ -746,122 +810,66 @@ static func _build_sub_lattice_rescue(region, base: Vector2,
 		"fill": {"levels": coarse_levels},
 		"region": region,
 	}
-	var pq := PriorityQueue.new()
 	var prof_nodes := {}   # per-stage node visits (PROFILE_WATER_COST only)
-	if profile_source_cost:
-		_fine_counts = {}
-	# Seed and anchor stages: C# when it serves this region (ungraded, its
-	# ground the tile kernel's), else the GDScript reference below.
-	var stages := {}
-	if NATIVE_FILL.on() and region is HeightfieldRegion and region.terrain_grades.is_empty():
-		stages = NATIVE_FILL.rescue_seed_anchors(region, base, coarse_levels, coarse_n, sub_ground)
-	if stages.is_empty():
-		stages = _rescue_seed_anchors(region, base, coarse_levels, coarse_n, sub_ground,
+	# on() first: its lazy parity gate runs GDScript rescues of its own.
+	var use_native: bool = NATIVE_FILL.on() and region is HeightfieldRegion \
+		and region.terrain_grades.is_empty()
+	var profiling := profile_source_cost and _fine_begin()
+	var native := {}
+	if use_native:
+		native = NATIVE_FILL.rescue_flood(region, base, coarse_levels, coarse_n, sub_ground,
+			river_levels, window)
+	var stage_usec := {}
+	var fine_anchors: PackedFloat32Array
+	if native.is_empty():
+		var pq := PriorityQueue.new()
+		var stages := _rescue_seed_anchors(region, base, coarse_levels, coarse_n, sub_ground,
 			coarse_ctx, queued, pq, ground_bakes, prof_nodes)
-	else:
-		sub_ground = stages.ground
-		queued = stages.queued
-		coarse_ctx.surface_samples = stages.samples
-		coarse_ctx.node_ground = stages.node_ground
-		NATIVE_FILL.fill_queue(pq, stages)
+		stage_usec = {"seed": stages.seed_usec, "anchors": stages.anchor_usec}
+		fine_anchors = stages.anchors
 		if profile_source_cost:
+			prof_nodes["seed_pushed"] = pq.size()
+			prof_nodes["anchors"] = (stages.anchor_indices as PackedInt32Array).size()
+			prof_nodes["ground_after_anchors"] = sub_ground.size() - sub_ground.count(INF)
+		if pq.is_empty():
+			pq.free()
+			sub_levels.resize(sub_n * sub_rows)
+			sub_levels.fill(-INF)
+		else:
+			var flood := _rescue_flood(region, base, coarse_n, river_levels, coarse_ctx, sub_ground,
+				pq, fine_anchors, stages.anchor_indices, ground_bakes, prof_nodes)
+			sub_levels = flood.levels
+			stage_usec.spill_init = flood.spill_usec
+			stage_usec.flood = flood.flood_usec
+	else:
+		sub_ground = native.ground
+		queued = native.queued
+		coarse_ctx.surface_samples = native.samples
+		coarse_ctx.node_ground = native.node_ground
+		sub_levels = native.levels
+		fine_anchors = native.anchors
+		# Window and marshalling count toward the seed.
+		stage_usec = {"seed": native.seed_usec, "anchors": native.anchor_usec,
+			"spill_init": native.spill_usec, "flood": native.flood_usec}
+		if profile_source_cost:
+			for key in ["seed_visits", "anchor_visits", "seed_pushed", "flood_pops",
+					"flood_settled", "spill_searches", "spill_search_pops"]:
+				prof_nodes[key] = native[key]
 			prof_nodes["native"] = true
-			prof_nodes["seed_visits"] = stages.seed_visits
-			prof_nodes["anchor_visits"] = stages.anchor_visits
-			prof_nodes["native_ground_ms"] = stages.ground_usec / 1000.0
-			prof_nodes["native_window_ms"] = stages.window_usec / 1000.0
-	# Stage overheads (C#: window, marshalling, heap) count toward the seed.
-	var anchor_finished := Time.get_ticks_usec() if profile_source_cost else 0
-	var seed_finished := anchor_finished - int(stages.anchor_usec) if profile_source_cost else 0
-	if profile_source_cost:
-		prof_nodes["seed_pushed"] = pq.size()
-		prof_nodes["anchors"] = (stages.anchor_indices as PackedInt32Array).size()
-		prof_nodes["ground_after_anchors"] = sub_ground.size() - sub_ground.count(INF)
-	if pq.is_empty():
-		if profile_source_cost: _fine_stage = ""
-		pq.free()
-		return {"levels": sub_levels, "ground": sub_ground}
-	var fine_anchors: PackedFloat32Array = stages.anchors
-	var fine_anchor_indices: PackedInt32Array = stages.anchor_indices
-	if profile_source_cost:
-		_fine_stage = "spill_init"
-	# Establish physical outlets before expansion. A rejected high head must
-	# not travel across a dry saddle to seed a disconnected pocket beyond it.
-	var spill := SpillSearch.new(region, base, sub_n, fine_anchors, sub_ground, fine_anchors, FILL_SUB_STEP, ground_bakes, fine_anchor_indices)
-	var spill_init_finished := Time.get_ticks_usec() if profile_source_cost else 0
-	if profile_source_cost:
-		prof_nodes["ground_after_spill_init"] = sub_ground.size() - sub_ground.count(INF)
-		_fine_stage = "flood"
-	var flood_pops := 0
-	while not pq.is_empty():
-		flood_pops+=1
-		if profile_source_cost and flood_pops%5000==0:
-			print("WATER_FINE_FLOOD pops=",flood_pops," pending=",pq.size()," searches=",spill.generation," search_work=",spill.work," ms=",Time.get_ticks_msec())
-		var entry: Array = pq.pop()
-		var idx: int = entry[0]
-		var lvl: float = entry[1]
-		var ceiling := _sub_river_ceiling(river_levels, idx % sub_n, idx / sub_n, coarse_n)
-		lvl = minf(minf(lvl, ceiling), spill.height_at(idx) - EPS)
-		if settled[idx] != -INF and settled[idx] <= lvl:
-			continue
-		settled[idx] = lvl
-		var si: int = idx % sub_n
-		var sj: int = idx / sub_n
-		var p: Vector2 = base + Vector2(si, sj) * FILL_SUB_STEP
-		var own_ground: float = sub_ground[idx]
-		if own_ground == INF:
-			own_ground = _ground_at(region, base, sub_n, sub_ground, si, sj, FILL_SUB_STEP, ground_bakes)
-			sub_ground[idx] = own_ground
-			own_ground = sub_ground[idx]
-		if own_ground >= lvl - EPS:
-			sub_levels[idx] = -INF
-			continue
-		var own_coarse_level: float = _rescue_coarse_level(coarse_ctx, p)
-		if (own_coarse_level == -INF or own_coarse_level <= own_ground + EPS) \
-				and own_ground < lvl - EPS:
-			sub_levels[idx] = lvl
-		for d: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0),
-				Vector2i(0, 1), Vector2i(0, -1)]:
-			var ni: int = si + d.x
-			var nj: int = sj + d.y
-			if ni < 0 or ni >= sub_n or nj < 0 or nj >= sub_rows:
-				continue
-			var nidx: int = nj * sub_n + ni
-			var q: Vector2 = base + Vector2(ni, nj) * FILL_SUB_STEP
-			var coarse_level: float = _rescue_coarse_level(coarse_ctx, q)
-			var ground: float = sub_ground[nidx]
-			if ground == INF:
-				ground = _ground_at(region, base, sub_n, sub_ground, ni, nj, FILL_SUB_STEP, ground_bakes)
-				sub_ground[nidx] = ground
-				ground = sub_ground[nidx]
-			# Existing coarse-wet territory needs no rescue and every shoreline
-			# point in a mixed cell was independently seeded above. Stop this
-			# branch rather than re-settling the canonical surface.
-			if coarse_level != -INF and coarse_level > ground + EPS:
-				continue
-			var next_level := minf(minf(lvl, _sub_river_ceiling(river_levels, ni, nj, coarse_n)), spill.height_at(nidx) - EPS)
-			if settled[nidx] != -INF and settled[nidx] <= next_level:
-				continue
-			if ground >= next_level - EPS:
-				continue
-			pq.push([nidx, next_level], next_level)
+			prof_nodes["anchors"] = (native.anchor_indices as PackedInt32Array).size()
+			prof_nodes["native_ground_ms"] = native.ground_usec / 1000.0
+			prof_nodes["native_window_ms"] = native.window_usec / 1000.0
 	var flood_finished := Time.get_ticks_usec() if profile_source_cost else 0
 	if profile_source_cost:
-		prof_nodes["flood_pops"] = flood_pops
-		prof_nodes["flood_settled"] = settled.size() - settled.count(-INF)
-		prof_nodes["spill_searches"] = spill.generation
-		prof_nodes["spill_search_pops"] = spill.work
 		prof_nodes["ground_after_flood"] = sub_ground.size() - sub_ground.count(INF)
-		_fine_stage = "finish"
-	spill.close()
-	pq.free()
+	if profiling: _fine_set(5)   # finish
 	var has_rescue := false
 	for level: float in sub_levels:
 		if is_finite(level):
 			has_rescue = true
 			break
 	if not has_rescue:
-		if profile_source_cost: _fine_stage = ""
+		if profiling: _fine_end()
 		return {"levels": sub_levels, "ground": sub_ground}
 
 	# The former shoreline becomes interior water beside a rescued pocket.
@@ -918,26 +926,126 @@ static func _build_sub_lattice_rescue(region, base: Vector2,
 				var nidx: int = nj * sub_n + ni
 				if sub_ground[nidx] != INF:
 					continue
-				var q: Vector2 = base + Vector2(ni, nj) * FILL_SUB_STEP
 				sub_ground[nidx] = _ground_at(region, base, sub_n, sub_ground, ni, nj, FILL_SUB_STEP, ground_bakes)
 	if profile_source_cost:
-		_fine_stage = ""
+		var helpers := _fine_end() if profiling else {}
 		prof_nodes["lattice_nodes"] = sub_levels.size()
 		prof_nodes["rescued"] = sub_levels.size() - sub_levels.count(-INF)
 		prof_nodes["ground_after_finish"] = sub_ground.size() - sub_ground.count(INF)
+		var spill_init_usec: int = stage_usec.get("spill_init", 0)
+		var flood_usec: int = stage_usec.get("flood", 0)
+		var seed_usec: int = stage_usec.seed
 		print("WATER_FINE_COST ",JSON.stringify({"side":sub_n,"rows":sub_rows,
-			"seed_ms":(seed_finished-profile_started)/1000.0,
-			"flood_and_spill_ms":(flood_finished-anchor_finished)/1000.0,
-			"spill_init_ms":(spill_init_finished-anchor_finished)/1000.0,
-			"anchors_ms":(anchor_finished-seed_finished)/1000.0,
+			"seed_ms":seed_usec/1000.0,
+			"anchors_ms":int(stage_usec.anchors)/1000.0,
+			"spill_init_ms":spill_init_usec/1000.0,
+			"flood_ms":flood_usec/1000.0,
+			"flood_and_spill_ms":(spill_init_usec+flood_usec)/1000.0,
+			"stages_ms":(flood_finished-profile_started)/1000.0,
 			"finish_ms":(Time.get_ticks_usec()-flood_finished)/1000.0}))
 		print("WATER_FINE_NODES ",JSON.stringify(prof_nodes))
-		var keys := _fine_counts.keys()
+		var keys := helpers.keys()
 		keys.sort()
 		for key: String in keys:
-			var row: Array = _fine_counts[key]
+			var row: Array = helpers[key]
 			print("WATER_FINE_HELPER ",key," calls=",row[0]," ms=",row[1]/1000.0," misses=",row[2])
+	elif profiling:
+		_fine_end()
 	return {"levels": sub_levels, "ground": sub_ground}
+
+
+## The spill init and flood stages of _build_sub_lattice_rescue (GDScript
+## reference of NativeWaterFill.rescue_flood's last two stages): drains `pq`
+## (the seed queue) through the 3 m lattice, capped by each node's river
+## ceiling and spill height, sampling `sub_ground` lazily. Returns {"levels"
+## (the rescued 3 m levels, -INF elsewhere), "settled" (the 64-bit labels),
+## "spill_usec", "flood_usec"} (usec only under PROFILE_WATER_COST). Frees `pq`.
+static func _rescue_flood(region, base: Vector2, coarse_n: int,
+		river_levels: PackedFloat32Array, coarse_ctx: Dictionary,
+		sub_ground: PackedFloat32Array, pq: PriorityQueue,
+		fine_anchors: PackedFloat32Array, fine_anchor_indices: PackedInt32Array,
+		ground_bakes: Dictionary, prof_nodes: Dictionary) -> Dictionary:
+	var started := Time.get_ticks_usec() if profile_source_cost else 0
+	var sub_n := (coarse_n - 1) * 2 + 1
+	var sub_rows := int(sub_ground.size() / sub_n)
+	var sub_levels := PackedFloat32Array()
+	sub_levels.resize(sub_ground.size())
+	sub_levels.fill(-INF)
+	# Queue levels interpolate in 64-bit floats. Keep the settled labels at
+	# that precision: rounding one upward to float32 makes the identical
+	# queued level appear lower forever when a bank can be revisited.
+	var settled := PackedFloat64Array()
+	settled.resize(sub_ground.size())
+	settled.fill(-INF)
+	_fine_set(3)   # spill_init
+	# Establish physical outlets before expansion. A rejected high head must
+	# not travel across a dry saddle to seed a disconnected pocket beyond it.
+	var spill := SpillSearch.new(region, base, sub_n, fine_anchors, sub_ground, fine_anchors, FILL_SUB_STEP, ground_bakes, fine_anchor_indices)
+	var spill_init_finished := Time.get_ticks_usec() if profile_source_cost else 0
+	if profile_source_cost:
+		prof_nodes["ground_after_spill_init"] = sub_ground.size() - sub_ground.count(INF)
+	_fine_set(4)   # flood
+	var flood_pops := 0
+	while not pq.is_empty():
+		flood_pops+=1
+		var entry: Array = pq.pop()
+		var idx: int = entry[0]
+		var lvl: float = entry[1]
+		var ceiling := _sub_river_ceiling(river_levels, idx % sub_n, idx / sub_n, coarse_n)
+		lvl = minf(minf(lvl, ceiling), spill.height_at(idx) - EPS)
+		if settled[idx] != -INF and settled[idx] <= lvl:
+			continue
+		settled[idx] = lvl
+		var si: int = idx % sub_n
+		var sj: int = idx / sub_n
+		var p: Vector2 = base + Vector2(si, sj) * FILL_SUB_STEP
+		var own_ground: float = sub_ground[idx]
+		if own_ground == INF:
+			own_ground = _ground_at(region, base, sub_n, sub_ground, si, sj, FILL_SUB_STEP, ground_bakes)
+			sub_ground[idx] = own_ground
+			own_ground = sub_ground[idx]
+		if own_ground >= lvl - EPS:
+			sub_levels[idx] = -INF
+			continue
+		var own_coarse_level: float = _rescue_coarse_level(coarse_ctx, p)
+		if (own_coarse_level == -INF or own_coarse_level <= own_ground + EPS) \
+				and own_ground < lvl - EPS:
+			sub_levels[idx] = lvl
+		for d: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0),
+				Vector2i(0, 1), Vector2i(0, -1)]:
+			var ni: int = si + d.x
+			var nj: int = sj + d.y
+			if ni < 0 or ni >= sub_n or nj < 0 or nj >= sub_rows:
+				continue
+			var nidx: int = nj * sub_n + ni
+			var q: Vector2 = base + Vector2(ni, nj) * FILL_SUB_STEP
+			var coarse_level: float = _rescue_coarse_level(coarse_ctx, q)
+			var ground: float = sub_ground[nidx]
+			if ground == INF:
+				ground = _ground_at(region, base, sub_n, sub_ground, ni, nj, FILL_SUB_STEP, ground_bakes)
+				sub_ground[nidx] = ground
+				ground = sub_ground[nidx]
+			# Existing coarse-wet territory needs no rescue and every shoreline
+			# point in a mixed cell was independently seeded above. Stop this
+			# branch rather than re-settling the canonical surface.
+			if coarse_level != -INF and coarse_level > ground + EPS:
+				continue
+			var next_level := minf(minf(lvl, _sub_river_ceiling(river_levels, ni, nj, coarse_n)), spill.height_at(nidx) - EPS)
+			if settled[nidx] != -INF and settled[nidx] <= next_level:
+				continue
+			if ground >= next_level - EPS:
+				continue
+			pq.push([nidx, next_level], next_level)
+	var flood_finished := Time.get_ticks_usec() if profile_source_cost else 0
+	if profile_source_cost:
+		prof_nodes["flood_pops"] = flood_pops
+		prof_nodes["flood_settled"] = settled.size() - settled.count(-INF)
+		prof_nodes["spill_searches"] = spill.generation
+		prof_nodes["spill_search_pops"] = spill.work
+	spill.close()
+	pq.free()
+	return {"levels": sub_levels, "settled": settled, "spill_usec": spill_init_finished - started,
+		"flood_usec": flood_finished - spill_init_finished}
 
 
 ## The seed and anchor stages of _build_sub_lattice_rescue (GDScript
@@ -955,7 +1063,7 @@ static func _rescue_seed_anchors(region, base: Vector2, coarse_levels: PackedFlo
 	var coarse_rows := int(coarse_levels.size() / coarse_n)
 	var sub_rows := (coarse_rows - 1) * 2 + 1
 	var sub_n := (coarse_n - 1) * 2 + 1
-	if profile_source_cost: _fine_stage = "seed"
+	_fine_set(1)   # seed
 	# Only mixed coarse cells own a shoreline. Seed every 3m point in those
 	# cells that the existing field itself already considers wet. Neighbouring
 	# mixed cells duplicate candidates harmlessly; `queued` keeps one offer.
@@ -989,7 +1097,7 @@ static func _rescue_seed_anchors(region, base: Vector2, coarse_levels: PackedFlo
 	if profile_source_cost:
 		print("WATER_FINE_STAGE seeded ",pq.size()," ",Time.get_ticks_msec())
 		prof_nodes["ground_after_seed"] = sub_ground.size() - sub_ground.count(INF)
-		_fine_stage = "anchors"
+	_fine_set(2)   # anchors
 	if pq.is_empty():
 		return {"anchors": PackedFloat32Array(), "anchor_indices": PackedInt32Array(),
 			"seed_usec": seed_finished - started, "anchor_usec": 0}

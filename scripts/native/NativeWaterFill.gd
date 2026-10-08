@@ -7,8 +7,9 @@ extends RefCounted
 ## NativeWaterSeed.cs, GdPond.cs), of profile()'s terrain-shaped branch with
 ## the trace's natural terrain corridor (NativeWaterProfile.cs: the corridor
 ## is compute_rect_region's certified values on just the lattice points a
-## profile reads, so no trace region is built), of the fine rescue's seed and
-## anchor stages with their coarse queries (NativeFineRescue.cs) and of PriorityQueue.gd
+## profile reads, so no trace region is built), of the fine rescue's seed,
+## anchor, spill init and flood stages with their coarse queries and the
+## lazily sampled SpillSearch (NativeFineRescue.cs) and of PriorityQueue.gd
 ## (scripts/native/NativeWaterFill.cs, GdPriorityQueue.cs). Used only once
 ## verified bit-identical to the GDScript on random lattices (setup()), and
 ## never under the standard editor. No class_name: preload it.
@@ -177,19 +178,10 @@ static func rescue_seed_anchors(region: HeightfieldRegion, base: Vector2,
 		coarse_levels: PackedFloat32Array, coarse_n: int,
 		sub_ground: PackedFloat32Array) -> Dictionary:
 	var started := Time.get_ticks_usec()
-	var sub_rows := (int(coarse_levels.size() / coarse_n) - 1) * 2 + 1
-	var far := base + Vector2((coarse_n - 1) * 2, sub_rows - 1) * WaterField.FILL_SUB_STEP
-	# Every probe (lattice points, walls +-1 mm inside a cell, shore edges
-	# 1 mm past a cell edge) is owned within one point of the lattice span;
-	# the window holds those owners' tiles with one point to spare.
-	var lo := Vector2i(TerrainTileField.point_of(base.x, region),
-		TerrainTileField.point_of(base.y, region)) - Vector2i(2, 2)
-	var hi := Vector2i(TerrainTileField.point_of(far.x, region),
-		TerrainTileField.point_of(far.y, region)) + Vector2i(2, 2)
-	var window := TerrainTileField.dense_window(region, lo, hi - lo + Vector2i.ONE)
+	var window := WaterField._rescue_window(region, base, coarse_n, int(coarse_levels.size() / coarse_n))
 	var window_usec := Time.get_ticks_usec() - started
 	var r = _native.RescueSeedAnchors(window.heights, window.storeys, window.w, window.h,
-		lo.x, lo.y, window.spacing, TerrainTileField.cliff_end, base.x, base.y,
+		window.lo.x, window.lo.y, window.spacing, TerrainTileField.cliff_end, base.x, base.y,
 		coarse_levels, coarse_n, sub_ground)
 	if _fault(r) or not r is Array or (r as Array).size() != 10:
 		return {}
@@ -201,6 +193,45 @@ static func rescue_seed_anchors(region: HeightfieldRegion, base: Vector2,
 		"anchor_indices": PackedInt32Array(r[8]), "seed_usec": stats[0] + window_usec,
 		"anchor_usec": stats[1], "ground_usec": stats[2], "window_usec": window_usec,
 		"seed_visits": stats[3], "anchor_visits": stats[4]}
+
+
+## WaterField._rescue_seed_anchors then _rescue_flood (spill init and flood)
+## over an ungraded HeightfieldRegion, the seed queue never leaving C#.
+## `window`: the region's WaterField._rescue_window (built here when empty).
+## `sub_ground` is read only. Returns {"levels" (the flood's 3 m levels),
+## "ground", "queued", "samples", "node_ground", "anchors", "anchor_indices",
+## stage usec ("seed_usec" with the window and marshalling, "anchor_usec",
+## "spill_usec", "flood_usec", "ground_usec", "window_usec") and node counts
+## ("seed_visits", "anchor_visits", "seed_pushed", "flood_pops",
+## "flood_settled", "spill_searches", "spill_search_pops"), and "settled" (the
+## flood's 64-bit labels; empty unless `with_settled`, for the gate)}; {} when
+## the C# call failed.
+static func rescue_flood(region: HeightfieldRegion, base: Vector2,
+		coarse_levels: PackedFloat32Array, coarse_n: int, sub_ground: PackedFloat32Array,
+		river_levels: PackedFloat32Array, window: Dictionary = {},
+		with_settled := false) -> Dictionary:
+	var started := Time.get_ticks_usec()
+	if window.is_empty():
+		window = WaterField._rescue_window(region, base, coarse_n, int(coarse_levels.size() / coarse_n))
+	var window_usec := Time.get_ticks_usec() - started
+	var r = _native.RescueFlood(window.heights, window.storeys, window.w, window.h,
+		window.lo.x, window.lo.y, window.spacing, TerrainTileField.cliff_end, base.x, base.y,
+		coarse_levels, coarse_n, sub_ground, river_levels, with_settled)
+	if _fault(r) or not r is Array or (r as Array).size() != 9:
+		return {}
+	var stats := PackedInt64Array(r[7])
+	var out := {"ground": PackedFloat32Array(r[0]), "samples": PackedFloat64Array(r[1]),
+		"node_ground": PackedFloat64Array(r[2]), "queued": PackedByteArray(r[3]),
+		"anchors": PackedFloat32Array(r[4]), "anchor_indices": PackedInt32Array(r[5]),
+		"levels": PackedFloat32Array(r[6]),
+		"anchor_usec": stats[1], "ground_usec": stats[2], "window_usec": window_usec,
+		"seed_visits": stats[3], "anchor_visits": stats[4], "seed_pushed": stats[5],
+		"spill_usec": stats[6], "flood_usec": stats[7], "flood_pops": stats[8],
+		"flood_settled": stats[9], "spill_searches": stats[10], "spill_search_pops": stats[11],
+		"settled": PackedFloat64Array(r[8])}
+	# Whatever the C# stages did not time (window, marshalling) counts as seed.
+	out.seed_usec = Time.get_ticks_usec() - started - stats[1] - stats[6] - stats[7]
+	return out
 
 ## WaterField._profile_compute's terrain-shaped branch for `trace` (level0 =
 ## levels[0]). Corner heights come from `source` (a region the GDScript would
@@ -385,7 +416,8 @@ static func _gate() -> void:
 			+ "_reconcile_connected_surface, _smooth_fill_surface, _retain_source_connected_fill, "
 			+ "_cap_hydrostatic_fill, SpillSearch, _claim_river_segment, _claim_rivers, "
 			+ "_contain_rivers, _seed_ponds; NativeWaterSeed.cs, GdPond.cs with PondStamp; "
-			+ "NativeFineRescue.cs with _rescue_seed_anchors, _rescue_coarse_level, "
+			+ "NativeFineRescue.cs with _rescue_seed_anchors, _rescue_flood, _sub_river_ceiling, "
+			+ "_rescue_coarse_level, "
 			+ "_fill_bilinear_coarse, _node_ground, _may_straddle_a_cliff, _wall_span, "
 			+ "_shore_support_level, _fill_untapered_level; "
 			+ "NativeWaterProfile.cs with profile()'s _descend_segment, _shape_descent_span, "
@@ -549,7 +581,8 @@ static func _parity() -> String:
 
 
 
-## Fine rescue seed + anchor stages on random terraced regions with cliffs
+## Fine rescue seed + anchor stages, then the whole C# path through spill
+## init and the flood (rescue_flood, with dry-bank river ceilings), on random terraced regions with cliffs
 ## (storey steps of two and three), slopes and level steps, and random coarse
 ## levels from two water planes chosen by terrace height: wet/dry pairs across
 ## walls, spills (upper water over a crown, lower below it), submerged walls,
@@ -591,7 +624,22 @@ static func rescue_parity(cases: int, rng_seed: int = 20261008) -> String:
 			heap_index.append(entry.item[0])
 			heap_level.append(entry.item[1])
 			heap_priority.append(entry.priority)
-		pq.free()
+		var seed_ground := expected_ground.duplicate()
+		var seed_samples := samples.duplicate()
+		var seed_node_ground := node_ground.duplicate()
+		# Then spill init and the flood (it drains and frees pq).
+		var river: PackedFloat32Array = made.river
+		var expected_levels := PackedFloat32Array()
+		var expected_settled := PackedFloat64Array()
+		if pq.is_empty():
+			pq.free()
+			expected_levels.resize(ground.size())
+			expected_levels.fill(-INF)
+		else:
+			var flood := WaterField._rescue_flood(region, base, coarse_n, river, ctx,
+				expected_ground, pq, expected.anchors, expected.anchor_indices, {}, {})
+			expected_levels = flood.levels
+			expected_settled = flood.settled
 		var actual := rescue_seed_anchors(region, base, coarse, coarse_n, ground)
 		var where := "case %d, %dx%d coarse, %d seeded" % [case_index, coarse_n, coarse_rows, heap_index.size()]
 		if actual.is_empty():
@@ -600,16 +648,36 @@ static func rescue_parity(cases: int, rng_seed: int = 20261008) -> String:
 			return "rescue seed queue differs (%s)" % where
 		if actual.queued != queued:
 			return "rescue queued marks differ (%s)" % where
-		if actual.ground != expected_ground:
+		if actual.ground != seed_ground:
 			return "rescue ground differs (%s)" % where
 		if actual.anchors != expected.anchors or actual.anchor_indices != expected.anchor_indices:
 			return "rescue anchors differ (%s)" % where
 		# The memos: every level C# evaluated equals the GDScript's (the sets
 		# agree; the coarse query is a pure function of the point).
-		if actual.samples != samples:
+		if actual.samples != seed_samples:
 			return "rescue coarse levels differ (%s)" % where
-		if actual.node_ground != node_ground:
+		if actual.node_ground != seed_node_ground:
 			return "rescue node ground differs (%s)" % where
+		# The whole C# path (seed through flood): levels, the lazily sampled
+		# ground (which points were sampled, too) and the memos after it.
+		var flooded := rescue_flood(region, base, coarse, coarse_n, ground, river, {}, true)
+		if flooded.is_empty():
+			return "rescue flood failed in C# (%s)" % where
+		# Every settled 64-bit label (spill caps and ceilings included), not
+		# only the rescued float32 levels.
+		if flooded.settled != expected_settled:
+			return "rescue flood settled labels differ (%s)" % where
+		if flooded.levels != expected_levels:
+			return "rescue flood levels differ (%s)" % where
+		if flooded.ground != expected_ground:
+			return "rescue flood ground differs (%s)" % where
+		if flooded.queued != queued or flooded.anchors != expected.anchors \
+				or flooded.anchor_indices != expected.anchor_indices:
+			return "rescue flood seeds or anchors differ (%s)" % where
+		if flooded.samples != samples or flooded.node_ground != node_ground:
+			return "rescue flood coarse memos differ (%s)" % where
+		if int(flooded.seed_pushed) != heap_index.size():
+			return "rescue flood seed count differs (%s)" % where
 	return ""
 
 ## One random rescue lattice (rescue_parity, tests): a terraced region with
@@ -656,8 +724,21 @@ static func rescue_case(rng: RandomNumberGenerator, case_index: int) -> Dictiona
 			elif roll > 0.85:
 				lvl = g + WaterField.EPS + rng.randf_range(0.0, 0.02)   # near-EPS depth
 			coarse[j * coarse_n + i] = lvl
+	# Dry-bank river ceilings (the flood's _sub_river_ceiling): some dry nodes
+	# hold a river level below, at or above the planes; every fifth case has
+	# none (an empty lattice: no ceiling).
+	var river := PackedFloat32Array()
+	if case_index % 5 != 4:
+		river.resize(coarse.size()); river.fill(-INF)
+		for idx in coarse.size():
+			if coarse[idx] == -INF and rng.randf() < 0.5:
+				var q := base + Vector2(idx % coarse_n, idx / coarse_n) * step
+				var g := TerrainTileField.surface_y(region, q.x, q.y)
+				var plane := high_plane if g >= 16.0 else low_plane
+				# Mostly under the plane (a binding ceiling), some above it.
+				river[idx] = plane + rng.randf_range(-2.0, 0.5)
 	return {"region": region, "base": base, "coarse": coarse, "coarse_n": coarse_n,
-		"coarse_rows": coarse_rows}
+		"coarse_rows": coarse_rows, "river": river}
 
 
 ## Random traces (12 m-ish steps, zero and near-zero segments, storey drops,

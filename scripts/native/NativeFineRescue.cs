@@ -258,6 +258,22 @@ namespace Story.Native
             }
         }
 
+        /// The rescue's state after the seed and anchor stages.
+        sealed class RescueState
+        {
+            public TileWindow Window = null!;
+            public V2 Base;
+            public int SubN, SubRows, CoarseN;
+            public float[] Ground = null!;
+            public CoarseQuery Coarse = null!;
+            public byte[] Queued = null!;
+            public GdPriorityQueue<Offer> Queue = null!;
+            public float[] Anchors = Array.Empty<float>();
+            public int[] AnchorIndices = Array.Empty<int>();
+            public long SeedTicks, AnchorTicks, GroundTicks;
+            public int SeedVisits, AnchorVisits, Seeded;
+        }
+
         /// The seed and anchor stages of _build_sub_lattice_rescue. `subGround`
         /// is the rescue's ground (INF = unsampled; prefilled entries are kept).
         /// Returns [sub_ground, surface_samples, node_ground, queued, heap index,
@@ -272,138 +288,309 @@ namespace Story.Native
             try
             {
                 NativeFault.Check("NativeWaterFill");
-                var clock = Stopwatch.StartNew();
-                var window = new TileWindow(heights, storeys, w, h, i0, j0, pitch, cliffEnd);
-                int coarseRows = coarseLevels.Length / coarseN;
-                int subRows = (coarseRows - 1) * 2 + 1;
-                int subN = (coarseN - 1) * 2 + 1;
-                if (coarseN < 2 || coarseRows < 2 || subGround.Length != subN * subRows)
-                    throw new ArgumentException("rescue lattice sizes disagree");
-                V2 bas = V2.D(baseX, baseY);
-                var ground = (float[])subGround.Clone();
-                var coarse = new CoarseQuery(window, coarseLevels, coarseN, bas, ground.Length);
-                var queued = new byte[ground.Length];
-                long groundTicks = 0;
-
-                // Seed: every 3 m point of a mixed coarse cell is visited (its
-                // first visit always is: `queued` marks pushed points only), and
-                // _ground_at samples each visited point.
-                var visit = new byte[ground.Length];
-                var seedVisits = new int[64];
-                int seedCount = 0;
-                for (int cj = 0; cj < coarseRows - 1; cj++)
-                {
-                    for (int ci = 0; ci < coarseN - 1; ci++)
-                    {
-                        if (!MixedCell(coarseLevels, coarseN, ci, cj)) continue;
-                        for (int sj = cj * 2; sj < cj * 2 + 3; sj++)
-                            for (int si = ci * 2; si < ci * 2 + 3; si++)
-                            {
-                                int sidx = sj * subN + si;
-                                if (visit[sidx] == 1) continue;
-                                visit[sidx] = 1;
-                                if (seedCount == seedVisits.Length) Array.Resize(ref seedVisits, seedCount * 2);
-                                seedVisits[seedCount++] = sidx;
-                            }
-                    }
-                }
-                long t0 = clock.ElapsedTicks;
-                SampleGround(window, bas, subN, ground, seedVisits, seedCount);
-                groundTicks += clock.ElapsedTicks - t0;
-                var pq = new GdPriorityQueue<Offer>();
-                for (int cj = 0; cj < coarseRows - 1; cj++)
-                {
-                    for (int ci = 0; ci < coarseN - 1; ci++)
-                    {
-                        if (!MixedCell(coarseLevels, coarseN, ci, cj)) continue;
-                        for (int sj = cj * 2; sj < cj * 2 + 3; sj++)
-                            for (int si = ci * 2; si < ci * 2 + 3; si++)
-                            {
-                                int sidx = sj * subN + si;
-                                if (queued[sidx] == 1) continue;
-                                V2 p = bas + new V2(si, sj) * FILL_SUB_STEP;
-                                double lvl = coarse.Rescue(p);
-                                double g = ground[sidx];
-                                if (lvl == double.NegativeInfinity || lvl <= g + EPS) continue;
-                                double head = coarse.Untapered(p);
-                                queued[sidx] = 1;
-                                pq.Push(new Offer(sidx, head), head);
-                            }
-                    }
-                }
-                long seedTicks = clock.ElapsedTicks;
-                pq.ExportHeap(out Offer[] heap, out double[] priorities);
+                var s = SeedAnchors(heights, storeys, w, h, i0, j0, pitch, cliffEnd, baseX, baseY,
+                    coarseLevels, coarseN, subGround);
+                s.Queue.ExportHeap(out Offer[] heap, out double[] priorities);
                 var heapIndex = new int[heap.Length];
                 var heapLevel = new double[heap.Length];
                 for (int k = 0; k < heap.Length; k++) { heapIndex[k] = heap[k].Index; heapLevel[k] = heap[k].Level; }
-
-                var anchors = Array.Empty<float>();
-                var anchorIndices = Array.Empty<int>();
-                int anchorVisits = 0;
-                if (heap.Length > 0)
-                {
-                    // Anchors: the 3 m ring round each wet coarse node, in the
-                    // GDScript's visit order; ground only where the level is finite.
-                    var seen = new byte[ground.Length];
-                    var found = new int[64];
-                    var foundLevel = new double[64];
-                    int foundCount = 0;
-                    for (int coarseIndex = 0; coarseIndex < coarseLevels.Length; coarseIndex++)
-                    {
-                        if (!float.IsFinite(coarseLevels[coarseIndex])) continue;
-                        int cx = coarseIndex % coarseN;
-                        int cz = coarseIndex / coarseN;
-                        int sjEnd = Math.Min(subRows, cz * 2 + 2), siEnd = Math.Min(subN, cx * 2 + 2);
-                        for (int sj = Math.Max(0, cz * 2 - 1); sj < sjEnd; sj++)
-                            for (int si = Math.Max(0, cx * 2 - 1); si < siEnd; si++)
-                            {
-                                int idx = sj * subN + si;
-                                if (seen[idx] == 1) continue;
-                                seen[idx] = 1;
-                                anchorVisits++;
-                                V2 p = bas + new V2(si, sj) * FILL_SUB_STEP;
-                                double level = coarse.Rescue(p);
-                                if (!double.IsFinite(level)) continue;
-                                if (foundCount == found.Length)
-                                {
-                                    Array.Resize(ref found, foundCount * 2);
-                                    Array.Resize(ref foundLevel, foundCount * 2);
-                                }
-                                found[foundCount] = idx;
-                                foundLevel[foundCount++] = level;
-                            }
-                    }
-                    t0 = clock.ElapsedTicks;
-                    SampleGround(window, bas, subN, ground, found, foundCount);
-                    groundTicks += clock.ElapsedTicks - t0;
-                    anchors = new float[ground.Length];
-                    Array.Fill(anchors, float.NegativeInfinity);
-                    var indices = new int[foundCount];
-                    int n = 0;
-                    for (int k = 0; k < foundCount; k++)
-                    {
-                        int idx = found[k];
-                        if (foundLevel[k] <= (double)ground[idx] + EPS) continue;
-                        V2 p = bas + new V2(idx % subN, idx / subN) * FILL_SUB_STEP;
-                        anchors[idx] = (float)coarse.Untapered(p);
-                        indices[n++] = idx;
-                    }
-                    anchorIndices = indices.AsSpan(0, n).ToArray();
-                }
-                long endTicks = clock.ElapsedTicks;
                 double usec = 1e6 / Stopwatch.Frequency;
                 var stats = new long[]
                 {
-                    (long)(seedTicks * usec), (long)((endTicks - seedTicks) * usec), (long)(groundTicks * usec),
-                    seedCount, anchorVisits,
+                    (long)(s.SeedTicks * usec), (long)(s.AnchorTicks * usec), (long)(s.GroundTicks * usec),
+                    s.SeedVisits, s.AnchorVisits,
                 };
                 return new Godot.Collections.Array
                 {
-                    ground, coarse.Samples, coarse.NodeGround, queued, heapIndex, heapLevel, priorities,
-                    anchors, anchorIndices, stats,
+                    s.Ground, s.Coarse.Samples, s.Coarse.NodeGround, s.Queued, heapIndex, heapLevel, priorities,
+                    s.Anchors, s.AnchorIndices, stats,
                 };
             }
             catch (Exception e) { NativeFault.Record(e); return null!; }
+        }
+
+        /// The seed, anchor, spill init and flood stages of
+        /// _build_sub_lattice_rescue (_rescue_seed_anchors then _rescue_flood):
+        /// the seed queue goes straight into the flood. `riverLevels` is the
+        /// coarse dry-bank lattice (empty: no ceiling). Returns [sub_ground,
+        /// surface_samples, node_ground, queued, fine_anchors, anchor indices,
+        /// sub_levels, [seed usec, anchor usec, ground usec, seed visits,
+        /// anchor visits, seeded, spill init usec, flood usec, flood pops,
+        /// flood settled, spill searches, spill search pops], settled]; when
+        /// nothing was seeded the anchors are empty and sub_levels all -INF (the
+        /// GDScript returns after the seed stage). `settled` (the flood's
+        /// 64-bit labels, for the parity gate) is empty unless `withSettled`.
+        public Godot.Collections.Array RescueFlood(float[] heights, int[] storeys, int w, int h,
+            int i0, int j0, double pitch, int cliffEnd, double baseX, double baseY,
+            float[] coarseLevels, int coarseN, float[] subGround, float[] riverLevels, bool withSettled)
+        {
+            try
+            {
+                NativeFault.Check("NativeWaterFill");
+                var clock = Stopwatch.StartNew();
+                var s = SeedAnchors(heights, storeys, w, h, i0, j0, pitch, cliffEnd, baseX, baseY,
+                    coarseLevels, coarseN, subGround);
+                long stagesStart = clock.ElapsedTicks;
+                var subLevels = new float[s.Ground.Length];
+                Array.Fill(subLevels, float.NegativeInfinity);
+                long spillTicks = 0, floodTicks = 0, pops = 0, settledCount = 0, searches = 0, searchPops = 0;
+                var settledOut = Array.Empty<double>();
+                if (s.Seeded > 0)
+                {
+                    var lazy = new LazyGround(s.Window, s.Base, s.SubN, s.Ground);
+                    var spill = new SpillSearch(s.SubN, s.Anchors, s.AnchorIndices, lazy);
+                    spillTicks = clock.ElapsedTicks - stagesStart;
+                    var settled = new double[s.Ground.Length];
+                    Array.Fill(settled, double.NegativeInfinity);
+                    Flood(s, spill, lazy, riverLevels, subLevels, settled, ref pops);
+                    floodTicks = clock.ElapsedTicks - stagesStart - spillTicks;
+                    foreach (double v in settled) if (v != double.NegativeInfinity) settledCount++;
+                    searches = spill.Generation;
+                    searchPops = spill.Work;
+                    if (withSettled) settledOut = settled;
+                }
+                double usec = 1e6 / Stopwatch.Frequency;
+                var stats = new long[]
+                {
+                    (long)(s.SeedTicks * usec), (long)(s.AnchorTicks * usec), (long)(s.GroundTicks * usec),
+                    s.SeedVisits, s.AnchorVisits, s.Seeded, (long)(spillTicks * usec), (long)(floodTicks * usec),
+                    pops, settledCount, searches, searchPops,
+                };
+                return new Godot.Collections.Array
+                {
+                    s.Ground, s.Coarse.Samples, s.Coarse.NodeGround, s.Queued, s.Anchors, s.AnchorIndices,
+                    subLevels, stats, settledOut,
+                };
+            }
+            catch (Exception e) { NativeFault.Record(e); return null!; }
+        }
+
+        /// _rescue_flood's loop (after its SpillSearch): drains the seed queue.
+        static void Flood(RescueState s, SpillSearch spill, LazyGround lazy, float[] riverLevels,
+            float[] subLevels, double[] settled, ref long pops)
+        {
+            var pq = s.Queue;
+            var ground = s.Ground;
+            int subN = s.SubN, subRows = s.SubRows, coarseN = s.CoarseN;
+            while (!pq.IsEmpty)
+            {
+                pops++;
+                Offer entry = pq.Pop();
+                int idx = entry.Index;
+                double lvl = entry.Level;
+                double ceiling = SubRiverCeiling(riverLevels, idx % subN, idx / subN, coarseN);
+                lvl = Min(Min(lvl, ceiling), spill.HeightAt(idx) - EPS);
+                if (settled[idx] != double.NegativeInfinity && settled[idx] <= lvl) continue;
+                settled[idx] = lvl;
+                int si = idx % subN;
+                int sj = idx / subN;
+                V2 p = s.Base + new V2(si, sj) * FILL_SUB_STEP;
+                double ownGround = lazy.Get(idx);
+                if (ownGround >= lvl - EPS)
+                {
+                    subLevels[idx] = float.NegativeInfinity;
+                    continue;
+                }
+                double ownCoarse = s.Coarse.Rescue(p);
+                if ((ownCoarse == double.NegativeInfinity || ownCoarse <= ownGround + EPS) && ownGround < lvl - EPS)
+                    subLevels[idx] = (float)lvl;
+                for (int d = 0; d < 4; d++)
+                {
+                    // Vector2i(1, 0), (-1, 0), (0, 1), (0, -1).
+                    int ni = si + (d == 0 ? 1 : d == 1 ? -1 : 0);
+                    int nj = sj + (d == 2 ? 1 : d == 3 ? -1 : 0);
+                    if (ni < 0 || ni >= subN || nj < 0 || nj >= subRows) continue;
+                    int nidx = nj * subN + ni;
+                    V2 q = s.Base + new V2(ni, nj) * FILL_SUB_STEP;
+                    double coarseLevel = s.Coarse.Rescue(q);
+                    double g = lazy.Get(nidx);
+                    if (coarseLevel != double.NegativeInfinity && coarseLevel > g + EPS) continue;
+                    double next = Min(Min(lvl, SubRiverCeiling(riverLevels, ni, nj, coarseN)), spill.HeightAt(nidx) - EPS);
+                    if (settled[nidx] != double.NegativeInfinity && settled[nidx] <= next) continue;
+                    if (g >= next - EPS) continue;
+                    pq.Push(new Offer(nidx, next), next);
+                }
+            }
+        }
+
+        /// WaterField._sub_river_ceiling.
+        static double SubRiverCeiling(float[] riverLevels, int si, int sj, int coarseN)
+        {
+            if (riverLevels.Length == 0) return double.PositiveInfinity;
+            int ci = Math.Min(si / 2, coarseN - 2);
+            int cj = Math.Min(sj / 2, riverLevels.Length / coarseN - 2);
+            double tx = (double)si * 0.5 - ci;
+            double tz = (double)sj * 0.5 - cj;
+            double value = 0.0, total = 0.0;
+            for (int dz = 0; dz < 2; dz++)
+            {
+                for (int dx = 0; dx < 2; dx++)
+                {
+                    double level = riverLevels[(cj + dz) * coarseN + ci + dx];
+                    if (level == double.NegativeInfinity) continue;
+                    double weight = (dx != 0 ? tx : 1.0 - tx) * (dz != 0 ? tz : 1.0 - tz);
+                    value += level * weight;
+                    total += weight;
+                }
+            }
+            return total > 0.000001 ? value / total : double.PositiveInfinity;
+        }
+
+        /// WaterField._ground_at on the 3 m lattice: samples a point the first
+        /// time it is read (INF = unsampled) and stores it float32.
+        sealed class LazyGround
+        {
+            readonly TileWindow _t;
+            readonly V2 _base;
+            readonly int _subN;
+            public readonly float[] Values;
+
+            public LazyGround(TileWindow t, V2 bas, int subN, float[] values)
+            {
+                _t = t; _base = bas; _subN = subN; Values = values;
+            }
+
+            public float Get(int idx)
+            {
+                float g = Values[idx];
+                if (g == float.PositiveInfinity)
+                {
+                    V2 p = _base + new V2(idx % _subN, idx / _subN) * FILL_SUB_STEP;
+                    g = (float)_t.SurfaceY(p.X, p.Y);
+                    Values[idx] = g;
+                }
+                return g;
+            }
+        }
+
+        RescueState SeedAnchors(float[] heights, int[] storeys, int w, int h,
+            int i0, int j0, double pitch, int cliffEnd, double baseX, double baseY,
+            float[] coarseLevels, int coarseN, float[] subGround)
+        {
+            var clock = Stopwatch.StartNew();
+            var window = new TileWindow(heights, storeys, w, h, i0, j0, pitch, cliffEnd);
+            int coarseRows = coarseLevels.Length / coarseN;
+            int subRows = (coarseRows - 1) * 2 + 1;
+            int subN = (coarseN - 1) * 2 + 1;
+            if (coarseN < 2 || coarseRows < 2 || subGround.Length != subN * subRows)
+                throw new ArgumentException("rescue lattice sizes disagree");
+            V2 bas = V2.D(baseX, baseY);
+            var ground = (float[])subGround.Clone();
+            var coarse = new CoarseQuery(window, coarseLevels, coarseN, bas, ground.Length);
+            var queued = new byte[ground.Length];
+            long groundTicks = 0;
+
+            // Seed: every 3 m point of a mixed coarse cell is visited (its
+            // first visit always is: `queued` marks pushed points only), and
+            // _ground_at samples each visited point.
+            var visit = new byte[ground.Length];
+            var seedVisits = new int[64];
+            int seedCount = 0;
+            for (int cj = 0; cj < coarseRows - 1; cj++)
+            {
+                for (int ci = 0; ci < coarseN - 1; ci++)
+                {
+                    if (!MixedCell(coarseLevels, coarseN, ci, cj)) continue;
+                    for (int sj = cj * 2; sj < cj * 2 + 3; sj++)
+                        for (int si = ci * 2; si < ci * 2 + 3; si++)
+                        {
+                            int sidx = sj * subN + si;
+                            if (visit[sidx] == 1) continue;
+                            visit[sidx] = 1;
+                            if (seedCount == seedVisits.Length) Array.Resize(ref seedVisits, seedCount * 2);
+                            seedVisits[seedCount++] = sidx;
+                        }
+                }
+            }
+            long t0 = clock.ElapsedTicks;
+            SampleGround(window, bas, subN, ground, seedVisits, seedCount);
+            groundTicks += clock.ElapsedTicks - t0;
+            var pq = new GdPriorityQueue<Offer>();
+            for (int cj = 0; cj < coarseRows - 1; cj++)
+            {
+                for (int ci = 0; ci < coarseN - 1; ci++)
+                {
+                    if (!MixedCell(coarseLevels, coarseN, ci, cj)) continue;
+                    for (int sj = cj * 2; sj < cj * 2 + 3; sj++)
+                        for (int si = ci * 2; si < ci * 2 + 3; si++)
+                        {
+                            int sidx = sj * subN + si;
+                            if (queued[sidx] == 1) continue;
+                            V2 p = bas + new V2(si, sj) * FILL_SUB_STEP;
+                            double lvl = coarse.Rescue(p);
+                            double g = ground[sidx];
+                            if (lvl == double.NegativeInfinity || lvl <= g + EPS) continue;
+                            double head = coarse.Untapered(p);
+                            queued[sidx] = 1;
+                            pq.Push(new Offer(sidx, head), head);
+                        }
+                }
+            }
+            long seedTicks = clock.ElapsedTicks;
+            int seeded = pq.Count;
+
+            var anchors = Array.Empty<float>();
+            var anchorIndices = Array.Empty<int>();
+            int anchorVisits = 0;
+            if (seeded > 0)
+            {
+                // Anchors: the 3 m ring round each wet coarse node, in the
+                // GDScript's visit order; ground only where the level is finite.
+                var seen = new byte[ground.Length];
+                var found = new int[64];
+                var foundLevel = new double[64];
+                int foundCount = 0;
+                for (int coarseIndex = 0; coarseIndex < coarseLevels.Length; coarseIndex++)
+                {
+                    if (!float.IsFinite(coarseLevels[coarseIndex])) continue;
+                    int cx = coarseIndex % coarseN;
+                    int cz = coarseIndex / coarseN;
+                    int sjEnd = Math.Min(subRows, cz * 2 + 2), siEnd = Math.Min(subN, cx * 2 + 2);
+                    for (int sj = Math.Max(0, cz * 2 - 1); sj < sjEnd; sj++)
+                        for (int si = Math.Max(0, cx * 2 - 1); si < siEnd; si++)
+                        {
+                            int idx = sj * subN + si;
+                            if (seen[idx] == 1) continue;
+                            seen[idx] = 1;
+                            anchorVisits++;
+                            V2 p = bas + new V2(si, sj) * FILL_SUB_STEP;
+                            double level = coarse.Rescue(p);
+                            if (!double.IsFinite(level)) continue;
+                            if (foundCount == found.Length)
+                            {
+                                Array.Resize(ref found, foundCount * 2);
+                                Array.Resize(ref foundLevel, foundCount * 2);
+                            }
+                            found[foundCount] = idx;
+                            foundLevel[foundCount++] = level;
+                        }
+                }
+                t0 = clock.ElapsedTicks;
+                SampleGround(window, bas, subN, ground, found, foundCount);
+                groundTicks += clock.ElapsedTicks - t0;
+                anchors = new float[ground.Length];
+                Array.Fill(anchors, float.NegativeInfinity);
+                var indices = new int[foundCount];
+                int n = 0;
+                for (int k = 0; k < foundCount; k++)
+                {
+                    int idx = found[k];
+                    if (foundLevel[k] <= (double)ground[idx] + EPS) continue;
+                    V2 p = bas + new V2(idx % subN, idx / subN) * FILL_SUB_STEP;
+                    anchors[idx] = (float)coarse.Untapered(p);
+                    indices[n++] = idx;
+                }
+                anchorIndices = indices.AsSpan(0, n).ToArray();
+            }
+            long endTicks = clock.ElapsedTicks;
+            return new RescueState
+            {
+                Window = window, Base = bas, SubN = subN, SubRows = subRows, CoarseN = coarseN,
+                Ground = ground, Coarse = coarse, Queued = queued, Queue = pq,
+                Anchors = anchors, AnchorIndices = anchorIndices,
+                SeedTicks = seedTicks, AnchorTicks = endTicks - seedTicks, GroundTicks = groundTicks,
+                SeedVisits = seedCount, AnchorVisits = anchorVisits, Seeded = seeded,
+            };
         }
 
         static bool MixedCell(float[] levels, int n, int ci, int cj)

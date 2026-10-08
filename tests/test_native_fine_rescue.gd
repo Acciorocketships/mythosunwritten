@@ -1,6 +1,7 @@
 extends GutTest
-## The fine rescue's seed and anchor stages in C# (NativeFineRescue.cs) against
-## WaterField._rescue_seed_anchors, and the whole rescue through the dispatch.
+## The fine rescue's seed, anchor, spill init and flood stages in C#
+## (NativeFineRescue.cs) against WaterField._rescue_seed_anchors and
+## _rescue_flood, and the whole rescue through the dispatch.
 const F := preload("res://scripts/native/NativeWaterFill.gd")
 
 
@@ -8,7 +9,15 @@ func before_each() -> void:
 	F.setup()
 
 
-## Many more random lattices than the gate's 12, on another seed.
+## With the C# built, the parity gate (seed through flood) must pass: the
+## other tests skip when the port is off, which would hide a mismatch.
+func test_the_parity_gate_passes_when_the_csharp_is_built() -> void:
+	if F._native == null: pass_test("C# not built"); return
+	assert_true(F.enabled, "NativeWaterFill gate passed (a warning names the mismatch)")
+
+
+## Many more random lattices than the gate's 12, on another seed (seed and
+## anchor stages, then the C# path through the flood).
 func test_seed_and_anchor_stages_match_gdscript_on_random_lattices() -> void:
 	if not F.enabled: pass_test("native fill unavailable"); return
 	assert_eq(F.rescue_parity(48, 99), "", "every output bit-identical")
@@ -58,7 +67,7 @@ func test_random_lattices_cover_the_wall_branches() -> void:
 	assert_gt(shores, 0, "mixed (shore) cells")
 
 
-## The whole rescue (seed and anchors in C#, flood and finish in GDScript)
+## The whole rescue (seed through flood in C#, finish in GDScript)
 ## equals the all-GDScript rescue, levels and ground.
 func test_whole_rescue_through_the_dispatch_matches_gdscript() -> void:
 	if not F.enabled: pass_test("native fill unavailable"); return
@@ -105,3 +114,72 @@ func test_a_throwing_rescue_call_falls_back_to_gdscript() -> void:
 			e.handled = true
 			warned += 1
 	assert_gt(warned, 0, "a warning names the C# failure")
+
+
+## The gate's random lattices must make the flood do real work: rescued
+## pockets, spill searches that cap a level, and river ceilings that bind.
+func test_random_lattices_exercise_the_flood() -> void:
+	if not F.enabled: pass_test("native fill unavailable"); return
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 20261008
+	var rescued := 0
+	var searches := 0
+	var capped := 0
+	var ceilinged := 0
+	for case_index in 12:
+		var made := F.rescue_case(rng, case_index)
+		var coarse: PackedFloat32Array = made.coarse
+		var n := (int(made.coarse_n) - 1) * 2 + 1
+		var rows := (int(made.coarse_rows) - 1) * 2 + 1
+		var ground := PackedFloat32Array(); ground.resize(n * rows); ground.fill(INF)
+		var r := F.rescue_flood(made.region, made.base, coarse, made.coarse_n, ground, made.river)
+		assert_false(r.is_empty(), "C# flood ran (case %d)" % case_index)
+		var levels: PackedFloat32Array = r.levels
+		rescued += levels.size() - levels.count(-INF)
+		searches += int(r.spill_searches)
+		# Settled nodes the flood did not rescue: capped dry by a spill height
+		# or ceiling, or coarse-wet already.
+		if int(r.flood_settled) > levels.size() - levels.count(-INF): capped += 1
+		if not (made.river as PackedFloat32Array).is_empty():
+			var open := F.rescue_flood(made.region, made.base, coarse, made.coarse_n, ground,
+				PackedFloat32Array())
+			if open.levels != levels: ceilinged += 1
+	assert_gt(rescued, 0, "rescued 3 m nodes")
+	assert_gt(searches, 0, "spill searches")
+	assert_gt(capped, 0, "settled nodes left unrescued")
+	assert_gt(ceilinged, 0, "river ceilings that change the flood")
+
+
+## Profiling counters (PROFILE_WATER_COST) belong to one rescue at a time:
+## concurrent profiled rescues on several threads neither crash nor leave the
+## counters claimed (the October 8 class: no unlocked static container).
+func test_profiled_rescues_on_several_threads_share_the_counters_safely() -> void:
+	var was := WaterField.profile_source_cost
+	WaterField.profile_source_cost = true
+	F.force_off = true   # the GDScript stages tick the counters on every helper
+	var threads: Array[Thread] = []
+	for t in 3:
+		var thread := Thread.new()
+		thread.start(_profiled_rescues.bind(100 + t))
+		threads.append(thread)
+	_profiled_rescues(99)
+	var done := 0
+	for thread in threads:
+		done += int(thread.wait_to_finish())
+	WaterField.profile_source_cost = was
+	F.force_off = false
+	assert_eq(done, 3 * 4, "every threaded rescue finished")
+	assert_eq(WaterField._fine_owner, -1, "counters released")
+	assert_eq(WaterField._fine_stage, 0, "no stage left running")
+
+
+func _profiled_rescues(rng_seed: int) -> int:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = rng_seed
+	var finished := 0
+	for case_index in 4:
+		var made := F.rescue_case(rng, case_index)
+		WaterField._build_sub_lattice_rescue(made.region, made.base, made.coarse, made.river,
+			made.coarse_n)
+		finished += 1
+	return finished

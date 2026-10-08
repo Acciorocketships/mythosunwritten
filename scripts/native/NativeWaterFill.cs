@@ -302,17 +302,24 @@ namespace Story.Native
             catch (Exception e) { NativeFault.Record(e); return null!; }
         }
 
-        // WaterField.SpillSearch over a dense ground lattice (all anchors
-        // scanned, as with anchor_indices == null).
+        // WaterField.SpillSearch. Over a dense ground lattice (all anchors
+        // scanned, as with anchor_indices == null), or, for the fine rescue,
+        // over its lazily sampled 3 m ground (LazyGround = _ground_at) with
+        // the rescue's anchor list. Same semantics otherwise.
         sealed class SpillSearch
         {
             readonly int _side, _rows;
             readonly float[] _ground;
+            readonly LazyGround? _lazy;
             readonly double[] _escape, _distance;
             readonly int[] _marks;
             int _generation;
+            long _work;
             readonly GdPriorityQueue<int> _queue = new GdPriorityQueue<int>();
             readonly System.Collections.Generic.List<int> _reached = new System.Collections.Generic.List<int>();
+
+            public int Generation => _generation;
+            public long Work => _work;
 
             public SpillSearch(int side, float[] levels, float[] ground, float[] anchors)
             {
@@ -326,6 +333,30 @@ namespace Story.Native
                 for (int index = 0; index < levels.Length; index++)
                     if (double.IsFinite(levels[index]) && double.IsFinite(anchors[index]))
                         _escape[index] = MaxF(anchors[index] + EPS, ground[index]);
+                SetBoundaries();
+            }
+
+            // The fine rescue's: levels and anchors are both fine_anchors.
+            public SpillSearch(int side, float[] anchors, int[] anchorIndices, LazyGround lazy)
+            {
+                _side = side;
+                _lazy = lazy;
+                _ground = lazy.Values;
+                _rows = anchors.Length / side;
+                _escape = new double[anchors.Length];
+                Array.Fill(_escape, double.PositiveInfinity);
+                _marks = new int[anchors.Length];
+                _distance = new double[anchors.Length];
+                foreach (int index in anchorIndices)
+                    _escape[index] = MaxF(anchors[index] + EPS, G(index));
+                SetBoundaries();
+            }
+
+            float G(int index) => _lazy == null ? _ground[index] : _lazy.Get(index);
+
+            void SetBoundaries()
+            {
+                int side = _side;
                 for (int x = 0; x < side; x++)
                 {
                     SetBoundary(x);
@@ -340,7 +371,7 @@ namespace Story.Native
 
             void SetBoundary(int index)
             {
-                if (!double.IsFinite(_escape[index])) _escape[index] = _ground[index];
+                if (!double.IsFinite(_escape[index])) _escape[index] = G(index);
             }
 
             public double HeightAt(int target)
@@ -349,13 +380,14 @@ namespace Story.Native
                 {
                     _generation++;
                     _reached.Clear();
-                    double start = _ground[target];
+                    double start = G(target);
                     _marks[target] = _generation;
                     _distance[target] = start;
                     _queue.Push(target, start);
                     double outlet = double.PositiveInfinity;
                     while (!_queue.IsEmpty)
                     {
+                        _work++;
                         int index = _queue.Pop();
                         double height = _distance[index];
                         if (double.IsFinite(_escape[index]))
@@ -372,7 +404,7 @@ namespace Story.Native
                             if (nx < 0 || nz < 0 || nx >= _side || nz >= _rows) continue;
                             int next = nz * _side + nx;
                             if (_marks[next] == _generation) continue;
-                            double cost = MaxF(height, _ground[next]);
+                            double cost = MaxF(height, G(next));
                             if (double.IsFinite(_escape[next])) cost = MaxF(cost, _escape[next]);
                             _marks[next] = _generation;
                             _distance[next] = cost;

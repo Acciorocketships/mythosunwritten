@@ -86,8 +86,17 @@
 > `WaterField._rescue_seed_anchors`) with their coarse query (`_fill_bilinear_coarse` wall
 > branches, `_shore_support_level`, `_fill_untapered_level`) over a `dense_window` and
 > `NativeTileKernel.Sample`; ungraded `HeightfieldRegion`s only. Visited nodes' ground is
-> sampled in one batch; the memos, `queued` and the seed heap go back to the GDScript flood.
-> Cold block (-4,-5): seed 9.1 s -> 0.22 s (0.15 s of it the window), anchors 8.0 s -> 0.02 s.
+> sampled in one batch. Cold block (-4,-5): seed 9.1 s -> 0.22 s, anchors 8.0 s -> 0.02 s.
+> Step 2b: spill init and the flood run in C# too, in the same call (`RescueFlood`; GDScript
+> reference `WaterField._rescue_flood` with `SpillSearch`): the seed heap never leaves C#, the
+> C# `SpillSearch` takes the rescue's lazy 3 m ground (`LazyGround` = `_ground_at`, so the
+> same nodes get sampled) and anchor list, and the memos, `queued`, anchors, ground and levels
+> go back to the GDScript finish. The gate also compares every settled 64-bit flood label
+> with dry-bank river ceilings. `_source_fill` builds `_rescue_window` once and samples its
+> coarse ground from it. Flood 2.4 s -> 0.03 s, fine_ms 3.4 s -> 0.8 s (finish ~0.5-0.7 s is
+> the rest). Profiling counters (`_fine_*`) belong to one rescue thread at a time (int stage
+> and owner, Dictionary under `_fine_lock`), so profiled parallel solves and the worker gate
+> are safe.
 > October 8 fixes: frame feel main-thread max 15-19.5 ms (was 182.8: `_drain_results`
 > spikes were payloads freed in the task reap), startup 67-69 s in the feel harness (was
 > 138-141 s under other load); see `docs/qa/2026-10-07-native-ports/result.md`.
