@@ -30,6 +30,7 @@ static func wall_face_lattice(kit: BuildingKit) -> float:
 ## Arcade support frames retain their measured native recipe: its four
 ## corner posts are proved clear of the body lanes. Cell-based replacement
 ## posts were all dropped at public floors, leaving their upper rooms floating.
+const GROWTH := preload("res://scripts/terrain/features/villages/kit/KitGrowingFronts.gd")
 const REPLACED_FEATURE_KINDS: Array[StringName] = [
 	&"facade_bay", &"prefab_landmark", &"balcony", &"room_overhang_support",
 ]
@@ -76,6 +77,19 @@ static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 	for house_id: StringName in houses:
 		for cell: Vector3i in (houses[house_id] as Dictionary).cells:
 			owner_at[cell] = house_id
+	# Growing upper floors read the town's odds; a fixture without a source plan never grows.
+	var growth_character: TownCharacter = null
+	if spatial.source_volume != null:
+		var growth_source := spatial.source_volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
+		if growth_source != null and growth_source.scale_profile != null:
+			growth_character = TownCharacter.of(growth_source.scale_profile, growth_source.world_seed)
+	var growth_solid := func(own: StringName, cell: Vector2i, band: int) -> bool:
+		return _solid_other(grid, owner_at, own, Vector3i(cell.x, band, cell.y))
+	var growth_street := func(cell: Vector2i, band: int) -> bool:
+		var at := Vector3i(cell.x, band, cell.y)
+		return grid.contains(at) and grid.use_at(at) == WarrenSpatialGrid.Use.PUBLIC_AIR
+	var growth_context := {} if growth_character == null else \
+		{"character": growth_character, "solid": growth_solid, "street": growth_street}
 	var payload := EnvironmentInstancePayload.new()
 	var map := native_to_lattice(kit)
 	var masses: Array[BuildingMass] = []
@@ -91,7 +105,7 @@ static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 			kit, spatial.world_seed, house_id, native_roofs) if mixed_styles else kit
 		house_kits[house_id] = house_kit
 		var mass := _mass_for(house_id, house, grid, owner_at, spatial.world_seed, house_kit,
-			flights, canopy_claims, podium, passages, ridge_counts, public_crowns, bracket_bearings)
+			flights, canopy_claims, podium, passages, ridge_counts, public_crowns, bracket_bearings, growth_context)
 		if mass != null:
 			masses.append(mass)
 			var principal := {}
@@ -1426,7 +1440,8 @@ static func _mass_for(house_id: StringName, house: Dictionary,
 		grid: WarrenSpatialGrid, owner_at: Dictionary, world_seed: int,
 		kit: BuildingKit, flights: Dictionary = {}, canopy_claims: Array = [],
 		podium: Dictionary = {}, passages: Dictionary = {}, ridge_counts := Vector2i.ZERO,
-		public_crowns: Dictionary = {}, bracket_bearings: Variant = null) -> BuildingMass:
+		public_crowns: Dictionary = {}, bracket_bearings: Variant = null,
+		growth: Dictionary = {}) -> BuildingMass:
 	var storeys_by_band: Dictionary = house.storeys
 	if storeys_by_band.is_empty():
 		return null
@@ -1551,6 +1566,11 @@ static func _mass_for(house_id: StringName, house: Dictionary,
 			if near:
 				context["stone_chance"] = 0.0
 				break
+	if not growth.is_empty():
+		mass.grows = GROWTH.house_grows(growth.character, mass, growth.solid, growth.street)
+		if mass.grows:
+			context["grows"] = true
+			context["gable_boost"] = (growth.character as TownCharacter).value(GROWTH.BOOST_KNOB)
 	designer.articulate(mass, context)
 	# The circulation compiler can use a construction crown as a bridge
 	# landing. Replacing that flat roof with a gable leaves the accepted

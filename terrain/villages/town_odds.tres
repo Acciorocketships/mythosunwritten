@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="TownOddsTable" load_steps=20 format=3]
+[gd_resource type="Resource" script_class="TownOddsTable" load_steps=27 format=3]
 
 [ext_resource type="Script" path="res://scripts/terrain/features/villages/odds/TownOddsTable.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/terrain/features/villages/odds/TownKnob.gd" id="2"]
@@ -191,6 +191,86 @@ clamp_min = 0.0
 clamp_max = 1.0
 notes = "Town taste knobs (Oct 7) task 6: chance a reserved cottage (house site) not already on the street network gets a painted access road, rolled per site id. When the roll fails and the cottage stands on its own ground with its whole approach over open ground at that grade, its approach is a footway (feature_kind house_site_footway): still walk for the door and the audits, but no worn-path paint (PublicRealmSurfacePlan.footway_columns). Otherwise the road is carved regardless. 1 = always a road (today)."
 
+[sub_resource type="Resource" id="growing_house_chance"]
+script = ExtResource("2")
+name = &"growing_house_chance"
+kind = 0
+at_small = 0.0
+at_large = 0.0
+spread = 0.0
+clamp_min = 0.0
+clamp_max = 1.0
+notes = "Growing upper floors (Oct 8) task 1: share of eligible houses (2+ storeys above the ground storey on a street face) whose upper storeys lean over the lane, rolled per house stable id (KitGrowingFronts.house_grows). A growing house takes no inset jetties. 0 = today. Shipped default (task 7): 0.3 small -> 0.45 large, spread 0.1."
+
+[sub_resource type="Resource" id="growth_street_face_chance"]
+script = ExtResource("2")
+name = &"growth_street_face_chance"
+kind = 0
+at_small = 0.85
+at_large = 0.85
+spread = 0.0
+clamp_min = 0.0
+clamp_max = 1.0
+notes = "Growing upper floors (Oct 8) task 1: per street-facing exposed face of a growing house (every edge's outward column is public air at some band from the ground up to the storey), rolled per face key."
+
+[sub_resource type="Resource" id="growth_other_face_chance"]
+script = ExtResource("2")
+name = &"growth_other_face_chance"
+kind = 0
+at_small = 0.1
+at_large = 0.1
+spread = 0.0
+clamp_min = 0.0
+clamp_max = 1.0
+notes = "Growing upper floors (Oct 8) task 1: per other exposed face of a growing house, rolled per face key."
+
+[sub_resource type="Resource" id="growth_step"]
+script = ExtResource("2")
+name = &"growth_step"
+kind = 3
+at_small = 0.0
+at_large = 0.0
+spread = 0.0
+clamp_min = 0.0
+clamp_max = 1.0
+options = PackedStringArray("0.25", "0.5")
+weights_small = PackedFloat32Array(1, 1)
+weights_large = PackedFloat32Array(1, 1)
+notes = "Growing upper floors (Oct 8) task 1: lean added per storey, native m (0.25 = 0.5 m world, 0.5 = 1.0 m world), picked per house. Options must be KitGrowingFronts.STEP_SIZES (the baked family)."
+
+[sub_resource type="Resource" id="growth_max_lean"]
+script = ExtResource("2")
+name = &"growth_max_lean"
+kind = 1
+at_small = 1.0
+at_large = 1.5
+spread = 0.0
+clamp_min = 0.0
+clamp_max = 2.0
+notes = "Growing upper floors (Oct 8) task 1: total lean cap of the top storey, native m (1.0-1.5 = 2-3 m world), floored to whole steps and to KitGrowingFronts.MAX_STEPS (4)."
+
+[sub_resource type="Resource" id="lane_sky_gap"]
+script = ExtResource("2")
+name = &"lane_sky_gap"
+kind = 1
+at_small = 0.75
+at_large = 0.75
+spread = 0.0
+clamp_min = 0.25
+clamp_max = 4.0
+notes = "Growing upper floors (Oct 8) task 1: minimum open gap between a leaned face and the facing facade (including its accepted lean), native m (0.75 = 1.5 m world). Guardrail 2."
+
+[sub_resource type="Resource" id="growth_gable_front_boost"]
+script = ExtResource("2")
+name = &"growth_gable_front_boost"
+kind = 1
+at_small = 2.0
+at_large = 2.0
+spread = 0.0
+clamp_min = 1.0
+clamp_max = 8.0
+notes = "Growing upper floors (Oct 8) task 5: multiplies the gable-to-street share in BuildingDesigner._square_axis for growing houses (a gable end can follow the lean; an eave caps it)."
+
 [resource]
 script = ExtResource("1")
-knobs = Array[Resource]([SubResource("clearing_count"), SubResource("clearing_block_bias"), SubResource("clearing_ground_weight"), SubResource("clearing_area"), SubResource("clearing_shape"), SubResource("clearing_extra_link_chance"), SubResource("clearing_cover"), SubResource("clearing_purpose"), SubResource("clearing_lobe_bias"), SubResource("clearing_enclosure_bias"), SubResource("plaza_ring_chance"), SubResource("clearing_ring_chance"), SubResource("clearing_deco_density"), SubResource("well_scale"), SubResource("satellite_reach_scale"), SubResource("suburb_house_count"), SubResource("lone_house_path_chance")])
+knobs = Array[Resource]([SubResource("clearing_count"), SubResource("clearing_block_bias"), SubResource("clearing_ground_weight"), SubResource("clearing_area"), SubResource("clearing_shape"), SubResource("clearing_extra_link_chance"), SubResource("clearing_cover"), SubResource("clearing_purpose"), SubResource("clearing_lobe_bias"), SubResource("clearing_enclosure_bias"), SubResource("plaza_ring_chance"), SubResource("clearing_ring_chance"), SubResource("clearing_deco_density"), SubResource("well_scale"), SubResource("satellite_reach_scale"), SubResource("suburb_house_count"), SubResource("lone_house_path_chance"), SubResource("growing_house_chance"), SubResource("growth_street_face_chance"), SubResource("growth_other_face_chance"), SubResource("growth_step"), SubResource("growth_max_lean"), SubResource("lane_sky_gap"), SubResource("growth_gable_front_boost")])
