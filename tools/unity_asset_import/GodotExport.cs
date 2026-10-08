@@ -22,6 +22,9 @@ public static class GodotExport
         new Pack { root = "Assets/Polyart/PolyartStudio", outName = "Polyart" },
         new Pack { root = "Assets/ANGRY MESH", outName = "ANGRY MESH" },
         new Pack { root = "Assets/BK/Pure_Village", outName = "PureVillage" },
+        new Pack { root = "Assets/BK/PureNature_Meadows", outName = "PureNatureMeadows" },
+        new Pack { root = "Assets/BK/PureNature_Mountains", outName = "PureNatureMountains" },
+        new Pack { root = "Assets/BK/PureNature_Redwood", outName = "PureNatureRedwood" },
     };
 
     // Demo content, Unity-only systems and effect/duplicate folders.
@@ -35,11 +38,15 @@ public static class GodotExport
         "_COLL.", "TreeCollision", "/Billboards/", "_impostor", "_Impostor", "/SM_Cube", "SM_WaterPlane", "/Waterfalls/",
         // BK Pure Village: smoke/star particles; LOD3 bake textures only serve dropped distance LODs.
         "/Fx/", "/LOD3_Textures/",
+        // BK Pure Nature 2: scene manager, shader-only water planes, Unity terrain data.
+        "/Environment Manager.prefab", "/Prefabs/Water/", "/Models/Water/", "/Terrains/",
     };
     static readonly string[] TextureExcluded =
     {
         "/Demo/", "/Scenes/", "/Settings/", "/SRP Templates/", "/Post Processing/", "/Skyboxes/", "/Terrain Data/",
         "/LOD3_Textures/", "_Impostor_",
+        // BK Pure Nature 2 sky/cloud/water/particle textures serve Unity-only shaders.
+        "/Textures/Sky/", "/Textures/Clouds/", "/Textures/Water/", "/Textures/Fx/",
     };
     static readonly HashSet<string> DropSegments = new HashSet<string> { "Assets", "Prefabs", "Meshes", "Models", "Sources", "Textures", "PolyartStudio" };
 
@@ -680,7 +687,7 @@ public static class GodotExport
 
             // Metallic / roughness / occlusion
             string ormProp = mp.FirstTex("_ORMMap", "_ORM_Map", "_Layer_01_ORM");
-            string msProp = mp.FirstTex("_MetallicSmoothness", "_MetallicGlossMap");
+            string msProp = mp.FirstTex("_MetallicSmoothness", "_MetallicGlossMap", "_MetallicROcclusionGSmoothnessA");
             string smaeProp = mp.FirstTex("_BaseSMAE");
             if (ormProp != null)
             {
@@ -691,13 +698,13 @@ public static class GodotExport
                 mat["occlusionTexture"] = TexInfo(TextureOut(pack, mp.TexPath(ormProp), "copy", null), xf, "strength", Mathf.Clamp01(mp.Flt("_AOIntensity", "_AO_Intensity", "_Layer_01_AO") ?? 1f));
                 report["mr"] = ormProp + " (ORM)";
             }
-            else if (msProp != null && (sn == "BK/Standard Layered"
+            else if (msProp != null && (sn == "BK/Standard Layered" || sn == "BK/Vegetation Trunk"
                 || (sn == "Universal Render Pipeline/Lit" && m.IsKeywordEnabled("_METALLICSPECGLOSSMAP") && (mp.Flt("_SmoothnessTextureChannel") ?? 0f) < 0.5f)))
             {
                 // Unity metallic map: R metallic, G occlusion, A smoothness. BK Pure Village's
                 // layered shader reads occlusion from G of the same map; URP Lit uses a separate
                 // _OcclusionMap slot, combined here only when it names the same texture.
-                bool bk = sn == "BK/Standard Layered";
+                bool bk = sn.StartsWith("BK/");
                 float s = Mathf.Clamp01((bk ? mp.Flt("_SmoothnessPower") : mp.Flt("_Smoothness")) ?? 0.5f);
                 string occProp = bk ? msProp : mp.FirstTex("_OcclusionMap");
                 bool occ = occProp != null && mp.TexPath(occProp) == mp.TexPath(msProp);

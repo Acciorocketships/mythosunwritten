@@ -3,7 +3,9 @@
 Converts purchased Unity packages (prefabs, `.mat`, FBX, Unity mesh assets) into
 self-contained `.glb` models plus shared PNG textures under `assets/<Pack>/`.
 Used on 2026-09-23 for Raygeas Suntail Village, Polyart Farmlands/Dreamscape Castle and
-ANGRY MESH Meadow Environment, and on 2026-09-26 for BK Pure Village (`assets/PureVillage`). See each pack's `assets/<Pack>/README.md`.
+ANGRY MESH Meadow Environment, on 2026-09-26 for BK Pure Village (`assets/PureVillage`), and on 2026-10-07 for BK Pure Nature 2
+(`assets/PureNatureMeadows`, `assets/PureNatureMountains`, `assets/PureNatureRedwood`; trunks read
+`BK/Vegetation Trunk`'s `_MetallicROcclusionGSmoothnessA` MOS map). See each pack's `assets/<Pack>/README.md`.
 
 Unity itself resolves prefabs, nested prefabs, material overrides and FBX import
 settings, so the conversion runs inside Unity batch mode on an APFS clone of the

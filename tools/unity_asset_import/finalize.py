@@ -10,6 +10,9 @@ PACKS = {
     "Polyart": ("Polyart/PolyartStudio", "Polyart Studio — Farmlands + Dreamscape Castle (props, building modules, crops, animals/Gobold characters)"),
     "ANGRY MESH": ("ANGRY MESH", "ANGRY MESH — Stylized Pack: Meadow Environment (trees, grass, flowers, rocks, props in summer/autumn/winter)"),
     "PureVillage": ("BK/Pure_Village", "BK — Pure Village (realistic European village: modular architecture, whole houses, props, furniture, garden, plants, trees)"),
+    "PureNatureMeadows": ("BK/PureNature_Meadows", "BK — Pure Nature 2: Meadows (oak, elm, birch, cypress, willow, bushes, plants, mushrooms, rocks, barriers, mountains)"),
+    "PureNatureMountains": ("BK/PureNature_Mountains", "BK — Pure Nature 2: Mountains (fir, spruce, pine, bushes, alpine plants, rocks, mountains)"),
+    "PureNatureRedwood": ("BK/PureNature_Redwood", "BK — Pure Nature 2: Redwood (sequoia, red fir, red pine, hollow logs, plants, rocks)"),
 }
 # PACKS limited to the outNames present in this staging run (GODOT_EXPORT_PACKS).
 PACKS = {k: v for k, v in PACKS.items() if os.path.isdir(os.path.join(STAGE, k))}
@@ -49,7 +52,7 @@ for pack, (src_root, title) in PACKS.items():
     lines = [
         f"# {title}",
         "",
-        "Converted from the Unity Asset Store package for Godot 4 (September 2026).",
+        "Converted from the Unity Asset Store package for Godot 4 (" + ("October 2026" if pack.startswith("PureNature") else "September 2026") + ").",
         "Source: `~/Setup Guide In-Editor Tutorial/Assets/" + src_root + "`.",
         "",
         "## Layout",
