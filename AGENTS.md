@@ -103,6 +103,31 @@
 > Legacy biome_canopy trees keep no imposter. Measured: `tests/harness/imposter_review.gd`,
 > `frame_feel_profile --imposter-distance M --view-shots DIR`;
 > `docs/qa/2026-10-07-tree-imposters/result.md`.
+>
+> October 7 tree imposters, bake and capture (`tools/environment_bake/imposter_capture.gd`, 83
+> tree visuals, 51 MB of atlases). WINDOWED only: `environment_bake.gd -- --manifest M
+> --imposters` captures every new `tree`-tagged visual in a normal bake; `-- --imposters-only`
+> walks the existing catalogue and re-saves only each tree's visual plus its textures (no
+> mesh/material/descriptor/index/provenance change, prunes nothing; a manifest re-bake without
+> `--keep-existing` would prune other manifests and churn ~14k files). Headless refuses
+> `--imposters`; a headless re-bake carries the imposter already on disk (`_carry_imposter`).
+> 8 azimuth frames (albedo+coverage, and normals whose alpha is the tint response). Rules:
+> narrow 4 deg PERSPECTIVE camera (the leaf shader reads orthographic as the sun shadow pass
+> and thins the cards); `leaf_lod_camera` set so every card and `mesh_lod_threshold` 0 draws
+> the finest bark LOD; albedo is `DEBUG_DRAW_UNSHADED`, normals `DEBUG_DRAW_NORMAL_BUFFER`
+> stored in the FRAME basis (x right, y up, z toward the eye; the shader rotates to world);
+> tint response is measured in LINEAR space from white vs grey-0.5 instance colour (Meadow bark
+> uses vertex colour as albedo, so it tints ~1); frames are square about the vertical axis
+> (side = max(2 x radius, height) x 1.15, `pivot_height` = frame bottom above the origin).
+> Runtime strictness: `EnvironmentCommitQueue.can_crossfade` accepts only materials the
+> crossfade copies reproduce; the bark swap in `EnvironmentRenderCache._crossfade_tree` is
+> process-wide and idempotent; anything unsupported keeps no imposter (safe fallback). Imposter
+> casts no shadow and its material is warmed. Measured (seed 2697992464, `imposter_review.gd`):
+> 60-300 m coverage within 10% and dE < 2 against the meshes; forest idle dt p50 16.1 -> 14.1
+> ms, primitives -7..-10%; running phases within noise. Limits: the 14 legacy canopy
+> trees keep none (approximate tint, unplaced); the dither crawls on screen while moving in the
+> 88-112 m band; cards read rounder and darker backlit at 100-200 m; elevations above 60 deg
+> can open a hole (latent, unseen).
 
 > October 5 nature style (owner: try the Meadow and Farmlands packs; branch `meadow-nature`).
 > Ambient trees, bushes, flowers, plants, cliff tufts, toadstools, logs and stumps now come from
@@ -5443,6 +5468,7 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
 
 ## Adding terrain content
 
+- **Tree imposter**: a new `tree`-tagged visual gets its distant card from a WINDOWED bake with `--imposters` (or `--imposters-only` afterwards); a headless bake keeps the old one.
 - **New environment visual**: add a stable-ID entry to the relevant manifest under
   `tools/environment_bake/manifests/`, including its canonical bake scale and either
   `collision_source`, a supported `collision_profile`, or intentionally neither. `tree`, `rock`,
