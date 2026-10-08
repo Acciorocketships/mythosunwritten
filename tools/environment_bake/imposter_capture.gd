@@ -23,12 +23,20 @@ extends RefCounted
 ##   space (the shader multiplies linear albedo by the colour), is how fully
 ##   a texel scales with the instance tint. Both materials are measured, not
 ##   assumed: Meadow bark uses vertex colour as albedo, so it tints (~1) too.
-## - A square frame: one frame covers max(width, height) of the crown, so the
-##   runtime quad (size x size) maps the square image back undistorted.
+## - A square frame about the asset's vertical axis (x = z = 0, the axis the
+##   runtime billboard turns about): side = max(2 * the largest horizontal
+##   vertex distance from the axis, height) * MARGIN, so every azimuth frames
+##   the same world square and the runtime quad (size x size) maps it back
+##   undistorted. pivot_height is the frame's bottom edge above the origin.
+## - Normal basis: the normal atlas RGB is n * 0.5 + 0.5 in the FRAME basis of
+##   frame f (azimuth a = TAU * f / FRAMES, eye at (sin a, 0, cos a) from the
+##   axis): x = frame right (cos a, 0, -sin a), y = world up, z = toward the
+##   capture eye (sin a, 0, cos a). The runtime rotates it into world space.
 
 const FRAMES := 8
 const FOV_DEGREES := 4.0
-const MARGIN := 1.05
+## Framing margin: >= 8 px of empty border at 128 px frames.
+const MARGIN := 1.15
 const GREY := 0.5
 ## Metres per pixel per metre for leaf_lod_camera: small enough to keep every card.
 const FULL_DETAIL_PIXEL := 0.0001
@@ -50,9 +58,14 @@ static func capture(tree: SceneTree, visual: EnvironmentVisual, frame_px: int = 
 	var instances := _instances(visual)
 	for instance in instances:
 		viewport.add_child(instance)
+	# Frame about the asset's vertical axis (x = z = 0), which is what the
+	# runtime billboard turns about: an off-axis crown then stays put between
+	# azimuths instead of swimming during frame blends.
+	var extent := _axis_extent(visual)
+	var radius: float = extent.x
 	var aabb := _aabb(visual)
-	var centre := aabb.get_center()
-	var side := maxf(maxf(aabb.size.x, aabb.size.z), aabb.size.y) * MARGIN
+	var axis_centre := Vector3(0.0, 0.5 * (extent.y + extent.z), 0.0)
+	var side := maxf(2.0 * radius, extent.z - extent.y) * MARGIN
 	var distance := 0.5 * side / tan(deg_to_rad(FOV_DEGREES * 0.5))
 	var camera := Camera3D.new()
 	camera.fov = FOV_DEGREES
@@ -65,9 +78,8 @@ static func capture(tree: SceneTree, visual: EnvironmentVisual, frame_px: int = 
 	var response := Image.create(frame_px * FRAMES, frame_px, false, Image.FORMAT_RGBA8)
 	for f in FRAMES:
 		var azimuth := TAU * float(f) / float(FRAMES)
-		camera.look_at_from_position(centre + Vector3(sin(azimuth), 0.0, cos(azimuth)) * distance, centre, Vector3.UP)
-		var eye := camera.position
-		RenderingServer.global_shader_parameter_set(&"leaf_lod_camera", Vector4(eye.x, eye.y, eye.z, FULL_DETAIL_PIXEL))
+		camera.look_at_from_position(axis_centre + Vector3(sin(azimuth), 0.0, cos(azimuth)) * distance,
+			axis_centre, Vector3.UP)
 		var white: Image = await _render(tree, viewport, instances, Color.WHITE, Viewport.DEBUG_DRAW_UNSHADED)
 		var grey: Image = await _render(tree, viewport, instances, Color(GREY, GREY, GREY), Viewport.DEBUG_DRAW_UNSHADED)
 		var normals: Image = await _render(tree, viewport, instances, Color.WHITE, Viewport.DEBUG_DRAW_NORMAL_BUFFER)
@@ -81,9 +93,11 @@ static func capture(tree: SceneTree, visual: EnvironmentVisual, frame_px: int = 
 				var n := normals.get_pixel(x, y)
 				normal.set_pixel(f * frame_px + x, y, Color(n.r, n.g, n.b, w.a))
 				response.set_pixel(f * frame_px + x, y, Color(r, r, r, w.a))
-	# Bake time has no AtmosphereDirector: restore the project default.
-	RenderingServer.global_shader_parameter_set(&"leaf_lod_camera",
-		ProjectSettings.get_setting("shader_globals/leaf_lod_camera")["value"])
+	# The global cannot be read back outside the editor: restore the project
+	# default (AtmosphereDirector rewrites it every frame in game).
+	var setting: Variant = ProjectSettings.get_setting("shader_globals/leaf_lod_camera", {})
+	var default_lod: Variant = setting.get("value", Vector4.ZERO) if setting is Dictionary else Vector4.ZERO
+	RenderingServer.global_shader_parameter_set(&"leaf_lod_camera", default_lod)
 	viewport.queue_free()
 	# Bleed covered texels into the empty background before mipmapping, so
 	# neither the albedo, the normals nor the response darken toward the
@@ -102,8 +116,8 @@ static func capture(tree: SceneTree, visual: EnvironmentVisual, frame_px: int = 
 	out.normal = ImageTexture.create_from_image(normal)
 	out.frames = FRAMES
 	out.size = Vector2(side, side)
-	out.pivot_height = centre.y - 0.5 * side
-	out.crown_centre = centre
+	out.pivot_height = axis_centre.y - 0.5 * side
+	out.crown_centre = aabb.get_center()
 	return out
 
 ## The visual drawn as production does (EnvironmentCommitQueue._commit_batch):
@@ -126,10 +140,27 @@ static func _instances(visual: EnvironmentVisual) -> Array[MultiMeshInstance3D]:
 
 static func _aabb(visual: EnvironmentVisual) -> AABB:
 	var out := AABB()
-	for piece: EnvironmentVisualPiece in visual.pieces:
+	for i in visual.pieces.size():
+		var piece: EnvironmentVisualPiece = visual.pieces[i]
 		var box := piece.local_transform * piece.mesh.get_aabb()
-		out = out.merge(box) if out.has_volume() else box
+		out = box if i == 0 else out.merge(box)
 	return out
+
+## (max horizontal distance from the vertical axis, min y, max y) over every
+## drawn vertex in asset space.
+static func _axis_extent(visual: EnvironmentVisual) -> Vector3:
+	var radius := 0.0
+	var low := INF
+	var high := -INF
+	for piece: EnvironmentVisualPiece in visual.pieces:
+		for surface in piece.mesh.get_surface_count():
+			var vertices: PackedVector3Array = piece.mesh.surface_get_arrays(surface)[Mesh.ARRAY_VERTEX]
+			for vertex in vertices:
+				var p := piece.local_transform * vertex
+				radius = maxf(radius, Vector2(p.x, p.z).length())
+				low = minf(low, p.y)
+				high = maxf(high, p.y)
+	return Vector3(radius, low, high)
 
 static func _render(tree: SceneTree, viewport: SubViewport, instances: Array[MultiMeshInstance3D],
 		colour: Color, mode: Viewport.DebugDraw) -> Image:
@@ -137,6 +168,10 @@ static func _render(tree: SceneTree, viewport: SubViewport, instances: Array[Mul
 		if instance.multimesh.use_colors:
 			instance.multimesh.set_instance_color(0, colour)
 	viewport.debug_draw = mode
+	# Set before every render so nothing else (a live AtmosphereDirector)
+	# can re-thin the cards mid-capture.
+	var eye := viewport.get_camera_3d().global_position
+	RenderingServer.global_shader_parameter_set(&"leaf_lod_camera", Vector4(eye.x, eye.y, eye.z, FULL_DETAIL_PIXEL))
 	for i in 5:
 		await tree.process_frame
 	await RenderingServer.frame_post_draw

@@ -27,8 +27,28 @@ func _headless() -> bool:
 	return DisplayServer.get_name() == "headless"
 
 const OAK := "res://terrain/environment/visuals/angry_mesh_meadow/meadow_oak_01_summer.tres"
-## Review copies of the captured atlases (look at them after a capture change).
+const BIRCH := "res://terrain/environment/visuals/angry_mesh_meadow/meadow_birch_05_summer.tres"
+## IMPOSTER_DUMP=1 writes review copies of the captured atlases here (look at
+## them after a capture change).
 const REVIEW_DIR := "/private/tmp/imposter-oak"
+
+func _dump(imposter: EnvironmentImposter, name: String) -> void:
+	if OS.get_environment("IMPOSTER_DUMP") != "1":
+		return
+	DirAccess.make_dir_recursive_absolute(REVIEW_DIR)
+	imposter.albedo.get_image().save_png("%s/%s_albedo.png" % [REVIEW_DIR, name])
+	imposter.normal.get_image().save_png("%s/%s_normal.png" % [REVIEW_DIR, name])
+
+## Fewest empty pixels between any frame's covered texels and its border.
+func _min_margin(imposter: EnvironmentImposter, px: int) -> int:
+	var albedo := imposter.albedo.get_image()
+	var margin := px
+	for f in imposter.frames:
+		for y in px:
+			for x in px:
+				if albedo.get_pixel(f * px + x, y).a > 0.5:
+					margin = mini(margin, mini(mini(x, px - 1 - x), mini(y, px - 1 - y)))
+	return margin
 
 ## Mean tint response (normal alpha) over covered texels of frame 0 in a box.
 func _response(imposter: EnvironmentImposter, box: Rect2i) -> float:
@@ -53,13 +73,11 @@ func test_capture_keeps_full_crowns_and_measures_tint_response() -> void:
 	var imposter: EnvironmentImposter = await CAPTURE.capture(get_tree(), visual, 128)
 	assert_eq(imposter.frames, 8)
 	var albedo := imposter.albedo.get_image()
-	var normal := imposter.normal.get_image()
-	DirAccess.make_dir_recursive_absolute(REVIEW_DIR)
-	albedo.save_png(REVIEW_DIR + "/albedo.png")
-	normal.save_png(REVIEW_DIR + "/normal.png")
+	_dump(imposter, "oak")
 	assert_eq(albedo.get_width(), 128 * 8)
 	assert_eq(albedo.get_height(), 128)
 	assert_eq(imposter.size.x, imposter.size.y, "a square frame maps undistorted onto the runtime quad")
+	assert_gte(_min_margin(imposter, 128), 8, "every frame keeps an empty border")
 	# Coverage in every frame: a thinned or killed crown shows up here.
 	for f in 8:
 		var covered := 0
@@ -79,3 +97,28 @@ func test_capture_keeps_full_crowns_and_measures_tint_response() -> void:
 	var plain: EnvironmentImposter = await CAPTURE.capture(get_tree(), untinted, 128)
 	assert_lt(_response(plain, Rect2i(48, 20, 32, 20)), 0.1, "no instance colour, no response")
 	assert_lt(_response(plain, Rect2i(56, 104, 16, 16)), 0.1, "no instance colour, no response")
+
+func test_capture_frames_a_tall_tree_about_its_vertical_axis() -> void:
+	if _headless():
+		pass_test("needs a renderer")
+		return
+	const CAPTURE := preload("res://tools/environment_bake/imposter_capture.gd")
+	var visual := load(BIRCH) as EnvironmentVisual
+	var imposter: EnvironmentImposter = await CAPTURE.capture(get_tree(), visual, 128)
+	_dump(imposter, "birch")
+	assert_gte(_min_margin(imposter, 128), 8, "every frame keeps an empty border")
+	# The trunk base sits on the axis the runtime billboard turns about, so it
+	# stays at the frame's centre column from every azimuth.
+	var albedo := imposter.albedo.get_image()
+	for f in imposter.frames:
+		var low := -1
+		var sum := 0
+		var count := 0
+		for y in range(127, -1, -1):
+			for x in 128:
+				if albedo.get_pixel(f * 128 + x, y).a > 0.5:
+					if low < 0: low = y
+					if y > low - 4:
+						sum += x
+						count += 1
+		assert_almost_eq(float(sum) / maxf(count, 1), 63.5, 4.0, "frame %d trunk base on the axis" % f)
