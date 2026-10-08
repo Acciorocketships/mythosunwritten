@@ -229,6 +229,11 @@ static func carve(world_seed: int, massif: WarrenMassif, excavation: WarrenExcav
 				var a := _door_of(c)
 				var b := _door_of(connections[i])
 				far_enough = far_enough and absi(a.x - b.x) + absi(a.z - b.z) > 3
+				# Every connection was searched against the same network, so two can
+				# share a stretch of lane; a second lane through the same cells would
+				# claim a walk cell twice (the volume plan refuses it). Keep them apart.
+				for cell: Vector3i in connections[i].cells:
+					far_enough = far_enough and not (c.cells as Array).has(cell)
 			if far_enough and character.chance(&"clearing_extra_link_chance",
 					Vector3i(i, floor_band, excavation.court_clearings.size())):
 				chosen.append(connections[i])

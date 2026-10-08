@@ -81,9 +81,9 @@ func test_well_scale_shrinks_the_well_and_stays_clear() -> void:
 		checked += 1
 	assert_gt(checked, 0)
 
-func test_default_well_scale_is_one() -> void:
+func test_default_well_scale_is_the_taste_value() -> void:
 	var profile := WarrenVillageScaleProfile.for_id(&"grand")
-	assert_eq(TownCharacter.of(profile, 53).value(&"well_scale"), 1.0)
+	assert_eq(TownCharacter.of(profile, 53).value(&"well_scale"), 0.7)
 
 func test_sloped_ground_plaza_stays_eligible_and_a_plinth_is_raised() -> void:
 	# Floor 3 over a hillside: 2 columns at 3, 4 at 2, 2 cut to 0 -- only the

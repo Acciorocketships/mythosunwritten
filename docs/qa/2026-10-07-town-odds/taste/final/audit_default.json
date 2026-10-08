@@ -1,0 +1,122 @@
+[
+  {
+    "floating": 0,
+    "joins": 0,
+    "ms": 88787,
+    "profile": "grand",
+    "roof": {
+      "area": 0.0,
+      "gable_area": 14.2022284236179,
+      "gable_contacts": 234,
+      "intrusions": 0,
+      "triangles": 1118761
+    },
+    "seed": 53,
+    "valid_payload": true
+  },
+  {
+    "floating": 0,
+    "joins": 0,
+    "ms": 36657,
+    "profile": "large",
+    "roof": {
+      "area": 0.0,
+      "gable_area": 0.0,
+      "gable_contacts": 0,
+      "intrusions": 0,
+      "triangles": 511445
+    },
+    "seed": 31,
+    "valid_payload": true
+  },
+  {
+    "floating": 0,
+    "joins": 0,
+    "ms": 23814,
+    "profile": "standard",
+    "roof": {
+      "area": 0.0,
+      "gable_area": 0.0,
+      "gable_contacts": 0,
+      "intrusions": 0,
+      "triangles": 500556
+    },
+    "seed": 103,
+    "valid_payload": true
+  },
+  {
+    "floating": 0,
+    "joins": 0,
+    "ms": 13194,
+    "profile": "standard",
+    "roof": {
+      "area": 0.0,
+      "gable_area": 0.0903776800560081,
+      "gable_contacts": 28,
+      "intrusions": 0,
+      "triangles": 375680
+    },
+    "seed": 13,
+    "valid_payload": true
+  },
+  {
+    "floating": 0,
+    "joins": 1,
+    "ms": 121215,
+    "profile": "grand",
+    "roof": {
+      "area": 0.0,
+      "gable_area": 0.0,
+      "gable_contacts": 0,
+      "intrusions": 0,
+      "triangles": 677487
+    },
+    "seed": 83,
+    "valid_payload": true
+  },
+  {
+    "floating": 0,
+    "joins": 0,
+    "ms": 12483,
+    "profile": "compact",
+    "roof": {
+      "area": 0.0,
+      "gable_area": 0.0,
+      "gable_contacts": 0,
+      "intrusions": 0,
+      "triangles": 403087
+    },
+    "seed": 7,
+    "valid_payload": true
+  },
+  {
+    "floating": 0,
+    "joins": 0,
+    "ms": 39200,
+    "profile": "large",
+    "roof": {
+      "area": 0.0,
+      "gable_area": 0.0,
+      "gable_contacts": 0,
+      "intrusions": 0,
+      "triangles": 542842
+    },
+    "seed": 43,
+    "valid_payload": true
+  },
+  {
+    "floating": 0,
+    "joins": 1,
+    "ms": 34529,
+    "profile": "standard",
+    "roof": {
+      "area": 0.0,
+      "gable_area": 12.6193601257208,
+      "gable_contacts": 733,
+      "intrusions": 0,
+      "triangles": 733045
+    },
+    "seed": 3,
+    "valid_payload": true
+  }
+]

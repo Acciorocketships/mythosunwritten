@@ -10,9 +10,9 @@ const DEFAULTS := {&"satellite_reach_scale": 1.0, &"suburb_house_count": 0.0,
 
 func _profile(scale: StringName, seed_value: int, overrides: Dictionary) -> WarrenVillageScaleProfile:
 	var profile := WarrenVillageScaleProfile.for_id(scale)
-	var program := TownOddsProgram.builtin()
-	if not overrides.is_empty():
-		program = program.with_overrides(overrides)
+	# The three knobs are pinned at their pre-taste values unless overridden: the
+	# shipped defaults (October 7 taste pass) are checked separately below.
+	var program := TownOddsProgram.builtin().with_overrides(DEFAULTS.merged(overrides, true))
 	TownCharacter.attach(profile, program, seed_value)
 	return profile
 
@@ -142,8 +142,7 @@ const COMBINED := {&"satellite_reach_scale": 0.6, &"suburb_house_count": 4.0,
 
 func _generate(seed_value: int, scale: StringName, overrides: Dictionary) -> WarrenSpatialPlan:
 	var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
-	if not overrides.is_empty():
-		program.town_odds = program.town_odds.with_overrides(overrides)
+	program.town_odds = program.town_odds.with_overrides(DEFAULTS.merged(overrides, true))
 	return WarrenVolumetricSolver.generate(seed_value, {}, program,
 		WarrenVillageScaleProfile.for_id(scale))
 
@@ -160,3 +159,14 @@ func test_defaults_have_no_footways() -> void:
 	assert_not_null(spatial)
 	if spatial == null: return
 	assert_true(spatial.compiled_fabric_cache().surface_plan.footway_columns.is_empty())
+
+
+func test_shipped_defaults_are_the_taste_values() -> void:
+	var small := TownCharacter.of(WarrenVillageScaleProfile.for_id(&"compact"), 7)
+	assert_between(small.value(&"satellite_reach_scale"), 0.3, 1.0)
+	assert_lt(small.value(&"lone_house_path_chance"), 0.9)
+	var table := TownOddsProgram.builtin()
+	assert_almost_eq(float(table.knobs[&"satellite_reach_scale"].small), 0.7, 0.001)
+	assert_almost_eq(float(table.knobs[&"suburb_house_count"].small), 1.0, 0.001)
+	assert_almost_eq(float(table.knobs[&"suburb_house_count"].large), 4.0, 0.001)
+	assert_almost_eq(float(table.knobs[&"lone_house_path_chance"].small), 0.2, 0.001)

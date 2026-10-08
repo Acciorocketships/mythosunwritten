@@ -1,3 +1,10 @@
+> TASTE KNOBS (Oct 7, plan `.superpowers/sdd/2026-10-07-town-taste-knobs`; defaults in `town_odds.tres`, each knob's notes name its task): `clearing_lobe_bias` 2.0 /
+> `clearing_enclosure_bias` 2.0 (courtyards kept with probability by lobe depth / fronted sides, never a hard reject), `plaza_ring_chance` 1.0 and `clearing_ring_chance` 0.25
+> (ringless greens), `clearing_deco_density` 0.7 (clearing furnishing), `well_scale` 0.7 (wells only on ground greens, hard rule), `satellite_reach_scale` 0.7 spread 0.15,
+> `suburb_house_count` 1 (small) -> 4 (large) spread 1 (detached cottages 1.0-1.4 x radius), `lone_house_path_chance` 0.2 (else a footway). `clearing_count` stays 0
+> (owner decides); lamps are fixed dark wood. Old behaviour: well_scale 1, satellite 1, suburb 0, lone 1, ring chances 1, biases/deco 0. Result:
+> `docs/qa/2026-10-07-town-odds/taste/result.md`; fingerprint baseline re-pinned for these defaults.
+>
 > October 7 town odds layer (branch `town-redesign`; spec
 > `docs/superpowers/specs/2026-10-07-town-odds-layer-design.md`, decisions
 > `docs/qa/2026-10-07-town-rule-audit/audit.md` section 10). Owner principle: hard rules
@@ -6020,7 +6027,7 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
   removed. Production rolls only
   village/town; the compiled hamlet vocabulary stays dormant until it can satisfy the same
   inhabited multi-level contract.
-  `VillageOutskirtsSolver` (deleted October 7) runs only after an accepted urban transaction. Every painted outskirts
+  HISTORICAL (this outskirts description predates the October 7 deletion; the code below no longer exists). `VillageOutskirtsSolver` (deleted October 7) runs only after an accepted urban transaction. Every painted outskirts
   lane, including the final spur to a prefab doorstep, is the ordinary `PathProgram.PATH_WIDTH`;
   only the spur's reserved headroom narrows to the measured doorway. The edge district is meant to
   RING the dense core (2026-09-04): each exit's neighbourhood reaches sixteen grid steps so the

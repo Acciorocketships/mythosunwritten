@@ -94,6 +94,13 @@ static func destination_cells(fabric: SettlementFabricPlan,
 				macros.append(cell)
 		if source.excavation != null:
 			macros.append_array(source.excavation.portals)
+		# A courtyard clearing is a place to go (it is furnished and fronted),
+		# however small: a 4-cell green's ring is under OVERLOOK_MIN_CELLS but its
+		# one access lane is not a pathway to nowhere.
+		for plot: Dictionary in source.plots:
+			if WarrenPlotReservations.is_clearing_plot(plot):
+				for column: Vector2i in plot.cells:
+					macros.append(Vector3i(column.x, int(plot.floor), column.y))
 		for macro: Vector3i in macros:
 			for dx in 2:
 				for dz in 2:

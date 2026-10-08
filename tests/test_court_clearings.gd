@@ -1,8 +1,10 @@
 extends GutTest
 
+const Old := preload("res://tests/fixtures/town_old_look.gd")  # pre-taste knob values; see that file
+
 func _setup(seed_value: int, scale: StringName, count: float) -> Dictionary:
 	var profile := WarrenVillageScaleProfile.for_id(scale)
-	TownCharacter.attach(profile, TownOddsProgram.builtin().with_overrides({&"clearing_count": count}), seed_value)
+	TownCharacter.attach(profile, TownOddsProgram.builtin().with_overrides(Old.merge({&"clearing_count": count})), seed_value)
 	var plan := WarrenMazeSitePlanner.plan(seed_value, {}, profile, &"carve")
 	return {"profile": profile, "plan": plan}
 
@@ -46,9 +48,9 @@ func _streets_only(seed_value: int, scale: StringName, count: float) -> Dictiona
 	## Streets built without clearings; the profile then carries `count`, so
 	## propose() sees a network none of its own clearings have reserved yet.
 	var profile := WarrenVillageScaleProfile.for_id(scale)
-	TownCharacter.attach(profile, TownOddsProgram.builtin(), seed_value)
+	TownCharacter.attach(profile, TownOddsProgram.builtin().with_overrides(Old.merge()), seed_value)
 	var plan := WarrenMazeSitePlanner.plan(seed_value, {}, profile, &"carve")
-	TownCharacter.attach(profile, TownOddsProgram.builtin().with_overrides({&"clearing_count": count}), seed_value)
+	TownCharacter.attach(profile, TownOddsProgram.builtin().with_overrides(Old.merge({&"clearing_count": count})), seed_value)
 	return {"profile": profile, "plan": plan}
 
 func test_thick_blocks_are_preferred() -> void:
@@ -129,9 +131,9 @@ func test_unconnectable_clearing_leaves_no_trace() -> void:
 	# Carving again over a finished street network: proposals no street reaches
 	# at their floor are withdrawn whole -- no reservation, lane or carved cell.
 	var profile := WarrenVillageScaleProfile.for_id(&"large")
-	TownCharacter.attach(profile, TownOddsProgram.builtin(), 31)
+	TownCharacter.attach(profile, TownOddsProgram.builtin().with_overrides(Old.merge()), 31)
 	var base := WarrenMazeSitePlanner.plan(31, {}, profile, &"carve")
-	TownCharacter.attach(profile, TownOddsProgram.builtin().with_overrides({&"clearing_count": 3.0}), 31)
+	TownCharacter.attach(profile, TownOddsProgram.builtin().with_overrides(Old.merge({&"clearing_count": 3.0})), 31)
 	var excavation := WarrenExcavation.new(31)
 	for key: String in ["route", "transitions", "lanes", "loop_edges", "carved", "covered", "portals",
 			"bridge_spans", "bridge_span_audit", "bridge_bearing_columns", "bridge_directions",
@@ -172,7 +174,7 @@ func test_unconnectable_clearing_leaves_no_trace() -> void:
 
 func test_clearing_lanes_survive_destination_pruning() -> void:
 	var profile := WarrenVillageScaleProfile.for_id(&"standard")
-	TownCharacter.attach(profile, TownOddsProgram.builtin().with_overrides({&"clearing_count": 3.0}), 103)
+	TownCharacter.attach(profile, TownOddsProgram.builtin().with_overrides(Old.merge({&"clearing_count": 3.0})), 103)
 	var plan := WarrenMazeSitePlanner.plan(103, {}, profile)
 	assert_not_null(plan)
 	assert_gt(plan.excavation.court_clearings.size(), 0)
@@ -193,9 +195,9 @@ func _copy_excavation(source: WarrenExcavation) -> WarrenExcavation:
 
 func test_clearings_never_share_another_reservation() -> void:
 	var profile := WarrenVillageScaleProfile.for_id(&"grand")
-	TownCharacter.attach(profile, TownOddsProgram.builtin(), 53)
+	TownCharacter.attach(profile, TownOddsProgram.builtin().with_overrides(Old.merge()), 53)
 	var base := WarrenMazeSitePlanner.plan(53, {}, profile, &"carve")
-	TownCharacter.attach(profile, TownOddsProgram.builtin().with_overrides({&"clearing_count": 3.0}), 53)
+	TownCharacter.attach(profile, TownOddsProgram.builtin().with_overrides(Old.merge({&"clearing_count": 3.0})), 53)
 	var excavation := _copy_excavation(base.excavation)
 	var first := WarrenCourtClearings.propose(53, base.massif, excavation, profile)
 	assert_gt(first.size(), 0)
@@ -234,7 +236,7 @@ func test_clearings_become_court_plots_and_greens_are_lawns() -> void:
 	# Seed 31 keeps no clearing after Task 9's guardrails; 103 standard keeps some.
 	var profile := WarrenVillageScaleProfile.for_id(&"standard")
 	var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
-	program.town_odds = program.town_odds.with_overrides({&"clearing_count": 3.0})
+	program.town_odds = program.town_odds.with_overrides(Old.merge({&"clearing_count": 3.0}))
 	var spatial := WarrenVolumetricSolver.generate(103, {}, program, profile)
 	assert_not_null(spatial)
 	var source := spatial.source_volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
@@ -251,7 +253,7 @@ func test_plaza_is_still_green() -> void:
 
 func test_clearing_plots_match_kept_clearings_and_nothing_builds_on_them() -> void:
 	var profile := WarrenVillageScaleProfile.for_id(&"standard")
-	TownCharacter.attach(profile, TownOddsProgram.builtin().with_overrides({&"clearing_count": 3.0}), 103)
+	TownCharacter.attach(profile, TownOddsProgram.builtin().with_overrides(Old.merge({&"clearing_count": 3.0})), 103)
 	var plan := WarrenMazeSitePlanner.plan(103, {}, profile)
 	assert_not_null(plan)
 	var courts := _clearing_plots(plan)
@@ -276,7 +278,7 @@ func test_clearing_plots_match_kept_clearings_and_nothing_builds_on_them() -> vo
 
 func test_withdrawn_clearing_withdraws_its_plot() -> void:
 	var profile := WarrenVillageScaleProfile.for_id(&"standard")
-	TownCharacter.attach(profile, TownOddsProgram.builtin().with_overrides({&"clearing_count": 3.0}), 103)
+	TownCharacter.attach(profile, TownOddsProgram.builtin().with_overrides(Old.merge({&"clearing_count": 3.0})), 103)
 	var plan := WarrenMazeSitePlanner.plan(103, {}, profile, &"reserve")
 	var courts := _clearing_plots(plan)
 	assert_gt(courts.size(), 0)
@@ -297,7 +299,7 @@ func _green_features(seed_value: int, scale: StringName, count: float) -> Dictio
 	var profile := WarrenVillageScaleProfile.for_id(scale)
 	var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
 	if count > 0.0:
-		program.town_odds = program.town_odds.with_overrides({&"clearing_count": count})
+		program.town_odds = program.town_odds.with_overrides(Old.merge({&"clearing_count": count}))
 	var spatial := WarrenVolumetricSolver.generate(seed_value, {}, program, profile)
 	assert_not_null(spatial)
 	var source := spatial.source_volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
@@ -389,14 +391,14 @@ const PULL_TOWNS := [[53, &"grand"], [103, &"standard"]]
 func _pull_plan(seed_value: int, scale: StringName) -> Dictionary:
 	## Streets built with the default table; proposals then read `overrides`.
 	var profile := WarrenVillageScaleProfile.for_id(scale)
-	TownCharacter.attach(profile, TownOddsProgram.builtin(), seed_value)
+	TownCharacter.attach(profile, TownOddsProgram.builtin().with_overrides(Old.merge()), seed_value)
 	var plan := WarrenMazeSitePlanner.plan(seed_value, {}, profile, &"carve")
 	return {"profile": profile, "plan": plan}
 
 func _propose_with(s: Dictionary, seed_value: int, overrides: Dictionary) -> Array[Dictionary]:
 	var profile: WarrenVillageScaleProfile = s.profile
 	var plan: WarrenMazeSourcePlan = s.plan
-	TownCharacter.attach(profile, TownOddsProgram.builtin().with_overrides(overrides), seed_value)
+	TownCharacter.attach(profile, TownOddsProgram.builtin().with_overrides(Old.merge(overrides)), seed_value)
 	return WarrenCourtClearings.propose(seed_value, plan.massif, plan.excavation, profile)
 
 func test_zero_pulls_reproduce_the_pre_knob_proposals() -> void:
@@ -462,3 +464,23 @@ func test_pulls_at_full_strength_still_fill_the_count() -> void:
 	var open := _pull_stats(s, 53, {})
 	var max_pulls := _pull_stats(s, 53, {&"clearing_lobe_bias": 4.0, &"clearing_enclosure_bias": 4.0})
 	assert_eq(max_pulls.count, open.count)
+
+
+func test_extra_links_never_share_lane_cells() -> void:
+	## 31:large under the shipped taste defaults with clearings on: two links of
+	## one clearing both bored through (8, 0, 4) and the volume plan refused the
+	## town ("duplicate walk cell"). Links are now disjoint, so it builds.
+	var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
+	program.town_odds = program.town_odds.with_overrides({&"clearing_count": 2.5})
+	var spatial := WarrenVolumetricSolver.generate(31, {}, program,
+		WarrenVillageScaleProfile.for_id(&"large"))
+	assert_not_null(spatial, WarrenVolumetricSolver.last_failure)
+	var profile := WarrenVillageScaleProfile.for_id(&"large")
+	TownCharacter.attach(profile, program.town_odds, 31)
+	var plan := WarrenMazeSitePlanner.plan(31, {}, profile, &"carve")
+	var seen := {}
+	for lane: Dictionary in plan.excavation.lanes:
+		if lane.get("feature_kind", &"") != &"court_clearing_access": continue
+		for cell: Vector3i in lane.cells:
+			assert_false(seen.has(cell), "lane cell %s is claimed once" % [cell])
+			seen[cell] = true

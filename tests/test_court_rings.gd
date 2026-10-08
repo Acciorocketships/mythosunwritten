@@ -1,4 +1,6 @@
 extends GutTest
+
+const Old := preload("res://tests/fixtures/town_old_look.gd")  # pre-taste knob values; see that file
 ## Town taste knobs (Oct 7) task 2: green courts (the plaza and green
 ## clearings) may drop their one-cell walking ring. Ring chance 1.0 (the
 ## default) reproduces the ringed planting exactly; ring chance 0 plants the
@@ -17,8 +19,7 @@ func _spatial(seed_value: int, scale: StringName, overrides: Dictionary) -> Warr
 		return _cache[key]
 	var profile := WarrenVillageScaleProfile.for_id(scale)
 	var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
-	if not overrides.is_empty():
-		program.town_odds = program.town_odds.with_overrides(overrides)
+	program.town_odds = program.town_odds.with_overrides(Old.merge(overrides))
 	var spatial := WarrenVolumetricSolver.generate(seed_value, {}, program, profile)
 	_cache[key] = spatial
 	return spatial

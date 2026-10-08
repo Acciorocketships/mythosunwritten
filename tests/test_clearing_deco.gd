@@ -1,4 +1,6 @@
 extends GutTest
+
+const Old := preload("res://tests/fixtures/town_old_look.gd")  # pre-taste knob values; see that file
 ## Town taste knobs task 3: courtyard clearings furnished for their purpose
 ## (`clearing_deco_density`). Density 0 places nothing; density 1 gives every
 ## clearing at least two props, none on a walk landing and none overlapping.
@@ -6,8 +8,8 @@ extends GutTest
 func _town(seed_value: int, scale: StringName, density: float) -> Dictionary:
 	var profile := WarrenVillageScaleProfile.for_id(scale)
 	var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
-	program.town_odds = program.town_odds.with_overrides({&"clearing_count": 3.0,
-		&"clearing_deco_density": density})
+	program.town_odds = program.town_odds.with_overrides(Old.merge({&"clearing_count": 3.0,
+		&"clearing_deco_density": density}))
 	var spatial := WarrenVolumetricSolver.generate(seed_value, {}, program, profile)
 	assert_not_null(spatial)
 	var source := spatial.source_volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
