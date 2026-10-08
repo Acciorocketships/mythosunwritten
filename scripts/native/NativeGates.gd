@@ -20,7 +20,22 @@ extends RefCounted
 ## whose C# threw turns itself off (push_warning names the error) and its
 ## caller runs the GDScript for that call.
 
+##
+## THREADS. A port's gate state is read on every height sample and river walk
+## from many pool threads. Never publish it in a static Dictionary/Array that
+## readers access unlocked, even one that is "replaced, never mutated":
+## reading a container static copies its Variant (load the private pointer,
+## then reference it) while assignment unreferences, frees and nulls the old
+## pointer before storing the new one, so a reader in that window
+## dereferences null or freed memory (the intermittent startup SIGSEGV in
+## NativeRiverWalk.ready_for, October 8). Containers are touched only under
+## the port's state mutex; the lock-free fast path compares plain ints and
+## bools (copied by value).
+
 static var deferred := false
+
+## "No seed" for a port's lock-free fast-path seed (seeds are 32-bit hashes).
+const NO_SEED := -9223372036854775807 - 1
 
 
 ## Whether a deferred gate may run on this thread (never the main thread).

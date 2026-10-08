@@ -26,27 +26,37 @@ const _GATES := preload("res://scripts/native/NativeGates.gd")
 ## Tests and the parity gate: force the GDScript reference.
 static var force_off := false
 static var enabled := false
-## Seeds served natively (replaced, never mutated, so readers on other threads
-## always see a complete dictionary).
-static var seeds: Dictionary = {}
-## Seeds registered by a deferred setup() whose gate has not run yet
-## (replaced, never mutated).
+## The last seed that passed its gate: ready_for's lock-free fast path (an int
+## static is copied by value; see NativeGates.gd, THREADS).
+static var _fast_seed: int = _GATES.NO_SEED
+## Guarded by _state (short holds, any thread): seeds served natively, seeds a
+## deferred setup() registered whose gate has not run, seeds already gated.
+static var _seeds: Dictionary = {}
 static var _pending: Dictionary = {}
 static var _attempted: Dictionary = {}
 static var _native: Object = null
 static var _native_failed := false
-static var _mutex := Mutex.new()
+static var _state := Mutex.new()
+## Serializes gates (~1.8 s each); workers only try_lock it.
+static var _gate_mutex := Mutex.new()
 
 
 ## Runs a deferred gate on a worker that wins the lock.
 static func ready_for(seed: int) -> bool:
-	if not enabled or not seeds.has(seed):
-		if not (_pending.has(seed) and _GATES.may_gate_here() and _mutex.try_lock()):
-			return false
-		_gate(seed)
-		_mutex.unlock()
-	return enabled and not force_off and seeds.has(seed) \
-		and HeightfieldPlan.LOWPASS_M <= 0.0 and NATIVE_HEIGHT.ready_for(seed)
+	var served := enabled and seed == _fast_seed
+	if not served:
+		_state.lock()
+		served = enabled and _seeds.has(seed)
+		var pending := _pending.has(seed)
+		_state.unlock()
+		if not served and pending and _GATES.may_gate_here() and _gate_mutex.try_lock():
+			_gate(seed)
+			_gate_mutex.unlock()
+			_state.lock()
+			served = enabled and _seeds.has(seed)
+			_state.unlock()
+	return served and not force_off and HeightfieldPlan.LOWPASS_M <= 0.0 \
+		and NATIVE_HEIGHT.ready_for(seed)
 
 
 ## The wrappers return null when the C# call threw (the seed is then off):
@@ -80,11 +90,11 @@ static func _fault(result, seed: int) -> bool:
 	var err := _GATES.faulted(_native, result)
 	if err.is_empty():
 		return false
-	_mutex.lock()
-	var next := seeds.duplicate()
-	next.erase(seed)
-	seeds = next
-	_mutex.unlock()
+	_state.lock()
+	_seeds.erase(seed)
+	if _fast_seed == seed:
+		_fast_seed = _GATES.NO_SEED
+	_state.unlock()
 	push_warning("NativeRiverWalk disabled for seed %d: the C# call failed (%s); using the GDScript river walk." % [seed, err])
 	return true
 
@@ -97,37 +107,31 @@ static func arm_fault() -> void:
 
 ## Load C# and register the seed; gate now unless NativeGates.deferred.
 static func setup(seed: int) -> void:
-	_mutex.lock()
-	if _GATES.deferred:
-		if _native == null and not _native_failed and not _load_native():
-			_native_failed = true
-		if _native != null and not _attempted.has(seed) and not _pending.has(seed):
-			var next := _pending.duplicate()
-			next[seed] = true
-			_pending = next
-	else:
-		_gate(seed)
-	_mutex.unlock()
+	if not _GATES.deferred:
+		setup_now(seed)
+		return
+	_state.lock()
+	if _ensure_native() and not _attempted.has(seed):
+		_pending[seed] = true
+	_state.unlock()
 
 
 ## Load and gate now, deferred or not (tests).
 static func setup_now(seed: int) -> void:
-	_mutex.lock()
+	_gate_mutex.lock()
 	_gate(seed)
-	_mutex.unlock()
+	_gate_mutex.unlock()
 
 
-## Under _mutex. Harmless to repeat.
+## Under _gate_mutex. Harmless to repeat.
 static func _gate(seed: int) -> void:
-	if _attempted.has(seed) or _native_failed:
-		return
-	_attempted[seed] = true
-	if _pending.has(seed):
-		var next := _pending.duplicate()
-		next.erase(seed)
-		_pending = next
-	if _native == null and not _load_native():
-		_native_failed = true
+	_state.lock()
+	var run := not _attempted.has(seed) and _ensure_native()
+	if run:
+		_attempted[seed] = true
+	_pending.erase(seed)
+	_state.unlock()
+	if not run:
 		return
 	NATIVE_HEIGHT.setup_now(seed)
 	var mismatch := ""
@@ -138,10 +142,11 @@ static func _gate(seed: int) -> void:
 	else:
 		mismatch = _parity(seed)
 	if mismatch == "":
-		var next := seeds.duplicate()
-		next[seed] = true
-		seeds = next
+		_state.lock()
+		_seeds[seed] = true
 		enabled = true
+		_fast_seed = seed
+		_state.unlock()
 	elif ClassDB.class_exists(&"CSharpScript"):
 		push_warning("NativeRiverWalk disabled for seed %d: %s. Re-sync scripts/native/NativeRiverWalk.cs " % [seed, mismatch]
 			+ "with scripts/terrain/water/WaterPlan.gd (_jitter_pos/_ascend/_has_source_uncached/_walk/"
@@ -150,12 +155,20 @@ static func _gate(seed: int) -> void:
 
 ## Drop every verified seed (tests): the next setup() re-checks parity.
 static func reset() -> void:
-	_mutex.lock()
-	seeds = {}
-	_pending = {}
+	_state.lock()
+	_seeds.clear()
+	_pending.clear()
 	_attempted.clear()
 	enabled = false
-	_mutex.unlock()
+	_fast_seed = _GATES.NO_SEED
+	_state.unlock()
+
+
+## Under _state: load C# once; false when it is absent or failed.
+static func _ensure_native() -> bool:
+	if _native == null and not _native_failed and not _load_native():
+		_native_failed = true
+	return _native != null
 
 
 static func _load_native() -> bool:

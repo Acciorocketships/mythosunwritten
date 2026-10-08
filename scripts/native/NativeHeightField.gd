@@ -36,29 +36,46 @@ const _GATES := preload("res://scripts/native/NativeGates.gd")
 
 ## True once the C# side is loaded and at least one seed passed its check.
 static var enabled := false
-## Seeds served natively (replaced, never mutated, so readers on other threads
-## always see a complete dictionary).
-static var seeds: Dictionary = {}
-## Seeds registered by a deferred setup() whose gate has not run yet
-## (replaced, never mutated).
+## The last seed that passed its gate: ready_for's lock-free fast path. An int
+## static is copied by value; a Dictionary static is not safe to read while
+## another thread assigns it (see NativeGates.gd, THREADS).
+static var _fast_seed: int = _GATES.NO_SEED
+## Guarded by _state (short holds, any thread): seeds served natively, seeds a
+## deferred setup() registered whose gate has not run, seeds already gated.
+static var _seeds: Dictionary = {}
 static var _pending: Dictionary = {}
 static var _attempted: Dictionary = {}
 static var _native: Object = null
 static var _native_failed := false
-static var _mutex := Mutex.new()
+static var _state := Mutex.new()
+## Serializes gates (held for the whole ~2.2 s parity check); workers only
+## try_lock it, so no caller ever waits behind a gate it did not ask for.
+static var _gate_mutex := Mutex.new()
 
 
 ## True when height_m(…, seed, …) is served by verified C#. A forced archetype
 ## (tests, gallery) is GDScript-only state the C# side does not mirror. Runs a
 ## deferred gate on a worker that wins the lock.
 static func ready_for(seed: int) -> bool:
-	if enabled and seeds.has(seed):
+	if enabled and seed == _fast_seed:
 		return TerrainRegimeField._force == &""
-	if _pending.has(seed) and _GATES.may_gate_here() and _mutex.try_lock():
+	_state.lock()
+	var served := enabled and _seeds.has(seed)
+	var pending := _pending.has(seed)
+	_state.unlock()
+	if not served and pending and _GATES.may_gate_here() and _gate_mutex.try_lock():
 		_gate(seed)
-		_mutex.unlock()
-		return enabled and seeds.has(seed) and TerrainRegimeField._force == &""
-	return false
+		_gate_mutex.unlock()
+		served = served_natively(seed)
+	return served and TerrainRegimeField._force == &""
+
+
+## Whether `seed` passed its gate and the port is on (any thread).
+static func served_natively(seed: int) -> bool:
+	_state.lock()
+	var served := enabled and _seeds.has(seed)
+	_state.unlock()
+	return served
 
 
 static func height_m(p: Vector2, seed: int, include_detail: bool) -> float:
@@ -97,47 +114,42 @@ static func arm_fault() -> void:
 
 ## Load C# and register the seed; gate now unless NativeGates.deferred.
 static func setup(seed: int) -> void:
-	_mutex.lock()
-	if _GATES.deferred:
-		if _native == null and not _native_failed and not _load_native():
-			_native_failed = true
-		if _native != null and not _attempted.has(seed) and not _pending.has(seed):
-			var next := _pending.duplicate()
-			next[seed] = true
-			_pending = next
-	else:
-		_gate(seed)
-	_mutex.unlock()
+	if not _GATES.deferred:
+		setup_now(seed)
+		return
+	_state.lock()
+	if _ensure_native() and not _attempted.has(seed):
+		_pending[seed] = true
+	_state.unlock()
 
 
 ## Load and gate now, deferred or not (tests, the river walk's gate).
 static func setup_now(seed: int) -> void:
-	_mutex.lock()
+	_gate_mutex.lock()
 	_gate(seed)
-	_mutex.unlock()
+	_gate_mutex.unlock()
 
 
-## Under _mutex. Harmless to repeat.
+## Under _gate_mutex. Harmless to repeat.
 static func _gate(seed: int) -> void:
-	if _attempted.has(seed) or _native_failed:
-		return
-	_attempted[seed] = true
-	if _pending.has(seed):
-		var next := _pending.duplicate()
-		next.erase(seed)
-		_pending = next
-	if _native == null and not _load_native():
-		_native_failed = true
+	_state.lock()
+	var run := not _attempted.has(seed) and _ensure_native()
+	if run:
+		_attempted[seed] = true
+	_pending.erase(seed)
+	_state.unlock()
+	if not run:
 		return
 	var err: String = _native.Prepare(seed)
 	var mismatch := "" if err == "" else "C# setup failed: " + err
 	if mismatch == "":
 		mismatch = _parity(seed)
 	if mismatch == "":
-		var next := seeds.duplicate()
-		next[seed] = true
-		seeds = next
+		_state.lock()
+		_seeds[seed] = true
 		enabled = true
+		_fast_seed = seed
+		_state.unlock()
 	else:
 		push_warning("NativeHeightField disabled for seed %d: %s. Re-sync scripts/native/*.cs with " % [seed, mismatch]
 			+ "scripts/terrain/heightfield/{TerrainField,LandformFeatures,TerrainRegime*,LandformSetpieces,"
@@ -147,12 +159,20 @@ static func _gate(seed: int) -> void:
 
 ## Drop every verified seed (tests): the next setup() re-checks parity.
 static func reset() -> void:
-	_mutex.lock()
-	seeds = {}
-	_pending = {}
+	_state.lock()
+	_seeds.clear()
+	_pending.clear()
 	_attempted.clear()
 	enabled = false
-	_mutex.unlock()
+	_fast_seed = _GATES.NO_SEED
+	_state.unlock()
+
+
+## Under _state: load C# once; false when it is absent or failed.
+static func _ensure_native() -> bool:
+	if _native == null and not _native_failed and not _load_native():
+		_native_failed = true
+	return _native != null
 
 
 static func _load_native() -> bool:
