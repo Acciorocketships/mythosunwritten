@@ -119,19 +119,27 @@ func test_background_builds_populate_radius():
 	assert_true(s._request_job_locked(Vector2i.ZERO, true, true, 0))
 	s._mutex.unlock()
 	s._sem.post()
-	var payload_deadline := Time.get_ticks_msec() + 60_000
-	var has_payload := false
-	while not has_payload and Time.get_ticks_msec() < payload_deadline:
+	# A chunk job publishes TWO results: the feature placements the moment they
+	# are planned, and (PARALLEL_TAILS) the terrain tail later, from the pool.
+	var payload_deadline := Time.get_ticks_msec() + 180_000
+	var first_payload: Dictionary = {}
+	var feature_payload: Dictionary = {}
+	while (first_payload.is_empty() or feature_payload.is_empty()) \
+			and Time.get_ticks_msec() < payload_deadline:
 		s._mutex.lock()
-		has_payload = not s._done.is_empty()
+		for r: Dictionary in s._done:
+			if r.get("kind", &"") != &"chunk":
+				continue
+			if r.has("terrain") and first_payload.is_empty():
+				first_payload = r
+			if r.has("features") and feature_payload.is_empty():
+				feature_payload = r
 		s._mutex.unlock()
-		if has_payload:
-			break
-		await wait_seconds(0.25)
-	s._mutex.lock()
-	var first_payload: Dictionary = s._done[0] if not s._done.is_empty() else {}
-	s._mutex.unlock()
-	assert_false(first_payload.is_empty(), "worker produced a chunk payload")
+		if first_payload.is_empty() or feature_payload.is_empty():
+			await wait_seconds(0.25)
+	assert_false(first_payload.is_empty(), "worker produced a terrain chunk payload")
+	assert_true(feature_payload.get("features") is EnvironmentInstancePayload,
+		"the terrain request carries its feature block in its own worker result")
 	if not first_payload.is_empty():
 		assert_true(first_payload.terrain is Dictionary,
 			"terrain crosses the worker boundary as CPU-side data, never a Node")
@@ -139,8 +147,6 @@ func test_background_builds_populate_radius():
 			"water crosses the worker boundary as CPU-side data, never a Node")
 		assert_true(first_payload.dressing is EnvironmentInstancePayload,
 			"dressing crosses the worker boundary as a typed CPU payload")
-		assert_true(first_payload.features is EnvironmentInstancePayload,
-			"the terrain request carries its feature block in the same worker job")
 		assert_true(first_payload.storeys is PackedInt32Array)
 		assert_eq(first_payload.storeys.size(), TerrainChunkMesher.POINTS_PER_CHUNK ** 2,
 			"one storey per lattice point the chunk owns (16 k .. 16 k + 15)")
@@ -153,7 +159,8 @@ func test_background_builds_populate_radius():
 			"water worker payload has no scene/render/physics resources")
 		assert_false(_contains_scene_or_server_resource(first_payload.dressing),
 			"dressing worker payload has IDs, transforms and colours only")
-		assert_false(_contains_scene_or_server_resource(first_payload.features),
+	if not feature_payload.is_empty():
+		assert_false(_contains_scene_or_server_resource(feature_payload.features),
 			"feature worker payload has IDs, transforms and colours only")
 	s.MAX_BUILD_PER_FRAME = 4
 	s.set_process(true)
