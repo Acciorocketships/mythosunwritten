@@ -59,6 +59,27 @@ func visual(asset_id: StringName) -> EnvironmentVisual:
 			if piece.material_override is ShaderMaterial:
 				piece.material_override = piece.material_override.duplicate()
 				load("res://scripts/terrain/field/CliffRockCrags.gd").apply_moss(piece.material_override)
+	# Trees crossfade to their baked imposter in their own surface shaders.
+	# The visible mesh takes faded copies; the shadow proxy keeps the originals.
+	if loaded.imposter != null:
+		for piece: EnvironmentVisualPiece in loaded.pieces:
+			for surface in piece.mesh.get_surface_count():
+				var source := piece.mesh.surface_get_material(surface)
+				if source != null and not EnvironmentCommitQueue.can_crossfade(source):
+					loaded = loaded.duplicate()
+					loaded.imposter = null
+					break
+			if loaded.imposter == null:
+				break
+	if loaded.imposter != null:
+		for piece: EnvironmentVisualPiece in loaded.pieces:
+			for surface in piece.mesh.get_surface_count():
+				var source := piece.mesh.surface_get_material(surface)
+				if source != null and not source.has_meta(&"imposter_crossfade"):
+					var faded := EnvironmentCommitQueue.crossfade_material(source)
+					faded.set_meta(&"imposter_crossfade", true)
+					faded.set_meta(&"baked_material", source)
+					piece.mesh.surface_set_material(surface, faded)
 	_visuals[asset_id] = loaded
 	return loaded
 

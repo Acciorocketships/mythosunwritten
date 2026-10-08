@@ -180,3 +180,120 @@ func test_dressing_grass_and_flowers_end_with_the_grass_ring() -> void:
 	GrassStreamer.set_radii(full, edge)
 	assert_almost_eq(range_end, 100.0 + 6.0 + EnvironmentCommitQueue._TILE_HALF_DIAGONAL, 0.01,
 		"sparse grass/flower dressing fades with the dense carpet, not at a fixed 90 m")
+
+func test_tree_batches_hand_over_to_an_imposter_child() -> void:
+	## October 7: past IMPOSTER_DISTANCE a tree tile draws one baked camera-
+	## facing card per tree instead of thousands of leaf cards, crossfading per
+	## tree in the shaders (complementary dither) inside culling-only ranges.
+	var asset_id := &"meadow.oak.01.summer"
+	var cache := _cache_for(asset_id)
+	var queue := EnvironmentCommitQueue.new(cache, &"Dressing")
+	var parent := Node3D.new()
+	add_child_autofree(parent)
+	var payload := EnvironmentInstancePayload.new()
+	var placement := Transform3D(Basis(Vector3.UP, 0.6).scaled(Vector3.ONE * 1.1), Vector3(5, 0, 5))
+	payload.add(asset_id, placement, Color(0.9, 0.8, 0.6))
+	payload.add(asset_id, Transform3D(Basis(), Vector3(12, 1, 30)), Color(0.7, 0.9, 0.6))
+	queue.register_chunk(Vector2i.ZERO, 1)
+	queue.enqueue(Vector2i.ZERO, 1, parent, payload)
+	queue.drain(64)
+	var container := parent.get_node("Dressing") as Node3D
+	var near := container.get_child(0) as MultiMeshInstance3D
+	var imposter := near.get_node_or_null("Imposter") as MultiMeshInstance3D
+	assert_not_null(imposter)
+	if imposter == null:
+		return
+	var global: Dictionary = ProjectSettings.get_setting("shader_globals/tree_imposter_fade")
+	assert_eq(global.value, Vector2(EnvironmentCommitQueue.IMPOSTER_DISTANCE, EnvironmentCommitQueue.IMPOSTER_FADE),
+		"project.godot's shader global starts at the queue's switch")
+	# The node ranges only cull; the crossfade is per tree in the shaders.
+	assert_almost_eq(near.visibility_range_end, EnvironmentCommitQueue.imposter_range_end(), 1e-3)
+	assert_almost_eq(imposter.visibility_range_begin, EnvironmentCommitQueue.imposter_range_begin(), 1e-3)
+	assert_eq(imposter.visibility_range_end, 0.0, "the imposter draws to the horizon")
+	assert_gt(near.visibility_range_end, EnvironmentCommitQueue.IMPOSTER_DISTANCE
+		+ EnvironmentCommitQueue.IMPOSTER_FADE + EnvironmentCommitQueue._TILE_HALF_DIAGONAL,
+		"the batch draws until its farthest tree has faded out")
+	assert_lt(imposter.visibility_range_begin, EnvironmentCommitQueue.IMPOSTER_DISTANCE
+		- EnvironmentCommitQueue.IMPOSTER_FADE - EnvironmentCommitQueue._TILE_HALF_DIAGONAL,
+		"cards draw from before its nearest tree starts to fade")
+	for node: GeometryInstance3D in [near, imposter]:
+		assert_eq(node.visibility_range_fade_mode, GeometryInstance3D.VISIBILITY_RANGE_FADE_DISABLED,
+			"FADE_SELF would draw the whole batch translucent at every distance")
+	var mesh := near.multimesh.mesh
+	var bark := mesh.surface_get_material(0) as ShaderMaterial
+	var leaf := mesh.surface_get_material(1) as ShaderMaterial
+	assert_eq(bark.shader.resource_path, "res://terrain/environment/materials/tree_bark.gdshader")
+	assert_true(leaf.get_shader_parameter("imposter_crossfade"))
+	var shadow := near.get_node("LeafShadow") as MultiMeshInstance3D
+	assert_true(shadow.multimesh.mesh.surface_get_material(0) is StandardMaterial3D,
+		"the shadow proxy keeps the baked bark")
+	assert_ne(shadow.multimesh.mesh.surface_get_material(1).get_shader_parameter("imposter_crossfade"), true)
+	assert_eq(imposter.multimesh.instance_count, near.multimesh.instance_count)
+	# The atlas was captured in asset space (piece transforms included): the
+	# card takes the placement itself.
+	# (The headless renderer keeps no instance data: read back windowed only.)
+	if DisplayServer.get_name() != "headless":
+		var piece := cache.visual(asset_id).pieces[0]
+		assert_eq(near.multimesh.get_instance_transform(0), placement * piece.local_transform)
+		assert_eq(imposter.multimesh.get_instance_transform(0), placement)
+		for index in 2:
+			assert_eq(imposter.multimesh.get_instance_color(index), near.multimesh.get_instance_color(index))
+			assert_eq(imposter.multimesh.get_instance_custom_data(index),
+				near.multimesh.get_instance_custom_data(index))
+	assert_eq(imposter.cast_shadow, GeometryInstance3D.SHADOW_CASTING_SETTING_OFF,
+		"the card would turn to the sun in the shadow pass")
+	assert_true(imposter.is_in_group("tactical_preserve_surface"))
+	assert_almost_eq(imposter.custom_aabb.get_center(), near.multimesh.get_aabb().get_center(), Vector3.ONE * 1e-4,
+		"both ranges are measured to one centre, so the crossfade never leaves a gap")
+	var quad := imposter.multimesh.mesh as QuadMesh
+	assert_not_null(quad)
+	if quad != null:
+		assert_eq(quad.size, Vector2.ONE)
+	var material := imposter.material_override as ShaderMaterial
+	assert_eq(material.shader.resource_path, "res://terrain/environment/materials/tree_imposter.gdshader")
+	var imposter_data := cache.visual(asset_id).imposter
+	assert_same(material.get_shader_parameter("albedo_atlas"), imposter_data.albedo)
+	assert_eq(material.get_shader_parameter("pivot_height"), imposter_data.pivot_height)
+	# Every tile of the same tree shares one material.
+	assert_same(EnvironmentCommitQueue.imposter_material(imposter_data), material)
+	assert_eq(container.get_child_count(), 1, "the card hangs under its batch; Dressing's children are unchanged")
+	# Non-tree dressing gets no imposter.
+	assert_null(near.get_node_or_null("LeafShadow/Imposter"))
+
+func test_every_placed_tree_keeps_its_imposter_and_crossfades() -> void:
+	## Only the legacy LPFV/KayKit canopy shader cannot crossfade; no dressing
+	## set places those trees.
+	var catalog := EnvironmentCatalog.load_default()
+	var cache := EnvironmentRenderCache.new(catalog)
+	var index := load("res://terrain/dressing/index.tres") as DressingCatalogIndex
+	var trees := 0
+	for asset_id: StringName in DressingCompiler.authored_asset_ids(index):
+		if not &"tree" in catalog.descriptor(asset_id).tags:
+			continue
+		var visual := cache.visual(asset_id)
+		assert_not_null(visual.imposter, "%s hands over to its imposter" % asset_id)
+		trees += 1
+		for piece: EnvironmentVisualPiece in visual.pieces:
+			for surface in piece.mesh.get_surface_count():
+				var material := piece.mesh.surface_get_material(surface) as ShaderMaterial
+				assert_not_null(material, "%s surface %d crossfades" % [asset_id, surface])
+				if material != null:
+					assert_true(material.shader.code.contains("tree_imposter_fade"))
+	assert_gt(trees, 20)
+
+func test_tree_crossfade_shaders_survive_the_camera_bubble() -> void:
+	## CameraVisibilityBubble rewrites a foreground tree's materials by
+	## instrumenting their shader text: each must be one self-contained file.
+	var source := StandardMaterial3D.new()
+	source.vertex_color_use_as_albedo = true
+	var cutout := source.duplicate() as StandardMaterial3D
+	cutout.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+	for material: ShaderMaterial in [EnvironmentCommitQueue.crossfade_material(source),
+			EnvironmentCommitQueue.crossfade_material(cutout)]:
+		var code := CameraVisibilityBubble.instrument(material.shader.code)
+		assert_false(code.contains("#include \"res://terrain/environment/materials/tree"))
+		assert_eq(code.count("void fragment()"), 1)
+		assert_eq(code.count("void vertex()"), 1)
+	var cut := EnvironmentCommitQueue.crossfade_material(cutout) as ShaderMaterial
+	assert_true(cut.shader.code.contains("ALPHA_SCISSOR_THRESHOLD = alpha_scissor;"))
+	assert_true(cut.shader.code.contains("cull_disabled"))

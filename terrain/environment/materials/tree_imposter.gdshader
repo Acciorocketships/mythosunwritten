@@ -17,16 +17,18 @@ shader_type spatial;
 // and is deliberately not read here.
 render_mode cull_disabled, depth_draw_opaque, skip_vertex_transform;
 
-uniform sampler2D albedo_atlas : source_color, filter_linear_mipmap;
-uniform sampler2D normal_atlas : filter_linear_mipmap;
+uniform sampler2D albedo_atlas : source_color, filter_linear_mipmap, repeat_disable;
+uniform sampler2D normal_atlas : filter_linear_mipmap, repeat_disable;
 uniform int frames = 8;
 uniform vec2 frame_size = vec2(1.0);
 uniform float pivot_height = 0.0;
 uniform float alpha_cut = 0.5;
 // Mipmapped coverage averages leaf texels with the empty background, so
 // alpha-tested crowns thin with distance; alpha grows by this much per mip
-// level below the base (0 disables the compensation).
-uniform float mip_alpha_boost = 0.25;
+// level below the base (0 disables the compensation). 1.0 measured in
+// tests/harness/imposter_review.gd: coverage 0.94-0.99 of the meshes' from
+// 80 to 300 m (0.25: 0.92-0.96).
+uniform float mip_alpha_boost = 1.0;
 // Top-down fallback: a vertical card seen from above collapses to a line, so
 // it dissolves (screen-space dither) as the camera's elevation above the
 // frame centre rises from start to end. Orthographic (sun shadow) passes
@@ -43,6 +45,10 @@ varying flat float frame_a;
 varying flat float frame_b;
 varying flat float blend;
 varying flat float fade;
+// The near tree's share of the per-instance crossfade (painted_leaf.gdshader):
+// the card draws exactly the dither cells the tree leaves.
+global uniform vec2 tree_imposter_fade;
+varying flat float near_fade;
 varying flat vec3 axis_x;
 varying flat vec3 axis_z;
 
@@ -74,6 +80,8 @@ void vertex() {
 	blend = f - floor(f);
 	float elevation = degrees(atan(to_eye.y, length(to_eye.xz)));
 	fade = ortho ? 1.0 : 1.0 - smoothstep(top_fade_start_deg, top_fade_end_deg, elevation);
+	near_fade = ortho ? 0.0 : 1.0 - smoothstep(tree_imposter_fade.x - tree_imposter_fade.y,
+		tree_imposter_fade.x + tree_imposter_fade.y, distance(CAMERA_POSITION_WORLD, origin));
 	frame_uv = vec2(VERTEX.x + 0.5, 0.5 - VERTEX.y);
 	VERTEX = (VIEW_MATRIX * vec4(world, 1.0)).xyz;
 	NORMAL = (VIEW_MATRIX * vec4(flat_dir.x, 0.0, flat_dir.y, 0.0)).xyz;
@@ -100,14 +108,19 @@ float dither(vec2 p) {
 }
 
 void fragment() {
-	if (fade < 1.0 && fade <= dither(FRAGCOORD.xy)) {
-		discard;
-	}
+	// Texture reads and derivatives come before the dither discard: screen
+	// derivatives are undefined once a quad's neighbours are discarded.
 	vec2 uv_a = atlas_uv(frame_a);
 	vec2 uv_b = atlas_uv(frame_b);
 	vec4 a = mix(texture(albedo_atlas, uv_a), texture(albedo_atlas, uv_b), blend);
 	vec4 na = texture(normal_atlas, uv_a);
 	vec4 nb = texture(normal_atlas, uv_b);
+	vec2 texel = uv_a * vec2(textureSize(albedo_atlas, 0));
+	float lod = 0.5 * log2(max(max(dot(dFdx(texel), dFdx(texel)), dot(dFdy(texel), dFdy(texel))), 1.0));
+	float cell = dither(FRAGCOORD.xy);
+	if ((fade < 1.0 && fade <= cell) || (near_fade >= 0.001 && near_fade >= cell)) {
+		discard;
+	}
 	// Each frame's normal is rotated by its own capture azimuth before the
 	// blend, so a mid-blend normal never mixes two different bases.
 	vec3 world_normal = normalize(mix(frame_normal(na, frame_a), frame_normal(nb, frame_b), blend) + vec3(0.0, 1e-4, 0.0));
@@ -118,8 +131,6 @@ void fragment() {
 	ROUGHNESS = roughness;
 	SPECULAR = specular;
 	BACKLIGHT = colour * translucency;
-	vec2 texel = uv_a * vec2(textureSize(albedo_atlas, 0));
-	float lod = 0.5 * log2(max(max(dot(dFdx(texel), dFdx(texel)), dot(dFdy(texel), dFdy(texel))), 1.0));
 	ALPHA = a.a * (1.0 + mip_alpha_boost * lod);
 	ALPHA_SCISSOR_THRESHOLD = alpha_cut;
 }

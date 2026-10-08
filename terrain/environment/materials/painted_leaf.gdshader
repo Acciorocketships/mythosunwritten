@@ -34,6 +34,15 @@ uniform float shadow_card_cascade_width = 30.0;
 // Main camera position and metres per pixel per metre of distance (set by
 // AtmosphereDirector), so the shadow pass thins exactly like the view.
 global uniform vec4 leaf_lod_camera;
+// Trees with a baked imposter (EnvironmentCommitQueue) hand over to it per
+// instance: (switch distance, half-width) in metres from the camera to the
+// instance origin. Both dither with one interleaved-gradient pattern and
+// complementary tests (tree_imposter.gdshader, the bark's object dither), so
+// the crossfade neither doubles nor opens a gap. Off for bushes and for the
+// shadow proxy, which keep the material without it.
+uniform bool imposter_crossfade = false;
+global uniform vec2 tree_imposter_fade;
+varying flat float near_fade;
 varying vec3 instance_tint;
 varying float crown_depth;
 varying float crown_up;
@@ -63,6 +72,12 @@ void vertex() {
 	crown_up = NORMAL.y;
 	crown_depth = length((VERTEX - crown_centre) / max(crown_half_extents, vec3(0.01)));
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	near_fade = 1.0;
+	if (imposter_crossfade && PROJECTION_MATRIX[3][3] < 0.5) {
+		float d = distance(CAMERA_POSITION_WORLD, MODEL_MATRIX[3].xyz);
+		near_fade = 1.0 - smoothstep(tree_imposter_fade.x - tree_imposter_fade.y,
+			tree_imposter_fade.x + tree_imposter_fade.y, d);
+	}
 }
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -98,4 +113,8 @@ void fragment() {
 	ROUGHNESS = 0.9;
 	SPECULAR = 0.12;
 	BACKLIGHT = colour * translucency;
+	if (near_fade < 1.0 && (near_fade < 0.001
+			|| near_fade < fract(52.9829189 * fract(dot(FRAGCOORD.xy, vec2(0.06711056, 0.00583715)))))) {
+		discard;
+	}
 }

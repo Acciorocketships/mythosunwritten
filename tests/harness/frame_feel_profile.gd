@@ -9,7 +9,7 @@ extends Node
 ## ("judder"), even when the frame rate is fine.
 ##   Godot --path . res://tests/harness/frame_feel_profile.tscn -- \
 ##     [--seed N] [--phase-seconds 8] [--report /tmp/feel.json] [--size 1920x1080]
-##     [--no-vsync] [--turn-deg 120] [--x X --z Z] [--ablate]
+##     [--no-vsync] [--turn-deg 120] [--x X --z Z] [--ablate] [--imposter-distance M] [--view-shots DIR]
 ## --ablate then holds a slow turn and switches one render feature off at a
 ## time (ablate_* phases), so each feature's cost is the difference from the
 ## ablate_full phases before and after.
@@ -40,6 +40,7 @@ var _x := 0.5
 var _z := 0.5
 var _ablate := false
 var _shots_dir := ""
+var _view_shots := ""
 var _prespin := false
 # Exact per-frame spans: this node runs first (priority -1000) and a tail
 # node runs last, so their difference is every script's _process (resp.
@@ -71,7 +72,11 @@ func _ready() -> void:
 			"--z": _z = float(next)
 			"--ablate": _ablate = true
 			"--grass-shots": _shots_dir = next
+			# Close and tactical views at four headings, then quit (imposter review).
+			"--view-shots": _view_shots = next
 			"--prespin": _prespin = true
+			# Tree imposter switch distance (1e6 = never; before/after checks).
+			"--imposter-distance": EnvironmentCommitQueue.set_imposter_distance(float(next))
 			"--grass-radius":
 				var pair := next.split(",")
 				GrassStreamer.set_radii(float(pair[0]), float(pair[1]))
@@ -209,6 +214,10 @@ func _run() -> void:
 	print("FEEL ready after %.1f s" % ((Time.get_ticks_msec() - _start) / 1000.0))
 	await get_tree().create_timer(3.0).timeout
 	if not _shots_dir.is_empty(): await _grass_shots()
+	if not _view_shots.is_empty():
+		await _capture_views()
+		get_tree().quit()
+		return
 	for phase: String in PHASES:
 		if phase == "turn" and _prespin:
 			_phase = "prespin"
@@ -268,6 +277,22 @@ func _grass_shots() -> void:
 	for instance: GeometryInstance3D in instances:
 		instance.lod_bias = 1.0
 	_rig._pitch = 0.22131444
+
+
+func _capture_views() -> void:
+	DirAccess.make_dir_recursive_absolute(_view_shots)
+	for view: String in ["close", "tactical"]:
+		if _rig.tactical_view != (view == "tactical"):
+			_rig.toggle_view()
+		for heading in 4:
+			_rig._yaw = heading * TAU / 4.0
+			await get_tree().create_timer(1.5).timeout
+			await RenderingServer.frame_post_draw
+			var path := "%s/%s_h%d.png" % [_view_shots, view, heading]
+			get_viewport().get_texture().get_image().save_png(path)
+			print("FEEL shot %s prims=%d draws=%d" % [path,
+				Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME),
+				Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)])
 
 
 func _run_ablations() -> void:

@@ -262,6 +262,9 @@ func test_imposter_renders_lit_tinted_and_rooted_from_every_side() -> void:
 		return
 	var imposter := (load(OAK) as EnvironmentVisual).imposter
 	var distance := imposter.size.y * INSTANCE_SCALE * 1.6
+	# Up close the card yields to its tree (per-instance crossfade): switch at 0 m.
+	var switch := EnvironmentCommitQueue.IMPOSTER_DISTANCE
+	EnvironmentCommitQueue.set_imposter_distance(0.0)
 	var base_m := _baked_base(imposter) * INSTANCE_SCALE
 	for azimuth in [0.0, 2.1, 4.4]:
 		var shot: Dictionary = await _render_imposter(imposter, azimuth, 8.0, Color.WHITE, distance)
@@ -295,3 +298,8 @@ func test_imposter_renders_lit_tinted_and_rooted_from_every_side() -> void:
 	# Seen from overhead the card dissolves instead of collapsing to a line.
 	var top: Dictionary = await _render_imposter(imposter, 0.0, 80.0, Color.WHITE, distance)
 	assert_lt(_coverage(top["image"]).x, 20.0, "top-down view fades the card out")
+	# Nearer than the switch the card draws nothing: the tree owns every cell.
+	EnvironmentCommitQueue.set_imposter_distance(distance + 2.0 * EnvironmentCommitQueue.IMPOSTER_FADE)
+	var yielded: Dictionary = await _render_imposter(imposter, 0.0, 8.0, Color.WHITE, distance)
+	assert_lt(_coverage(yielded["image"]).x, 20.0, "inside the switch distance the card yields to its tree")
+	EnvironmentCommitQueue.set_imposter_distance(switch)

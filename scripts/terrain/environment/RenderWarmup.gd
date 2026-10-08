@@ -47,4 +47,26 @@ static func build(render_cache: EnvironmentRenderCache,
 			# shadow-pass pipeline compiles here too.
 			CANOPY_SHADOWS.attach(instance)
 			slot += 1
+		if visual.imposter != null:
+			# Its distant imposter card (EnvironmentCommitQueue._attach_imposter),
+			# scaled like the pieces so the card stays in view.
+			var size := maxf(visual.imposter.size.x, 0.001)
+			var place := Vector3(float(slot % 16) - 7.5, float(slot / 16) * 0.5, 0.0) * 0.06
+			var multimesh := MultiMesh.new()
+			multimesh.transform_format = MultiMesh.TRANSFORM_3D
+			multimesh.use_colors = true
+			multimesh.use_custom_data = true
+			multimesh.mesh = EnvironmentCommitQueue.imposter_quad()
+			multimesh.instance_count = 1
+			multimesh.set_instance_transform(0, Transform3D(Basis.from_scale(
+				Vector3.ONE * (0.05 / size)), place))
+			multimesh.set_instance_color(0, Color.WHITE)
+			multimesh.set_instance_custom_data(0, Color(0, 0, 0, 0))
+			var card := MultiMeshInstance3D.new()
+			card.multimesh = multimesh
+			card.material_override = EnvironmentCommitQueue.imposter_material(visual.imposter)
+			card.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			root.add_child(card)
+			slot += 1
 	return root
+

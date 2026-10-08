@@ -85,6 +85,10 @@ zoom_out={
 
 [shader_globals]
 
+tree_imposter_fade={
+"type": "vec2",
+"value": Vector2(100, 12)
+}
 leaf_lod_camera={
 "type": "vec4",
 "value": Vector4(0, 0, 0, 0)

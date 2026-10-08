@@ -88,6 +88,22 @@
 > `GrassWorkQueue.WORKERS` is 1 (N-worker path kept; raise if a wider ring ships). `set_radii` at
 > runtime only affects newly streamed tiles: use `--grass-radius` or set before the world starts.
 >
+> October 7 tree imposters: painted trees hand over to a baked camera-facing card
+> (`EnvironmentVisual.imposter`, `tree_imposter.gdshader`, child `Imposter` of each tree
+> tile batch, shared unit QuadMesh, one material per imposter, no shadow) at
+> `EnvironmentCommitQueue.IMPOSTER_DISTANCE` 100 m (shader global `tree_imposter_fade` =
+> (100, 12) in project.godot; test keeps them equal). The crossfade is PER TREE in the
+> shaders, complementary interleaved-gradient dither, opaque pipeline: the visible mesh's
+> leaves (`painted_leaf` `imposter_crossfade`) and bark (`tree_bark.gdshader`, rebuilt from
+> the bake's StandardMaterial3D by `crossfade_material`; object dither cannot see the
+> MultiMesh instance) vs the card. `EnvironmentRenderCache` swaps those copies onto the
+> visible mesh (meta `baked_material` = original); the shadow proxy keeps the baked
+> materials. Node visibility ranges only cull (FADE_DISABLED): GeometryInstance3D
+> FADE_SELF draws a ranged batch in the alpha pass at every distance (trunks vanished).
+> Legacy biome_canopy trees keep no imposter. Measured: `tests/harness/imposter_review.gd`,
+> `frame_feel_profile --imposter-distance M --view-shots DIR`;
+> `docs/qa/2026-10-07-tree-imposters/result.md`.
+
 > October 5 nature style (owner: try the Meadow and Farmlands packs; branch `meadow-nature`).
 > Ambient trees, bushes, flowers, plants, cliff tufts, toadstools, logs and stumps now come from
 > ANGRY MESH Meadow (`tools/environment_bake/manifests/angry_mesh_meadow_nature.json`, ids

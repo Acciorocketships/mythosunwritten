@@ -592,7 +592,7 @@ func test_painted_nature_is_capped_and_collides_on_its_trunk_in_every_season() -
 		var visual := cache.visual(asset_id)
 		for piece: EnvironmentVisualPiece in visual.pieces:
 			for surface in piece.mesh.get_surface_count():
-				var material := piece.mesh.surface_get_material(surface) as BaseMaterial3D
+				var material := _baked(piece.mesh.surface_get_material(surface)) as BaseMaterial3D
 				if material == null or material.albedo_texture == null:
 					continue
 				var size := material.albedo_texture.get_size()
@@ -614,6 +614,10 @@ func test_painted_nature_is_capped_and_collides_on_its_trunk_in_every_season() -
 			assert_almost_eq(capsule.radius, summer_radius, 0.01,
 				"%s fits the same wood as summer whatever its leaf colour" % asset_id)
 
+## The bake's own material behind a tree's crossfade copy (EnvironmentRenderCache).
+static func _baked(material: Material) -> Material:
+	return material.get_meta(&"baked_material", material) if material != null else null
+
 func test_painted_nature_leaves_keep_radial_normals_and_wood_is_matte() -> void:
 	## October 6 owner review: painted canopies split into a lit and a black
 	## shade (Godot flipped every back-face normal into the crown), trunks and
@@ -629,7 +633,8 @@ func test_painted_nature_leaves_keep_radial_normals_and_wood_is_matte() -> void:
 		var leaves := 0
 		for piece: EnvironmentVisualPiece in cache.visual(asset_id).pieces:
 			for surface in piece.mesh.get_surface_count():
-				var material := piece.mesh.surface_get_material(surface)
+				# Trees draw crossfade copies (EnvironmentRenderCache); check the bake.
+				var material := _baked(piece.mesh.surface_get_material(surface))
 				if material is ShaderMaterial:
 					assert_eq((material as ShaderMaterial).shader.resource_path,
 						"res://terrain/environment/materials/painted_leaf.gdshader", "%s leaf shader" % asset_id)
@@ -679,7 +684,7 @@ func test_painted_leaves_thin_by_card_and_the_shader_matches_the_bake() -> void:
 		for surface in surfaces.size():
 			var data: Dictionary = surfaces[surface]
 			var lods: Array = data.get("lods", [])
-			if not mesh.surface_get_material(surface) is ShaderMaterial:
+			if not _baked(mesh.surface_get_material(surface)) is ShaderMaterial:
 				assert_gt(lods.size(), 0, "%s wood has generated LODs" % asset_id)
 				continue
 			leaf_surfaces += 1
