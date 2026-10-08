@@ -1,0 +1,24 @@
+extends SceneTree
+## 64-town production sample: corpus 1-6 x four profiles (for_id) plus
+## production-size seeds 101-140, and seed 141 (production size).
+func _init() -> void:
+	call_deferred("_run")
+func _run() -> void:
+	var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
+	var jobs := []
+	for s in range(1, 7):
+		for id: StringName in WarrenVillageScaleProfile.IDS: jobs.append([s, id])
+	for s in range(101, 142): jobs.append([s, &"prod"])
+	var fails := 0
+	var withdrew := 0
+	for job: Array in jobs:
+		var profile := WarrenVillageScaleProfile.select(job[0]) if job[1] == &"prod" else WarrenVillageScaleProfile.for_id(job[1])
+		var t0 := Time.get_ticks_msec()
+		var plan := WarrenVolumetricSolver.generate(job[0], {}, program, profile)
+		var ids: Array = plan.audit.get("roof_withdrawn_room_ids", []) if plan != null else []
+		fails += int(plan == null)
+		withdrew += int(not ids.is_empty())
+		print("SAMPLE ", job[0], ":", job[1], "/", profile.scale_id, " ok=", plan != null, " ms=", Time.get_ticks_msec() - t0,
+			" withdrawn=", ids, " fail=", WarrenVolumetricSolver.last_failure.substr(0, 300) if plan == null else "")
+	print("SAMPLE_TOTAL towns=", jobs.size(), " failed=", fails, " built_after_withdrawal=", withdrew)
+	quit(0)

@@ -47,12 +47,6 @@ func test_corpus_has_no_pathways_to_nowhere() -> void:
 	var found: Array[String] = []
 	for seed_value in [1, 2, 3, 4, 5, 6]:
 		for scale: StringName in WarrenVillageScaleProfile.IDS:
-			if seed_value == 1 and scale == &"grand":
-				# Known limit: under the taste defaults 1/grand hits the
-				# existing setback-roof gate and builds no town
-				# (docs/qa/2026-10-07-town-odds/taste/result.md, known limits).
-				pending("1/grand builds no town under the taste defaults (setback-roof gate)")
-				continue
 			var dead := _dead_ends(seed_value, scale)
 			total += dead.size()
 			if not dead.is_empty():

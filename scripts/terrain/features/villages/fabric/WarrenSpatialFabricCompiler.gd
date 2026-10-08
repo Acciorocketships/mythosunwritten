@@ -8,6 +8,10 @@ extends RefCounted
 ## envelopes. No method here may move, resize, or restamp the spatial topology.
 static var last_failure := ""
 static var last_audit: Dictionary = {}
+## The room whose own roof choice failed `compile_roof_units` (empty when the
+## failure is not one room's). WarrenVolumetricSolver withdraws that room's
+## storey and composes again rather than losing the town.
+static var last_failure_room_id: StringName = &""
 ## TASK F2. Per-stage wall clock for ONE compile, printed rather than stamped:
 ## the fabric compile is the second cost of a maze solve and `solve` is a
 ## fifteen-step pipeline, so "the compile is 1.9 s" needed a breakdown before
@@ -241,6 +245,7 @@ static func generate(source: WarrenSpatialPlan,
 	## Nothing in this adapter may infer a replacement footprint or route.
 	last_failure = ""
 	last_audit = {}
+	last_failure_room_id = &""
 	if source == null or not source.is_sealed() or program == null:
 		last_failure = "missing sealed spatial town or measured vocabulary"
 		return null
@@ -4053,6 +4058,7 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 	## that the resulting recipe layers reproduce the exact reserved cell union.
 	last_failure = ""
 	last_audit = {}
+	last_failure_room_id = &""
 	if source == null or not source.is_sealed() or program == null \
 			or (room_units.is_empty() and not source.buildings.is_empty()):
 		last_failure = "missing spatial plan, vocabulary, or compiled rooms"
@@ -5134,6 +5140,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		fixed_feature_units: Array[FabricUnit] = []) -> Array[FabricUnit]:
 	last_failure = ""
 	last_audit = {}
+	last_failure_room_id = &""
 	if source == null or not source.is_sealed() or program == null \
 			or (room_units.is_empty() and not source.buildings.is_empty()):
 		last_failure = "missing spatial plan, vocabulary, or compiled rooms"
@@ -5385,6 +5392,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 	var maze_construction_crown_units: Array[StringName] = []
 	roof_stage_ms = _trace_stage("roof.neighborhood", roof_stage_ms)
 	for room_id: StringName in room_ids:
+		last_failure_room_id = room_id
 		# From this point the current room owns the next choice. Every candidate is
 		# checked only against still-unbuilt closures; already-built roofs are
 		# checked by the authoritative transaction probe.
@@ -6256,6 +6264,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 				.contains(".terrace."))
 			garden_cap_count += int(String(cap_unit.recipe_id) \
 				.contains(".garden."))
+	last_failure_room_id = &""
 	out = _join_compact_roof_pairs(source, program, room_units, fixed_feature_units, out, room_by_id, roof_faces_by_room, room_id_by_cell)
 	probe=SettlementFabricPlan.new(&"spatial.joined-roof-selection")
 	for recipe: FabricRecipe in program.recipes(): probe.register_recipe(recipe)

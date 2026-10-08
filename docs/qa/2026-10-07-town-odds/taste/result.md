@@ -133,7 +133,7 @@ old ones, a different seed, so no extra failure rate from the knobs).
   purpose-driven and low-density.
 - A ringless green's lawn reaches house walls; some house doors meet the lawn directly with
   only a one-cell strip.
-- Seed 1 / grand (`for_id`) no longer builds under the new defaults: the same hard setback-roof gate that already rejects seed 141 at d912cd332 ("macro setback roof ... rejected") now rejects a core wall-room roof there. Either satellite_reach_scale=1 or suburb_house_count=0 alone avoids it, so it is a shifted town hitting an existing roof/public-air gate, not a rule added by this plan. Sample: 64 production-size towns, 1 failure under the new defaults (and 1 under the old: seed 141); d912cd332's own corpus had 6/grand with one dead end. Not fixed here.
+- Seed 1 / grand (`for_id`) no longer builds under the new defaults: the same hard setback-roof gate that already rejects seed 141 at d912cd332 ("macro setback roof ... rejected") now rejects a core wall-room roof there. Either satellite_reach_scale=1 or suburb_house_count=0 alone avoids it, so it is a shifted town hitting an existing roof/public-air gate, not a rule added by this plan. Sample: 64 production-size towns, 1 failure under the new defaults (and 1 under the old: seed 141); d912cd332's own corpus had 6/grand with one dead end. Not fixed here. Fixed October 8: the roof gate withdraws the room instead (docs/qa/2026-10-08-roof-proportion/result.md).
 
 
 ## Do the pulls reduce clearings built? (final review, October 8)

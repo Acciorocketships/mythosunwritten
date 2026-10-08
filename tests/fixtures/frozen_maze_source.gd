@@ -30,10 +30,11 @@ static func read(path: String, finish: bool = true) -> WarrenMazeSourcePlan:
 
 static func spatial(source: WarrenMazeSourcePlan,
 		program: SettlementFabricProgram) -> WarrenSpatialPlan:
-	var volume := WarrenMazeVolumeAdapter.to_volume_plan(source)
-	var result := WarrenVolumetricSolver.from_volume(volume, -1, program, true)
-	assert(result != null, WarrenVolumetricSolver.last_failure)
-	var fabric := WarrenSpatialFabricCompiler.generate(result, program, true)
-	assert(fabric != null, WarrenSpatialFabricCompiler.last_failure)
-	result.cache_compiled_fabric(fabric)
+	# The production composition, roof withdrawals included (October 8).
+	var composed := WarrenVolumetricSolver.compose_maze_source(source, program, true)
+	assert(not composed.is_empty(), WarrenVolumetricSolver.last_failure)
+	if composed.is_empty():
+		return null
+	var result := composed.plan as WarrenSpatialPlan
+	result.cache_compiled_fabric(composed.fabric)
 	return result

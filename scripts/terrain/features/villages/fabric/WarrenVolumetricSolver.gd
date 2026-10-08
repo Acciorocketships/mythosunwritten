@@ -203,49 +203,24 @@ static func _solve_maze(world_seed: int, ground_bands: Dictionary,
 	## carve -> reserve -> partition -> seal), never the bare bore: a plan
 	## without plots carries no town to translate, and the block partitioner
 	## rightly refuses one.
-	var started_ms := Time.get_ticks_msec()
 	last_advisory_shortfalls = {}
 	last_maze_stage_ms = {}
+	var started_ms := Time.get_ticks_msec()
 	var maze := WarrenMazeSitePlanner.plan(world_seed, ground_bands, profile,
 		&"", collect_diagnostics)
 	if maze == null:
 		last_failure = "maze source rejected: %s" \
 			% WarrenMazeSitePlanner.last_failure
 		return null
-	# TASK D1 FIX 1, controller ruling. The source's addressed-frontage bar
-	# is advisory: `WarrenMazeCarver`'s ratchets still steer growth by it,
-	# and a town that cannot reach it on real ground ships and says so.
-	# Recorded here rather than in the carver because this dictionary is
-	# the one place a maze town's shortfalls are collected, and it is what
-	# reaches the sealed plan's audit.
-	var frontage := float(maze.audit.get("frontage_ratio", 1.0))
-	if frontage < WarrenMazeSourcePlan.FRONTAGE_FLOOR:
-		last_advisory_shortfalls["frontage"] = frontage
-		last_advisory_shortfalls["frontage_target"] = \
-			WarrenMazeSourcePlan.FRONTAGE_FLOOR
-	_forward_aesthetic_shortfalls(maze.audit.get("aesthetic_shortfalls", {}))
-	var volume := WarrenMazeVolumeAdapter.to_volume_plan(maze, collect_diagnostics)
-	if volume == null:
-		last_failure = "maze volume adapter rejected: %s" \
-			% WarrenMazeVolumeAdapter.last_failure
-		return null
 	var source_ms := Time.get_ticks_msec() - started_ms
-	var spatial_started_ms := Time.get_ticks_msec()
-	# The maze partitioner is deterministic and ignores the variant index, so
-	# the eight-variant rotation is meaningless here: pass -1 for "the one".
-	# Compose the source once, without a speculative paired rebuild.
-	var plan := from_volume(volume, -1, construction_program, collect_diagnostics)
-	var spatial_ms := Time.get_ticks_msec() - spatial_started_ms
-	if plan == null:
-		last_failure = "maze composition rejected: %s" % last_failure
+	var composed := compose_maze_source(maze, construction_program, collect_diagnostics)
+	if composed.is_empty():
 		return null
-	var fabric_started_ms := Time.get_ticks_msec()
-	var fabric := WarrenSpatialFabricCompiler.generate(plan, construction_program, collect_diagnostics)
-	var fabric_ms := Time.get_ticks_msec() - fabric_started_ms
-	if fabric == null:
-		last_failure = "maze fabric gate failed: %s" \
-			% WarrenSpatialFabricCompiler.last_failure
-		return null
+	var volume := composed.volume as WarrenVolumePlan
+	var plan := composed.plan as WarrenSpatialPlan
+	var fabric := composed.fabric as SettlementFabricPlan
+	var spatial_ms := int(composed.spatial_ms)
+	var fabric_ms := int(composed.fabric_ms)
 	if diagnostic_trace_skywalk_timing:
 		print("SKYWALK_TIMING maze_source ms=", source_ms)
 		print("SKYWALK_TIMING partition_spatial source=", volume.stable_id,
@@ -257,6 +232,8 @@ static func _solve_maze(world_seed: int, ground_bands: Dictionary,
 	if finalized == null:
 		last_failure = "maze finalization rejected: %s" % last_failure
 		return null
+	finalized.audit["roof_withdrawn_room_ids"] = composed.withdrawn_room_ids
+	finalized.audit["roof_withdrawn_cell_count"] = int(composed.withdrawn_cell_count)
 	# The pipeline label, and the four counters the searched pipeline used to
 	# vary, kept at the constants a one-pass solve makes them so a sealed audit
 	# keeps the same shape for every reader that already knows it.
@@ -274,6 +251,101 @@ static func _solve_maze(world_seed: int, ground_bands: Dictionary,
 	finalized.audit["advisory_shortfalls"] = last_advisory_shortfalls.duplicate()
 	finalized.audit["advisory_shortfall_count"] = last_advisory_shortfalls.size()
 	return finalized
+
+
+## Rooms the roof gate may withdraw before a town is given up (each one is
+## a full recomposition of the same source; see `_solve_maze`).
+const MAX_ROOF_WITHDRAWALS := 4
+
+
+static func compose_maze_source(maze: WarrenMazeSourcePlan,
+		construction_program: SettlementFabricProgram,
+		collect_diagnostics: bool) -> Dictionary:
+	## Compose and compile one sealed maze source: {volume, plan, fabric,
+	## spatial_ms, fabric_ms, withdrawn_room_ids, withdrawn_cell_count}, or {}
+	## with `last_failure` set.
+	##
+	## ROOF WITHDRAWAL (October 8). The roof gate is a guardrail, not a town
+	## veto: when no roof in the vocabulary can close one room's setback
+	## shoulder (`macro setback roof ... rejected`), that room's storey and
+	## every storey standing on it are withdrawn (the composition planner's
+	## room-support clearance token ends an optional crown there) and the same
+	## source composes again. Deterministic: the withdrawn cells are a function
+	## of the town, and the source plan is not mutated by composition. A room
+	## the town cannot do without (a required doorway, market or bridge
+	## course) still fails the town, as before.
+	var withdrawn_cells: Dictionary = {}
+	var withdrawn_room_ids: Array[StringName] = []
+	for withdrawal in MAX_ROOF_WITHDRAWALS + 1:
+		var volume := _maze_volume(maze, collect_diagnostics)
+		if volume == null:
+			return {}
+		volume.mass_context[&"roof_withdrawn_cells"] = withdrawn_cells.duplicate()
+		var spatial_started_ms := Time.get_ticks_msec()
+		# The maze partitioner is deterministic and ignores the variant index, so
+		# the eight-variant rotation is meaningless here: pass -1 for "the one".
+		# Compose the source once, without a speculative paired rebuild.
+		var plan := from_volume(volume, -1, construction_program, collect_diagnostics)
+		var spatial_ms := Time.get_ticks_msec() - spatial_started_ms
+		if plan == null:
+			last_failure = "maze composition rejected: %s" % last_failure
+			return {}
+		var fabric_started_ms := Time.get_ticks_msec()
+		var fabric := WarrenSpatialFabricCompiler.generate(plan,
+			construction_program, collect_diagnostics)
+		if fabric != null:
+			return {"volume": volume, "plan": plan, "fabric": fabric,
+				"spatial_ms": spatial_ms,
+				"fabric_ms": Time.get_ticks_msec() - fabric_started_ms,
+				"withdrawn_room_ids": withdrawn_room_ids,
+				"withdrawn_cell_count": withdrawn_cells.size()}
+		last_failure = "maze fabric gate failed: %s" \
+			% WarrenSpatialFabricCompiler.last_failure
+		var room_id := WarrenSpatialFabricCompiler.last_failure_room_id
+		var room_cells := _room_private_cells(plan, room_id)
+		if room_cells.is_empty() or withdrawal == MAX_ROOF_WITHDRAWALS:
+			return {}
+		withdrawn_room_ids.append(room_id)
+		for cell: Vector3i in room_cells:
+			withdrawn_cells[cell] = true
+		# Advisories from the withdrawn composition do not describe the town.
+		last_advisory_shortfalls = {}
+		last_maze_stage_ms = {}
+	return {}
+
+
+static func _maze_volume(maze: WarrenMazeSourcePlan,
+		collect_diagnostics: bool) -> WarrenVolumePlan:
+	# TASK D1 FIX 1, controller ruling. The source's addressed-frontage bar
+	# is advisory: `WarrenMazeCarver`'s ratchets still steer growth by it,
+	# and a town that cannot reach it on real ground ships and says so.
+	# Recorded here rather than in the carver because this dictionary is
+	# the one place a maze town's shortfalls are collected, and it is what
+	# reaches the sealed plan's audit.
+	var frontage := float(maze.audit.get("frontage_ratio", 1.0))
+	if frontage < WarrenMazeSourcePlan.FRONTAGE_FLOOR:
+		last_advisory_shortfalls["frontage"] = frontage
+		last_advisory_shortfalls["frontage_target"] = \
+			WarrenMazeSourcePlan.FRONTAGE_FLOOR
+	_forward_aesthetic_shortfalls(maze.audit.get("aesthetic_shortfalls", {}))
+	var volume := WarrenMazeVolumeAdapter.to_volume_plan(maze, collect_diagnostics)
+	if volume == null:
+		last_failure = "maze volume adapter rejected: %s" \
+			% WarrenMazeVolumeAdapter.last_failure
+	return volume
+
+
+static func _room_private_cells(plan: WarrenSpatialPlan,
+		room_id: StringName) -> Array[Vector3i]:
+	var out: Array[Vector3i] = []
+	if plan == null or room_id.is_empty():
+		return out
+	for building: WarrenBuildingVolume in plan.buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			if room.stable_id == room_id:
+				out.assign(room.private_cells)
+				return out
+	return out
 
 
 static func _forward_aesthetic_shortfalls(record: Dictionary) -> void:
@@ -3615,6 +3687,16 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		if not protected_owners.has(support_cell):
 			protected_owners[support_cell] = {}
 		(protected_owners[support_cell] as Dictionary)[
+			WarrenRoomCompositionPlanner.ROOM_SUPPORT_CLEARANCE_OWNER_ID] = true
+	# A room whose setback shoulder no roof could close is withdrawn by
+	# `_solve_maze` (October 8 roof withdrawal): the same token ends that
+	# optional storey, and every storey standing on it, in this composition.
+	for cell_value: Variant in (volume.mass_context.get(&"roof_withdrawn_cells",
+			{}) as Dictionary).keys():
+		var withdrawn_cell := cell_value as Vector3i
+		if not protected_owners.has(withdrawn_cell):
+			protected_owners[withdrawn_cell] = {}
+		(protected_owners[withdrawn_cell] as Dictionary)[
 			WarrenRoomCompositionPlanner.ROOM_SUPPORT_CLEARANCE_OWNER_ID] = true
 	var composition := WarrenRoomCompositionPlanner.solve(grid, volume,
 		proposals, solved_offsets_by_parcel, exact_forced_offsets_by_parcel,

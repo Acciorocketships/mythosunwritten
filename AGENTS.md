@@ -2,6 +2,11 @@
 > `MAX_GABLE_STOREYS` 2 storeys of gable and at most `MAX_ROOF_SLENDERNESS` 3x as tall as its ridge is long. A house wing that fails turns, becomes a double pile
 > (`pile_rects`) or a terrace; a one-module bridge-house whose transverse gatehouse roof fails (gap >= 5: 31/large with clearings had a 12 m roof on a 2 m ridge)
 > takes a row of 2-3-module transverse piles. Gap <= 4 gatehouses and every default fingerprint town are unchanged (`test_roof_proportion`).
+> ROOF WITHDRAWAL (same date): the fabric roof gate no longer vetoes a town. `WarrenSpatialFabricCompiler.last_failure_room_id` names the room whose roof
+> failed; `WarrenVolumetricSolver.compose_maze_source` (production `_solve_maze` and `frozen_maze_source.gd` both use it) marks its cells with the
+> room-support clearance token (`mass_context.roof_withdrawn_cells`) and composes the same source again: that storey and what stands on it are not built
+> (required door/market/bridge courses still fail; at most `MAX_ROOF_WITHDRAWALS` 4). Audit `roof_withdrawn_room_ids`. 1/grand and 141 build again
+> (`test_town_roof_withdrawal`); a 65-town sample fails 0 (2 before); towns that built before are byte-identical.
 >
 > TASTE KNOBS (Oct 7, plan `.superpowers/sdd/2026-10-07-town-taste-knobs`; defaults in `town_odds.tres`, each knob's notes name its task): `clearing_lobe_bias` 2.0 /
 > `clearing_enclosure_bias` 2.0 (courtyards kept with probability by lobe depth / fronted sides, never a hard reject), `plaza_ring_chance` 1.0 and `clearing_ring_chance` 0.25
