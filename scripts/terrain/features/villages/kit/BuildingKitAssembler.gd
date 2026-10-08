@@ -134,6 +134,12 @@ static func yaw_for_dir(dir: int) -> float:
 		_: return PI
 
 
+## Name suffix of the baked front family for one cumulative lean, native m:
+## 0.25 -> "d025" (`frontage.return.d025`).
+static func lean_suffix(depth: float) -> String:
+	return "d%03d" % roundi(depth * 100.0)
+
+
 ## Native +X of a piece facing `dir` (its right, seen from outside).
 static func right_of(dir: int) -> Vector2i:
 	match dir:

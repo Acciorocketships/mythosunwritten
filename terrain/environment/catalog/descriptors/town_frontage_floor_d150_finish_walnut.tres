@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_5an4o"]
+
+[resource]
+script = ExtResource("1_5an4o")
+id = &"town.frontage.floor.d150.finish_walnut"
+visual_path = "res://terrain/environment/visuals/town_room_fronts/town_frontage_floor_d150.tres"
+tags = Array[StringName]([&"building", &"town_room_fronts", &"village"])
+measured_aabb = AABB(-1.0000001, -0.05168787, -0.75, 1.9999964, 0.17940773, 1.5)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"town_room_fronts:town.frontage.floor.d150/frame/walnut"
+material_tints = {
+"DoorShutter": Color(0.48, 0.37, 0.29, 1),
+"DoorShutters": Color(0.48, 0.37, 0.29, 1),
+"Planks": Color(0.48, 0.37, 0.29, 1),
+"Planks_Full": Color(0.48, 0.37, 0.29, 1),
+"Wood": Color(0.48, 0.37, 0.29, 1),
+"Wood_1": Color(0.48, 0.37, 0.29, 1),
+"Wood_2": Color(0.48, 0.37, 0.29, 1),
+"Wood_3": Color(0.48, 0.37, 0.29, 1),
+"Wooden_Planks": Color(0.48, 0.37, 0.29, 1)
+}
