@@ -8,14 +8,16 @@ meet over the lane) and the Suntail reference images. Memory: town-reference-bui
 
 ## Intent
 
-Some houses — not all, by tunable odds — grow outward storey by storey on their street faces,
-so upper floors lean over the lane and facing houses nearly touch at the top while the lane
-keeps a slot of sky. Hard rules exist only as guardrails against broken-looking geometry; a
-guardrail withdraws the offending step, never a house or a town. With the knobs at zero,
+Some houses — not all, by tunable odds — grow outward storey by storey: each storey steps
+out further than the one below (walls stay vertical; "lean" in code names means this cumulative
+step-out), so upper floors overhang the lane and facing houses nearly touch at the top while the
+lane keeps a slot of sky. (Amended October 8: any exposed face, kit-sized steps, wrap-around —
+see "Amendment (October 8, owner review)", which overrides the sections above it.)
+Hard rules exist only as guardrails against broken-looking geometry; a guardrail withdraws the offending step, never a house or a town. With the knobs at zero,
 towns are byte-identical to today.
 
 Success:
-- Growing houses read as Shambles-style leaning fronts in street-level views.
+- Growing houses read as Shambles-style stepped-out fronts in street-level views.
 - Facing upper floors come within `lane_sky_gap` of each other, never closer.
 - No lean enters walking air, clips a neighbour or feature, or projects past its roof.
 - Fingerprint and old-look pins hold at `growing_house_chance = 0`.
@@ -143,3 +145,126 @@ takes no further step on that face and every storey above it keeps the last acce
   air (rooftop walks, skywalk selection) must ask the kit layer's accepted leans.
 - Gable-end shifting depends on roof piece clipping; if a kit roof family cannot be clipped
   cleanly, that family falls back to the eave rule (lean capped under the roof edge).
+
+## Amendment (October 8, owner review)
+
+Binding owner decisions after Task 4's diagnosis (ledger
+`.superpowers/sdd/2026-10-08-growing-upper-floors/progress.md`, measurements in `task-4-report.md`
+"Diagnosis" and "Diagnosis 2"). Where they conflict with the sections above, this section wins.
+
+Why: with the original rules only 1 of 45 rolled street faces stepped out in the 8 fingerprint
+towns at `growing_house_chance = 1`. Most rejections were real interpenetration at face ENDS
+(inside corners, coplanar terrace neighbours, own wings), three were false blockers, and the
+street-face-only pool was small (45 faces). Every-exposed-face eligibility raises the pool to 183;
+the three false-blocker fixes alone take it to 18 stepping faces, the coplanar terrace to 22;
+the remaining end geometry (26 inside corners against another house, 33 coplanar, 28 projecting
+neighbours, 27 own wings, 17 perpendicular faces) is what the wrap-around rules address.
+
+### Decisions
+
+1. **"Step out", not lean.** Each storey juts further than the one below; walls stay vertical.
+   User-facing docs say "step out"; code names (`lean`, `growth`, `wall_offsets`) stay.
+2. **Eligibility: any exposed face.** A house with at least two stacked storeys (ground storey +
+   one above) is eligible on ANY exposed face (not touching another building at the storey's
+   bands), not only street faces. Per edge, the face's edges must also be boundary edges of the
+   storey below (matching footprint, guardrail 5), whether or not that lower edge is itself
+   exposed (a face over a lower neighbour's roof, a garden or the town edge counts). The two
+   face knobs stay; by default they are equal (0.85), so all exposed faces are treated alike.
+3. **Kit-sized steps on the kit's own jetty.** The default step is the Suntail jetty: `jetty_depth`
+   1.0 native m (half a module) per storey, carried by `bracket.jetty` (the kit's diagonal brace,
+   1.0 drop / 1.0 span; one per module, placed exactly as the kit's own jetty places it, on the
+   storey below's leaned face). A 0.5 native step stays as a lighter, rarer option carried by
+   `bracket.small` (as Tasks 2-3 built it). The cap is 2.0 native (two kit steps). The 0.25 step is
+   retired (its baked pieces stay in the catalogue; nothing places them). The attic gable steps
+   out with the top storey (Roofs).
+4. **Wrap-around at neighbours, by rule.** At each end of a stepping face, per storey:
+   (a) **Coplanar terrace neighbour** (another house touching the end, facade on the same line,
+   same first upper floor band): the two faces step out together over the storeys both have — a
+   terrace row jets out as one. No returns at the shared joint; side pieces only at the row's
+   open ends. A growing face pulls its coplanar neighbours' faces into its row (their houses need
+   not have rolled growth; they must be eligible and pass every guardrail).
+   (b) **Inside corner, perpendicular wall** (the cell diagonally beyond the end, in front of the
+   face line, is another building — or the house's own wing): the stepped storey's end is run into
+   that wall and buried (no visible return) only where that part of the wall is plain: the
+   measured contact region (the wall plane over the step's depth and the storey's height,
+   brace drop included) meets only plain wall panels, posts and floor beams — no window, door,
+   eave/roof, balcony, bay, ornament. A baked abutment piece is added only if measurement shows
+   the end panel stops short of the wall surface.
+   (c) Otherwise the step is withdrawn, as before.
+5. **Wrap around outer (convex) corners of the same house.** Adjacent exposed faces of one house
+   meeting at a convex corner step out together, and the corner is closed: each face's wall runs
+   on past the old corner by the step depth (a baked return strip turned to face out), a corner
+   floor and ceiling square (new baked `frontage.corner.dNNN`), the face beams with it, and the
+   corner post at the new corner. A growing face pulls its convex-corner neighbours into its
+   front. This overrides the plan ruling "never two faces that meet at a corner"; two faces that
+   meet at a convex corner either step equally (wrapped) or one of them is flush at that storey.
+6. **Three false blockers fixed.** (i) The house's own bay or ornament on the stepping face of the
+   stepping storey rides out with the face (it is part of that face) and is not an obstacle.
+   (ii) The house's own ornaments on lower storeys that the new braces or floor strip meet (ivy,
+   corner ivy, window boxes, awnings) yield: they are removed, not blocking. Rails, bays and
+   architecture still block. (iii) Contact no deeper than 5 cm (`TOUCH`) is touching, not a
+   collision.
+7. **Principle.** Guardrails withdraw only the offending step — never a house or a town; in a
+   front, the member that cannot hold a storey leaves the front at that storey (the rest keep
+   stepping). `growing_house_chance = 0` stays byte-identical (fingerprint MATCH, old-look test).
+
+### What changes
+
+**Approach.** The unit that steps out is a FRONT: one or more face chains that step as one, joined
+at convex corners of one house (`wrap`) and at coplanar joints between houses (`joint`). A lone
+face is a front of one member. Fronts are built from every eligible house's face chains; a front
+steps out when at least one member face belongs to a growing house and passed its face roll
+(keyed by face key). The front's step and cap come from its leader (first member in key order):
+the leader house's `growth_step` pick, quantised to what its kit can carry (1.0 needs
+`bracket.jetty` and `jetty_depth` 1.0, else 0.5). One monotone profile per front, indexed by storey
+above the shared first upper storey. Each end of each member closes by kind: `return` (open air),
+`wrap`, `joint`, `bury`, or the step is withdrawn (`blocked`). Steps are applied through
+`wall_offsets` / `projections{growth, base, closures}` as before; `bracket.jetty` replaces
+`bracket.small` for a 1.0 increment.
+
+**Knobs** (`terrain/villages/town_odds.tres`; supersedes the table above):
+
+| Knob | Kind | Meaning | Default |
+|---|---|---|---|
+| `growing_house_chance` | CHANCE | share of eligible houses (2+ stacked storeys, at least one exposed face) that grow | 0.3 small → 0.45 large, spread 0.1 (shipped in the defaults task; 0 until then) |
+| `growth_street_face_chance` | CHANCE | per exposed face that fronts public air | 0.85 |
+| `growth_other_face_chance` | CHANCE | per other exposed face | 0.85 (equal: all exposed faces alike) |
+| `growth_step` | WEIGHTS | step per storey, native m | {0.5 (1.0 m world): 1, 1.0 (2.0 m world, the kit jetty): 3} |
+| `growth_max_lean` | RANGE_FLOAT | total step-out cap of the top storey, native m | 2.0 (two kit steps; 4 m world) |
+| `lane_sky_gap` | RANGE_FLOAT | minimum open gap between facing upper floors, native m | 0.75 (1.5 m world) |
+| `growth_gable_front_boost` | RANGE_FLOAT | odds multiplier toward gable-to-street for growing houses | 2.0 |
+
+**Guardrails.** G1 (walking air), G2 (sky gap, per member), G3 (measured neighbours/features and
+reserved columns), G5 (matching footprint per edge) and G6 (portals, balcony bearings) apply to
+every member of a front. G3 skips touching contact (≤ 5 cm), pieces that ride with any active
+member's face at that storey (own bay/ornament on the face; a terrace neighbour's facade at the
+joint), and yielding ornaments (Decision 6). G4 is replaced by the end rule (Decision 4/5): an end
+must close as `return`, `wrap`, `joint` or `bury`; anything else withdraws the step. The rejection
+of each withdrawn step is recorded with its guardrail cause for the corpus audit. G7 (roof cover)
+is unchanged in intent (below).
+
+**Roofs.** Gable to the stepping face: the gable end, barge boards and end roof pieces move out
+with the top storey (a full module at the 2.0 cap), the opened strip is filled with a clipped copy
+of the end-adjacent roof pieces, as specified above. Eave to the stepping face: the eave does not
+move; the top storey's step must stay under the measured cornice (G7). The Suntail cornice reaches
+0.986 native m, so a 1.0 kit step cannot pass under an eave: an eave-crowned face falls back to the
+0.5 step when the measured allowance admits 0.5, otherwise it stays flush (recorded cause
+`crown`). A front member whose crown cannot cover the front's lean at its top storey leaves the
+front there.
+
+**Interactions.** Fronts cross houses (terrace rows), so fitting order is by front leader key, and
+pulled neighbours are written like growing houses (wall offsets, projections) without changing
+their designer choices (a pulled house with inset jetties on the face's storey faults on
+`material` and leaves the front). Balconies, bays and room projections are still fitted after
+growth around the stepped walls. Towers and feature masses remain obstacles.
+
+**Testing additions.** Per decision: any-face eligibility (incl. a face over a lower neighbour),
+kit brace placement and count, each false-blocker fix, outer-corner wrap closure (post, squares,
+extension strips coplanar with the face), a terrace row stepping as one with returns only at the
+open ends and a member leaving the row, inside-corner bury against a plain wall and withdrawal
+against a window. Corpus targets (8 fingerprint towns, `growing_house_chance = 1`, both face
+chances 1): stepping faces well above the Diagnosis 2 baseline of 18-22, counts reported per
+withdrawal cause; zero violations (air, gap, open returns, open corners, broken joints, buried
+ends on non-plain walls, unfloored overhangs, walls beyond their roof, floating masses, roof/public
+air intrusions). Evidence adds street-level and side views of wrapped corners, rows and buried
+ends, and a deviations write-up (ledger ruling F5).
