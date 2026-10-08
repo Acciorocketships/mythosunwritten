@@ -121,3 +121,103 @@ func test_dense_natural_ground_equals_the_lazy_samples_on_a_real_domain() -> voi
 	for index in lazy.size():
 		if ground[index] < dense[index]: carved += 1
 	assert_gt(carved, 0, "the domain contains carved channels (a meaningful comparison)")
+
+
+## River and pond seeding on real source domains (the WaterField._source_fill
+## inputs: contributors in the rect, the owned region, the dense carved
+## ground): the C# claims, containment and pond seeds must equal the GDScript
+## _seed_rivers + _seed_ponds exactly: river levels, claim margins and the
+## queue (source indices, levels, priorities, in heap order).
+func test_river_seeding_matches_gdscript_on_real_domains() -> void:
+	F.setup()
+	if not ClassDB.class_exists(&"CSharpScript"): pass_test("standard editor"); return
+	assert_true(F.enabled)
+	var seed := 2697992464
+	var water := TerrainWorldTuning.make_water(seed)
+	var plan := TerrainWorldTuning.make_heightfield(seed, water)
+	var rivers_seen := 0
+	var seeds_seen := 0
+	var banks_seen := 0
+	for domain_spec: Array in [[Vector2(-2403.0, -2277.0), 70, 61], [Vector2(-807.0, -999.0), 72, 72],
+			[Vector2(189.0, -957.0), 64, 70], [Vector2(-1203.0, -1599.0), 80, 66]]:
+		var base: Vector2 = domain_spec[0]
+		var m1: int = domain_spec[1]
+		var rows: int = domain_spec[2]
+		var rect := Rect2(base, Vector2(m1 - 1, rows - 1) * WaterField.FILL_STEP)
+		var contributors: Dictionary = water.bodies_in_rect(rect)
+		var context := {"water": water, "rivers": contributors.rivers, "ponds": contributors.ponds}
+		var owned := plan.compute_rect_region(WaterField._point_domain(rect))
+		var ground := WaterField._sample_ground_lattice(owned, base, m1, WaterField.FILL_STEP, rows)
+		var dry := PackedFloat32Array(); dry.resize(m1 * rows); dry.fill(-INF)
+		# GDScript reference.
+		var expected := dry.duplicate()
+		var claims := WaterField._river_claims(context, owned)
+		var margins := WaterField._claim_rivers(claims, base, m1, expected)
+		var queue := PQ.new()
+		WaterField._contain_rivers(context.ponds, owned, base, m1, dry, ground, expected, margins, queue)
+		WaterField._seed_ponds(context, owned, base, m1, dry, ground, queue)
+		var index := PackedInt32Array()
+		var level := PackedFloat64Array()
+		var priority := PackedFloat64Array()
+		for entry: Dictionary in queue.heap:
+			index.append(entry.item[0]); level.append(entry.item[1]); priority.append(entry.priority)
+		queue.free()
+		# The dispatch the source solve uses.
+		var actual := dry.duplicate()
+		var heap := WaterField._seed_sources_native(context, owned, base, m1, dry, ground, actual)
+		assert_false(heap.is_empty(), "native seeding ran")
+		if heap.is_empty(): return
+		var label := "domain %s %dx%d" % [base, m1, rows]
+		assert_eq(actual, expected, label + ": river levels")
+		assert_eq(heap.margins, margins, label + ": claim margins")
+		assert_eq(heap.index, index, label + ": source indices (heap order)")
+		assert_eq(heap.level, level, label + ": seed levels")
+		assert_eq(heap.priority, priority, label + ": seed priorities")
+		rivers_seen += contributors.rivers.size()
+		seeds_seen += index.size()
+		for k in margins.size():
+			if is_finite(margins[k]) and margins[k] > 0.0: banks_seen += 1
+	assert_gt(rivers_seen, 3, "the domains hold real rivers")
+	assert_gt(seeds_seen, 100, "and real seeds")
+	assert_gt(banks_seen, 100, "and bank constraints")
+
+
+## The September 9 bank fixture with complete ground: the seeding dispatch
+## and the GDScript agree, and the source fill's relax on the native heap
+## equals the GDScript relax of the GDScript queue.
+func test_seeded_heap_relaxes_like_the_gdscript_queue() -> void:
+	F.setup()
+	if not ClassDB.class_exists(&"CSharpScript"): pass_test("standard editor"); return
+	var river := RiverTrace.new()
+	river.source_cell = Vector2i(901, 903)
+	river.points = PackedVector2Array([Vector2(-36, 0), Vector2(0, 6), Vector2(36, 0)])
+	river.beds = PackedFloat32Array([4, 3.5, 3])
+	river.widths = PackedFloat32Array([20, 14, 20])
+	var near_pond := PondStamp.new(Vector2(0, 36), 12, 17, 2, 3)
+	var far_pond := PondStamp.new(Vector2(700, 700), 60, 31, 2, 3)
+	river.pond = near_pond
+	var water := WaterPlan.new(123, 32, 8)
+	var context := {"water": water, "rivers": [river], "ponds": [near_pond, far_pond]}
+	var region := HeightfieldRegion.new({}, {})
+	var m1 := 17
+	var ground := PackedFloat32Array(); ground.resize(m1 * m1)
+	for j in m1:
+		for i in m1:
+			ground[j * m1 + i] = floorf(absf(j - 8) * 0.6 + absf(i - 8) * 0.2)
+	var dry := PackedFloat32Array(); dry.resize(m1 * m1); dry.fill(-INF)
+	var base := Vector2(-48, -48)
+	var expected_rivers := dry.duplicate()
+	var expected := dry.duplicate()
+	var queue := PQ.new()
+	WaterField._seed_rivers(context, region, base, m1, dry, ground, expected_rivers, queue)
+	WaterField._seed_ponds(context, region, base, m1, dry, ground, queue)
+	WaterField._relax_fill(null, base, m1, expected, ground, expected_rivers, queue)
+	queue.free()
+	var actual_rivers := dry.duplicate()
+	var actual := dry.duplicate()
+	var heap := WaterField._seed_sources_native(context, region, base, m1, dry, ground, actual_rivers)
+	assert_false(heap.is_empty())
+	F.relax_heap(m1, actual, ground, actual_rivers, heap)
+	assert_eq(actual_rivers, expected_rivers, "river levels")
+	assert_eq(actual, expected, "relaxed levels")
+	assert_gt(heap.index.size(), 0)

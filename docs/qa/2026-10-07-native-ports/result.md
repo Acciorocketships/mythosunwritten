@@ -290,3 +290,63 @@ on 8 of 12, mixed INF / -INF / finite flow ceilings). Gate cost about 0.53 s
 `test_water_field` 25/25 (mono). `test_september9_source_domain_cache` fails
 1/1 on both binaries, identically at ba3d4ae46 (its `CountedPlan.compute_region`
 count reads 0: pre-existing, unrelated to this task).
+
+## Task 8: native river seeding (segment claims and containment)
+
+`WaterField._seed_rivers` is split into `_river_claims` (per trace: bank
+strengths and `profile()`, still GDScript until Task 9), `_claim_rivers`
+(`_claim_river_segment` over the dense descent curves and the trace samples;
+returns the margins) and `_contain_rivers` (pond-owned banks, the ground gate,
+`_settle`). The GDScript stays the reference and fallback; the signature of
+`_seed_rivers` is unchanged for its callers and probes.
+
+C#: `scripts/native/NativeWaterSeed.cs` (a partial of `NativeWaterFill`)
+mirrors `_claim_rivers` + `_contain_rivers` + `_seed_ponds` over a complete
+ground lattice (float32 `V2` math for q, ab, nearest and distances, double
+lerps, float32 margin/level storage, the 0.0001 tie rule, the terminal-pond
+collar test) and pushes the offers through the `PriorityQueue.gd` port in the
+same order; the heap comes back as three arrays (`GdPriorityQueue.ExportHeap`).
+`_source_fill` uses it through `WaterField._seed_sources_native` (native on,
+ground dense), takes `source_indices` straight from the heap index array and
+relaxes with `NativeWaterFill.relax_heap`, so the queue never becomes a
+GDScript Dictionary heap (that conversion was most of the old relax_ms).
+Per trace only array references are flattened (no per-sample marshalling).
+`PondStamp` geometry is shared: `GdPond.cs` (radius_at, footprint_t,
+bound_radius, surface_y, read from `NativeCarve.gd.flatten_ponds`) now serves
+both NativeCarve and the seeding; `flatten_ponds` maps a pond to its first
+occurrence.
+
+Gate: `_seed_parity`, appended to the existing lazy NativeWaterFill gate: 16
+random terraced lattices, 1-6 rivers (single-point and zero-length segments,
+descent spans, half-metre level ties, bank weights 0..1), 0-3 ponds with
+aspect and ceilings, terminal ponds in and outside the pond list, and a twin
+river whose widths are 0..0.0003 wider (margins inside and just outside the
+tie band). Compares river levels, margins and the heap (index, level,
+priority) with `!=`. Gate total 0.56-0.57 s (was about 0.55). Falsification:
+`margin < current - 0.0001` -> `0.00011` disables it ("river seeding differs
+(case 5, 40x41)"); `abs <= 0.0001` -> `0.00009` disables it ("river claim
+margins differ (case 3)"). The real-domain test also fails on the first.
+
+Tests: `test_river_seeding_matches_gdscript_on_real_domains` (seed
+2697992464, four real source lattices 61-72 rows: contributors from
+`bodies_in_rect`, the owned region, the dense carved ground; river levels,
+margins, source indices, seed levels and priorities equal) and
+`test_seeded_heap_relaxes_like_the_gdscript_queue` (the September 9 bank
+fixture with complete ground and a terminal pond, through relax).
+
+| measure (`PROFILE_WATER_COST=1 water_block_cost --chunk=-4,-5 --no-disk`) | before (b69495aac) | after |
+|---|---|---|
+| claim_ms | 1391 | 22.5 (C#) |
+| containment_ms (+ pond seeds) | 800 (+ ~37) | 9.7 (C#, ponds included) |
+| native call incl. marshalling | - | 35.8 |
+| profile_ms (Task 9) | 6993 | 6548 |
+| seeds_ms | 9220 | 6585 |
+| relax_ms | 43.6 | 16.9 |
+| harness water_ms | 24704 | 21382 |
+| digest | `b6c965def22e7e93` | `b6c965def22e7e93` |
+
+`parallel_tail_check --rounds=2`: PASS failures=0. Tests (mono and standard):
+`test_native_water_fill` 7/7, `test_september9_pond_seed_queries` 1/1,
+`test_september9_water_containment` 18/18,
+`test_september15_water_source_connectivity` 5/5; `test_native_carve` 1/1 and
+`test_water_field` 25/25 (mono).

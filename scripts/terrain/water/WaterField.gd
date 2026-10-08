@@ -331,16 +331,23 @@ static func _source_fill(c: Dictionary, region) -> Dictionary:
 	var ground_finished := Time.get_ticks_usec() if profile_source_cost else 0
 	if profile_source_cost: print("WATER_SOURCE_STAGE ground ",Time.get_ticks_msec())
 	var queue := PriorityQueue.new()
-	_seed_rivers(source_context, owned, base, m1, levels, ground, rivers, queue)
-	_seed_ponds(source_context, owned, base, m1, levels, ground, queue)
 	# Capture actual offered sources before relaxation spreads their heads.
 	# Dry bank constraints are not sources; neither are later flood labels.
 	var source_indices := PackedInt32Array()
-	for entry: Dictionary in queue.heap:
-		source_indices.append(int(entry.item[0]))
+	var native_heap := _seed_sources_native(source_context, owned, base, m1, levels, ground, rivers)
+	if native_heap.is_empty():
+		_seed_rivers(source_context, owned, base, m1, levels, ground, rivers, queue)
+		_seed_ponds(source_context, owned, base, m1, levels, ground, queue)
+		for entry: Dictionary in queue.heap:
+			source_indices.append(int(entry.item[0]))
+	else:
+		source_indices = native_heap.index
 	var seeds_finished := Time.get_ticks_usec() if profile_source_cost else 0
 	if profile_source_cost: print("WATER_SOURCE_STAGE seeds ",Time.get_ticks_msec())
-	_relax_fill(owned, base, m1, levels, ground, rivers, queue)
+	if native_heap.is_empty():
+		_relax_fill(owned, base, m1, levels, ground, rivers, queue)
+	else:
+		NATIVE_FILL.relax_heap(m1, levels, ground, rivers, native_heap)
 	var relax_finished := Time.get_ticks_usec() if profile_source_cost else 0
 	if profile_source_cost: print("WATER_SOURCE_STAGE relax ",Time.get_ticks_msec())
 	# A flowing trench can drain downhill without being a static basin. Its
@@ -970,22 +977,38 @@ static func _sub_river_ceiling(river_levels: PackedFloat32Array, si: int, sj: in
 static func _seed_rivers(c: Dictionary, region, base: Vector2, m1: int,
 		levels: PackedFloat32Array, gnd: PackedFloat32Array,
 		river_levels: PackedFloat32Array, pq: PriorityQueue) -> void:
-	var profile_usec := 0
-	var claim_usec := 0
 	var seed_started := Time.get_ticks_usec() if profile_source_cost else 0
-	var margins := PackedFloat32Array()
-	margins.resize(levels.size())
-	margins.fill(INF)
-	var pond_bounds_squared := PackedFloat64Array()
-	for pond: PondStamp in c.ponds:
-		var bound := pond.bound_radius()
-		pond_bounds_squared.append(bound * bound)
+	var claims := _river_claims(c, region)
+	var claim_started := Time.get_ticks_usec() if profile_source_cost else 0
+	var margins := _claim_rivers(claims, base, m1, river_levels)
+	var contain_started := Time.get_ticks_usec() if profile_source_cost else 0
+	_contain_rivers(c.ponds, region, base, m1, levels, gnd, river_levels, margins, pq)
+	if profile_source_cost:
+		print("WATER_SEED_COST ",JSON.stringify({"side":m1,"profile_ms":(claim_started-seed_started)/1000.0,
+			"claim_ms":(contain_started-claim_started)/1000.0,
+			"containment_ms":(Time.get_ticks_usec()-contain_started)/1000.0}))
+
+
+## Every river's seeding input: [trace, bank strengths, profile()].
+static func _river_claims(c: Dictionary, region) -> Array:
+	var claims := []
 	for tr: RiverTrace in c.rivers:
-		var profile_started := Time.get_ticks_usec() if profile_source_cost else 0
 		var bank_weights: PackedFloat64Array = c.water.bank_strengths(tr)
-		var prof: Dictionary = profile(tr, region)
-		var claim_started := Time.get_ticks_usec() if profile_source_cost else 0
-		profile_usec += claim_started-profile_started
+		claims.append([tr, bank_weights, profile(tr, region)])
+	return claims
+
+
+## Each river offers its segment capsules (dense descent curve inside a
+## descent span, trace samples elsewhere). Returns the claim margins.
+static func _claim_rivers(claims: Array, base: Vector2, m1: int,
+		river_levels: PackedFloat32Array) -> PackedFloat32Array:
+	var margins := PackedFloat32Array()
+	margins.resize(river_levels.size())
+	margins.fill(INF)
+	for claim: Array in claims:
+		var tr: RiverTrace = claim[0]
+		var bank_weights: PackedFloat64Array = claim[1]
+		var prof: Dictionary = claim[2]
 		var descents: Array = prof.get("descents", [])
 		var in_span := PackedByteArray() # one flag per ORIGINAL trace segment
 		in_span.resize(maxi(0, tr.points.size() - 1))
@@ -1009,11 +1032,20 @@ static func _seed_rivers(c: Dictionary, region, base: Vector2, m1: int,
 			_claim_river_segment(base, m1, margins, river_levels,
 				tr.points[0], tr.points[0], tr.widths[0], tr.widths[0],
 				prof.levels[0], prof.levels[0], WaterPlan.BANK_FEATHER * bank_weights[0])
-		if profile_source_cost: claim_usec += Time.get_ticks_usec()-claim_started
-	# Ground containment is evaluated once after every trace has offered its
-	# geometry.  Every accepted river node queues exactly its own projected
-	# level; _relax_fill treats river_levels as authoritative if a lower
-	# hydrostatic entry happens to reach the same index first.
+	return margins
+
+
+## Ground containment is evaluated once after every trace has offered its
+## geometry.  Every accepted river node queues exactly its own projected
+## level; _relax_fill treats river_levels as authoritative if a lower
+## hydrostatic entry happens to reach the same index first.
+static func _contain_rivers(ponds: Array, region, base: Vector2, m1: int,
+		levels: PackedFloat32Array, gnd: PackedFloat32Array,
+		river_levels: PackedFloat32Array, margins: PackedFloat32Array, pq: PriorityQueue) -> void:
+	var pond_bounds_squared := PackedFloat64Array()
+	for pond: PondStamp in ponds:
+		var bound := pond.bound_radius()
+		pond_bounds_squared.append(bound * bound)
 	for j in int(levels.size() / m1):
 		for i in m1:
 			var idx: int = j * m1 + i
@@ -1023,8 +1055,8 @@ static func _seed_rivers(c: Dictionary, region, base: Vector2, m1: int,
 				# Broad banks constrain incoming water, but are never seeds.
 				# A pond retains ownership of its own footprint.
 				var point := base + Vector2(i,j) * FILL_STEP
-				for pond_index in c.ponds.size():
-					var pond: PondStamp = c.ponds[pond_index]
+				for pond_index in ponds.size():
+					var pond: PondStamp = ponds[pond_index]
 					# The complete source inventory spans kilometres. A bank
 					# point needs the detailed shape only inside its conservative
 					# outer circle; distant ponds cannot withdraw this constraint.
@@ -1038,9 +1070,27 @@ static func _seed_rivers(c: Dictionary, region, base: Vector2, m1: int,
 				river_levels[idx] = -INF
 				continue
 			_settle(m1, levels, pq, i, j, lvl)
+
+
+## River and pond seeding in C# (NativeWaterFill) when its gate passed and
+## the ground lattice is complete: river_levels is updated in place and the
+## seeds come back as the queue heap {"index", "level", "priority"} the
+## GDScript _seed_rivers + _seed_ponds would have built (empty: use those).
+static func _seed_sources_native(c: Dictionary, region, base: Vector2, m1: int,
+		levels: PackedFloat32Array, gnd: PackedFloat32Array,
+		river_levels: PackedFloat32Array) -> Dictionary:
+	if not NATIVE_FILL.on() or gnd.has(INF):
+		return {}
+	var seed_started := Time.get_ticks_usec() if profile_source_cost else 0
+	var claims := _river_claims(c, region)
+	var native_started := Time.get_ticks_usec() if profile_source_cost else 0
+	var heap := NATIVE_FILL.seed_sources(claims, c.ponds, base, m1, levels, gnd, river_levels)
 	if profile_source_cost:
-		print("WATER_SEED_COST ",JSON.stringify({"side":m1,"profile_ms":profile_usec/1000.0,
-			"claim_ms":claim_usec/1000.0,"containment_ms":(Time.get_ticks_usec()-seed_started-profile_usec-claim_usec)/1000.0}))
+		print("WATER_SEED_COST ",JSON.stringify({"side":m1,"native":true,
+			"profile_ms":(native_started-seed_started)/1000.0,
+			"claim_ms":heap.claim_usec/1000.0,"containment_ms":heap.contain_usec/1000.0,
+			"native_call_ms":(Time.get_ticks_usec()-native_started)/1000.0}))
+	return heap
 
 
 ## Offers every fill-lattice point inside one variable-width segment

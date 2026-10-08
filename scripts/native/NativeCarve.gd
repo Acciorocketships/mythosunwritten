@@ -171,18 +171,27 @@ static func _consts() -> Dictionary:
 	return out
 
 
-## A carve region as flat arrays (NativeCarve.cs Build).
-static func _flatten(plan: WaterPlan, rc: Vector2i, region: Dictionary) -> Dictionary:
+## PondStamps as flat arrays (GdPond.cs ReadAll); "index" maps each pond's
+## instance id to its position. Shared with NativeWaterFill.gd.
+static func flatten_ponds(ponds: Array) -> Dictionary:
 	var pond_vec := PackedVector2Array()
 	var pond_num := PackedFloat64Array()
 	var pond_int := PackedInt64Array()
 	var pond_index := {}
-	for pond: PondStamp in region.ponds:
-		pond_index[pond.get_instance_id()] = pond_index.size()
+	for pond: PondStamp in ponds:
+		if not pond_index.has(pond.get_instance_id()):   # first occurrence
+			pond_index[pond.get_instance_id()] = pond_vec.size() / 2
 		pond_vec.append(pond.center)
 		pond_vec.append(pond.island_offset)
 		pond_num.append_array([pond.radius, pond.surface_ceiling, pond.depth, pond.island_radius, pond.aspect_ratio])
 		pond_int.append_array([pond.shape_seed, pond.level, 1 if pond.peninsula else 0])
+	return {"pond_vec": pond_vec, "pond_num": pond_num, "pond_int": pond_int, "index": pond_index}
+
+
+## A carve region as flat arrays (NativeCarve.cs Build).
+static func _flatten(plan: WaterPlan, rc: Vector2i, region: Dictionary) -> Dictionary:
+	var flat_ponds := flatten_ponds(region.ponds)
+	var pond_index: Dictionary = flat_ponds.index
 	var trace_index := {}
 	var points := []
 	var beds := []
@@ -221,7 +230,7 @@ static func _flatten(plan: WaterPlan, rc: Vector2i, region: Dictionary) -> Dicti
 				seg.append(trace_index[flat[n].get_instance_id()])
 				seg.append(flat[n + 1])
 	cell_start[side * side] = seg.size() / 2
-	return {"pond_vec": pond_vec, "pond_num": pond_num, "pond_int": pond_int,
+	return {"pond_vec": flat_ponds.pond_vec, "pond_num": flat_ponds.pond_num, "pond_int": flat_ponds.pond_int,
 		"trace_points": points, "trace_beds": beds, "trace_widths": widths, "trace_bank": bank,
 		"bar_vec": bar_vec, "bar_num": bar_num, "trace_pond": trace_pond,
 		"first_cell": first, "side": side, "cell_start": cell_start, "seg": seg}

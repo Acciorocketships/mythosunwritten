@@ -30,27 +30,19 @@ namespace Story.Native
                 RIM_FEATHER;
         }
 
-        sealed class Pond
-        {
-            public V2 Center, IslandOffset;
-            public double Radius, SurfaceCeiling, Depth, IslandRadius, Aspect, Bound, A, B;
-            public long Level;
-            public bool Peninsula;
-        }
-
         sealed class Trace
         {
             public V2[] Points = Array.Empty<V2>();
             public float[] Beds = Array.Empty<float>(), Widths = Array.Empty<float>();
             public double[] Bank = Array.Empty<double>();
-            public Pond? Pond;
+            public GdPond? Pond;
             public V2[] BarVec = Array.Empty<V2>();      // center, axis per bar
             public double[] BarNum = Array.Empty<double>(); // half_length, half_width per bar
         }
 
         sealed class Region
         {
-            public Pond[] Ponds = Array.Empty<Pond>();
+            public GdPond[] Ponds = Array.Empty<GdPond>();
             public int FirstX, FirstZ, Side;
             public int[] CellStart = Array.Empty<int>();
             public Trace[] SegTrace = Array.Empty<Trace>();
@@ -97,28 +89,8 @@ namespace Story.Native
             try
             {
                 Consts c = _consts ?? throw new InvalidOperationException("NativeCarve: Configure first");
-                Vector2[] pondVec = flat["pond_vec"].AsVector2Array();
-                double[] pondNum = flat["pond_num"].AsFloat64Array();
-                long[] pondInt = flat["pond_int"].AsInt64Array();
-                int nPonds = pondInt.Length / 3;
-                var ponds = new Pond[nPonds];
-                for (int k = 0; k < nPonds; k++)
-                {
-                    var p = new Pond
-                    {
-                        Center = new V2(pondVec[2 * k].X, pondVec[2 * k].Y),
-                        IslandOffset = new V2(pondVec[2 * k + 1].X, pondVec[2 * k + 1].Y),
-                        Radius = pondNum[5 * k], SurfaceCeiling = pondNum[5 * k + 1], Depth = pondNum[5 * k + 2],
-                        IslandRadius = pondNum[5 * k + 3], Aspect = pondNum[5 * k + 4],
-                        Level = pondInt[3 * k + 1], Peninsula = pondInt[3 * k + 2] != 0,
-                    };
-                    long seed = pondInt[3 * k];
-                    // radius_at's two phases and bound_radius(): pure functions of the record.
-                    p.A = Hash01(Mix64(seed)) * TAU;
-                    p.B = Hash01(Mix64(unchecked(seed + 1))) * TAU;
-                    p.Bound = p.Radius * (1.0 + c.WOBBLE);
-                    ponds[k] = p;
-                }
+                GdPond[] ponds = GdPond.ReadAll(flat["pond_vec"].AsVector2Array(),
+                    flat["pond_num"].AsFloat64Array(), flat["pond_int"].AsInt64Array(), c.WOBBLE);
                 var points = flat["trace_points"].AsGodotArray();
                 var beds = flat["trace_beds"].AsGodotArray();
                 var widths = flat["trace_widths"].AsGodotArray();
@@ -250,13 +222,11 @@ namespace Story.Native
         /// Godot's MAX (maxf): a < b ? b : a (differs from Max on signed zeros).
         static double Maxf(double a, double b) => a < b ? b : a;
 
-        static double Hash01(long h) => (double)(h & 0x7FFFFFFF) / (double)0x80000000L;
-
         /// WaterPlan._carve_region after the spawn disk: ground is known.
         static double Carve(Consts c, Region r, V2 p, long cx, long cz, double ground)
         {
             double best = 0.0;
-            foreach (Pond pond in r.Ponds)
+            foreach (GdPond pond in r.Ponds)
             {
                 double bound = pond.Bound;
                 V2 dp = p - pond.Center;
@@ -307,28 +277,13 @@ namespace Story.Native
             return best;
         }
 
-        static double RadiusAt(Consts c, Pond pond, double ang)
-        {
-            double minor = Clamp(pond.Aspect, 0.5, 1.0);
-            double across = Math.Sin(ang - pond.A);
-            double ellipse = minor / Math.Sqrt(minor * minor * (1.0 - across * across) + across * across);
-            return pond.Radius * ellipse
-                * (1.0 + c.WOBBLE * (0.6 * Math.Sin(2.0 * ang + pond.A) + 0.4 * Math.Sin(3.0 * ang + pond.B)));
-        }
+        static double FootprintT(Consts c, GdPond pond, V2 p) => pond.FootprintT(p, c.WOBBLE);
 
-        static double FootprintT(Consts c, Pond pond, V2 p)
-        {
-            V2 d = p - pond.Center;
-            if ((double)d.LengthSquared() < 0.000001) return 0.0;
-            return (double)d.Length() / RadiusAt(c, pond, Math.Atan2((double)d.Y, (double)d.X));
-        }
+        static double SurfaceY(Consts c, GdPond pond) => pond.SurfaceY(c.POND_STOREY, c.SURFACE_DROP);
 
-        static double SurfaceY(Consts c, Pond pond)
-            => Min((double)pond.Level * c.POND_STOREY - c.SURFACE_DROP, pond.SurfaceCeiling);
+        static double BedY(Consts c, GdPond pond) => SurfaceY(c, pond) + c.SURFACE_DROP - pond.Depth;
 
-        static double BedY(Consts c, Pond pond) => SurfaceY(c, pond) + c.SURFACE_DROP - pond.Depth;
-
-        static double IslandExcavationWeight(Pond pond, V2 p)
+        static double IslandExcavationWeight(GdPond pond, V2 p)
         {
             if (pond.IslandRadius <= 0.0) return 1.0;
             V2 local = p - pond.Center - pond.IslandOffset;
@@ -341,7 +296,7 @@ namespace Story.Native
             return Smoothstep(pond.IslandRadius * 0.75, pond.IslandRadius * 1.25, local.Length());
         }
 
-        static double PondCarve(Consts c, Pond pond, V2 p, double groundY)
+        static double PondCarve(Consts c, GdPond pond, V2 p, double groundY)
         {
             double t = FootprintT(c, pond, p);
             if (t >= 1.0) return 0.0;

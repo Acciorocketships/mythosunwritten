@@ -2,7 +2,9 @@ extends RefCounted
 
 ## C# versions of WaterField's hydraulic fill kernels (_relax_fill,
 ## _reconcile_connected_surface, _smooth_fill_surface,
-## _retain_source_connected_fill, _cap_hydrostatic_fill with its SpillSearch) and of PriorityQueue.gd
+## _retain_source_connected_fill, _cap_hydrostatic_fill with its SpillSearch),
+## of its source seeding (_claim_rivers, _contain_rivers, _seed_ponds;
+## NativeWaterSeed.cs, GdPond.cs) and of PriorityQueue.gd
 ## (scripts/native/NativeWaterFill.cs, GdPriorityQueue.cs). Used only once
 ## verified bit-identical to the GDScript on random lattices (setup()), and
 ## never under the standard editor. No class_name: preload it.
@@ -20,6 +22,7 @@ extends RefCounted
 ## keeps the native path off and names the files to re-sync.
 
 const _CS_PATH := "res://scripts/native/NativeWaterFill.cs"
+const _CARVE := preload("res://scripts/native/NativeCarve.gd")
 
 ## Tests: force the GDScript reference.
 static var force_off := false
@@ -61,6 +64,75 @@ static func relax(m1: int, levels: PackedFloat32Array, gnd: PackedFloat32Array,
 		priority[k] = entry.priority
 	pq.heap.clear()
 	_store(levels, _native.Relax(m1, levels, gnd, river_levels, index, level, priority))
+
+
+## The GDScript heap's entries as three arrays (seed_sources), relaxed.
+static func relax_heap(m1: int, levels: PackedFloat32Array, gnd: PackedFloat32Array,
+		river_levels: PackedFloat32Array, heap: Dictionary) -> void:
+	_store(levels, _native.Relax(m1, levels, gnd, river_levels, heap.index, heap.level, heap.priority))
+
+
+## WaterField._claim_rivers + _contain_rivers + _seed_ponds over a complete
+## `gnd` (claims: WaterField._river_claims). Updates river_levels in place and
+## returns the queue the GDScript would have built, as {"index", "level",
+## "priority"} in heap order, plus "margins" and the C# phase times
+## ("claim_usec", "contain_usec"). {} when the C# call failed (nothing changed).
+static func seed_sources(claims: Array, ponds: Array, base: Vector2, m1: int,
+		levels: PackedFloat32Array, gnd: PackedFloat32Array,
+		river_levels: PackedFloat32Array) -> Dictionary:
+	var all_ponds := ponds.duplicate()
+	var position := {}
+	for k in ponds.size():
+		if not position.has(ponds[k].get_instance_id()): position[ponds[k].get_instance_id()] = k
+	var t_points := []
+	var t_widths := []
+	var t_levels := []
+	var t_bank := []
+	var t_terminal := PackedInt32Array()
+	var d_start := PackedInt32Array()
+	var d_lo := PackedInt32Array()
+	var d_hi := PackedInt32Array()
+	var d_pos := []
+	var d_w := []
+	var d_lvl := []
+	for claim: Array in claims:
+		var tr: RiverTrace = claim[0]
+		var prof: Dictionary = claim[2]
+		t_points.append(tr.points)
+		t_widths.append(tr.widths)
+		t_levels.append(prof.levels)
+		t_bank.append(claim[1])
+		var terminal := -1
+		if tr.pond != null:
+			var id := tr.pond.get_instance_id()
+			if not position.has(id):
+				position[id] = all_ponds.size()
+				all_ponds.append(tr.pond)
+			terminal = position[id]
+		t_terminal.append(terminal)
+		d_start.append(d_lo.size())
+		for d: Dictionary in prof.get("descents", []):
+			d_lo.append(int(d.lo))
+			d_hi.append(int(d.hi))
+			d_pos.append(d.pos)
+			d_w.append(d.w)
+			d_lvl.append(d.lvl)
+	d_start.append(d_lo.size())
+	var flat_ponds := _CARVE.flatten_ponds(all_ponds)
+	var flat := {"pond_vec": flat_ponds.pond_vec, "pond_num": flat_ponds.pond_num,
+		"pond_int": flat_ponds.pond_int, "seed_ponds": ponds.size(),
+		"t_points": t_points, "t_widths": t_widths, "t_levels": t_levels, "t_bank": t_bank,
+		"t_terminal": t_terminal, "d_start": d_start, "d_lo": d_lo, "d_hi": d_hi,
+		"d_pos": d_pos, "d_w": d_w, "d_lvl": d_lvl}
+	var consts := PackedFloat64Array([WaterField.FILL_STEP, WaterPlan.BANK_FEATHER,
+		PondStamp.WOBBLE, PondStamp.STOREY, PondStamp.SURFACE_DROP])
+	var result = _native.SeedSources(flat, consts, base.x, base.y, m1, levels, gnd, river_levels)
+	if not result is Array or (result as Array).size() != 7:
+		return {}
+	_store(river_levels, result[0])
+	return {"index": PackedInt32Array(result[2]), "level": PackedFloat64Array(result[3]),
+		"priority": PackedFloat64Array(result[4]), "margins": PackedFloat32Array(result[1]),
+		"claim_usec": int(result[5]), "contain_usec": int(result[6])}
 
 
 static func reconcile(levels: PackedFloat32Array, ground: PackedFloat32Array,
@@ -133,7 +205,8 @@ static func _gate() -> void:
 		push_warning("NativeWaterFill disabled: %s. Re-sync scripts/native/NativeWaterFill.cs " % mismatch
 			+ "(and GdPriorityQueue.cs) with scripts/terrain/water/WaterField.gd (_relax_fill, "
 			+ "_reconcile_connected_surface, _smooth_fill_surface, _retain_source_connected_fill, "
-			+ "_cap_hydrostatic_fill, SpillSearch) "
+			+ "_cap_hydrostatic_fill, SpillSearch, _claim_river_segment, _claim_rivers, "
+			+ "_contain_rivers, _seed_ponds; NativeWaterSeed.cs, GdPond.cs with PondStamp) "
 			+ "and scripts/core/PriorityQueue.gd; the water fill uses GDScript until then.")
 
 
@@ -282,4 +355,119 @@ static func _parity() -> String:
 		if reconcile(reconciled_actual, reconcile_ground, m1, step) != offers_expected \
 				or reconciled_actual != reconciled_expected:
 			return "reconcile differs (case %d, %dx%d)" % [case_index, m1, rows]
+	return _seed_parity(rng)
+
+
+## Random rivers over terraced lattices: claim ties (equal levels, equal
+## margins), descent spans, degenerate and single-point traces, terminal ponds
+## inside and outside the pond list, bank widths from zero to wide. The C#
+## seeding must equal _claim_rivers + _contain_rivers + _seed_ponds: river
+## levels, margins and the queue heap (index, level and priority, in order).
+static func _seed_parity(rng: RandomNumberGenerator) -> String:
+	for case_index in 16:
+		var m1 := rng.randi_range(24, 44)
+		var rows := m1 if case_index % 3 == 0 else rng.randi_range(24, 44)
+		var n := m1 * rows
+		var base := Vector2(rng.randi_range(-40, 40), rng.randi_range(-40, 40)) * WaterField.FILL_STEP \
+			+ Vector2.ONE * WaterField.FILL_OFFSET
+		var extent := Vector2(m1 - 1, rows - 1) * WaterField.FILL_STEP
+		var ground := PackedFloat32Array(); ground.resize(n)
+		var slope := Vector2(rng.randf_range(-0.05, 0.05), rng.randf_range(-0.05, 0.05))
+		for j in rows:
+			for i in m1:
+				ground[j * m1 + i] = floorf(12.0 + slope.dot(Vector2(i, j) * WaterField.FILL_STEP)
+					+ rng.randf_range(-1.0, 1.0))
+		var ponds: Array = []
+		var extra_ponds: Array = []
+		for k in rng.randi_range(0, 3):
+			var pond := PondStamp.new(base + Vector2(rng.randf(), rng.randf()) * extent,
+				rng.randf_range(8.0, 40.0), rng.randi(), rng.randi_range(2, 5), rng.randf_range(1.0, 4.0))
+			pond.aspect_ratio = rng.randf_range(0.4, 1.0)
+			if rng.randf() < 0.4: pond.surface_ceiling = float(rng.randi_range(8, 18))
+			ponds.append(pond)
+		if rng.randf() < 0.5:
+			extra_ponds.append(PondStamp.new(base + Vector2(rng.randf(), rng.randf()) * extent,
+				rng.randf_range(8.0, 30.0), rng.randi(), rng.randi_range(2, 5), 2.0))
+		var claims: Array = []
+		for t in rng.randi_range(1, 6):
+			var tr := RiverTrace.new()
+			var count := 1 if rng.randf() < 0.15 else rng.randi_range(2, 7)
+			var p := base + Vector2(rng.randf(), rng.randf()) * extent
+			var heading := rng.randf() * TAU
+			var levels := PackedFloat32Array()
+			var points := PackedVector2Array()
+			var widths := PackedFloat32Array()
+			var level := float(rng.randi_range(9, 16))
+			for k in count:
+				points.append(p)
+				widths.append(rng.randf_range(2.0, 22.0) if rng.randf() < 0.8 else 10.0)
+				levels.append(level)
+				if rng.randf() < 0.1: continue   # a repeated point (zero-length segment)
+				heading += rng.randf_range(-0.8, 0.8)
+				p += Vector2.from_angle(heading) * rng.randf_range(6.0, 30.0)
+				level -= float(rng.randi_range(0, 2)) * 0.5   # ties on whole and half metres
+			tr.points = points
+			tr.widths = widths
+			var bank := PackedFloat64Array()
+			for k in count:
+				var roll := rng.randf()
+				bank.append(0.0 if roll < 0.3 else 1.0 if roll < 0.4 else rng.randf_range(0.0, 0.3))
+			var descents := []
+			if count >= 3 and rng.randf() < 0.6:
+				var lo := rng.randi_range(0, count - 3)
+				var hi := rng.randi_range(lo + 1, count - 1)
+				var pos := PackedVector2Array()
+				var w := PackedFloat32Array()
+				var lvl := PackedFloat32Array()
+				var steps := (hi - lo) * 3
+				for k in steps + 1:
+					var u := float(k) / float(steps) * float(hi - lo)
+					var si := mini(lo + int(u), hi - 1)
+					var f := u - float(si - lo)
+					pos.append(tr.points[si].lerp(tr.points[si + 1], f))
+					w.append(lerpf(tr.widths[si], tr.widths[si + 1], f))
+					lvl.append(lerpf(levels[si], levels[si + 1], f))
+				descents.append({"lo": lo, "hi": hi, "pos": pos, "w": w, "lvl": lvl})
+			var pond_roll := rng.randf()
+			if pond_roll < 0.3 and not ponds.is_empty():
+				tr.pond = ponds[rng.randi_range(0, ponds.size() - 1)]
+			elif pond_roll < 0.5 and not extra_ponds.is_empty():
+				tr.pond = extra_ponds[0]
+			claims.append([tr, bank, {"levels": levels, "descents": descents}])
+		# A twin of one river, its widths a hair wider (margins within and just
+		# beyond the 0.0001 tie band) and its levels shifted: the tie rule.
+		if not claims.is_empty():
+			var source: Array = claims[rng.randi_range(0, claims.size() - 1)]
+			var twin := RiverTrace.new()
+			twin.points = source[0].points
+			var twin_widths := PackedFloat32Array()
+			for width in source[0].widths:
+				twin_widths.append(width + rng.randf_range(0.0, 0.0003))
+			twin.widths = twin_widths
+			var twin_levels := PackedFloat32Array()
+			for value in source[2].levels:
+				twin_levels.append(value + float(rng.randi_range(-1, 1)) * 0.5)
+			claims.append([twin, source[1], {"levels": twin_levels, "descents": []}])
+		var dry := PackedFloat32Array(); dry.resize(n); dry.fill(-INF)
+		var expected := dry.duplicate()
+		var actual := dry.duplicate()
+		var margins := WaterField._claim_rivers(claims, base, m1, expected)
+		var pq := PriorityQueue.new()
+		WaterField._contain_rivers(ponds, null, base, m1, dry, ground, expected, margins, pq)
+		WaterField._seed_ponds({"ponds": ponds}, null, base, m1, dry, ground, pq)
+		var heap := seed_sources(claims, ponds, base, m1, dry, ground, actual)
+		var heap_index := PackedInt32Array()
+		var heap_level := PackedFloat64Array()
+		var heap_priority := PackedFloat64Array()
+		for entry: Dictionary in pq.heap:
+			heap_index.append(entry.item[0])
+			heap_level.append(entry.item[1])
+			heap_priority.append(entry.priority)
+		pq.free()
+		if heap.is_empty():
+			return "seeding failed in C# (case %d)" % case_index
+		if actual != expected or heap.index != heap_index or heap.level != heap_level or heap.priority != heap_priority:
+			return "river seeding differs (case %d, %dx%d)" % [case_index, m1, rows]
+		if heap.margins != margins:
+			return "river claim margins differ (case %d)" % case_index
 	return ""

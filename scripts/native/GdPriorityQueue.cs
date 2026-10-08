@@ -24,6 +24,15 @@ namespace Story.Native
             _count = items.Length;
         }
 
+        // The heap's entries in heap order (GDScript `heap`).
+        public void ExportHeap(out T[] items, out double[] priorities)
+        {
+            items = new T[_count];
+            priorities = new double[_count];
+            Array.Copy(_items, items, _count);
+            Array.Copy(_priorities, priorities, _count);
+        }
+
         // GDScript `heap.clear()`.
         public void Clear()
         {
