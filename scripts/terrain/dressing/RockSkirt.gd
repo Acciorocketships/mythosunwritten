@@ -135,9 +135,10 @@ static func terrain_surface(region: HeightfieldRegion, world_seed: int,
 	# the quad. The quad's corners lie on the side of the lattice point owning
 	# the point being shaded (a cliff's upper and lower quads never weld).
 	var baked := {}
-	# Lattice corner tints, read once each (one surface is built and read by
-	# one thread: a skirt's or a candidate's own, never shared).
+	# Lattice corner tints and node normals, read once each (one surface is
+	# built and read by one thread: a skirt's or a candidate's own).
 	var tints := {}
+	var node_normals := {}
 	var lattice_tint := func(x: float, z: float) -> Color:
 		var key := Vector2(x, z)
 		if not tints.has(key):
@@ -155,15 +156,24 @@ static func terrain_surface(region: HeightfieldRegion, world_seed: int,
 			var fz := (p.y - z0) / step
 			var nodes := PackedVector3Array()
 			var known: PackedFloat64Array = corners.get(p, PackedFloat64Array())
+			var missing := PackedVector3Array()
 			for k in 4:
 				var x := x0 + (step if k & 1 else 0.0)
 				var z := z0 + (step if k & 2 else 0.0)
-				nodes.append(Vector3(x, known[k] if not known.is_empty()
-					else TerrainTileField.surface_y_on_side(region, x, z, owner), z))
-			var normals := TerrainChunkMesher.field_normals(nodes, region, baked)
+				var node := Vector3(x, known[k] if not known.is_empty()
+					else TerrainTileField.surface_y_on_side(region, x, z, owner), z)
+				nodes.append(node)
+				if not node_normals.has(node):
+					missing.append(node)
+			# field_normals is per node (a pure function of the node), so a
+			# node shared by neighbouring vertices is lit once.
+			if not missing.is_empty():
+				var fresh := TerrainChunkMesher.field_normals(missing, region, baked)
+				for k in missing.size():
+					node_normals[missing[k]] = fresh[k]
 			var n := Vector3.ZERO
 			for k in 4:
-				n += normals[k] * (fx if k & 1 else 1.0 - fx) * (fz if k & 2 else 1.0 - fz)
+				n += (node_normals[nodes[k]] as Vector3) * (fx if k & 1 else 1.0 - fx) * (fz if k & 2 else 1.0 - fz)
 			return n.normalized(),
 		"tint": func(p: Vector2) -> Color:
 			var x0 := floorf(p.x / tile) * tile
