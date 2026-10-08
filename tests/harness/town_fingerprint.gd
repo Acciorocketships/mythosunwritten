@@ -5,6 +5,7 @@ extends SceneTree
 ## identical hashes and any change in geometry, placement or dressing shows.
 
 const REVIEW := preload("res://tests/harness/suntail/kit_town_review.gd")
+const OLD_LOOK := preload("res://tests/fixtures/town_old_look.gd")
 const DEFAULT_TOWNS := "53:grand,31:large,13:standard,43:large,83:grand,103:standard,7:compact,61:standard"
 
 func _init() -> void:
@@ -14,12 +15,19 @@ func _arg(args: PackedStringArray, name: String, fallback: String) -> String:
 	var i := args.find(name)
 	return args[i + 1] if i >= 0 and i + 1 < args.size() else fallback
 
-func _hash_values(values: Array) -> String:
+static func _hash_values(values: Array) -> String:
 	var ctx := HashingContext.new()
 	ctx.start(HashingContext.HASH_SHA256)
 	for value: Variant in values:
 		ctx.update(var_to_bytes(value))
 	return ctx.finish().hex_encode()
+
+## The source-plan hash pinned by baseline.json / old_look_baseline.json.
+static func source_hash_of(source: WarrenMazeSourcePlan) -> String:
+	return _hash_values([source.plots, source.passage_kinds,
+		source.feature_stamps, source.market_square_cells, source.summit_cell,
+		source.excavation.carved, source.excavation.lanes,
+		source.excavation.tunnel_cells, source.excavation.construction_reservations])
 
 func _payload_hash(payload: EnvironmentInstancePayload) -> String:
 	var ctx := HashingContext.new()
@@ -40,12 +48,19 @@ func _run() -> void:
 	var towns := _arg(args, "--towns", DEFAULT_TOWNS).split(",")
 	var out_path := _arg(args, "--out", "/tmp/town_fingerprint.json")
 	var compare_path := _arg(args, "--compare", "")
+	# --parts source compares source-plan hashes only (e.g. the old-look pin,
+	# whose payloads legitimately differ: dark-wood lamps).
+	var compare_parts := _arg(args, "--parts", "source,payload,error").split(",")
 	var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
 	var overrides := TownOddsProgram.parse_overrides(args, program.town_odds)
 	if overrides.has("error"):
 		push_error(String(overrides.error))
 		quit(2)
 		return
+	# --old-look builds every town under the pre-taste knob values
+	# (tests/fixtures/town_old_look.gd); --odds still overrides on top.
+	if args.has("--old-look"):
+		overrides = OLD_LOOK.merge(overrides)
 	if not overrides.is_empty():
 		program.town_odds = program.town_odds.with_overrides(overrides)
 	var results := {}
@@ -73,10 +88,7 @@ func _run() -> void:
 					"purpose": p.get("purpose", &""), "green": WarrenPlotReservations.is_green_court(p)})),
 			" ", JSON.stringify(WarrenPlotPlanner.outcomes(source).get("clearings", [])))
 		var fabric := spatial.compiled_fabric_cache()
-		var source_hash := _hash_values([source.plots, source.passage_kinds,
-			source.feature_stamps, source.market_square_cells, source.summit_cell,
-			source.excavation.carved, source.excavation.lanes,
-			source.excavation.tunnel_cells, source.excavation.construction_reservations])
+		var source_hash := source_hash_of(source)
 		var payload := REVIEW.town_payload(spatial, fabric, false)
 		results[town] = {"source": source_hash, "payload": _payload_hash(payload),
 			"ms": Time.get_ticks_msec() - started}
@@ -95,7 +107,7 @@ func _run() -> void:
 	var expected: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(compare_path))
 	var ok := true
 	for town: String in towns:
-		for part: String in ["source", "payload", "error"]:
+		for part: String in compare_parts:
 			if str((expected.get(town, {}) as Dictionary).get(part, "")) \
 					!= str((results.get(town, {}) as Dictionary).get(part, "")):
 				print("FINGERPRINT_MISMATCH ", town, " ", part)

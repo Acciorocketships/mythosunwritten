@@ -28,6 +28,6 @@ func test_reserved_bridge_end_houses_count_as_court_frontages_at_their_room_heig
  var plan := WarrenMazeSourcePlan.new(43,WarrenVillageScaleProfile.for_id(&"grand"),massif,excavation)
  var blocked := {}
  for c in massif.columns: blocked[c]=true
- assert_eq(WarrenPlotReservations._plaza_buildable_frontages(plan,columns,4,{},blocked),1,"committed lower bridge houses form a real continuous court edge")
- assert_eq(WarrenPlotReservations._plaza_buildable_frontages(plan,columns,8,{},blocked),0,"narrow upper room cannot imply a full-width upper facade")
- assert_eq(WarrenPlotReservations._plaza_buildable_frontages(plan,columns,11,{},blocked),0,"no imagined rooms above their roof")
+ assert_eq(WarrenPlotReservations.plaza_buildable_frontages(plan,columns,4,{},blocked),1,"committed lower bridge houses form a real continuous court edge")
+ assert_eq(WarrenPlotReservations.plaza_buildable_frontages(plan,columns,8,{},blocked),0,"narrow upper room cannot imply a full-width upper facade")
+ assert_eq(WarrenPlotReservations.plaza_buildable_frontages(plan,columns,11,{},blocked),0,"no imagined rooms above their roof")

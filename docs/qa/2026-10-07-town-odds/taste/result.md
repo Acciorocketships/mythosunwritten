@@ -125,7 +125,8 @@ old ones, a different seed, so no extra failure rate from the knobs).
 
 - The enclosure pull is a weighted draw, so it still allows exterior clearings with no fronting houses (103:standard's clearing is one). Ringless only drops walk on edges facing built mass; an isolated clearing keeps walk on its open edges, which reads as a ring.
 - Clearing supply is low: with the new biases and `clearing_count` 2.5 or 1, 53:grand,
-  13:standard and 7:compact grew none; more would need a higher count or a lower bias.
+  13:standard and 7:compact grew none; more needs a higher count. A lower bias does not
+  help: the pulls cost no built clearings (see "Do the pulls reduce clearings built?").
 - Wells are rare: only ground-level greens qualify, and the plaza is often raised.
 - Raised clearings keep their edge walk (a ringless raised green still needs it for the guards).
 - Paved courts read as storage (crates, barrels, stall) rather than squares; deco is
@@ -133,3 +134,47 @@ old ones, a different seed, so no extra failure rate from the knobs).
 - A ringless green's lawn reaches house walls; some house doors meet the lawn directly with
   only a one-cell strip.
 - Seed 1 / grand (`for_id`) no longer builds under the new defaults: the same hard setback-roof gate that already rejects seed 141 at d912cd332 ("macro setback roof ... rejected") now rejects a core wall-room roof there. Either satellite_reach_scale=1 or suburb_house_count=0 alone avoids it, so it is a shifted town hitting an existing roof/public-air gate, not a rule added by this plan. Sample: 64 production-size towns, 1 failure under the new defaults (and 1 under the old: seed 141); d912cd332's own corpus had 6/grand with one dead end. Not fixed here.
+
+
+## Do the pulls reduce clearings built? (final review, October 8)
+
+Measured on the eight fingerprint towns with `--odds clearing_count=3` and both pulls
+overridden together (`clearing_lobe_bias` = `clearing_enclosure_bias`), every other knob at
+its shipped default. Proposed = carved `court_clearings`; built = `clearing.NN` deck plots
+(`CLEARINGS` / `CLEARING_PLOTS` lines of `tests/harness/town_fingerprint.gd`).
+
+| town | bias 0 carved / built | bias 2 carved / built |
+|---|---|---|
+| 53:grand | 0 / 0 | 0 / 0 |
+| 31:large | 1 / 1 | 1 / 1 |
+| 13:standard | 0 / 0 | 0 / 0 |
+| 43:large | 3 / 3 | 3 / 3 |
+| 83:grand | 3 / 3 | 3 / 3 |
+| 103:standard | 3 / 3 | 3 / 3 |
+| 7:compact | 1 / 1 | 1 / 1 |
+| 61:standard | 1 / 1 | 1 / 1 |
+| total | 12 / 12 | 12 / 12 |
+
+The pulls change WHICH clearings are taken (43:large: a floor-4 paved court instead of a
+floor-6 one; 83:grand two_rect courts instead of a three_rect; different shapes in 103 and
+61), never how many: every carved clearing became a plot under both settings, and the
+towns short of three (53, 13, 31, 7, 61) are short at bias 0 as well -- candidate supply,
+not the pulls, limits them. The pull fallback (best-kept rejected clearings fill a short
+draw) already keeps the count; no carve/placement fall-through was needed, and the shipped
+defaults (2.0 / 2.0) stand. Bias 0 is untouched (old-look source pin below).
+
+## Old-look pin (final review, October 8)
+
+`docs/qa/2026-10-07-town-odds/fingerprint/old_look_baseline.json` is the fingerprint of the
+eight towns at d912cd332 (the commit before the taste work, built in a /tmp worktree).
+Under `tests/fixtures/town_old_look.gd` values today's tree reproduces all eight SOURCE
+hashes exactly (no legitimate source differences: disjoint clearing links are inert at
+`clearing_count` 0). Payloads match for 13, 103, 7 and 61 and differ for 53, 31, 43 and 83
+(the towns with lamps: every lamp is dark wood now). Compare:
+
+    godot --headless --path . -s res://tests/harness/town_fingerprint.gd -- --old-look \
+      --compare res://docs/qa/2026-10-07-town-odds/fingerprint/old_look_baseline.json --parts source
+
+`tests/test_town_old_look.gd` checks 7:compact and 103:standard in the suite;
+`test_town_sprawl::test_old_values_reproduce_the_pre_sprawl_field_exactly` pins the town
+field of four towns to d912cd332.

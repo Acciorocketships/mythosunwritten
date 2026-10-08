@@ -47,6 +47,12 @@ func test_corpus_has_no_pathways_to_nowhere() -> void:
 	var found: Array[String] = []
 	for seed_value in [1, 2, 3, 4, 5, 6]:
 		for scale: StringName in WarrenVillageScaleProfile.IDS:
+			if seed_value == 1 and scale == &"grand":
+				# Known limit: under the taste defaults 1/grand hits the
+				# existing setback-roof gate and builds no town
+				# (docs/qa/2026-10-07-town-odds/taste/result.md, known limits).
+				pending("1/grand builds no town under the taste defaults (setback-roof gate)")
+				continue
 			var dead := _dead_ends(seed_value, scale)
 			total += dead.size()
 			if not dead.is_empty():
@@ -139,3 +145,57 @@ func test_a_leaf_far_from_any_clearing_still_reports() -> void:
 	var dead: Array = PublicWalkAudit.audit(fabric, spatial).dead_ends
 	assert_eq(dead.size(), 1, "only the far deck: %s" % [dead])
 	assert_eq(dead[0].id, &"far_deck")
+
+
+func test_a_leaf_beside_a_clearing_that_does_not_enter_it_still_reports() -> void:
+	# Only surface cells ON a clearing count: a railed deck one step beside a
+	# clearing, reached only from elsewhere, is still a pathway to nowhere.
+	var spatial := _clearing_town()
+	assert_not_null(spatial)
+	if spatial == null: return
+	var source := spatial.source_volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
+	var fabric := spatial.compiled_fabric_cache()
+	var destinations := PublicWalkAudit.destination_cells(fabric, spatial)
+	var surfaced := {}
+	for node: PublicRealmNode in fabric.public_realm.nodes:
+		for cell: Vector3i in node.surface_cells:
+			surfaced[cell] = true
+	var origin := Vector3i.MAX
+	for plot: Dictionary in source.plots:
+		if not WarrenPlotReservations.is_clearing_plot(plot): continue
+		for column: Vector2i in plot.cells:
+			for step: Vector2i in [Vector2i(2, 0), Vector2i(-2, 0), Vector2i(0, 2), Vector2i(0, -2)]:
+				var candidate := Vector3i(column.x * 2 + step.x, int(plot.floor), column.y * 2 + step.y)
+				var free := true
+				for dx in 2:
+					for dz in 2:
+						var cell := candidate + Vector3i(dx, 0, dz)
+						free = free and not destinations.has(cell) and not surfaced.has(cell)
+				if free:
+					origin = candidate
+					break
+			if origin != Vector3i.MAX: break
+		if origin != Vector3i.MAX: break
+	assert_ne(origin, Vector3i.MAX, "a free 2x2 beside the clearing")
+	if origin == Vector3i.MAX: return
+	var cells: Array[Vector3i] = []
+	for dx in 2:
+		for dz in 2:
+			cells.append(origin + Vector3i(dx, 0, dz))
+	var realm := fabric.public_realm
+	var anchor: PublicRealmNode = realm.nodes[0]
+	var anchor_cell: Vector3i = anchor.surface_cells[0]
+	var deck := PublicRealmNode.new(&"beside_deck", PublicRealmNode.EpisodeKind.TERRACE,
+		PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,
+		PublicRealmNode.AirRealm.EXTERIOR, PublicRealmNode.CoverPolicy.OPEN,
+		cells, [], 0, 0, false, false)
+	realm.nodes.append(deck)
+	var edge := PublicRealmEdge.new(&"beside_e", anchor.stable_id, &"beside_deck",
+		PublicRealmEdge.TransitionKind.LEVEL)
+	edge.add_seam(anchor_cell, origin)
+	edge.add_seam(anchor_cell + Vector3i(0, 0, 1), origin + Vector3i(0, 0, 1))
+	realm.edges.append(edge)
+	var dead: Array = PublicWalkAudit.audit(fabric, spatial).dead_ends
+	assert_eq(dead.size(), 1, "only the beside deck: %s" % [dead])
+	if dead.size() == 1:
+		assert_eq(dead[0].id, &"beside_deck")

@@ -1227,7 +1227,7 @@ static func _best_plaza_site(plan: WarrenMazeSourcePlan, streets: Dictionary,
 			var bands: Array = doors.keys()
 			bands.sort()
 			for datum: int in bands:
-				var frontage_sides := _plaza_buildable_frontages(
+				var frontage_sides := plaza_buildable_frontages(
 					plan, cells, datum, streets, blocked) if mini(shape.x, shape.y) >= 3 else 0
 				var cut_limit := INHABITED_PLAZA_LEVEL_BANDS if frontage_sides >= 3 else PLAZA_LEVEL_BANDS
 				var cost := 0
@@ -1329,7 +1329,7 @@ static func _bridge_house_fronts(plan: WarrenMazeSourcePlan, column: Vector2i, d
 	return false
 
 
-static func _plaza_buildable_frontages(plan: WarrenMazeSourcePlan,
+static func plaza_buildable_frontages(plan: WarrenMazeSourcePlan,
 		cells: Array[Vector2i], datum: int, streets: Dictionary,
 		blocked: Dictionary) -> int:
 	var sides := 0

@@ -254,8 +254,9 @@ func set_planned_plaza(cells: Dictionary, planting: Dictionary = {},
 		if not cells.has(cell): return false
 		# Islands may not consume an entrance or exterior edge of the court --
 		# unless the court rolled no walking ring (`ringless`, Town taste knobs
-		# task 2): its lawn reaches the edges backed by built mass, and its
-		# walk (landings, open edges, joining strips) is still proved below.
+		# task 2): its lawn reaches the edges backed by built mass. Its walk
+		# (landings, open edges, joining strips) and their connectivity are
+		# proved upstream in WarrenVolumetricSolver._ringless_court_walk, not here.
 		if not ringless.has(cell):
 			for step: Vector3i in [Vector3i.LEFT,Vector3i.RIGHT,Vector3i.FORWARD,Vector3i.BACK]:
 				if not cells.has(cell+step): return false

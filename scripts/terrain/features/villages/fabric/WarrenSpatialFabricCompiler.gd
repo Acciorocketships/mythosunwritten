@@ -323,7 +323,7 @@ static func generate(source: WarrenSpatialPlan,
 			planting[cell+Vector3i.DOWN] = true
 	var ringless := {}
 	if source.source_volume != null:
-		for cell: Vector3i in WarrenVolumetricSolver._maze_ringless_court_cells(source.source_volume):
+		for cell: Vector3i in WarrenVolumetricSolver.maze_ringless_court_cells(source.source_volume):
 			ringless[cell+Vector3i.DOWN] = true
 	if not result.set_planned_plaza(planned_plaza,planting,ringless):
 		last_failure = "planned village green topology is invalid"

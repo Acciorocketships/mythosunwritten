@@ -71,7 +71,7 @@ func test_default_rings_every_green_and_reproduces_the_planting() -> void:
 		assert_false(plot.has("ring"), "%s is ringed by default and carries no flag" % plot.id)
 	assert_eq(WarrenVolumetricSolver._maze_court_planting_cells(spatial.source_volume),
 		_ringed_reference(source))
-	assert_true(WarrenVolumetricSolver._maze_ringless_court_cells(spatial.source_volume).is_empty())
+	assert_true(WarrenVolumetricSolver.maze_ringless_court_cells(spatial.source_volume).is_empty())
 
 
 func _assert_ringless(seed_value: int, scale: StringName, overrides: Dictionary,
@@ -81,7 +81,7 @@ func _assert_ringless(seed_value: int, scale: StringName, overrides: Dictionary,
 	if spatial == null: return
 	var source := _source(spatial)
 	var planting := WarrenVolumetricSolver._maze_court_planting_cells(spatial.source_volume)
-	var ringless := WarrenVolumetricSolver._maze_ringless_court_cells(spatial.source_volume)
+	var ringless := WarrenVolumetricSolver.maze_ringless_court_cells(spatial.source_volume)
 	var greens := _greens(source).filter(func(p: Dictionary) -> bool:
 		return not bool(p.get("ring", true)))
 	assert_gt(greens.size(), 0, "%d/%s has a ringless green" % [seed_value, scale])

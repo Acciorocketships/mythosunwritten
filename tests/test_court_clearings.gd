@@ -425,7 +425,7 @@ func _pull_stats(s: Dictionary, seed_value: int, overrides: Dictionary) -> Dicti
 	for clearing: Dictionary in proposals:
 		var cells: Array[Vector2i] = []
 		cells.assign(clearing.cells)
-		sides += WarrenPlotReservations._plaza_buildable_frontages(
+		sides += WarrenPlotReservations.plaza_buildable_frontages(
 			empty, cells, int(clearing.floor), streets, blocked)
 		for column: Vector2i in cells:
 			sum += float(depth[column])

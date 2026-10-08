@@ -2721,7 +2721,7 @@ static func maze_raised_green_cells(volume: WarrenVolumePlan) -> Dictionary:
 	return out
 
 
-static func _maze_ringless_court_cells(volume: WarrenVolumePlan) -> Dictionary:
+static func maze_ringless_court_cells(volume: WarrenVolumePlan) -> Dictionary:
 	## The fine floor cells of every green court that rolled no walking ring
 	## (`plot.ring`, Town taste knobs task 2). Their lawn may reach the court
 	## edge, so the planned-plaza declaration exempts exactly these cells from

@@ -4,15 +4,22 @@ extends GutTest
 ## reproduces today's town field and lanes.
 
 const FIELD := preload("res://scripts/terrain/features/villages/fabric/WarrenTownField.gd")
-const DEFAULTS := {&"satellite_reach_scale": 1.0, &"suburb_house_count": 0.0,
-	&"lone_house_path_chance": 1.0}
+const OLD := preload("res://tests/fixtures/town_old_look.gd")
+## WarrenTownField.sample at d912cd332 (before the sprawl knobs and taste
+## defaults): sha256 of var_to_str([lobes, solid, house_sites, open_spaces]).
+const PRE_SPRAWL_FIELD := {
+	"13:standard": "3f6232e4dde563714350cd8da815be62cee03d2dd89941816b9fd303edbe46aa",
+	"53:grand": "3d0eaab103131aa67d0a5ddccd025ff90d6c8c901cfb88a762d867295f60f6ec",
+	"7:compact": "9d0c83b262fd6ab120cd589aea4bb652b6e5956144e141159314eb9428960e00",
+	"21:large": "8157be7b55dcc622b859d75095374e57bc4b501276247a11a6bea77aa9093bba",
+}
 
 
 func _profile(scale: StringName, seed_value: int, overrides: Dictionary) -> WarrenVillageScaleProfile:
 	var profile := WarrenVillageScaleProfile.for_id(scale)
-	# The three knobs are pinned at their pre-taste values unless overridden: the
-	# shipped defaults (October 7 taste pass) are checked separately below.
-	var program := TownOddsProgram.builtin().with_overrides(DEFAULTS.merged(overrides, true))
+	# Every knob is pinned at its pre-taste value unless overridden: the shipped
+	# defaults (October 7 taste pass) are checked separately below.
+	var program := TownOddsProgram.builtin().with_overrides(OLD.merge(overrides))
 	TownCharacter.attach(profile, program, seed_value)
 	return profile
 
@@ -35,14 +42,15 @@ func _satellite_distance(field: Dictionary) -> float:
 	return total / float(maxi(count, 1))
 
 
-func test_default_values_reproduce_the_field_exactly() -> void:
-	for town: Array in [[13, &"standard"], [53, &"grand"], [7, &"compact"], [21, &"large"]]:
-		var base := _field(town[0], town[1], {})
-		var explicit := _field(town[0], town[1], DEFAULTS)
-		assert_eq(var_to_str(explicit.lobes), var_to_str(base.lobes))
-		assert_eq(var_to_str(explicit.solid), var_to_str(base.solid))
-		assert_eq(var_to_str(explicit.house_sites), var_to_str(base.house_sites))
-		assert_eq(var_to_str(explicit.open_spaces), var_to_str(base.open_spaces))
+func test_old_values_reproduce_the_pre_sprawl_field_exactly() -> void:
+	# Old-look reachability: the pre-taste knob values rebuild the town field
+	# byte for byte as it was before the sprawl knobs existed.
+	for key: String in PRE_SPRAWL_FIELD:
+		var parts := key.split(":")
+		var field := _field(int(parts[0]), StringName(parts[1]), {})
+		var digest := var_to_str([field.lobes, field.solid, field.house_sites,
+			field.open_spaces]).sha256_text()
+		assert_eq(digest, PRE_SPRAWL_FIELD[key], key)
 
 
 func test_a_smaller_reach_pulls_satellites_toward_the_core() -> void:
@@ -142,7 +150,7 @@ const COMBINED := {&"satellite_reach_scale": 0.6, &"suburb_house_count": 4.0,
 
 func _generate(seed_value: int, scale: StringName, overrides: Dictionary) -> WarrenSpatialPlan:
 	var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
-	program.town_odds = program.town_odds.with_overrides(DEFAULTS.merged(overrides, true))
+	program.town_odds = program.town_odds.with_overrides(OLD.merge(overrides))
 	return WarrenVolumetricSolver.generate(seed_value, {}, program,
 		WarrenVillageScaleProfile.for_id(scale))
 

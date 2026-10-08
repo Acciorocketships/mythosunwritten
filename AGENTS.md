@@ -3,7 +3,7 @@
 > (ringless greens), `clearing_deco_density` 0.7 (clearing furnishing), `well_scale` 0.7 (wells only on ground greens, hard rule), `satellite_reach_scale` 0.7 spread 0.15,
 > `suburb_house_count` 1 (small) -> 4 (large) spread 1 (detached cottages 1.0-1.4 x radius), `lone_house_path_chance` 0.2 (else a footway). `clearing_count` stays 0
 > (owner decides); lamps are fixed dark wood, declared in the bake manifests (`material_tint_variants` -> descriptor-only `suntail.prop.lamp_1.dark_wood`, `material_tints` on `sfv.light_pole.001`) so a rebake keeps them (`test_lamp_finish`). Old behaviour: well_scale 1, satellite 1, suburb 0, lone 1, ring chances 1, biases/deco 0. Result:
-> `docs/qa/2026-10-07-town-odds/taste/result.md`; fingerprint baseline re-pinned for these defaults.
+> `docs/qa/2026-10-07-town-odds/taste/result.md`; fingerprint baseline re-pinned for these defaults. Old-look pin: `town_fingerprint.gd --old-look --compare .../fingerprint/old_look_baseline.json --parts source` reproduces d912cd332's source plans (`test_town_old_look`).
 >
 > October 7 town odds layer (branch `town-redesign`; spec
 > `docs/superpowers/specs/2026-10-07-town-odds-layer-design.md`, decisions

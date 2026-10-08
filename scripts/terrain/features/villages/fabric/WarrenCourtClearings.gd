@@ -112,7 +112,7 @@ static func propose(world_seed: int, massif: WarrenMassif, excavation: WarrenExc
 			keep_all *= keep
 			kept = character.roll(&"clearing_lobe_bias", Vector2i(attempt, SALT_LOBE)) < keep
 		if enclosure_bias > 0.0 and kept:
-			var sides := WarrenPlotReservations._plaza_buildable_frontages(
+			var sides := WarrenPlotReservations.plaza_buildable_frontages(
 				empty, cells, floor_band, streets, blocked)
 			var keep := maxf(KEEP_FLOOR, pow((1.0 + float(sides)) / ENCLOSURE_SIDES, enclosure_bias))
 			keep_all *= keep
