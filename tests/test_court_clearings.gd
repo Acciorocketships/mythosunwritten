@@ -404,10 +404,8 @@ func _propose_with(s: Dictionary, seed_value: int, overrides: Dictionary) -> Arr
 func test_zero_pulls_reproduce_the_pre_knob_proposals() -> void:
 	for spec: Array in PULL_TOWNS:
 		var s := _pull_plan(spec[0], spec[1])
-		var absent := _propose_with(s, spec[0], {&"clearing_count": 3.0})
 		var zero := _propose_with(s, spec[0], {&"clearing_count": 3.0,
 			&"clearing_lobe_bias": 0.0, &"clearing_enclosure_bias": 0.0})
-		assert_eq(var_to_str(absent).sha256_text(), PRE_KNOB_PROPOSALS[spec[0]], "%s default" % [spec])
 		assert_eq(var_to_str(zero).sha256_text(), PRE_KNOB_PROPOSALS[spec[0]], "%s zero biases" % [spec])
 
 func _pull_stats(s: Dictionary, seed_value: int, overrides: Dictionary) -> Dictionary:
@@ -471,7 +469,13 @@ func test_extra_links_never_share_lane_cells() -> void:
 	## one clearing both bored through (8, 0, 4) and the volume plan refused the
 	## town ("duplicate walk cell"). Links are now disjoint, so it builds.
 	var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
-	program.town_odds = program.town_odds.with_overrides({&"clearing_count": 2.5})
+	# Knobs pinned explicitly (the taste values), so retuning the table cannot
+	# make this vacuous.
+	var pinned := {&"clearing_count": 2.5, &"clearing_lobe_bias": 2.0,
+		&"clearing_enclosure_bias": 2.0, &"clearing_ring_chance": 0.25,
+		&"clearing_deco_density": 0.7, &"satellite_reach_scale": 0.7,
+		&"suburb_house_count": 4.0, &"lone_house_path_chance": 0.2}
+	program.town_odds = program.town_odds.with_overrides(pinned)
 	var spatial := WarrenVolumetricSolver.generate(31, {}, program,
 		WarrenVillageScaleProfile.for_id(&"large"))
 	assert_not_null(spatial, WarrenVolumetricSolver.last_failure)

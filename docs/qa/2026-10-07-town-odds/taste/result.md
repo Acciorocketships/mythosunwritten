@@ -53,8 +53,8 @@ court_<id>_0-3). Towns: 53:grand, 31:large, 103:standard, 13:standard, 83:grand,
 |---|---|
 | `53_grand_overview.png` (before/after) | The core is more compact and crowded; two detached cottages now stand out in the lawn at the edge (the suburb band); street edges are no longer ragged with far satellites. |
 | `31_large_overview.png` | A tighter core with a cottage ring and two lone cottages with footways, no painted roads. |
-| `103_standard_overview.png` | Before: long painted road spurs to far cottages. After: a compact core, cottages and trees close by; one green clearing outside. |
-| `103_standard_court_clearing.00_1.png` (after only) | The new ringless green clearing: tree, two benches, flowers and a plant on the lawn, a path edge only where needed. |
+| `103_standard_overview.png` | Before: long painted road spurs to far cottages. After: a compact core, cottages and trees close by; one exterior clearing outside. |
+| `103_standard_court_clearing.00_1.png` (after only) | An exterior clearing on open lawn outside the core: a tree, two benches, flowers and a plant on the grass, with a worn path on most sides. It has no fronting houses, so it is not the enclosed courtyard you described and it is not a ringless green; the walk stays on its open edges (effectively a ring). |
 | `53_grand_plaza_1.png` (after) | The plaza: ringed lawn, tree, two benches, plants and flowers in the pools of grass under the arcade. |
 | `*_plaza_*.png`, `*_lamp0.png` | Close-ups of wells (0.7 scale; wells only where the green stands on the ground) and dark-wood lamp posts. |
 | `wells/well_1.0` vs `wells/well_0.7` | The size A/B behind the 0.7 pick (31:large plaza). |
@@ -123,6 +123,7 @@ old ones, a different seed, so no extra failure rate from the knobs).
 
 ## Known limits
 
+- The enclosure pull is a weighted draw, so it still allows exterior clearings with no fronting houses (103:standard's clearing is one). Ringless only drops walk on edges facing built mass; an isolated clearing keeps walk on its open edges, which reads as a ring.
 - Clearing supply is low: with the new biases and `clearing_count` 2.5 or 1, 53:grand,
   13:standard and 7:compact grew none; more would need a higher count or a lower bias.
 - Wells are rare: only ground-level greens qualify, and the plaza is often raised.
@@ -131,3 +132,4 @@ old ones, a different seed, so no extra failure rate from the knobs).
   purpose-driven and low-density.
 - A ringless green's lawn reaches house walls; some house doors meet the lawn directly with
   only a one-cell strip.
+- Seed 1 / grand (`for_id`) no longer builds under the new defaults: the same hard setback-roof gate that already rejects seed 141 at d912cd332 ("macro setback roof ... rejected") now rejects a core wall-room roof there. Either satellite_reach_scale=1 or suburb_house_count=0 alone avoids it, so it is a shifted town hitting an existing roof/public-air gate, not a rule added by this plan. Sample: 64 production-size towns, 1 failure under the new defaults (and 1 under the old: seed 141); d912cd332's own corpus had 6/grand with one dead end. Not fixed here.

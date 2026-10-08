@@ -82,3 +82,60 @@ func test_audit_peels_a_railed_leaf_deck() -> void:
 	var fabric := SettlementFabricPlan.new(&"t")
 	fabric.public_realm = realm
 	assert_eq(PublicWalkAudit.audit(fabric).dead_ends.size(), 1)
+
+
+func _clearing_town() -> WarrenSpatialPlan:
+	# The shipped table plus clearing_count 1 (its default is 0).
+	var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
+	program.town_odds = program.town_odds.with_overrides({&"clearing_count": 1.0})
+	return WarrenVolumetricSolver.generate(103, {}, program,
+		WarrenVillageScaleProfile.for_id(&"standard"))
+
+
+func test_a_clearing_court_is_a_destination() -> void:
+	# 103:standard grows one 4-cell green: its 12-cell walk ring is under the
+	# overlook threshold, but the court itself is a reason to walk there.
+	var spatial := _clearing_town()
+	assert_not_null(spatial, WarrenVolumetricSolver.last_failure)
+	if spatial == null: return
+	var source := spatial.source_volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
+	var clearings := source.plots.filter(func(p: Dictionary) -> bool:
+		return WarrenPlotReservations.is_clearing_plot(p))
+	assert_gt(clearings.size(), 0, "the fixture grows a clearing")
+	var fabric := spatial.compiled_fabric_cache()
+	var destinations := PublicWalkAudit.destination_cells(fabric, spatial)
+	for plot: Dictionary in clearings:
+		var column: Vector2i = plot.cells[0]
+		assert_true(destinations.has(Vector3i(column.x * 2, int(plot.floor), column.y * 2)),
+			"%s counts as a destination" % plot.id)
+	assert_eq(PublicWalkAudit.audit(fabric, spatial).summary.dead_end_nodes, 0)
+
+
+func test_a_leaf_far_from_any_clearing_still_reports() -> void:
+	# The clearing rule adds destinations only on clearing cells: a railed
+	# deck elsewhere with no door is still peeled in the same town.
+	var spatial := _clearing_town()
+	assert_not_null(spatial)
+	if spatial == null: return
+	var fabric := spatial.compiled_fabric_cache()
+	var realm := fabric.public_realm
+	var far := Vector3i(900, 0, 900)
+	var cells: Array[Vector3i] = []
+	for dx in 2:
+		for dz in 2:
+			cells.append(far + Vector3i(dx, 0, dz))
+	var anchor: PublicRealmNode = realm.nodes[0]
+	var anchor_cell: Vector3i = anchor.surface_cells[0]
+	var deck := PublicRealmNode.new(&"far_deck", PublicRealmNode.EpisodeKind.TERRACE,
+		PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,
+		PublicRealmNode.AirRealm.EXTERIOR, PublicRealmNode.CoverPolicy.OPEN,
+		cells, [], 0, 0, false, false)
+	realm.nodes.append(deck)
+	var edge := PublicRealmEdge.new(&"far_e", anchor.stable_id, &"far_deck",
+		PublicRealmEdge.TransitionKind.LEVEL)
+	edge.add_seam(anchor_cell, far)
+	edge.add_seam(anchor_cell + Vector3i(0, 0, 1), far + Vector3i(0, 0, 1))
+	realm.edges.append(edge)
+	var dead: Array = PublicWalkAudit.audit(fabric, spatial).dead_ends
+	assert_eq(dead.size(), 1, "only the far deck: %s" % [dead])
+	assert_eq(dead[0].id, &"far_deck")

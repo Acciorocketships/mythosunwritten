@@ -154,7 +154,7 @@ func test_all_three_knobs_together_never_reject_a_town() -> void:
 		assert_not_null(spatial, "%d:%s %s" % [town[0], town[1], WarrenVolumetricSolver.last_failure])
 
 
-func test_defaults_have_no_footways() -> void:
+func test_old_knob_values_have_no_footways() -> void:
 	var spatial := _generate(13, &"standard", {})
 	assert_not_null(spatial)
 	if spatial == null: return
@@ -162,11 +162,15 @@ func test_defaults_have_no_footways() -> void:
 
 
 func test_shipped_defaults_are_the_taste_values() -> void:
-	var small := TownCharacter.of(WarrenVillageScaleProfile.for_id(&"compact"), 7)
-	assert_between(small.value(&"satellite_reach_scale"), 0.3, 1.0)
-	assert_lt(small.value(&"lone_house_path_chance"), 0.9)
 	var table := TownOddsProgram.builtin()
-	assert_almost_eq(float(table.knobs[&"satellite_reach_scale"].small), 0.7, 0.001)
-	assert_almost_eq(float(table.knobs[&"suburb_house_count"].small), 1.0, 0.001)
-	assert_almost_eq(float(table.knobs[&"suburb_house_count"].large), 4.0, 0.001)
-	assert_almost_eq(float(table.knobs[&"lone_house_path_chance"].small), 0.2, 0.001)
+	var expected := {
+		&"clearing_lobe_bias": [2.0, 2.0], &"clearing_enclosure_bias": [2.0, 2.0],
+		&"plaza_ring_chance": [1.0, 1.0], &"clearing_ring_chance": [0.25, 0.25],
+		&"clearing_deco_density": [0.7, 0.7], &"well_scale": [0.7, 0.7],
+		&"satellite_reach_scale": [0.7, 0.7], &"suburb_house_count": [1.0, 4.0],
+		&"lone_house_path_chance": [0.2, 0.2], &"clearing_count": [0.0, 0.0]}
+	for name: StringName in expected:
+		assert_almost_eq(float(table.knobs[name].small), float(expected[name][0]), 0.001, "%s small" % name)
+		assert_almost_eq(float(table.knobs[name].large), float(expected[name][1]), 0.001, "%s large" % name)
+	assert_almost_eq(float(table.knobs[&"satellite_reach_scale"].spread), 0.15, 0.001)
+	assert_almost_eq(float(table.knobs[&"suburb_house_count"].spread), 1.0, 0.001)
