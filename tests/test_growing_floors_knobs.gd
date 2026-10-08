@@ -23,12 +23,14 @@ func test_growth_knobs_are_in_the_table_with_their_shipped_values() -> void:
 	assert_almost_eq(TownCharacter.draw(program, 53, 1.0).value(GROWTH.CAP_KNOB), 1.5, 1e-6)
 
 
-func test_eligible_house_needs_two_upper_storeys_on_a_street_face() -> void:
+func test_eligible_house_needs_an_upper_storey_on_a_street_face() -> void:
 	var street := Callable(FIXTURE, "street")
 	var none := Callable(FIXTURE, "nothing_solid")
 	assert_true(GROWTH.house_eligible(FIXTURE.house(&"kit.a", Rect2i(0, 0, 3, 2), 3, 3), none, street))
-	assert_false(GROWTH.house_eligible(FIXTURE.house(&"kit.b", Rect2i(0, 0, 3, 2), 2, 3), none, street),
-		"one storey above the ground cannot grow")
+	assert_true(GROWTH.house_eligible(FIXTURE.house(&"kit.b", Rect2i(0, 0, 3, 2), 2, 3), none, street),
+		"one storey above the ground can grow")
+	assert_false(GROWTH.house_eligible(FIXTURE.house(&"kit.d", Rect2i(0, 0, 3, 2), 1, 3), none, street),
+		"a ground-only house cannot grow")
 	assert_false(GROWTH.house_eligible(FIXTURE.house(&"kit.c", Rect2i(0, 2, 3, 2), 3, 3), none, street),
 		"no face fronts the lane")
 
@@ -63,18 +65,19 @@ func test_zero_chance_never_grows_and_one_always_does() -> void:
 
 
 func test_build_marks_houses_growing_only_when_the_chance_is_positive() -> void:
-	# Houses with two storeys above the ground storey on a lane are rare; of the
-	# fingerprint towns only the grand seed 53 has any (4 of 48 houses).
 	for chance: float in [0.0, 1.0]:
 		var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
 		program.town_odds = program.town_odds.with_overrides({&"growing_house_chance": chance})
-		var spatial := WarrenVolumetricSolver.generate(53, {}, program,
-			WarrenVillageScaleProfile.for_id(&"grand"))
-		assert_not_null(spatial)
-		var built := KitVillageBuildings.build(spatial, spatial.compiled_fabric_cache(),
-			SuntailBuildingKit.create())
-		var growing := (built.houses as Array).filter(func(m: BuildingMass) -> bool: return m.grows).size()
+		var growing := 0
+		for town: String in ["7:compact", "103:standard"]:
+			var parts := town.split(":")
+			var spatial := WarrenVolumetricSolver.generate(int(parts[0]), {}, program,
+				WarrenVillageScaleProfile.for_id(StringName(parts[1])))
+			assert_not_null(spatial, town)
+			var built := KitVillageBuildings.build(spatial, spatial.compiled_fabric_cache(),
+				SuntailBuildingKit.create())
+			growing += (built.houses as Array).filter(func(m: BuildingMass) -> bool: return m.grows).size()
 		if chance == 0.0:
 			assert_eq(growing, 0)
 		else:
-			assert_gt(growing, 0, "grand town 53 has eligible street houses")
+			assert_gt(growing, 0, "the two towns have eligible street houses")

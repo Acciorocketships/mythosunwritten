@@ -103,12 +103,12 @@ static func face_chains(mass: BuildingMass, solid: Callable, street: Callable) -
 	return chains
 
 
-## 2+ storeys above the ground storey on one street face.
+## At least one storey above the ground storey on a street face (2+ storeys total).
 static func house_eligible(mass: BuildingMass, solid: Callable, street: Callable) -> bool:
 	if String(mass.stable_id).contains("wall-room"):
 		return false
 	for chain: Dictionary in face_chains(mass, solid, street):
-		if bool(chain.street) and (chain.storeys as Array).size() >= 2:
+		if bool(chain.street) and (chain.storeys as Array).size() >= 1:
 			return true
 	return false
 
