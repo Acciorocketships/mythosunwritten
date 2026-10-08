@@ -126,3 +126,64 @@ two towns that needed a withdrawal are exactly the two that returned null before
   to 150 s). It only runs for towns that would otherwise have no town.
 - `kit_town_review` and other harnesses that use `tests/fixtures/frozen_maze_source.gd`
   now go through the same withdrawal path.
+
+## Follow-up: one long gable instead of the row (owner ruling)
+
+**The ruling.** The row of side-by-side transverse gables over the long bridge read as
+a sawtooth. The owner asked for ONE long gable running the other way (ridge along the
+span), made interesting with dormers or similar kit details.
+
+**What changed.** `KitVillageBuildings._skywalk_mass`: a one-module bridge-house whose
+transverse gatehouse roof fails `roof_proportion_ok` (gap 5 and longer) now turns its
+ridge along the span and keeps a single roof over every bay. Bridges of two to four
+modules keep their one transverse gatehouse roof (the earlier "tiny roof" ruling), and
+house roofs are unchanged. The long roof is 1.62 m tall over a 16 m ridge, well inside
+the guardrail.
+
+**Why no dormers.** A roof one module (2 m) deep is the kit's ridge-top course alone
+(`roof_profile(1)`: zero eave rows, only `roof.<colour>.top`). The kit's only dormer is
+an eave-row piece (`suntail.roof.roof_1_cornice_w_*`, role `eave_dormer`) that replaces
+one module of the first slope row, so it exists only on roofs at least two modules deep;
+the Suntail pack has no standalone dormer. Fitting one would mean scaling a piece or
+widening the roof past the bridge walls, both ruled out. The closest legitimate details,
+both pieces the kit already uses on house roofs, are on the ridge:
+
+- crest finials along the ridge (`trim.ridge_peak`, `ridge_peaks = true`), the iron
+  cresting some house ridges carry;
+- a rubble chimney stack straddling the ridge at mid-span (`chimney`, `chimney_u` = the
+  middle bay). `KitRoofMeshUnion.fit_chimneys` moves it along the ridge or withdraws it if
+  it meets anything (31/large: kept, `chimneys` checked 4, moved 0, omitted 0); a detail
+  never rejects the bridge or the town.
+
+The gables face the bridge ends. In 31/large both ends meet same-eave endpoint roofs, so
+`KitRoofJunctions` opens them into the host roofs (`open_min`/`open_max`); the gallery
+roof runs into its neighbours rather than ending in two small gables.
+
+**Images** (on disk, `long_gable/`, same `kit_town_review` command and cameras as
+`before/` and `after/`, plus close views):
+
+| Image | What it shows |
+|---|---|
+| `long_gable/31_large_overview.png` | Owner's camera. The bridge is now a long low roof with a chimney at mid-span, between the taller house roofs; no sawtooth. |
+| `long_gable/31_large_orbit0-3.png` | Same orbit cameras; `orbit1` is the closest overview of the bridge. |
+| `long_gable/31_large_bridge_close.png` | Close oblique (`--view bridge_oblique:-12,38,-14:8,22,6:60`): the covered gallery with its windowed side, ridge cresting and chimney; both ends run into the endpoint roofs. |
+| `long_gable/31_large_bridge_side.png` | Side view from the courtyard (`--view bridge_nx:-14,30,10:8,22,6:55`). |
+| `long_gable/31_large_skywalk*.png` | The harness's automatic skywalk cameras; most start inside neighbouring houses and are not useful. |
+
+Judgement: the bridge reads as one covered gallery in proportion with its neighbours.
+Seen from close above, the finials read a little like a fence rail along the ridge; if
+the owner prefers a plain ridge, drop `ridge_peaks` and keep the chimney.
+
+**Tests.**
+
+- `test_roof_proportion` (red first: 3 of 4 failed, gap 5-8 had 2-4 roofs and the
+  31/large bridge 4; green after, 4/4, 115 asserts): every gap 2-8 bridge has one roof
+  covering every bay; gap 5-8 have their ridge along the span with chimney and finials;
+  gap 2-4 keep the transverse gatehouse; the five towns have no out-of-proportion roof and
+  the 31/large (clearings) bridge `kit.skywalk.2.6.-3.0.1` has one along-span roof.
+- test_town_roof_withdrawal 2/2, test_september29_skywalks 5/5,
+  test_september29_roofline_variety 8/8, test_kit_roof_junctions 9/9,
+  test_enclosed_skywalk_ceiling 2/2, test_backed_shed_roofs 6/6.
+- `town_fingerprint.gd --compare docs/qa/2026-10-07-town-odds/fingerprint/baseline.json`:
+  FINGERPRINT_MATCH (no default fingerprint town has a bridge of five or more modules),
+  baseline not re-pinned.

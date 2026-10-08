@@ -735,18 +735,24 @@ static func _skywalk_mass(span: Dictionary, world_seed: int,
 		# KitRoofJunctions still opens an end into a same-eave host roof.
 		# A long one-module bridge would raise that transverse roof far above
 		# its 2 m ridge (31/large: 12 m over an eight-module span, its gable
-		# infill four storeys of windows). Out of proportion, the span takes a
-		# row of transverse piles instead (BuildingDesigner.roof_proportion_ok).
+		# infill four storeys of windows). Out of proportion
+		# (BuildingDesigner.roof_proportion_ok), the bridge instead takes ONE
+		# long gable whose ridge runs along the span, like a covered bridge
+		# (October 8 owner ruling; a row of transverse gables read as a
+		# sawtooth). Its gables face the bridge ends. A one-module roof is the
+		# kit's ridge-top course alone, with no eave row to carry a dormer, so
+		# it is dressed on the ridge: finials along the crest and a chimney
+		# stack at mid-span (KitRoofMeshUnion.fit_chimneys moves or withdraws
+		# a stack that meets anything, never the bridge).
 		var kit := roof_kit if roof_kit != null else SuntailBuildingKit.create()
-		var rects: Array[Rect2i] = [rect]
-		if not BuildingDesigner.roof_proportion_ok(kit, rect, axis):
-			rects = BuildingDesigner.pile_rects(rect, axis)
-			if rects.is_empty() or rects.any(func(pile: Rect2i) -> bool:
-					return not BuildingDesigner.roof_proportion_ok(kit, pile, axis)):
-				axis = along
-				rects = [rect]
-		for roof_rect: Rect2i in rects:
-			mass.add_roof(roof_rect, axis, cell.y + 2, colour)
+		var long_gable := not BuildingDesigner.roof_proportion_ok(kit, rect, axis)
+		if long_gable:
+			axis = along
+		var wing := mass.add_roof(rect, axis, cell.y + 2, colour)
+		if long_gable:
+			wing.ridge_peaks = true
+			wing.chimney = true
+			wing.chimney_u = float(rect.position[axis] + rect.size[axis] / 2)
 		# Timber portal posts frame each open end.
 		for key: Vector3i in open_edges:
 			var c := Vector2(key.x, key.y) + Vector2(0.5, 0.5) \

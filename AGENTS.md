@@ -1,7 +1,9 @@
 > ROOF PROPORTION (Oct 8, `docs/qa/2026-10-08-roof-proportion/result.md`): `BuildingDesigner.roof_proportion_ok` is a guardrail on every kit pitched roof: at most
 > `MAX_GABLE_STOREYS` 2 storeys of gable and at most `MAX_ROOF_SLENDERNESS` 3x as tall as its ridge is long. A house wing that fails turns, becomes a double pile
 > (`pile_rects`) or a terrace; a one-module bridge-house whose transverse gatehouse roof fails (gap >= 5: 31/large with clearings had a 12 m roof on a 2 m ridge)
-> takes a row of 2-3-module transverse piles. Gap <= 4 gatehouses and every default fingerprint town are unchanged (`test_roof_proportion`).
+> takes ONE long gable with its ridge along the span (owner ruling, replaced the row of transverse piles), dressed on the ridge with crest finials and a
+> mid-span chimney (a one-module roof is the ridge-top course alone, no eave row for a dormer; `fit_chimneys` moves/withdraws the stack). Gap <= 4 gatehouses
+> and every default fingerprint town are unchanged (`test_roof_proportion`).
 > ROOF WITHDRAWAL (same date): the fabric roof gate no longer vetoes a town. `WarrenSpatialFabricCompiler.last_failure_room_id` names the room whose roof
 > failed; `WarrenVolumetricSolver.compose_maze_source` (production `_solve_maze` and `frozen_maze_source.gd` both use it) marks its cells with the
 > room-support clearance token (`mass_context.roof_withdrawn_cells`) and composes the same source again: that storey and what stands on it are not built

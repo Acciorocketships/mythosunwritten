@@ -42,13 +42,32 @@ func test_a_long_narrow_bridge_house_keeps_a_proportioned_roof() -> void:
 			var mass := KitVillageBuildings._skywalk_mass(span, 43)
 			assert_false(mass.roofs.is_empty(), "gap %d keeps a roof" % gap)
 			assert_eq(_violations([mass], {}, kit), [] as Array[String], "gap %d" % gap)
-			# The roofs still cover the whole bridge, each a transverse gable.
+			# One roof covers the whole bridge (never a row of gables).
+			assert_eq(mass.roofs.size(), 1, "one roof (gap %d)" % gap)
 			var covered := {}
 			for roof: Dictionary in mass.roofs:
 				for cell: Vector2i in BuildingMass.rect_cells(roof.rect):
-					assert_false(covered.has(cell), "no two roofs over one bay")
 					covered[cell] = true
 			assert_eq(covered.size(), gap, "every bay roofed (gap %d)" % gap)
+
+
+func test_a_long_narrow_bridge_house_takes_one_long_gable_along_its_span() -> void:
+	# October 8 owner ruling: a one-module bridge too long for its transverse
+	# gatehouse roof takes ONE long gable whose ridge runs along the span (not
+	# a sawtooth row of transverse gables), dressed with ridge details.
+	for gap in [5, 6, 7, 8]:
+		for step in [Vector3i.RIGHT, Vector3i.BACK]:
+			var span := {"cell": Vector3i(1, 6, -3), "step": step, "gap": gap,
+				"width": 1, "cross": Vector3i(step.z, 0, step.x), "enclosed": true}
+			var mass := KitVillageBuildings._skywalk_mass(span, 43)
+			assert_eq(mass.roofs.size(), 1, "one gable (gap %d)" % gap)
+			if mass.roofs.size() != 1: continue
+			var roof: Dictionary = mass.roofs[0]
+			var along := 0 if step.x != 0 else 1
+			assert_eq(int(roof.axis), along, "ridge along the span (gap %d)" % gap)
+			assert_eq((roof.rect as Rect2i).size[along], gap, "ridge spans the bridge (gap %d)" % gap)
+			assert_true(bool(roof.get("chimney", false)), "a chimney on the ridge (gap %d)" % gap)
+			assert_true(bool(roof.get("ridge_peaks", false)), "ridge finials (gap %d)" % gap)
 
 
 func test_short_bridge_houses_keep_their_gatehouse_roof() -> void:
@@ -79,3 +98,13 @@ func test_built_towns_have_no_out_of_proportion_roof() -> void:
 		var built := KitVillageBuildings.build(spatial, spatial.compiled_fabric_cache(), kit)
 		assert_eq(_violations(built.masses, built.house_kits, kit), [] as Array[String],
 			"%d/%s %s" % [town[0], town[1], town[2]])
+		# The owner's bridge (step +z): one long gable along its span, not a row.
+		if not (town[2] as Dictionary).is_empty():
+			var found := false
+			for mass: BuildingMass in built.masses:
+				if mass.stable_id == &"kit.skywalk.2.6.-3.0.1":
+					found = true
+					assert_eq(mass.roofs.size(), 1, "the 31/large bridge has one roof")
+					if mass.roofs.size() == 1:
+						assert_eq(int(mass.roofs[0].axis), 1, "its ridge runs along the span")
+			assert_true(found, "the owner's bridge is built")
