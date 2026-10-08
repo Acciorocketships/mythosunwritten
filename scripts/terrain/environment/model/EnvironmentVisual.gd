@@ -6,3 +6,5 @@ extends Resource
 ## shapes into memory.
 @export var pieces: Array[EnvironmentVisualPiece] = []
 @export var collisions: Array[EnvironmentCollisionPiece] = []
+## Baked distant-card set for trees; null for everything else.
+@export var imposter: EnvironmentImposter

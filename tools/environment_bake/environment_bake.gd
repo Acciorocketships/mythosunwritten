@@ -636,6 +636,7 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 	visual.collisions = collisions
 	var visual_path := "res://terrain/environment/visuals/%s/%s.tres" % [_slug(pack), slug]
 	_ensure_parent(visual_path)
+	_carry_imposter(visual_path, visual)
 	if ResourceSaver.save(visual, visual_path) != OK:
 		_fail("Cannot save environment visual: %s" % visual_path)
 		return {}
@@ -2719,3 +2720,12 @@ func _fail(message: String) -> void:
 	_failed = true
 	push_error(message)
 	printerr(message)
+
+
+## A headless re-bake has no imposter pass; keep the one already on disk.
+static func _carry_imposter(path: String, visual: EnvironmentVisual) -> void:
+	if visual.imposter != null or not ResourceLoader.exists(path):
+		return
+	var previous := ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE) as EnvironmentVisual
+	if previous != null:
+		visual.imposter = previous.imposter
