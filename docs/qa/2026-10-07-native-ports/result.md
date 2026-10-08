@@ -625,3 +625,89 @@ memoized), prefetch 0.27, grass_support 0.26, tint 0.24, append loop 0.23,
 height+bump 0.21, triangles 0.18, sheet flag 0.17, setup 0.05. What remains
 is spread over many small GDScript loops (~0.5 ms per skirt); no single
 dominant hotspot left.
+
+## Final verification (October 8, HEAD b321c7d7a + AGENTS)
+
+Godot_mono 4.5.1 and standard Godot 4.5, seed 2697992464, one harness process
+at a time (the owner's Godot_mono editor was open throughout).
+
+### Tests (each file alone, `gut_cmdln.gd -gtest=... -gexit`)
+
+| file | mono | standard |
+|---|---|---|
+| test_cliff_sheet_ends | 8/8 | 8/8 |
+| test_cliff_sheet_normals | 2/2 | 2/2 |
+| test_cliff_sheet_tiles | 2/2 | 2/2 |
+| test_native_carve | 1/1 | 1/1 (off) |
+| test_native_cliff_envelope | 4/4 | 4/4 (off) |
+| test_native_cliff_solid | 5/5 | 5/5 (off) |
+| test_native_grid_kernels | 1/1 | 1/1 |
+| test_native_height_field | 4/4 | 4/4 |
+| test_native_river_walk | 1/1 | 1/1 (off) |
+| test_native_tile_kernel | 3/3 | 3/3 |
+| test_native_water_fill | 7/7 | 7/7 |
+| test_native_water_profile | 3/3 | 3/3 |
+| test_terrain_tile_field | 33/33 | 33/33 |
+| test_rock_skirt_batch | 3/3 | 3/3 (593 s) |
+| test_cliff_envelope_shortcuts | 4/4 | 4/4 |
+| test_water_dual_grid | 17/17 | 17/17 (547 s) |
+| test_september9_water_containment | 18/18 | 18/18 |
+| test_water_field | 25/25 | - |
+| test_water_plan | 29/29 (137 s) | skipped (~1 h) |
+
+No failures. The known pre-existing failures (source_domain_cache,
+river_generation (1), water_profile_retention, terrain_chunk_mesher sheen) are
+outside this set and were not rerun.
+
+### Identity
+
+| harness | result |
+|---|---|
+| `water_block_cost --chunk=-4,-5 --no-disk` | digest `b6c965def22e7e93`; region_ms 3449, water_ms 20561 (cold block 24.0 s; plan start 59 s) |
+| source stages (ms) | region 5832, natural 1332, flow 1082, cap 105, spill 2519, seeds 2238 (profile 2193, claim 27, containment 11), relax 20, smooth 33, ground 188, fine 9366 (anchors 2946, seed 3794, flood+spill 2019, finish 561) |
+| `profile_mesh_phases --chunks "0,-2;0,-1;1,-1" --detail` | hashes 3c960e38 / b7871a95 / 356b34c1 (= recorded) |
+| `parallel_tail_check --rounds=2` | PASS failures=0 |
+
+Mesh phases (ms): (0,-2) total 28660, cliff dressing 27110, slope_init 7312,
+solid 928, add_skirts 4586, mesh_arrays 4411, grass_support 1202; (0,-1) total
+4780; (1,-1) total 15716. Three chunks: total 49157, cliff dressing 45947,
+slope_init 12039, solid 1261, add_skirts 6497, mesh_arrays 8641,
+grass_support 2746 (before Task 2: chunk (0,-2) cliff dressing 84509; mesher
+total over the three chunks 151.2 s at Task 3).
+
+### 240 s walk (`travel_profile.tscn -- --seconds 240 --mode walk`, windowed)
+
+Distance 1024 m, frozen 107.3 s (earlier today 1037 m / 121 s, 1004 m / 135 s),
+startup 138 s (was 155 s), walk frame p50/p95/p99/max 8.9 / 17.2 / 27.1 /
+292 ms. Frozen time by the worker's active job: (0,-4) 23.1 s, (-4,-7) 21.2,
+(-2,-4) 15.9, (-2,-6) 14.1, (0,-3) 11.2, (-1,-4) 10.8, (-2,-5) 6.1 s. Long
+worker phases during the walk: `feature_villages` (-2,-4) 28.1 s, (0,-4)
+23.1, (-4,-7) 24.3; `feature_paths` (-4,-7) 20.6; `water_context` (-2,-5)
+29.4, (1,-1) 18.0, (-1,-2) 10.0 s. Six `slow_field operation=water` events
+(16.9-29.0 s each), three of them inside feature jobs: cold water source
+solves remain the cause, reached both from terrain `water_context` and from
+village/path feature planning (feature-only jobs, `build_terrain=false`).
+Cliff tails (`tail_wait`) do not show up.
+
+### Frame feel (`frame_feel_profile -- --no-vsync --size 1920x1080 --phase-seconds 8`)
+
+| phase | dt p50/p95/p99/max | process p50/p95/max |
+|---|---|---|
+| idle | 16.9 / 21.8 / 35.6 / 76.3 | 1.38 / 2.53 / 24.4 |
+| turn | 19.2 / 22.5 / 26.5 / 87.2 | 1.00 / 1.46 / 6.4 |
+| run | 18.5 / 22.1 / 26.7 / 190.4 | 1.77 / 10.27 / 182.8 |
+| run_turn | 20.4 / 22.9 / 26.3 / 27.6 | 1.47 / 3.35 / 4.6 |
+| idle_end | 21.0 / 23.7 / 27.8 / 51.9 | 1.03 / 1.74 / 16.6 |
+
+Reference v28: turn dt p99 23.9, run_turn process p95 4.7, no frame over 10 ms
+of process in gameplay phases. Turn and run_turn are within that (turn dt p99
+26.5 is GPU-bound). Run: 19 streamer frames over 10 ms of process, almost all
+in the run phase while chunks streamed in (integrate 8-15 ms per frame, the
+6 ms integrate budget overrun by single steps: `terrain#105` 14.6 ms, `fx`
+12 ms), and two main-thread spikes `slow_frame drain_results=138.0` and
+`drain_results=181.0` ms (FEEL spikes dt 154 / 190 ms). `_drain_results`
+only sorts and enqueues; the cost is most likely the main thread dropping
+the last reference to a discarded worker result (a stale/out-of-range terrain
+payload is skipped and freed there, not off-thread). Not investigated
+further; follow-up: free skipped results off-thread like committed payloads.
+Spikes over 40 ms (harness threshold): idle 5, turn 1, run 3, idle_end 2.

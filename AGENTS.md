@@ -31,6 +31,34 @@
 > in any phase; frames are GPU-bound at ~17-18 ms. Remaining freezes when outrunning
 > generation are cold water solves (30-60 s a block on the single planning thread).
 
+> October 7 native ports (plan `docs/superpowers/plans/2026-10-07-native-terrain-water-ports.md`;
+> results `docs/qa/2026-10-07-native-ports/result.md`). Under `Godot_mono` the hot numeric
+> kernels run in C# (`scripts/native/`): `NativeTileKernel` (the tile kernel; batched
+> `TerrainTileField.sample_window` / `sample_grid` / `sample_grid32`, used by the mesher quad
+> loop, `CliffSlopeField._ground_grid`, `WaterField._sample_ground_lattice`, rock-skirt corner
+> prefetch), `NativeRiverWalk` (source search + raw contour walk), `NativeCarve` (batched
+> carved height prefetch), `NativeWaterFill` (relax/smooth/reconcile/retain, spill search +
+> hydrostatic cap, river seeding, hydraulic profiles with C# corridor terrain;
+> `GdPriorityQueue` is a line-for-line `PriorityQueue.gd` port), `NativeCliffEnvelope` (the
+> whole numeric envelope build), `NativeCliffSolid` (bedrock surface nets), beside the older
+> `NativeHeightField` / `NativeGridKernels`. RULE: a port is bit-identical or it is off. The
+> GDScript stays the reference and fallback (the standard binary and test subclasses always use
+> it); each loader runs a parity gate (`!=` on every output) and one mismatch disables it for
+> the seed. Gates are lazy (`prepare()` only loads C# on the main thread; the first `on()` on
+> a worker runs the gate under `try_lock`, other threads take GDScript meanwhile), never on the
+> main thread in game. Port float32 vs double exactly as Godot stores it (`snapped` is double;
+> Vector2/3 math float32, no FMA). Debug knobs `NATIVE_CLIFF_ENVELOPE_OFF=1`,
+> `NATIVE_CLIFF_SOLID_OFF=1`. Changes to `KEY_SOURCES` files force a cold planning run.
+> Identity gates: `water_block_cost --chunk=-4,-5 --no-disk` digest `b6c965def22e7e93`,
+> `profile_mesh_phases --chunks "0,-2;0,-1;1,-1"` hashes 3c960e38/b7871a95/356b34c1,
+> `parallel_tail_check --rounds=2` PASS. Measured (mono, seed 2697992464): cold block
+> (-4,-5) region + water 59 s -> 24 s (water 20.6 s; fine rescue 9.4 s is now the largest
+> stage, follow-up `docs/superpowers/plans/2026-10-07-native-fine-rescue-followup.md`);
+> chunk (0,-2) cliff dressing 84.5 -> 27.1 s (`d.solid` 10.4 -> 0.9, `d.slope_init` 15.0 ->
+> 7.3, `d.add_skirts` 10.3 -> 4.6 s); three-chunk mesher total 151 -> 49 s. 240 s walk:
+> 1024 m, 107 s frozen (was 121-135 s), startup 138 s; the remaining freezes are cold water
+> solves (17-29 s each) reached from `water_context` and from village/path feature planning.
+
 > October 7 grass render distance: radii are runtime values (`GrassStreamer.set_radii(full, edge)`,
 > shader globals `grass_full_radius`/`grass_radius`), still 60/84 m. A re-sweep with two grass workers
 > (`docs/qa/2026-10-07-grass-distance/result.md`) found 90/140 and 100/170 over the frame-time gates
