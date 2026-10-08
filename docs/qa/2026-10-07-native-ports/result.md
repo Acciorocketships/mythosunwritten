@@ -583,3 +583,45 @@ kernel (one with a grade list), and the dispatch incl. grass support.
 `d.grass_support` also drops a little (native columns): 3324 -> 2582 ms over
 the first set. The cliff dressing's largest remaining stages are now
 `d.add_skirts` (2.4-8.7 s) and `d.mesh_arrays` (0.5-4.3 s).
+
+## Task 12: rock skirts (memoized tints, node normals)
+
+The skirt ring's terrain ground samples were already batched by Task 3
+(`RockSkirt.terrain_surface` `prefetch` + corner memo). Two per-surface memos
+(each surface is built and read by one thread: a slope rock's skirt in
+`CliffSlopeField.skirt`, or an ambient candidate's in `DressingField._skirt`):
+
+1. `tint`: the 24 m lattice corner tints (`BiomeRegistry.ground_tint_at`,
+   was 4 calls per vertex). Test
+   `test_rock_skirt_batch::test_skirt_tints_read_each_lattice_corner_once`
+   (counting `corner_tint` hook; red at 4/vertex, green at <= corners touched,
+   colours equal).
+2. `normal`: the terrain normal ran `TerrainChunkMesher.field_normals` on the
+   2 m quad's four nodes for every vertex; it is per node and pure in the
+   node, so the surface memoizes node -> normal.
+
+| check | result |
+|---|---|
+| `--chunks "0,-2;0,-1;1,-1"` vs HEAD 3fc32682d baseline | `HASH CHECK: IDENTICAL` after each commit |
+| `--seed 2697992464 --chunks "2,4;1,4;1,3"` vs HEAD 3fc32682d baseline | `HASH CHECK: IDENTICAL` after each commit |
+| `parallel_tail_check --rounds=2` | PASS failures=0 (both commits) |
+| tests (mono) | rock_skirt_batch 3/3, september27_rock_placement 10/10, dressing_field 6/7 + 1 pre-existing risky (no assert) |
+
+`d.add_skirts` (`--detail`, Godot_mono, ms; single runs, noisy ~±20%):
+
+| chunk | before | tints | + node normals |
+|---|---|---|---|
+| (0,-2) | 10289 | 4039 | 2589 |
+| (0,-1) | 1491 | 568 | 414 |
+| (1,-1) | 5531 | 1744 | 1698 |
+| seed 2697992464 (2,4) | 6184 | 2695 | 1643 |
+| (1,4) | 5533 | 1882 | 1354 |
+| (1,3) | 2947 | 1242 | 645 |
+| totals | 17311 / 14664 | 6351 / 5820 | 4701 / 3642 |
+
+Breakdown after the tint memo (instrumented, chunk (0,-2), 519 skirts,
+3.83 s): normal 2.28 s (60%: terrain `field_normals` per vertex, now
+memoized), prefetch 0.27, grass_support 0.26, tint 0.24, append loop 0.23,
+height+bump 0.21, triangles 0.18, sheet flag 0.17, setup 0.05. What remains
+is spread over many small GDScript loops (~0.5 ms per skirt); no single
+dominant hotspot left.
