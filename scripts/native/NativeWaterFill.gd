@@ -4,7 +4,10 @@ extends RefCounted
 ## _reconcile_connected_surface, _smooth_fill_surface,
 ## _retain_source_connected_fill, _cap_hydrostatic_fill with its SpillSearch),
 ## of its source seeding (_claim_rivers, _contain_rivers, _seed_ponds;
-## NativeWaterSeed.cs, GdPond.cs) and of PriorityQueue.gd
+## NativeWaterSeed.cs, GdPond.cs), of profile()'s terrain-shaped branch with
+## the trace's natural terrain corridor (NativeWaterProfile.cs: the corridor
+## is compute_rect_region's certified values on just the lattice points a
+## profile reads, so no trace region is built) and of PriorityQueue.gd
 ## (scripts/native/NativeWaterFill.cs, GdPriorityQueue.cs). Used only once
 ## verified bit-identical to the GDScript on random lattices (setup()), and
 ## never under the standard editor. No class_name: preload it.
@@ -31,6 +34,8 @@ static var _native: Object = null
 static var _load_attempted := false
 static var _gated := false
 static var _mutex := Mutex.new()
+## Profiles the C# shaped (tests).
+static var profiles_served := 0
 
 
 ## Any thread. The first call runs the parity gate (unless setup() already
@@ -135,6 +140,91 @@ static func seed_sources(claims: Array, ponds: Array, base: Vector2, m1: int,
 		"claim_usec": int(result[5]), "contain_usec": int(result[6])}
 
 
+## WaterField._profile_compute's terrain-shaped branch for `trace` (level0 =
+## levels[0]). Corner heights come from `source` (a region the GDScript would
+## read) or, when null, from plan's natural corridor (corridor_terrain).
+## Returns {"levels", "descents"} as the GDScript builds them, {} on failure.
+static func profile(trace: RiverTrace, level0: float, source, plan: HeightfieldPlan) -> Dictionary:
+	_mutex.lock()
+	profiles_served += 1
+	_mutex.unlock()
+	var consts := _profile_consts()
+	var lattice = _native.ProfileLattice(trace.points, trace.beds, level0, consts)
+	if not lattice is PackedInt32Array or (lattice as PackedInt32Array).is_empty():
+		return {}
+	var heights := PackedFloat32Array()
+	var storeys := PackedInt32Array()
+	if source != null:
+		var count: int = lattice.size() / 2
+		heights.resize(count)
+		storeys.resize(count)
+		for k in count:
+			heights[k] = source.surface_height(lattice[2 * k], lattice[2 * k + 1])
+			storeys[k] = source.storey_at(lattice[2 * k], lattice[2 * k + 1])
+	else:
+		var terrain := corridor_terrain(plan, lattice)
+		if terrain.is_empty():
+			return {}
+		heights = terrain.heights
+		storeys = terrain.storeys
+	var has_pond := trace.pond != null
+	var r = _native.Profile(trace.points, trace.beds, trace.widths, level0, has_pond,
+		trace.pond.surface_y() if has_pond else 0.0, lattice, heights, storeys, consts)
+	if not r is Array or (r as Array).size() != 7:
+		return {}
+	var lo := PackedInt32Array(r[1])
+	var hi := PackedInt32Array(r[2])
+	var sizes := PackedInt32Array(r[3])
+	var pos := PackedVector2Array(r[4])
+	var w := PackedFloat32Array(r[5])
+	var lvl := PackedFloat32Array(r[6])
+	var descents: Array = []
+	var at := 0
+	for d in lo.size():
+		descents.append({"lo": lo[d], "hi": hi[d], "pos": pos.slice(at, at + sizes[d]),
+			"w": w.slice(at, at + sizes[d]), "lvl": lvl.slice(at, at + sizes[d])})
+		at += sizes[d]
+	return {"levels": PackedFloat32Array(r[0]), "descents": descents}
+
+
+## Certified natural surface heights (float32) and storeys of the lattice
+## points `lattice` (interleaved i, j): what plan.compute_rect_region over
+## any certifying interior holds there, from the plan's samples near them
+## only. {"heights", "storeys"}, {} on failure.
+static func corridor_terrain(plan: HeightfieldPlan, lattice: PackedInt32Array) -> Dictionary:
+	var terrain := _terrain_consts()
+	var agg := _aggregation(plan.aggregation)
+	var s = _native.CorridorPoints(lattice, terrain)
+	if not s is PackedInt32Array:
+		return {}
+	var hs := plan.sample_heights(s)
+	var d = _native.CorridorDisks(s, hs, agg, plan.max_storeys, plan.max_step, terrain)
+	if not d is PackedInt32Array:
+		return {}
+	var hd := plan.sample_heights(d)
+	var r = _native.CorridorTerrain(lattice, s, hs, d, hd, agg, plan.max_storeys, plan.max_step, terrain)
+	if not r is Array or (r as Array).size() != 2:
+		return {}
+	return {"heights": PackedFloat32Array(r[0]), "storeys": PackedInt32Array(r[1])}
+
+
+static func _aggregation(name: String) -> int:
+	return 0 if name == "min" else (2 if name == "max" else 1)
+
+
+static func _profile_consts() -> PackedFloat64Array:
+	return PackedFloat64Array([WaterField.SURFACE_RIDE, WaterField.FILM, WaterField._EASE_BAND,
+		WaterField._DESCENT_STEP, WaterField.DESCENT_CLAMP, WaterField.EPS,
+		WaterField.DESCENT_POOL_GAP, WaterField.FALL_DROP_MIN, HeightfieldPlan.POINT,
+		float(TerrainTileField.cliff_end)])
+
+
+static func _terrain_consts() -> PackedFloat64Array:
+	return PackedFloat64Array([HeightfieldPlan.STOREY_HEIGHT, HeightfieldPlan.LEVEL_HEIGHT,
+		HeightfieldPlan.LEVELS_PER_STOREY, HeightfieldPlan._CLIFF_SEARCH_MAX,
+		1.0 if HeightfieldPlan.RENDER_LEVELS else 0.0, HeightfieldPlan._NO_CLIFF])
+
+
 static func reconcile(levels: PackedFloat32Array, ground: PackedFloat32Array,
 		columns: int, step: float) -> int:
 	var result: Array = _native.Reconcile(levels, ground, columns, step)
@@ -206,7 +296,10 @@ static func _gate() -> void:
 			+ "(and GdPriorityQueue.cs) with scripts/terrain/water/WaterField.gd (_relax_fill, "
 			+ "_reconcile_connected_surface, _smooth_fill_surface, _retain_source_connected_fill, "
 			+ "_cap_hydrostatic_fill, SpillSearch, _claim_river_segment, _claim_rivers, "
-			+ "_contain_rivers, _seed_ponds; NativeWaterSeed.cs, GdPond.cs with PondStamp) "
+			+ "_contain_rivers, _seed_ponds; NativeWaterSeed.cs, GdPond.cs with PondStamp; "
+			+ "NativeWaterProfile.cs with profile()'s _descend_segment, _shape_descent_span, "
+			+ "_dense_span_curve, _find_descent_knots, _eval_descent_knots, _descent_knot_tangents, "
+			+ "_dense_span_points and HeightfieldPlan.region_kernel) "
 			+ "and scripts/core/PriorityQueue.gd; the water fill uses GDScript until then.")
 
 
@@ -248,7 +341,7 @@ static func _parity() -> String:
 		gd.free()
 		if PackedInt64Array(_native.QueueReplay(pushes)) != order:
 			return "priority queue order differs (case %d)" % case_index
-	for case_index in 12:
+	for case_index in 9:
 		var m1 := rng.randi_range(20, 60)
 		var rows := m1 if case_index % 3 == 0 else rng.randi_range(20, 60)
 		var n := m1 * rows
@@ -355,7 +448,167 @@ static func _parity() -> String:
 		if reconcile(reconciled_actual, reconcile_ground, m1, step) != offers_expected \
 				or reconciled_actual != reconciled_expected:
 			return "reconcile differs (case %d, %dx%d)" % [case_index, m1, rows]
-	return _seed_parity(rng)
+	var seeded := _seed_parity(rng)
+	if not seeded.is_empty():
+		return seeded
+	return _profile_parity(rng)
+
+
+## Random traces (12 m-ish steps, zero and near-zero segments, storey drops,
+## pools under DESCENT_POOL_GAP, near-EPS ties, source pools, terminal ponds
+## above and below the end) over random natural regions with cliffs and level
+## steps: the C# profile must equal WaterField._profile_compute (levels and
+## every descent array). Then corridor_parity.
+static func _profile_parity(rng: RandomNumberGenerator) -> String:
+	for case_index in 15:
+		var trace := RiverTrace.new()
+		var n := rng.randi_range(1, 30)
+		var p := Vector2(rng.randf_range(-40.0, 40.0), rng.randf_range(-40.0, 40.0))
+		var dir := Vector2.from_angle(rng.randf() * TAU)
+		var bed := rng.randf_range(24.0, 44.0)
+		for i in n:
+			trace.points.append(p)
+			trace.beds.append(bed)
+			trace.widths.append(rng.randf_range(4.0, 20.0))
+			var roll := rng.randf()
+			var step := 0.0 if roll < 0.05 else (0.0004 if roll < 0.08 else rng.randf_range(5.0, 14.0))
+			dir = dir.rotated(rng.randf_range(-0.7, 0.7))
+			p += dir * step
+			roll = rng.randf()
+			if roll < 0.35:
+				bed -= 4.0 * rng.randi_range(1, 2)
+			elif roll < 0.5:
+				var ties := [0.05, 0.04999, 0.05001, 0.0]
+				bed -= ties[rng.randi_range(0, 3)] if rng.randf() < 0.5 else rng.randf_range(0.0, 1.5)
+		if rng.randf() < 0.3:
+			trace.source_pool = PondStamp.new(p, 20.0, rng.randi(), 30, 4.0)
+			trace.source_pool.surface_ceiling = trace.beds[0] + rng.randf_range(-3.0, 4.0)
+		if rng.randf() < 0.6:
+			trace.pond = PondStamp.new(p, 20.0, rng.randi(), 30, 4.0)
+			trace.pond.surface_ceiling = bed + (rng.randf_range(-12.0, -5.0) if rng.randf() < 0.4
+				else rng.randf_range(0.0, 6.0))
+		# Natural region round the trace: terraced storeys near the beds,
+		# cliffs (two-storey jumps) and random level steps.
+		var lo := Vector2i(floori(trace.points[0].x / 12.0), floori(trace.points[0].y / 12.0)) - Vector2i(4, 4)
+		var hi := lo + Vector2i(8, 8)
+		for q: Vector2 in trace.points:
+			lo = Vector2i(mini(lo.x, floori(q.x / 12.0) - 4), mini(lo.y, floori(q.y / 12.0) - 4))
+			hi = Vector2i(maxi(hi.x, floori(q.x / 12.0) + 4), maxi(hi.y, floori(q.y / 12.0) + 4))
+		var storeys := {}
+		var levels := {}
+		for j in range(lo.y, hi.y + 1):
+			for i in range(lo.x, hi.x + 1):
+				var near := 0
+				for k in n:
+					if trace.points[k].distance_squared_to(Vector2(i, j) * 12.0) \
+							< trace.points[near].distance_squared_to(Vector2(i, j) * 12.0):
+						near = k
+				# By case: the local bed (ordinary reaches), the source's
+				# height (sills, knots) or low ground (curves under a pond).
+				var st := floori(trace.beds[near if case_index % 3 == 0 else 0] / 4.0) - rng.randi_range(-1, 3)
+				if case_index % 3 == 2:
+					st = rng.randi_range(0, 1)
+				if rng.randf() < 0.15:
+					st += rng.randi_range(2, 3)
+				storeys[Vector2i(i, j)] = maxi(st, 0)
+				levels[Vector2i(i, j)] = rng.randi_range(0, 3)
+		var region := HeightfieldRegion.new(storeys, levels)
+		var expected := WaterField._profile_compute(trace, region, false, false)
+		var level0 := trace.beds[0] + WaterField.SURFACE_RIDE
+		if trace.source_pool != null:
+			level0 = minf(level0, trace.source_pool.surface_y())
+		var actual := profile(trace, PackedFloat32Array([level0])[0], region, null)
+		if actual.is_empty():
+			return "profile failed (case %d)" % case_index
+		if actual.levels != expected.levels or var_to_bytes(actual.descents) != var_to_bytes(expected.descents):
+			return "profile differs (case %d, %d points)" % [case_index, n]
+	return _corridor_parity(rng)
+
+
+## Random samples (pits, spikes, x.5 roundings) under every aggregation and
+## max_step: corridor terrain on an interior equals HeightfieldPlan's region
+## kernel there (surface heights and storeys).
+static func _corridor_parity(rng: RandomNumberGenerator) -> String:
+	var terrain := _terrain_consts()
+	var aggregations := ["min", "mean", "max"]
+	for case_index in 9:
+		var max_step: int = 1 + case_index % 3
+		var max_storeys: int = 5 + rng.randi_range(0, 4)
+		var agg: String = aggregations[(case_index / 3) % 3]
+		var inset: int = HeightfieldPlan._CLIFF_SEARCH_MAX + ceili(float(max_storeys) / max_step)
+		var grow: int = 1 + HeightfieldPlan.LEVELS_PER_STOREY + inset
+		var interior := Vector2i(rng.randi_range(5, 10), rng.randi_range(5, 10))
+		var width := interior.x + 2 * grow
+		var rows := interior.y + 2 * grow
+		var origin := Vector2i(rng.randi_range(-40, 40), rng.randi_range(-40, 40))
+		# Terraces of nearly equal storeys (so diagonal-only cliffs, cliff
+		# distances and level relaxation all occur) high enough for a rare pit
+		# to clamp them from afar; x.5 levels and storeys exercise the rounding.
+		var heights := PackedFloat64Array()
+		heights.resize(width * rows)
+		var top := float(max_storeys * 4 + 6)
+		var block := rng.randi_range(3, 7)
+		var base := rng.randi_range(maxi(0, max_storeys - 3), max_storeys)
+		var block_storeys := {}
+		for z in rows:
+			for x in width:
+				var cell := Vector2i(x / block, z / block)
+				if not block_storeys.has(cell):
+					block_storeys[cell] = maxi(0, base - rng.randi_range(0, 1))
+				# Residuals the aggregation keeps on the block's own storey.
+				var low := 0.0 if agg == "min" else (-1.99 if agg == "mean" else -3.99)
+				var residual := rng.randf_range(low, low + 3.98)
+				var roll := rng.randf()
+				if roll < 0.2:
+					residual = float(rng.randi_range(0, 3)) + 0.5 + floorf(low)
+				elif roll < 0.3:
+					residual = 2.0
+				var h := float(block_storeys[cell]) * 4.0 + residual
+				roll = rng.randf()
+				if roll < (0.04 if case_index % 2 == 1 else 0.002):
+					h = 0.0
+				elif roll < 0.02:
+					h = top
+				heights[z * width + x] = h
+		var kernel := HeightfieldPlan.region_kernel(heights, width, rows, inset, max_step, max_storeys, agg)
+		var lattice := PackedInt32Array()
+		var expected_h := PackedFloat32Array()
+		var expected_s := PackedInt32Array()
+		for z in interior.y:
+			for x in interior.x:
+				var idx := (z + grow) * width + x + grow
+				lattice.append_array([origin.x + x + grow, origin.y + z + grow])
+				var st: int = kernel[0][idx]
+				var h := float(st) * HeightfieldPlan.STOREY_HEIGHT
+				if HeightfieldPlan.RENDER_LEVELS:
+					h += float(kernel[1][idx]) * HeightfieldPlan.LEVEL_HEIGHT
+				expected_h.append(h)
+				expected_s.append(st)
+		var agg_id := _aggregation(agg)
+		var s: PackedInt32Array = _native.CorridorPoints(lattice, terrain)
+		var hs := _lookup(heights, width, rows, origin, s)
+		if hs.size() != s.size() / 2:
+			return "corridor points leave the sample rectangle (case %d)" % case_index
+		var d: PackedInt32Array = _native.CorridorDisks(s, hs, agg_id, max_storeys, max_step, terrain)
+		var hd := _lookup(heights, width, rows, origin, d)
+		if hd.size() != d.size() / 2:
+			return "corridor disks leave the sample rectangle (case %d)" % case_index
+		var r = _native.CorridorTerrain(lattice, s, hs, d, hd, agg_id, max_storeys, max_step, terrain)
+		if not r is Array or PackedFloat32Array(r[0]) != expected_h or PackedInt32Array(r[1]) != expected_s:
+			return "corridor terrain differs (case %d, %s, step %d)" % [case_index, agg, max_step]
+	return ""
+
+
+static func _lookup(heights: PackedFloat64Array, width: int, rows: int, origin: Vector2i,
+		points: PackedInt32Array) -> PackedFloat64Array:
+	var out := PackedFloat64Array()
+	for k in points.size() / 2:
+		var x := points[2 * k] - origin.x
+		var z := points[2 * k + 1] - origin.y
+		if x < 0 or z < 0 or x >= width or z >= rows:
+			break
+		out.append(heights[z * width + x])
+	return out
 
 
 ## Random rivers over terraced lattices: claim ties (equal levels, equal

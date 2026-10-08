@@ -350,3 +350,96 @@ fixture with complete ground and a terminal pond, through relax).
 `test_september9_water_containment` 18/18,
 `test_september15_water_source_connectivity` 5/5; `test_native_carve` 1/1 and
 `test_water_field` 25/25 (mono).
+
+## Task 9: hydraulic profiles (corridor terrain, knot search in C#)
+
+Measured first: `profile_ms` (7.1 s on chunk (-4,-5)) was 96% building the
+trace-owned regions (`_trace_owned_region` -> `compute_rect_region` over each
+trace's bounding box plus the 40-point clamp margin, 16-64 k points each, 22
+traces): about 3.3 s sampling cold heights over the margin, 2.6 s of GDScript
+region kernel, 0.2 s of dictionaries. Ground samples and the knot search were
+about 0.26 s. So the port covers both: the profile math, and the terrain it
+reads, without building a region.
+
+- `NativeWaterProfile.cs` (partial `NativeWaterFill`): `ProfileLattice` lists
+  every lattice point the profile can read (the 3 x 3 points round the owner
+  of each trace point, every `_descend_segment` substep and every span's dense
+  point: a superset, since which are read depends on ground); `Profile` is the
+  terrain-shaped branch of `profile()` (spans, `_descend_segment`,
+  `_shape_descent_span`, `_dense_span_curve`, the Fritsch-Carlson knot search
+  on parallel int/double lists, `_dense_span_points`, the terminal pond
+  reconcile) over that lattice data, sampled with `NativeTileKernel.Sample`.
+- Corridor terrain (`CorridorPoints` / `CorridorDisks` / `CorridorTerrain`):
+  `compute_rect_region`'s certified values on just those points. A certified
+  storey is min over q of target(q) + max_step * |p - q|_1 (targets >= 0, so
+  only q closer than ceil(target(p) / max_step) - 1 can lower it: the disk
+  union is sampled, then one separable L1 distance transform); a level reads
+  storeys within (LEVELS - 1) relaxation + (CLIFF - 1) cliff-distance steps +
+  one ring (7 points). Samples come from `HeightfieldPlan.sample_heights`
+  (the `_sample` memo; misses filled by `NativeCarve.sample_batch`, on the pool
+  from 512 misses when not already on it).
+- `WaterField.profile` = cache + `_profile_compute(trace, region, plan_backed,
+  native)`; `_profile_native` takes corners from a region the GDScript would
+  read (an earlier trace region, the caller's certifying region, a hand-built
+  natural region) or else the corridor; graded/duck regions and plan
+  subclasses without a certifying region stay GDScript.
+- `HeightfieldPlan.region_kernel` (static) is `compute_rect_region`'s kernel
+  split out unchanged, so the gate can run it on synthetic samples.
+- Gate (appended to the lazy NativeWaterFill gate): 15 random traces (zero and
+  0.0004 m segments, storey drops, pools under DESCENT_POOL_GAP, EPS ties,
+  source pools, terminal ponds above/below the end) over random natural
+  regions with cliffs (local-bed, source-height and low ground), profile vs
+  `_profile_compute(..., native = false)` (levels, `var_to_bytes(descents)`);
+  9 corridor cases (each aggregation and max_step 1-3, terraced blocks with
+  diagonal-only cliffs, rare and frequent pits, x.5 storeys and levels) vs
+  `region_kernel`. Gate total 0.68 s in a fresh process (was 0.64 there).
+- Falsification (each disables the gate): knot tie `>=` -> `>`; FILM + 1e-3;
+  FC limit 3.0 -> 2.9; pond trailing raise ps + 1e-3; dense pond raise ps - 1e-3;
+  steep-pond dense pin + 1e-3; pool gap `>=` -> `> + 3`; width lerp + 1e-3;
+  resample t + 1e-4; diagonal cap removed / always on; storey rounding
+  floor -> round, ceil -> floor + 1, away-from-zero -> banker's; clamp DT step
+  + 1. Mutations shown equivalent and not caught: cliff-distance depth and
+  relaxation depth one shorter (the relaxation from the boundary cell implies
+  the cap; a 3-step path cannot lower a level <= 3), and a clamp radius one
+  smaller (distance ceil(t/ms) - 1 is the tight bound).
+
+Tests: `tests/test_native_water_profile.gd` (30 real traces of seeds
+2697992464 and 3046246887, 260 descent spans, all native: corridor and a
+certifying-region source vs the GDScript over `_trace_owned_region`, levels
+and descents exact). Red check: with the gate bypassed and the knot tie
+mutated, 6 of 80 asserts fail.
+
+| measure (`PROFILE_WATER_COST=1 water_block_cost --chunk=-4,-5 --no-disk`) | before (927892fee) | after |
+|---|---|---|
+| profile_ms | 7097 | 1839 |
+| seeds_ms | 7134 | 1871 |
+| harness water_ms | 22609 | 17376 |
+| harness region_ms | 2194 | 2165 |
+| cold block (region + water) vs the plan's 59 s | 24.8 s | 19.5 s |
+| height samples computed | 381638 | 223960 |
+| digest | `b6c965def22e7e93` | `b6c965def22e7e93` (also `--serial`) |
+
+What remains in profile_ms is cold height sampling of the corridors (about
+150 k points, native batches) and the GDScript memo reads.
+`parallel_tail_check --rounds=2`: PASS failures=0. Tests (mono):
+`test_native_water_profile` 1/1, `test_native_water_fill` 7/7,
+`test_water_field` 25/25, `test_september15_water_profile_work` 3/3,
+`test_water_dual_grid` 17/17; standard: `test_native_water_profile` 1/1
+(native off), `test_native_water_fill` 7/7, `test_water_field` 25/25,
+`test_september15_water_profile_work` 3/3. Pre-existing failures, identical at
+HEAD 927892fee: `test_river_generation::test_production_channel_has_no_dry_diagonal_interruptions`
+(`river_for` returns null: geography-pinned) and
+`test_september9_water_profile_retention::test_completed_profile_keeps_its_values_without_retaining_construction_terrain`
+(counts `compute_region` overrides; the trace region uses `compute_rect_region`).
+
+Phase 3 exit check: the fine rescue (`fine_ms` 8.0-9.2 s) is now the largest
+water cost, ahead of spill (1.9-3.5 s), source region (3.7 s) and profiles
+(1.8 s). Follow-up: measure `_fill_bilinear_coarse`, wall spans and shore
+support inside it before porting (`docs/superpowers/plans/2026-10-07-native-fine-rescue-followup.md`).
+
+240 s walk (`travel_profile.tscn -- --seconds 240 --mode walk --startup-timeout
+3000`, Godot_mono, windowed): startup 155 s, distance 1004 m, frozen 134.9 s
+(earlier today, before Task 9: 1037 m, 121 s frozen). Single run each: no
+change in walking freeze within run-to-run noise; the walk's frozen time is
+not bound by profiles (fine rescue, cliff dressing and cold planning remain).
+Walk frame p50 6.8 ms, p95 15.6 ms, p99 28.3 ms.

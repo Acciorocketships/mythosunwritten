@@ -214,7 +214,11 @@ static func natural01(pos: Vector3, p_world_seed: int) -> float:
 ## Apply the aggregation rounding mode to a quotient: min=floor (hug valleys),
 ## max=ceil (build up), mean=nearest. Shared by storey and level quantization.
 func _round_mode(q: float) -> int:
-	match aggregation:
+	return round_with(q, aggregation)
+
+
+static func round_with(q: float, p_aggregation: String) -> int:
+	match p_aggregation:
 		"min":
 			return floori(q)
 		"mean":
@@ -228,7 +232,11 @@ func _round_mode(q: float) -> int:
 
 ## Quantize a height (metres) to an integer storey index, clamped to [0, max_storeys].
 func quantize_storey(h: float) -> int:
-	return clampi(_round_mode(h / STOREY_HEIGHT), 0, max_storeys)
+	return quantize_with(h, aggregation, max_storeys)
+
+
+static func quantize_with(h: float, p_aggregation: String, p_max_storeys: int) -> int:
+	return clampi(round_with(h / STOREY_HEIGHT, p_aggregation), 0, p_max_storeys)
 
 
 const _CARDINALS: Array[Vector2i] = [
@@ -486,6 +494,9 @@ func compute_region(center_cx: int, center_cz: int, radius: int) -> HeightfieldR
 
 ## Below this many missing samples a rectangle is sampled serially.
 const PREFETCH_MIN := 4096
+## Below this many missing samples sample_heights fills them on its own
+## thread (the native batch costs tens of microseconds a sample).
+const SAMPLE_POOL_MIN := 512
 ## Pool tasks a large rectangle's samples are split across: leaves cores for
 ## the main thread and the chunk tails.
 const PREFETCH_TASKS := 4
@@ -538,8 +549,10 @@ func _prefetch_samples(lo: Vector2i, width: int, rows: int) -> void:
 ## height field and carve are verified and every carve region the window needs
 ## has its verified native copy (NativeCarve.region_for, built on first use).
 ## False leaves the window to the GDScript prefetch. Only plain plans (test
-## subclasses override field reads).
-func _prefetch_native(lo: Vector2i, width: int, rows: int, missing: PackedInt32Array) -> bool:
+## subclasses override field reads). `parallel` false runs one batch on this
+## thread (allowed on a pool thread).
+func _prefetch_native(lo: Vector2i, width: int, rows: int, missing: PackedInt32Array,
+		parallel := true) -> bool:
 	if _water_plan == null or get_script() != HeightfieldPlan or _water_plan.get_script() != WaterPlan \
 			or not NativeHeightField.ready_for(world_seed) \
 			or not WaterPlan.NATIVE_CARVE.ready_for(_water_plan.world_seed):
@@ -563,7 +576,7 @@ func _prefetch_native(lo: Vector2i, width: int, rows: int, missing: PackedInt32A
 			regions.append(native)
 			keys.append(rx)
 			keys.append(rz)
-	var band := ceili(float(missing.size()) / PREFETCH_TASKS)
+	var band := ceili(float(missing.size()) / PREFETCH_TASKS) if parallel else missing.size()
 	var job := func(task: int) -> void:
 		var part := missing.slice(task * band, mini(missing.size(), (task + 1) * band))
 		if part.is_empty():
@@ -576,10 +589,52 @@ func _prefetch_native(lo: Vector2i, width: int, rows: int, missing: PackedInt32A
 				[out[3 * k], out[3 * k + 1], out[3 * k + 2]])
 		_samples_lock.unlock()
 		WaterPlan.NATIVE_CARVE.count_filled(part.size())
+	if not parallel:
+		job.call(0)
+		return true
 	var group := WorkerThreadPool.add_group_task(job, PREFETCH_TASKS, PREFETCH_TASKS, true,
 		"heightfield prefetch")
 	WorkerThreadPool.wait_for_group_task_completion(group)
 	return true
+
+
+## _sample(i, j)[0] for each lattice point of `points` (interleaved i, j), as
+## memoized samples. Missing ones are filled first in native batches where the
+## seed is verified (on the pool when many and not already on it), like
+## _prefetch_samples; otherwise _sample computes them.
+func sample_heights(points: PackedInt32Array) -> PackedFloat64Array:
+	var count := points.size() / 2
+	var out := PackedFloat64Array()
+	out.resize(count)
+	var missing := PackedInt32Array()
+	var lo := Vector2i(1 << 30, 1 << 30)
+	var hi := Vector2i(-(1 << 30), -(1 << 30))
+	_samples_lock.lock()
+	for k in count:
+		var i := points[2 * k]
+		var j := points[2 * k + 1]
+		var s = _samples.get(Vector2i(i, j))
+		if s == null:
+			missing.append(k)
+			lo = Vector2i(mini(lo.x, i), mini(lo.y, j))
+			hi = Vector2i(maxi(hi.x, i), maxi(hi.y, j))
+		else:
+			out[k] = s[0]
+	_samples_lock.unlock()
+	if missing.is_empty():
+		return out
+	if prefetch_enabled and not _raw_override.is_valid():
+		var width := hi.x - lo.x + 1
+		var indices := PackedInt32Array()
+		indices.resize(missing.size())
+		for m in missing.size():
+			var k := missing[m]
+			indices[m] = (points[2 * k + 1] - lo.y) * width + (points[2 * k] - lo.x)
+		_prefetch_native(lo, width, hi.y - lo.y + 1, indices,
+			indices.size() >= SAMPLE_POOL_MIN and not WaterPlan.on_pool_thread())
+	for k in missing:
+		out[k] = _sample(points[2 * k], points[2 * k + 1])[0]
+	return out
 
 
 ## Same certified terrain computation on a rectangular requested interior.
@@ -596,28 +651,67 @@ func compute_rect_region(interior: Rect2i) -> HeightfieldRegion:
 	var count := width * rows
 	var lo := outer_rect.position
 	_prefetch_samples(lo, width, rows)
+	var heights := PackedFloat64Array()
+	heights.resize(count)
+	var carves := PackedFloat64Array()
+	carves.resize(count)
+	for z in rows:
+		for x in width:
+			var smp := _sample(lo.x+x,lo.y+z)
+			heights[z*width+x] = smp[0]
+			carves[z*width+x] = smp[1]
+	var kernel := region_kernel(heights, width, rows, inset, max_step, max_storeys, aggregation)
+	var storeys: PackedInt32Array = kernel[0]
+	var levels: PackedInt32Array = kernel[1]
+	var end_x := width-inset
+	var end_z := rows-inset
+	var carved: Dictionary = {}
+	for z in range(inset,end_z):
+		for x in range(inset,end_x):
+			if carves[z*width+x]>3.0: carved[Vector2i(lo.x+x,lo.y+z)]=true
+	var storey_map: Dictionary = {}
+	var level_map: Dictionary = {}
+	for z in rows:
+		for x in width:
+			storey_map[Vector2i(lo.x+x,lo.y+z)]=storeys[z*width+x]
+	for z in range(inset,end_z):
+		for x in range(inset,end_x):
+			level_map[Vector2i(lo.x+x,lo.y+z)]=levels[z*width+x]
+	var result := HeightfieldRegion.new(storey_map,level_map,carved,self)
+	result.certified_points = interior
+	return result
+
+
+## The certified-region kernel of compute_rect_region over a rectangle of
+## samples (`heights` = _sample()[0], row-major): clamped storeys for the whole
+## rectangle and levels for the part `inset` inside every side (-1 elsewhere).
+## Returns [storeys, levels]. Static so a native port can be checked on
+## synthetic samples (NativeWaterFill's corridor gate).
+static func region_kernel(heights: PackedFloat64Array, width: int, rows: int, inset: int,
+		p_max_step: int, p_max_storeys: int, p_aggregation: String) -> Array:
+	var count := width * rows
 	var storeys := PackedInt32Array()
 	storeys.resize(count)
 	for z in rows:
 		for x in width:
-			storeys[z*width+x] = quantize_storey(_sample(lo.x+x,lo.y+z)[0])
+			storeys[z*width+x] = quantize_with(heights[z*width+x], p_aggregation, p_max_storeys)
 	# The rectangular cardinal clamp is the minimum of target(q) plus
 	# max_step * ManhattanDistance(p,q). Its two separable distance transforms
 	# reach exactly the old monotone fixpoint, including finite outer edges.
 	for z in rows:
 		var row := z*width
 		for x in range(1,width):
-			storeys[row+x] = mini(storeys[row+x],storeys[row+x-1]+max_step)
+			storeys[row+x] = mini(storeys[row+x],storeys[row+x-1]+p_max_step)
 		for x in range(width-2,-1,-1):
-			storeys[row+x] = mini(storeys[row+x],storeys[row+x+1]+max_step)
+			storeys[row+x] = mini(storeys[row+x],storeys[row+x+1]+p_max_step)
 	for z in range(1,rows):
 		for x in width:
 			var idx := z*width+x
-			storeys[idx] = mini(storeys[idx],storeys[idx-width]+max_step)
+			storeys[idx] = mini(storeys[idx],storeys[idx-width]+p_max_step)
 	for z in range(rows-2,-1,-1):
 		for x in width:
 			var idx := z*width+x
-			storeys[idx] = mini(storeys[idx],storeys[idx+width]+max_step)
+			storeys[idx] = mini(storeys[idx],storeys[idx+width]+p_max_step)
 	var distances := PackedInt32Array()
 	distances.resize(count)
 	distances.fill(_NO_CLIFF)
@@ -649,20 +743,17 @@ func compute_rect_region(interior: Rect2i) -> HeightfieldRegion:
 	levels.fill(-1) # the original level map excludes the outer storey margin
 	var end_x := width-inset
 	var end_z := rows-inset
-	var carved: Dictionary = {}
 	for z in range(inset,end_z):
 		for x in range(inset,end_x):
 			var idx := z*width+x
 			var here := storeys[idx]
-			var smp := _sample(lo.x+x,lo.y+z)
-			var residual: float = smp[0]-float(here)*STOREY_HEIGHT
-			var detail := clampi(_round_mode(residual/LEVEL_HEIGHT),0,LEVELS_PER_STOREY-1)
+			var residual: float = heights[idx]-float(here)*STOREY_HEIGHT
+			var detail := clampi(round_with(residual/LEVEL_HEIGHT, p_aggregation),0,LEVELS_PER_STOREY-1)
 			var cap := distances[idx]-1
 			if storeys[idx-width-1]!=here or storeys[idx-width+1]!=here \
 					or storeys[idx+width-1]!=here or storeys[idx+width+1]!=here:
 				cap=0
 			levels[idx]=clampi(mini(detail,cap),0,LEVELS_PER_STOREY-1)
-			if smp[1]>3.0: carved[Vector2i(lo.x+x,lo.y+z)]=true
 	# Terrace relaxation remains masked by storey; use the same row order and
 	# cardinal neighbors as the dictionary reference, with contiguous storage.
 	var changed := true
@@ -679,14 +770,4 @@ func compute_rect_region(interior: Rect2i) -> HeightfieldRegion:
 						here=levels[nb]+1
 						changed=true
 				levels[idx]=here
-	var storey_map: Dictionary = {}
-	var level_map: Dictionary = {}
-	for z in rows:
-		for x in width:
-			storey_map[Vector2i(lo.x+x,lo.y+z)]=storeys[z*width+x]
-	for z in range(inset,end_z):
-		for x in range(inset,end_x):
-			level_map[Vector2i(lo.x+x,lo.y+z)]=levels[z*width+x]
-	var result := HeightfieldRegion.new(storey_map,level_map,carved,self)
-	result.certified_points = interior
-	return result
+	return [storeys, levels]

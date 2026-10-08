@@ -43,7 +43,7 @@ namespace Story.Native
             return output;
         }
 
-        static double Sample(float[] heights, int[] storeys, int w, int i0, int j0, double s,
+        internal static double Sample(float[] heights, int[] storeys, int w, int i0, int j0, double s,
             double x, double z, int oi, int oj, int cliffEnd)
         {
             double cx = oi * s, cz = oj * s;

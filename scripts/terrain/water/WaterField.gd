@@ -171,10 +171,7 @@ static func _trace_owned_region(trace: RiverTrace, plan: HeightfieldPlan,
 	# lattice points those samples can read (each sample reads the four corners
 	# of its 12 m tile) rather than requiring the unused square around the
 	# river's maximum span. Both paths certify every sampled height.
-	var first := trace.points[0]
-	var sample_bounds := Rect2(first,Vector2.ZERO)
-	for point: Vector2 in trace.points: sample_bounds = sample_bounds.expand(point)
-	var required := _point_domain(sample_bounds)
+	var required := _trace_point_domain(trace)
 	if available != null and available.plan == plan and available.terrain_grades.is_empty() \
 			and available.native_control_heights.is_empty() \
 			and available.certified_points.encloses(required):
@@ -187,6 +184,14 @@ static func _trace_owned_region(trace: RiverTrace, plan: HeightfieldPlan,
 	_trace_regions.clear()
 	_trace_regions[key] = region
 	return region
+
+
+## The lattice points a trace's profile can read (see _trace_owned_region).
+static func _trace_point_domain(trace: RiverTrace) -> Rect2i:
+	var first := trace.points[0]
+	var sample_bounds := Rect2(first,Vector2.ZERO)
+	for point: Vector2 in trace.points: sample_bounds = sample_bounds.expand(point)
+	return _point_domain(sample_bounds)
 
 
 ## Terrain lattice points (12 m, TerrainTileField) a surface query anywhere in
@@ -1446,6 +1451,20 @@ static func profile(trace: RiverTrace, region = null) -> Dictionary:
 		_profiles[cache_key] = cached
 		_profiles_lock.unlock()
 		return cached
+	var out := _profile_compute(trace, region, plan_backed, true)
+	if plan_backed:
+		_trace_regions.erase([trace.get_instance_id(),cache_key[1]])
+	if _profiles.size() >= PROFILE_CACHE_LIMIT:
+		_profiles.erase(_profiles.keys()[0])
+	_profiles[cache_key] = out
+	_profiles_lock.unlock()
+	return out
+
+
+## profile()'s body, uncached. `native` lets the terrain-shaped branch run in
+## C# (NativeWaterFill.profile) when its gate passed; the gate itself compares
+## against this function with native = false.
+static func _profile_compute(trace: RiverTrace, region, plan_backed: bool, native: bool) -> Dictionary:
 	var n: int = trace.points.size()
 	var levels := PackedFloat32Array()
 	levels.resize(n)
@@ -1490,6 +1509,10 @@ static func profile(trace: RiverTrace, region = null) -> Dictionary:
 				break
 		var terminal_drop := trace.pond != null and n >= 2 \
 			and raw[-1]-trace.pond.surface_y() > FALL_DROP_MIN+0.01
+		if (varies or terminal_drop) and native and NATIVE_FILL.on():
+			var fast := _profile_native(trace, region, plan_backed, levels[0])
+			if not fast.is_empty():
+				return fast
 		# A flat packed target cannot be lowered by the min-held terrain hug:
 		# its result lies between targets that round to the same stored level.
 		# Only an actual descent (including the terminal pond) needs ground.
@@ -1579,14 +1602,35 @@ static func profile(trace: RiverTrace, region = null) -> Dictionary:
 					if dl.size() > 0:
 						dl[dl.size() - 1] = minf(dl[dl.size() - 1], levels[n - 1])
 						d["lvl"] = dl
-	var out := {"levels": levels, "descents": descents}
+	return {"levels": levels, "descents": descents}
+
+
+## The terrain-shaped profile in C# over the corner data it reads: taken from
+## the terrain the GDScript would read when that is already at hand (a trace
+## region built earlier, the caller's certifying region, or a hand-built
+## natural region), else the trace's natural corridor computed from the plan's
+## samples (the values _trace_owned_region's region would certify; no region
+## is built). {} leaves it to the GDScript (graded or duck regions, plan
+## subclasses, a failed C# call).
+static func _profile_native(trace: RiverTrace, region, plan_backed: bool, level0: float) -> Dictionary:
+	var source = null
+	var plan: HeightfieldPlan = null
 	if plan_backed:
-		_trace_regions.erase([trace.get_instance_id(),cache_key[1]])
-	if _profiles.size() >= PROFILE_CACHE_LIMIT:
-		_profiles.erase(_profiles.keys()[0])
-	_profiles[cache_key] = out
-	_profiles_lock.unlock()
-	return out
+		plan = region.plan
+		var key := [trace.get_instance_id(), plan.get_instance_id()]
+		if _trace_regions.has(key):
+			source = _trace_regions[key]
+		elif region is HeightfieldRegion and region.terrain_grades.is_empty() \
+				and region.native_control_heights.is_empty() \
+				and region.certified_points.encloses(_trace_point_domain(trace)):
+			source = region
+		elif plan.get_script() != HeightfieldPlan:
+			return {}
+	elif region is HeightfieldRegion and region.terrain_grades.is_empty():
+		source = region
+	else:
+		return {}
+	return NATIVE_FILL.profile(trace, level0, source, plan)
 
 
 ## Advances the held level across one trace segment (a→b, normally the
