@@ -140,3 +140,158 @@ func test_every_baked_tree_has_an_imposter_inside_the_environment_tree() -> void
 		assert_eq(visual.imposter.albedo.get_width(), visual.imposter.albedo.get_height() * visual.imposter.frames,
 			"%s atlas holds its frames side by side" % id)
 	assert_eq(missing, [], "trees without an imposter (run the bake with --imposters-only)")
+
+const IMPOSTER_SHADER := "res://terrain/environment/materials/tree_imposter.gdshader"
+
+func test_imposter_shader_billboards_blends_frames_and_tints_by_response() -> void:
+	var code := (load(IMPOSTER_SHADER) as Shader).code
+	for needle in ["render_mode", "cull_disabled", "ALPHA_SCISSOR_THRESHOLD", "MODEL_MATRIX",
+			"frames", "normal_atlas", "COLOR.rgb", "mix(vec3(1.0), COLOR.rgb"]:
+		assert_true(code.contains(needle), "imposter shader: " + needle)
+	assert_false(code.contains("INSTANCE_CUSTOM"), "custom data carries the tactical footprint")
+
+## IMPOSTER_DUMP=1 writes the runtime renders here.
+const RENDER_DIR := "/private/tmp/imposter-render"
+const RENDER_PX := 192
+const INSTANCE_SCALE := 1.2
+const INSTANCE_YAW := 0.7
+
+func _imposter_material(imposter: EnvironmentImposter) -> ShaderMaterial:
+	var material := ShaderMaterial.new()
+	material.shader = load(IMPOSTER_SHADER)
+	material.set_shader_parameter(&"albedo_atlas", imposter.albedo)
+	material.set_shader_parameter(&"normal_atlas", imposter.normal)
+	material.set_shader_parameter(&"frames", imposter.frames)
+	material.set_shader_parameter(&"frame_size", imposter.size)
+	material.set_shader_parameter(&"pivot_height", imposter.pivot_height)
+	return material
+
+## One imposter instance (yawed, scaled, tinted) through a MultiMesh, seen
+## from `azimuth` at `elevation` degrees, lit by a sun and ambient light.
+## `sun_offset` turns the sun about the vertical from the camera's azimuth
+## (+PI/2: low sun from the camera's right).
+func _render_imposter(imposter: EnvironmentImposter, azimuth: float, elevation: float,
+		tint: Color, distance: float, sun_offset := 0.6) -> Dictionary:
+	var view := SubViewport.new()
+	view.size = Vector2i(RENDER_PX, RENDER_PX)
+	view.own_world_3d = true
+	view.transparent_bg = true
+	view.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	var multimesh := MultiMesh.new()
+	multimesh.transform_format = MultiMesh.TRANSFORM_3D
+	multimesh.use_colors = true
+	multimesh.use_custom_data = true
+	var quad := QuadMesh.new()
+	quad.size = Vector2.ONE
+	multimesh.mesh = quad
+	multimesh.instance_count = 1
+	multimesh.set_instance_transform(0, Transform3D(Basis(Vector3.UP, INSTANCE_YAW).scaled(Vector3.ONE * INSTANCE_SCALE), Vector3.ZERO))
+	multimesh.set_instance_color(0, tint)
+	multimesh.set_instance_custom_data(0, Color(9.0, 9.0, 9.0, 9.0))
+	var instance := MultiMeshInstance3D.new()
+	instance.multimesh = multimesh
+	instance.material_override = _imposter_material(imposter)
+	view.add_child(instance)
+	var sun := DirectionalLight3D.new()
+	view.add_child(sun)
+	var sun_from := Vector3(sin(azimuth + sun_offset), 0.6, cos(azimuth + sun_offset))
+	sun.look_at_from_position(sun_from, Vector3.ZERO, Vector3.UP)
+	var environment := Environment.new()
+	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	environment.ambient_light_color = Color(0.5, 0.55, 0.6)
+	var world_environment := WorldEnvironment.new()
+	world_environment.environment = environment
+	view.add_child(world_environment)
+	var camera := Camera3D.new()
+	camera.fov = 40.0
+	view.add_child(camera)
+	add_child(view)
+	var centre_y := (imposter.pivot_height + 0.5 * imposter.size.y) * INSTANCE_SCALE
+	var e := deg_to_rad(elevation)
+	var eye := Vector3(sin(azimuth) * cos(e), sin(e), cos(azimuth) * cos(e)) * distance + Vector3(0.0, centre_y, 0.0)
+	camera.look_at_from_position(eye, Vector3(0.0, centre_y, 0.0), Vector3.UP)
+	camera.current = true
+	for frame in 5:
+		await get_tree().process_frame
+	await RenderingServer.frame_post_draw
+	var image := view.get_texture().get_image()
+	var base := camera.unproject_position(Vector3.ZERO)
+	view.free()
+	return {"image": image, "base": base}
+
+## Mean luminance of covered crown pixels (upper 60%) in the (left, right) halves.
+func _halves(image: Image) -> Vector2:
+	var sums := Vector2.ZERO
+	var counts := Vector2.ZERO
+	for y in int(image.get_height() * 0.6):
+		for x in image.get_width():
+			var c := image.get_pixel(x, y)
+			if c.a > 0.5:
+				var side := 0 if x < image.get_width() / 2 else 1
+				sums[side] += c.get_luminance()
+				counts[side] += 1.0
+	return Vector2(sums.x / maxf(counts.x, 1.0), sums.y / maxf(counts.y, 1.0))
+
+## (covered pixel count, lowest covered row, mean luminance of covered pixels).
+func _coverage(image: Image) -> Vector3:
+	var count := 0
+	var lowest := -1
+	var luminance := 0.0
+	for y in image.get_height():
+		for x in image.get_width():
+			var c := image.get_pixel(x, y)
+			if c.a > 0.5:
+				count += 1
+				lowest = maxi(lowest, y)
+				luminance += c.get_luminance()
+	return Vector3(count, lowest, luminance / maxf(count, 1))
+
+## The lowest covered texel of frame 0, in asset metres above the origin.
+func _baked_base(imposter: EnvironmentImposter) -> float:
+	var albedo := imposter.albedo.get_image()
+	var px := albedo.get_height()
+	for y in range(px - 1, -1, -1):
+		for x in px:
+			if albedo.get_pixel(x, y).a > 0.5:
+				return imposter.pivot_height + (1.0 - (y + 1.0) / px) * imposter.size.y
+	return imposter.pivot_height
+
+func test_imposter_renders_lit_tinted_and_rooted_from_every_side() -> void:
+	if _headless():
+		pass_test("needs a renderer")
+		return
+	var imposter := (load(OAK) as EnvironmentVisual).imposter
+	var distance := imposter.size.y * INSTANCE_SCALE * 1.6
+	var base_m := _baked_base(imposter) * INSTANCE_SCALE
+	for azimuth in [0.0, 2.1, 4.4]:
+		var shot: Dictionary = await _render_imposter(imposter, azimuth, 8.0, Color.WHITE, distance)
+		var image: Image = shot["image"]
+		if OS.get_environment("IMPOSTER_DUMP") == "1":
+			DirAccess.make_dir_recursive_absolute(RENDER_DIR)
+			image.save_png("%s/oak_az%.1f.png" % [RENDER_DIR, azimuth])
+		var stats := _coverage(image)
+		assert_gt(stats.x, RENDER_PX * RENDER_PX * 0.08, "azimuth %.1f: the crown covers the view" % azimuth)
+		assert_gt(stats.z, 0.12, "azimuth %.1f: the imposter is lit, not black" % azimuth)
+		# The trunk base stands where the instance origin projects (the baked
+		# base is at most a few centimetres off the origin), so pivot_height,
+		# frame_size and the instance scale all place the card correctly.
+		var base: Vector2 = shot["base"]
+		var expected_row := base.y - base_m / (2.0 * distance * tan(deg_to_rad(20.0))) * RENDER_PX
+		assert_almost_eq(stats.y, expected_row, 4.0, "azimuth %.1f: trunk base on the instance origin" % azimuth)
+		# The baked normals, rotated through frame azimuth and instance yaw,
+		# light the crown on the sun's side: a low sun from the camera's right
+		# brightens the right half relative to the same sun from the left
+		# (the ratio cancels the baked albedo).
+		var from_right: Dictionary = await _render_imposter(imposter, azimuth, 8.0, Color.WHITE, distance, PI / 2.0)
+		var from_left: Dictionary = await _render_imposter(imposter, azimuth, 8.0, Color.WHITE, distance, -PI / 2.0)
+		var right := _halves(from_right["image"])
+		var left := _halves(from_left["image"])
+		assert_gt(right.y / left.y, 1.15 * right.x / left.x,
+			"azimuth %.1f: the sunlit half is brighter (sun right %s, sun left %s)" % [azimuth, right, left])
+	# The tint multiplies through the baked response (leaves and this oak's bark ~1).
+	var white: Dictionary = await _render_imposter(imposter, 0.0, 8.0, Color.WHITE, distance)
+	var grey: Dictionary = await _render_imposter(imposter, 0.0, 8.0, Color(0.4, 0.4, 0.4), distance)
+	assert_lt(_coverage(grey["image"]).z, _coverage(white["image"]).z * 0.8, "the instance tint darkens the crown")
+	# Seen from overhead the card dissolves instead of collapsing to a line.
+	var top: Dictionary = await _render_imposter(imposter, 0.0, 80.0, Color.WHITE, distance)
+	assert_lt(_coverage(top["image"]).x, 20.0, "top-down view fades the card out")
