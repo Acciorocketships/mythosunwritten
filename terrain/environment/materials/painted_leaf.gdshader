@@ -41,6 +41,8 @@ global uniform vec4 leaf_lod_camera;
 // the crossfade neither doubles nor opens a gap. Off for bushes and for the
 // shadow proxy, which keep the material without it.
 uniform bool imposter_crossfade = false;
+// The placement origin in this piece's mesh space (a piece may sit offset).
+uniform vec3 imposter_origin_offset = vec3(0.0);
 global uniform vec2 tree_imposter_fade;
 varying flat float near_fade;
 varying vec3 instance_tint;
@@ -74,7 +76,7 @@ void vertex() {
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	near_fade = 1.0;
 	if (imposter_crossfade && PROJECTION_MATRIX[3][3] < 0.5) {
-		float d = distance(CAMERA_POSITION_WORLD, MODEL_MATRIX[3].xyz);
+		float d = distance(CAMERA_POSITION_WORLD, (MODEL_MATRIX * vec4(imposter_origin_offset, 1.0)).xyz);
 		near_fade = 1.0 - smoothstep(tree_imposter_fade.x - tree_imposter_fade.y,
 			tree_imposter_fade.x + tree_imposter_fade.y, d);
 	}

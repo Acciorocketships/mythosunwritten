@@ -288,6 +288,7 @@ func test_tree_crossfade_shaders_survive_the_camera_bubble() -> void:
 	source.vertex_color_use_as_albedo = true
 	var cutout := source.duplicate() as StandardMaterial3D
 	cutout.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+	cutout.cull_mode = BaseMaterial3D.CULL_DISABLED
 	for material: ShaderMaterial in [EnvironmentCommitQueue.crossfade_material(source),
 			EnvironmentCommitQueue.crossfade_material(cutout)]:
 		var code := CameraVisibilityBubble.instrument(material.shader.code)
@@ -297,3 +298,122 @@ func test_tree_crossfade_shaders_survive_the_camera_bubble() -> void:
 	var cut := EnvironmentCommitQueue.crossfade_material(cutout) as ShaderMaterial
 	assert_true(cut.shader.code.contains("ALPHA_SCISSOR_THRESHOLD = alpha_scissor;"))
 	assert_true(cut.shader.code.contains("cull_disabled"))
+
+
+func test_a_second_render_cache_still_hands_trees_over() -> void:
+	## Review fix: the crossfade copies live on the ResourceLoader-shared meshes.
+	## A second cache (SettlementFabricAssembler builds one per town) must find
+	## them in place, not mistake them for unsupported materials and drop the
+	## card while the mesh still dithers away.
+	var ids: Array[StringName] = [&"meadow.oak.04.summer", &"meadow.birch.05.summer"]
+	var first := EnvironmentRenderCache.new(EnvironmentCatalog.load_default())
+	assert_true(first.prepare(ids))
+	var second := EnvironmentRenderCache.new(EnvironmentCatalog.load_default())
+	assert_true(second.prepare(ids))
+	for asset_id in ids:
+		var a := first.visual(asset_id)
+		var b := second.visual(asset_id)
+		assert_not_null(b.imposter, "%s keeps its imposter in the second cache" % asset_id)
+		for piece_index in b.pieces.size():
+			var mesh := b.pieces[piece_index].mesh
+			for surface in mesh.get_surface_count():
+				var material := mesh.surface_get_material(surface) as ShaderMaterial
+				assert_not_null(material)
+				if material == null:
+					continue
+				assert_true(material.has_meta(&"imposter_crossfade"))
+				assert_true(material.shader.code.contains("tree_imposter_fade"))
+				assert_same(material, a.pieces[piece_index].mesh.surface_get_material(surface),
+					"one copy per mesh surface, made once")
+				var baked: Material = material.get_meta(&"baked_material")
+				assert_false(baked.has_meta(&"imposter_crossfade"), "the original is the bake's")
+
+func test_every_piece_fades_at_the_placement_distance() -> void:
+	## Review fix: a piece may sit offset from the placement (none of today's
+	## imposter trees has one: their offset transforms are trunk collisions).
+	## Each piece's crossfade copy carries the placement origin in its own
+	## mesh space, so every piece and the card measure one distance.
+	var source := cache_material(&"meadow.oak.04.summer")
+	var bark := StandardMaterial3D.new()
+	bark.vertex_color_use_as_albedo = true
+	var placement := Transform3D(Basis(Vector3.UP, 1.1).scaled(Vector3.ONE * 1.2), Vector3(40, 3, -7))
+	var locals := [Transform3D(Basis().scaled(Vector3.ONE * 1.3), Vector3.ZERO),
+		Transform3D(Basis(Vector3.UP, 2.0).scaled(Vector3.ONE * 1.3), Vector3(-0.08, 1.49, 0.09))]
+	for local: Transform3D in locals:
+		var offset := local.affine_inverse().origin
+		for material: Material in [source, bark]:
+			var copy := EnvironmentCommitQueue.crossfade_material(material, offset) as ShaderMaterial
+			var carried: Vector3 = copy.get_shader_parameter("imposter_origin_offset")
+			# The shader: MODEL_MATRIX (= placement * local) * vec4(offset, 1).
+			assert_almost_eq((placement * local) * carried, placement.origin, Vector3.ONE * 1e-3,
+				"a piece at %s fades at the placement" % local.origin)
+	var visual := EnvironmentVisual.new()
+	for local: Transform3D in locals:
+		var piece := EnvironmentVisualPiece.new()
+		var mesh := ArrayMesh.new()
+		var arrays := []
+		arrays.resize(Mesh.ARRAY_MAX)
+		arrays[Mesh.ARRAY_VERTEX] = PackedVector3Array([Vector3.ZERO, Vector3.RIGHT, Vector3.UP])
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+		mesh.surface_set_material(0, bark)
+		piece.mesh = mesh
+		piece.local_transform = local
+		visual.pieces.append(piece)
+	assert_true(EnvironmentRenderCache._crossfade_tree(visual))
+	for piece: EnvironmentVisualPiece in visual.pieces:
+		var carried: Vector3 = (piece.mesh.surface_get_material(0) as ShaderMaterial) \
+			.get_shader_parameter("imposter_origin_offset")
+		assert_almost_eq((placement * piece.local_transform) * carried, placement.origin, Vector3.ONE * 1e-3)
+	for path in ["res://terrain/environment/materials/painted_leaf.gdshader",
+			"res://terrain/environment/materials/tree_bark.gdshader"]:
+		assert_true((load(path) as Shader).code.contains(
+			"(MODEL_MATRIX * vec4(imposter_origin_offset, 1.0)).xyz"), path)
+
+## The bake's leaf material of a tree (behind its crossfade copy).
+func cache_material(asset_id: StringName) -> Material:
+	var mesh := _cache_for(asset_id).visual(asset_id).pieces[0].mesh
+	return mesh.surface_get_material(1).get_meta(&"baked_material")
+
+func test_bark_with_an_unreproduced_feature_keeps_no_imposter() -> void:
+	## Review fix: tree_bark.gdshader mirrors only what the baked bark uses; any
+	## other StandardMaterial3D feature must keep the mesh (no card) rather
+	## than draw a wrong copy.
+	var base := StandardMaterial3D.new()
+	base.vertex_color_use_as_albedo = true
+	base.roughness = 0.85
+	assert_true(EnvironmentCommitQueue.can_crossfade(base))
+	var changes := {
+		"vertex_color_use_as_albedo": false, "vertex_color_is_srgb": true,
+		"uv1_scale": Vector3(2, 2, 2), "uv1_offset": Vector3(0.1, 0, 0), "uv1_triplanar": true,
+		"cull_mode": BaseMaterial3D.CULL_DISABLED,
+		"shading_mode": BaseMaterial3D.SHADING_MODE_UNSHADED,
+		"texture_filter": BaseMaterial3D.TEXTURE_FILTER_NEAREST,
+		"rim_enabled": true, "backlight_enabled": true, "detail_enabled": true,
+		"emission_enabled": true, "metallic": 0.5,
+		"transparency": BaseMaterial3D.TRANSPARENCY_ALPHA,
+	}
+	for property: String in changes:
+		var material := base.duplicate() as StandardMaterial3D
+		material.set(property, changes[property])
+		assert_false(EnvironmentCommitQueue.can_crossfade(material), "rejects %s" % property)
+	var ao := base.duplicate() as StandardMaterial3D
+	ao.ao_enabled = true
+	ao.ao_texture = PlaceholderTexture2D.new()
+	assert_true(EnvironmentCommitQueue.can_crossfade(ao))
+	ao.ao_on_uv2 = true
+	assert_false(EnvironmentCommitQueue.can_crossfade(ao), "rejects ao_on_uv2")
+	# A visual with one such surface drops its imposter.
+	var visual := EnvironmentVisual.new()
+	var piece := EnvironmentVisualPiece.new()
+	var mesh := ArrayMesh.new()
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = PackedVector3Array([Vector3.ZERO, Vector3.RIGHT, Vector3.UP])
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	var rim := base.duplicate() as StandardMaterial3D
+	rim.rim_enabled = true
+	mesh.surface_set_material(0, rim)
+	piece.mesh = mesh
+	visual.pieces.append(piece)
+	assert_false(EnvironmentRenderCache._crossfade_tree(visual))
+	assert_same(mesh.surface_get_material(0), rim, "nothing is swapped")

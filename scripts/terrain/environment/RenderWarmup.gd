@@ -46,6 +46,10 @@ static func build(render_cache: EnvironmentRenderCache,
 			# Tree crowns also get the shadow-only canopy proxy, so its
 			# shadow-pass pipeline compiles here too.
 			CANOPY_SHADOWS.attach(instance)
+			# Painted trees cast from their baked shadow proxy (LeafShadow), whose
+			# materials are the bake's: the visible mesh draws crossfade copies.
+			if piece.shadow_mesh != null:
+				EnvironmentCommitQueue._attach_shadow_proxy(instance, piece.shadow_mesh)
 			slot += 1
 		if visual.imposter != null:
 			# Its distant imposter card (EnvironmentCommitQueue._attach_imposter),

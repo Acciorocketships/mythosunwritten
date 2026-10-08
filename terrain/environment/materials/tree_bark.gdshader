@@ -16,12 +16,14 @@ uniform sampler2D ao_texture : hint_default_white, filter_linear_mipmap, repeat_
 uniform float roughness = 1.0;
 uniform float alpha_scissor = 0.5;
 global uniform vec2 tree_imposter_fade;
+// The placement origin in this piece's mesh space (a piece may sit offset).
+uniform vec3 imposter_origin_offset = vec3(0.0);
 varying flat float near_fade;
 
 void vertex() {
 	near_fade = 1.0;
 	if (PROJECTION_MATRIX[3][3] < 0.5) {
-		float d = distance(CAMERA_POSITION_WORLD, MODEL_MATRIX[3].xyz);
+		float d = distance(CAMERA_POSITION_WORLD, (MODEL_MATRIX * vec4(imposter_origin_offset, 1.0)).xyz);
 		near_fade = 1.0 - smoothstep(tree_imposter_fade.x - tree_imposter_fade.y,
 			tree_imposter_fade.x + tree_imposter_fade.y, d);
 	}

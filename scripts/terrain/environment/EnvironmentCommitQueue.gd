@@ -216,24 +216,57 @@ static func imposter_range_begin() -> float:
 
 ## Painted-leaf cards and the bake's StandardMaterial3D (bark, Farmlands
 ## cutouts) can crossfade; the legacy LPFV/KayKit canopy shader cannot, so
-## those trees keep no imposter.
+## those trees keep no imposter. A StandardMaterial3D qualifies only if
+## tree_bark.gdshader reproduces every feature it uses: an asset with anything
+## else keeps no imposter rather than drawing a wrong copy.
 static func can_crossfade(material: Material) -> bool:
-	if material is StandardMaterial3D:
-		var standard := material as StandardMaterial3D
-		return standard.transparency in [BaseMaterial3D.TRANSPARENCY_DISABLED,
-			BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR] and standard.metallic == 0.0 \
-			and standard.roughness_texture == null and not standard.emission_enabled
-	return material is ShaderMaterial and (material as ShaderMaterial).shader != null \
-		and (material as ShaderMaterial).shader.resource_path.ends_with("painted_leaf.gdshader")
+	if material is ShaderMaterial:
+		var shader := (material as ShaderMaterial).shader
+		return shader != null and shader.resource_path.ends_with("painted_leaf.gdshader")
+	if not material is StandardMaterial3D:
+		return false
+	var m := material as StandardMaterial3D
+	var cutout := m.transparency == BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+	if not cutout and m.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED:
+		return false
+	if m.cull_mode != (BaseMaterial3D.CULL_DISABLED if cutout else BaseMaterial3D.CULL_BACK):
+		return false
+	if m.ao_enabled and (m.ao_on_uv2 or m.ao_texture == null or m.ao_light_affect != 0.0
+			or m.ao_texture_channel != BaseMaterial3D.TEXTURE_CHANNEL_RED):
+		return false
+	if m.normal_enabled and m.normal_texture == null:
+		return false
+	return m.vertex_color_use_as_albedo and not m.vertex_color_is_srgb \
+		and m.uv1_scale == Vector3.ONE and m.uv1_offset == Vector3.ZERO and not m.uv1_triplanar \
+		and m.shading_mode == BaseMaterial3D.SHADING_MODE_PER_PIXEL \
+		and m.diffuse_mode == BaseMaterial3D.DIFFUSE_BURLEY \
+		and m.specular_mode == BaseMaterial3D.SPECULAR_SCHLICK_GGX \
+		and m.texture_filter == BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS and m.texture_repeat \
+		and m.blend_mode == BaseMaterial3D.BLEND_MODE_MIX \
+		and m.depth_draw_mode == BaseMaterial3D.DEPTH_DRAW_OPAQUE_ONLY and not m.no_depth_test \
+		and m.metallic == 0.0 and is_equal_approx(m.metallic_specular, 0.5) \
+		and m.roughness_texture == null and not m.emission_enabled and not m.rim_enabled \
+		and not m.backlight_enabled and not m.detail_enabled and not m.heightmap_enabled \
+		and not m.clearcoat_enabled and not m.anisotropy_enabled and not m.refraction_enabled \
+		and not m.subsurf_scatter_enabled and not m.albedo_texture_msdf \
+		and m.billboard_mode == BaseMaterial3D.BILLBOARD_DISABLED and not m.grow \
+		and not m.use_point_size and not m.fixed_size and not m.disable_receive_shadows \
+		and not m.disable_ambient_light and not m.shadow_to_opacity and not m.proximity_fade_enabled \
+		and m.distance_fade_mode == BaseMaterial3D.DISTANCE_FADE_DISABLED \
+		and m.alpha_antialiasing_mode == BaseMaterial3D.ALPHA_ANTIALIASING_OFF \
+		and not m.use_particle_trails and m.next_pass == null
 
 ## The tree's own surface material, fading out where its imposter fades in
 ## (EnvironmentRenderCache gives it to the visible mesh only; the shadow proxy
-## keeps the original). Requires can_crossfade.
-static func crossfade_material(material: Material) -> Material:
+## keeps the original). `origin_offset` is the placement origin in the piece's
+## mesh space (the inverse of its local transform), so every piece fades at the
+## same distance as the card. Requires can_crossfade.
+static func crossfade_material(material: Material, origin_offset := Vector3.ZERO) -> Material:
 	assert(can_crossfade(material))
 	if material is ShaderMaterial:
 		var leaf := material.duplicate() as ShaderMaterial
 		leaf.set_shader_parameter("imposter_crossfade", true)
+		leaf.set_shader_parameter("imposter_origin_offset", origin_offset)
 		return leaf
 	var source := material as StandardMaterial3D
 	var cutout := source.transparency == BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
@@ -241,16 +274,13 @@ static func crossfade_material(material: Material) -> Material:
 	bark.resource_name = source.resource_name
 	bark.shader = _bark_cutout_shader() if cutout \
 		else preload("res://terrain/environment/materials/tree_bark.gdshader")
-	var colour := source.albedo_color
-	if not source.vertex_color_use_as_albedo:
-		push_warning("tree bark %s ignores vertex colour; the crossfade copy uses it" % source.resource_name)
-	bark.set_shader_parameter("albedo_color", colour)
+	bark.set_shader_parameter("imposter_origin_offset", origin_offset)
+	bark.set_shader_parameter("albedo_color", source.albedo_color)
 	bark.set_shader_parameter("albedo_texture", source.albedo_texture)
-	if source.normal_enabled and source.normal_texture != null:
+	if source.normal_enabled:
 		bark.set_shader_parameter("normal_texture", source.normal_texture)
 		bark.set_shader_parameter("normal_scale", source.normal_scale)
-	if source.ao_enabled and source.ao_texture != null:
-		assert(source.ao_texture_channel == BaseMaterial3D.TEXTURE_CHANNEL_RED)
+	if source.ao_enabled:
 		bark.set_shader_parameter("use_ao", true)
 		bark.set_shader_parameter("ao_texture", source.ao_texture)
 	bark.set_shader_parameter("roughness", source.roughness)

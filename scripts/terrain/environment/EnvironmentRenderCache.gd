@@ -60,28 +60,40 @@ func visual(asset_id: StringName) -> EnvironmentVisual:
 				piece.material_override = piece.material_override.duplicate()
 				load("res://scripts/terrain/field/CliffRockCrags.gd").apply_moss(piece.material_override)
 	# Trees crossfade to their baked imposter in their own surface shaders.
-	# The visible mesh takes faded copies; the shadow proxy keeps the originals.
-	if loaded.imposter != null:
-		for piece: EnvironmentVisualPiece in loaded.pieces:
-			for surface in piece.mesh.get_surface_count():
-				var source := piece.mesh.surface_get_material(surface)
-				if source != null and not EnvironmentCommitQueue.can_crossfade(source):
-					loaded = loaded.duplicate()
-					loaded.imposter = null
-					break
-			if loaded.imposter == null:
-				break
-	if loaded.imposter != null:
-		for piece: EnvironmentVisualPiece in loaded.pieces:
-			for surface in piece.mesh.get_surface_count():
-				var source := piece.mesh.surface_get_material(surface)
-				if source != null and not source.has_meta(&"imposter_crossfade"):
-					var faded := EnvironmentCommitQueue.crossfade_material(source)
-					faded.set_meta(&"imposter_crossfade", true)
-					faded.set_meta(&"baked_material", source)
-					piece.mesh.surface_set_material(surface, faded)
+	# A tree whose materials cannot keeps no imposter.
+	if loaded.imposter != null and not _crossfade_tree(loaded):
+		loaded = loaded.duplicate()
+		loaded.imposter = null
 	_visuals[asset_id] = loaded
 	return loaded
+
+## Gives the visible meshes of a tree with an imposter their crossfade copies
+## (EnvironmentCommitQueue.crossfade_material), once per mesh surface for the
+## whole process: the meshes are ResourceLoader-shared, so a second cache (one
+## per town) finds the copies already in place (meta `imposter_crossfade`,
+## original in `baked_material`). The shadow proxy keeps the baked materials.
+## False, changing nothing, when any surface cannot crossfade.
+static func _crossfade_tree(visual_value: EnvironmentVisual) -> bool:
+	for piece: EnvironmentVisualPiece in visual_value.pieces:
+		for surface in piece.mesh.get_surface_count():
+			var material := piece.mesh.surface_get_material(surface)
+			if material == null or not (material.has_meta(&"imposter_crossfade")
+					or EnvironmentCommitQueue.can_crossfade(material)):
+				return false
+	for piece: EnvironmentVisualPiece in visual_value.pieces:
+		# The fade is measured from the placement origin, not the piece's.
+		var offset := piece.local_transform.affine_inverse().origin
+		for surface in piece.mesh.get_surface_count():
+			var source := piece.mesh.surface_get_material(surface)
+			if source.has_meta(&"imposter_crossfade"):
+				assert((source as ShaderMaterial).get_shader_parameter("imposter_origin_offset") == offset,
+					"one mesh shared by pieces with different origins")
+				continue
+			var faded := EnvironmentCommitQueue.crossfade_material(source, offset)
+			faded.set_meta(&"imposter_crossfade", true)
+			faded.set_meta(&"baked_material", source)
+			piece.mesh.surface_set_material(surface, faded)
+	return true
 
 func is_prepared(asset_id: StringName) -> bool:
 	return _visuals.has(asset_id)
