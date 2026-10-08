@@ -122,3 +122,21 @@ func test_capture_frames_a_tall_tree_about_its_vertical_axis() -> void:
 						sum += x
 						count += 1
 		assert_almost_eq(float(sum) / maxf(count, 1), 63.5, 4.0, "frame %d trunk base on the axis" % f)
+
+func test_every_baked_tree_has_an_imposter_inside_the_environment_tree() -> void:
+	var catalog := EnvironmentCatalog.load_default()
+	var missing: Array[String] = []
+	for id: StringName in catalog.ids():
+		var descriptor := catalog.descriptor(id)
+		if not descriptor.tags.has(&"tree"):
+			continue
+		var visual := load(descriptor.visual_path) as EnvironmentVisual
+		if visual.imposter == null or visual.imposter.albedo == null or visual.imposter.normal == null:
+			missing.append(String(id))
+			continue
+		for texture: Texture2D in [visual.imposter.albedo, visual.imposter.normal]:
+			assert_true(texture.resource_path.begins_with("res://terrain/environment/textures/"),
+				"%s imposter texture lives in the generated tree: %s" % [id, texture.resource_path])
+		assert_eq(visual.imposter.albedo.get_width(), visual.imposter.albedo.get_height() * visual.imposter.frames,
+			"%s atlas holds its frames side by side" % id)
+	assert_eq(missing, [], "trees without an imposter (run the bake with --imposters-only)")

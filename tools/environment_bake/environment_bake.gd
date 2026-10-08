@@ -3,8 +3,11 @@ extends SceneTree
 
 ## Deterministic editor-side importer for source-pack visuals. Runtime code is
 ## intentionally unaware of every source path named by the manifests.
-const TOOL_VERSION := 39
+const TOOL_VERSION := 40
 const RoofEnvelope = preload("res://tools/environment_bake/EnvironmentRoofEnvelope.gd")
+const IMPOSTER = preload("res://tools/environment_bake/imposter_capture.gd")
+## Pixels per imposter frame edge (FRAMES frames side by side per atlas).
+const IMPOSTER_FRAME_PX := 256
 const DESCRIPTOR_DIR := "res://terrain/environment/catalog/descriptors"
 const INDEX_PATH := "res://terrain/environment/catalog/index.tres"
 const MANIFEST_DIR := "res://tools/environment_bake/manifests"
@@ -32,22 +35,35 @@ var _material_textures: Dictionary = {}
 var _max_texture_size := 0
 var _failed := false
 var _provenance_by_pack: Dictionary = {}
+## --imposters: capture a distant imposter for every baked tree (windowed only).
+var _imposters := false
 
 func _init() -> void:
 	call_deferred("_run")
 
 func _run() -> void:
+	var args := OS.get_cmdline_user_args()
+	var imposters_only := args.has("--imposters-only")
+	_imposters = imposters_only or args.has("--imposters")
+	if _imposters and DisplayServer.get_name() == "headless":
+		_fail("Imposter capture needs a renderer: run the bake without --headless")
+		quit(1)
+		return
+	if imposters_only:
+		await _bake_catalog_imposters()
+		quit(1 if _failed else 0)
+		return
 	var manifests := _requested_manifests()
 	if manifests.is_empty():
-		_fail("Usage: --manifest <res://...json> (repeatable)")
+		_fail("Usage: --manifest <res://...json> (repeatable) [--imposters] | --imposters-only")
 		quit(1)
 		return
 	for manifest_path: String in manifests:
-		_bake_manifest(manifest_path)
+		await _bake_manifest(manifest_path)
 		if _failed:
 			quit(1)
 			return
-	if not OS.get_cmdline_user_args().has("--keep-existing"):
+	if not args.has("--keep-existing"):
 		_prune_unmanifested_descriptors()
 	if _failed:
 		quit(1)
@@ -56,10 +72,66 @@ func _run() -> void:
 	if _failed:
 		quit(1)
 		return
-	if not OS.get_cmdline_user_args().has("--keep-existing"):
+	if not args.has("--keep-existing"):
 		_prune_generated_orphans()
 	print("Environment bake complete: %d manifest(s)" % manifests.size())
 	quit(0)
+
+## --imposters-only: capture an imposter for every tree already in the
+## catalogue and re-save only its visual. Touches no mesh, material, texture,
+## descriptor, index or provenance and prunes nothing.
+func _bake_catalog_imposters() -> void:
+	var catalog := EnvironmentCatalog.load_default()
+	if catalog == null:
+		_fail("Cannot load the environment catalogue")
+		return
+	var count := 0
+	for asset_id: StringName in catalog.ids():
+		var descriptor := catalog.descriptor(asset_id)
+		if not descriptor.tags.has(&"tree"):
+			continue
+		var visual_path := descriptor.visual_path
+		var visual := ResourceLoader.load(visual_path, "", ResourceLoader.CACHE_MODE_REUSE) as EnvironmentVisual
+		if visual == null:
+			_fail("Cannot load tree visual: %s" % visual_path)
+			return
+		var pack := visual_path.get_base_dir().get_file()
+		await _attach_imposter(visual, pack, visual_path.get_file().get_basename())
+		if _failed:
+			return
+		if ResourceSaver.save(visual, visual_path) != OK:
+			_fail("Cannot save environment visual: %s" % visual_path)
+			return
+		_validate_dependencies(visual_path)
+		if _failed:
+			return
+		count += 1
+		print("Imposter %d: %s" % [count, asset_id])
+	print("Imposter bake complete: %d tree(s)" % count)
+
+## Captures `visual`'s imposter and saves its two atlases next to the pack's
+## other generated textures.
+func _attach_imposter(visual: EnvironmentVisual, pack_slug: String, asset_slug: String) -> void:
+	var imposter: EnvironmentImposter = await IMPOSTER.capture(self, visual, IMPOSTER_FRAME_PX)
+	if imposter == null:
+		_fail("Imposter capture failed for %s" % asset_slug)
+		return
+	imposter.albedo = _save_imposter_texture(pack_slug, asset_slug + "_albedo", imposter.albedo.get_image())
+	imposter.normal = _save_imposter_texture(pack_slug, asset_slug + "_normal", imposter.normal.get_image())
+	if imposter.albedo == null or imposter.normal == null:
+		return
+	visual.imposter = imposter
+
+func _save_imposter_texture(pack_slug: String, name: String, image: Image) -> Texture2D:
+	var texture := PortableCompressedTexture2D.new()
+	texture.keep_compressed_buffer = true
+	texture.create_from_image(image, PortableCompressedTexture2D.COMPRESSION_MODE_LOSSLESS)
+	var path := "res://terrain/environment/textures/%s/imposter_%s.res" % [pack_slug, name]
+	_ensure_parent(path)
+	if ResourceSaver.save(texture, path) != OK:
+		_fail("Cannot save imposter texture: %s" % path)
+		return null
+	return ResourceLoader.load(path, "Texture2D", ResourceLoader.CACHE_MODE_REPLACE) as Texture2D
 
 func _requested_manifests() -> Array[String]:
 	var out: Array[String] = []
@@ -120,7 +192,7 @@ func _bake_manifest(path: String) -> void:
 			_fail("Manifest %s contains a non-dictionary asset" % path)
 			return
 		var entry: Dictionary = value
-		var record := _bake_asset(pack, license_label, entry, default_scale)
+		var record: Dictionary = await _bake_asset(pack, license_label, entry, default_scale)
 		if _failed:
 			return
 		record["tool_version"] = TOOL_VERSION
@@ -636,6 +708,10 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 	visual.collisions = collisions
 	var visual_path := "res://terrain/environment/visuals/%s/%s.tres" % [_slug(pack), slug]
 	_ensure_parent(visual_path)
+	if _imposters and (entry.get("tags", []) as Array).has("tree"):
+		await _attach_imposter(visual, _slug(pack), slug)
+		if _failed:
+			return {}
 	_carry_imposter(visual_path, visual)
 	if ResourceSaver.save(visual, visual_path) != OK:
 		_fail("Cannot save environment visual: %s" % visual_path)
