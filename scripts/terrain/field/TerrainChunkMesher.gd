@@ -563,12 +563,18 @@ func commit_steps(data: Dictionary) -> Dictionary:
 	var root := Node3D.new()
 	root.name = "Chunk_%d_%d" % [chunk.x, chunk.y]
 	var steps: Array[Callable] = [func() -> void: _commit_surface(root, data)]
+	# One label per step (the streamer's slow-step log names them).
+	var labels := PackedStringArray(["surface"])
 	var cliffs: Dictionary = CLIFF_ROCKS.build_steps(data.get("cliff_terraces", {}),
 		data["world_seed"])
 	steps.append(func() -> void: root.add_child(cliffs.root))
+	labels.append("cliff_root")
 	steps.append_array(cliffs.steps)
+	labels.append_array(cliffs.labels)
 	steps.append(func() -> void: _commit_arches(root, data))
+	labels.append("arches")
 	steps.append(func() -> void: _commit_collision(root, data))
+	labels.append("collision")
 	# The residual ground trimesh (cliffy ground the heightmap tiles cannot
 	# carry; 18k triangles on a cliffy chunk, ~10 ms of BVH) joins the body in
 	# pieces after its first, one step each, like the cliff sheet's below.
@@ -582,6 +588,7 @@ func commit_steps(data: Dictionary) -> Dictionary:
 			ground_collision.name = "GroundTrimesh%d" % (piece + 1)
 			ground_collision.shape = shape
 			(root.get_node("Body") as StaticBody3D).add_child(ground_collision))
+		labels.append("ground_trimesh_piece")
 	# The cliff sheet's own collision is often 10-50k triangles; it joins the
 	# body as several shapes (the same triangles) so no one step builds it all.
 	var rock_faces: PackedVector3Array = (data.get("cliff_terraces", {}) as Dictionary) \
@@ -596,9 +603,13 @@ func commit_steps(data: Dictionary) -> Dictionary:
 			rock_collision.name = "CliffRocks" if piece == 0 else "CliffRocks%d" % (piece + 1)
 			rock_collision.shape = shape
 			(root.get_node("Body") as StaticBody3D).add_child(rock_collision))
+		labels.append("cliff_collision_piece")
 	steps.append(func() -> void: _commit_wall_collision(root, data))
+	labels.append("wall_collision")
 	steps.append(func() -> void: _commit_cliff_faces(root, data))
-	return {"root": root, "steps": steps}
+	labels.append("cliff_faces")
+	assert(labels.size() == steps.size())
+	return {"root": root, "steps": steps, "labels": labels}
 
 ## Each piece's BVH build is one integration step on the main thread:
 ## ~1 ms per 1,000 triangles, so 3,000 keeps a step inside the streamer's

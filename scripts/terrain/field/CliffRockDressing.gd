@@ -103,6 +103,7 @@ static func build_steps(data:Dictionary,seed_value:int)->Dictionary:
  assert(OS.get_thread_caller_id()==OS.get_main_thread_id())
  var root:=Node3D.new();root.name="CliffRockFormations"
  var steps:Array[Callable]=[]
+ var labels:=PackedStringArray()  # one per step, for slow-step logs
  for p:Dictionary in data.get("placements",[]):
   # One node per sheet tile (CliffRockCrags.split_tiles), all sharing one
   # material; a step per tile keeps each frame's integration short.
@@ -117,10 +118,15 @@ static func build_steps(data:Dictionary,seed_value:int)->Dictionary:
     mm.set_instance_transform(0,p.transform);mm.set_instance_color(0,Color.WHITE)
     var node:=MultiMeshInstance3D.new();node.multimesh=mm;node.set_meta("cliff_asset",p.asset)
     node.add_to_group("tactical_solid_earth",true);root.add_child(node))
+   labels.append("cliff_tile(%d)"%((tile.arrays as Array)[Mesh.ARRAY_VERTEX] as PackedVector3Array).size())
  if not (data.get("slope_rocks",{}) as Dictionary).is_empty():
   var rocks:=SLOPE_ROCKS.build_steps(data.slope_rocks,seed_value)
   steps.append(func()->void:root.add_child(rocks.root))
+  labels.append("slope_rocks_root")
   steps.append_array(rocks.steps)
+  labels.append_array(rocks.labels)
  # Terrain-covering parts of the basal rocks' ground skirts.
- steps.append(func()->void:RockSkirt.commit(root,data.get("rock_skirts",[])))
- return {"root":root,"steps":steps}
+ var skirt_steps:=RockSkirt.commit_steps(root,data.get("rock_skirts",[]))
+ steps.append_array(skirt_steps)
+ for index in skirt_steps.size():labels.append("cliff_rock_skirts#%d/%d"%[index,skirt_steps.size()])
+ return {"root":root,"steps":steps,"labels":labels}

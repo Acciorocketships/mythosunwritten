@@ -125,7 +125,10 @@ static func build(profile: BiomeProfile, light_points: Array, surf_lo := 0.0, su
 		root.add_child(l)
 	return root
 
-static func _emitter(recipe: StringName, density: float, surf_lo := 0.0, surf_hi := 12.0) -> GPUParticles3D:
+## `points` (chunk-local, optional): emit from those points instead of the
+## band's box.
+static func _emitter(recipe: StringName, density: float, surf_lo := 0.0, surf_hi := 12.0,
+		points := PackedVector3Array()) -> GPUParticles3D:
 	var r: Dictionary = RECIPES.get(recipe, {})
 	if r.is_empty():
 		push_warning("BiomeChunkFx: unknown particle recipe '%s' (add it to RECIPES)" % recipe)
@@ -166,9 +169,40 @@ static func _emitter(recipe: StringName, density: float, surf_lo := 0.0, surf_hi
 		m.angle_max = 180.0
 		m.angular_velocity_min = -35.0
 		m.angular_velocity_max = 35.0
+	if not points.is_empty():
+		m.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_POINTS
+		m.emission_shape_offset = Vector3.ZERO
+		m.emission_point_count = points.size()
+		var positions := Image.create_empty(points.size(), 1, false, Image.FORMAT_RGBF)
+		for i in points.size():
+			positions.set_pixel(i, 0, Color(points[i].x, points[i].y, points[i].z))
+		m.emission_point_texture = ImageTexture.create_from_image(positions)
+	# Assigned once fully configured: assigning builds the material's shader for
+	# its configuration then (3-5 ms when no live material shares it; the box
+	# configuration the point emitters used to pass through was never live).
+	# The first material per configuration stays alive so later chunks share it.
+	var key := "%s/%s" % [recipe, points.is_empty()]
+	if not _shader_keepalive.has(key):
+		_shader_keepalive[key] = m
 	e.process_material = m
 	e.draw_pass_1 = _draw_pass(recipe, r)
 	return e
+
+## Main thread, behind the loading screen: the first point emitter of each
+## recipe (its process shader, sprite material and textures) and the first
+## firefly batch cost 12-15 ms each; build and drop one of each now.
+static func warm() -> void:
+	var data := {"lo": 0.0, "hi": 12.0}
+	var points := PackedVector3Array([Vector3(8.0, 4.0, 8.0)])
+	for recipe: StringName in RECIPES:
+		var node := _point_effect(recipe, points, data)
+		if node != null:
+			node.free()
+
+## One live ParticleProcessMaterial per (recipe, emission) configuration, so
+## its generated shader stays cached (a configuration no live material holds is
+## rebuilt by the next one, on the main thread).
+static var _shader_keepalive: Dictionary = {}
 
 ## The sprite quad and material depend only on the recipe, so every chunk's
 ## emitter of one recipe shares them (a new material per emitter per chunk was
@@ -215,20 +249,25 @@ static func build_field_steps(data: Dictionary) -> Dictionary:
 	var root := Node3D.new()
 	root.name = "BiomeFx"
 	var steps: Array[Callable] = []
+	var labels := PackedStringArray()   # one per step, for slow-step logs
 	var density_max := 0.0
 	for atmosphere: Color in data.fog:
 		density_max = maxf(density_max, atmosphere.a)
 	if density_max > 0.0001:
 		steps.append(func() -> void: root.add_child(_mist_volume(data)))
+		labels.append("mist")
 	steps.append(func() -> void: preload("res://scripts/terrain/biome/BiomeMistWisps.gd").attach(root, data))
+	labels.append("wisps")
 	for recipe: StringName in data.points:
 		var points: PackedVector3Array = data.points[recipe]
 		if points.is_empty():
 			continue
 		steps.append(func() -> void: root.add_child(_point_effect(recipe, points, data)))
+		labels.append("points:%s(%d)" % [recipe, points.size()])
 	for point: Vector3 in data.orbs:
 		steps.append(func() -> void: root.add_child(SpiritOrb.create(point)))
-	return {"root": root, "steps": steps}
+		labels.append("orb")
+	return {"root": root, "steps": steps, "labels": labels}
 
 static func _mist_volume(data: Dictionary) -> FogVolume:
 	# Clear chunks and orb-only previews need no fog textures or shape data.
@@ -258,16 +297,8 @@ static func _point_effect(recipe: StringName, points: PackedVector3Array, data: 
 		var batch := SmallOrbRenderer.new()
 		batch.setup(points)
 		return batch
-	var emitter := _emitter(recipe, 1.0, data.lo, data.hi)
+	var emitter := _emitter(recipe, 1.0, data.lo, data.hi, points)
 	emitter.amount = clampi(points.size() * 5, 8, 240)
 	emitter.preprocess = 5.0
 	emitter.fixed_fps = 30
-	var process := emitter.process_material as ParticleProcessMaterial
-	process.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_POINTS
-	process.emission_shape_offset = Vector3.ZERO
-	process.emission_point_count = points.size()
-	var positions := Image.create_empty(points.size(), 1, false, Image.FORMAT_RGBF)
-	for i in points.size():
-		positions.set_pixel(i, 0, Color(points[i].x, points[i].y, points[i].z))
-	process.emission_point_texture = ImageTexture.create_from_image(positions)
 	return emitter

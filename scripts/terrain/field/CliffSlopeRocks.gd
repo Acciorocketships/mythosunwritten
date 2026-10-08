@@ -90,6 +90,7 @@ static func build_steps(entries: Dictionary, seed_value: int) -> Dictionary:
 	var root := Node3D.new()
 	root.name = "CliffSlopeRocks"
 	var steps: Array[Callable] = []
+	var labels := PackedStringArray()   # one per step, for slow-step logs
 	for name: String in entries:
 		# Study `stamp`: face rocks live in the slope solid, not as meshes.
 		if STYLE.sheet_study == "stamp" and name.begins_with("face_"):
@@ -106,8 +107,9 @@ static func build_steps(entries: Dictionary, seed_value: int) -> Dictionary:
 		for key: Vector2i in keys:
 			var rocks: Array = tiles[key]
 			steps.append(func() -> void: root.add_child(_batch(name, rocks, seed_value)))
-	_add_collision_steps(root, entries, steps)
-	return {"root": root, "steps": steps}
+			labels.append("rocks:%s(%d)" % [name, rocks.size()])
+	_add_collision_steps(root, entries, steps, labels)
+	return {"root": root, "steps": steps, "labels": labels}
 
 
 static func _batch(name: String, rocks: Array, seed_value: int) -> MultiMeshInstance3D:
@@ -163,7 +165,8 @@ static func _with_lods(mesh: ArrayMesh) -> ArrayMesh:
 ## Ground rocks collide like the same Meadow rocks placed as ambient dressing
 ## (owner, September 27: their ground skirt collides, so must the rock). The
 ## catalog hull sits on the rock's base; these pieces pivot at their centre.
-static func _add_collision_steps(root: Node3D, entries: Dictionary, steps: Array[Callable]) -> void:
+static func _add_collision_steps(root: Node3D, entries: Dictionary, steps: Array[Callable],
+		labels: PackedStringArray) -> void:
 	var colliding: Array = []   # [name, rock]
 	for name: String in entries:
 		if name.begins_with("angry_"):
@@ -174,7 +177,9 @@ static func _add_collision_steps(root: Node3D, entries: Dictionary, steps: Array
 	var body := StaticBody3D.new()
 	body.name = "CliffSlopeRockCollision"
 	steps.append(func() -> void: root.add_child(body))
+	labels.append("rock_collision_body")
 	for first in range(0, colliding.size(), COLLISION_STEP):
+		labels.append("rock_collision(%d)" % (mini(first + COLLISION_STEP, colliding.size()) - first))
 		steps.append(func() -> void:
 			for index in range(first, mini(first + COLLISION_STEP, colliding.size())):
 				var name: String = colliding[index][0]

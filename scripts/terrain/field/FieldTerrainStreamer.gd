@@ -292,6 +292,8 @@ func _ready() -> void:
 	# grass binds its live texture/UV instead of copying a sampled colour.
 	CliffDressing.prepare(_environment_cache)
 	CliffDressing.shared_material()
+	if not _headless:
+		BiomeChunkFx.warm()
 	WaterSurfaceBuilder.sheet_material()
 	_mesher.prepare_resources()
 	# C# grid kernels for the cliff sheet, when verified (no-op otherwise).
@@ -1563,7 +1565,7 @@ func _integration_steps(result: Dictionary) -> Array[Callable]:
 	steps.append_array(commit.steps)
 	# Names for the slow-step log (one per step, same order).
 	var labels := PackedStringArray()
-	for index in steps.size(): labels.append("terrain#%d" % index)
+	for index in steps.size(): labels.append("terrain#%d:%s" % [index, commit.labels[index]])
 	steps.append(func() -> void:
 		var water_node: Node3D = _water_builder.commit_chunk(result.water)
 		if water_node != null:
@@ -1574,17 +1576,20 @@ func _integration_steps(result: Dictionary) -> Array[Callable]:
 	steps.append_array(collision_steps)
 	for _i in collision_steps.size(): labels.append("dressing_collision")
 	# Embedded rocks' ground skirts are ground: they commit with it.
-	steps.append(func() -> void: RockSkirt.commit(node, result.dressing.ground_skirts))
-	labels.append("rock_skirts")
+	var skirt_steps := RockSkirt.commit_steps(node, result.dressing.ground_skirts)
+	steps.append_array(skirt_steps)
+	for index in skirt_steps.size(): labels.append("rock_skirts#%d/%d" % [index, skirt_steps.size()])
 	# The chunk's effects (mist, particles, orbs) build one element per step,
 	# after the chunk is attached; built in the attach step they held it 10-25 ms.
 	var fx_steps: Array[Callable] = []
+	var fx_labels := PackedStringArray()
 	var fx_root: Node3D = null
 	if not (result.fx as Dictionary).is_empty():
 		var fx := BiomeChunkFx.build_field_steps(result.fx)
 		fx_root = fx.root
 		fx_root.position = result.fx.origin
 		fx_steps = fx.steps
+		fx_labels = fx.labels
 	steps.append(func() -> void:
 		var t0 := Time.get_ticks_usec()
 		terrain_parent.add_child(node)
@@ -1611,7 +1616,7 @@ func _integration_steps(result: Dictionary) -> Array[Callable]:
 				node.get_child_count()]))
 	labels.append("attach")
 	steps.append_array(fx_steps)
-	for _i in fx_steps.size(): labels.append("fx")
+	for label in fx_labels: labels.append("fx:" + label)
 	_step_labels = labels
 	_integrating_node_ref = {"node": node}
 	return steps

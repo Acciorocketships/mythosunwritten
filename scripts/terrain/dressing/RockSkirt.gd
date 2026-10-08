@@ -301,15 +301,41 @@ static func _grass_support(id: String, centre: Vector2, radii: PackedFloat32Arra
 ## Main thread: the terrain-covering triangles as one merged ground-material
 ## mesh and one collision shape.
 static func commit(parent: Node3D, skirts: Array) -> void:
-	assert(OS.get_thread_caller_id() == OS.get_main_thread_id())
+	for step: Callable in commit_steps(parent, skirts):
+		step.call()
+
+
+## Skirts gathered per step on the main thread (the per-index loop was most of
+## a 9-19 ms integration step on rocky chunks).
+const SKIRTS_PER_STEP := 24
+
+## commit as main-thread steps: gather SKIRTS_PER_STEP skirts a step, then the
+## mesh, then the collision. Running them in order builds exactly commit's
+## nodes (the same arrays, mesh, shape and child order).
+static func commit_steps(parent: Node3D, skirts: Array) -> Array[Callable]:
+	var steps: Array[Callable] = []
 	if skirts.is_empty():
-		return
-	var vertices := PackedVector3Array()
-	var normals := PackedVector3Array()
-	var colors := PackedColorArray()
-	var indices := PackedInt32Array()
-	var faces := PackedVector3Array()
-	for skirt: Dictionary in skirts:
+		return steps
+	var acc := {"vertices": PackedVector3Array(), "normals": PackedVector3Array(),
+		"colors": PackedColorArray(), "indices": PackedInt32Array(), "faces": PackedVector3Array()}
+	for first in range(0, skirts.size(), SKIRTS_PER_STEP):
+		steps.append(func() -> void: _gather(acc, skirts, first, mini(first + SKIRTS_PER_STEP, skirts.size())))
+	steps.append(func() -> void: _commit_mesh(parent, acc))
+	steps.append(func() -> void: _commit_collision(parent, acc))
+	return steps
+
+
+static func _gather(acc: Dictionary, skirts: Array, from: int, to: int) -> void:
+	assert(OS.get_thread_caller_id() == OS.get_main_thread_id())
+	# Taken out of the dictionary while appending, so no copy is made.
+	var vertices: PackedVector3Array = acc.vertices
+	var normals: PackedVector3Array = acc.normals
+	var colors: PackedColorArray = acc.colors
+	var indices: PackedInt32Array = acc.indices
+	var faces: PackedVector3Array = acc.faces
+	acc.clear()
+	for k in range(from, to):
+		var skirt: Dictionary = skirts[k]
 		var base := vertices.size()
 		vertices.append_array(skirt.vertices)
 		normals.append_array(skirt.normals)
@@ -317,17 +343,23 @@ static func commit(parent: Node3D, skirts: Array) -> void:
 		for index: int in skirt.indices:
 			indices.append(base + index)
 			faces.append((skirt.vertices as PackedVector3Array)[index])
+	acc.merge({"vertices": vertices, "normals": normals, "colors": colors, "indices": indices, "faces": faces})
+
+
+static func _commit_mesh(parent: Node3D, acc: Dictionary) -> void:
+	var indices: PackedInt32Array = acc.indices
 	# The terrain-covering triangles; slope-covering ones render in the sheet.
 	if indices.is_empty():
 		return
+	var vertices: PackedVector3Array = acc.vertices
 	var uvs := PackedVector2Array()
 	uvs.resize(vertices.size())
 	uvs.fill(CliffDressing.ground_uv())
 	var arrays: Array = []
 	arrays.resize(Mesh.ARRAY_MAX)
 	arrays[Mesh.ARRAY_VERTEX] = vertices
-	arrays[Mesh.ARRAY_NORMAL] = normals
-	arrays[Mesh.ARRAY_COLOR] = colors
+	arrays[Mesh.ARRAY_NORMAL] = acc.normals
+	arrays[Mesh.ARRAY_COLOR] = acc.colors
 	arrays[Mesh.ARRAY_TEX_UV] = uvs
 	arrays[Mesh.ARRAY_INDEX] = indices
 	var mesh := ArrayMesh.new()
@@ -338,6 +370,12 @@ static func commit(parent: Node3D, skirts: Array) -> void:
 	instance.mesh = mesh
 	instance.add_to_group("tactical_solid_earth", true)
 	parent.add_child(instance)
+
+
+static func _commit_collision(parent: Node3D, acc: Dictionary) -> void:
+	var faces: PackedVector3Array = acc.faces
+	if (acc.indices as PackedInt32Array).is_empty():
+		return
 	var shape := ConcavePolygonShape3D.new()
 	shape.set_faces(faces)
 	var collision := CollisionShape3D.new()
