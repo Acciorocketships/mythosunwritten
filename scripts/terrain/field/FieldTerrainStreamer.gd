@@ -296,9 +296,9 @@ func _ready() -> void:
 	_mesher.prepare_resources()
 	# C# grid kernels for the cliff sheet, when verified (no-op otherwise).
 	preload("res://scripts/native/NativeGridKernels.gd").setup()
+	# Deferred: loads C# here; the gate runs on the first worker sample.
 	preload("res://scripts/native/NativeTileKernel.gd").setup()
 	# Water fill kernels: load C# here; their gate runs on the first water solve.
-	# Deferred: loads C# here; the gate runs on the first worker sample.
 	preload("res://scripts/native/NativeWaterFill.gd").prepare()
 	preload("res://scripts/native/NativeCliffEnvelope.gd").prepare()
 	preload("res://scripts/native/NativeCliffSolid.gd").prepare()
@@ -758,14 +758,17 @@ func _worker() -> void:
 				_tail_slots.post()
 				_publish_worker_result({}, job)
 				continue
+			# Boxed: _run_tail empties the box, so these die on the pool thread
+			# and not with the task's Callable in the main thread's reap.
+			var inputs := [terrain_result, region, water_context, features, blocks, mesher_index]
 			if PARALLEL_TAILS:
-				var task := WorkerThreadPool.add_task(_run_tail.bind(terrain_result, region,
-					water_context, features, blocks, mesher_index), false, "terrain chunk tail")
+				var task := WorkerThreadPool.add_task(_run_tail.bind(inputs), false, "terrain chunk tail")
 				_mutex.lock()
 				_tail_tasks[task] = c
 				_mutex.unlock()
 			else:
-				_run_tail(terrain_result, region, water_context, features, blocks, mesher_index)
+				_run_tail(inputs)
+			inputs = []
 			result["build_terrain"] = false
 		_publish_worker_result(result, job)
 
@@ -795,7 +798,9 @@ var _tail_slots := Semaphore.new()
 var _tail_tasks: Dictionary = {}       # WorkerThreadPool task id -> chunk
 var _tails_in_flight: Dictionary = {}  # chunk -> terrain generation
 
-## Every WorkerThreadPool task must be waited for once to release it.
+## Every WorkerThreadPool task must be waited for once to release it. The
+## wait frees the task's Callable, bound arguments included, on the calling
+## (main) thread: tasks bind boxes they empty themselves (_run_tail, _drop).
 func _reap_tail_tasks(wait_all := false) -> void:
 	_mutex.lock()
 	var ids: Array = _tail_tasks.keys()
@@ -807,9 +812,15 @@ func _reap_tail_tasks(wait_all := false) -> void:
 			_tail_tasks.erase(id)
 			_mutex.unlock()
 
-func _run_tail(result: Dictionary, region: HeightfieldRegion,
-		water_context: WaterFieldContext, features: FeatureContext,
-		blocks: WorldFieldBlockCache, mesher_index: int) -> void:
+## `inputs`: [result, region, water_context, features, blocks, mesher_index],
+## emptied when done (the box outlives the task until the main thread reaps it).
+func _run_tail(inputs: Array) -> void:
+	var result: Dictionary = inputs[0]
+	var region: HeightfieldRegion = inputs[1]
+	var water_context: WaterFieldContext = inputs[2]
+	var features: FeatureContext = inputs[3]
+	var blocks: WorldFieldBlockCache = inputs[4]
+	var mesher_index: int = inputs[5]
 	var c: Vector2i = result.chunk
 	var mesher := _tail_meshers[mesher_index]
 	mesher.water_blocks = blocks
@@ -854,6 +865,7 @@ func _run_tail(result: Dictionary, region: HeightfieldRegion,
 	_done.append(result)
 	_mutex.unlock()
 	_tail_slots.post()
+	inputs.clear()
 
 
 func _publish_worker_result(result: Dictionary, job: Dictionary) -> void:
@@ -1083,11 +1095,16 @@ func _process(_delta: float) -> void:
 		_accept_feature_ready(event)
 	_mark(&"features")
 	_reap_tail_tasks()
+	_mark(&"reap_tails")
 	_reap_drop_tasks()
+	_mark(&"reap_drops")
 	_drain_results(centre)
 	_mark(&"drain_results")
 	_integrate_pending_terrain(centre)
 	_mark(&"integrate")
+	# Every payload released this frame goes to one pool task, now that the
+	# frames that held them have returned (no main-thread reference is left).
+	_flush_drops()
 	if _grass_runtime_enabled:
 		for item: Dictionary in _grass_streamer.drain_commits():
 			_grass_root.add_child(item.node)
@@ -1303,11 +1320,13 @@ func _drain_results(centre: Vector2i) -> void:
 	for result: Dictionary in results:
 		if StringName(result.get("kind", &"chunk")) != &"chunk" \
 				or not bool(result.get("build_terrain", false)):
+			_drop_box.append(result)   # features (enqueued or stale), cancellations
 			continue
 		var c: Vector2i = result.chunk
 		if int(_terrain_generation.get(c, 0)) != int(result.terrain_generation) \
 			or _built.has(c) \
 			or maxi(absi(c.x - centre.x), absi(c.y - centre.y)) > KEEP_RADIUS:
+			_drop_box.append(result)   # stale, built or out of range
 			continue
 		_telemetry.count(&"terrain_results")
 		_pending_terrain.append(result)
@@ -1455,9 +1474,8 @@ func _integrate_pending_terrain(centre: Vector2i) -> void:
 		elif not (not _integrating.is_empty() and is_same(_integrating.result, result)):
 			stale.append(result)
 	_pending_terrain = remaining
-	if not stale.is_empty():
-		_drop_tasks.append(WorkerThreadPool.add_task(_drop.bind(stale)))
-		stale = []
+	_drop_box.append_array(stale)
+	stale = []
 	var frame_usec := Time.get_ticks_usec() - frame_started
 	if LOG_SLOW_FRAMES and frame_usec >= 3 * SLOW_FRAME_USEC:
 		print("[terrain-streamer] slow_integrate_frame ms=%.1f next=%.1f index=%.1f steps=%.1f pending=%d" % [
@@ -1496,13 +1514,27 @@ func _abandon_integration() -> void:
 ## water and grass sampling data) is one large nested value; dropping its
 ## last reference on the main thread cost ~100 ms when a chunk finished
 ## integrating. The step lambdas were made on the main thread and die here;
-## the plain data, built on the worker, is released on a pool thread. Callers
-## clear their own references first, so the task holds the last one.
+## the plain data, built on the worker, goes into _drop_box and is released
+## on a pool thread by _flush_drops.
 func _release_off_main(integration: Dictionary) -> void:
 	if integration.is_empty():
 		return
 	integration.erase("steps")
-	_drop_tasks.append(WorkerThreadPool.add_task(_drop.bind(integration)))
+	_drop_box.append(integration)
+
+## Payloads to release off the main thread (main thread only).
+var _drop_box: Array = []
+
+## One pool task empties the box, so its payloads die there. Called at the
+## end of _process: the box must hold the last reference, and the frames that
+## used the payloads (drain, integration) have returned by then. The wait in
+## _reap_drop_tasks later frees only the empty box.
+func _flush_drops() -> void:
+	if _drop_box.is_empty():
+		return
+	var box := _drop_box
+	_drop_box = []
+	_drop_tasks.append(WorkerThreadPool.add_task(_drop.bind(box)))
 
 ## Pool tasks must be waited on (they leak otherwise, and one still queued at
 ## quit freed its payload during engine teardown). Finished ones are reaped
@@ -1518,8 +1550,8 @@ func _reap_drop_tasks(wait_all := false) -> void:
 			pending.append(task)
 	_drop_tasks = pending
 
-static func _drop(_value: Variant) -> void:
-	pass
+static func _drop(box: Array) -> void:
+	box.clear()
 
 var _step_labels := PackedStringArray()
 
@@ -2008,6 +2040,9 @@ func _exit_tree() -> void:
 	if not CLIFF_STYLE.is_empty():
 		var style := preload("res://scripts/terrain/field/CliffRockStyle.gd")
 		style.apply(style.PRODUCTION)
+	# Process-wide like the style: later plans (tests) gate synchronously again.
+	if terrain_parent != null:
+		preload("res://scripts/native/NativeGates.gd").deferred = false
 	if _grass_work != null: _grass_work.stop()
 	if not _thread.is_started():
 		return
@@ -2020,6 +2055,7 @@ func _exit_tree() -> void:
 	# A worker waiting for a tail slot is released as running tails finish.
 	_thread.wait_to_finish()
 	_reap_tail_tasks(true)
+	_flush_drops()
 	_reap_drop_tasks(true)
 	# Pending entries are CPU-side payloads only; releasing the arrays and
 	# RefCounted samplers is sufficient and safe on the main thread.
@@ -2045,9 +2081,6 @@ func streaming_profile_snapshot() -> Dictionary:
 	result["pending_terrain"] = _pending_terrain.size()
 	result["built"] = _built.size()
 	result["player_frozen"] = _player_frozen
-	# Process-wide like the style: later plans (tests) gate synchronously again.
-	if terrain_parent != null:
-		preload("res://scripts/native/NativeGates.gd").deferred = false
 	result["feature_pending"] = _feature_queue.pending_chunks().size() if _feature_queue != null else 0
 	result["ground_frontier"] = loading_boundary_snapshot()
 	return result
