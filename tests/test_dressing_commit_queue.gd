@@ -429,3 +429,32 @@ func test_bark_with_an_unreproduced_feature_keeps_no_imposter() -> void:
 	visual.pieces.append(piece)
 	assert_false(EnvironmentRenderCache._crossfade_tree(visual))
 	assert_same(mesh.surface_get_material(0), rim, "nothing is swapped")
+
+## The loading-screen warm-up draws each imposter card in the production
+## instance format (colour, no custom data): a different format would compile
+## a different pipeline and leave the real one to stall the first frame.
+func test_render_warmup_draws_the_imposter_card_in_its_production_format() -> void:
+	var asset_id := &"meadow.oak.01.summer"
+	var cache := _cache_for(asset_id)
+	var ids: Array[StringName] = [asset_id]
+	var root := preload("res://scripts/terrain/environment/RenderWarmup.gd").build(cache, ids)
+	add_child_autofree(root)
+	var cards := root.get_children().filter(func(n: Node) -> bool:
+		return n is MultiMeshInstance3D and (n as MultiMeshInstance3D).multimesh.mesh == EnvironmentCommitQueue.imposter_quad())
+	assert_eq(cards.size(), 1)
+	if cards.is_empty():
+		return
+	var queue := EnvironmentCommitQueue.new(cache, &"Dressing")
+	var parent := Node3D.new()
+	add_child_autofree(parent)
+	var payload := EnvironmentInstancePayload.new()
+	payload.add(asset_id, Transform3D.IDENTITY, Color.WHITE)
+	queue.register_chunk(Vector2i.ZERO, 1)
+	queue.enqueue(Vector2i.ZERO, 1, parent, payload)
+	queue.drain(64)
+	var real := parent.get_node("Dressing").get_child(0).get_node("Imposter") as MultiMeshInstance3D
+	var warm := (cards[0] as MultiMeshInstance3D).multimesh
+	assert_eq(warm.use_custom_data, real.multimesh.use_custom_data)
+	assert_eq(warm.use_colors, real.multimesh.use_colors)
+	assert_eq(warm.transform_format, real.multimesh.transform_format)
+	assert_eq((cards[0] as MultiMeshInstance3D).material_override, real.material_override)

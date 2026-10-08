@@ -38,7 +38,6 @@ static func build(render_cache: EnvironmentRenderCache,
 				Vector3.ONE * (0.05 / size)), place))
 			if piece.use_instance_color:
 				multimesh.set_instance_color(0, Color.WHITE)
-			multimesh.set_instance_custom_data(0, Color(0, 0, 0, 0))
 			var instance := MultiMeshInstance3D.new()
 			instance.multimesh = multimesh
 			instance.material_override = LANTERN_LIGHTS.glass_material(asset_id, piece)
@@ -59,13 +58,13 @@ static func build(render_cache: EnvironmentRenderCache,
 			var multimesh := MultiMesh.new()
 			multimesh.transform_format = MultiMesh.TRANSFORM_3D
 			multimesh.use_colors = true
-			multimesh.use_custom_data = true
+			# Same instance format as the cards (colour, no custom data), so the
+			# warmed pipeline is the one they draw with.
 			multimesh.mesh = EnvironmentCommitQueue.imposter_quad()
 			multimesh.instance_count = 1
 			multimesh.set_instance_transform(0, Transform3D(Basis.from_scale(
 				Vector3.ONE * (0.05 / size)), place))
 			multimesh.set_instance_color(0, Color.WHITE)
-			multimesh.set_instance_custom_data(0, Color(0, 0, 0, 0))
 			var card := MultiMeshInstance3D.new()
 			card.multimesh = multimesh
 			card.material_override = EnvironmentCommitQueue.imposter_material(visual.imposter)
