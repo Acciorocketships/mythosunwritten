@@ -605,6 +605,7 @@ func rocks(owned:Rect2)->Array[Dictionary]:
 ## (CliffSlopeEnvelope), with the rocks' ellipsoid swells unioned in, meshed
 ## per chunk by surface nets on the envelope's world-aligned grid.
 const GRID:=ENVELOPE.H
+const NativeCliffSolid:=preload("res://scripts/native/NativeCliffSolid.gd")
 ## The solid tops out this far under the plateau grass and sinks under the
 ## ground where the slope meets it, so no seam edge shows.
 const SINK:=.02
@@ -1018,6 +1019,12 @@ func _columns(owned:Rect2)->Dictionary:
  _column_cache[owned]=cols
  return cols
 
+## _columns as NativeCliffSolid's mask (bedrock sheet, native on), cached.
+var _mask_cache:Dictionary={}
+func _column_mask(owned:Rect2)->RefCounted:
+ if not _mask_cache.has(owned):_mask_cache[owned]=NativeCliffSolid.columns(envelope(),owned)
+ return _mask_cache[owned]
+
 ## Maximum of f over [i-r, i+r] clipped to the line, for every i, in linear
 ## time (van Herk / Gil-Werman: prefix and suffix maxima of 2r+1 blocks).
 ## Exactly the clipped window maximum (max is order-independent).
@@ -1044,7 +1051,7 @@ static func _window_max(f:PackedFloat64Array,r:int)->PackedFloat64Array:
 ## folded rock benches. Rocks claim their points without growing blades.
 func grass_support(area:Rect2)->Dictionary:
  var env:=envelope()
- var cols:=_columns(area)
+ var cols=_column_mask(area) if NativeCliffSolid.on() else _columns(area)
  var lo:=Vector2i(floori(area.position.x/GRID),floori(area.position.y/GRID))
  var hi:=Vector2i(ceili(area.end.x/GRID),ceili(area.end.y/GRID))
  var w:=hi.x-lo.x+1;var h:=hi.y-lo.y+1
@@ -1073,9 +1080,15 @@ func grass_support(area:Rect2)->Dictionary:
   "mesh_faces":_support_faces,"mesh_bounds":_support_owned,"mesh_cells":GrassSupportSurfaces.index_mesh(_support_faces,Vector2(lo)*GRID,GRID),
   "bounds":Rect2(Vector2(lo)*GRID,Vector2(w-1,h-1)*GRID),"id":"slope/%s"%area.position,"obstacles":[]}
 
-## Surface-nets mesh of the solid for the owned rectangle.
-func solid(owned:Rect2)->Array[Dictionary]:
+## Surface-nets mesh of the solid for the owned rectangle. `mode`: 0 auto
+## (the native bedrock net once NativeCliffSolid's gate passed), 1 GDScript,
+## 2 native (gate and tests).
+func solid(owned:Rect2,mode:=0)->Array[Dictionary]:
  var env:=envelope()
+ if STYLE.sheet_study=="bedrock" and (mode==2 or (mode==0 and NativeCliffSolid.on())):
+  var cols:=_column_mask(owned)
+  env.replacement_columns=_column_mask(owned.grow(4.0))
+  return NativeCliffSolid.solid(self,env,owned,cols,_region)
  var rock_cells:Dictionary={}
  for r:Dictionary in rock_list:
   # Bedrock foot assets are already fitted and buried against the sheet.

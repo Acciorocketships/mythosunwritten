@@ -529,3 +529,57 @@ on (1,4) (625x625 grid) shows exclusion + water levels 15.7 s on the cold
 timed build (water contexts) and 1.35 s warm, against 0.39 s for the whole
 native rest (wall-line samples included). Next target: `_exclusion` /
 `_water_level` queries.
+
+## Task 11: native cliff solid (bedrock surface net in C#)
+
+`CliffSlopeField.solid` (production `sheet_bedrock`, no rock swells) now runs
+in `scripts/native/NativeCliffSolid.cs` when `NativeCliffSolid.on()`:
+`_columns` with `_window_max` (returned as a row-major `ColumnMask` with the
+Dictionary's `has` / `is_empty`, also used for `env.replacement_columns` and
+by `grass_support`), the per-column `_solid_top_over` / `_mesh_height`, the
+level ranges (float32 column values), the surface-nets meshing (points /
+field order, vertex snap, winding by grid edge, degenerate threshold),
+`_drop_fragments` and the per-vertex gradient normal, rock exposure and moss
+grade, plus the AABB (float32 `expand`). The 2 m quad corners `_mesh_height`
+bakes are presampled in one `TerrainTileField.sample_grid_window` call (two
+samples per quad and axis, each owned by the quad centre's lattice point);
+a region with a grade list grades only the quads the columns read
+(`NeededQuads`). GDScript rebuilds `native_roots` from the parallel arrays in
+first-occurrence order. `solid(owned, mode)`: 0 auto, 1 GDScript, 2 native.
+
+Numerics: `Vector3.snapped` evaluates `Math::snapped` in double (as Task 10
+found for Vector2); Vector3 sums, cross products, lengths and normalize in
+float32 without FMA; Variant Vector3 keys compare with float `==`.
+
+Gate: lazy like the envelope (`prepare()` in the streamer, first `on()` on a
+chunk tail, try_lock, only while `sheet_study == "bedrock"`): constants + 3
+synthetic `HeightfieldRegion` sites (stepped massif, cliff ending in a slope
+with a keep-out stripe, cliff beside a gentle slope) with a small envelope
+(owned rect grown by 8 m), comparing faces, every placement field,
+`native_roots` keys/values/order, and both column sets. 0.41-0.46 s cold
+(C# load and JIT included). Debug knob `NATIVE_CLIFF_SOLID_OFF=1`.
+Test `test_native_cliff_solid.gd`: gate, P03 fixture (no region), 96 m
+windows of seed 2697992464 chunks (2,4), (1,4), (1,3) through the real tile
+kernel (one with a grade list), and the dispatch incl. grass support.
+
+| check | result |
+|---|---|
+| `--chunks "0,-2;0,-1;1,-1"` native | hashes 3c960e38 / b7871a95 / 356b34c1 (= HEAD, recorded above); vs `NATIVE_CLIFF_SOLID_OFF=1` `HASH CHECK: IDENTICAL` |
+| `--seed 2697992464 --chunks "2,4;1,4;1,3"` native vs HEAD-tree GDScript baseline | `HASH CHECK: IDENTICAL`; `NATIVE_CLIFF_SOLID_OFF=1` vs the same baseline: IDENTICAL |
+| `parallel_tail_check --rounds=2` | PASS failures=0 |
+| tests (mono / standard) | shortcuts 4/4, sheet_ends 8/8, sheet_normals 2/2, sept26_bedrock 5/5, sept28_ground_seams 5/5, sheet_tiles 2/2, native_cliff_envelope 4/4, native_cliff_solid 5/5 (standard: enabled == false) |
+
+`d.solid` (`--detail`, Godot_mono, ms; before = `NATIVE_CLIFF_SOLID_OFF=1`):
+
+| chunk | before | Task 11 |
+|---|---|---|
+| (0,-2) | 10400 | 336 |
+| (0,-1) | 2036 | 47 |
+| (1,-1) | 9570 | 250 |
+| seed 2697992464 (2,4) | 10569 | 261 |
+| (1,4) | 12147 | 317 |
+| (1,3) | 5077 | 111 |
+
+`d.grass_support` also drops a little (native columns): 3324 -> 2582 ms over
+the first set. The cliff dressing's largest remaining stages are now
+`d.add_skirts` (2.4-8.7 s) and `d.mesh_arrays` (0.5-4.3 s).

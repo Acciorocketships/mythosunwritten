@@ -99,8 +99,9 @@ var moss_grade:=PackedFloat64Array()
 ## must never cover.
 var excluded:=PackedByteArray()
 ## Solid columns of the bedrock surface net (CliffSlopeField.solid): a
-## mesher skirt point is buried only under a full neighbourhood of them.
-var replacement_columns:Dictionary={}
+## mesher skirt point is buried only under a full neighbourhood of them. A
+## Dictionary, or NativeCliffSolid's ColumnMask (the same has / is_empty).
+var replacement_columns={}
 
 const STYLE=preload("res://scripts/terrain/field/CliffRockStyle.gd")
 ## Native (C#) versions of _envelope_axis, _window and _blur under .NET Godot,

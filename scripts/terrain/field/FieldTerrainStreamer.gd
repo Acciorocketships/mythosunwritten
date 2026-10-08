@@ -297,6 +297,7 @@ func _ready() -> void:
 	# Water fill kernels: load C# here; their gate runs on the first water solve.
 	preload("res://scripts/native/NativeWaterFill.gd").prepare()
 	preload("res://scripts/native/NativeCliffEnvelope.gd").prepare()
+	preload("res://scripts/native/NativeCliffSolid.gd").prepare()
 	for index in TAIL_THREADS:
 		var tail_mesher := TerrainChunkMesher.new()
 		tail_mesher.profile_enabled = PROFILE_STREAMING
