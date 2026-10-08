@@ -13,8 +13,7 @@ shader_type spatial;
 // - normal_atlas: RGB = n * 0.5 + 0.5 in the frame basis (x = frame right,
 //   y = up, z = toward the capture eye); A = linear tint response r.
 // Instances are upright: yaw plus uniform scale (DressingField).
-// The instance custom data carries the tactical owner footprint (EnvironmentCommitQueue)
-// and is deliberately not read here.
+// No instance custom data: the cards are never in the camera's visibility bubble.
 render_mode cull_disabled, depth_draw_opaque, skip_vertex_transform;
 
 uniform sampler2D albedo_atlas : source_color, filter_linear_mipmap, repeat_disable;

@@ -252,8 +252,9 @@ func _apply(mode: String, distance: float) -> void:
 	for near in _tile_batches:
 		var imposter := near.get_node("Imposter") as MultiMeshInstance3D
 		near.visible = mode != "none"
-		near.visibility_range_end = EnvironmentCommitQueue.imposter_range_end() if mode.begins_with("on_") else 0.0
-		imposter.visibility_range_begin = EnvironmentCommitQueue.imposter_range_begin() if mode.begins_with("on_") else 0.0
+		var slack := EnvironmentCommitQueue.imposter_cull_slack(near.multimesh.get_aabb())
+		near.visibility_range_end = EnvironmentCommitQueue.imposter_range_end(slack) if mode.begins_with("on_") else 0.0
+		imposter.visibility_range_begin = EnvironmentCommitQueue.imposter_range_begin(slack) if mode.begins_with("on_") else 0.0
 		(imposter.material_override as ShaderMaterial).set_shader_parameter("mip_alpha_boost", boost)
 	var dir := Vector3(sin(deg_to_rad(_azimuth)), 0.0, cos(deg_to_rad(_azimuth)))
 	var e := deg_to_rad(_elevation)

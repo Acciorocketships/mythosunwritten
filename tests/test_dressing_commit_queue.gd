@@ -207,15 +207,25 @@ func test_tree_batches_hand_over_to_an_imposter_child() -> void:
 	assert_eq(global.value, Vector2(EnvironmentCommitQueue.IMPOSTER_DISTANCE, EnvironmentCommitQueue.IMPOSTER_FADE),
 		"project.godot's shader global starts at the queue's switch")
 	# The node ranges only cull; the crossfade is per tree in the shaders.
-	assert_almost_eq(near.visibility_range_end, EnvironmentCommitQueue.imposter_range_end(), 1e-3)
-	assert_almost_eq(imposter.visibility_range_begin, EnvironmentCommitQueue.imposter_range_begin(), 1e-3)
+	# Slack = half the batch's 3D diagonal: two trees 26 m apart and ~1 m up,
+	# each with its full crown height, reach farther than the flat footprint.
+	var piece0 := cache.visual(asset_id).pieces[0]
+	var bounds := (placement * piece0.local_transform) * piece0.mesh.get_aabb()
+	bounds = bounds.merge((Transform3D(Basis(), Vector3(12, 1, 30)) * piece0.local_transform) * piece0.mesh.get_aabb())
+	var slack := EnvironmentCommitQueue.imposter_cull_slack(bounds)
+	assert_almost_eq(slack, 0.5 * bounds.size.length(), 1e-4)
+	assert_gt(slack, 0.5 * Vector2(bounds.size.x, bounds.size.z).length(), "height counts toward the slack")
+	assert_almost_eq(near.visibility_range_end, EnvironmentCommitQueue.imposter_range_end(slack), 1e-3)
+	assert_almost_eq(imposter.visibility_range_begin, EnvironmentCommitQueue.imposter_range_begin(slack), 1e-3)
 	assert_eq(imposter.visibility_range_end, 0.0, "the imposter draws to the horizon")
 	assert_gt(near.visibility_range_end, EnvironmentCommitQueue.IMPOSTER_DISTANCE
-		+ EnvironmentCommitQueue.IMPOSTER_FADE + EnvironmentCommitQueue._TILE_HALF_DIAGONAL,
+		+ EnvironmentCommitQueue.IMPOSTER_FADE + slack,
 		"the batch draws until its farthest tree has faded out")
 	assert_lt(imposter.visibility_range_begin, EnvironmentCommitQueue.IMPOSTER_DISTANCE
-		- EnvironmentCommitQueue.IMPOSTER_FADE - EnvironmentCommitQueue._TILE_HALF_DIAGONAL,
+		- EnvironmentCommitQueue.IMPOSTER_FADE - slack,
 		"cards draw from before its nearest tree starts to fade")
+	assert_false(imposter.multimesh.use_custom_data, "the cards carry no unused owner footprints")
+	assert_false(imposter.has_meta("tactical_owner_footprints"))
 	for node: GeometryInstance3D in [near, imposter]:
 		assert_eq(node.visibility_range_fade_mode, GeometryInstance3D.VISIBILITY_RANGE_FADE_DISABLED,
 			"FADE_SELF would draw the whole batch translucent at every distance")
@@ -238,12 +248,14 @@ func test_tree_batches_hand_over_to_an_imposter_child() -> void:
 		assert_eq(imposter.multimesh.get_instance_transform(0), placement)
 		for index in 2:
 			assert_eq(imposter.multimesh.get_instance_color(index), near.multimesh.get_instance_color(index))
-			assert_eq(imposter.multimesh.get_instance_custom_data(index),
-				near.multimesh.get_instance_custom_data(index))
 	assert_eq(imposter.cast_shadow, GeometryInstance3D.SHADOW_CASTING_SETTING_OFF,
 		"the card would turn to the sun in the shadow pass")
 	assert_true(imposter.is_in_group("tactical_preserve_surface"))
-	assert_almost_eq(imposter.custom_aabb.get_center(), near.multimesh.get_aabb().get_center(), Vector3.ONE * 1e-4,
+	assert_almost_eq(near.custom_aabb.get_center(), bounds.get_center(), Vector3.ONE * 1e-3,
+		"the near batch's pinned bounds are its trees' bounds")
+	if DisplayServer.get_name() != "headless":
+		assert_almost_eq(near.custom_aabb.get_center(), near.multimesh.get_aabb().get_center(), Vector3.ONE * 1e-3)
+	assert_almost_eq(imposter.custom_aabb.get_center(), near.custom_aabb.get_center(), Vector3.ONE * 1e-4,
 		"both ranges are measured to one centre, so the crossfade never leaves a gap")
 	var quad := imposter.multimesh.mesh as QuadMesh
 	assert_not_null(quad)

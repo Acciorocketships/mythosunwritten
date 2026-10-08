@@ -145,7 +145,6 @@ func _commit_batch(parent: Node3D, item: Dictionary) -> void:
 		var box := native_piece.local_transform * native_piece.mesh.get_aabb()
 		native_bounds = native_bounds.merge(box) if native_bounds.has_volume() else box
 	var owners: Array = item.get("visibility_owners", [])
-	var footprints: Array[Color] = []
 	for index in composed.size():
 		multimesh.set_instance_transform(index, composed[index])
 		if piece.use_instance_color:
@@ -154,7 +153,6 @@ func _commit_batch(parent: Node3D, item: Dictionary) -> void:
 		if not owner.has_volume(): owner = (transforms[index] as Transform3D) * native_bounds
 		var footprint := Color(owner.position.x,owner.position.z,owner.end.x,owner.end.z)
 		multimesh.set_instance_custom_data(index, footprint)
-		footprints.append(footprint)
 	var container := parent.get_node_or_null(String(_container_name)) as Node3D
 	if container == null:
 		container = Node3D.new()
@@ -175,12 +173,19 @@ func _commit_batch(parent: Node3D, item: Dictionary) -> void:
 	if view_range > 0.0:
 		instance.visibility_range_end = view_range
 		instance.visibility_range_end_margin = VISIBILITY_MARGIN
+	var batch_bounds := AABB()
 	if visual.imposter != null:
-		instance.visibility_range_end = imposter_range_end()
+		# The batch's own bounds on the CPU (the headless renderer keeps none).
+		for index in composed.size():
+			var box := composed[index] * piece.mesh.get_aabb()
+			batch_bounds = box if index == 0 else batch_bounds.merge(box)
+		# Pinned so the near batch and its cards measure range to one centre.
+		instance.custom_aabb = batch_bounds
+		instance.visibility_range_end = imposter_range_end(imposter_cull_slack(batch_bounds))
 	container.add_child(instance)
 	if visual.imposter != null and int(item.piece_index) == 0:
 		_attach_imposter(instance, visual.imposter, transforms,
-			colors if piece.use_instance_color else [], footprints)
+			colors if piece.use_instance_color else [], batch_bounds)
 	if piece.shadow_mesh != null:
 		_attach_shadow_proxy(instance, piece.shadow_mesh)
 	preload("res://scripts/terrain/biome/CanopyShadows.gd").attach(instance)
@@ -208,11 +213,18 @@ static func set_imposter_distance(distance: float) -> void:
 	RenderingServer.global_shader_parameter_set(&"tree_imposter_fade",
 		Vector2(IMPOSTER_DISTANCE, IMPOSTER_FADE))
 
-static func imposter_range_end() -> float:
-	return IMPOSTER_DISTANCE + IMPOSTER_FADE + _TILE_HALF_DIAGONAL + VISIBILITY_MARGIN
+## The renderer measures a node's range to its AABB centre, but every tree in
+## the batch fades by its own distance: a node may only be culled once every
+## point of its bounds is past the band, so the slack is half the batch's 3D
+## diagonal (tall trees on a steep tile reach well past the tile's flat one).
+static func imposter_cull_slack(batch_bounds: AABB) -> float:
+	return 0.5 * batch_bounds.size.length()
 
-static func imposter_range_begin() -> float:
-	return maxf(IMPOSTER_DISTANCE - IMPOSTER_FADE - _TILE_HALF_DIAGONAL - VISIBILITY_MARGIN, 0.0)
+static func imposter_range_end(slack: float) -> float:
+	return IMPOSTER_DISTANCE + IMPOSTER_FADE + slack + VISIBILITY_MARGIN
+
+static func imposter_range_begin(slack: float) -> float:
+	return maxf(IMPOSTER_DISTANCE - IMPOSTER_FADE - slack - VISIBILITY_MARGIN, 0.0)
 
 ## Painted-leaf cards and the bake's StandardMaterial3D (bark, Farmlands
 ## cutouts) can crossfade; the legacy LPFV/KayKit canopy shader cannot, so
@@ -327,28 +339,25 @@ static func imposter_material(imposter: EnvironmentImposter) -> ShaderMaterial:
 ## in asset space, piece transforms included), the batch's tints and custom
 ## data. Their quad is not a shadow caster: the shader would turn it to the sun.
 static func _attach_imposter(instance: MultiMeshInstance3D, imposter: EnvironmentImposter,
-		placements: Array, colors: Array, footprints: Array[Color]) -> MultiMeshInstance3D:
+		placements: Array, colors: Array, batch_bounds: AABB) -> MultiMeshInstance3D:
 	var count := placements.size()
 	var multimesh := MultiMesh.new()
 	multimesh.transform_format = MultiMesh.TRANSFORM_3D
 	multimesh.use_colors = true
-	multimesh.use_custom_data = true
 	multimesh.mesh = imposter_quad()
 	multimesh.instance_count = count
-	# One buffer upload (3x4 row-major transform, colour, custom per instance).
+	# One buffer upload (3x4 row-major transform, colour per instance).
 	var buffer := PackedFloat32Array()
-	buffer.resize(count * 20)
+	buffer.resize(count * 16)
 	var max_scale := 0.0
 	for index in count:
 		var t: Transform3D = placements[index]
 		var c: Color = colors[index] if index < colors.size() else Color.WHITE
-		var f := footprints[index]
-		var o := index * 20
+		var o := index * 16
 		buffer[o] = t.basis.x.x; buffer[o + 1] = t.basis.y.x; buffer[o + 2] = t.basis.z.x; buffer[o + 3] = t.origin.x
 		buffer[o + 4] = t.basis.x.y; buffer[o + 5] = t.basis.y.y; buffer[o + 6] = t.basis.z.y; buffer[o + 7] = t.origin.y
 		buffer[o + 8] = t.basis.x.z; buffer[o + 9] = t.basis.y.z; buffer[o + 10] = t.basis.z.z; buffer[o + 11] = t.origin.z
 		buffer[o + 12] = c.r; buffer[o + 13] = c.g; buffer[o + 14] = c.b; buffer[o + 15] = c.a
-		buffer[o + 16] = f.r; buffer[o + 17] = f.g; buffer[o + 18] = f.b; buffer[o + 19] = f.a
 		max_scale = maxf(max_scale, t.basis.x.length())
 	multimesh.buffer = buffer
 	var imposter_node := MultiMeshInstance3D.new()
@@ -359,10 +368,10 @@ static func _attach_imposter(instance: MultiMeshInstance3D, imposter: Environmen
 	imposter_node.layers = instance.layers
 	# The near batch's bounds grown evenly (same centre, so the same range
 	# distance) by the card's reach on every side.
-	imposter_node.custom_aabb = instance.multimesh.get_aabb().grow(imposter.size.x * max_scale)
-	imposter_node.visibility_range_begin = imposter_range_begin()
-	imposter_node.set_meta("tactical_owner_footprints", true)
-	# Distant cards are never between the camera and the player.
+	imposter_node.custom_aabb = batch_bounds.grow(imposter.size.x * max_scale)
+	imposter_node.visibility_range_begin = imposter_range_begin(imposter_cull_slack(batch_bounds))
+	# Distant cards are never between the camera and the player, so the
+	# visibility bubble skips them: no owner footprints (custom data) needed.
 	imposter_node.add_to_group("tactical_preserve_surface", true)
 	instance.add_child(imposter_node)
 	return imposter_node
