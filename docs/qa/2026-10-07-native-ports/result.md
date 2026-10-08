@@ -385,23 +385,36 @@ reads, without building a region.
   subclasses without a certifying region stay GDScript.
 - `HeightfieldPlan.region_kernel` (static) is `compute_rect_region`'s kernel
   split out unchanged, so the gate can run it on synthetic samples.
-- Gate (appended to the lazy NativeWaterFill gate): 15 random traces (zero and
-  0.0004 m segments, storey drops, pools under DESCENT_POOL_GAP, EPS ties,
-  source pools, terminal ponds above/below the end) over random natural
-  regions with cliffs (local-bed, source-height and low ground), profile vs
-  `_profile_compute(..., native = false)` (levels, `var_to_bytes(descents)`);
-  9 corridor cases (each aggregation and max_step 1-3, terraced blocks with
-  diagonal-only cliffs, rare and frequent pits, x.5 storeys and levels) vs
-  `region_kernel`. Gate total 0.68 s in a fresh process (was 0.64 there).
+- Gate (appended to the lazy NativeWaterFill gate; the earlier 12 fill cases
+  are unchanged): 15 random traces (zero and 0.0004 m segments, storey drops,
+  pools under DESCENT_POOL_GAP, EPS ties, source pools, terminal ponds
+  above/below the end) over random natural regions with cliffs (local-bed,
+  source-height and low ground), profile vs `_profile_compute(..., native =
+  false)` (levels, `var_to_bytes(descents)`); 3 random corridor cases (one per
+  aggregation, terraced blocks with diagonal-only cliffs, pits, x.5 storeys
+  and levels) and 6 sparse cone cases (one point / a diagonal line of 3 x 3
+  blocks, max_step 1-3, 12 storeys: targets ms * (|x - pit|_1 + 1) round a
+  pit 8 points outside the corridor, so only the outermost clamp disks reach
+  it, at exactly their radius) vs `region_kernel`. Gate total 0.76-0.78 s in
+  quiet fresh-process runs (0.64 s before Task 9; runs with another
+  session's Godot busy read 1.0-1.2 s).
+- Moved to tests (`test_native_water_profile`): 12 random corridor cases and
+  the cones at production scale (120 storeys, max_step 3 and 1).
 - Falsification (each disables the gate): knot tie `>=` -> `>`; FILM + 1e-3;
   FC limit 3.0 -> 2.9; pond trailing raise ps + 1e-3; dense pond raise ps - 1e-3;
   steep-pond dense pin + 1e-3; pool gap `>=` -> `> + 3`; width lerp + 1e-3;
   resample t + 1e-4; diagonal cap removed / always on; storey rounding
   floor -> round, ceil -> floor + 1, away-from-zero -> banker's; clamp DT step
-  + 1. Mutations shown equivalent and not caught: cliff-distance depth and
-  relaxation depth one shorter (the relaxation from the boundary cell implies
-  the cap; a 3-step path cannot lower a level <= 3), and a clamp radius one
-  smaller (distance ceil(t/ms) - 1 is the tight bound).
+  + 1; clamp radius one below ceil(t/ms) - 1 (red only since the cone cases,
+  fix round 1; also red in the production-scale test). Mutations that are
+  equivalent: cliff-distance depth and relaxation depth one shorter (the
+  relaxation from the boundary cell implies the cap; a 3-step path cannot
+  lower a level <= 3), and widening the radius from ceil(t/ms) - 1 to
+  ceil(t/ms) (distance ceil(t/ms) can never lower the storey). The first
+  version of this section called a radius one smaller than the shipped one
+  equivalent: wrong. On a sparse corridor a pit just outside it is reached
+  only by the outermost disks at exactly their radius (review counterexample,
+  ms 1: target 3, neighbour 2, pit at distance 2 -> storey 2, not 3).
 
 Tests: `tests/test_native_water_profile.gd` (30 real traces of seeds
 2697992464 and 3046246887, 260 descent spans, all native: corridor and a
@@ -443,3 +456,21 @@ support inside it before porting (`docs/superpowers/plans/2026-10-07-native-fine
 change in walking freeze within run-to-run noise; the walk's frozen time is
 not bound by profiles (fine rescue, cliff dressing and cold planning remain).
 Walk frame p50 6.8 ms, p95 15.6 ms, p99 28.3 ms.
+
+### Task 9 fix round 1
+
+- `_parity`'s fill/relax/smooth/reconcile cases restored to 12 (a stray sed
+  had cut them to 9).
+- Sparse cone corridor cases in the gate (12 storeys) and at production scale
+  in `test_native_water_profile` (120 storeys, max_step 3 and 1); the random
+  corridor cases are split: 3 in the gate, 12 in the test
+  (`NativeWaterFill.corridor_random`, `cone_case`, `corridor_check`).
+- Red check: `ClampRadius` one smaller (`/ maxStep - 2`) -> gate "corridor
+  terrain differs (mean, step 1, 12 storeys) (cone case 0)", and with the
+  gate bypassed the production test fails 3 of 84 asserts; restored, green.
+- `_profile_native`: dropped the unreachable `_trace_regions` source;
+  `profiles_served` no longer takes the mutex.
+- Gate 0.76-0.78 s (quiet runs). Tests: `test_native_water_profile` 3/3 and
+  `test_native_water_fill` 7/7 on mono and standard (native off there),
+  `test_water_field` 25/25 mono. Digest `b6c965def22e7e93`;
+  `parallel_tail_check --rounds=2` PASS failures=0.

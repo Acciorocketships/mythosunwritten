@@ -34,7 +34,8 @@ static var _native: Object = null
 static var _load_attempted := false
 static var _gated := false
 static var _mutex := Mutex.new()
-## Profiles the C# shaped (tests).
+## Profiles the C# shaped (single-threaded tests; unlocked, so approximate
+## when chunk tails run in parallel).
 static var profiles_served := 0
 
 
@@ -145,9 +146,7 @@ static func seed_sources(claims: Array, ponds: Array, base: Vector2, m1: int,
 ## read) or, when null, from plan's natural corridor (corridor_terrain).
 ## Returns {"levels", "descents"} as the GDScript builds them, {} on failure.
 static func profile(trace: RiverTrace, level0: float, source, plan: HeightfieldPlan) -> Dictionary:
-	_mutex.lock()
 	profiles_served += 1
-	_mutex.unlock()
 	var consts := _profile_consts()
 	var lattice = _native.ProfileLattice(trace.points, trace.beds, level0, consts)
 	if not lattice is PackedInt32Array or (lattice as PackedInt32Array).is_empty():
@@ -341,7 +340,7 @@ static func _parity() -> String:
 		gd.free()
 		if PackedInt64Array(_native.QueueReplay(pushes)) != order:
 			return "priority queue order differs (case %d)" % case_index
-	for case_index in 9:
+	for case_index in 12:
 		var m1 := rng.randi_range(20, 60)
 		var rows := m1 if case_index % 3 == 0 else rng.randi_range(20, 60)
 		var n := m1 * rows
@@ -525,16 +524,33 @@ static func _profile_parity(rng: RandomNumberGenerator) -> String:
 	return _corridor_parity(rng)
 
 
-## Random samples (pits, spikes, x.5 roundings) under every aggregation and
-## max_step: corridor terrain on an interior equals HeightfieldPlan's region
-## kernel there (surface heights and storeys).
+## Corridor terrain against HeightfieldPlan's region kernel: three random
+## terraced cases (one per aggregation; tests run more, corridor_random) and
+## the sparse cone cases.
 static func _corridor_parity(rng: RandomNumberGenerator) -> String:
-	var terrain := _terrain_consts()
+	var mismatch := corridor_random(rng, 3)
+	if not mismatch.is_empty():
+		return mismatch
+	# Sparse corridors as traces make them (one point; a diagonal line of 3 x 3
+	# blocks), over a cone of targets ms * (|x - pit|_1 + 1) round a pit just
+	# outside the 7-point ring: only the outermost points' clamp disks reach
+	# the pit, at exactly their radius, and the pit sets every storey.
+	for case_index in 6:
+		mismatch = cone_case(1 + case_index % 3, 12, case_index >= 3)
+		if not mismatch.is_empty():
+			return "%s (cone case %d)" % [mismatch, case_index]
+	return ""
+
+
+## `cases` random samples (pits, spikes, x.5 roundings), cycling aggregation
+## and max_step: corridor terrain on an interior equals the region kernel
+## there (surface heights and storeys). "" when all agree.
+static func corridor_random(rng: RandomNumberGenerator, cases: int) -> String:
 	var aggregations := ["min", "mean", "max"]
-	for case_index in 9:
+	for case_index in cases:
 		var max_step: int = 1 + case_index % 3
 		var max_storeys: int = 5 + rng.randi_range(0, 4)
-		var agg: String = aggregations[(case_index / 3) % 3]
+		var agg: String = aggregations[case_index % 3 if cases <= 3 else (case_index / 3) % 3]
 		var inset: int = HeightfieldPlan._CLIFF_SEARCH_MAX + ceili(float(max_storeys) / max_step)
 		var grow: int = 1 + HeightfieldPlan.LEVELS_PER_STOREY + inset
 		var interior := Vector2i(rng.randi_range(5, 10), rng.randi_range(5, 10))
@@ -570,32 +586,82 @@ static func _corridor_parity(rng: RandomNumberGenerator) -> String:
 				elif roll < 0.02:
 					h = top
 				heights[z * width + x] = h
-		var kernel := HeightfieldPlan.region_kernel(heights, width, rows, inset, max_step, max_storeys, agg)
 		var lattice := PackedInt32Array()
-		var expected_h := PackedFloat32Array()
-		var expected_s := PackedInt32Array()
 		for z in interior.y:
 			for x in interior.x:
-				var idx := (z + grow) * width + x + grow
 				lattice.append_array([origin.x + x + grow, origin.y + z + grow])
-				var st: int = kernel[0][idx]
-				var h := float(st) * HeightfieldPlan.STOREY_HEIGHT
-				if HeightfieldPlan.RENDER_LEVELS:
-					h += float(kernel[1][idx]) * HeightfieldPlan.LEVEL_HEIGHT
-				expected_h.append(h)
-				expected_s.append(st)
-		var agg_id := _aggregation(agg)
-		var s: PackedInt32Array = _native.CorridorPoints(lattice, terrain)
-		var hs := _lookup(heights, width, rows, origin, s)
-		if hs.size() != s.size() / 2:
-			return "corridor points leave the sample rectangle (case %d)" % case_index
-		var d: PackedInt32Array = _native.CorridorDisks(s, hs, agg_id, max_storeys, max_step, terrain)
-		var hd := _lookup(heights, width, rows, origin, d)
-		if hd.size() != d.size() / 2:
-			return "corridor disks leave the sample rectangle (case %d)" % case_index
-		var r = _native.CorridorTerrain(lattice, s, hs, d, hd, agg_id, max_storeys, max_step, terrain)
-		if not r is Array or PackedFloat32Array(r[0]) != expected_h or PackedInt32Array(r[1]) != expected_s:
-			return "corridor terrain differs (case %d, %s, step %d)" % [case_index, agg, max_step]
+		var mismatch := corridor_check(heights, width, rows, origin, lattice, max_step, max_storeys, agg)
+		if not mismatch.is_empty():
+			return "%s (case %d)" % [mismatch, case_index]
+	return ""
+
+
+## A corridor over a cone of targets: `line` = four 3 x 3 blocks on a
+## diagonal (else one point), max_step `ms`; the pit sits 8 points east of the
+## easternmost corridor point. "" when the corridor equals region_kernel.
+static func cone_case(ms: int, max_storeys: int, line: bool) -> String:
+	var lattice := PackedInt32Array()
+	if line:
+		for b in 4:
+			for dz in 3:
+				for dx in 3:
+					lattice.append_array([b * 2 + dx - 5, b * 3 + dz + 3])
+	else:
+		lattice.append_array([-7, 4])
+	var lo := Vector2i(1 << 30, 1 << 30)
+	var hi := -lo
+	for k in lattice.size() / 2:
+		lo = Vector2i(mini(lo.x, lattice[2 * k]), mini(lo.y, lattice[2 * k + 1]))
+		hi = Vector2i(maxi(hi.x, lattice[2 * k]), maxi(hi.y, lattice[2 * k + 1]))
+	var pit := Vector2i.ZERO
+	for k in lattice.size() / 2:
+		if lattice[2 * k] == hi.x:
+			pit = Vector2i(hi.x + 8, lattice[2 * k + 1])
+	var inset: int = HeightfieldPlan._CLIFF_SEARCH_MAX + ceili(float(max_storeys) / ms)
+	var grow: int = 1 + HeightfieldPlan.LEVELS_PER_STOREY + inset
+	var origin := lo - Vector2i.ONE * grow
+	var width := hi.x - lo.x + 1 + 2 * grow
+	var rows := hi.y - lo.y + 1 + 2 * grow
+	var heights := PackedFloat64Array()
+	heights.resize(width * rows)
+	for z in rows:
+		for x in width:
+			var q := origin + Vector2i(x, z)
+			var dist := absi(q.x - pit.x) + absi(q.y - pit.y)
+			heights[z * width + x] = 0.0 if dist == 0 else 4.0 * float(mini(max_storeys, ms * (dist + 1)))
+	return corridor_check(heights, width, rows, origin, lattice, ms, max_storeys, "mean")
+
+
+## The native corridor terrain at `lattice` (inside the certified part of the
+## sample rectangle at `origin`) against HeightfieldPlan.region_kernel over the
+## whole rectangle: surface heights (float32) and storeys. "" when equal.
+static func corridor_check(heights: PackedFloat64Array, width: int, rows: int, origin: Vector2i,
+		lattice: PackedInt32Array, max_step: int, max_storeys: int, agg: String) -> String:
+	var terrain := _terrain_consts()
+	var inset: int = HeightfieldPlan._CLIFF_SEARCH_MAX + ceili(float(max_storeys) / max_step)
+	var kernel := HeightfieldPlan.region_kernel(heights, width, rows, inset, max_step, max_storeys, agg)
+	var expected_h := PackedFloat32Array()
+	var expected_s := PackedInt32Array()
+	for k in lattice.size() / 2:
+		var idx := (lattice[2 * k + 1] - origin.y) * width + lattice[2 * k] - origin.x
+		var st: int = kernel[0][idx]
+		var h := float(st) * HeightfieldPlan.STOREY_HEIGHT
+		if HeightfieldPlan.RENDER_LEVELS:
+			h += float(kernel[1][idx]) * HeightfieldPlan.LEVEL_HEIGHT
+		expected_h.append(h)
+		expected_s.append(st)
+	var agg_id := _aggregation(agg)
+	var s: PackedInt32Array = _native.CorridorPoints(lattice, terrain)
+	var hs := _lookup(heights, width, rows, origin, s)
+	if hs.size() != s.size() / 2:
+		return "corridor points leave the sample rectangle"
+	var d: PackedInt32Array = _native.CorridorDisks(s, hs, agg_id, max_storeys, max_step, terrain)
+	var hd := _lookup(heights, width, rows, origin, d)
+	if hd.size() != d.size() / 2:
+		return "corridor disks leave the sample rectangle"
+	var r = _native.CorridorTerrain(lattice, s, hs, d, hd, agg_id, max_storeys, max_step, terrain)
+	if not r is Array or PackedFloat32Array(r[0]) != expected_h or PackedInt32Array(r[1]) != expected_s:
+		return "corridor terrain differs (%s, step %d, %d storeys)" % [agg, max_step, max_storeys]
 	return ""
 
 

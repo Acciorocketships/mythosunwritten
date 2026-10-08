@@ -1606,9 +1606,8 @@ static func _profile_compute(trace: RiverTrace, region, plan_backed: bool, nativ
 
 
 ## The terrain-shaped profile in C# over the corner data it reads: taken from
-## the terrain the GDScript would read when that is already at hand (a trace
-## region built earlier, the caller's certifying region, or a hand-built
-## natural region), else the trace's natural corridor computed from the plan's
+## the terrain the GDScript would read when that is already at hand (the
+## caller's certifying region or a hand-built natural region), else the trace's natural corridor computed from the plan's
 ## samples (the values _trace_owned_region's region would certify; no region
 ## is built). {} leaves it to the GDScript (graded or duck regions, plan
 ## subclasses, a failed C# call).
@@ -1617,10 +1616,7 @@ static func _profile_native(trace: RiverTrace, region, plan_backed: bool, level0
 	var plan: HeightfieldPlan = null
 	if plan_backed:
 		plan = region.plan
-		var key := [trace.get_instance_id(), plan.get_instance_id()]
-		if _trace_regions.has(key):
-			source = _trace_regions[key]
-		elif region is HeightfieldRegion and region.terrain_grades.is_empty() \
+		if region is HeightfieldRegion and region.terrain_grades.is_empty() \
 				and region.native_control_heights.is_empty() \
 				and region.certified_points.encloses(_trace_point_domain(trace)):
 			source = region

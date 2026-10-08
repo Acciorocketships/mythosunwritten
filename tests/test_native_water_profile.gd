@@ -48,3 +48,25 @@ func test_profiles_match_gdscript_on_real_rivers() -> void:
 	assert_gte(shaped, 20, "most real traces descend and take the native path")
 	assert_gt(spans, 0, "descent spans are exercised")
 	gut.p("compared %d traces, %d native, %d descent spans" % [compared, shaped, spans])
+
+
+## Production scale (max_storeys 120, max_step 3: clamp radii up to 39) on
+## sparse corridors, one point and a diagonal line of 3 x 3 blocks, over a cone
+## of targets whose pit only the outermost clamp disks reach, at exactly their
+## radius. Kept here, not in the runtime gate (which runs the same cones at 12
+## storeys). A radius one shorter fails this test.
+func test_corridor_terrain_at_production_scale_reaches_a_pit_at_the_clamp_radius() -> void:
+	F.setup()
+	if not ClassDB.class_exists(&"CSharpScript"): pass_test("standard editor"); return
+	assert_eq(F.cone_case(3, 120, false), "", "one point")
+	assert_eq(F.cone_case(3, 120, true), "", "a diagonal line of 3 x 3 blocks")
+	assert_eq(F.cone_case(1, 120, true), "", "max_step 1")
+
+
+## The runtime gate runs three random corridor cases; this runs twelve
+## (every aggregation with max_step 1-3, rare and frequent pits).
+func test_corridor_terrain_matches_the_region_kernel_on_random_terraces() -> void:
+	F.setup()
+	if not ClassDB.class_exists(&"CSharpScript"): pass_test("standard editor"); return
+	var rng := RandomNumberGenerator.new(); rng.seed = 20261008
+	assert_eq(F.corridor_random(rng, 12), "")
