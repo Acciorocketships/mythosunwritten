@@ -15,6 +15,10 @@ namespace Story.Native
 {
     public partial class NativeCliffEnvelope : RefCounted
     {
+        /// NativeFault: arm a one-shot test failure; this thread's last failure.
+        public void ArmFault() => NativeFault.Arm("NativeCliffEnvelope");
+        public string TakeError() => NativeFault.Take();
+
         // CliffSlopeEnvelope constants (Vector2 constants are float32; the
         // parity gate compares this list with the GDScript's own).
         const double H = 0.5;
@@ -683,119 +687,124 @@ namespace Story.Native
             double[] wetLevel, int[] kb0, double[] at0, double[] samples0, int[] kb1, double[] at1,
             double[] samples1, long seed, bool bedrock, bool withStages)
         {
-            int n = w * h;
-            var c = new Ctx { Origin = new V2(origin.X, origin.Y), W = w, H = h, N = n, Ground = ground, WetLevel = wetLevel, Seed = seed };
-            var stages = new Godot.Collections.Dictionary();
-            bool anyExcluded = excluded.Length > 0;
-            bool anyWet = wetLevel.Length > 0;
-            var g = ground;
-            var walls = Walls(c, new[] { kb0, kb1 }, new[] { at0, at1 }, new[] { samples0, samples1 }, out var corners);
-            if (withStages)
+            try
             {
-                stages["crest0"] = walls[0].Crest; stages["drop0"] = walls[0].Drop; stages["lead0"] = walls[0].Lead;
-                stages["crest1"] = walls[1].Crest; stages["drop1"] = walls[1].Drop; stages["lead1"] = walls[1].Lead;
-            }
-            double[] surface, rock = Array.Empty<double>(), mossGrade = Array.Empty<double>();
-            if (walls[0].Crests.Length == 0 && walls[1].Crests.Length == 0)
-            {
-                surface = (double[])g.Clone();
-                if (bedrock) { mossGrade = MossGrade(w, h, surface); rock = new double[n]; }
+                NativeFault.Check("NativeCliffEnvelope");
+                int n = w * h;
+                var c = new Ctx { Origin = new V2(origin.X, origin.Y), W = w, H = h, N = n, Ground = ground, WetLevel = wetLevel, Seed = seed };
+                var stages = new Godot.Collections.Dictionary();
+                bool anyExcluded = excluded.Length > 0;
+                bool anyWet = wetLevel.Length > 0;
+                var g = ground;
+                var walls = Walls(c, new[] { kb0, kb1 }, new[] { at0, at1 }, new[] { samples0, samples1 }, out var corners);
+                if (withStages)
+                {
+                    stages["crest0"] = walls[0].Crest; stages["drop0"] = walls[0].Drop; stages["lead0"] = walls[0].Lead;
+                    stages["crest1"] = walls[1].Crest; stages["drop1"] = walls[1].Drop; stages["lead1"] = walls[1].Lead;
+                }
+                double[] surface, rock = Array.Empty<double>(), mossGrade = Array.Empty<double>();
+                if (walls[0].Crests.Length == 0 && walls[1].Crests.Length == 0)
+                {
+                    surface = (double[])g.Clone();
+                    if (bedrock) { mossGrade = MossGrade(w, h, surface); rock = new double[n]; }
+                    return new Godot.Collections.Array { surface, rock, mossGrade, stages };
+                }
+                double shX = SHOULDER_X, shY = SHOULDER_Y, foot = FOOT;
+                var channel = new byte[n];
+                var alongNarrow = new double[n]; var alongWide = new double[n];
+                var alongTight = new double[n]; var alongTightWide = new double[n];
+                var groundRows = new Dictionary<double, double[]>();
+                var narrow = CloseWalls(g, walls, corners, w, h, shX, foot, channel, alongNarrow, groundRows);
+                var wideDilated = Dilate(g, w, h, shY + foot);
+                var wide = CloseWalls(g, walls, corners, w, h, shY, foot, channel, alongWide, groundRows);
+                var tight = CloseWalls(g, walls, corners, w, h, TIGHT_X, TIGHT_Y, channel, alongTight, groundRows);
+                var tightWide = CloseWalls(g, walls, corners, w, h, 6.4, TIGHT_Y, channel, alongTightWide, groundRows);
+                if (withStages)
+                {
+                    stages["narrow"] = narrow; stages["wide"] = wide; stages["tight"] = tight; stages["tight_wide"] = tightWide;
+                    stages["along_narrow"] = alongNarrow; stages["channel"] = channel;
+                }
+                var floorLevel = Erode(g, w, h, SHOULDER_Y + FOOT);
+                var relief = new double[n];
+                for (int idx = 0; idx < n; idx++) relief[idx] = wideDilated[idx] - floorLevel[idx];
+                relief = Dilate(relief, w, h, RELIEF_SPREAD);
+                var drop = relief;
+                if (anyWet)
+                {
+                    var floorDry = (double[])g.Clone();
+                    for (int idx = 0; idx < n; idx++)
+                        if (Finite(wetLevel[idx]) && wetLevel[idx] > floorDry[idx]) floorDry[idx] = wetLevel[idx];
+                    floorDry = Erode(floorDry, w, h, SHOULDER_Y + FOOT);
+                    drop = new double[n];
+                    for (int idx = 0; idx < n; idx++) drop[idx] = wideDilated[idx] - floorDry[idx];
+                    drop = Dilate(drop, w, h, RELIEF_SPREAD);
+                }
+                var t = Ridges(c, narrow, wide, wideDilated);
+                if (withStages) { stages["relief"] = relief; stages["drop"] = drop; stages["ridges"] = t; }
+                surface = new double[n];
+                var along = new double[n];
+                for (int idx = 0; idx < n; idx++)
+                {
+                    double tall = Smooth(RELIEF_X, RELIEF_Y, relief[idx]);
+                    double ridge = Lerp(PLAIN, t[idx], Smooth(VARIED_X, VARIED_Y, drop[idx]));
+                    surface[idx] = Lerp(Lerp(narrow[idx], wide[idx], ridge), Lerp(tight[idx], tightWide[idx], ridge), tall);
+                    along[idx] = Lerp(Lerp(alongNarrow[idx], alongWide[idx], ridge), Lerp(alongTight[idx], alongTightWide[idx], ridge), tall);
+                }
+                if (withStages) stages["blend"] = (double[])surface.Clone();
+                var filleted = Erode(Dilate(surface, w, h, FOOT), w, h, FOOT);
+                var lips = Lips(walls, g, w, n, true);
+                if (withStages) stages["lips"] = lips;
+                for (int idx = 0; idx < n; idx++)
+                {
+                    double fill = filleted[idx];
+                    if (lips[idx] > NEG_INF) fill = Min(fill, Max(lips[idx], surface[idx]));
+                    if (channel[idx] != 0 && Deep(wetLevel, ground, idx)) fill = Min(fill, wetLevel[idx] - .3);
+                    surface[idx] = Lerp(surface[idx], Max(surface[idx], fill), Smooth(0.0, .5, Max(surface[idx] - g[idx], along[idx])));
+                }
+                var uncut = (double[])surface.Clone();
+                if (withStages) stages["fillet"] = uncut;
+                var shaped = (double[])surface.Clone();
+                var caps = new double[n]; Array.Fill(caps, INF);
+                if (anyExcluded)
+                {
+                    var dist = Distance(excluded, w, h);
+                    for (int idx = 0; idx < n; idx++) caps[idx] = ground[idx] + CUT_SLOPE * Max(0.0, dist[idx] - CUT_MARGIN);
+                }
+                var rockCaps = (double[])caps.Clone();
+                var rockLips = Lips(walls, g, w, n, false);
+                for (int idx = 0; idx < n; idx++)
+                    if (rockLips[idx] > NEG_INF)
+                        rockCaps[idx] = Min(rockCaps[idx], Max(rockLips[idx], uncut[idx]) + 7.5 * Smooth(0.0, 1.0, uncut[idx] - rockLips[idx]));
+                for (int idx = 0; idx < n; idx++) surface[idx] = Min(surface[idx], Max(ground[idx], caps[idx]));
+                if (withStages) { stages["caps"] = (double[])surface.Clone(); stages["rock_caps"] = rockCaps; }
+                if (bedrock)
+                {
+                    if (anyWet)
+                    {
+                        for (int idx = 0; idx < n; idx++)
+                        {
+                            if (!Deep(wetLevel, ground, idx)) continue;
+                            double room = 7.5 * Smooth(.75, 3.0, surface[idx] - wetLevel[idx]);
+                            rockCaps[idx] = Min(rockCaps[idx], surface[idx] + room);
+                        }
+                    }
+                    var cut = new double[n];
+                    for (int idx = 0; idx < n; idx++) cut[idx] = shaped[idx] - surface[idx];
+                    var cliff = new double[n];
+                    for (int idx = 0; idx < n; idx++)
+                        cliff[idx] = Smooth(VARIED_X, VARIED_Y, relief[idx]) * Smooth(CLIFF_DROP, VARIED_X, drop[idx]) * Smooth(.15, 1.0, uncut[idx] - g[idx]);
+                    if (anyWet)
+                    {
+                        for (int idx = 0; idx < n; idx++)
+                            if (Deep(wetLevel, ground, idx)) cliff[idx] *= 1.0 - Smooth(-.5, 0.0, wetLevel[idx] - surface[idx]);
+                    }
+                    Bedrock(c, surface, out mossGrade, out rock, floorLevel, wideDilated, cliff, cut, anyExcluded);
+                    if (withStages) { stages["cliff"] = cliff; stages["bedrock"] = (double[])surface.Clone(); }
+                    for (int idx = 0; idx < n; idx++) surface[idx] = Min(surface[idx], Max(ground[idx], rockCaps[idx]));
+                }
                 return new Godot.Collections.Array { surface, rock, mossGrade, stages };
             }
-            double shX = SHOULDER_X, shY = SHOULDER_Y, foot = FOOT;
-            var channel = new byte[n];
-            var alongNarrow = new double[n]; var alongWide = new double[n];
-            var alongTight = new double[n]; var alongTightWide = new double[n];
-            var groundRows = new Dictionary<double, double[]>();
-            var narrow = CloseWalls(g, walls, corners, w, h, shX, foot, channel, alongNarrow, groundRows);
-            var wideDilated = Dilate(g, w, h, shY + foot);
-            var wide = CloseWalls(g, walls, corners, w, h, shY, foot, channel, alongWide, groundRows);
-            var tight = CloseWalls(g, walls, corners, w, h, TIGHT_X, TIGHT_Y, channel, alongTight, groundRows);
-            var tightWide = CloseWalls(g, walls, corners, w, h, 6.4, TIGHT_Y, channel, alongTightWide, groundRows);
-            if (withStages)
-            {
-                stages["narrow"] = narrow; stages["wide"] = wide; stages["tight"] = tight; stages["tight_wide"] = tightWide;
-                stages["along_narrow"] = alongNarrow; stages["channel"] = channel;
-            }
-            var floorLevel = Erode(g, w, h, SHOULDER_Y + FOOT);
-            var relief = new double[n];
-            for (int idx = 0; idx < n; idx++) relief[idx] = wideDilated[idx] - floorLevel[idx];
-            relief = Dilate(relief, w, h, RELIEF_SPREAD);
-            var drop = relief;
-            if (anyWet)
-            {
-                var floorDry = (double[])g.Clone();
-                for (int idx = 0; idx < n; idx++)
-                    if (Finite(wetLevel[idx]) && wetLevel[idx] > floorDry[idx]) floorDry[idx] = wetLevel[idx];
-                floorDry = Erode(floorDry, w, h, SHOULDER_Y + FOOT);
-                drop = new double[n];
-                for (int idx = 0; idx < n; idx++) drop[idx] = wideDilated[idx] - floorDry[idx];
-                drop = Dilate(drop, w, h, RELIEF_SPREAD);
-            }
-            var t = Ridges(c, narrow, wide, wideDilated);
-            if (withStages) { stages["relief"] = relief; stages["drop"] = drop; stages["ridges"] = t; }
-            surface = new double[n];
-            var along = new double[n];
-            for (int idx = 0; idx < n; idx++)
-            {
-                double tall = Smooth(RELIEF_X, RELIEF_Y, relief[idx]);
-                double ridge = Lerp(PLAIN, t[idx], Smooth(VARIED_X, VARIED_Y, drop[idx]));
-                surface[idx] = Lerp(Lerp(narrow[idx], wide[idx], ridge), Lerp(tight[idx], tightWide[idx], ridge), tall);
-                along[idx] = Lerp(Lerp(alongNarrow[idx], alongWide[idx], ridge), Lerp(alongTight[idx], alongTightWide[idx], ridge), tall);
-            }
-            if (withStages) stages["blend"] = (double[])surface.Clone();
-            var filleted = Erode(Dilate(surface, w, h, FOOT), w, h, FOOT);
-            var lips = Lips(walls, g, w, n, true);
-            if (withStages) stages["lips"] = lips;
-            for (int idx = 0; idx < n; idx++)
-            {
-                double fill = filleted[idx];
-                if (lips[idx] > NEG_INF) fill = Min(fill, Max(lips[idx], surface[idx]));
-                if (channel[idx] != 0 && Deep(wetLevel, ground, idx)) fill = Min(fill, wetLevel[idx] - .3);
-                surface[idx] = Lerp(surface[idx], Max(surface[idx], fill), Smooth(0.0, .5, Max(surface[idx] - g[idx], along[idx])));
-            }
-            var uncut = (double[])surface.Clone();
-            if (withStages) stages["fillet"] = uncut;
-            var shaped = (double[])surface.Clone();
-            var caps = new double[n]; Array.Fill(caps, INF);
-            if (anyExcluded)
-            {
-                var dist = Distance(excluded, w, h);
-                for (int idx = 0; idx < n; idx++) caps[idx] = ground[idx] + CUT_SLOPE * Max(0.0, dist[idx] - CUT_MARGIN);
-            }
-            var rockCaps = (double[])caps.Clone();
-            var rockLips = Lips(walls, g, w, n, false);
-            for (int idx = 0; idx < n; idx++)
-                if (rockLips[idx] > NEG_INF)
-                    rockCaps[idx] = Min(rockCaps[idx], Max(rockLips[idx], uncut[idx]) + 7.5 * Smooth(0.0, 1.0, uncut[idx] - rockLips[idx]));
-            for (int idx = 0; idx < n; idx++) surface[idx] = Min(surface[idx], Max(ground[idx], caps[idx]));
-            if (withStages) { stages["caps"] = (double[])surface.Clone(); stages["rock_caps"] = rockCaps; }
-            if (bedrock)
-            {
-                if (anyWet)
-                {
-                    for (int idx = 0; idx < n; idx++)
-                    {
-                        if (!Deep(wetLevel, ground, idx)) continue;
-                        double room = 7.5 * Smooth(.75, 3.0, surface[idx] - wetLevel[idx]);
-                        rockCaps[idx] = Min(rockCaps[idx], surface[idx] + room);
-                    }
-                }
-                var cut = new double[n];
-                for (int idx = 0; idx < n; idx++) cut[idx] = shaped[idx] - surface[idx];
-                var cliff = new double[n];
-                for (int idx = 0; idx < n; idx++)
-                    cliff[idx] = Smooth(VARIED_X, VARIED_Y, relief[idx]) * Smooth(CLIFF_DROP, VARIED_X, drop[idx]) * Smooth(.15, 1.0, uncut[idx] - g[idx]);
-                if (anyWet)
-                {
-                    for (int idx = 0; idx < n; idx++)
-                        if (Deep(wetLevel, ground, idx)) cliff[idx] *= 1.0 - Smooth(-.5, 0.0, wetLevel[idx] - surface[idx]);
-                }
-                Bedrock(c, surface, out mossGrade, out rock, floorLevel, wideDilated, cliff, cut, anyExcluded);
-                if (withStages) { stages["cliff"] = cliff; stages["bedrock"] = (double[])surface.Clone(); }
-                for (int idx = 0; idx < n; idx++) surface[idx] = Min(surface[idx], Max(ground[idx], rockCaps[idx]));
-            }
-            return new Godot.Collections.Array { surface, rock, mossGrade, stages };
+            catch (Exception e) { NativeFault.Record(e); return null!; }
         }
     }
 }

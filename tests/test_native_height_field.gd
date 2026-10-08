@@ -78,3 +78,56 @@ func test_a_forced_archetype_stays_on_gdscript() -> void:
 	assert_false(NativeHeightField.ready_for(7), "forced archetypes are GDScript-only state")
 	TerrainRegimeField.set_force_archetype(&"")
 	assert_eq(NativeHeightField.ready_for(7), _dotnet())
+
+
+func test_a_throwing_call_falls_back_to_gdscript_and_disables() -> void:
+	if not _dotnet():
+		pass_test("standard editor: no C#")
+		return
+	var seed: int = SEEDS[0]
+	NativeHeightField.setup(seed)
+	assert_true(NativeHeightField.ready_for(seed))
+	var p := Vector2(1234.5, -876.25)
+	NativeHeightField.arm_fault()
+	assert_eq(NativeHeightField.height_m(p, seed, true), TerrainField.height_m(p, seed, true),
+		"the faulted call returns the GDScript height")
+	assert_false(NativeHeightField.ready_for(seed), "the port turned itself off")
+	var points := _points(seed, 20)
+	NativeHeightField.enabled = true
+	NativeHeightField.arm_fault()
+	var batch := NativeHeightField.height_batch(points, seed, false)
+	for i in points.size():
+		assert_eq(batch[i], TerrainField.height_m(points[i], seed, false))
+	assert_false(NativeHeightField.enabled)
+	NativeHeightField.enabled = true
+	_expect_fault_warning()
+
+
+## NativeGates.deferred (the game): setup() only registers; the main thread
+## never gates and keeps GDScript; the first worker call gates the seed.
+func test_deferred_gate_runs_on_a_worker_not_the_main_thread() -> void:
+	if not _dotnet():
+		pass_test("standard editor: no C#")
+		return
+	var gates := preload("res://scripts/native/NativeGates.gd")
+	var seed := 31337
+	gates.deferred = true
+	NativeHeightField.setup(seed)
+	assert_false(NativeHeightField.ready_for(seed), "main thread: still GDScript, no gate")
+	var on_worker := [false]
+	var task := WorkerThreadPool.add_task(func() -> void:
+		on_worker[0] = NativeHeightField.ready_for(seed))
+	WorkerThreadPool.wait_for_task_completion(task)
+	gates.deferred = false
+	assert_true(on_worker[0], "the worker ran the gate and the seed is native")
+	assert_true(NativeHeightField.ready_for(seed))
+
+
+## The fault's warning is the expected outcome, not a test failure.
+func _expect_fault_warning() -> void:
+	var warned := 0
+	for e in get_errors():
+		if e.contains_text("forced test fault"):
+			e.handled = true
+			warned += 1
+	assert_gt(warned, 0, "a warning names the C# failure")

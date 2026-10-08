@@ -6,13 +6,18 @@ extends RefCounted
 ## No class_name on purpose: reference it with preload (a new global class
 ## would force a class-cache rebuild in every checkout).
 ##
-## setup(seed) (called by HeightfieldPlan._init, so on the main thread before
-## the streamer's worker starts) does nothing under the standard editor (no
-## CSharpScript class). Under the .NET editor it hands the live tuning tables
-## to C# and compares C# and GDScript heights bit for bit on a fixed
-## deterministic point set for that seed (~4000 points, with and without
-## detail). Only a seed that passes is served natively; otherwise the game
-## keeps the (slower) GDScript field and a warning names the files to re-sync.
+## setup(seed) (called by HeightfieldPlan._init) does nothing under the
+## standard editor (no CSharpScript class). Under the .NET editor it hands the
+## live tuning tables to C#; the parity gate compares C# and GDScript heights
+## bit for bit on a fixed deterministic point set for that seed (~4000
+## points, with and without detail, ~2.2 s). Tests and harnesses gate at once
+## in setup(); the game (NativeGates.deferred) only registers the seed, and the
+## gate runs in the first ready_for(seed) on a non-main thread that wins the
+## try_lock (a worker); every other caller, the main thread always, uses the
+## GDScript field meanwhile (identical heights). Only a seed that passes is
+## served natively; otherwise the game keeps the (slower) GDScript field and a
+## warning names the files to re-sync. A C# call that throws turns the port
+## off and that call returns the GDScript height.
 ## The GDScript field stays the reference: change it freely, the parity check
 ## turns the native path off until the C# mirror catches up.
 
@@ -27,12 +32,16 @@ const _SCRIPTS := {
 	"Helper": preload("res://scripts/core/Helper.gd"),
 }
 const CLUSTERS := 48   # parity clusters of 48 points (see parity_points)
+const _GATES := preload("res://scripts/native/NativeGates.gd")
 
 ## True once the C# side is loaded and at least one seed passed its check.
 static var enabled := false
 ## Seeds served natively (replaced, never mutated, so readers on other threads
 ## always see a complete dictionary).
 static var seeds: Dictionary = {}
+## Seeds registered by a deferred setup() whose gate has not run yet
+## (replaced, never mutated).
+static var _pending: Dictionary = {}
 static var _attempted: Dictionary = {}
 static var _native: Object = null
 static var _native_failed := false
@@ -40,29 +49,85 @@ static var _mutex := Mutex.new()
 
 
 ## True when height_m(…, seed, …) is served by verified C#. A forced archetype
-## (tests, gallery) is GDScript-only state the C# side does not mirror.
+## (tests, gallery) is GDScript-only state the C# side does not mirror. Runs a
+## deferred gate on a worker that wins the lock.
 static func ready_for(seed: int) -> bool:
-	return enabled and seeds.has(seed) and TerrainRegimeField._force == &""
+	if enabled and seeds.has(seed):
+		return TerrainRegimeField._force == &""
+	if _pending.has(seed) and _GATES.may_gate_here() and _mutex.try_lock():
+		_gate(seed)
+		_mutex.unlock()
+		return enabled and seeds.has(seed) and TerrainRegimeField._force == &""
+	return false
 
 
 static func height_m(p: Vector2, seed: int, include_detail: bool) -> float:
-	return _native.HeightM(p, seed, include_detail)
+	var h: float = _native.HeightM(p, seed, include_detail)
+	if is_nan(h) and _fault(h):
+		return TerrainField.height_m(p, seed, include_detail)
+	return h
 
 
 ## Heights for many points in one call (PackedVector2Array -> PackedFloat64Array).
 static func height_batch(points: PackedVector2Array, seed: int, include_detail: bool) -> PackedFloat64Array:
-	return _native.HeightBatch(points, seed, include_detail)
+	var out = _native.HeightBatch(points, seed, include_detail)
+	if _fault(out):
+		out = PackedFloat64Array()
+		out.resize(points.size())
+		for k in points.size():
+			out[k] = TerrainField.height_m(points[k], seed, include_detail)
+	return out
 
 
+## True (and the port off) when the C# call behind `result` threw.
+static func _fault(result) -> bool:
+	var err := _GATES.faulted(_native, result)
+	if err.is_empty():
+		return false
+	enabled = false
+	push_warning("NativeHeightField disabled: the C# call failed (%s); using GDScript heights." % err)
+	return true
+
+
+## Test hook: the next C# call (any port) throws once.
+static func arm_fault() -> void:
+	if _native != null:
+		_native.ArmFault()
+
+
+## Load C# and register the seed; gate now unless NativeGates.deferred.
 static func setup(seed: int) -> void:
 	_mutex.lock()
+	if _GATES.deferred:
+		if _native == null and not _native_failed and not _load_native():
+			_native_failed = true
+		if _native != null and not _attempted.has(seed) and not _pending.has(seed):
+			var next := _pending.duplicate()
+			next[seed] = true
+			_pending = next
+	else:
+		_gate(seed)
+	_mutex.unlock()
+
+
+## Load and gate now, deferred or not (tests, the river walk's gate).
+static func setup_now(seed: int) -> void:
+	_mutex.lock()
+	_gate(seed)
+	_mutex.unlock()
+
+
+## Under _mutex. Harmless to repeat.
+static func _gate(seed: int) -> void:
 	if _attempted.has(seed) or _native_failed:
-		_mutex.unlock()
 		return
 	_attempted[seed] = true
+	if _pending.has(seed):
+		var next := _pending.duplicate()
+		next.erase(seed)
+		_pending = next
 	if _native == null and not _load_native():
 		_native_failed = true
-		_mutex.unlock()
 		return
 	var err: String = _native.Prepare(seed)
 	var mismatch := "" if err == "" else "C# setup failed: " + err
@@ -78,13 +143,13 @@ static func setup(seed: int) -> void:
 			+ "scripts/terrain/heightfield/{TerrainField,LandformFeatures,TerrainRegime*,LandformSetpieces,"
 			+ "RegimeRelief,ReliefPrimitives}.gd / Helper.gd noise. The game uses the (slower) GDScript "
 			+ "height field until then.")
-	_mutex.unlock()
 
 
 ## Drop every verified seed (tests): the next setup() re-checks parity.
 static func reset() -> void:
 	_mutex.lock()
 	seeds = {}
+	_pending = {}
 	_attempted.clear()
 	enabled = false
 	_mutex.unlock()

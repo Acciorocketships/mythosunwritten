@@ -12,6 +12,7 @@ extends RefCounted
 
 const _CS_PATH := "res://scripts/native/NativeGridKernels.cs"
 const _ENVELOPE := preload("res://scripts/terrain/field/CliffSlopeEnvelope.gd")
+const _GATES := preload("res://scripts/native/NativeGates.gd")
 
 static var enabled := false
 static var _native: Object = null
@@ -19,18 +20,46 @@ static var _attempted := false
 static var _mutex := Mutex.new()
 
 
+## A C# call that throws turns the port off and that call re-dispatches to
+## the (now GDScript) CliffSlopeEnvelope kernel.
 static func envelope_axis(f: PackedFloat64Array, w: int, h: int, a: float,
 		columns: bool, only := PackedByteArray()) -> PackedFloat64Array:
-	return _native.EnvelopeAxis(f, w, h, a, columns, only)
+	var out = _native.EnvelopeAxis(f, w, h, a, columns, only)
+	if _fault(out):
+		return _ENVELOPE._envelope_axis(f, w, h, a, columns, only)
+	return out
 
 
 static func window(g: PackedFloat64Array, w: int, h: int, reach: float,
 		highest: bool) -> PackedFloat64Array:
-	return _native.Window(g, w, h, ceili(reach / _ENVELOPE.H), highest)
+	var out = _native.Window(g, w, h, ceili(reach / _ENVELOPE.H), highest)
+	if _fault(out):
+		return _ENVELOPE._window(g, w, h, reach, highest)
+	return out
 
 
 static func blur(f: PackedFloat64Array, w: int, h: int, r: int) -> PackedFloat64Array:
-	return _native.Blur(f, w, h, r)
+	var out = _native.Blur(f, w, h, r)
+	if _fault(out):
+		return _ENVELOPE._blur(f, w, h, r)
+	return out
+
+
+## True (and the port off) when the C# call behind `result` threw.
+static func _fault(result) -> bool:
+	var err := _GATES.faulted(_native, result)
+	if err.is_empty():
+		return false
+	enabled = false
+	push_warning("NativeGridKernels disabled: the C# call failed (%s); using the GDScript kernels." % err)
+	return true
+
+
+## Test hook: the next C# call (any port) throws once.
+static func arm_fault() -> void:
+	setup()
+	if _native != null:
+		_native.ArmFault()
 
 
 ## Main thread, once (FieldTerrainStreamer._ready; harmless to repeat).

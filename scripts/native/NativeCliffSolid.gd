@@ -20,6 +20,7 @@ extends RefCounted
 const _CS_PATH := "res://scripts/native/NativeCliffSolid.cs"
 const _FIELD := preload("res://scripts/terrain/field/CliffSlopeField.gd")
 const _STYLE := preload("res://scripts/terrain/field/CliffRockStyle.gd")
+const _GATES := preload("res://scripts/native/NativeGates.gd")
 
 ## Tests: force the GDScript reference.
 static var force_off := false
@@ -27,6 +28,8 @@ static var enabled := false
 static var _native: Object = null
 static var _load_attempted := false
 static var _gated := false
+## A C# call threw: off for good (NativeGates.faulted).
+static var _faulted := false
 static var _mutex := Mutex.new()
 
 
@@ -84,9 +87,11 @@ static func setup() -> void:
 	_mutex.unlock()
 
 
-## CliffSlopeField._columns(rect) of `env`.
+## CliffSlopeField._columns(rect) of `env`; null when the C# call failed.
 static func columns(env, rect: Rect2) -> ColumnMask:
-	var r: Array = _native.Columns(env.origin, env.w, env.h, env.surface, env.ground, rect, true)
+	var r = _native.Columns(env.origin, env.w, env.h, env.surface, env.ground, rect, true)
+	if _fault(r):
+		return null
 	var m := ColumnMask.new()
 	m.lo = r[0]
 	m.dims = r[1]
@@ -96,12 +101,14 @@ static func columns(env, rect: Rect2) -> ColumnMask:
 
 
 ## CliffSlopeField.solid's bedrock branch over the columns `cols`: the same
-## placement list. Sets field._support_faces / _support_owned.
-static func solid(field, env, owned: Rect2, cols: ColumnMask, region) -> Array[Dictionary]:
+## placement list. Sets field._support_faces / _support_owned. null when a
+## C# call failed (the port is then off; nothing was set).
+static func solid(field, env, owned: Rect2, cols: ColumnMask, region) -> Variant:
 	if cols.count == 0:
 		field._support_faces = PackedVector3Array()
 		field._support_owned = owned
-		return []
+		var none: Array[Dictionary] = []
+		return none
 	var qlo := Vector2i.ZERO
 	var qsize := Vector2i.ZERO
 	var corners := PackedFloat64Array()
@@ -135,6 +142,8 @@ static func solid(field, env, owned: Rect2, cols: ColumnMask, region) -> Array[D
 			# (sample_baked grades every corner it returns).
 			var needed: PackedByteArray = _native.NeededQuads(env.origin, env.w, env.h, env.surface, env.ground,
 				cols.lo, cols.dims, cols.mask, qlo, qsize)
+			if _fault(needed):
+				return null
 			var w2 := 2 * qsize.x
 			for b in qsize.y:
 				for a in qsize.x:
@@ -143,13 +152,16 @@ static func solid(field, env, owned: Rect2, cols: ColumnMask, region) -> Array[D
 					for c in 4:
 						var n := (2 * b + (c >> 1)) * w2 + 2 * a + (c & 1)
 						corners[n] = TerrainTileField._apply_grade(region, xs[2 * a + (c & 1)], zs[2 * b + (c >> 1)], corners[n])
-	var r: Array = _native.Solid(env.origin, env.w, env.h, env.surface, env.ground, env.excluded, env.rock,
+	var r = _native.Solid(env.origin, env.w, env.h, env.surface, env.ground, env.excluded, env.rock,
 		env.moss_grade, owned, cols.lo, cols.dims, cols.mask, region != null, qlo, qsize, corners)
+	if _fault(r):
+		return null
 	var faces: PackedVector3Array = r[0]
 	field._support_faces = faces
 	field._support_owned = owned
+	var placements: Array[Dictionary] = []
 	if faces.is_empty():
-		return []
+		return placements
 	var points: PackedVector3Array = r[1]
 	var normals: PackedVector3Array = r[2]
 	var exposure: PackedFloat64Array = r[3]
@@ -158,10 +170,29 @@ static func solid(field, env, owned: Rect2, cols: ColumnMask, region) -> Array[D
 	for n in points.size():
 		roots[points[n]] = [normals[n], exposure[n], grade[n]]
 	var bounds := AABB(r[5], r[6])
-	return [{"faces": faces, "green": PackedVector3Array(), "native_roots": roots, "transform": Transform3D.IDENTITY,
+	placements.append({"faces": faces, "green": PackedVector3Array(), "native_roots": roots, "transform": Transform3D.IDENTITY,
 		"bounds": bounds, "anchor": bounds.get_center(), "top": bounds.end.y, "base": bounds.position.y,
 		"id": "slope_solid/%s" % owned.position, "asset": &"cliff.native_crag", "kind": "rock", "native_crag": true,
-		"slope_sheet": true}]
+		"slope_sheet": true})
+	return placements
+
+
+## True (and the port off for good) when the C# call behind `result` threw.
+static func _fault(result) -> bool:
+	var err := _GATES.faulted(_native, result)
+	if err.is_empty():
+		return false
+	_faulted = true
+	enabled = false
+	push_warning("NativeCliffSolid disabled: the C# call failed (%s); the cliff sheet uses GDScript." % err)
+	return true
+
+
+## Test hook: the next C# call (any port) throws once.
+static func arm_fault() -> void:
+	setup()
+	if _native != null:
+		_native.ArmFault()
 
 
 ## Under _mutex. _gated is set before the parity runs.
@@ -173,9 +204,9 @@ static func _gate() -> void:
 	if _native == null:
 		return
 	var mismatch := _parity()
-	if mismatch.is_empty():
+	if mismatch.is_empty() and not _faulted:
 		enabled = true
-	else:
+	elif not mismatch.is_empty():
 		push_warning("NativeCliffSolid disabled: %s. Re-sync scripts/native/NativeCliffSolid.cs " % mismatch
 			+ "with scripts/terrain/field/CliffSlopeField.gd (_columns, _window_max, _solid_top_over, "
 			+ "_mesh_height, solid, _drop_fragments); the cliff sheet uses GDScript until then.")
@@ -277,9 +308,13 @@ static func compare_field(field, owned: Rect2) -> String:
 	var gd_replacement: Dictionary = field._columns(owned.grow(4.0))
 	var cs: Array = field.solid(owned, 2)
 	var cs_faces: PackedVector3Array = field._support_faces
-	if Array(columns(env, owned).keys()) != gd_columns.keys():
+	var cs_columns := columns(env, owned)
+	var cs_replacement := columns(env, owned.grow(4.0))
+	if cs_columns == null or cs_replacement == null:
+		return "C# columns failed"
+	if Array(cs_columns.keys()) != gd_columns.keys():
 		return "columns differ"
-	if Array(columns(env, owned.grow(4.0)).keys()) != gd_replacement.keys():
+	if Array(cs_replacement.keys()) != gd_replacement.keys():
 		return "replacement columns differ"
 	if cs_faces != gd_faces:
 		return "faces differ (%d vs %d)" % [cs_faces.size(), gd_faces.size()]

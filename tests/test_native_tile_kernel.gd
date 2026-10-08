@@ -94,3 +94,54 @@ func test_sample_grid_matches_sample_baked_with_grades() -> void:
 					changed += 1
 		assert_true(same, "sample_grid == sample_baked on every sample")
 	assert_gt(changed, 0, "the listed grade patch actually moves the ground in this window")
+
+## A C# call that throws (NativeFault) returns the GDScript result to its
+## caller and turns the port off; no script error reaches the caller.
+func test_a_throwing_call_falls_back_to_gdscript_and_disables() -> void:
+	K.setup()
+	if not K.enabled:
+		pass_test("native tile kernel unavailable")
+		return
+	var rng := RandomNumberGenerator.new(); rng.seed = 11
+	var window := Tile.dense_window(_random_region(rng), Vector2i(-2, -2), Vector2i(10, 10))
+	var xs := PackedFloat64Array([5.0, 17.5, 30.0, 41.0]); var zs := PackedFloat64Array([7.0, 18.0, 29.5])
+	var ox := PackedInt32Array(); var oz := PackedInt32Array()
+	for x in xs: ox.append(Tile.point_of(x))
+	for z in zs: oz.append(Tile.point_of(z))
+	var expected := Tile._sample_grid_gd(window, xs, zs, ox, oz)
+	K.arm_fault()
+	var got := Tile.sample_grid_window(window, xs, zs, ox, oz)
+	assert_eq(got, expected, "the faulted call returns the GDScript samples")
+	assert_false(K.enabled, "the port turned itself off")
+	assert_false(K.on())
+	K.enabled = true
+	_expect_fault_warning()
+
+
+## NativeGates.deferred (the game): setup() only loads; the main thread keeps
+## GDScript and the first worker call runs the gate.
+func test_deferred_gate_runs_on_a_worker_not_the_main_thread() -> void:
+	if not _dotnet():
+		pass_test("standard editor: no C#")
+		return
+	var gates := preload("res://scripts/native/NativeGates.gd")
+	gates.deferred = true
+	K.reset()
+	K.setup()
+	assert_false(K.on(), "main thread: no gate, GDScript")
+	var on_worker := [false]
+	var task := WorkerThreadPool.add_task(func() -> void: on_worker[0] = K.on())
+	WorkerThreadPool.wait_for_task_completion(task)
+	gates.deferred = false
+	assert_true(on_worker[0], "the worker ran the gate")
+	assert_true(K.enabled)
+
+
+## The fault's warning is the expected outcome, not a test failure.
+func _expect_fault_warning() -> void:
+	var warned := 0
+	for e in get_errors():
+		if e.contains_text("forced test fault"):
+			e.handled = true
+			warned += 1
+	assert_gt(warned, 0, "a warning names the C# failure")

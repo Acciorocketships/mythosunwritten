@@ -10,7 +10,6 @@ const POINTS := preload("res://tests/fixtures/tile_point_region.gd")
 
 func after_each() -> void:
 	N.force_off = false
-	E.capture_stages = false
 
 func test_native_matches_gdscript_or_stays_off() -> void:
 	N.setup()
@@ -100,3 +99,35 @@ func test_build_dispatch_matches_the_reference() -> void:
 		N.force_off = false
 		return [env.surface, env.rock, env.moss_grade, env.excluded]
 	assert_eq(run.call(true), run.call(false))
+
+
+## A C# build that throws turns the port off for good and the envelope is
+## built in GDScript: the same arrays, no script error.
+func test_a_throwing_call_falls_back_to_gdscript_and_disables() -> void:
+	N.setup()
+	if not N.enabled:
+		pass_test("native envelope unavailable")
+		return
+	var c: Dictionary = N.parity_cases()[1]
+	var run := func():
+		var env = E.build(c.rect, c.ground, c.excluded, c.seed, c.water)
+		return [env.surface, env.rock, env.moss_grade, env.excluded]
+	N.force_off = true
+	var expected = run.call()
+	N.force_off = false
+	N.arm_fault()
+	assert_eq(run.call(), expected, "the faulted build returns the GDScript envelope")
+	assert_false(N.on(), "the port turned itself off")
+	N._faulted = false
+	N.enabled = true
+	_expect_fault_warning()
+
+
+## The fault's warning is the expected outcome, not a test failure.
+func _expect_fault_warning() -> void:
+	var warned := 0
+	for e in get_errors():
+		if e.contains_text("forced test fault"):
+			e.handled = true
+			warned += 1
+	assert_gt(warned, 0, "a warning names the C# failure")

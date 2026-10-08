@@ -582,6 +582,10 @@ func _prefetch_native(lo: Vector2i, width: int, rows: int, missing: PackedInt32A
 		if part.is_empty():
 			return
 		var out := WaterPlan.NATIVE_CARVE.sample_batch(self, lo, width, part, regions, keys)
+		if out.is_empty():   # the C# call failed (the seed is now off): GDScript
+			for index in part:
+				_sample(lo.x + index % width, lo.y + index / width)
+			return
 		_samples_lock.lock()
 		for k in part.size():
 			var index := part[k]

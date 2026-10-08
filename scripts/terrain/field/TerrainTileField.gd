@@ -145,7 +145,7 @@ static func tile_y(region, tile: Vector2i, u: float, v: float, side := Vector2i.
 ## `o` is the offset of the 8-value tile block inside `p` (sample_baked passes
 ## its per-point bake directly; no slice per call). This is the mesher's hot
 ## path: no Array literals.
-static func eval_params(p: PackedFloat32Array, u: float, v: float, side := Vector2i.ZERO, o := 0) -> float:
+static func eval_params(p: PackedFloat32Array, u: float, v: float, side := Vector2i.ZERO, o := 0, mode := -1) -> float:
 	var h0 := p[o]
 	var h1 := p[o + 1]
 	var h2 := p[o + 2]
@@ -164,6 +164,7 @@ static func eval_params(p: PackedFloat32Array, u: float, v: float, side := Vecto
 		var su := SlopeProfile.smootherstep(u)
 		var sv := SlopeProfile.smootherstep(v)
 		return lerpf(lerpf(h0, h1, su), lerpf(h3, h2, su), sv)
+	var end_mode := cliff_end if mode < 0 else mode
 	var result := lo
 	var prev := lo
 	while true:
@@ -178,19 +179,19 @@ static func eval_params(p: PackedFloat32Array, u: float, v: float, side := Vecto
 			t = h3
 		if t == INF:
 			break
-		result += (t - prev) * _layer(h0 >= t, h1 >= t, h2 >= t, h3 >= t, cb, cr, ct, cl, u, v, side)
+		result += (t - prev) * _layer(h0 >= t, h1 >= t, h2 >= t, h3 >= t, cb, cr, ct, cl, u, v, side, end_mode)
 		prev = t
 	return result
 
 
 static func _layer(ba: bool, bb: bool, bc: bool, bd: bool,
 		cb: float, cr: float, ct: float, cl: float,
-		u: float, v: float, side: Vector2i) -> float:
+		u: float, v: float, side: Vector2i, mode: int) -> float:
 	var highs := int(ba) + int(bb) + int(bc) + int(bd)
 	# E3 ends a cliff cleanly only where it truly ends: the tile's one cliff
 	# edge. Where walls turn a corner beside slopes the tile keeps the E2 rule
 	# (a clean end there left a trough at the foot of the turning wall).
-	var ends := cliff_end == CliffEnd.E3 and int(cb >= 1.0) + int(cr >= 1.0) + int(ct >= 1.0) + int(cl >= 1.0) == 1
+	var ends := mode == CliffEnd.E3 and int(cb >= 1.0) + int(cr >= 1.0) + int(ct >= 1.0) + int(cl >= 1.0) == 1
 	if highs != 2 or ba == bc:
 		# One high corner, one low corner or a saddle is built from CORNER
 		# shapes: a corner's shape is the product of its two crossings' profiles
@@ -204,10 +205,10 @@ static func _layer(ba: bool, bb: bool, bc: bool, bd: bool,
 		var mixed := ((ba != bb) and cb < 1.0) or ((bd != bc) and ct < 1.0) \
 			or ((ba != bd) and cl < 1.0) or ((bb != bc) and cr < 1.0)
 		var corners := [
-			(1.0 - _corner_profile(u, cb, v, 0.0, mixed, side.x, side.y, ends)) * (1.0 - _corner_profile(v, cl, u, 0.0, mixed, side.y, side.x, ends)),
-			_corner_profile(u, cb, v, 1.0, mixed, side.x, side.y, ends) * (1.0 - _corner_profile(v, cr, 1.0 - u, 0.0, mixed, side.y, -side.x, ends)),
-			_corner_profile(u, ct, 1.0 - v, 1.0, mixed, side.x, -side.y, ends) * _corner_profile(v, cr, 1.0 - u, 1.0, mixed, side.y, -side.x, ends),
-			(1.0 - _corner_profile(u, ct, 1.0 - v, 0.0, mixed, side.x, -side.y, ends)) * _corner_profile(v, cl, u, 1.0, mixed, side.y, side.x, ends)]
+			(1.0 - _corner_profile(u, cb, v, 0.0, mixed, side.x, side.y, ends, mode)) * (1.0 - _corner_profile(v, cl, u, 0.0, mixed, side.y, side.x, ends, mode)),
+			_corner_profile(u, cb, v, 1.0, mixed, side.x, side.y, ends, mode) * (1.0 - _corner_profile(v, cr, 1.0 - u, 0.0, mixed, side.y, -side.x, ends, mode)),
+			_corner_profile(u, ct, 1.0 - v, 1.0, mixed, side.x, -side.y, ends, mode) * _corner_profile(v, cr, 1.0 - u, 1.0, mixed, side.y, -side.x, ends, mode),
+			(1.0 - _corner_profile(u, ct, 1.0 - v, 0.0, mixed, side.x, -side.y, ends, mode)) * _corner_profile(v, cl, u, 1.0, mixed, side.y, side.x, ends, mode)]
 		var bits := [ba, bb, bc, bd]
 		if highs == 1:
 			return corners[bits.find(true)]
@@ -232,8 +233,8 @@ static func _layer(ba: bool, bb: bool, bc: bool, bd: bool,
 	var kt := ct if xt else idle
 	var kl := cl if xl else idle
 	var kr := cr if xr else idle
-	var pu := _profile(u, kb, kt, v, side.x, side.y, ends)
-	var pv := _profile(v, kl, kr, u, side.y, side.x, ends)
+	var pu := _profile(u, kb, kt, v, side.x, side.y, ends, mode)
+	var pv := _profile(v, kl, kr, u, side.y, side.x, ends, mode)
 	var a := 1.0 if ba else 0.0
 	var b := 1.0 if bb else 0.0
 	var c := 1.0 if bc else 0.0
@@ -249,7 +250,7 @@ static func _layer(ba: bool, bb: bool, bc: bool, bd: bool,
 ## edge to the tile centre (E2) that then gives way to a half-tile ramp on the
 ## corner's own side: the far side of the wall stays level (no notch), and
 ## the corner only deepens toward its corner along t.
-static func _corner_profile(t: float, k: float, s: float, corner_t: float, mixed: bool, side: int, side_s: int, ends := false) -> float:
+static func _corner_profile(t: float, k: float, s: float, corner_t: float, mixed: bool, side: int, side_s: int, ends: bool, mode: int) -> float:
 	if k <= 0.0:
 		return SlopeProfile.smootherstep(t)
 	if not mixed:
@@ -259,7 +260,7 @@ static func _corner_profile(t: float, k: float, s: float, corner_t: float, mixed
 	# slope tile has it.
 	if ends:
 		return _step(t, side) if _step(s, side_s) == 0.0 else SlopeProfile.smootherstep(t)
-	var wall := 1.0 - s if cliff_end == CliffEnd.E1 else \
+	var wall := 1.0 - s if mode == CliffEnd.E1 else \
 		SlopeProfile.smootherstep(clampf((1.0 - CLIFF_END_CLEAR - s) / (0.5 - CLIFF_END_CLEAR), 0.0, 1.0))
 	# A cubic smoothstep: over half a tile a storey ramp peaks at 45 degrees,
 	# lawn (SlopeProfile.LAWN_STEEPNESS); the smootherstep peaked at 51 and read
@@ -270,9 +271,9 @@ static func _corner_profile(t: float, k: float, s: float, corner_t: float, mixed
 
 ## Profile of one direction's crossing at coordinate t, given the cliff weight
 ## k0 of the crossing edge at s = 0 and k1 at s = 1 (s = transverse coordinate).
-static func _profile(t: float, k0: float, k1: float, s: float, side: int, side_s: int, ends := false) -> float:
+static func _profile(t: float, k0: float, k1: float, s: float, side: int, side_s: int, ends: bool, mode: int) -> float:
 	var k: float
-	if cliff_end == CliffEnd.E1 or k0 == k1:
+	if mode == CliffEnd.E1 or k0 == k1:
 		k = lerpf(k0, k1, s)
 	elif ends:   # E3: the wall ends on the centre line
 		k = k0 if _step(s, side_s) == 0.0 else k1
@@ -388,7 +389,7 @@ static func dense_window(region, lo: Vector2i, size: Vector2i) -> Dictionary:
 ## assert _window_holds on the owners' bounds).
 static func sample_window(window: Dictionary, xs: PackedFloat64Array, zs: PackedFloat64Array,
 		owner_i: PackedInt32Array, owner_j: PackedInt32Array) -> PackedFloat64Array:
-	if NATIVE_TILE.enabled:
+	if NATIVE_TILE.on():
 		return NATIVE_TILE.sample_owned(window, xs, zs, owner_i, owner_j)
 	return _sample_window_gd(window, xs, zs, owner_i, owner_j)
 
@@ -397,7 +398,7 @@ static func sample_window(window: Dictionary, xs: PackedFloat64Array, zs: Packed
 ## column (owner_xs[i]) and per row (owner_zs[k]); no flattened sample arrays.
 static func sample_grid_window(window: Dictionary, xs: PackedFloat64Array, zs: PackedFloat64Array,
 		owner_xs: PackedInt32Array, owner_zs: PackedInt32Array) -> PackedFloat64Array:
-	if NATIVE_TILE.enabled:
+	if NATIVE_TILE.on():
 		return NATIVE_TILE.sample_grid(window, xs, zs, owner_xs, owner_zs)
 	return _sample_grid_gd(window, xs, zs, owner_xs, owner_zs)
 
@@ -406,7 +407,7 @@ static func sample_grid_window(window: Dictionary, xs: PackedFloat64Array, zs: P
 ## rounds each double.
 static func sample_grid_window32(window: Dictionary, xs: PackedFloat64Array, zs: PackedFloat64Array,
 		owner_xs: PackedInt32Array, owner_zs: PackedInt32Array) -> PackedFloat32Array:
-	if NATIVE_TILE.enabled:
+	if NATIVE_TILE.on():
 		return NATIVE_TILE.sample_grid32(window, xs, zs, owner_xs, owner_zs)
 	return _to_float32(_sample_grid_gd(window, xs, zs, owner_xs, owner_zs))
 
@@ -492,20 +493,23 @@ static func _owners_inside(window: Dictionary, owner_i: PackedInt32Array, owner_
 
 
 ## The GDScript references (the native parity gate compares against these).
+## `mode`: the cliff end rule (CliffEnd; -1 = cliff_end). The parity gate
+## passes each mode instead of setting the shared cliff_end (it may run on a
+## worker while other threads sample).
 static func _sample_window_gd(window: Dictionary, xs: PackedFloat64Array, zs: PackedFloat64Array,
-		owner_i: PackedInt32Array, owner_j: PackedInt32Array) -> PackedFloat64Array:
+		owner_i: PackedInt32Array, owner_j: PackedInt32Array, mode := -1) -> PackedFloat64Array:
 	var out := PackedFloat64Array(); out.resize(xs.size())
 	var params := PackedFloat32Array(); params.resize(8)
 	var heights: PackedFloat32Array = window.heights
 	var storeys: PackedInt32Array = window.storeys
 	for k in xs.size():
 		out[k] = _window_sample(heights, storeys, window.w, window.lo, window.spacing, params,
-			xs[k], zs[k], owner_i[k], owner_j[k])
+			xs[k], zs[k], owner_i[k], owner_j[k], mode)
 	return out
 
 
 static func _sample_grid_gd(window: Dictionary, xs: PackedFloat64Array, zs: PackedFloat64Array,
-		owner_xs: PackedInt32Array, owner_zs: PackedInt32Array) -> PackedFloat64Array:
+		owner_xs: PackedInt32Array, owner_zs: PackedInt32Array, mode := -1) -> PackedFloat64Array:
 	var w := xs.size()
 	var out := PackedFloat64Array(); out.resize(w * zs.size())
 	var params := PackedFloat32Array(); params.resize(8)
@@ -517,14 +521,15 @@ static func _sample_grid_gd(window: Dictionary, xs: PackedFloat64Array, zs: Pack
 	for k in zs.size():
 		for i in w:
 			out[k * w + i] = _window_sample(heights, storeys, ww, lo, sp, params,
-				xs[i], zs[k], owner_xs[i], owner_zs[k])
+				xs[i], zs[k], owner_xs[i], owner_zs[k], mode)
 	return out
 
 
 ## One sample of the reference over the window's arrays: `params` is
 ## caller-owned scratch (8 floats).
 static func _window_sample(heights: PackedFloat32Array, storeys: PackedInt32Array, w: int,
-		lo: Vector2i, s: float, params: PackedFloat32Array, x: float, z: float, oi: int, oj: int) -> float:
+		lo: Vector2i, s: float, params: PackedFloat32Array, x: float, z: float, oi: int, oj: int,
+		mode := -1) -> float:
 	var cx := float(oi) * s
 	var cz := float(oj) * s
 	var lx := clampf(x, cx - s * 0.5, cx + s * 0.5)
@@ -540,7 +545,7 @@ static func _window_sample(heights: PackedFloat32Array, storeys: PackedInt32Arra
 	params[5] = 1.0 if absi(sb - sc) >= 2 else 0.0
 	params[6] = 1.0 if absi(sd - sc) >= 2 else 0.0
 	params[7] = 1.0 if absi(sa - sd) >= 2 else 0.0
-	return eval_params(params, (lx - float(ti) * s) / s, (lz - float(tj) * s) / s, side)
+	return eval_params(params, (lx - float(ti) * s) / s, (lz - float(tj) * s) / s, side, 0, mode)
 
 
 # --- walls -----------------------------------------------------------------------

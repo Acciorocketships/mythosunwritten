@@ -351,8 +351,9 @@ static func _source_fill(c: Dictionary, region) -> Dictionary:
 	if profile_source_cost: print("WATER_SOURCE_STAGE seeds ",Time.get_ticks_msec())
 	if native_heap.is_empty():
 		_relax_fill(owned, base, m1, levels, ground, rivers, queue)
-	else:
-		NATIVE_FILL.relax_heap(m1, levels, ground, rivers, native_heap)
+	elif not NATIVE_FILL.relax_heap(m1, levels, ground, rivers, native_heap):
+		NATIVE_FILL.fill_queue(queue, native_heap)   # C# failed: the GDScript relax
+		_relax_fill(owned, base, m1, levels, ground, rivers, queue)
 	var relax_finished := Time.get_ticks_usec() if profile_source_cost else 0
 	if profile_source_cost: print("WATER_SOURCE_STAGE relax ",Time.get_ticks_msec())
 	# A flowing trench can drain downhill without being a static basin. Its
@@ -433,7 +434,9 @@ static func _source_fill(c: Dictionary, region) -> Dictionary:
 ## retained water, without using the disconnected pocket as a new source.
 static func _retain_source_connected_fill(levels: PackedFloat32Array,
 		side: int, source_indices: PackedInt32Array) -> int:
-	if NATIVE_FILL.on(): return NATIVE_FILL.retain(levels, side, source_indices)
+	if NATIVE_FILL.on():
+		var removed := NATIVE_FILL.retain(levels, side, source_indices)
+		if removed >= 0: return removed   # else C# failed: GDScript below
 	var rows := int(levels.size() / side)
 	var retained := PackedByteArray(); retained.resize(levels.size())
 	var queue := PackedInt32Array()
@@ -467,7 +470,9 @@ static func _retain_source_connected_fill(levels: PackedFloat32Array,
 ## head across land. The operation cannot raise water or empty a wet node.
 static func _reconcile_connected_surface(levels: PackedFloat32Array,
 		ground: PackedFloat32Array, columns: int, step: float) -> int:
-	if NATIVE_FILL.on(): return NATIVE_FILL.reconcile(levels, ground, columns, step)
+	if NATIVE_FILL.on():
+		var offers := NATIVE_FILL.reconcile(levels, ground, columns, step)
+		if offers >= 0: return offers   # else C# failed: GDScript below
 	const MAX_GRADE := 0.30
 	const MIN_DEPTH := 0.10
 	var rows := int(levels.size() / columns)
@@ -611,8 +616,8 @@ static func _smooth_fill_surface(region, base: Vector2, m1: int,
 		levels: PackedFloat32Array, gnd: PackedFloat32Array,
 		river_levels: PackedFloat32Array, physical_ceilings: PackedFloat32Array = PackedFloat32Array()) -> void:
 	# Native needs every ground sample (INF = not sampled yet, see _ground_at).
-	if NATIVE_FILL.on() and not gnd.has(INF):
-		NATIVE_FILL.smooth(m1, levels, gnd, river_levels, physical_ceilings, FILL_SURFACE_PASSES)
+	if NATIVE_FILL.on() and not gnd.has(INF) \
+			and NATIVE_FILL.smooth(m1, levels, gnd, river_levels, physical_ceilings, FILL_SURFACE_PASSES):
 		return
 	var rows := int(levels.size() / m1)
 	var ceilings := levels.duplicate() if physical_ceilings.is_empty() else physical_ceilings
@@ -1221,8 +1226,7 @@ static func _relax_fill(region, base: Vector2, m1: int,
 		levels: PackedFloat32Array, gnd: PackedFloat32Array,
 		river_levels: PackedFloat32Array, pq: PriorityQueue) -> void:
 	# Native needs every ground sample (INF = not sampled yet, see _ground_at).
-	if NATIVE_FILL.on() and not gnd.has(INF):
-		NATIVE_FILL.relax(m1, levels, gnd, river_levels, pq)
+	if NATIVE_FILL.on() and not gnd.has(INF) and NATIVE_FILL.relax(m1, levels, gnd, river_levels, pq):
 		return
 	while not pq.is_empty():
 		var entry: Array = pq.pop()
@@ -1362,8 +1366,9 @@ static func _cap_hydrostatic_fill(region, base: Vector2, side: int,
 		flow_ceilings: PackedFloat32Array = PackedFloat32Array()) -> PackedFloat32Array:
 	var dense_natural: bool = natural is PackedFloat32Array
 	if NATIVE_FILL.on() and (natural == null or dense_natural) and not ground.has(INF):
-		return NATIVE_FILL.cap(side, levels, ground, anchors,
+		var capped = NATIVE_FILL.cap(side, levels, ground, anchors,
 			natural if dense_natural else PackedFloat32Array(), flow_ceilings)
+		if capped != null: return capped   # else C# failed: GDScript below
 	var search := SpillSearch.new(region, base, side, levels, ground, anchors, step, ground_bakes)
 	var ceilings := levels.duplicate()
 	var natural_region: HeightfieldRegion = null if dense_natural else natural

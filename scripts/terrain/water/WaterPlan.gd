@@ -430,8 +430,9 @@ func source_pos(sc: Vector2i) -> Vector2:
 	var cached: Variant = _cache_get(_source_pos_cache, sc)
 	if not (cached is StringName and cached == _MISSING):
 		return cached
-	var p: Vector2 = NATIVE_WALK.source_pos(self, sc) if _native_walk() \
-		else _ascend(_jitter_pos(sc))
+	# null: not native, or the C# call failed (the seed is then off).
+	var native = NATIVE_WALK.source_pos(self, sc) if _native_walk() else null
+	var p: Vector2 = native if native != null else _ascend(_jitter_pos(sc))
 	_cache_put(_source_pos_cache, sc, p, SOURCE_MEMO_LIMIT)
 	return p
 
@@ -451,8 +452,8 @@ func has_source(sc: Vector2i) -> bool:
 
 
 func _has_source_uncached(sc: Vector2i) -> bool:
-	if _native_walk():
-		var gate: Dictionary = NATIVE_WALK.source_gate(self, sc)
+	var gate = NATIVE_WALK.source_gate(self, sc) if _native_walk() else null
+	if gate != null:
 		if gate.has_source_pos:
 			_cache_put(_source_pos_cache, sc, gate.source_pos, SOURCE_MEMO_LIMIT)
 		if not gate.passes_gates:
@@ -589,8 +590,9 @@ func _make_pond(p: Vector2, arc: float, incoming_bed := INF) -> PondStamp:
 ## and spilled a waterfall on every side (summit tarns especially).
 ## Floor of 1 keeps beds above y=0.
 func _pond_level(center: Vector2, radius: float) -> int:
-	if _native_walk():
-		return NATIVE_WALK.pond_level(self, center, radius)
+	var native = NATIVE_WALK.pond_level(self, center, radius) if _native_walk() else null
+	if native != null:
+		return native
 	var pitch := HeightfieldPlan.POINT
 	var bound: float = radius * (1.0 + PondStamp.WOBBLE) + TILE
 	var r_points: int = int(ceil(bound / pitch))
@@ -623,8 +625,9 @@ func _walk(sc: Vector2i, progress_start := -1.0, progress_end := -1.0) -> RiverT
 	var cached: Variant = _cache_get(_walk_cache, sc)
 	if not (cached is StringName and cached == _MISSING):
 		return cached
-	if _native_walk():
-		var native := _trace_from_native(sc, NATIVE_WALK.walk(self, sc))
+	var walked = NATIVE_WALK.walk(self, sc) if _native_walk() else null
+	if walked != null:
+		var native := _trace_from_native(sc, walked)
 		_cache_put(_walk_cache, sc, native, SOURCE_MEMO_LIMIT)
 		if progress_start >= 0.0:
 			_report_planning_progress(progress_end)

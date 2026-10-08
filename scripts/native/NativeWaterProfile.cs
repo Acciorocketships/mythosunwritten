@@ -207,17 +207,22 @@ namespace Story.Native
         /// every position Positions() visits.
         public int[] ProfileLattice(Vector2[] points, float[] beds, double lvl0, double[] consts)
         {
-            var c = new ProfileConsts(consts);
-            var trace = new ProfileTrace(points, beds, beds, lvl0, c);
-            var keys = new HashSet<long>();
-            trace.Positions(c, p =>
+            try
             {
-                long oi = PointOf(p.X, c.Spacing), oj = PointOf(p.Y, c.Spacing);
-                for (long j = oj - 1; j <= oj + 1; j++)
-                    for (long i = oi - 1; i <= oi + 1; i++)
-                        keys.Add(LatticeKey(i, j));
-            });
-            return SortedPoints(keys);
+                NativeFault.Check("NativeWaterFill");
+                var c = new ProfileConsts(consts);
+                var trace = new ProfileTrace(points, beds, beds, lvl0, c);
+                var keys = new HashSet<long>();
+                trace.Positions(c, p =>
+                {
+                    long oi = PointOf(p.X, c.Spacing), oj = PointOf(p.Y, c.Spacing);
+                    for (long j = oj - 1; j <= oj + 1; j++)
+                        for (long i = oi - 1; i <= oi + 1; i++)
+                            keys.Add(LatticeKey(i, j));
+                });
+                return SortedPoints(keys);
+            }
+            catch (Exception e) { NativeFault.Record(e); return null!; }
         }
 
         static int[] SortedPoints(HashSet<long> keys)
@@ -237,91 +242,96 @@ namespace Story.Native
         public Godot.Collections.Array Profile(Vector2[] points, float[] beds, float[] widths, double lvl0,
             bool hasPond, double pondY, int[] lattice, float[] heights, int[] storeys, double[] consts)
         {
-            var c = new ProfileConsts(consts);
-            var t = new ProfileTrace(points, beds, widths, lvl0, c);
-            var g = new LatticeGround(lattice, heights, storeys, c.Spacing, c.CliffEnd);
-            int n = t.N;
-            var levels = new float[n];
-            var dLo = new List<int>();
-            var dHi = new List<int>();
-            var dPos = new List<V2[]>();
-            var dW = new List<float[]>();
-            var dLvl = new List<float[]>();
-            levels[0] = (float)lvl0;
-            if (!t.Varies)
+            try
             {
-                Array.Copy(t.Raw, levels, n);
-            }
-            else
-            {
-                int i = 1, spanIdx = 0;
-                while (i < n)
+                NativeFault.Check("NativeWaterFill");
+                var c = new ProfileConsts(consts);
+                var t = new ProfileTrace(points, beds, widths, lvl0, c);
+                var g = new LatticeGround(lattice, heights, storeys, c.Spacing, c.CliffEnd);
+                int n = t.N;
+                var levels = new float[n];
+                var dLo = new List<int>();
+                var dHi = new List<int>();
+                var dPos = new List<V2[]>();
+                var dW = new List<float[]>();
+                var dLvl = new List<float[]>();
+                levels[0] = (float)lvl0;
+                if (!t.Varies)
                 {
-                    if (spanIdx < t.Spans.Count && t.Spans[spanIdx].lo == i - 1)
-                    {
-                        var (lo, hi) = t.Spans[spanIdx];
-                        ShapeSpan(t, g, c, lo, hi, levels[lo], t.Raw[hi], out float[] samples, out float[] dense);
-                        for (int k = lo + 1; k <= hi; k++) levels[k] = samples[k - lo];
-                        t.DensePoints(lo, hi, c, out V2[] pos, out float[] w);
-                        dLo.Add(lo); dHi.Add(hi); dPos.Add(pos); dW.Add(w); dLvl.Add(dense);
-                        i = hi + 1;
-                        spanIdx++;
-                    }
-                    else
-                    {
-                        double target = Min(levels[i - 1], (double)beds[i] + c.Ride);
-                        levels[i] = (float)Descend(g, c, t.P[i - 1], t.P[i], levels[i - 1], target);
-                        i++;
-                    }
+                    Array.Copy(t.Raw, levels, n);
                 }
-            }
-            if (hasPond)
-            {
-                double ps = pondY;
-                if ((double)levels[n - 1] - ps <= c.FallDrop + 0.01)
+                else
                 {
-                    int i = n - 1;
-                    while (i >= 0 && levels[i] < ps)
+                    int i = 1, spanIdx = 0;
+                    while (i < n)
                     {
-                        levels[i] = (float)Maxf(levels[i], ps);
-                        i--;
-                    }
-                    levels[n - 1] = (float)ps;
-                    foreach (float[] dl in dLvl)
-                        for (int k = 0; k < dl.Length; k++) dl[k] = (float)Maxf(dl[k], ps);
-                }
-                else if (n >= 2)
-                {
-                    levels[n - 1] = (float)Descend(g, c, t.P[n - 2], t.P[n - 1], levels[n - 2], ps);
-                    for (int d = 0; d < dHi.Count; d++)
-                    {
-                        float[] dl = dLvl[d];
-                        if (dHi[d] == n - 1 && dl.Length > 0)
-                            dl[dl.Length - 1] = (float)Min(dl[dl.Length - 1], levels[n - 1]);
+                        if (spanIdx < t.Spans.Count && t.Spans[spanIdx].lo == i - 1)
+                        {
+                            var (lo, hi) = t.Spans[spanIdx];
+                            ShapeSpan(t, g, c, lo, hi, levels[lo], t.Raw[hi], out float[] samples, out float[] dense);
+                            for (int k = lo + 1; k <= hi; k++) levels[k] = samples[k - lo];
+                            t.DensePoints(lo, hi, c, out V2[] pos, out float[] w);
+                            dLo.Add(lo); dHi.Add(hi); dPos.Add(pos); dW.Add(w); dLvl.Add(dense);
+                            i = hi + 1;
+                            spanIdx++;
+                        }
+                        else
+                        {
+                            double target = Min(levels[i - 1], (double)beds[i] + c.Ride);
+                            levels[i] = (float)Descend(g, c, t.P[i - 1], t.P[i], levels[i - 1], target);
+                            i++;
+                        }
                     }
                 }
-            }
-            var sizes = new int[dLo.Count];
-            int total = 0;
-            for (int d = 0; d < dLo.Count; d++) { sizes[d] = dPos[d].Length; total += sizes[d]; }
-            var posOut = new Vector2[total];
-            var wOut = new float[total];
-            var lvlOut = new float[total];
-            int o = 0;
-            for (int d = 0; d < dLo.Count; d++)
-            {
-                if (dLvl[d].Length != sizes[d]) throw new InvalidOperationException("dense size");
-                for (int k = 0; k < sizes[d]; k++, o++)
+                if (hasPond)
                 {
-                    posOut[o] = new Vector2(dPos[d][k].X, dPos[d][k].Y);
-                    wOut[o] = dW[d][k];
-                    lvlOut[o] = dLvl[d][k];
+                    double ps = pondY;
+                    if ((double)levels[n - 1] - ps <= c.FallDrop + 0.01)
+                    {
+                        int i = n - 1;
+                        while (i >= 0 && levels[i] < ps)
+                        {
+                            levels[i] = (float)Maxf(levels[i], ps);
+                            i--;
+                        }
+                        levels[n - 1] = (float)ps;
+                        foreach (float[] dl in dLvl)
+                            for (int k = 0; k < dl.Length; k++) dl[k] = (float)Maxf(dl[k], ps);
+                    }
+                    else if (n >= 2)
+                    {
+                        levels[n - 1] = (float)Descend(g, c, t.P[n - 2], t.P[n - 1], levels[n - 2], ps);
+                        for (int d = 0; d < dHi.Count; d++)
+                        {
+                            float[] dl = dLvl[d];
+                            if (dHi[d] == n - 1 && dl.Length > 0)
+                                dl[dl.Length - 1] = (float)Min(dl[dl.Length - 1], levels[n - 1]);
+                        }
+                    }
                 }
+                var sizes = new int[dLo.Count];
+                int total = 0;
+                for (int d = 0; d < dLo.Count; d++) { sizes[d] = dPos[d].Length; total += sizes[d]; }
+                var posOut = new Vector2[total];
+                var wOut = new float[total];
+                var lvlOut = new float[total];
+                int o = 0;
+                for (int d = 0; d < dLo.Count; d++)
+                {
+                    if (dLvl[d].Length != sizes[d]) throw new InvalidOperationException("dense size");
+                    for (int k = 0; k < sizes[d]; k++, o++)
+                    {
+                        posOut[o] = new Vector2(dPos[d][k].X, dPos[d][k].Y);
+                        wOut[o] = dW[d][k];
+                        lvlOut[o] = dLvl[d][k];
+                    }
+                }
+                return new Godot.Collections.Array
+                {
+                    levels, dLo.ToArray(), dHi.ToArray(), sizes, posOut, wOut, lvlOut
+                };
             }
-            return new Godot.Collections.Array
-            {
-                levels, dLo.ToArray(), dHi.ToArray(), sizes, posOut, wOut, lvlOut
-            };
+            catch (Exception e) { NativeFault.Record(e); return null!; }
         }
 
         // _descend_segment
@@ -490,16 +500,21 @@ namespace Story.Native
         /// every point whose storey the levels of `n` read.
         public int[] CorridorPoints(int[] n, double[] terrain)
         {
-            int ring = CorridorRing(terrain);
-            var keys = new HashSet<long>();
-            for (int k = 0; k < n.Length / 2; k++)
-                for (int dj = -ring; dj <= ring; dj++)
-                {
-                    int rem = ring - Math.Abs(dj);
-                    for (int di = -rem; di <= rem; di++)
-                        keys.Add(LatticeKey(n[2 * k] + di, n[2 * k + 1] + dj));
-                }
-            return SortedPoints(keys);
+            try
+            {
+                NativeFault.Check("NativeWaterFill");
+                int ring = CorridorRing(terrain);
+                var keys = new HashSet<long>();
+                for (int k = 0; k < n.Length / 2; k++)
+                    for (int dj = -ring; dj <= ring; dj++)
+                    {
+                        int rem = ring - Math.Abs(dj);
+                        for (int di = -rem; di <= rem; di++)
+                            keys.Add(LatticeKey(n[2 * k] + di, n[2 * k + 1] + dj));
+                    }
+                return SortedPoints(keys);
+            }
+            catch (Exception e) { NativeFault.Record(e); return null!; }
         }
 
         static long RoundWith(double q, int aggregation) => aggregation switch
@@ -520,43 +535,48 @@ namespace Story.Native
         /// the bounding box.
         public int[] CorridorDisks(int[] s, double[] hs, int aggregation, int maxStoreys, int maxStep, double[] terrain)
         {
-            int count = s.Length / 2;
-            var radius = new int[count];
-            int reach = 0, i0 = int.MaxValue, j0 = int.MaxValue, i1 = int.MinValue, j1 = int.MinValue;
-            for (int k = 0; k < count; k++)
+            try
             {
-                radius[k] = ClampRadius(Quantize(hs[k], aggregation, maxStoreys, terrain[0]), maxStep);
-                reach = Math.Max(reach, radius[k]);
-                i0 = Math.Min(i0, s[2 * k]); i1 = Math.Max(i1, s[2 * k]);
-                j0 = Math.Min(j0, s[2 * k + 1]); j1 = Math.Max(j1, s[2 * k + 1]);
-            }
-            if (count == 0) return Array.Empty<int>();
-            i0 -= reach; j0 -= reach; i1 += reach; j1 += reach;
-            int w = i1 - i0 + 1, rows = j1 - j0 + 1;
-            var cover = new int[(w + 1) * rows];   // per-row interval difference array
-            for (int k = 0; k < count; k++)
-            {
-                int pi = s[2 * k] - i0, pj = s[2 * k + 1] - j0, r = radius[k];
-                for (int dj = -r; dj <= r; dj++)
+                NativeFault.Check("NativeWaterFill");
+                int count = s.Length / 2;
+                var radius = new int[count];
+                int reach = 0, i0 = int.MaxValue, j0 = int.MaxValue, i1 = int.MinValue, j1 = int.MinValue;
+                for (int k = 0; k < count; k++)
                 {
-                    int rem = r - Math.Abs(dj), row = (pj + dj) * (w + 1);
-                    cover[row + pi - rem]++;
-                    cover[row + pi + rem + 1]--;
+                    radius[k] = ClampRadius(Quantize(hs[k], aggregation, maxStoreys, terrain[0]), maxStep);
+                    reach = Math.Max(reach, radius[k]);
+                    i0 = Math.Min(i0, s[2 * k]); i1 = Math.Max(i1, s[2 * k]);
+                    j0 = Math.Min(j0, s[2 * k + 1]); j1 = Math.Max(j1, s[2 * k + 1]);
                 }
-            }
-            var inner = new bool[w * rows];
-            for (int k = 0; k < count; k++) inner[(s[2 * k + 1] - j0) * w + (s[2 * k] - i0)] = true;
-            var output = new List<int>();
-            for (int j = 0; j < rows; j++)
-            {
-                int run = 0;
-                for (int i = 0; i < w; i++)
+                if (count == 0) return Array.Empty<int>();
+                i0 -= reach; j0 -= reach; i1 += reach; j1 += reach;
+                int w = i1 - i0 + 1, rows = j1 - j0 + 1;
+                var cover = new int[(w + 1) * rows];   // per-row interval difference array
+                for (int k = 0; k < count; k++)
                 {
-                    run += cover[j * (w + 1) + i];
-                    if (run > 0 && !inner[j * w + i]) { output.Add(i + i0); output.Add(j + j0); }
+                    int pi = s[2 * k] - i0, pj = s[2 * k + 1] - j0, r = radius[k];
+                    for (int dj = -r; dj <= r; dj++)
+                    {
+                        int rem = r - Math.Abs(dj), row = (pj + dj) * (w + 1);
+                        cover[row + pi - rem]++;
+                        cover[row + pi + rem + 1]--;
+                    }
                 }
+                var inner = new bool[w * rows];
+                for (int k = 0; k < count; k++) inner[(s[2 * k + 1] - j0) * w + (s[2 * k] - i0)] = true;
+                var output = new List<int>();
+                for (int j = 0; j < rows; j++)
+                {
+                    int run = 0;
+                    for (int i = 0; i < w; i++)
+                    {
+                        run += cover[j * (w + 1) + i];
+                        if (run > 0 && !inner[j * w + i]) { output.Add(i + i0); output.Add(j + j0); }
+                    }
+                }
+                return output.ToArray();
             }
-            return output.ToArray();
+            catch (Exception e) { NativeFault.Record(e); return null!; }
         }
 
         /// Certified surface heights (float32) and storeys of the points `n`,
@@ -565,144 +585,149 @@ namespace Story.Native
         public Godot.Collections.Array CorridorTerrain(int[] n, int[] s, double[] hs, int[] d, double[] hd,
             int aggregation, int maxStoreys, int maxStep, double[] terrain)
         {
-            double storeyHeight = terrain[0], levelHeight = terrain[1];
-            int levels = (int)terrain[2], cliffMax = (int)terrain[3], noCliff = (int)terrain[5];
-            bool renderLevels = terrain[4] != 0.0;
-            int i0 = int.MaxValue, j0 = int.MaxValue, i1 = int.MinValue, j1 = int.MinValue;
-            void Bound(int[] pts)
+            try
             {
-                for (int k = 0; k < pts.Length / 2; k++)
+                NativeFault.Check("NativeWaterFill");
+                double storeyHeight = terrain[0], levelHeight = terrain[1];
+                int levels = (int)terrain[2], cliffMax = (int)terrain[3], noCliff = (int)terrain[5];
+                bool renderLevels = terrain[4] != 0.0;
+                int i0 = int.MaxValue, j0 = int.MaxValue, i1 = int.MinValue, j1 = int.MinValue;
+                void Bound(int[] pts)
                 {
-                    i0 = Math.Min(i0, pts[2 * k]); i1 = Math.Max(i1, pts[2 * k]);
-                    j0 = Math.Min(j0, pts[2 * k + 1]); j1 = Math.Max(j1, pts[2 * k + 1]);
+                    for (int k = 0; k < pts.Length / 2; k++)
+                    {
+                        i0 = Math.Min(i0, pts[2 * k]); i1 = Math.Max(i1, pts[2 * k]);
+                        j0 = Math.Min(j0, pts[2 * k + 1]); j1 = Math.Max(j1, pts[2 * k + 1]);
+                    }
                 }
-            }
-            Bound(s);
-            Bound(d);
-            int w = i1 - i0 + 1, rows = j1 - j0 + 1;
-            var h = new double[w * rows];
-            var target = new int[w * rows];
-            var has = new bool[w * rows];
-            void Fill(int[] pts, double[] values)
-            {
-                for (int k = 0; k < pts.Length / 2; k++)
+                Bound(s);
+                Bound(d);
+                int w = i1 - i0 + 1, rows = j1 - j0 + 1;
+                var h = new double[w * rows];
+                var target = new int[w * rows];
+                var has = new bool[w * rows];
+                void Fill(int[] pts, double[] values)
                 {
-                    int a = (pts[2 * k + 1] - j0) * w + (pts[2 * k] - i0);
-                    h[a] = values[k];
-                    target[a] = Quantize(values[k], aggregation, maxStoreys, storeyHeight);
-                    has[a] = true;
+                    for (int k = 0; k < pts.Length / 2; k++)
+                    {
+                        int a = (pts[2 * k + 1] - j0) * w + (pts[2 * k] - i0);
+                        h[a] = values[k];
+                        target[a] = Quantize(values[k], aggregation, maxStoreys, storeyHeight);
+                        has[a] = true;
+                    }
                 }
-            }
-            Fill(s, hs);
-            Fill(d, hd);
-            int Index(int i, int j)
-            {
-                if (i < i0 || j < j0 || i > i1 || j > j1 || !has[(j - j0) * w + (i - i0)])
-                    throw new InvalidOperationException($"corridor point ({i}, {j}) missing");
-                return (j - j0) * w + (i - i0);
-            }
-            // Clamped storeys: the separable L1 distance transform of the
-            // targets (absent points never win), read on s only.
-            const int Absent = 1 << 28;
-            var clamp = new int[w * rows];
-            for (int a = 0; a < clamp.Length; a++) clamp[a] = has[a] ? target[a] : Absent;
-            for (int j = 0; j < rows; j++)
-            {
-                int row = j * w;
-                for (int i = 1; i < w; i++) clamp[row + i] = Math.Min(clamp[row + i], clamp[row + i - 1] + maxStep);
-                for (int i = w - 2; i >= 0; i--) clamp[row + i] = Math.Min(clamp[row + i], clamp[row + i + 1] + maxStep);
-            }
-            for (int j = 1; j < rows; j++)
-                for (int i = 0; i < w; i++) clamp[j * w + i] = Math.Min(clamp[j * w + i], clamp[(j - 1) * w + i] + maxStep);
-            for (int j = rows - 2; j >= 0; j--)
-                for (int i = 0; i < w; i++) clamp[j * w + i] = Math.Min(clamp[j * w + i], clamp[(j + 1) * w + i] + maxStep);
-            var storey = new int[w * rows];
-            Array.Fill(storey, int.MinValue);   // int.MinValue: not in s
-            for (int k = 0; k < s.Length / 2; k++)
-            {
-                int a = Index(s[2 * k], s[2 * k + 1]);
-                storey[a] = clamp[a];
-            }
-            int StoreyAt(int i, int j)
-            {
-                int v = storey[Index(i, j)];
-                if (v == int.MinValue) throw new InvalidOperationException($"corridor storey ({i}, {j}) missing");
-                return v;
-            }
-            int[] dI = { 1, -1, 0, 0 }, dJ = { 0, 0, 1, -1 };
-            bool Boundary(int i, int j)
-            {
-                int here = StoreyAt(i, j);
-                for (int q = 0; q < 4; q++)
-                    if (StoreyAt(i + dI[q], j + dJ[q]) != here) return true;
-                return false;
-            }
-            // Same-storey cardinal breadth-first walk from (i, j) to `depth`;
-            // visit(i, j, steps) returns true to stop.
-            void Walk(int si, int sj, int depth, Func<int, int, int, bool> visit)
-            {
-                int here = StoreyAt(si, sj);
-                var seen = new HashSet<long> { LatticeKey(si, sj) };
-                var frontier = new List<(int, int)> { (si, sj) };
-                for (int step = 0; ; step++)
+                Fill(s, hs);
+                Fill(d, hd);
+                int Index(int i, int j)
                 {
-                    foreach (var (fi, fj) in frontier)
-                        if (visit(fi, fj, step)) return;
-                    if (step == depth) return;
-                    var next = new List<(int, int)>();
-                    foreach (var (fi, fj) in frontier)
-                        for (int q = 0; q < 4; q++)
-                        {
-                            int ni = fi + dI[q], nj = fj + dJ[q];
-                            if (StoreyAt(ni, nj) != here || !seen.Add(LatticeKey(ni, nj))) continue;
-                            next.Add((ni, nj));
-                        }
-                    if (next.Count == 0) return;
-                    frontier = next;
+                    if (i < i0 || j < j0 || i > i1 || j > j1 || !has[(j - j0) * w + (i - i0)])
+                        throw new InvalidOperationException($"corridor point ({i}, {j}) missing");
+                    return (j - j0) * w + (i - i0);
                 }
-            }
-            var initLevel = new Dictionary<long, int>();
-            int Init(int i, int j)
-            {
-                long key = LatticeKey(i, j);
-                if (initLevel.TryGetValue(key, out int cached)) return cached;
-                int here = StoreyAt(i, j);
-                double residual = h[Index(i, j)] - (double)here * storeyHeight;
-                int detail = (int)ClampI(RoundWith(residual / levelHeight, aggregation), 0, levels - 1);
-                int distance = noCliff;
-                Walk(i, j, cliffMax - 1, (wi, wj, steps) =>
+                // Clamped storeys: the separable L1 distance transform of the
+                // targets (absent points never win), read on s only.
+                const int Absent = 1 << 28;
+                var clamp = new int[w * rows];
+                for (int a = 0; a < clamp.Length; a++) clamp[a] = has[a] ? target[a] : Absent;
+                for (int j = 0; j < rows; j++)
                 {
-                    if (!Boundary(wi, wj)) return false;
-                    distance = steps + 1;
-                    return true;
-                });
-                int cap = distance - 1;
-                if (StoreyAt(i - 1, j - 1) != here || StoreyAt(i + 1, j - 1) != here
-                        || StoreyAt(i - 1, j + 1) != here || StoreyAt(i + 1, j + 1) != here)
-                    cap = 0;
-                int level = (int)ClampI(Math.Min(detail, cap), 0, levels - 1);
-                initLevel[key] = level;
-                return level;
-            }
-            int count = n.Length / 2;
-            var heightsOut = new float[count];
-            var storeysOut = new int[count];
-            for (int k = 0; k < count; k++)
-            {
-                int pi = n[2 * k], pj = n[2 * k + 1];
-                int level = int.MaxValue;
-                Walk(pi, pj, levels - 1, (wi, wj, steps) =>
+                    int row = j * w;
+                    for (int i = 1; i < w; i++) clamp[row + i] = Math.Min(clamp[row + i], clamp[row + i - 1] + maxStep);
+                    for (int i = w - 2; i >= 0; i--) clamp[row + i] = Math.Min(clamp[row + i], clamp[row + i + 1] + maxStep);
+                }
+                for (int j = 1; j < rows; j++)
+                    for (int i = 0; i < w; i++) clamp[j * w + i] = Math.Min(clamp[j * w + i], clamp[(j - 1) * w + i] + maxStep);
+                for (int j = rows - 2; j >= 0; j--)
+                    for (int i = 0; i < w; i++) clamp[j * w + i] = Math.Min(clamp[j * w + i], clamp[(j + 1) * w + i] + maxStep);
+                var storey = new int[w * rows];
+                Array.Fill(storey, int.MinValue);   // int.MinValue: not in s
+                for (int k = 0; k < s.Length / 2; k++)
                 {
-                    level = Math.Min(level, Init(wi, wj) + steps);
+                    int a = Index(s[2 * k], s[2 * k + 1]);
+                    storey[a] = clamp[a];
+                }
+                int StoreyAt(int i, int j)
+                {
+                    int v = storey[Index(i, j)];
+                    if (v == int.MinValue) throw new InvalidOperationException($"corridor storey ({i}, {j}) missing");
+                    return v;
+                }
+                int[] dI = { 1, -1, 0, 0 }, dJ = { 0, 0, 1, -1 };
+                bool Boundary(int i, int j)
+                {
+                    int here = StoreyAt(i, j);
+                    for (int q = 0; q < 4; q++)
+                        if (StoreyAt(i + dI[q], j + dJ[q]) != here) return true;
                     return false;
-                });
-                int st = StoreyAt(pi, pj);
-                double surface = (double)st * storeyHeight;
-                if (renderLevels) surface += (double)level * levelHeight;
-                heightsOut[k] = (float)surface;
-                storeysOut[k] = st;
+                }
+                // Same-storey cardinal breadth-first walk from (i, j) to `depth`;
+                // visit(i, j, steps) returns true to stop.
+                void Walk(int si, int sj, int depth, Func<int, int, int, bool> visit)
+                {
+                    int here = StoreyAt(si, sj);
+                    var seen = new HashSet<long> { LatticeKey(si, sj) };
+                    var frontier = new List<(int, int)> { (si, sj) };
+                    for (int step = 0; ; step++)
+                    {
+                        foreach (var (fi, fj) in frontier)
+                            if (visit(fi, fj, step)) return;
+                        if (step == depth) return;
+                        var next = new List<(int, int)>();
+                        foreach (var (fi, fj) in frontier)
+                            for (int q = 0; q < 4; q++)
+                            {
+                                int ni = fi + dI[q], nj = fj + dJ[q];
+                                if (StoreyAt(ni, nj) != here || !seen.Add(LatticeKey(ni, nj))) continue;
+                                next.Add((ni, nj));
+                            }
+                        if (next.Count == 0) return;
+                        frontier = next;
+                    }
+                }
+                var initLevel = new Dictionary<long, int>();
+                int Init(int i, int j)
+                {
+                    long key = LatticeKey(i, j);
+                    if (initLevel.TryGetValue(key, out int cached)) return cached;
+                    int here = StoreyAt(i, j);
+                    double residual = h[Index(i, j)] - (double)here * storeyHeight;
+                    int detail = (int)ClampI(RoundWith(residual / levelHeight, aggregation), 0, levels - 1);
+                    int distance = noCliff;
+                    Walk(i, j, cliffMax - 1, (wi, wj, steps) =>
+                    {
+                        if (!Boundary(wi, wj)) return false;
+                        distance = steps + 1;
+                        return true;
+                    });
+                    int cap = distance - 1;
+                    if (StoreyAt(i - 1, j - 1) != here || StoreyAt(i + 1, j - 1) != here
+                            || StoreyAt(i - 1, j + 1) != here || StoreyAt(i + 1, j + 1) != here)
+                        cap = 0;
+                    int level = (int)ClampI(Math.Min(detail, cap), 0, levels - 1);
+                    initLevel[key] = level;
+                    return level;
+                }
+                int count = n.Length / 2;
+                var heightsOut = new float[count];
+                var storeysOut = new int[count];
+                for (int k = 0; k < count; k++)
+                {
+                    int pi = n[2 * k], pj = n[2 * k + 1];
+                    int level = int.MaxValue;
+                    Walk(pi, pj, levels - 1, (wi, wj, steps) =>
+                    {
+                        level = Math.Min(level, Init(wi, wj) + steps);
+                        return false;
+                    });
+                    int st = StoreyAt(pi, pj);
+                    double surface = (double)st * storeyHeight;
+                    if (renderLevels) surface += (double)level * levelHeight;
+                    heightsOut[k] = (float)surface;
+                    storeysOut[k] = st;
+                }
+                return new Godot.Collections.Array { heightsOut, storeysOut };
             }
-            return new Godot.Collections.Array { heightsOut, storeysOut };
+            catch (Exception e) { NativeFault.Record(e); return null!; }
         }
     }
 }

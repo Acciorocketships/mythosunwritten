@@ -15,6 +15,10 @@ namespace Story.Native
 {
     public partial class NativeCliffSolid : RefCounted
     {
+        /// NativeFault: arm a one-shot test failure; this thread's last failure.
+        public void ArmFault() => NativeFault.Arm("NativeCliffSolid");
+        public string TakeError() => NativeFault.Take();
+
         // CliffSlopeField / CliffSlopeEnvelope constants (the gate compares
         // this list with the GDScript's own).
         const double GRID = 0.5;            // CliffSlopeField.GRID = CliffSlopeEnvelope.H
@@ -139,9 +143,14 @@ namespace Story.Native
         public Godot.Collections.Array Columns(Vector2 origin, int w, int h, double[] surface, double[] ground,
             Rect2 owned, bool bedrock)
         {
-            var env = new Env { Origin = new V2(origin.X, origin.Y), W = w, H = h, Surface = surface, Ground = ground };
-            ColumnsCore(env, owned, bedrock, out int lox, out int loz, out int mw, out int mh, out byte[] mask, out int count);
-            return new Godot.Collections.Array { new Vector2I(lox, loz), new Vector2I(mw, mh), mask, count };
+            try
+            {
+                NativeFault.Check("NativeCliffSolid");
+                var env = new Env { Origin = new V2(origin.X, origin.Y), W = w, H = h, Surface = surface, Ground = ground };
+                ColumnsCore(env, owned, bedrock, out int lox, out int loz, out int mw, out int mh, out byte[] mask, out int count);
+                return new Godot.Collections.Array { new Vector2I(lox, loz), new Vector2I(mw, mh), mask, count };
+            }
+            catch (Exception e) { NativeFault.Record(e); return null!; }
         }
 
         static void ColumnsCore(Env env, Rect2 owned, bool bedrock, out int lox, out int loz, out int mw, out int mh,
@@ -263,18 +272,23 @@ namespace Story.Native
         public byte[] NeededQuads(Vector2 origin, int w, int h, double[] surface, double[] ground,
             Vector2I lo, Vector2I size, byte[] mask, Vector2I qlo, Vector2I qsize)
         {
-            var env = new Env { Origin = new V2(origin.X, origin.Y), W = w, H = h, Surface = surface, Ground = ground };
-            var output = new byte[qsize.X * qsize.Y];
-            for (int k = 0; k < size.Y; k++)
-                for (int i = 0; i < size.X; i++)
-                {
-                    if (mask[k * size.X + i] == 0) continue;
-                    V2 q = KeyPoint(lo.X + i, lo.Y + k);
-                    if (GdMath.Smoothstep(RAISED, EMERGE, env.At(q) - env.GroundNode(q)) >= 1.0) continue;
-                    long a = (long)Math.Floor((double)q.X / STEP) - qlo.X, b = (long)Math.Floor((double)q.Y / STEP) - qlo.Y;
-                    output[b * qsize.X + a] = 1;
-                }
-            return output;
+            try
+            {
+                NativeFault.Check("NativeCliffSolid");
+                var env = new Env { Origin = new V2(origin.X, origin.Y), W = w, H = h, Surface = surface, Ground = ground };
+                var output = new byte[qsize.X * qsize.Y];
+                for (int k = 0; k < size.Y; k++)
+                    for (int i = 0; i < size.X; i++)
+                    {
+                        if (mask[k * size.X + i] == 0) continue;
+                        V2 q = KeyPoint(lo.X + i, lo.Y + k);
+                        if (GdMath.Smoothstep(RAISED, EMERGE, env.At(q) - env.GroundNode(q)) >= 1.0) continue;
+                        long a = (long)Math.Floor((double)q.X / STEP) - qlo.X, b = (long)Math.Floor((double)q.Y / STEP) - qlo.Y;
+                        output[b * qsize.X + a] = 1;
+                    }
+                return output;
+            }
+            catch (Exception e) { NativeFault.Record(e); return null!; }
         }
 
         /// CliffSlopeField.solid's bedrock branch over the columns `mask`
@@ -286,29 +300,34 @@ namespace Story.Native
             byte[] excluded, double[] rock, double[] moss, Rect2 owned, Vector2I lo, Vector2I size, byte[] mask,
             bool hasRegion, Vector2I qlo, Vector2I qsize, double[] corners)
         {
-            var env = new Env
+            try
             {
-                Origin = new V2(origin.X, origin.Y), W = w, H = h, Surface = surface, Ground = ground,
-                Excluded = excluded, Rock = rock, Moss = moss,
-            };
-            var mesh = new Mesh { Present = hasRegion, Qx0 = qlo.X, Qz0 = qlo.Y, Nqx = qsize.X, Nqz = qsize.Y, Corners = corners };
-            var faces = Mesh_(env, mesh, owned, lo.X, lo.Y, size.X, size.Y, mask);
-            faces = DropFragments(faces);
-            var result = new Godot.Collections.Array();
-            var gfaces = new Vector3[faces.Count];
-            for (int n = 0; n < faces.Count; n++) gfaces[n] = faces[n].G;
-            result.Add(gfaces);
-            if (faces.Count == 0)
-            {
-                result.Add(Array.Empty<Vector3>()); result.Add(Array.Empty<Vector3>());
-                result.Add(Array.Empty<double>()); result.Add(Array.Empty<double>());
-                result.Add(Vector3.Zero); result.Add(Vector3.Zero);
+                NativeFault.Check("NativeCliffSolid");
+                var env = new Env
+                {
+                    Origin = new V2(origin.X, origin.Y), W = w, H = h, Surface = surface, Ground = ground,
+                    Excluded = excluded, Rock = rock, Moss = moss,
+                };
+                var mesh = new Mesh { Present = hasRegion, Qx0 = qlo.X, Qz0 = qlo.Y, Nqx = qsize.X, Nqz = qsize.Y, Corners = corners };
+                var faces = Mesh_(env, mesh, owned, lo.X, lo.Y, size.X, size.Y, mask);
+                faces = DropFragments(faces);
+                var result = new Godot.Collections.Array();
+                var gfaces = new Vector3[faces.Count];
+                for (int n = 0; n < faces.Count; n++) gfaces[n] = faces[n].G;
+                result.Add(gfaces);
+                if (faces.Count == 0)
+                {
+                    result.Add(Array.Empty<Vector3>()); result.Add(Array.Empty<Vector3>());
+                    result.Add(Array.Empty<double>()); result.Add(Array.Empty<double>());
+                    result.Add(Vector3.Zero); result.Add(Vector3.Zero);
+                    return result;
+                }
+                Roots(env, faces, out var points, out var normals, out var exposure, out var grade, out V3 bpos, out V3 bsize);
+                result.Add(points); result.Add(normals); result.Add(exposure); result.Add(grade);
+                result.Add(bpos.G); result.Add(bsize.G);
                 return result;
             }
-            Roots(env, faces, out var points, out var normals, out var exposure, out var grade, out V3 bpos, out V3 bsize);
-            result.Add(points); result.Add(normals); result.Add(exposure); result.Add(grade);
-            result.Add(bpos.G); result.Add(bsize.G);
-            return result;
+            catch (Exception e) { NativeFault.Record(e); return null!; }
         }
 
         static readonly int[,] EDGES = { { 0, 1 }, { 2, 3 }, { 4, 5 }, { 6, 7 }, { 0, 2 }, { 1, 3 }, { 4, 6 }, { 5, 7 }, { 0, 4 }, { 1, 5 }, { 2, 6 }, { 3, 7 } };

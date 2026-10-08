@@ -11,6 +11,10 @@ namespace Story.Native
 {
     public partial class NativeTerrainHeight : RefCounted
     {
+        /// NativeFault: arm a one-shot test failure; this thread's last failure.
+        public void ArmFault() => NativeFault.Arm("NativeTerrainHeight");
+        public string TakeError() => NativeFault.Take();
+
         static volatile TerrainTables? _tables;
         static readonly ConcurrentDictionary<long, SeedField> _fields = new();
 
@@ -58,14 +62,22 @@ namespace Story.Native
         }
 
         public double HeightM(Vector2 p, long seed, bool includeDetail)
-            => Field(seed).HeightM(new V2(p.X, p.Y), includeDetail);
+        {
+            try { NativeFault.Check("NativeTerrainHeight"); return Field(seed).HeightM(new V2(p.X, p.Y), includeDetail); }
+            catch (Exception e) { NativeFault.Record(e); return double.NaN; }
+        }
 
         public double[] HeightBatch(Vector2[] points, long seed, bool includeDetail)
         {
-            SeedField f = Field(seed);
-            var outH = new double[points.Length];
-            for (int i = 0; i < points.Length; i++) outH[i] = f.HeightM(new V2(points[i].X, points[i].Y), includeDetail);
-            return outH;
+            try
+            {
+                NativeFault.Check("NativeTerrainHeight");
+                SeedField f = Field(seed);
+                var outH = new double[points.Length];
+                for (int i = 0; i < points.Length; i++) outH[i] = f.HeightM(new V2(points[i].X, points[i].Y), includeDetail);
+                return outH;
+            }
+            catch (Exception e) { NativeFault.Record(e); return null!; }
         }
     }
 }

@@ -58,3 +58,43 @@ func test_native_carve_prefetch_matches_serial_samples_or_stays_off() -> void:
 	assert_eq(checked, 3000)
 	assert_gt(carved, 100, "the probe set crosses water")
 	gut.p("checked %d points, %d carved, %d native regions" % [checked, carved, native_regions])
+
+
+## A C# carve call that throws (region build or SampleBatch) turns the seed off;
+## the prefetch then samples that window in GDScript (the serial samples).
+func test_a_throwing_call_falls_back_to_gdscript_and_disables() -> void:
+	var water := TerrainWorldTuning.make_water(SEED)
+	if not N.ready_for(SEED):
+		pass_test("native carve unavailable")
+		return
+	var serial := TerrainWorldTuning.make_heightfield(SEED, water)
+	var batched := TerrainWorldTuning.make_heightfield(SEED, water)
+	var corner := Vector2i(1, -5) * 64
+	batched.compute_rect_region(Rect2i(corner, Vector2i(WINDOW, WINDOW)))   # warms the carve regions
+	var shifted := corner + Vector2i(0, WINDOW + 8)
+	var filled_before := N.samples_filled
+	N.arm_fault()
+	batched.compute_rect_region(Rect2i(shifted, Vector2i(WINDOW, WINDOW)))
+	assert_false(N.ready_for(SEED), "the seed turned off")
+	assert_eq(N.samples_filled, filled_before, "nothing was filled natively after the fault")
+	var same := true
+	for z in WINDOW:
+		for x in WINDOW:
+			var q := shifted + Vector2i(x, z)
+			batched._samples_lock.lock()
+			var b = batched._samples.get(q)
+			batched._samples_lock.unlock()
+			same = same and b != null and b == serial._sample(q.x, q.y)
+	assert_true(same, "every sample equals the serial GDScript sample")
+	N.failed = {}
+	_expect_fault_warning()
+
+
+## The fault's warning is the expected outcome, not a test failure.
+func _expect_fault_warning() -> void:
+	var warned := 0
+	for e in get_errors():
+		if e.contains_text("forced test fault"):
+			e.handled = true
+			warned += 1
+	assert_gt(warned, 0, "a warning names the C# failure")

@@ -23,6 +23,10 @@ namespace Story.Native
 {
     public partial class NativeCarve : RefCounted
     {
+        /// NativeFault: arm a one-shot test failure; this thread's last failure.
+        public void ArmFault() => NativeFault.Arm("NativeCarve");
+        public string TakeError() => NativeFault.Take();
+
         sealed class Consts
         {
             public double TILE, SUPER, SPAWN_WATER_RADIUS, BANK_FEATHER, CARVE_FEATHER, CARVE_BED_EXTRA,
@@ -88,6 +92,7 @@ namespace Story.Native
         {
             try
             {
+                NativeFault.Check("NativeCarve");
                 Consts c = _consts ?? throw new InvalidOperationException("NativeCarve: Configure first");
                 GdPond[] ponds = GdPond.ReadAll(flat["pond_vec"].AsVector2Array(),
                     flat["pond_num"].AsFloat64Array(), flat["pond_int"].AsInt64Array(), c.WOBBLE);
@@ -156,16 +161,21 @@ namespace Story.Native
         /// (WaterPlan.noise_h of the point), spawn disk included.
         public double[] CarveBatch(double[] xs, double[] zs, double[] grounds)
         {
-            Consts c = _consts ?? throw new InvalidOperationException("NativeCarve: Configure first");
-            Region r = _region ?? throw new InvalidOperationException("NativeCarve: not a built region");
-            var outC = new double[xs.Length];
-            for (int k = 0; k < xs.Length; k++)
+            try
             {
-                V2 p = V2.D(xs[k], zs[k]);
-                if (p.Length() < c.SPAWN_WATER_RADIUS) continue;
-                outC[k] = Carve(c, r, p, Floori(xs[k] / c.TILE + 0.5), Floori(zs[k] / c.TILE + 0.5), grounds[k]);
+                NativeFault.Check("NativeCarve");
+                Consts c = _consts ?? throw new InvalidOperationException("NativeCarve: Configure first");
+                Region r = _region ?? throw new InvalidOperationException("NativeCarve: not a built region");
+                var outC = new double[xs.Length];
+                for (int k = 0; k < xs.Length; k++)
+                {
+                    V2 p = V2.D(xs[k], zs[k]);
+                    if (p.Length() < c.SPAWN_WATER_RADIUS) continue;
+                    outC[k] = Carve(c, r, p, Floori(xs[k] / c.TILE + 0.5), Floori(zs[k] / c.TILE + 0.5), grounds[k]);
+                }
+                return outC;
             }
-            return outC;
+            catch (Exception e) { NativeFault.Record(e); return null!; }
         }
 
         /// HeightfieldPlan._sample for the lattice points lo + (index % width,
@@ -176,45 +186,50 @@ namespace Story.Native
             Godot.Collections.Array regions, int[] keys, double point, double heightAmp, double waterAmp,
             double spawnLevel, double refAmplitude)
         {
-            Consts c = _consts ?? throw new InvalidOperationException("NativeCarve: Configure first");
-            var byCell = new Dictionary<(long, long), Region>();
-            for (int k = 0; k < regions.Count; k++)
+            try
             {
-                var obj = regions[k].AsGodotObject() as NativeCarve;
-                Region r = obj?._region ?? throw new ArgumentException("region " + k + " is not built");
-                byCell[(keys[2 * k], keys[2 * k + 1])] = r;
-            }
-            SeedField f = NativeTerrainHeight.FieldFor(seed);
-            long cellsPerSuper = (long)(c.SUPER / c.TILE);
-            var outS = new double[indices.Length * 3];
-            for (int k = 0; k < indices.Length; k++)
-            {
-                int idx = indices[k];
-                double x = (double)(loX + idx % width) * point;
-                double z = (double)(loZ + idx / width) * point;
-                V2 p = V2.D(x, z);
-                // HeightfieldPlan.height01 round the native field (LOWPASS_M == 0).
-                double h = f.HeightM(p, true);
-                double falloff = Smootherstep(Clamp(((double)p.Length() - 60.0) / 180.0, 0.0, 1.0));
-                if (falloff < 1.0) h = Lerp(spawnLevel, h, falloff);
-                double n01 = Clamp(h / refAmplitude, 0.0, 1.0);
-                double height = n01 * heightAmp;
-                double carve = 0.0;
-                if (!(p.Length() < c.SPAWN_WATER_RADIUS))
+                NativeFault.Check("NativeCarve");
+                Consts c = _consts ?? throw new InvalidOperationException("NativeCarve: Configure first");
+                var byCell = new Dictionary<(long, long), Region>();
+                for (int k = 0; k < regions.Count; k++)
                 {
-                    long cx = Floori(x / c.TILE + 0.5);
-                    long cz = Floori(z / c.TILE + 0.5);
-                    long rcx = Floori((double)cx / (double)cellsPerSuper);
-                    long rcz = Floori((double)cz / (double)cellsPerSuper);
-                    if (!byCell.TryGetValue((rcx, rcz), out Region? r))
-                        throw new ArgumentException($"no carve region ({rcx}, {rcz})");
-                    carve = Carve(c, r, p, cx, cz, n01 * waterAmp);
+                    var obj = regions[k].AsGodotObject() as NativeCarve;
+                    Region r = obj?._region ?? throw new ArgumentException("region " + k + " is not built");
+                    byCell[(keys[2 * k], keys[2 * k + 1])] = r;
                 }
-                outS[3 * k] = height - carve;
-                outS[3 * k + 1] = carve;
-                outS[3 * k + 2] = height;
+                SeedField f = NativeTerrainHeight.FieldFor(seed);
+                long cellsPerSuper = (long)(c.SUPER / c.TILE);
+                var outS = new double[indices.Length * 3];
+                for (int k = 0; k < indices.Length; k++)
+                {
+                    int idx = indices[k];
+                    double x = (double)(loX + idx % width) * point;
+                    double z = (double)(loZ + idx / width) * point;
+                    V2 p = V2.D(x, z);
+                    // HeightfieldPlan.height01 round the native field (LOWPASS_M == 0).
+                    double h = f.HeightM(p, true);
+                    double falloff = Smootherstep(Clamp(((double)p.Length() - 60.0) / 180.0, 0.0, 1.0));
+                    if (falloff < 1.0) h = Lerp(spawnLevel, h, falloff);
+                    double n01 = Clamp(h / refAmplitude, 0.0, 1.0);
+                    double height = n01 * heightAmp;
+                    double carve = 0.0;
+                    if (!(p.Length() < c.SPAWN_WATER_RADIUS))
+                    {
+                        long cx = Floori(x / c.TILE + 0.5);
+                        long cz = Floori(z / c.TILE + 0.5);
+                        long rcx = Floori((double)cx / (double)cellsPerSuper);
+                        long rcz = Floori((double)cz / (double)cellsPerSuper);
+                        if (!byCell.TryGetValue((rcx, rcz), out Region? r))
+                            throw new ArgumentException($"no carve region ({rcx}, {rcz})");
+                        carve = Carve(c, r, p, cx, cz, n01 * waterAmp);
+                    }
+                    outS[3 * k] = height - carve;
+                    outS[3 * k + 1] = carve;
+                    outS[3 * k + 2] = height;
+                }
+                return outS;
             }
-            return outS;
+            catch (Exception e) { NativeFault.Record(e); return null!; }
         }
 
         // ------------------------------------------------------------ the port

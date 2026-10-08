@@ -2,6 +2,7 @@
 // over a dense window of corner heights. Same double arithmetic in the same
 // order; heights are float32 as tile_params stores them. NativeTileKernel.gd
 // checks bit-identity before switching over. Stateless and thread-safe.
+using System;
 using Godot;
 using static Story.Native.GdMath;
 
@@ -9,38 +10,57 @@ namespace Story.Native
 {
     public partial class NativeTileKernel : RefCounted
     {
+        /// NativeFault: arm a one-shot test failure; this thread's last failure.
+        public void ArmFault() => NativeFault.Arm("NativeTileKernel");
+        public string TakeError() => NativeFault.Take();
+
         const double CLIFF_END_CLEAR = 0.2;   // TerrainTileField.CLIFF_END_CLEAR
         const int E1 = 0, E3 = 2;             // TerrainTileField.CliffEnd
 
         public double[] SampleOwned(float[] heights, int[] storeys, int w, int h, int i0, int j0,
             double spacing, double[] xs, double[] zs, int[] ownerI, int[] ownerJ, int cliffEnd)
         {
-            var output = new double[xs.Length];
-            for (int k = 0; k < xs.Length; k++)
-                output[k] = Sample(heights, storeys, w, i0, j0, spacing, xs[k], zs[k], ownerI[k], ownerJ[k], cliffEnd);
-            return output;
+            try
+            {
+                NativeFault.Check("NativeTileKernel");
+                var output = new double[xs.Length];
+                for (int k = 0; k < xs.Length; k++)
+                    output[k] = Sample(heights, storeys, w, i0, j0, spacing, xs[k], zs[k], ownerI[k], ownerJ[k], cliffEnd);
+                return output;
+            }
+            catch (Exception e) { NativeFault.Record(e); return null!; }
         }
 
         // Every (xs[i], zs[k]), row-major with z outer; owners per column / per row.
         public double[] SampleGrid(float[] heights, int[] storeys, int w, int h, int i0, int j0,
             double spacing, double[] xs, double[] zs, int[] ownerXs, int[] ownerZs, int cliffEnd)
         {
-            var output = new double[xs.Length * zs.Length];
-            for (int k = 0; k < zs.Length; k++)
-                for (int i = 0; i < xs.Length; i++)
-                    output[k * xs.Length + i] = Sample(heights, storeys, w, i0, j0, spacing, xs[i], zs[k], ownerXs[i], ownerZs[k], cliffEnd);
-            return output;
+            try
+            {
+                NativeFault.Check("NativeTileKernel");
+                var output = new double[xs.Length * zs.Length];
+                for (int k = 0; k < zs.Length; k++)
+                    for (int i = 0; i < xs.Length; i++)
+                        output[k * xs.Length + i] = Sample(heights, storeys, w, i0, j0, spacing, xs[i], zs[k], ownerXs[i], ownerZs[k], cliffEnd);
+                return output;
+            }
+            catch (Exception e) { NativeFault.Record(e); return null!; }
         }
 
         // SampleGrid rounded to float32 as a PackedFloat32Array store rounds a double.
         public float[] SampleGrid32(float[] heights, int[] storeys, int w, int h, int i0, int j0,
             double spacing, double[] xs, double[] zs, int[] ownerXs, int[] ownerZs, int cliffEnd)
         {
-            var output = new float[xs.Length * zs.Length];
-            for (int k = 0; k < zs.Length; k++)
-                for (int i = 0; i < xs.Length; i++)
-                    output[k * xs.Length + i] = (float)Sample(heights, storeys, w, i0, j0, spacing, xs[i], zs[k], ownerXs[i], ownerZs[k], cliffEnd);
-            return output;
+            try
+            {
+                NativeFault.Check("NativeTileKernel");
+                var output = new float[xs.Length * zs.Length];
+                for (int k = 0; k < zs.Length; k++)
+                    for (int i = 0; i < xs.Length; i++)
+                        output[k * xs.Length + i] = (float)Sample(heights, storeys, w, i0, j0, spacing, xs[i], zs[k], ownerXs[i], ownerZs[k], cliffEnd);
+                return output;
+            }
+            catch (Exception e) { NativeFault.Record(e); return null!; }
         }
 
         internal static double Sample(float[] heights, int[] storeys, int w, int i0, int j0, double s,

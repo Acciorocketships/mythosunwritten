@@ -23,6 +23,7 @@ extends RefCounted
 
 const _CS_PATH := "res://scripts/native/NativeCarve.cs"
 const NATIVE_HEIGHT := preload("res://scripts/native/NativeHeightField.gd")
+const _GATES := preload("res://scripts/native/NativeGates.gd")
 const GATE_REGIONS := 3
 const GATE_POINTS := 2000
 const SPOT_REGIONS := 8
@@ -132,13 +133,30 @@ static func region_for(plan: WaterPlan, rc: Vector2i, region: Dictionary) -> Obj
 
 
 ## [h - carve, carve, h] for lattice points lo + (index % width, index / width),
-## flattened. Every owner super-cell's region must carry "native".
+## flattened. Every owner super-cell's region must carry "native". Empty when
+## the C# call threw: the seed is then off and the caller samples in GDScript.
 static func sample_batch(plan: HeightfieldPlan, lo: Vector2i, width: int, indices: PackedInt32Array,
 		regions: Array, keys: PackedInt32Array) -> PackedFloat64Array:
 	var water: WaterPlan = plan._water_plan
-	return _native.SampleBatch(plan.world_seed, lo.x, lo.y, width, indices, regions, keys,
+	var out = _native.SampleBatch(plan.world_seed, lo.x, lo.y, width, indices, regions, keys,
 		HeightfieldPlan.POINT, plan.height_amplitude, water.amplitude,
 		TerrainField.spawn_level_m(plan.world_seed), TerrainField.REF_AMPLITUDE)
+	var err := _GATES.faulted(_native, out)
+	if err.is_empty():
+		return out
+	_mutex.lock()
+	var next := failed.duplicate()
+	next[plan.world_seed] = true
+	failed = next
+	_mutex.unlock()
+	push_warning("NativeCarve disabled for seed %d: the C# call failed (%s). Using the GDScript carve." % [plan.world_seed, err])
+	return PackedFloat64Array()
+
+
+## Test hook: the next C# call (any port) throws once.
+static func arm_fault() -> void:
+	if _native != null:
+		_native.ArmFault()
 
 
 static func _load_native() -> bool:
@@ -278,6 +296,8 @@ static func _parity(plan: WaterPlan, rc: Vector2i, region: Dictionary, obj: Obje
 	for k in xs.size():
 		grounds.append(HeightfieldPlan.natural01(Vector3(xs[k], 0.0, zs[k]), plan.world_seed) * plan.amplitude)
 	var cs: PackedFloat64Array = obj.CarveBatch(xs, zs, grounds)
+	if cs.size() != xs.size():
+		return "C# CarveBatch failed (%s)" % _GATES.faulted(obj, cs)
 	for k in xs.size():
 		var gd := plan._carve_region(region, xs[k], zs[k], grounds[k])
 		if cs[k] != gd:

@@ -19,6 +19,7 @@ extends RefCounted
 
 const _CS_PATH := "res://scripts/native/NativeCliffEnvelope.cs"
 const _ENVELOPE := preload("res://scripts/terrain/field/CliffSlopeEnvelope.gd")
+const _GATES := preload("res://scripts/native/NativeGates.gd")
 
 ## Tests: force the GDScript reference.
 static var force_off := false
@@ -26,6 +27,8 @@ static var enabled := false
 static var _native: Object = null
 static var _load_attempted := false
 static var _gated := false
+## A C# call threw: off for good (NativeGates.faulted).
+static var _faulted := false
 static var _mutex := Mutex.new()
 
 
@@ -53,17 +56,40 @@ static func setup() -> void:
 
 
 ## The native build over env's presampled inputs; assigns env's surface,
-## rock and moss_grade exactly as the GDScript build does. With `stages`,
-## CliffSlopeEnvelope.stages receives the C# stage arrays.
+## rock and moss_grade exactly as the GDScript build does. `capture` (a
+## Dictionary or null) receives the C# stage arrays. False (env untouched,
+## the port off) when the C# call failed: the caller builds in GDScript.
 static func build_rest(env, wet_level: PackedFloat64Array, lines: Array, seed_value: int,
-		bedrock: bool, stages: bool) -> void:
-	var result: Array = _native.Build(env.origin, env.w, env.h, env.ground, env.excluded, wet_level,
-		lines[0], lines[1], lines[2], lines[3], lines[4], lines[5], seed_value, bedrock, stages)
+		bedrock: bool, capture) -> bool:
+	var result = _native.Build(env.origin, env.w, env.h, env.ground, env.excluded, wet_level,
+		lines[0], lines[1], lines[2], lines[3], lines[4], lines[5], seed_value, bedrock, capture != null)
+	if _fault(result):
+		return false
 	env.surface = result[0]
 	env.rock = result[1]
 	env.moss_grade = result[2]
-	if stages:
-		_ENVELOPE.stages = result[3]
+	if capture != null:
+		capture.clear()
+		capture.merge(result[3])
+	return true
+
+
+## True (and the port off for good) when the C# call behind `result` threw.
+static func _fault(result) -> bool:
+	var err := _GATES.faulted(_native, result)
+	if err.is_empty():
+		return false
+	_faulted = true
+	enabled = false
+	push_warning("NativeCliffEnvelope disabled: the C# call failed (%s); the cliff sheet uses GDScript." % err)
+	return true
+
+
+## Test hook: the next C# call (any port) throws once.
+static func arm_fault() -> void:
+	setup()
+	if _native != null:
+		_native.ArmFault()
 
 
 ## Under _mutex. _gated is set before the parity runs.
@@ -75,9 +101,9 @@ static func _gate() -> void:
 	if _native == null:
 		return
 	var mismatch := _parity()
-	if mismatch.is_empty():
+	if mismatch.is_empty() and not _faulted:
 		enabled = true
-	else:
+	elif not mismatch.is_empty():
 		push_warning("NativeCliffEnvelope disabled: %s. Re-sync scripts/native/NativeCliffEnvelope.cs " % mismatch
 			+ "with scripts/terrain/field/CliffSlopeEnvelope.gd (build after its inputs: _walls, "
 			+ "_close_walls, _channel_scale, _lips, _ridges, _bedrock, _bench, _bench_profile, "
@@ -169,13 +195,11 @@ static func compare(c: Dictionary, with_stages := false) -> String:
 	var arrays: Array = []
 	var stage_sets: Array = []
 	for mode in [1, 2]:
-		_ENVELOPE.capture_stages = with_stages
-		_ENVELOPE.stages = {}
-		var env = _ENVELOPE._build(c.rect, c.ground, c.excluded, c.seed, c.water, grid, points, c.bedrock, mode)
-		_ENVELOPE.capture_stages = false
+		# Stages per call, never shared statics: the gate runs on a pool thread.
+		var capture = {} if with_stages else null
+		var env = _ENVELOPE._build(c.rect, c.ground, c.excluded, c.seed, c.water, grid, points, c.bedrock, mode, capture)
 		arrays.append([env.surface, env.rock, env.moss_grade, env.excluded, env.ground])
-		stage_sets.append(_ENVELOPE.stages)
-	_ENVELOPE.stages = {}
+		stage_sets.append(capture)
 	if with_stages:
 		var gd: Dictionary = stage_sets[0]
 		var cs: Dictionary = stage_sets[1]

@@ -10,6 +10,10 @@ namespace Story.Native
 {
     public partial class NativeGridKernels : RefCounted
     {
+        /// NativeFault: arm a one-shot test failure; this thread's last failure.
+        public void ArmFault() => NativeFault.Arm("NativeGridKernels");
+        public string TakeError() => NativeFault.Take();
+
         // _envelope1(f, n, a, out, v, z): min over p of f[p] + a*(q-p)^2.
         static void Envelope1(double[] f, int n, double a, double[] output, int[] v, double[] z)
         {
@@ -49,7 +53,10 @@ namespace Story.Native
 
         // _envelope_axis(f, w, h, a, columns, only)
         public double[] EnvelopeAxis(double[] f, int w, int h, double a, bool columns, byte[] only)
-            => EnvelopeAxisS(f, w, h, a, columns, only);
+        {
+            try { NativeFault.Check("NativeGridKernels"); return EnvelopeAxisS(f, w, h, a, columns, only); }
+            catch (Exception e) { NativeFault.Record(e); return null!; }
+        }
 
         internal static double[] EnvelopeAxisS(double[] f, int w, int h, double a, bool columns, byte[] only)
         {
@@ -109,27 +116,36 @@ namespace Story.Native
         // _window(g, w, h, reach, highest) with r = ceili(reach / H).
         public double[] Window(double[] g, int w, int h, int r, bool highest)
         {
-            var rows = (double[])g.Clone();
-            var line = new double[w];
-            for (int k = 0; k < h; k++)
+            try
             {
-                Array.Copy(g, k * w, line, 0, w);
-                var slid = Slide(line, r, highest);
-                Array.Copy(slid, 0, rows, k * w, w);
+                NativeFault.Check("NativeGridKernels");
+                var rows = (double[])g.Clone();
+                var line = new double[w];
+                for (int k = 0; k < h; k++)
+                {
+                    Array.Copy(g, k * w, line, 0, w);
+                    var slid = Slide(line, r, highest);
+                    Array.Copy(slid, 0, rows, k * w, w);
+                }
+                var output = (double[])rows.Clone();
+                var column = new double[h];
+                for (int i = 0; i < w; i++)
+                {
+                    for (int k = 0; k < h; k++) column[k] = rows[k * w + i];
+                    var slid = Slide(column, r, highest);
+                    for (int k = 0; k < h; k++) output[k * w + i] = slid[k];
+                }
+                return output;
             }
-            var output = (double[])rows.Clone();
-            var column = new double[h];
-            for (int i = 0; i < w; i++)
-            {
-                for (int k = 0; k < h; k++) column[k] = rows[k * w + i];
-                var slid = Slide(column, r, highest);
-                for (int k = 0; k < h; k++) output[k * w + i] = slid[k];
-            }
-            return output;
+            catch (Exception e) { NativeFault.Record(e); return null!; }
         }
 
         // _blur(f, w, h, r): box blur of radius r nodes, rows then columns.
-        public double[] Blur(double[] f, int w, int h, int r) => BlurS(f, w, h, r);
+        public double[] Blur(double[] f, int w, int h, int r)
+        {
+            try { NativeFault.Check("NativeGridKernels"); return BlurS(f, w, h, r); }
+            catch (Exception e) { NativeFault.Record(e); return null!; }
+        }
 
         internal static double[] BlurS(double[] f, int w, int h, int r)
         {

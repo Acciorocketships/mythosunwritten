@@ -131,9 +131,6 @@ const BEDROCK_RECESS:=.25
 ## Tests only: run every transform even where the result is known to be the
 ## ground (build's no-wall shortcut), to prove the shortcut exact.
 static var always_transform:=false
-## Tests only: record each stage's arrays in `stages` (single-threaded use).
-static var capture_stages:=false
-static var stages:Dictionary={}
 ## `ground_grid`, when given, returns ground_at over the whole grid at once
 ## (origin, w, h -> the w*h node values, row by row): the same values, without
 ## a call per node. `ground_points`, when given, returns ground_at over the
@@ -143,8 +140,10 @@ static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:
  return _build(rect,ground_at,excluded_at,seed_value,water_at,ground_grid,ground_points,STYLE.sheet_study=="bedrock",0)
 
 ## mode: 0 native when available (NativeCliffEnvelope.on()), 1 GDScript,
-## 2 native (the parity gate and tests).
-static func _build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:int,water_at:Callable,ground_grid:Callable,ground_points:Callable,bedrock:bool,mode:int)->RefCounted:
+## 2 native (the parity gate and tests; GDScript if the C# call fails).
+## `capture` (tests, the parity gate): a Dictionary that receives each
+## stage's arrays; per call, so gates on pool threads share no state.
+static func _build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:int,water_at:Callable,ground_grid:Callable,ground_points:Callable,bedrock:bool,mode:int,capture=null)->RefCounted:
  var env:=new()
  var grid:=rect.grow(PAD)
  env.origin=(grid.position/H).floor()*H
@@ -193,9 +192,9 @@ static func _build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value
  var any_wet:=not wet_level.is_empty()
  mark.call("exclusion")
  if mode==2 or (mode==0 and not always_transform and NativeCliffEnvelope.on()):
-  NativeCliffEnvelope.build_rest(env,wet_level,_wall_lines(env,ground_at,ground_points),seed_value,bedrock,capture_stages)
-  mark.call("native")
-  return env
+  if NativeCliffEnvelope.build_rest(env,wet_level,_wall_lines(env,ground_at,ground_points),seed_value,bedrock,capture):
+   mark.call("native")
+   return env
  var g:=env.ground
  var sh:=SHOULDER
  var foot:=FOOT
@@ -203,10 +202,10 @@ static func _build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value
  var tight_foot:=TIGHT.y
  var walls:=_walls(env,g,ground_at,wet_level)
  mark.call("walls")
- if capture_stages:
-  stages={}
+ if capture!=null:
+  capture.clear()
   for a in 2:
-   stages["crest%d"%a]=walls[a][0];stages["drop%d"%a]=walls[a][1];stages["lead%d"%a]=walls[a][4]
+   capture["crest%d"%a]=walls[a][0];capture["drop%d"%a]=walls[a][1];capture["lead%d"%a]=walls[a][4]
  # Ground with no wall crest anywhere in the grid: every closing below
  # returns the ground itself (an erosion never rises over its input, and each
  # blend of equal surfaces is that surface), the fillet's gate is closed, no
@@ -234,8 +233,8 @@ static func _build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value
  var tight:=_close_walls(g,walls,env.w,env.h,tight_sh,tight_foot,channel,along_tight,ground_rows)
  var tight_wide:=_close_walls(g,walls,env.w,env.h,6.4,tight_foot,channel,along_tight_wide,ground_rows)
  mark.call("close all four")
- if capture_stages:
-  stages.merge({"narrow":narrow,"wide":wide,"tight":tight,"tight_wide":tight_wide,"along_narrow":along_narrow,"channel":channel})
+ if capture!=null:
+  capture.merge({"narrow":narrow,"wide":wide,"tight":tight,"tight_wide":tight_wide,"along_narrow":along_narrow,"channel":channel})
  # Local relief: highest reach minus lowest reach nearby; continuous even
  # across the terrain's own cliffs, so the blend never opens a step.
  var floor_level:=_erode(g,env.w,env.h,SHOULDER.y+FOOT)
@@ -258,7 +257,7 @@ static func _build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value
  mark.call("transforms")
  var t:=_ridges(env,narrow,wide,wide_dilated,seed_value)
  mark.call("ridges")
- if capture_stages:stages.merge({"relief":relief,"drop":drop,"ridges":t})
+ if capture!=null:capture.merge({"relief":relief,"drop":drop,"ridges":t})
  env.surface.resize(n)
  var along:=PackedFloat64Array();along.resize(n)
  for idx in n:
@@ -280,18 +279,18 @@ static func _build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value
  # opposing banks dammed the channel they were fitted to leave open.
  # The fillet never stands over the lip across a wall line (see _lips).
  mark.call("blend")
- if capture_stages:stages["blend"]=env.surface.duplicate()
+ if capture!=null:capture["blend"]=env.surface.duplicate()
  var filleted:=_erode(_dilate(env.surface,env.w,env.h,FOOT),env.w,env.h,FOOT)
  var lips:=_lips(walls,g,env.w,n)
  mark.call("fillet transform")
- if capture_stages:stages["lips"]=lips
+ if capture!=null:capture["lips"]=lips
  for idx in n:
   var fill:=filleted[idx]
   if lips[idx]>-INF:fill=minf(fill,maxf(lips[idx],env.surface[idx]))
   if channel[idx] and _deep(wet_level,env.ground,idx):fill=minf(fill,wet_level[idx]-.3)
   env.surface[idx]=lerpf(env.surface[idx],maxf(env.surface[idx],fill),smoothstep(0.0,.5,maxf(env.surface[idx]-g[idx],along[idx])))
  var uncut:=env.surface.duplicate()
- if capture_stages:stages["fillet"]=uncut
+ if capture!=null:capture["fillet"]=uncut
  # Only a road's cut face is bare rock: the underwater bank keeps its moss.
  var shaped:=env.surface.duplicate()
  # Keep-out caps: a steep cut rising from roads and graded ground.
@@ -314,7 +313,7 @@ static func _build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value
   if rock_lips[idx]>-INF:rock_caps[idx]=minf(rock_caps[idx],maxf(rock_lips[idx],uncut[idx])+7.5*smoothstep(0.0,1.0,uncut[idx]-rock_lips[idx]))
  for idx in n:env.surface[idx]=minf(env.surface[idx],maxf(env.ground[idx],caps[idx]))
  mark.call("fillet and caps")
- if capture_stages:stages.merge({"caps":env.surface.duplicate(),"rock_caps":rock_caps.duplicate()})
+ if capture!=null:capture.merge({"caps":env.surface.duplicate(),"rock_caps":rock_caps.duplicate()})
  if bedrock:
   # A dry rock face can stand proud; a submerged point must stay submerged.
   # Fade its available relief in above the actual bank/water contact.
@@ -337,7 +336,7 @@ static func _build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value
     if _deep(wet_level,env.ground,idx):cliff[idx]*=1.0-smoothstep(-.5,0.0,wet_level[idx]-env.surface[idx])
   # Only a keep-out cap cuts the slope back.
   _bedrock(env,floor_level,wide_dilated,cliff,seed_value,cut,any_excluded)
-  if capture_stages:stages.merge({"cliff":cliff,"bedrock":env.surface.duplicate()})
+  if capture!=null:capture.merge({"cliff":cliff,"bedrock":env.surface.duplicate()})
   for idx in n:env.surface[idx]=minf(env.surface[idx],maxf(env.ground[idx],rock_caps[idx]))
  mark.call("done")
  return env

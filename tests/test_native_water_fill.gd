@@ -221,3 +221,46 @@ func test_seeded_heap_relaxes_like_the_gdscript_queue() -> void:
 	assert_eq(actual_rivers, expected_rivers, "river levels")
 	assert_eq(actual, expected, "relaxed levels")
 	assert_gt(heap.index.size(), 0)
+
+
+## A C# kernel that throws turns the port off for good and its caller runs
+## the GDScript kernel: the same levels, no script error.
+func test_a_throwing_call_falls_back_to_gdscript_and_disables() -> void:
+	F.setup()
+	if not F.enabled:
+		pass_test("native fill unavailable")
+		return
+	var side := 9
+	var ground := PackedFloat32Array(); ground.resize(side * side)
+	for j in side:
+		for i in side:
+			ground[j * side + i] = floorf(absf(i - 4) + absf(j - 4) * 0.5)
+	var rivers := PackedFloat32Array(); rivers.resize(side * side); rivers.fill(-INF)
+	var run := func() -> PackedFloat32Array:
+		var levels := PackedFloat32Array(); levels.resize(side * side); levels.fill(-INF)
+		var queue := PQ.new()
+		queue.push([40, 2.5], 2.5)
+		queue.push([0, 3.0], 3.0)
+		WaterField._relax_fill(null, Vector2.ZERO, side, levels, ground, rivers, queue)
+		assert_true(queue.is_empty(), "the queue is consumed")
+		queue.free()
+		return levels
+	F.force_off = true
+	var expected: PackedFloat32Array = run.call()
+	F.force_off = false
+	F.arm_fault()
+	assert_eq(run.call(), expected, "the faulted relax returns the GDScript levels")
+	assert_false(F.on(), "the port turned itself off")
+	F._faulted = false
+	F.enabled = true
+	_expect_fault_warning()
+
+
+## The fault's warning is the expected outcome, not a test failure.
+func _expect_fault_warning() -> void:
+	var warned := 0
+	for e in get_errors():
+		if e.contains_text("forced test fault"):
+			e.handled = true
+			warned += 1
+	assert_gt(warned, 0, "a warning names the C# failure")

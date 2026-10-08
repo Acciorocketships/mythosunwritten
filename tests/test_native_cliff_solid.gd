@@ -122,3 +122,41 @@ func test_dispatch_and_grass_support_match() -> void:
 	assert_eq(results[0][0][0].faces, results[1][0][0].faces)
 	assert_eq(results[0][0][0].native_roots.keys(), results[1][0][0].native_roots.keys())
 	assert_eq(results[0][1], results[1][1], "grass support")
+
+
+## A C# call that throws turns the port off for good and solid() meshes in
+## GDScript: the same faces, no script error.
+func test_a_throwing_call_falls_back_to_gdscript_and_disables() -> void:
+	N.setup()
+	if not N.enabled:
+		pass_test("native solid unavailable")
+		return
+	var c: Dictionary = N.parity_cases()[1]
+	var region := N.region_of(c.storeys)
+	var owned: Rect2 = c.owned
+	var walls := TerrainTileField.wall_segments(region, owned.grow(24.0))
+	var faces := []
+	for native in [false, true]:
+		N.force_off = not native
+		var field = FIELD.new(walls, c.seed, region, owned)
+		field.envelope()   # the envelope's own C# calls are not the ones faulted
+		if native:
+			N.arm_fault()
+		var placements: Array = field.solid(owned)
+		faces.append(placements[0].faces)
+		N.force_off = false
+	assert_eq(faces[1], faces[0], "the faulted solid returns the GDScript faces")
+	assert_false(N.on(), "the port turned itself off")
+	N._faulted = false
+	N.enabled = true
+	_expect_fault_warning()
+
+
+## The fault's warning is the expected outcome, not a test failure.
+func _expect_fault_warning() -> void:
+	var warned := 0
+	for e in get_errors():
+		if e.contains_text("forced test fault"):
+			e.handled = true
+			warned += 1
+	assert_gt(warned, 0, "a warning names the C# failure")

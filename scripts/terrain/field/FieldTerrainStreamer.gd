@@ -170,6 +170,9 @@ func desired_chunks(centre: Vector2i, radius: int) -> Array:
 func _ready() -> void:
 	if terrain_parent == null:
 		return   # bare instance (unit test)
+	# Native parity gates (height field, river walk, tile kernel) run on the
+	# first worker that needs them, not here on the main thread (NativeGates).
+	preload("res://scripts/native/NativeGates.gd").deferred = true
 	# The loading overlay does not need hundreds of redraws per second while
 	# generation owns the CPU. Restore the caller's limit before gameplay.
 	if not Helper.is_headless() and (Engine.max_fps == 0 or Engine.max_fps > 30):
@@ -295,6 +298,7 @@ func _ready() -> void:
 	preload("res://scripts/native/NativeGridKernels.gd").setup()
 	preload("res://scripts/native/NativeTileKernel.gd").setup()
 	# Water fill kernels: load C# here; their gate runs on the first water solve.
+	# Deferred: loads C# here; the gate runs on the first worker sample.
 	preload("res://scripts/native/NativeWaterFill.gd").prepare()
 	preload("res://scripts/native/NativeCliffEnvelope.gd").prepare()
 	preload("res://scripts/native/NativeCliffSolid.gd").prepare()
@@ -2041,6 +2045,9 @@ func streaming_profile_snapshot() -> Dictionary:
 	result["pending_terrain"] = _pending_terrain.size()
 	result["built"] = _built.size()
 	result["player_frozen"] = _player_frozen
+	# Process-wide like the style: later plans (tests) gate synchronously again.
+	if terrain_parent != null:
+		preload("res://scripts/native/NativeGates.gd").deferred = false
 	result["feature_pending"] = _feature_queue.pending_chunks().size() if _feature_queue != null else 0
 	result["ground_frontier"] = loading_boundary_snapshot()
 	return result

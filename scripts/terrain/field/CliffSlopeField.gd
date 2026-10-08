@@ -1019,10 +1019,14 @@ func _columns(owned:Rect2)->Dictionary:
  _column_cache[owned]=cols
  return cols
 
-## _columns as NativeCliffSolid's mask (bedrock sheet, native on), cached.
+## _columns as NativeCliffSolid's mask (bedrock sheet, native on), cached;
+## null when the C# call failed (the port is then off).
 var _mask_cache:Dictionary={}
 func _column_mask(owned:Rect2)->RefCounted:
- if not _mask_cache.has(owned):_mask_cache[owned]=NativeCliffSolid.columns(envelope(),owned)
+ if not _mask_cache.has(owned):
+  var mask=NativeCliffSolid.columns(envelope(),owned)
+  if mask==null:return null
+  _mask_cache[owned]=mask
  return _mask_cache[owned]
 
 ## Maximum of f over [i-r, i+r] clipped to the line, for every i, in linear
@@ -1051,7 +1055,8 @@ static func _window_max(f:PackedFloat64Array,r:int)->PackedFloat64Array:
 ## folded rock benches. Rocks claim their points without growing blades.
 func grass_support(area:Rect2)->Dictionary:
  var env:=envelope()
- var cols=_column_mask(area) if NativeCliffSolid.on() else _columns(area)
+ var cols=_column_mask(area) if NativeCliffSolid.on() else null
+ if cols==null:cols=_columns(area)
  var lo:=Vector2i(floori(area.position.x/GRID),floori(area.position.y/GRID))
  var hi:=Vector2i(ceili(area.end.x/GRID),ceili(area.end.y/GRID))
  var w:=hi.x-lo.x+1;var h:=hi.y-lo.y+1
@@ -1086,9 +1091,13 @@ func grass_support(area:Rect2)->Dictionary:
 func solid(owned:Rect2,mode:=0)->Array[Dictionary]:
  var env:=envelope()
  if STYLE.sheet_study=="bedrock" and (mode==2 or (mode==0 and NativeCliffSolid.on())):
-  var cols:=_column_mask(owned)
-  env.replacement_columns=_column_mask(owned.grow(4.0))
-  return NativeCliffSolid.solid(self,env,owned,cols,_region)
+  # null anywhere: the C# call failed (the port is now off); GDScript below.
+  var mask=_column_mask(owned)
+  var replacement=_column_mask(owned.grow(4.0)) if mask!=null else null
+  if replacement!=null:
+   env.replacement_columns=replacement
+   var native=NativeCliffSolid.solid(self,env,owned,mask,_region)
+   if native!=null:return native
  var rock_cells:Dictionary={}
  for r:Dictionary in rock_list:
   # Bedrock foot assets are already fitted and buried against the sheet.

@@ -4,18 +4,24 @@ extends RefCounted
 ## contour walk (scripts/native/NativeRiverWalk.cs), used only where verified
 ## bit-identical to the GDScript reference. No class_name: preload it.
 ##
-## setup(seed) (called by WaterPlan._init, so on the main thread before the
-## streamer's worker starts) does nothing under the standard editor. Under the
-## .NET editor it hands WaterPlan's live constants to C# and compares C# with
-## the GDScript functions on 40 fixed super-cells of that seed (source gate,
-## source position, has_source and the whole raw walk, field by field with !=).
-## Only a seed that passes is served natively. The native path also needs the
-## native height field for the seed and an unfiltered natural field
-## (HeightfieldPlan.LOWPASS_M == 0; the tent filter stays GDScript).
+## setup(seed) (called by WaterPlan._init) does nothing under the standard
+## editor. Under the .NET editor it hands WaterPlan's live constants to C#; the
+## parity gate compares C# with the GDScript functions on 40 fixed super-cells
+## of that seed (source gate, source position, has_source and the whole raw
+## walk, field by field with !=; ~1.8 s). Tests and harnesses gate at once in
+## setup(); the game (NativeGates.deferred) only registers the seed and the
+## gate runs in the first ready_for(seed) on a non-main thread that wins the
+## try_lock; every other caller uses the GDScript walk meanwhile. Only a seed
+## that passes is served natively. The native path also needs the native
+## height field for the seed (the gate gates it first) and an unfiltered
+## natural field (HeightfieldPlan.LOWPASS_M == 0; the tent filter stays
+## GDScript). A C# call that throws turns the seed off: the wrappers return
+## null and WaterPlan runs the GDScript for that call.
 
 const _CS_PATH := "res://scripts/native/NativeRiverWalk.cs"
 const NATIVE_HEIGHT := preload("res://scripts/native/NativeHeightField.gd")
 const PARITY_CELLS := 40
+const _GATES := preload("res://scripts/native/NativeGates.gd")
 
 ## Tests and the parity gate: force the GDScript reference.
 static var force_off := false
@@ -23,48 +29,107 @@ static var enabled := false
 ## Seeds served natively (replaced, never mutated, so readers on other threads
 ## always see a complete dictionary).
 static var seeds: Dictionary = {}
+## Seeds registered by a deferred setup() whose gate has not run yet
+## (replaced, never mutated).
+static var _pending: Dictionary = {}
 static var _attempted: Dictionary = {}
 static var _native: Object = null
 static var _native_failed := false
 static var _mutex := Mutex.new()
 
 
+## Runs a deferred gate on a worker that wins the lock.
 static func ready_for(seed: int) -> bool:
+	if not enabled or not seeds.has(seed):
+		if not (_pending.has(seed) and _GATES.may_gate_here() and _mutex.try_lock()):
+			return false
+		_gate(seed)
+		_mutex.unlock()
 	return enabled and not force_off and seeds.has(seed) \
 		and HeightfieldPlan.LOWPASS_M <= 0.0 and NATIVE_HEIGHT.ready_for(seed)
 
 
-static func source_gate(plan: WaterPlan, sc: Vector2i) -> Dictionary:
-	return _native.SourceGate(plan.world_seed, sc.x, sc.y, plan.amplitude,
+## The wrappers return null when the C# call threw (the seed is then off):
+## the caller runs the GDScript.
+static func source_gate(plan: WaterPlan, sc: Vector2i) -> Variant:
+	var r = _native.SourceGate(plan.world_seed, sc.x, sc.y, plan.amplitude,
 		TerrainField.spawn_level_m(plan.world_seed), TerrainField.REF_AMPLITUDE)
+	return null if _fault(r, plan.world_seed) else r
 
 
-static func source_pos(plan: WaterPlan, sc: Vector2i) -> Vector2:
-	return _native.SourcePos(plan.world_seed, sc.x, sc.y, plan.amplitude,
+static func source_pos(plan: WaterPlan, sc: Vector2i) -> Variant:
+	var r = _native.SourcePos(plan.world_seed, sc.x, sc.y, plan.amplitude,
 		TerrainField.spawn_level_m(plan.world_seed), TerrainField.REF_AMPLITUDE)
+	return null if _fault(r, plan.world_seed) else r
 
 
-static func pond_level(plan: WaterPlan, center: Vector2, radius: float) -> int:
-	return _native.PondLevel(plan.world_seed, center, radius, plan.amplitude,
+static func pond_level(plan: WaterPlan, center: Vector2, radius: float) -> Variant:
+	var r = _native.PondLevel(plan.world_seed, center, radius, plan.amplitude,
 		TerrainField.spawn_level_m(plan.world_seed), TerrainField.REF_AMPLITUDE, plan.max_storeys)
+	return null if _fault(r, plan.world_seed) else r
 
 
-static func walk(plan: WaterPlan, sc: Vector2i) -> Dictionary:
-	return _native.Walk(plan.world_seed, sc.x, sc.y, plan.amplitude,
+static func walk(plan: WaterPlan, sc: Vector2i) -> Variant:
+	var r = _native.Walk(plan.world_seed, sc.x, sc.y, plan.amplitude,
 		TerrainField.spawn_level_m(plan.world_seed), TerrainField.REF_AMPLITUDE, plan.max_storeys)
+	return null if _fault(r, plan.world_seed) else r
 
 
+## True (and the seed off) when the C# call behind `result` threw.
+static func _fault(result, seed: int) -> bool:
+	var err := _GATES.faulted(_native, result)
+	if err.is_empty():
+		return false
+	_mutex.lock()
+	var next := seeds.duplicate()
+	next.erase(seed)
+	seeds = next
+	_mutex.unlock()
+	push_warning("NativeRiverWalk disabled for seed %d: the C# call failed (%s); using the GDScript river walk." % [seed, err])
+	return true
+
+
+## Test hook: the next C# call (any port) throws once.
+static func arm_fault() -> void:
+	if _native != null:
+		_native.ArmFault()
+
+
+## Load C# and register the seed; gate now unless NativeGates.deferred.
 static func setup(seed: int) -> void:
 	_mutex.lock()
+	if _GATES.deferred:
+		if _native == null and not _native_failed and not _load_native():
+			_native_failed = true
+		if _native != null and not _attempted.has(seed) and not _pending.has(seed):
+			var next := _pending.duplicate()
+			next[seed] = true
+			_pending = next
+	else:
+		_gate(seed)
+	_mutex.unlock()
+
+
+## Load and gate now, deferred or not (tests).
+static func setup_now(seed: int) -> void:
+	_mutex.lock()
+	_gate(seed)
+	_mutex.unlock()
+
+
+## Under _mutex. Harmless to repeat.
+static func _gate(seed: int) -> void:
 	if _attempted.has(seed) or _native_failed:
-		_mutex.unlock()
 		return
 	_attempted[seed] = true
+	if _pending.has(seed):
+		var next := _pending.duplicate()
+		next.erase(seed)
+		_pending = next
 	if _native == null and not _load_native():
 		_native_failed = true
-		_mutex.unlock()
 		return
-	NATIVE_HEIGHT.setup(seed)
+	NATIVE_HEIGHT.setup_now(seed)
 	var mismatch := ""
 	if not NATIVE_HEIGHT.ready_for(seed):
 		mismatch = "the native height field is off for this seed"
@@ -81,13 +146,13 @@ static func setup(seed: int) -> void:
 		push_warning("NativeRiverWalk disabled for seed %d: %s. Re-sync scripts/native/NativeRiverWalk.cs " % [seed, mismatch]
 			+ "with scripts/terrain/water/WaterPlan.gd (_jitter_pos/_ascend/_has_source_uncached/_walk/"
 			+ "_contour_step/_contained_bed/_pond_level). Using the GDScript river walk.")
-	_mutex.unlock()
 
 
 ## Drop every verified seed (tests): the next setup() re-checks parity.
 static func reset() -> void:
 	_mutex.lock()
 	seeds = {}
+	_pending = {}
 	_attempted.clear()
 	enabled = false
 	_mutex.unlock()
@@ -138,10 +203,13 @@ static func _parity(seed: int) -> String:
 	for n in PARITY_CELLS:
 		var sc := Vector2i(rng.randi_range(-12, 12), rng.randi_range(-12, 12))
 		force_off = true
-		var gate: Dictionary = source_gate(gd, sc)
+		var gate = source_gate(gd, sc)
+		if gate == null:
+			result = "C# SourceGate failed at %s" % sc
+			break
 		var pos := gd.source_pos(sc)
 		var has := gd.has_source(sc)
-		var native_pos := source_pos(gd, sc)
+		var native_pos = source_pos(gd, sc)
 		if native_pos != pos:
 			result = "source_pos %s: gd %s cs %s" % [sc, pos, native_pos]
 			break
@@ -155,7 +223,10 @@ static func _parity(seed: int) -> String:
 			result = "source gates %s: gd has_source %s, cs gates %s" % [sc, has, gate.passes_gates]
 			break
 		if gate.passes_gates:
-			var w: Dictionary = walk(gd, sc)
+			var w = walk(gd, sc)
+			if w == null:
+				result = "C# Walk failed at %s" % sc
+				break
 			var diff := _walk_diff(gd, sc, gd_walk, w)
 			if diff != "":
 				result = "walk %s: %s" % [sc, diff]

@@ -15,6 +15,10 @@ namespace Story.Native
 {
     public partial class NativeRiverWalk : RefCounted
     {
+        /// NativeFault: arm a one-shot test failure; this thread's last failure.
+        public void ArmFault() => NativeFault.Arm("NativeRiverWalk");
+        public string TakeError() => NativeFault.Take();
+
         sealed class Consts
         {
             public double SUPER, TILE, STOREY, SOURCE_MIN_HEIGHT, ASCEND_STEP, SOURCE_PEAK_EPS,
@@ -77,36 +81,56 @@ namespace Story.Native
         public Godot.Collections.Dictionary SourceGate(long seed, int scx, int scy, double amplitude,
             double spawnLevel, double refAmplitude)
         {
-            var w = new Walker(seed, amplitude, spawnLevel, refAmplitude, 0);
-            bool passes = w.Gates(scx, scy, out V2 pos, out bool hasPos);
-            var d = new Godot.Collections.Dictionary
+            try
             {
-                ["passes_gates"] = passes,
-                ["has_source_pos"] = hasPos,
-                ["source_pos"] = new Vector2(pos.X, pos.Y),
-            };
-            return d;
+                NativeFault.Check("NativeRiverWalk");
+                var w = new Walker(seed, amplitude, spawnLevel, refAmplitude, 0);
+                bool passes = w.Gates(scx, scy, out V2 pos, out bool hasPos);
+                var d = new Godot.Collections.Dictionary
+                {
+                    ["passes_gates"] = passes,
+                    ["has_source_pos"] = hasPos,
+                    ["source_pos"] = new Vector2(pos.X, pos.Y),
+                };
+                return d;
+            }
+            catch (Exception e) { NativeFault.Record(e); return null!; }
         }
 
         public Vector2 SourcePos(long seed, int scx, int scy, double amplitude, double spawnLevel, double refAmplitude)
         {
-            var w = new Walker(seed, amplitude, spawnLevel, refAmplitude, 0);
-            V2 p = w.Ascend(w.JitterPos(scx, scy));
-            return new Vector2(p.X, p.Y);
+            try
+            {
+                NativeFault.Check("NativeRiverWalk");
+                var w = new Walker(seed, amplitude, spawnLevel, refAmplitude, 0);
+                V2 p = w.Ascend(w.JitterPos(scx, scy));
+                return new Vector2(p.X, p.Y);
+            }
+            catch (Exception e) { NativeFault.Record(e); return new Vector2(float.NaN, float.NaN); }
         }
 
         public long PondLevel(long seed, Vector2 center, double radius, double amplitude, double spawnLevel,
             double refAmplitude, long maxStoreys)
         {
-            var w = new Walker(seed, amplitude, spawnLevel, refAmplitude, maxStoreys);
-            return w.PondLevel(new V2(center.X, center.Y), radius);
+            try
+            {
+                NativeFault.Check("NativeRiverWalk");
+                var w = new Walker(seed, amplitude, spawnLevel, refAmplitude, maxStoreys);
+                return w.PondLevel(new V2(center.X, center.Y), radius);
+            }
+            catch (Exception e) { NativeFault.Record(e); return long.MinValue; }
         }
 
         public Godot.Collections.Dictionary Walk(long seed, int scx, int scy, double amplitude,
             double spawnLevel, double refAmplitude, long maxStoreys)
         {
-            var w = new Walker(seed, amplitude, spawnLevel, refAmplitude, maxStoreys);
-            return w.Walk(scx, scy);
+            try
+            {
+                NativeFault.Check("NativeRiverWalk");
+                var w = new Walker(seed, amplitude, spawnLevel, refAmplitude, maxStoreys);
+                return w.Walk(scx, scy);
+            }
+            catch (Exception e) { NativeFault.Record(e); return null!; }
         }
 
         // ------------------------------------------------------------ the port

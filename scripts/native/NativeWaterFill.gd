@@ -26,6 +26,7 @@ extends RefCounted
 
 const _CS_PATH := "res://scripts/native/NativeWaterFill.cs"
 const _CARVE := preload("res://scripts/native/NativeCarve.gd")
+const _GATES := preload("res://scripts/native/NativeGates.gd")
 
 ## Tests: force the GDScript reference.
 static var force_off := false
@@ -33,6 +34,8 @@ static var enabled := false
 static var _native: Object = null
 static var _load_attempted := false
 static var _gated := false
+## A C# call threw: off for good (NativeGates.faulted).
+static var _faulted := false
 static var _mutex := Mutex.new()
 ## Profiles the C# shaped (single-threaded tests; unlocked, so approximate
 ## when chunk tails run in parallel).
@@ -57,8 +60,10 @@ static func queue_replay(pushes: PackedFloat64Array) -> PackedInt64Array:
 	return PackedInt64Array(_native.QueueReplay(pushes))
 
 
+## Kernel wrappers: false / -1 / null when the C# call failed (inputs
+## untouched, the port off): the caller runs the GDScript kernel.
 static func relax(m1: int, levels: PackedFloat32Array, gnd: PackedFloat32Array,
-		river_levels: PackedFloat32Array, pq: PriorityQueue) -> void:
+		river_levels: PackedFloat32Array, pq: PriorityQueue) -> bool:
 	var n: int = pq.heap.size()
 	var index := PackedInt32Array(); index.resize(n)
 	var level := PackedFloat64Array(); level.resize(n)
@@ -68,14 +73,33 @@ static func relax(m1: int, levels: PackedFloat32Array, gnd: PackedFloat32Array,
 		index[k] = entry.item[0]
 		level[k] = entry.item[1]
 		priority[k] = entry.priority
+	var out = _native.Relax(m1, levels, gnd, river_levels, index, level, priority)
+	if _fault(out):
+		return false
 	pq.heap.clear()
-	_store(levels, _native.Relax(m1, levels, gnd, river_levels, index, level, priority))
+	_store(levels, out)
+	return true
 
 
 ## The GDScript heap's entries as three arrays (seed_sources), relaxed.
 static func relax_heap(m1: int, levels: PackedFloat32Array, gnd: PackedFloat32Array,
-		river_levels: PackedFloat32Array, heap: Dictionary) -> void:
-	_store(levels, _native.Relax(m1, levels, gnd, river_levels, heap.index, heap.level, heap.priority))
+		river_levels: PackedFloat32Array, heap: Dictionary) -> bool:
+	var out = _native.Relax(m1, levels, gnd, river_levels, heap.index, heap.level, heap.priority)
+	if _fault(out):
+		return false
+	_store(levels, out)
+	return true
+
+
+## Loads a seed_sources heap into `pq` as the GDScript PriorityQueue it
+## mirrors (the same entries in the same heap order), for the GDScript relax
+## when C# failed.
+static func fill_queue(pq: PriorityQueue, heap: Dictionary) -> void:
+	var index: PackedInt32Array = heap.index
+	var level: PackedFloat64Array = heap.level
+	var priority: PackedFloat64Array = heap.priority
+	for k in index.size():
+		pq.heap.append({"item": [index[k], level[k]], "priority": priority[k]})
 
 
 ## WaterField._claim_rivers + _contain_rivers + _seed_ponds over a complete
@@ -133,7 +157,7 @@ static func seed_sources(claims: Array, ponds: Array, base: Vector2, m1: int,
 	var consts := PackedFloat64Array([WaterField.FILL_STEP, WaterPlan.BANK_FEATHER,
 		PondStamp.WOBBLE, PondStamp.STOREY, PondStamp.SURFACE_DROP])
 	var result = _native.SeedSources(flat, consts, base.x, base.y, m1, levels, gnd, river_levels)
-	if not result is Array or (result as Array).size() != 7:
+	if _fault(result) or not result is Array or (result as Array).size() != 7:
 		return {}
 	_store(river_levels, result[0])
 	return {"index": PackedInt32Array(result[2]), "level": PackedFloat64Array(result[3]),
@@ -149,7 +173,7 @@ static func profile(trace: RiverTrace, level0: float, source, plan: HeightfieldP
 	profiles_served += 1
 	var consts := _profile_consts()
 	var lattice = _native.ProfileLattice(trace.points, trace.beds, level0, consts)
-	if not lattice is PackedInt32Array or (lattice as PackedInt32Array).is_empty():
+	if _fault(lattice) or not lattice is PackedInt32Array or (lattice as PackedInt32Array).is_empty():
 		return {}
 	var heights := PackedFloat32Array()
 	var storeys := PackedInt32Array()
@@ -169,7 +193,7 @@ static func profile(trace: RiverTrace, level0: float, source, plan: HeightfieldP
 	var has_pond := trace.pond != null
 	var r = _native.Profile(trace.points, trace.beds, trace.widths, level0, has_pond,
 		trace.pond.surface_y() if has_pond else 0.0, lattice, heights, storeys, consts)
-	if not r is Array or (r as Array).size() != 7:
+	if _fault(r) or not r is Array or (r as Array).size() != 7:
 		return {}
 	var lo := PackedInt32Array(r[1])
 	var hi := PackedInt32Array(r[2])
@@ -194,15 +218,15 @@ static func corridor_terrain(plan: HeightfieldPlan, lattice: PackedInt32Array) -
 	var terrain := _terrain_consts()
 	var agg := _aggregation(plan.aggregation)
 	var s = _native.CorridorPoints(lattice, terrain)
-	if not s is PackedInt32Array:
+	if _fault(s) or not s is PackedInt32Array:
 		return {}
 	var hs := plan.sample_heights(s)
 	var d = _native.CorridorDisks(s, hs, agg, plan.max_storeys, plan.max_step, terrain)
-	if not d is PackedInt32Array:
+	if _fault(d) or not d is PackedInt32Array:
 		return {}
 	var hd := plan.sample_heights(d)
 	var r = _native.CorridorTerrain(lattice, s, hs, d, hd, agg, plan.max_storeys, plan.max_step, terrain)
-	if not r is Array or (r as Array).size() != 2:
+	if _fault(r) or not r is Array or (r as Array).size() != 2:
 		return {}
 	return {"heights": PackedFloat32Array(r[0]), "storeys": PackedInt32Array(r[1])}
 
@@ -226,34 +250,62 @@ static func _terrain_consts() -> PackedFloat64Array:
 
 static func reconcile(levels: PackedFloat32Array, ground: PackedFloat32Array,
 		columns: int, step: float) -> int:
-	var result: Array = _native.Reconcile(levels, ground, columns, step)
+	var result = _native.Reconcile(levels, ground, columns, step)
+	if _fault(result):
+		return -1
 	_store(levels, result[0])
 	return result[1]
 
 
 static func smooth(m1: int, levels: PackedFloat32Array, gnd: PackedFloat32Array,
 		river_levels: PackedFloat32Array, physical_ceilings: PackedFloat32Array,
-		passes: int) -> void:
-	_store(levels, _native.Smooth(m1, levels, gnd, river_levels, physical_ceilings, passes))
+		passes: int) -> bool:
+	var out = _native.Smooth(m1, levels, gnd, river_levels, physical_ceilings, passes)
+	if _fault(out):
+		return false
+	_store(levels, out)
+	return true
 
 
 static func retain(levels: PackedFloat32Array, side: int,
 		source_indices: PackedInt32Array) -> int:
-	var result: Array = _native.Retain(levels, side, source_indices)
+	var result = _native.Retain(levels, side, source_indices)
+	if _fault(result):
+		return -1
 	_store(levels, result[0])
 	return result[1]
 
 
 ## WaterField._cap_hydrostatic_fill (with its SpillSearch) over a dense
 ## `ground`; `natural_ground` is the dense uncarved lattice or empty (none).
-## Caps `levels` in place and returns the ceilings.
+## Caps `levels` in place and returns the ceilings (null: C# failed).
 static func cap(side: int, levels: PackedFloat32Array, ground: PackedFloat32Array,
 		anchors: PackedFloat32Array, natural_ground: PackedFloat32Array,
-		flow_ceilings: PackedFloat32Array) -> PackedFloat32Array:
-	var result: Array = _native.CapHydrostatic(side, levels, ground, anchors,
+		flow_ceilings: PackedFloat32Array) -> Variant:
+	var result = _native.CapHydrostatic(side, levels, ground, anchors,
 		not natural_ground.is_empty(), natural_ground, flow_ceilings)
+	if _fault(result):
+		return null
 	_store(levels, result[0])
 	return result[1]
+
+
+## True (and the port off for good) when the C# call behind `result` threw.
+static func _fault(result) -> bool:
+	var err := _GATES.faulted(_native, result)
+	if err.is_empty():
+		return false
+	_faulted = true
+	enabled = false
+	push_warning("NativeWaterFill disabled: the C# call failed (%s); the water fill uses GDScript." % err)
+	return true
+
+
+## Test hook: the next C# call (any port) throws once.
+static func arm_fault() -> void:
+	setup()
+	if _native != null:
+		_native.ArmFault()
 
 
 ## The kernels mutate their caller's array (packed arrays are shared by
@@ -288,9 +340,9 @@ static func _gate() -> void:
 	if _native == null:
 		return
 	var mismatch := _parity()
-	if mismatch.is_empty():
+	if mismatch.is_empty() and not _faulted:
 		enabled = true
-	else:
+	elif not mismatch.is_empty():
 		push_warning("NativeWaterFill disabled: %s. Re-sync scripts/native/NativeWaterFill.cs " % mismatch
 			+ "(and GdPriorityQueue.cs) with scripts/terrain/water/WaterField.gd (_relax_fill, "
 			+ "_reconcile_connected_surface, _smooth_fill_surface, _retain_source_connected_fill, "
@@ -536,7 +588,10 @@ static func _corridor_parity(rng: RandomNumberGenerator) -> String:
 	# outside the 7-point ring: only the outermost points' clamp disks reach
 	# the pit, at exactly their radius, and the pit sets every storey.
 	for case_index in 6:
-		mismatch = cone_case(1 + case_index % 3, 12, case_index >= 3)
+		# max_storeys 12 * ms: the cone rises ms storeys a point, so with 12
+		# a 2 or 3 step cone hits the cap halfway and never binds the clamp.
+		var ms := 1 + case_index % 3
+		mismatch = cone_case(ms, 12 * ms, case_index >= 3)
 		if not mismatch.is_empty():
 			return "%s (cone case %d)" % [mismatch, case_index]
 	return ""

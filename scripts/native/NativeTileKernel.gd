@@ -2,69 +2,137 @@ extends RefCounted
 
 ## C# version of TerrainTileField's tile evaluation over a dense window of
 ## corner data (sample_owned, sample_grid, sample_grid32). Used only once verified bit-identical to the
-## GDScript reference (setup()), and never under the standard editor.
+## GDScript reference, and never under the standard editor.
 ## No class_name: preload it. TerrainTileField dispatches with
-##   if NATIVE_TILE.enabled: return NATIVE_TILE.sample_owned(...)
+##   if NATIVE_TILE.on(): return NATIVE_TILE.sample_owned(...)
+##
+## setup() (FieldTerrainStreamer._ready) loads the C# class; it also runs the
+## 60-case parity gate at once unless NativeGates.deferred (the game), where
+## the gate runs on the first on() from a non-main thread that wins the
+## try_lock and every other caller uses GDScript meanwhile. A C# call that
+## throws turns the port off and that call returns the GDScript result.
 
 const _CS_PATH := "res://scripts/native/NativeTileKernel.cs"
 const TILE := preload("res://scripts/terrain/field/TerrainTileField.gd")
+const _GATES := preload("res://scripts/native/NativeGates.gd")
 
 static var enabled := false
 static var _native: Object = null
-static var _attempted := false
+static var _load_attempted := false
+static var _gated := false
 static var _mutex := Mutex.new()
+
+
+## Any thread. Runs a deferred gate on a worker that wins the lock.
+static func on() -> bool:
+	if not _gated and _native != null and _GATES.may_gate_here() and _mutex.try_lock():
+		_gate()
+		_mutex.unlock()
+	return enabled
 
 
 static func sample_owned(window: Dictionary, xs: PackedFloat64Array, zs: PackedFloat64Array,
 		owner_i: PackedInt32Array, owner_j: PackedInt32Array) -> PackedFloat64Array:
 	var lo: Vector2i = window.lo
-	return _native.SampleOwned(window.heights, window.storeys, window.w, window.h, lo.x, lo.y,
+	var out = _native.SampleOwned(window.heights, window.storeys, window.w, window.h, lo.x, lo.y,
 		window.spacing, xs, zs, owner_i, owner_j, TILE.cliff_end)
+	if _fault(out):
+		return TILE._sample_window_gd(window, xs, zs, owner_i, owner_j)
+	return out
 
 
 static func sample_grid(window: Dictionary, xs: PackedFloat64Array, zs: PackedFloat64Array,
 		owner_xs: PackedInt32Array, owner_zs: PackedInt32Array) -> PackedFloat64Array:
 	var lo: Vector2i = window.lo
-	return _native.SampleGrid(window.heights, window.storeys, window.w, window.h, lo.x, lo.y,
+	var out = _native.SampleGrid(window.heights, window.storeys, window.w, window.h, lo.x, lo.y,
 		window.spacing, xs, zs, owner_xs, owner_zs, TILE.cliff_end)
+	if _fault(out):
+		return TILE._sample_grid_gd(window, xs, zs, owner_xs, owner_zs)
+	return out
 
 
 static func sample_grid32(window: Dictionary, xs: PackedFloat64Array, zs: PackedFloat64Array,
 		owner_xs: PackedInt32Array, owner_zs: PackedInt32Array) -> PackedFloat32Array:
 	var lo: Vector2i = window.lo
-	return _native.SampleGrid32(window.heights, window.storeys, window.w, window.h, lo.x, lo.y,
+	var out = _native.SampleGrid32(window.heights, window.storeys, window.w, window.h, lo.x, lo.y,
 		window.spacing, xs, zs, owner_xs, owner_zs, TILE.cliff_end)
+	if _fault(out):
+		return TILE._to_float32(TILE._sample_grid_gd(window, xs, zs, owner_xs, owner_zs))
+	return out
 
 
-## Main thread, once (harmless to repeat).
+## True (and the port off) when the C# call behind `result` threw.
+static func _fault(result) -> bool:
+	var err := _GATES.faulted(_native, result)
+	if err.is_empty():
+		return false
+	enabled = false
+	push_warning("NativeTileKernel disabled: the C# call failed (%s); using the GDScript tile kernel." % err)
+	return true
+
+
+## Test hook: the next C# call (any port) throws once.
+static func arm_fault() -> void:
+	setup()
+	if _native != null:
+		_native.ArmFault()
+
+
+## Load the C# class; gate now unless NativeGates.deferred. Harmless to repeat.
 static func setup() -> void:
 	_mutex.lock()
-	if _attempted:
-		_mutex.unlock()
+	_load()
+	if not _GATES.deferred:
+		_gate()
+	_mutex.unlock()
+
+
+## Forget the gate (tests): the next setup()/on() gates again.
+static func reset() -> void:
+	_mutex.lock()
+	_gated = false
+	enabled = false
+	_mutex.unlock()
+
+
+## Load and gate now, deferred or not (tests).
+static func setup_now() -> void:
+	_mutex.lock()
+	_load()
+	_gate()
+	_mutex.unlock()
+
+
+## Under _mutex.
+static func _load() -> void:
+	if _load_attempted:
 		return
-	_attempted = true
+	_load_attempted = true
 	if not ClassDB.class_exists(&"CSharpScript"):
-		_mutex.unlock()
 		return
 	var script = load(_CS_PATH)
 	if script == null or not script.can_instantiate():
 		push_warning("NativeTileKernel: %s is not built (dotnet build Story.csproj); using GDScript." % _CS_PATH)
-		_mutex.unlock()
 		return
 	_native = script.new()
+
+
+## Under _mutex. _gated is set before the parity runs.
+static func _gate() -> void:
+	if _gated or _native == null:
+		return
+	_gated = true
 	var mismatch := _parity()
 	if mismatch.is_empty():
 		enabled = true
 	else:
 		push_warning("NativeTileKernel disabled: %s. Re-sync scripts/native/NativeTileKernel.cs with " % mismatch
 			+ "scripts/terrain/field/TerrainTileField.gd (eval_params/_layer/_corner_profile/_profile).")
-	_mutex.unlock()
 
 
 static func _parity() -> String:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 20261007
-	var saved: int = TILE.cliff_end
 	var result := ""
 	for case_index in 60:
 		var n := rng.randi_range(4, 14)
@@ -110,8 +178,7 @@ static func _parity() -> String:
 		var gx := xs.slice(0, 17); var gz := zs.slice(0, 13)
 		var gox := oi.slice(0, 17); var goz := oj.slice(0, 13)
 		for mode in 3:
-			TILE.cliff_end = mode
-			var grid_expected: PackedFloat64Array = TILE._sample_grid_gd(window, gx, gz, gox, goz)
+			var grid_expected: PackedFloat64Array = TILE._sample_grid_gd(window, gx, gz, gox, goz, mode)
 			var grid_actual: PackedFloat64Array = _native.SampleGrid(heights, storeys, n, n, 0, 0, 12.0,
 				gx, gz, gox, goz, mode)
 			if grid_expected != grid_actual:
@@ -122,7 +189,7 @@ static func _parity() -> String:
 			if TILE._to_float32(grid_expected) != grid32:
 				result = "sample_grid32 differs (case %d mode %d)" % [case_index, mode]
 				break
-			var expected: PackedFloat64Array = TILE._sample_window_gd(window, xs, zs, oi, oj)
+			var expected: PackedFloat64Array = TILE._sample_window_gd(window, xs, zs, oi, oj, mode)
 			var actual: PackedFloat64Array = _native.SampleOwned(heights, storeys, n, n, 0, 0, 12.0,
 				xs, zs, oi, oj, mode)
 			if expected != actual:
@@ -134,5 +201,4 @@ static func _parity() -> String:
 				break
 		if not result.is_empty():
 			break
-	TILE.cliff_end = saved
 	return result
