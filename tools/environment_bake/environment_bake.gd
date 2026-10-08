@@ -653,12 +653,27 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 	descriptor.tint_group = StringName(String(entry.get("tint_group", "identity")))
 	descriptor.supports_instance_color = supports_color
 	descriptor.provenance_id = StringName("%s:%s" % [pack, asset_id])
+	descriptor.material_tints = _material_tints(entry.get("material_tints", {}))
 	var descriptor_path := "%s/%s.tres" % [DESCRIPTOR_DIR, slug]
 	_ensure_parent(descriptor_path)
 	if ResourceSaver.save(descriptor, descriptor_path) != OK:
 		_fail("Cannot save environment descriptor: %s" % descriptor_path)
 		return {}
-	for output_path: String in [visual_path, descriptor_path]:
+	var output_paths: Array[String] = [visual_path, descriptor_path]
+	# A tint variant is a descriptor-only finish of this same visual (shared
+	# mesh, textures and collision): e.g. the dark-wood kit lamp.
+	var tint_variants: Dictionary = entry.get("material_tint_variants", {})
+	for variant_name: String in tint_variants:
+		var variant := descriptor.duplicate() as EnvironmentAssetDescriptor
+		variant.id = StringName(tint_variant_id(asset_id, variant_name))
+		variant.material_tints = _material_tints(tint_variants[variant_name])
+		variant.provenance_id = StringName("%s/%s" % [descriptor.provenance_id, variant_name])
+		var variant_path := "%s/%s.tres" % [DESCRIPTOR_DIR, _slug(String(variant.id))]
+		if ResourceSaver.save(variant, variant_path) != OK:
+			_fail("Cannot save environment tint variant: %s" % variant_path)
+			return {}
+		output_paths.append(variant_path)
+	for output_path: String in output_paths:
 		_validate_dependencies(output_path)
 	return {
 		"id": asset_id,
@@ -2393,8 +2408,7 @@ func _prune_unmanifested_descriptors() -> void:
 				return
 			for value: Variant in entries:
 				if value is Dictionary:
-					var asset_id := String((value as Dictionary).get("id", ""))
-					if not asset_id.is_empty():
+					for asset_id: String in descriptor_ids(value as Dictionary):
 						active_paths["%s/%s.tres" % [DESCRIPTOR_DIR, _slug(asset_id)]] = true
 		filename = manifest_directory.get_next()
 	manifest_directory.list_dir_end()
@@ -2514,12 +2528,45 @@ func _valid_scale(value: Variant) -> bool:
 			return false
 	return true
 
+## Every descriptor id one manifest entry bakes: its own and its tint variants.
+## The unmanifested-descriptor prune keeps exactly these.
+static func descriptor_ids(entry: Dictionary) -> Array[String]:
+	var asset_id := String(entry.get("id", ""))
+	var out: Array[String] = []
+	if asset_id.is_empty():
+		return out
+	out.append(asset_id)
+	var variants: Dictionary = entry.get("material_tint_variants", {})
+	for variant_name: String in variants:
+		out.append(tint_variant_id(asset_id, variant_name))
+	return out
+
+static func tint_variant_id(asset_id: String, variant_name: String) -> String:
+	return "%s.%s" % [asset_id, variant_name]
+
+## Manifest `material_tints`: vendor material name -> RGBA array.
+static func material_tints_of(value: Variant) -> Dictionary:
+	var out := {}
+	if value is Dictionary:
+		for material_name: String in value:
+			var rgba: Variant = (value as Dictionary)[material_name]
+			if rgba is Array and (rgba as Array).size() == 4:
+				out[material_name] = Color(float(rgba[0]), float(rgba[1]),
+					float(rgba[2]), float(rgba[3]))
+	return out
+
+func _material_tints(value: Variant) -> Dictionary:
+	var out := material_tints_of(value)
+	if value is Dictionary and out.size() != (value as Dictionary).size():
+		_fail("material_tints entries must be RGBA arrays: %s" % [value])
+	return out
+
 func _color(value) -> Color:
 	if not value is Array or value.size() != 4:
 		return Color.WHITE
 	return Color(float(value[0]), float(value[1]), float(value[2]), float(value[3]))
 
-func _slug(value: String) -> String:
+static func _slug(value: String) -> String:
 	return value.to_lower().replace(".", "_").replace("-", "_").replace("/", "_").replace(" ", "_")
 
 func _ensure_parent(path: String) -> void:
