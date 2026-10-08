@@ -231,7 +231,8 @@ static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 			var at:=Vector3i(cell.x,band,cell.y)
 			return podium.has(at) or fabric.surface_plan.has_cell(at) or _walked(grid,at) or public_crowns.has(at) or _solid_other(grid,owner_at,own,at),
 		func(own:StringName,cell:Vector2i,band:int)->bool:return _solid_other(grid,owner_at,own,Vector3i(cell.x,band,cell.y)),
-		func(cell:Vector2i,band:int)->bool:return fabric.surface_plan.has_cell(Vector3i(cell.x,band,cell.y)))
+		func(cell:Vector2i,band:int)->bool:return fabric.surface_plan.has_cell(Vector3i(cell.x,band,cell.y)),
+		growth.registry,growth_character.value(GROWTH.GAP_KNOB) if growth_character != null else 0.0)
 	for projection:Dictionary in room_projections:
 		walls.append(union_script.box_volume(projection.bounds))
 	var facade_bays := preload("res://scripts/terrain/features/villages/kit/KitTownFacadeBays.gd").fit(
@@ -336,10 +337,7 @@ static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 
 ## True when `box` misses every fitted front (`bounds`) another house hosts.
 static func _clear_of_others(box: AABB, host: StringName, fronts: Array) -> bool:
-	for front: Dictionary in fronts:
-		if front.host != host and box.intersects(front.bounds):
-			return false
-	return true
+	return GROWTH.clear_of(box, fronts, func(front: Dictionary) -> bool: return front.host != host)
 
 
 ## Balconies, overhang supports and skywalks as kit masses. Balconies also
