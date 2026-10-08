@@ -273,6 +273,22 @@ static var _basin_lock := Mutex.new()
 ## does not change cache identity, hydraulic labels or the returned payload.
 static var profile_source_cost := OS.get_environment("PROFILE_WATER_COST") == "1"
 static var profile_fine_input := Callable()
+## Fine-rescue helper counters (PROFILE_WATER_COST only). `_fine_stage` names
+## the rescue stage running on this solve; helpers record only while it is
+## set, so coarse-field use elsewhere is not counted. Each key holds
+## [calls, inclusive usec, misses] (misses = real work behind a memo).
+## Single-threaded profiling only (`--serial`); the counters are unlocked.
+static var _fine_stage := ""
+static var _fine_counts: Dictionary = {}
+
+static func _fine_tick(helper: String, started: int, miss: bool = false) -> void:
+	if _fine_stage == "": return
+	var key := _fine_stage + "/" + helper
+	var row: Array = _fine_counts.get(key, [0, 0, 0])
+	row[0] += 1
+	row[1] += Time.get_ticks_usec() - started
+	if miss: row[2] += 1
+	_fine_counts[key] = row
 
 static func cache_counts() -> Dictionary:
 	_profiles_lock.lock()
@@ -649,8 +665,10 @@ static func _smooth_fill_surface(region, base: Vector2, m1: int,
 ## — see _build_fill's own comment on why INF is a safe sentinel here).
 static func _ground_at(region, base: Vector2, m1: int, gnd: PackedFloat32Array,
 		i: int, j: int, step: float = FILL_STEP, bakes = null) -> float:
+	var prof_t := Time.get_ticks_usec() if profile_source_cost else 0
 	var idx: int = j * m1 + i
 	var g: float = gnd[idx]
+	var prof_miss := g == INF
 	if g == INF:
 		var p: Vector2 = base + Vector2(i, j) * step
 		if bakes != null and region.terrain_grades.is_empty():
@@ -660,6 +678,7 @@ static func _ground_at(region, base: Vector2, m1: int, gnd: PackedFloat32Array,
 		else:
 			g = TerrainTileField.surface_y(region, p.x, p.y)
 		gnd[idx] = g
+	if profile_source_cost: _fine_tick("ground_at", prof_t, prof_miss)
 	return gnd[idx]
 
 
@@ -728,6 +747,10 @@ static func _build_sub_lattice_rescue(region, base: Vector2,
 		"region": region,
 	}
 	var pq := PriorityQueue.new()
+	var prof_nodes := {}   # per-stage node visits (PROFILE_WATER_COST only)
+	if profile_source_cost:
+		_fine_counts = {}
+		_fine_stage = "seed"
 	# Only mixed coarse cells own a shoreline. Seed every 3m point in those
 	# cells that the existing field itself already considers wet. Neighbouring
 	# mixed cells duplicate candidates harmlessly; `queued` keeps one offer.
@@ -745,6 +768,7 @@ static func _build_sub_lattice_rescue(region, base: Vector2,
 					var sidx: int = sj * sub_n + si
 					if queued[sidx] == 1:
 						continue
+					if profile_source_cost: prof_nodes["seed_visits"] = prof_nodes.get("seed_visits", 0) + 1
 					var p: Vector2 = base + Vector2(si, sj) * FILL_SUB_STEP
 					var lvl: float = _rescue_coarse_level(coarse_ctx, p)
 					var ground: float = _ground_at(region, base, sub_n, sub_ground, si, sj, FILL_SUB_STEP, ground_bakes)
@@ -757,8 +781,13 @@ static func _build_sub_lattice_rescue(region, base: Vector2,
 					queued[sidx] = 1
 					pq.push([sidx, head], head)
 	var seed_finished := Time.get_ticks_usec() if profile_source_cost else 0
-	if profile_source_cost: print("WATER_FINE_STAGE seeded ",pq.size()," ",Time.get_ticks_msec())
+	if profile_source_cost:
+		print("WATER_FINE_STAGE seeded ",pq.size()," ",Time.get_ticks_msec())
+		prof_nodes["seed_pushed"] = pq.size()
+		prof_nodes["ground_after_seed"] = sub_ground.size() - sub_ground.count(INF)
+		_fine_stage = "anchors"
 	if pq.is_empty():
+		if profile_source_cost: _fine_stage = ""
 		pq.free()
 		return {"levels": sub_levels, "ground": sub_ground}
 	var fine_anchor_indices := PackedInt32Array()
@@ -778,6 +807,7 @@ static func _build_sub_lattice_rescue(region, base: Vector2,
 				var idx := sj * sub_n + si
 				if anchor_seen[idx] == 1: continue
 				anchor_seen[idx] = 1
+				if profile_source_cost: prof_nodes["anchor_visits"] = prof_nodes.get("anchor_visits", 0) + 1
 				var p := base + Vector2(si, sj) * FILL_SUB_STEP
 				var level := _rescue_coarse_level(coarse_ctx, p)
 				if not is_finite(level): continue
@@ -787,10 +817,18 @@ static func _build_sub_lattice_rescue(region, base: Vector2,
 				fine_anchors[idx] = head
 				fine_anchor_indices.append(idx)
 	var anchor_finished := Time.get_ticks_usec() if profile_source_cost else 0
-	if profile_source_cost: print("WATER_FINE_STAGE anchored ",fine_anchor_indices.size()," ",Time.get_ticks_msec())
+	if profile_source_cost:
+		print("WATER_FINE_STAGE anchored ",fine_anchor_indices.size()," ",Time.get_ticks_msec())
+		prof_nodes["anchors"] = fine_anchor_indices.size()
+		prof_nodes["ground_after_anchors"] = sub_ground.size() - sub_ground.count(INF)
+		_fine_stage = "spill_init"
 	# Establish physical outlets before expansion. A rejected high head must
 	# not travel across a dry saddle to seed a disconnected pocket beyond it.
 	var spill := SpillSearch.new(region, base, sub_n, fine_anchors, sub_ground, fine_anchors, FILL_SUB_STEP, ground_bakes, fine_anchor_indices)
+	var spill_init_finished := Time.get_ticks_usec() if profile_source_cost else 0
+	if profile_source_cost:
+		prof_nodes["ground_after_spill_init"] = sub_ground.size() - sub_ground.count(INF)
+		_fine_stage = "flood"
 	var flood_pops := 0
 	while not pq.is_empty():
 		flood_pops+=1
@@ -845,6 +883,13 @@ static func _build_sub_lattice_rescue(region, base: Vector2,
 				continue
 			pq.push([nidx, next_level], next_level)
 	var flood_finished := Time.get_ticks_usec() if profile_source_cost else 0
+	if profile_source_cost:
+		prof_nodes["flood_pops"] = flood_pops
+		prof_nodes["flood_settled"] = settled.size() - settled.count(-INF)
+		prof_nodes["spill_searches"] = spill.generation
+		prof_nodes["spill_search_pops"] = spill.work
+		prof_nodes["ground_after_flood"] = sub_ground.size() - sub_ground.count(INF)
+		_fine_stage = "finish"
 	spill.close()
 	pq.free()
 	var has_rescue := false
@@ -853,6 +898,7 @@ static func _build_sub_lattice_rescue(region, base: Vector2,
 			has_rescue = true
 			break
 	if not has_rescue:
+		if profile_source_cost: _fine_stage = ""
 		return {"levels": sub_levels, "ground": sub_ground}
 
 	# The former shoreline becomes interior water beside a rescued pocket.
@@ -912,11 +958,22 @@ static func _build_sub_lattice_rescue(region, base: Vector2,
 				var q: Vector2 = base + Vector2(ni, nj) * FILL_SUB_STEP
 				sub_ground[nidx] = _ground_at(region, base, sub_n, sub_ground, ni, nj, FILL_SUB_STEP, ground_bakes)
 	if profile_source_cost:
-		print("WATER_FINE_COST ",JSON.stringify({"side":sub_n,
+		_fine_stage = ""
+		prof_nodes["lattice_nodes"] = sub_levels.size()
+		prof_nodes["rescued"] = sub_levels.size() - sub_levels.count(-INF)
+		prof_nodes["ground_after_finish"] = sub_ground.size() - sub_ground.count(INF)
+		print("WATER_FINE_COST ",JSON.stringify({"side":sub_n,"rows":sub_rows,
 			"seed_ms":(seed_finished-profile_started)/1000.0,
 			"flood_and_spill_ms":(flood_finished-anchor_finished)/1000.0,
+			"spill_init_ms":(spill_init_finished-anchor_finished)/1000.0,
 			"anchors_ms":(anchor_finished-seed_finished)/1000.0,
 			"finish_ms":(Time.get_ticks_usec()-flood_finished)/1000.0}))
+		print("WATER_FINE_NODES ",JSON.stringify(prof_nodes))
+		var keys := _fine_counts.keys()
+		keys.sort()
+		for key: String in keys:
+			var row: Array = _fine_counts[key]
+			print("WATER_FINE_HELPER ",key," calls=",row[0]," ms=",row[1]/1000.0," misses=",row[2])
 	return {"levels": sub_levels, "ground": sub_ground}
 
 
@@ -927,6 +984,15 @@ static func _rescue_coarse_level(c: Dictionary, p: Vector2) -> float:
 	var width: int = (int(c.fill_size) - 1) * 2 + 1
 	var index := lattice.y * width + lattice.x
 	var samples: PackedFloat64Array = c.surface_samples
+	if profile_source_cost:
+		var prof_t := Time.get_ticks_usec()
+		var prof_miss := samples[index] == INF
+		if prof_miss:
+			var coarse_t := Time.get_ticks_usec()
+			samples[index] = _fill_bilinear_coarse(c, p)
+			_fine_tick("fill_bilinear_coarse", coarse_t)
+		_fine_tick("rescue_coarse_level", prof_t, prof_miss)
+		return samples[index]
 	if samples[index] == INF:
 		samples[index] = _fill_bilinear_coarse(c, p)
 	return samples[index]
@@ -936,6 +1002,7 @@ static func _sub_river_ceiling(river_levels: PackedFloat32Array, si: int, sj: in
 	## Topology rescue shares the coarse channel/bank datum. A higher shoreline
 	## elsewhere in the chunk cannot pour a second level across its dry bank.
 	if river_levels.is_empty(): return INF
+	var prof_t := Time.get_ticks_usec() if profile_source_cost else 0
 	var ci := mini(si / 2, coarse_n - 2)
 	var cj := mini(sj / 2, int(river_levels.size() / coarse_n) - 2)
 	var tx := float(si) * 0.5 - ci
@@ -949,6 +1016,7 @@ static func _sub_river_ceiling(river_levels: PackedFloat32Array, si: int, sj: in
 			var weight := (tx if dx else 1.0-tx) * (tz if dz else 1.0-tz)
 			value += level * weight
 			total += weight
+	if profile_source_cost: _fine_tick("sub_river_ceiling", prof_t)
 	return value / total if total > 0.000001 else INF
 
 
@@ -1312,6 +1380,8 @@ class SpillSearch extends RefCounted:
 
 
 	func height_at(target: int) -> float:
+		var prof_t := Time.get_ticks_usec() if WaterField.profile_source_cost else 0
+		var prof_miss := not is_finite(escape[target])
 		if not is_finite(escape[target]):
 			generation += 1
 			var reached: Array[int] = []
@@ -1350,6 +1420,7 @@ class SpillSearch extends RefCounted:
 			for index: int in reached:
 				if distance[index] < outlet or ground[index] >= outlet:
 					escape[index] = outlet
+		if WaterField.profile_source_cost: WaterField._fine_tick("spill_height_at", prof_t, prof_miss)
 		return escape[target]
 
 	func close() -> void:
@@ -2185,6 +2256,7 @@ static func _fill_bilinear(c: Dictionary, p: Vector2) -> float:
 
 ## Wet-only interpolation of the hydraulic head before dry-corner taper.
 static func _fill_untapered_level(c: Dictionary, p: Vector2) -> float:
+	var prof_t := Time.get_ticks_usec() if profile_source_cost else 0
 	var coarse_n: int = c.get("fill_size", FILL_M + 1)
 	var local := (p - (c.fill_base as Vector2)) / FILL_STEP
 	var i := clampi(floori(local.x), 0, coarse_n - 2)
@@ -2200,6 +2272,7 @@ static func _fill_untapered_level(c: Dictionary, p: Vector2) -> float:
 			var weight := (t.x if dx else 1.0 - t.x) * (t.y if dz else 1.0 - t.y)
 			value += level * weight
 			total += weight
+	if profile_source_cost: _fine_tick("fill_untapered_level", prof_t)
 	return value / total if total > 0.0 else -INF
 
 
@@ -2251,7 +2324,10 @@ static func _fill_bilinear_coarse(c: Dictionary, p: Vector2,
 	var px := clampf(p.x, x0, x0 + FILL_STEP)
 	var pz := clampf(p.y, z0, z0 + FILL_STEP)
 	var acc: float
-	if _may_straddle_a_cliff(c, i0, j0, m1):
+	var gate_t := Time.get_ticks_usec() if profile_source_cost else 0
+	var straddles := _may_straddle_a_cliff(c, i0, j0, m1)
+	if profile_source_cost: _fine_tick("cliff_gate_node_ground", gate_t, straddles)
+	if straddles:
 		# Fill nodes sit off the walls (FILL_OFFSET), so every other cell
 		# straddles a dual-cell border in x and/or z. Rows, then the column,
 		# are interpolated per side of a real cliff there (_wall_span), probed
@@ -2264,10 +2340,12 @@ static func _fill_bilinear_coarse(c: Dictionary, p: Vector2,
 		# any crown and so never admits a spill. A strict flag (both nodes wet)
 		# would switch the column's rule at the x-wall itself and break the
 		# surface there (measured in round 2 on the chute site at x = 54).
+		var prof_t := Time.get_ticks_usec() if profile_source_cost else 0
 		var pitch := TerrainTileField.spacing(c.region)
 		var row0 := _wall_span(c.region, pitch, values[0], values[1], wet[0], wet[1], x0, px, pz, 0)
 		var row1 := _wall_span(c.region, pitch, values[2], values[3], wet[2], wet[3], x0, px, pz, 0)
 		acc = _wall_span(c.region, pitch, row0, row1, wet[0] or wet[1], wet[2] or wet[3], z0, pz, px, 1)
+		if profile_source_cost: _fine_tick("wall_span_x3", prof_t)
 	else:
 		acc = lerpf(lerpf(values[0], values[1], tx), lerpf(values[2], values[3], tx), tz)
 	if wet_weight >= 1.0 - 0.000001 or not apply_shore_bound:
@@ -2430,6 +2508,7 @@ const SHORE_EDGE_PROBE := 0.001
 static func _shore_support_level(c: Dictionary, p: Vector2, interpolated: float,
 		head: float, origin: Vector2, step: float,
 		dry_heights: PackedFloat32Array) -> float:
+	var prof_t := Time.get_ticks_usec() if profile_source_cost else 0
 	var corners := [origin, origin + Vector2(step, 0.0),
 		origin + Vector2(0.0, step), origin + Vector2(step, step)]
 	var correction := 0.0
@@ -2449,6 +2528,7 @@ static func _shore_support_level(c: Dictionary, p: Vector2, interpolated: float,
 		var excess := maxf(limiting_head - edge_support, 0.0)
 		var support := clampf(p.distance_to(q) / step, 0.0, 1.0)
 		correction = maxf(correction, excess * (1.0 - support))
+	if profile_source_cost: _fine_tick("shore_support_level", prof_t)
 	return interpolated - correction
 
 
