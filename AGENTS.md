@@ -97,6 +97,10 @@
 > the rest). Profiling counters (`_fine_*`) belong to one rescue thread at a time (int stage
 > and owner, Dictionary under `_fine_lock`), so profiled parallel solves and the worker gate
 > are safe.
+> Follow-up: `NativeWaterFill.on()` gates only on a worker (`NativeGates.may_gate_here`, like
+> the other ports; ~1.26 s cold setup, ~0.48 s of it `rescue_parity`); the gate-only
+> `RescueSeedAnchors` entry is gone (the whole-path compare covers its outputs), and the gate
+> adds seed 99's case 28, which alone catches a swapped flood neighbour order.
 > October 8 fixes: frame feel main-thread max 15-19.5 ms (was 182.8: `_drain_results`
 > spikes were payloads freed in the task reap), startup 67-69 s in the feel harness (was
 > 138-141 s under other load); see `docs/qa/2026-10-07-native-ports/result.md`.

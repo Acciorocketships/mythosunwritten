@@ -17,9 +17,10 @@ extends RefCounted
 ## WaterField dispatches with
 ##   if NativeWaterFill.on(): return NativeWaterFill.<kernel>(...)
 ## FieldTerrainStreamer._ready only loads the C# class (prepare()); the parity
-## gate (about 0.3-0.4 s of GDScript reference runs) then happens lazily in the
-## first on() call, on the worker that first solves water, never on the main
-## thread. Tests and harnesses call setup() to load and gate at once.
+## gate (measured October 8: ~1.26 s for a cold setup() including the C#
+## load, ~0.48 s of it the fine rescue's rescue_parity) then happens lazily
+## in the first on() call from a worker (NativeGates.may_gate_here), never on
+## the main thread. Tests and harnesses call setup() to load and gate at once.
 ## Relax, smooth and cap read ground only from their dense array, so WaterField uses
 ## them only when that array is complete (no INF, the "not sampled yet"
 ## sentinel of _ground_at); otherwise the GDScript runs.
@@ -44,10 +45,11 @@ static var _mutex := Mutex.new()
 static var profiles_served := 0
 
 
-## Any thread. The first call runs the parity gate (unless setup() already
-## did); a thread that finds the gate running elsewhere just uses GDScript.
+## Any thread. The first call from a non-main thread that wins try_lock runs
+## the parity gate (unless setup() already did); the main thread, and a thread
+## that finds the gate running elsewhere, just use GDScript meanwhile.
 static func on() -> bool:
-	if not _gated and _mutex.try_lock():
+	if not _gated and _GATES.may_gate_here() and _mutex.try_lock():
 		_gate()
 		_mutex.unlock()
 	return enabled and not force_off
@@ -165,34 +167,6 @@ static func seed_sources(claims: Array, ponds: Array, base: Vector2, m1: int,
 	return {"index": PackedInt32Array(result[2]), "level": PackedFloat64Array(result[3]),
 		"priority": PackedFloat64Array(result[4]), "margins": PackedFloat32Array(result[1]),
 		"claim_usec": int(result[5]), "contain_usec": int(result[6])}
-
-
-## WaterField._rescue_seed_anchors over an ungraded HeightfieldRegion: the
-## fine rescue's seed and anchor stages with the coarse queries they share.
-## `sub_ground` is the rescue's ground (INF = unsampled), read only. Returns
-## {"ground", "queued", "samples" (the 3 m coarse-level memo), "node_ground",
-## "index"/"level"/"priority" (the seed queue in heap order, for fill_queue),
-## "anchors", "anchor_indices", "seed_usec", "anchor_usec", "ground_usec",
-## "window_usec", "seed_visits", "anchor_visits"}; {} when the C# call failed.
-static func rescue_seed_anchors(region: HeightfieldRegion, base: Vector2,
-		coarse_levels: PackedFloat32Array, coarse_n: int,
-		sub_ground: PackedFloat32Array) -> Dictionary:
-	var started := Time.get_ticks_usec()
-	var window := WaterField._rescue_window(region, base, coarse_n, int(coarse_levels.size() / coarse_n))
-	var window_usec := Time.get_ticks_usec() - started
-	var r = _native.RescueSeedAnchors(window.heights, window.storeys, window.w, window.h,
-		window.lo.x, window.lo.y, window.spacing, TerrainTileField.cliff_end, base.x, base.y,
-		coarse_levels, coarse_n, sub_ground)
-	if _fault(r) or not r is Array or (r as Array).size() != 10:
-		return {}
-	var stats := PackedInt64Array(r[9])
-	return {"ground": PackedFloat32Array(r[0]), "samples": PackedFloat64Array(r[1]),
-		"node_ground": PackedFloat64Array(r[2]), "queued": PackedByteArray(r[3]),
-		"index": PackedInt32Array(r[4]), "level": PackedFloat64Array(r[5]),
-		"priority": PackedFloat64Array(r[6]), "anchors": PackedFloat32Array(r[7]),
-		"anchor_indices": PackedInt32Array(r[8]), "seed_usec": stats[0] + window_usec,
-		"anchor_usec": stats[1], "ground_usec": stats[2], "window_usec": window_usec,
-		"seed_visits": stats[3], "anchor_visits": stats[4]}
 
 
 ## WaterField._rescue_seed_anchors then _rescue_flood (spill init and flood)
@@ -577,19 +551,26 @@ static func _parity() -> String:
 	var profiled := _profile_parity(rng)
 	if not profiled.is_empty():
 		return profiled
-	return rescue_parity(12)
+	var rescued := rescue_parity(12)
+	if not rescued.is_empty():
+		return rescued
+	# Seed 99's case 28 alone catches a swapped flood neighbour order (it
+	# changes which 3 m ground the flood samples); the 12 cases above miss it.
+	return rescue_parity(29, 99, 28)
 
 
 
-## Fine rescue seed + anchor stages, then the whole C# path through spill
-## init and the flood (rescue_flood, with dry-bank river ceilings), on random terraced regions with cliffs
+## The fine rescue's whole C# path (rescue_flood: seed, anchors, spill init
+## and the flood, with dry-bank river ceilings) against the GDScript
+## _rescue_seed_anchors + _rescue_flood, on random terraced regions with cliffs
 ## (storey steps of two and three), slopes and level steps, and random coarse
 ## levels from two water planes chosen by terrace height: wet/dry pairs across
 ## walls, spills (upper water over a crown, lower below it), submerged walls,
 ## near-EPS depths and dry holes; some cases start with part of the 3 m ground
 ## already sampled. Every output is compared with `!=`. Own RNG, so the other
-## parity draws are unchanged. Public for tests (`cases` random lattices).
-static func rescue_parity(cases: int, rng_seed: int = 20261008) -> String:
+## parity draws are unchanged. Public for tests (`cases` random lattices;
+## cases before `first` are drawn but not compared).
+static func rescue_parity(cases: int, rng_seed: int = 20261008, first := 0) -> String:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = rng_seed
 	for case_index in cases:
@@ -608,6 +589,8 @@ static func rescue_parity(cases: int, rng_seed: int = 20261008) -> String:
 					var q := base + Vector2(idx % sub_n, idx / sub_n) * WaterField.FILL_SUB_STEP
 					ground[idx] = TerrainTileField.surface_y(region, q.x, q.y) \
 						+ (rng.randf_range(-1.0, 1.0) if rng.randf() < 0.3 else 0.0)
+		if case_index < first:
+			continue
 		var expected_ground := ground.duplicate()
 		var samples := PackedFloat64Array(); samples.resize(ground.size()); samples.fill(INF)
 		var node_ground := PackedFloat64Array(); node_ground.resize(coarse.size()); node_ground.fill(INF)
@@ -617,16 +600,7 @@ static func rescue_parity(cases: int, rng_seed: int = 20261008) -> String:
 		var pq := PriorityQueue.new()
 		var expected := WaterField._rescue_seed_anchors(region, base, coarse, coarse_n,
 			expected_ground, ctx, queued, pq, {}, {})
-		var heap_index := PackedInt32Array()
-		var heap_level := PackedFloat64Array()
-		var heap_priority := PackedFloat64Array()
-		for entry: Dictionary in pq.heap:
-			heap_index.append(entry.item[0])
-			heap_level.append(entry.item[1])
-			heap_priority.append(entry.priority)
-		var seed_ground := expected_ground.duplicate()
-		var seed_samples := samples.duplicate()
-		var seed_node_ground := node_ground.duplicate()
+		var seeded: int = pq.heap.size()
 		# Then spill init and the flood (it drains and frees pq).
 		var river: PackedFloat32Array = made.river
 		var expected_levels := PackedFloat32Array()
@@ -640,24 +614,7 @@ static func rescue_parity(cases: int, rng_seed: int = 20261008) -> String:
 				expected_ground, pq, expected.anchors, expected.anchor_indices, {}, {})
 			expected_levels = flood.levels
 			expected_settled = flood.settled
-		var actual := rescue_seed_anchors(region, base, coarse, coarse_n, ground)
-		var where := "case %d, %dx%d coarse, %d seeded" % [case_index, coarse_n, coarse_rows, heap_index.size()]
-		if actual.is_empty():
-			return "rescue seed/anchors failed in C# (%s)" % where
-		if actual.index != heap_index or actual.level != heap_level or actual.priority != heap_priority:
-			return "rescue seed queue differs (%s)" % where
-		if actual.queued != queued:
-			return "rescue queued marks differ (%s)" % where
-		if actual.ground != seed_ground:
-			return "rescue ground differs (%s)" % where
-		if actual.anchors != expected.anchors or actual.anchor_indices != expected.anchor_indices:
-			return "rescue anchors differ (%s)" % where
-		# The memos: every level C# evaluated equals the GDScript's (the sets
-		# agree; the coarse query is a pure function of the point).
-		if actual.samples != seed_samples:
-			return "rescue coarse levels differ (%s)" % where
-		if actual.node_ground != seed_node_ground:
-			return "rescue node ground differs (%s)" % where
+		var where := "case %d, %dx%d coarse, %d seeded" % [case_index, coarse_n, coarse_rows, seeded]
 		# The whole C# path (seed through flood): levels, the lazily sampled
 		# ground (which points were sampled, too) and the memos after it.
 		var flooded := rescue_flood(region, base, coarse, coarse_n, ground, river, {}, true)
@@ -676,7 +633,7 @@ static func rescue_parity(cases: int, rng_seed: int = 20261008) -> String:
 			return "rescue flood seeds or anchors differ (%s)" % where
 		if flooded.samples != samples or flooded.node_ground != node_ground:
 			return "rescue flood coarse memos differ (%s)" % where
-		if int(flooded.seed_pushed) != heap_index.size():
+		if int(flooded.seed_pushed) != seeded:
 			return "rescue flood seed count differs (%s)" % where
 	return ""
 

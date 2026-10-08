@@ -16,11 +16,24 @@ func test_the_parity_gate_passes_when_the_csharp_is_built() -> void:
 	assert_true(F.enabled, "NativeWaterFill gate passed (a warning names the mismatch)")
 
 
-## Many more random lattices than the gate's 12, on another seed (seed and
-## anchor stages, then the C# path through the flood).
-func test_seed_and_anchor_stages_match_gdscript_on_random_lattices() -> void:
+## Many more random lattices than the gate's 12, on another seed (the C#
+## path from the seed stage through the flood).
+func test_the_whole_csharp_rescue_path_matches_gdscript_on_random_lattices() -> void:
 	if not F.enabled: pass_test("native fill unavailable"); return
 	assert_eq(F.rescue_parity(48, 99), "", "every output bit-identical")
+
+
+## The main thread never runs the deferred gate (~1.3 s): on() there keeps
+## the GDScript until a worker has gated.
+func test_on_never_gates_on_the_main_thread() -> void:
+	var was_gated: bool = F._gated
+	var was_enabled: bool = F.enabled
+	F._gated = false
+	F.enabled = false
+	assert_false(F.on(), "the main thread uses GDScript")
+	assert_false(F._gated, "and leaves the gate to a worker")
+	F._gated = was_gated
+	F.enabled = was_enabled
 
 
 ## The random lattices must actually reach every wall branch of _wall_span:

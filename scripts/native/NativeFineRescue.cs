@@ -274,41 +274,6 @@ namespace Story.Native
             public int SeedVisits, AnchorVisits, Seeded;
         }
 
-        /// The seed and anchor stages of _build_sub_lattice_rescue. `subGround`
-        /// is the rescue's ground (INF = unsampled; prefilled entries are kept).
-        /// Returns [sub_ground, surface_samples, node_ground, queued, heap index,
-        /// heap level, heap priority, fine_anchors, anchor indices,
-        /// [seed usec, anchor usec, ground usec, seed visits, anchor visits]];
-        /// the anchor arrays are empty when nothing was seeded (the GDScript
-        /// returns before the anchor stage).
-        public Godot.Collections.Array RescueSeedAnchors(float[] heights, int[] storeys, int w, int h,
-            int i0, int j0, double pitch, int cliffEnd, double baseX, double baseY,
-            float[] coarseLevels, int coarseN, float[] subGround)
-        {
-            try
-            {
-                NativeFault.Check("NativeWaterFill");
-                var s = SeedAnchors(heights, storeys, w, h, i0, j0, pitch, cliffEnd, baseX, baseY,
-                    coarseLevels, coarseN, subGround);
-                s.Queue.ExportHeap(out Offer[] heap, out double[] priorities);
-                var heapIndex = new int[heap.Length];
-                var heapLevel = new double[heap.Length];
-                for (int k = 0; k < heap.Length; k++) { heapIndex[k] = heap[k].Index; heapLevel[k] = heap[k].Level; }
-                double usec = 1e6 / Stopwatch.Frequency;
-                var stats = new long[]
-                {
-                    (long)(s.SeedTicks * usec), (long)(s.AnchorTicks * usec), (long)(s.GroundTicks * usec),
-                    s.SeedVisits, s.AnchorVisits,
-                };
-                return new Godot.Collections.Array
-                {
-                    s.Ground, s.Coarse.Samples, s.Coarse.NodeGround, s.Queued, heapIndex, heapLevel, priorities,
-                    s.Anchors, s.AnchorIndices, stats,
-                };
-            }
-            catch (Exception e) { NativeFault.Record(e); return null!; }
-        }
-
         /// The seed, anchor, spill init and flood stages of
         /// _build_sub_lattice_rescue (_rescue_seed_anchors then _rescue_flood):
         /// the seed queue goes straight into the flood. `riverLevels` is the
