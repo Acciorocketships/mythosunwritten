@@ -3,8 +3,8 @@ extends RefCounted
 
 ## Full density to FULL_RADIUS, gone by GRASS_RADIUS (player distance). One
 ## source of truth: set_radii() mirrors both into the grass shader's globals.
-static var FULL_RADIUS := 60.0
-static var GRASS_RADIUS := 84.0
+static var FULL_RADIUS := 90.0
+static var GRASS_RADIUS := 140.0
 
 static func keep_radius() -> float:
 	return GRASS_RADIUS + GrassField.TILE_WORLD
@@ -376,7 +376,7 @@ func _update_tile_visible(tile: Vector2i) -> void:
 		# rounds UP to a quarter band, so it changes a few times per tile
 		# crossing instead of every frame: each visible-count write is an
 		# engine-side update that cost ~0.3 ms per tile (~20 ms a moving frame
-		# over the 60-84 m fade ring).
+		# over the 90-140 m fade ring).
 		var visible := visible_count(count, tile_density)
 		if visible != int(batch.visible):
 			multimesh.visible_instance_count = visible

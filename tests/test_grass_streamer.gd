@@ -27,7 +27,7 @@ func test_intersection_ring_has_no_square_holes_inside_the_fade() -> void:
 			if GrassStreamer.distance_to_tile(Vector2.ZERO, Vector2i(dx, dz)) < GrassStreamer.GRASS_RADIUS:
 				expected += 1
 	assert_eq(tiles.size(), expected)
-	assert_eq(expected, 52, "60/84 m ring (update with the default radius)")
+	assert_eq(expected, 132, "90/140 m ring (update with the default radius)")
 	var requested: Dictionary = {}
 	for tile: Vector2i in tiles:
 		requested[tile] = true

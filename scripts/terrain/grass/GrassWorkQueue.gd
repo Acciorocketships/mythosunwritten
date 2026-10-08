@@ -7,9 +7,11 @@ extends RefCounted
 ## pre-initialized in _init (BiomeRegistry) or guarded by short get/put locks
 ## (Helper noise corners, HeightfieldRegion/WaterFieldContext memos,
 ## TerrainGradePatch bake/claim memos); the rest is per-call.
-## WORKERS is 1: at the shipped 60/84 m ring a second worker bought nothing.
-## Raise it (the N-worker path is exercised by tests) if a wider ring ships.
-const WORKERS := 1
+## WORKERS is 2 for the shipped 90/140 m ring: with one worker the run fill-in
+## lag was 19 tiles (p50); two cut it to 8 with no frame-time cost
+## (docs/qa/2026-10-07-grass-distance/result.md). The harness flag
+## `--grass-workers N` overrides it.
+static var WORKERS := 2
 ## Test hook: while true, workers park after claiming a job (tile is active).
 var hold_workers := false
 var _worker_count := WORKERS

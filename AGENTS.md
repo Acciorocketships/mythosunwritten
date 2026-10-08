@@ -106,9 +106,9 @@
 > 138-141 s under other load); see `docs/qa/2026-10-07-native-ports/result.md`.
 
 > October 7 grass render distance: radii are runtime values (`GrassStreamer.set_radii(full, edge)`,
-> shader globals `grass_full_radius`/`grass_radius`), still 60/84 m. A re-sweep with two grass workers
-> (`docs/qa/2026-10-07-grass-distance/result.md`) found 90/140 and 100/170 over the frame-time gates
-> (run_turn dt p95 +2.5 ms, >10 ms frames) and fill-in lag 12-22 tiles, so they were not shipped.
+> shader globals `grass_full_radius`/`grass_radius`), now 90/140 m (owner saw grass pop in nearby).
+> Measured (`docs/qa/2026-10-07-grass-distance/result.md`, load 8-17): +2.5 ms dt p95 idle/run, +2.9
+> run_turn; `GrassWorkQueue.WORKERS` is 2 (run fill-in lag p50 19 -> 8 tiles, no frame cost).
 > `EnvironmentCommitQueue.visibility_range` fades sparse grass/flower dressing at `GRASS_RADIUS + 6`.
 > `frame_feel_profile` samples `pending_tiles()` every 10th frame (it sorts the ring).
 > `GrassWorkQueue.WORKERS` is 1 (N-worker path kept; raise if a wider ring ships). `set_radii` at
@@ -3899,7 +3899,7 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
   triangle root/bend/tip strip. The bake also moves complete blades 25% radially from the patch
   centre, producing one self-contained 1,244-triangle, roughly 3.11 m-wide mesh. Its large
   overlapping footprint closes the bed at far fewer instances than the former tuft grid. The main-thread
-  service streams a 60 m full-density / 84 m fade / 108 m eviction ring and commits one shadowless
+  service streams a 90 m full-density / 140 m fade / 164 m eviction ring and commits one shadowless
   MultiMesh per tile under an elapsed-time budget. Player distance owns deterministic population
   dropout and conservative CPU prefix caps; camera distance independently removes unreadable
   wind detail over 32–48 m, so an orbit camera cannot leave screen-distant blades

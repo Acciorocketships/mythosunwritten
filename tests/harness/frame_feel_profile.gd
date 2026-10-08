@@ -81,6 +81,7 @@ func _ready() -> void:
 			"--imposter-distance": EnvironmentCommitQueue.set_imposter_distance(float(next))
 			# Bark crossfade ablation (off = trunks without the dither discard).
 			"--bark-dither": EnvironmentCommitQueue.BARK_DITHER = next != "off"
+			"--grass-workers": GrassWorkQueue.WORKERS = int(next)
 			"--grass-radius":
 				var pair := next.split(",")
 				GrassStreamer.set_radii(float(pair[0]), float(pair[1]))
