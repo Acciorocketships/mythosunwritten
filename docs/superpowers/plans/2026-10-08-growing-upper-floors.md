@@ -4,30 +4,34 @@
 
 > **Amended October 8 (owner review after Task 4's diagnosis).** Tasks 1–3 are done and reviewed (commits 44ceab557, fb0a33125, 8e952f670, 8ce3e55b4) and stay as written. The original Tasks 4–7 are replaced by Tasks 4–10 below. The spec's "Amendment (October 8, owner review)" section is binding; where the text of Tasks 1–3 says "lean", "street face" or "0.25 step", read the amendment.
 
-**Goal:** Some town houses grow outward storey by storey (York's Shambles): on any exposed face, each storey above the ground storey steps out one kit jetty (1.0 native m, on the kit's own `bracket.jetty` brace) further than the one below, walls vertical, closed like today's room projections. Adjacent faces of one house step out together round convex corners, terrace neighbours step out as one row, and a stepped end may run into a plain perpendicular wall; facing upper floors nearly meet while the lane keeps a slot of sky. Tunable by town odds; byte-identical to today when `growing_house_chance = 0`.
+> **Amended October 9 (owner option 2: step in the kit's way).** Tasks 4–7 are done and reviewed (commits c8963fe9b, d44da4be1, 7e03d12c6, 5651ae7d4, 9419f7dab) and stay as written; they built the step-OUT machinery (fronts, wrap, rows, bury, guardrails) that the step-in re-references. The former Task 8 (roofs follow the step; commits 7a4ad783d, 3607a1ff1, never reviewed) is superseded and its roof code is removed by the new Task 9. The former Tasks 8–10 are replaced by Tasks 8–11 below. The spec's "Amendment 2 (October 9): step in the kit's way" is binding over everything else; where Tasks 1–7 say "step out", "lean over the lane", "sky gap" or "crown", read Amendment 2.
 
-**Architecture:** A pure kit-layer fitter, `KitGrowingFronts`, runs in `KitVillageBuildings.build` after roofs are joined and towers proposed, before room projections and facade bays. It builds FRONTS (face chains that step as one: a lone face, faces joined at a house's convex corners, coplanar faces of neighbouring houses), gives each front one monotone cumulative step profile, and writes it through the existing `storey.wall_offsets` / `storey.projections` contract (`projections{growth, base, closures}`). `BuildingKitAssembler._emit_projected_front` closes each step with baked depth variants of `frontage.floor` / `frontage.return` / `frontage.return_beam` / `frontage.corner`, `bracket.jetty` for a kit-sized increment, and per-end closures (`return`, `wrap`, `joint`, `bury`). Guardrails each withdraw a step (never a house or town); a front member that cannot hold a storey leaves its front. The top storey follows its roof (gable end shifts with a clipped filler, or the step is capped under the measured eave).
+**Goal:** Some town houses grow storey by storey the Suntail/Shambles way: the roof and the top storey stay on the footprint and each lower storey steps IN one kit jetty (1.0 native m; 0.5 for the light step) further than the storey above, so the ground storey is the narrowest and every upper storey overhangs the one below on the kit's own jetty (floor beam, `bracket.jetty` braces on wall-module joints). Adjacent faces of one house step in together round convex corners, terrace neighbours step in as one row, an end beside the house's own wing closes its recess with a strip, and a ground door becomes a recessed shopfront under the overhang. Tunable by town odds; byte-identical to today when `growing_house_chance = 0`.
 
-**Tech Stack:** Godot 4.5, typed GDScript, GUT, environment bake (`tools/environment_bake/environment_bake.gd`, `bake_town_frame_variants.gd`, `export_growth_front_manifest.gd`), town fingerprint harness, `growth_corpus_audit` (new), `kit_town_review` / `building_gallery` render harnesses.
+**Architecture:** A pure kit-layer fitter, `KitGrowingFronts`, runs in `KitVillageBuildings.build` after roofs are joined and towers proposed, before room projections and facade bays. It builds FRONTS (face chains that step as one: a lone face, faces joined at a house's convex corners, coplanar faces of neighbouring houses), gives each front one monotone cumulative profile `lean_k`, and writes it re-referenced to the face's top storey: storey k stands `lean_k - top` inside its line and the ground storey `-top` (`offsets_of`), through `storey.wall_offsets` (negative), `storey.projections` growth records `{growth, dir, edges, centres, band, depth, base, closures}` (signed native m) and `storey.growth[dir]`. `BuildingKitAssembler` shortens (or drops) the perpendicular corner panels to the baked `frontage.return.dNNN` strip, trims a stepped-in upper storey's floor to the baked `frontage.floor` / `frontage.corner` inner piece, carries each overhang on its floor beam with braces on the module joints of the wall below and return beams at open sides, and closes a `bury` end with a strip on the vertex line. Guardrails each withdraw a step (the front's cap drops one step; never a house or town); a front member that cannot hold leaves its front. Roofs never move.
 
-**Spec:** `docs/superpowers/specs/2026-10-08-growing-upper-floors-design.md` (read its "Amendment (October 8, owner review)" first).
+**Tech Stack:** Godot 4.5, typed GDScript, GUT, environment bake (`tools/environment_bake/environment_bake.gd`, `bake_town_frame_variants.gd`, `export_growth_front_manifest.gd`), town fingerprint harness, `growth_corpus_audit`, `kit_town_review` / `building_gallery` render harnesses.
+
+**Spec:** `docs/superpowers/specs/2026-10-08-growing-upper-floors-design.md` (read "Amendment 2 (October 9): step in the kit's way" first, then the October 8 amendment).
 
 ## Global Constraints
 
 - Worktree `/Users/ryko/.codex/worktrees/77a0/story`, branch `town-redesign`; never touch `/Users/ryko/story`; never run the `godot-test` alias.
 - `godot` below means `/Applications/Godot.app/Contents/MacOS/Godot`; always add `--log-file /tmp/<name>.log`, redirect stdout to a file and check the exit code; ignore unrelated Godot processes; run `godot --headless --path . --import` after adding a `class_name` or new assets.
-- Knob `growing_house_chance`: CHANCE, 0.3 small → 0.45 large, spread 0.1 (shipped in Task 10; Tasks 1–9 keep it at 0).
+- Knob `growing_house_chance`: CHANCE, 0.3 small → 0.45 large, spread 0.1 (shipped in Task 11; Tasks 1–10 keep it at 0).
 - Knob `growth_street_face_chance`: CHANCE, 0.85.
-- Knob `growth_other_face_chance`: CHANCE, 0.85 (equal to the street knob: every exposed face alike; set in Task 4).
-- Knob `growth_step`: WEIGHTS, {0.5 native m (1.0 m world, `bracket.small`): 1, 1.0 native m (2.0 m world, the kit jetty, `bracket.jetty`): 3} (set in Task 4; 0.25 retired).
-- Knob `growth_max_lean`: RANGE_FLOAT, 2.0 native m (two kit steps; 4 m world) at every size (set in Task 4).
-- Knob `lane_sky_gap`: RANGE_FLOAT, 0.75 native m (1.5 m world).
-- Knob `growth_gable_front_boost`: RANGE_FLOAT, 2.0.
-- Units: kit native metres (module 2.0 m, storey 3.0 m; world = native x 2); steps are sub-module offsets applied through `wall_offsets` (module fractions). Suntail `jetty_depth` = 1.0 native = half a module.
-- Byte-identical at `growing_house_chance = 0`: fingerprint `baseline.json` MATCH and `test_town_old_look` pass after every task 4–9.
-- Guardrails withdraw the offending step, never a house or a town; in a front, a member that cannot hold a storey leaves the front (the rest keep stepping).
-- No runtime asset scaling: every depth is a baked `frontage.*` variant (manifest clip), steps 0.5 / 1.0, at most four steps (cap 2.0).
-- Worker purity: fitters return plain dictionaries and mutate only `BuildingMass` data; no nodes or server resources; catalog and roof geometry are read-only inputs.
+- Knob `growth_other_face_chance`: CHANCE, 0.85 (every exposed face alike).
+- Knob `growth_step`: WEIGHTS, {0.5 native m (1.0 m world, `bracket.small`): 1, 1.0 native m (2.0 m world, the kit jetty, `bracket.jetty`): 3}.
+- Knob `growth_max_lean`: RANGE_FLOAT, 2.0 native m: the total step-in of the ground storey below the top storey (name kept).
+- Knob `lane_sky_gap`: RANGE_FLOAT, 0.75 native m; inert under step-in (insets never narrow a lane), kept as the guardrail value for any outward offset (G2, room projections facing a growth registry entry).
+- Knob `growth_gable_front_boost`: removed in Task 9 (knob, `BOOST_KNOB`, designer member, `gable_boost` context key).
+- Units: kit native metres (module 2.0 m, storey 3.0 m; world = native x 2); offsets are sub-module values applied through `wall_offsets` (module fractions, negative = stepped in). Suntail `jetty_depth` = 1.0 native = half a module.
+- Step-in invariant: the roof and the top storey of every stepping face never move; every piece growth adds stands inside the house's own cells (lot), within the wall face plus 5 cm.
+- Byte-identical at `growing_house_chance = 0`: fingerprint `baseline.json` MATCH and `test_town_old_look` pass after every task 4–10.
+- Guardrails withdraw the offending step (the front's cap drops one step), never a house or a town; in a front, a member that cannot hold even the first step leaves the front (the rest refit).
+- No runtime asset scaling: every cut, strip, trimmed floor and beam is a baked `frontage.*` variant (d050/d100/d150/d200 for floors, returns, return beams and corner squares exist), steps 0.5 / 1.0, at most four steps (cap 2.0 = one module).
+- Braces stand on wall-module joints (panel joints and corner posts) of the stepped-in storey below, never over a window or door head; one brace per joint.
+- Worker purity: fitters return plain dictionaries and mutate only `BuildingMass` data; no nodes or server resources; the catalog is a read-only input.
 - Deterministic per-key rolls: house rolls keyed by `mass.stable_id`, face rolls by the face key, fronts processed in leader-key order; one knob never moves another knob's draw.
 - Every commit message ends with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`; commit only this task's paths (`git commit -m "..." -- <paths>`; another agent commits roof work in this worktree concurrently); never `git add -f`, never commit `.superpowers/`.
 - Measurement, not loosening: when a corpus count misses its target, report the per-cause withdrawal counts and stop for a controller ruling; never relax a guardrail to hit a number.
@@ -36,16 +40,16 @@ Command forms used below:
 
 - Focused test: `godot --headless --path . --log-file /tmp/t.log -s res://addons/gut/gut_cmdln.gd -gtest=res://tests/<file>.gd -gexit > /tmp/t.out 2>&1; echo EXIT $?; tail -30 /tmp/t.out`
 - Fingerprint gate: `godot --headless --path . --log-file /tmp/fp.log -s res://tests/harness/town_fingerprint.gd -- --out /tmp/fp.json --compare res://docs/qa/2026-10-07-town-odds/fingerprint/baseline.json > /tmp/fp.out 2>&1; echo EXIT $?; grep FINGERPRINT_ /tmp/fp.out` must print `FINGERPRINT_MATCH` (harness flags: `--towns`, `--out`, `--compare`, `--parts source,payload,error`, `--odds name=value`, `--old-look`).
-- Growth-on smoke (Tasks 3–9): the same command with `--odds growing_house_chance=1 --out /tmp/fp_on.json` and no `--compare`; `grep -c FINGERPRINT_NO_TOWN /tmp/fp.out` must print 0.
-- Growth corpus count (Tasks 4–9, harness created in Task 4): `godot --headless --path . --log-file /tmp/gc.log -s res://tests/harness/suntail/growth_corpus_audit.gd -- --odds growing_house_chance=1 --odds growth_street_face_chance=1 --odds growth_other_face_chance=1 --out /tmp/growth_count.json > /tmp/gc.out 2>&1; echo EXIT $?; grep -E "GROWTH_(TOTAL|AUDIT_DONE)" /tmp/gc.out`. Baselines from `task-4-report.md` Diagnosis 2 on the same 8 towns: 183 candidate faces; 18 stepping faces / 19 storeys with the three false-blocker fixes; 22 / 23 with the coplanar terrace.
+- Growth-on smoke (Tasks 3–10): the same command with `--odds growing_house_chance=1 --out /tmp/fp_on.json` and no `--compare`; `grep -c FINGERPRINT_NO_TOWN /tmp/fp.out` must print 0.
+- Growth corpus count (Tasks 4–10): `godot --headless --path . --log-file /tmp/gc.log -s res://tests/harness/suntail/growth_corpus_audit.gd -- --odds growing_house_chance=1 --odds growth_street_face_chance=1 --odds growth_other_face_chance=1 --out /tmp/growth_count.json > /tmp/gc.out 2>&1; echo EXIT $?; grep -E "GROWTH_(TOTAL|AUDIT_DONE)" /tmp/gc.out`. Baselines on the same 8 towns: 183 candidate faces (Task 4 Diagnosis 2); 21 stepping faces / 22 storeys after Task 7 (step-out, before roofs); 2 faces after the superseded Task 8.
 
 ## Review Focus
 
-1. Two growing fronts facing across a lane: the later front in leader-key order must see the earlier one's accepted step and withdraw exactly its own failing step, so every facing pair keeps at least `lane_sky_gap`; the earlier front is unchanged. Tests: Task 4 `test_sky_gap_withdraws_only_the_later_houses_failing_step`, Task 9 `test_facing_growing_houses_across_one_cell_lane`.
-2. A storey that cannot hold even the inherited step (portal on the face, blocked end, set-back storey above, uncovered crown): in a lone front the face cap drops and the storeys below re-cap, so no storey is ever inward of the one below (no exposed ledge); in a multi-member front the member leaves and the rest refit. The house and town still build. Tests: Task 4 `test_skywalk_portal_face_never_leans_but_other_face_does`, Task 5 `test_a_member_that_cannot_hold_leaves_the_front`, Task 6 `test_a_row_member_that_cannot_step_withdraws_the_joint_not_the_town`.
-3. Closures: every stepped end closes by exactly one rule — `return` (open air), `wrap` (strips + corner squares + post at the moved corner), `joint` (no pieces; neighbour steps equally), `bury` (plain wall only). No end is left open, no return is doubled at a joint. Tests: Task 5 `test_a_wrapped_corner_is_closed_by_strips_squares_and_a_post`, Task 6 `test_a_terrace_row_steps_out_as_one`, Task 7 `test_inside_corner_end_is_buried_in_a_plain_wall`, Task 9 audit keys `open_returns`, `open_corners`, `broken_joints`, `buried_on_ornament`.
-4. Roofs: an eave-crowned top storey stays under the measured cornice (kit 1.0 steps cannot; the 0.5 fallback or flush), and a gable end that cannot shift cleanly keeps its face flush at the top. Tests: Task 8 `test_eave_face_top_step_stays_under_the_measured_cornice`, `test_unshiftable_gable_end_keeps_the_face_flush`.
-5. The zero path: at `growing_house_chance = 0` no designer rng draw is skipped or added, no storey/wing key is written, projections/bays see exactly today's inputs, `storey_slots`' new `right_extend` is 0 everywhere, and changing one growth knob never moves another knob's draw or another house's roll. Tests: Task 1 `test_house_roll_is_keyed_by_house_and_untouched_by_other_growth_knobs`, `test_build_marks_houses_growing_only_when_the_chance_is_positive`, and the fingerprint gate after every task.
+1. The step-in invariant: roofs, top storeys and everything outside the lot are untouched — a stepping face's top storey has offset 0, no roof wing carries `lean_min`/`lean_max`, roof parts are identical with and without growth, and every added piece lies inside the lot. Tests: Task 9 `test_roofs_and_the_top_storey_never_move`, Task 10 audit keys `outside_lot`, `roof_moved`, `top_moved`.
+2. A storey that cannot take its inset (portal, blocked end, bearing, stone fraction, party wall): the front's cap drops one step and the whole face re-tests at its final offsets, so no storey is ever outward of the storey above (no exposed ledge); a member that cannot take even the first step leaves and the rest refit. The house and town still build. Tests: Task 9 `test_skywalk_portal_storey_stays_on_the_lot_line`, `test_a_member_that_cannot_hold_leaves_the_front`, `test_a_row_member_that_cannot_step_withdraws_the_joint_not_the_town`.
+3. Closures under step-in: `return` (perpendicular corner panel shortened or dropped, post at the new corner), `wrap` (both corner panels shortened, one post, inner floor square), `joint` (nothing), `bury` (strip on the vertex line). No end left open, no doubled post or beam. Tests: Task 8 `test_the_corner_panels_beside_a_stepped_in_run_give_way`, `test_a_wrapped_corner_steps_in_both_faces_with_one_post`, `test_a_buried_end_closes_the_recess_against_the_own_wing`, Task 9 `test_a_terrace_row_steps_in_as_one`, Task 10 audit keys `open_ends`, `broken_joints`.
+4. Braces on joints and floors without ledges: one brace per wall-module joint, none over a window or door head, none where nothing stands below (a wrapped corner, a cut end); a stepped-in upper floor ends at its wall while the ground floor stays whole as the paving to a recessed door. Tests: Task 8 `test_overhang_braces_stand_on_module_joints_never_over_an_opening`, `test_a_stepped_in_upper_floor_ends_at_its_wall_and_the_ground_floor_stays_whole`, Task 9 `test_a_ground_door_is_a_recessed_shopfront`, Task 10 audit keys `braces_over_openings`, `ledges`.
+5. The zero path: at `growing_house_chance = 0` no designer rng draw is skipped or added, no storey/wing key is written, projections/bays see exactly today's inputs, `storey_slots`' `right_extend` / `short` / `dropped` are 0/absent everywhere, and changing one growth knob never moves another knob's draw or another house's roll. Tests: Task 1 `test_house_roll_is_keyed_by_house_and_untouched_by_other_growth_knobs`, `test_build_marks_houses_growing_only_when_the_chance_is_positive`, Task 8 `test_offsets_of_zero_write_nothing`, and the fingerprint gate after every task.
 
 ---
 
@@ -2632,417 +2636,1773 @@ The host's own stepping-face pieces at the old plane meet the box by at most 0.0
 
 ---
 
-### Task 8: Roofs follow the step (gable shift, eave cap, gable-front boost)
+### Task 8: Assembler: cumulative step-in (cut corners, trimmed floors, joint braces, bury strips)
 
-The original Task 5, adapted to the amendment: kit steps (a 2.0 top step moves a gable end a full module), fronts (every member's top storey must be closed above; a member whose crown cannot cover the front's step leaves the front), and the eave finding. The Suntail cornice reaches 0.986 native m beyond the wall line and dips 0.6 m at its tip, so no kit jetty (1.0) can pass under an eave: an eave-crowned leader falls back to the 0.5 step when the measured allowance admits it, otherwise eave-crowned faces stay flush (cause `crown`). Consequence, measured in Task 9 and reported to the owner: outer-corner wraps and rows reach a top storey only where every member's crown is a gable end that can move.
+Spec Amendment 2, assembler side only. KitGrowingFronts still writes step-out data until Task 9, so every step-out branch stays untouched here; this task teaches the assembler the step-in data contract, and its tests write that contract directly (`FIXTURE.write_step_in`). The superseded Task 8 fix round already added a one-storey version of the step-in pieces (`storey_slots` `short`/`short_side`, `_emit_inset_end`, `_emit_inset_jetty`, `below_growth`); they are the concrete remaining use of that code and are generalised here to cumulative offsets (several stepped-in storeys, whole-module cuts, wrapped corners, joint braces).
+
+**Data contract** (Task 9's `apply` writes exactly this; `write_step_in` writes it for tests): for storey i of a stepping face from the ground storey up, an offset `o_i <= 0` (native m). Where `o_i < 0`, `storey.wall_offsets[edge] = o_i / module_width` on the face's run edges. Every storey with `o_i < 0` or `o_i > o_(i-1)` carries a growth record in `storey.projections`: `{"growth": true, "dir", "edges", "centres" (module centres on the ORIGINAL line, sorted along right_of(dir)), "band", "depth": o_i, "base": o_(i-1) (the ground storey: its own offset), "closures": [left, right]}`; `storey.growth[dir] = o_i`.
 
 **Files:**
-- Modify: `scripts/terrain/features/villages/kit/KitGrowingFronts.gd` (`fit` gains `roof_geometry: Dictionary = {}`; `_fault` gains `_crown_fault` as its last check; `_commit` writes the wing lean; `_fit_front` eave fallback; `_publish_riders` records each rider's crown; new `roof_geometry`, `crown_wing`, `eave_allowance`, `_gable_shift_ok`, constants `EAVE_MARGIN`, `EAVE_COVER`, `EAVE_SAMPLE`)
-- Modify: `scripts/terrain/features/villages/kit/BuildingKitAssembler.gd` (`_assemble_roof` lines 847–955: record first part, call `_lean_roof_end`; new `roof_parts`, `_lean_roof_end`)
-- Modify: `scripts/terrain/features/villages/kit/BuildingDesigner.gd` (member `gable_front_boost`; `articulate`; `_square_axis` lines 616–622)
-- Modify: `scripts/terrain/features/villages/kit/KitVillageBuildings.gd` (pass `GROWTH.roof_geometry(house_kits.values() + [kit])` to `GROWTH.fit`)
-- Modify: `tests/fixtures/growing_house.gd` (pass `GROWTH.roof_geometry([kit])`)
-- Modify: `tests/harness/suntail/building_gallery.gd` (`--growth step:cap`, option parsing lines 18–30, per-mass loop lines 108–112)
-- Modify (re-pins, Step 9): `tests/test_growing_floors_guardrails.gd`, `tests/test_growing_floors_wrap.gd`
-- Test: `tests/test_growing_floors_roofs.gd`
+- Modify: `scripts/terrain/features/villages/kit/BuildingKitAssembler.gd` (`storey_slots` lines 446–475; `_assemble_storey` slot loop lines 537–580; `_emit_inhabited_floor` lines 79–85; `_emit_front_floors` 88–95 and `_emit_projected_front` 104–144 route step-in records; `_emit_inset_jetty` 1011–1028 rewritten; new `_emit_joint_braces`, `_blocked_beside`, `_emit_trimmed_floor`, `_emit_step_in`)
+- Modify: `tests/fixtures/growing_house.gd` (new `write_step_in`)
+- Modify: `tests/test_growing_floors_roofs.gd` (two brace counts 3 → 4; the file is deleted in Task 9)
+- Test: `tests/test_growing_floors_step_in.gd` (new)
 
 **Interfaces:**
-- Consumes: `KitRoofMeshUnion._load_geometry(kit, geometry: Dictionary, loaded: Dictionary)`, `KitRoofMeshUnion.clip_volumes(wing: Dictionary, kit) -> Array[Dictionary]`, `KitRoofMeshUnion.prepare(roofs, walls, kit) -> Dictionary`, `KitRoofMeshUnion.realize(placement, ctx) -> Dictionary`, `BuildingKitAssembler.tight_eave_sides(wing) -> int`, `kit.anchor(role)`, `kit.asset_anchor(id)`, catalog `measured_aabb`.
-- Produces: rejection cause `&"crown"`; rider key `"crown": int` (the partner's crown `union_index`); wing keys `lean_min` / `lean_max: float` (native m); placement keys `lean_end: bool`, `lean_filler: bool`; `BuildingKitAssembler.roof_parts(mass, wing) -> Array[Dictionary]`; `KitGrowingFronts.roof_geometry(kits: Array) -> Dictionary`, `crown_wing(mass, chain, k) -> Dictionary`, `eave_allowance(kit, catalog, geometry, wing, side: int) -> float`; `BuildingDesigner.gable_front_boost: float`.
+- Consumes: `storey.wall_offsets` (module units), growth records as above, baked roles `frontage.{floor,return,return_beam,corner}.d{050,100,150,200}`, `bracket.jetty`, `bracket.small`, `trim.floor_beam`, `trim.floor_beam_corner`, `post.timber`, `kit.jetty_depth`, `external_blocked`.
+- Produces: slot keys `short` (modules cut at `short_side`), `short_side`, `dropped: bool` (a whole-module cut; its inner neighbour on the run takes its convex flag); `BuildingKitAssembler._emit_inset_jetty(ctx, storey, slot, y, lower: float, below: Dictionary)`, `_emit_joint_braces(ctx, storey, slot, y, lower: float, below: Dictionary)`, `_blocked_beside(storey, cell) -> bool`, `_emit_trimmed_floor(ctx, storey, offsets, cell, y) -> bool`, `_emit_step_in(ctx, storey, projection, y)`; fixture `write_step_in(mass, kit, dir, offsets: Array[float], closures: Array = [&"return", &"return"], run: Array[Vector3i] = [])`.
 
-Measurements this task relies on (catalog, October 8): Suntail eave `suntail.roof.roof_1_cornice_red` measured_aabb z −2.111..0.986 (outer reach 0.986 m beyond the wall line), y −0.599..3.119 (the cornice dips 0.6 m below the wall head at its tip); Pure `pure_village.roof.eave` z −2.276..1.072. The allowance therefore scans the baked roof geometry for the cornice's top surface over a leaned wall head, bounded by the measured reach.
+- [ ] **Step 1: Fixture helper.** Append to `tests/fixtures/growing_house.gd`:
 
-- [ ] **Step 1: Write the failing tests** `tests/test_growing_floors_roofs.gd`:
+```gdscript
+## Writes a step-in on face `dir` exactly as KitGrowingFronts.apply does (spec
+## Amendment 2): offsets[i] (native m, <= 0) for storey i from the ground up, a growth
+## record on every storey that stands in or overhangs the one below. `run` lists the
+## face's edges (default: every boundary edge facing `dir` of storey 0).
+static func write_step_in(mass: BuildingMass, kit: BuildingKit, dir: int, offsets: Array[float],
+		closures: Array = [&"return", &"return"], run: Array[Vector3i] = []) -> void:
+	var edges: Array[Vector3i] = run.duplicate()
+	if edges.is_empty():
+		for cell: Vector2i in mass.storeys[0].cells:
+			if not (mass.storeys[0].cells as Dictionary).has(cell + BuildingMass.DIRS[dir]):
+				edges.append(BuildingMass.edge_key(cell, dir))
+	var centres: Array[Vector2] = []
+	for edge: Vector3i in edges:
+		centres.append(Vector2(edge.x, edge.y) + Vector2.ONE * 0.5 + Vector2(BuildingMass.DIRS[dir]) * 0.5)
+	var right := Vector2(BuildingKitAssembler.right_of(dir))
+	centres.sort_custom(func(a: Vector2, b: Vector2) -> bool: return a.dot(right) < b.dot(right))
+	for index in offsets.size():
+		var storey: Dictionary = mass.storeys[index]
+		var depth := offsets[index]
+		var base := offsets[index - 1] if index > 0 else depth
+		var growth: Dictionary = storey.get("growth", {})
+		growth[dir] = depth
+		storey["growth"] = growth
+		if depth >= 0.0 and depth <= base:
+			continue
+		if depth < 0.0:
+			var wall_offsets: Dictionary = storey.get("wall_offsets", {})
+			for edge: Vector3i in edges:
+				wall_offsets[edge] = depth / kit.module_width
+			storey["wall_offsets"] = wall_offsets
+		var fronts: Array = storey.get("projections", [])
+		fronts.append({"edges": edges, "centres": centres, "dir": dir, "depth": depth, "base": base,
+			"band": int(storey.floor_band), "growth": true, "closures": closures})
+		storey["projections"] = fronts
+```
+
+- [ ] **Step 2: Write the failing tests** `tests/test_growing_floors_step_in.gd`:
 
 ```gdscript
 extends GutTest
+## Step-in assembly (spec Amendment 2): a storey stands `offset` (<= 0, native m) inside
+## its line on a stepping face; the top storey and the roof never move. Native frame:
+## the south face (dir 3) of Rect2i(0, 0, 3, 2) is the line z = 0, inward is +z.
 const FIXTURE := preload("res://tests/fixtures/growing_house.gd")
-const GROWTH := preload("res://scripts/terrain/features/villages/kit/KitGrowingFronts.gd")
-const UNION := preload("res://scripts/terrain/features/villages/kit/KitRoofMeshUnion.gd")
 
 
-func _causes(f: Dictionary) -> Array:
-	return (f.result.rejections as Array).map(func(r: Dictionary) -> StringName: return r.cause)
+func _house(storeys := 4, door_dir := 1) -> BuildingMass:
+	return FIXTURE.house(&"kit.fixture.front", Rect2i(0, 0, 3, 2), storeys, door_dir)
 
 
-func test_gable_end_moves_out_with_the_top_storey_and_the_gap_is_filled() -> void:
-	var f := FIXTURE.build({"roof_axis": 1, "lone": true})
-	var wing: Dictionary = f.front.roofs[0]
-	assert_eq(FIXTURE.leans_on(f.front, 3), [0.0, 1.0, 2.0, 2.0] as Array[float])
-	assert_almost_eq(float(wing.get("lean_min", 0.0)), 2.0, 1e-6, "front face is the min end")
-	var shifted := (f.parts as Array).filter(func(p: Dictionary) -> bool: return bool(p.get("lean_end", false)))
-	var fillers := (f.parts as Array).filter(func(p: Dictionary) -> bool: return bool(p.get("lean_filler", false)))
-	assert_gt(shifted.size(), 0)
-	assert_gt(fillers.size(), 0)
-	assert_true(shifted.any(func(p: Dictionary) -> bool: return String(p.role).begins_with("gable.")))
-	# Fillers keep only the 2.0 m strip between the last middle piece and the moved end.
-	var ctx := UNION.prepare(f.front.roofs, [], f.kit)
-	var seam := (0.0 + 0.5) * 2.0
-	for filler: Dictionary in fillers:
-		var realized := UNION.realize(filler, ctx)
-		assert_false(realized.is_empty(), "filler is trimmed by its clip volumes")
-		for mesh: Dictionary in realized.meshes:
-			for v: Vector3 in mesh.vertices:
-				assert_between(v.z, seam - 2.0 - 0.002, seam + 0.002)
+func _parts(mass: BuildingMass) -> Array[Dictionary]:
+	return BuildingKitAssembler.new(SuntailBuildingKit.create()).assemble(mass)
 
 
-func test_eave_face_top_step_stays_under_the_measured_cornice() -> void:
-	var f := FIXTURE.build({"roof_axis": 0, "lone": true})
-	var wing: Dictionary = f.front.roofs[0]
-	var allowance := GROWTH.eave_allowance(f.kit, EnvironmentCatalog.load_default(),
-		GROWTH.roof_geometry([f.kit]), wing, 1)
-	assert_lt(allowance, 0.986 - f.kit.wall_face)
-	assert_lt(allowance, 1.0, "no kit jetty passes under the Suntail cornice")
-	# The leader falls back to the light step; the top storey is capped under the
-	# eave and, with no inward step allowed, every storey holds that cap.
-	var q := 0.5 * floorf(allowance / 0.5 + 0.0001)
-	assert_eq(FIXTURE.leans_on(f.front, 3), [0.0, q, q, q] as Array[float])
-	assert_false(wing.has("lean_min"), "an eave never moves")
-	if q == 0.0:
-		assert_true(_causes(f).has(&"crown"), str(_causes(f)))
+func _box(part: Dictionary) -> AABB:
+	return part.transform * EnvironmentCatalog.load_default().descriptor(part.asset_id).measured_aabb
 
 
-func test_unshiftable_gable_end_keeps_the_face_flush() -> void:
-	for blocker: String in ["open", "verge", "tight", "dormer", "caps"]:
-		var options := {"roof_axis": 1, "lone": true, "prepare": func(front: BuildingMass) -> void:
-			var wing: Dictionary = front.roofs[0]
-			match blocker:
-				"open": wing.open_min = true
-				"verge": wing["verge_min"] = 0.3
-				"tight": wing["tight_eave"] = true
-				"dormer": (wing.dormers as Dictionary)[Vector2i(0, 0)] = true}
-		if blocker == "caps":
-			options["kit"] = preload("res://scripts/terrain/features/villages/kit/PureVillageBuildingKit.gd").roof_study(0)
-		var f := FIXTURE.build(options)
-		assert_eq(FIXTURE.leans_on(f.front, 3), [0.0, 0.0, 0.0, 0.0] as Array[float], blocker)
+## Parts whose role starts with `prefix` and whose box centre lies in the storey whose floor is y0.
+func _at(parts: Array, prefix: String, y0: float) -> Array:
+	return parts.filter(func(p: Dictionary) -> bool:
+		var y := _box(p).get_center().y
+		return String(p.role).begins_with(prefix) and y >= y0 - 0.02 and y <= y0 + 2.98)
 
 
-func test_a_wrapped_front_keeps_only_the_faces_its_roof_covers() -> void:
-	# Ridge along z: south and north are gable ends (they move), east and west are
-	# eaves (a kit jetty cannot pass under them): those two leave the front.
-	var f := FIXTURE.build({"character": FIXTURE.character({&"growth_other_face_chance": 1.0})})
-	for dir: int in [3, 1]:
-		assert_eq(FIXTURE.leans_on(f.front, dir), [0.0, 1.0, 2.0, 2.0] as Array[float], "gable face %d" % dir)
-	for dir: int in [0, 2]:
-		assert_eq(FIXTURE.leans_on(f.front, dir), [0.0, 0.0, 0.0, 0.0] as Array[float], "eave face %d" % dir)
-	assert_true(_causes(f).has(&"crown"), str(_causes(f)))
+## Braces of `role` hanging under the storey whose floor is y0.
+func _braces(parts: Array, role: StringName, y0: float) -> Array:
+	return parts.filter(func(p: Dictionary) -> bool:
+		var box := _box(p)
+		return p.role == role and box.end.y >= y0 - 0.3 and box.end.y <= y0 + 0.01)
 
 
-func test_terrace_row_gables_move_together() -> void:
-	var side := FIXTURE.roofed(&"kit.fixture.side", Rect2i(3, 0, 2, 2), 4, 3)
-	var f := FIXTURE.build({"extra": [side], "reserved_x": [-1, 5]})
-	assert_eq(FIXTURE.leans_on(f.front, 3), [0.0, 1.0, 2.0, 2.0] as Array[float])
-	assert_eq(FIXTURE.leans_on(side, 3), [0.0, 1.0, 2.0, 2.0] as Array[float])
-	assert_almost_eq(float(f.front.roofs[0].get("lean_min", 0.0)), 2.0, 1e-6)
-	assert_almost_eq(float(side.roofs[0].get("lean_min", 0.0)), 2.0, 1e-6)
+## The default step-in: ground two jetties in, first upper storey one, top two on the line.
+func _stepped(kit: BuildingKit, mass: BuildingMass) -> void:
+	FIXTURE.write_step_in(mass, kit, 3, [-2.0, -1.0, 0.0, 0.0] as Array[float])
 
 
-func test_growing_houses_prefer_a_gable_to_the_street() -> void:
+func test_each_storey_wall_stands_its_offset_inside_the_line() -> void:
 	var kit := SuntailBuildingKit.create()
-	var counts := [0, 0]
-	for boosted in 2:
-		for seed_value in 400:
-			var mass := FIXTURE.house(StringName("kit.g%d" % seed_value), Rect2i(0, 0, 3, 3), 2, 3)
-			var designer := BuildingDesigner.new(kit)
-			designer.gable_front_boost = 2.0 if boosted == 1 else 1.0
-			if designer._square_axis(mass) == 1:
-				counts[boosted] += 1
-	assert_between(counts[0], 150, 250, "even mix without growth")
-	assert_eq(counts[1], 400, "share 0.5 x 2 = 1: every square growing crown faces the lane with a gable")
+	var mass := _house()
+	_stepped(kit, mass)
+	var expected := [1.0, 0.5, 0.0, 0.0] # south slot centre z in cells (= -offset / 2)
+	for index in 4:
+		for slot: Dictionary in BuildingKitAssembler.storey_slots(mass.storeys[index]):
+			if int(slot.dir) == 3:
+				assert_almost_eq(float(slot.centre.y), float(expected[index]), 1e-5, "storey %d" % index)
+	for part: Dictionary in _at(_parts(mass), "wall.", 0.0):
+		var box := _box(part)
+		if box.size.x > box.size.z and box.get_center().z < 3.0:
+			assert_almost_eq(box.get_center().z, 2.0, 0.2, "ground south wall two jetties in")
 
 
-func test_articulate_reads_the_boost_only_for_growing_houses() -> void:
+func test_a_ground_door_moves_in_with_its_wall() -> void:
 	var kit := SuntailBuildingKit.create()
-	var designer := BuildingDesigner.new(kit)
-	designer.articulate(FIXTURE.house(&"kit.b1", Rect2i(0, 0, 3, 3), 3, 3), {"gable_boost": 2.0})
-	assert_eq(designer.gable_front_boost, 1.0)
-	designer.articulate(FIXTURE.house(&"kit.b2", Rect2i(0, 0, 3, 3), 3, 3), {"grows": true, "gable_boost": 2.0})
-	assert_eq(designer.gable_front_boost, 2.0)
+	var mass := _house(4, 3)
+	_stepped(kit, mass)
+	var doors := _parts(mass).filter(func(p: Dictionary) -> bool: return String(p.role) == "wall.timber.door")
+	assert_eq(doors.size(), 1)
+	assert_almost_eq(_box(doors[0]).get_center().z, 2.0, 0.3, "the shopfront door stands in its stepped-in wall")
+
+
+func test_the_corner_panels_beside_a_stepped_in_run_give_way() -> void:
+	var kit := SuntailBuildingKit.create()
+	var mass := _house()
+	_stepped(kit, mass)
+	var parts := _parts(mass)
+	# Ground (a whole module in): the east and west corner panels are gone; each side
+	# wall starts at the new corner (z 2), where one post stands.
+	for part: Dictionary in _at(parts, "wall.", 0.0):
+		var box := _box(part)
+		if box.size.z > box.size.x:
+			assert_true(box.position.z >= 2.0 - 0.05, "side panel at z %.2f" % box.position.z)
+	assert_eq(_at(parts, "frontage.return.d", 0.0).size(), 0, "a whole-module cut takes no strip")
+	for x: float in [0.0, 6.0]:
+		var posts := _at(parts, "post.timber", 0.0).filter(func(p: Dictionary) -> bool:
+			var c := _box(p).get_center()
+			return absf(c.x - x) < 0.3 and absf(c.z - 2.0) < 0.3)
+		assert_eq(posts.size(), 1, "one post at the ground's new corner x %.0f" % x)
+	# First upper storey (one jetty in): the d100 strip on the inner half of each corner panel.
+	var strips := _at(parts, "frontage.return.d100", 3.0)
+	assert_eq(strips.size(), 2)
+	for strip: Dictionary in strips:
+		var box := _box(strip)
+		assert_almost_eq(box.position.z, 1.0, 0.03, "the strip starts at the stepped-in face")
+		assert_almost_eq(box.end.z, 2.0, 0.03, "and meets the next panel")
+		assert_true(box.position.y <= 3.05 and box.end.y >= 5.85, "it spans the storey's height")
+	for y0: float in [6.0, 9.0]:
+		assert_eq(_at(parts, "frontage.return.d", y0).size(), 0, "the top storeys keep full side walls")
+
+
+func test_overhang_braces_stand_on_module_joints_never_over_an_opening() -> void:
+	var kit := SuntailBuildingKit.create()
+	var mass := _house(4, 3) # a ground door on the stepping face (x 2..4)
+	_stepped(kit, mass)
+	var parts := _parts(mass)
+	var faces := {1: [-1.0, -2.0], 2: [0.0, -1.0]} # storey: [its offset, the offset below]
+	for index: int in faces:
+		var y0 := 3.0 * index
+		var braces := _braces(parts, &"bracket.jetty", y0)
+		var xs := braces.map(func(p: Dictionary) -> float: return snappedf(_box(p).get_center().x, 0.5))
+		xs.sort()
+		assert_eq(xs, [0.0, 2.0, 4.0, 6.0], "one brace per module joint under storey %d" % index)
+		for brace: Dictionary in braces:
+			var box := _box(brace)
+			assert_almost_eq(box.end.z, -float(faces[index][1]), 0.1, "it bears on the stepped-in wall below")
+			assert_true(box.position.z <= -float(faces[index][0]) + 0.05, "it reaches the overhanging face")
+			assert_almost_eq(box.position.y, y0 - 1.0, 0.25, "it drops one jetty")
+	assert_eq(_braces(parts, &"bracket.jetty", 9.0).size(), 0, "a held storey adds no overhang")
+	assert_eq(parts.filter(func(p: Dictionary) -> bool: return p.role == &"bracket.small").size(), 0)
+
+
+func test_a_half_step_overhang_takes_small_brackets_on_the_joints() -> void:
+	var kit := SuntailBuildingKit.create()
+	var mass := _house()
+	FIXTURE.write_step_in(mass, kit, 3, [-1.5, -1.0, -0.5, 0.0] as Array[float])
+	var parts := _parts(mass)
+	assert_eq(parts.filter(func(p: Dictionary) -> bool: return p.role == &"bracket.jetty").size(), 0)
+	for index: int in [1, 2, 3]:
+		var y0 := 3.0 * index
+		var xs := parts.filter(func(p: Dictionary) -> bool:
+			var c := _box(p).get_center()
+			return p.role == &"bracket.small" and c.y < y0 and c.y > y0 - 1.2).map(
+				func(p: Dictionary) -> float: return snappedf(_box(p).get_center().x, 0.5))
+		xs.sort()
+		assert_eq(xs, [0.0, 2.0, 4.0, 6.0], "storey %d" % index)
+	assert_eq(_at(parts, "frontage.return.d050", 0.0).size(), 2, "ground 1.5 in: the 0.5 strips")
+	assert_eq(_at(parts, "frontage.return.d150", 6.0).size(), 2, "storey 2 0.5 in: the 1.5 strips")
+
+
+func test_a_stepped_in_upper_floor_ends_at_its_wall_and_the_ground_floor_stays_whole() -> void:
+	var kit := SuntailBuildingKit.create()
+	var mass := _house()
+	_stepped(kit, mass)
+	var parts := _parts(mass)
+	var boards := func(role: StringName, y: float) -> Array:
+		return parts.filter(func(p: Dictionary) -> bool:
+			return p.role == role and absf(_box(p).get_center().y - y) < 0.3)
+	assert_eq((boards.call(&"deck.board", 0.0) as Array).size(), 6,
+		"the ground keeps every board: the paving under the overhang")
+	var upper: Array = boards.call(&"deck.board", 3.0)
+	assert_eq(upper.size(), 3, "storey 1 keeps only its back row of boards")
+	for board: Dictionary in upper:
+		assert_gt(_box(board).get_center().z, 2.0)
+	var strips: Array = boards.call(&"frontage.floor.d100", 3.0)
+	assert_eq(strips.size(), 3, "the front row keeps its inner half")
+	for strip: Dictionary in strips:
+		var box := _box(strip)
+		assert_almost_eq(box.position.z, 1.0, 0.03, "the floor ends at the stepped-in wall")
+		assert_almost_eq(box.end.z, 2.0, 0.03)
+	assert_eq((boards.call(&"deck.board", 6.0) as Array).size(), 6, "the storeys on the line are whole")
+
+
+func test_the_overhang_closes_its_open_sides_once() -> void:
+	var kit := SuntailBuildingKit.create()
+	var mass := _house()
+	_stepped(kit, mass)
+	var parts := _parts(mass)
+	# Storey 1: its own corner strips' bottom beams close the overhang's sides (no
+	# second beam there); storey 2 stands on the line: one return beam per side.
+	for y0: float in [3.0, 6.0]:
+		var z := 1.5 if y0 == 3.0 else 0.5 # mid-overhang, between the two faces
+		var beams := parts.filter(func(p: Dictionary) -> bool:
+			var c := _box(p).get_center()
+			return p.role == &"frontage.return_beam.d100" and absf(c.y - y0) < 0.3 \
+				and absf(c.z - z) < 0.3 and (absf(c.x) < 0.3 or absf(c.x - 6.0) < 0.3))
+		assert_eq(beams.size(), 2, "one beam per open side at the floor y %.0f" % y0)
+
+
+func test_a_wrapped_corner_steps_in_both_faces_with_one_post() -> void:
+	var kit := SuntailBuildingKit.create()
+	var mass := _house()
+	# South: its right (west) end wraps; west: its left (south) end wraps.
+	FIXTURE.write_step_in(mass, kit, 3, [-2.0, -1.0, 0.0, 0.0] as Array[float], [&"return", &"wrap"])
+	FIXTURE.write_step_in(mass, kit, 2, [-2.0, -1.0, 0.0, 0.0] as Array[float], [&"wrap", &"return"])
+	var parts := _parts(mass)
+	var near := func(p: Dictionary, x: float, z: float, reach: float) -> bool:
+		var c := _box(p).get_center()
+		return absf(c.x - x) < reach and absf(c.z - z) < reach
+	# Storey 1: each face's corner panel keeps a d100 strip; one post at (1, 1).
+	assert_eq(_at(parts, "frontage.return.d100", 3.0).filter(func(p: Dictionary) -> bool:
+		return near.call(p, 1.5, 1.5, 0.7)).size(), 2, "one strip on each face at the corner")
+	assert_eq(_at(parts, "post.timber", 3.0).filter(func(p: Dictionary) -> bool:
+		return near.call(p, 1.0, 1.0, 0.3)).size(), 1, "one post at the stepped-in corner")
+	var squares := parts.filter(func(p: Dictionary) -> bool:
+		return p.role == &"frontage.corner.d100" and absf(_box(p).get_center().y - 3.0) < 0.3)
+	assert_eq(squares.size(), 1, "the corner cell's floor keeps its inner square")
+	assert_almost_eq(_box(squares[0]).position.x, 1.0, 0.03)
+	assert_almost_eq(_box(squares[0]).position.z, 1.0, 0.03)
+	# Ground: both corner panels are gone (a whole module); the post stands at (2, 2).
+	assert_eq(_at(parts, "post.timber", 0.0).filter(func(p: Dictionary) -> bool:
+		return near.call(p, 2.0, 2.0, 0.3)).size(), 1)
+	# No brace where nothing stands below: the outer corner of each overhang.
+	assert_eq(_braces(parts, &"bracket.jetty", 3.0).filter(func(p: Dictionary) -> bool:
+		var c := _box(p).get_center()
+		return c.x < 1.4 and c.z < 1.4).size(), 0, "storey 1's corner overhangs the ground's recess")
+	assert_eq(_braces(parts, &"bracket.jetty", 6.0).filter(func(p: Dictionary) -> bool:
+		var c := _box(p).get_center()
+		return c.x < 0.6 and c.z < 0.6).size(), 0, "storey 2's corner overhangs storey 1's recess")
+	assert_eq(parts.filter(func(p: Dictionary) -> bool:
+		return String(p.role).begins_with("frontage.return_beam") and absf(_box(p).get_center().y - 6.0) < 0.3 \
+			and near.call(p, 0.5, 0.5, 0.6)).size(), 0, "no return beam inside a wrapped corner")
+
+
+func test_a_buried_end_closes_the_recess_against_the_own_wing() -> void:
+	# An L: the body (x 0..2, z 0..1) and a wing (x 3, z -1..1) standing out in front of
+	# the body's south face. The body's south run steps in; its east end meets the wing.
+	var kit := SuntailBuildingKit.create()
+	var mass := BuildingMass.new()
+	mass.stable_id = &"kit.fixture.front"
+	var cells := BuildingMass.rect_cells(Rect2i(0, 0, 3, 2))
+	cells.merge({Vector2i(3, -1): true, Vector2i(3, 0): true, Vector2i(3, 1): true})
+	for s in 4:
+		mass.add_storey(s * 2, cells.duplicate(), BuildingMass.MATERIAL_TIMBER)
+	var run: Array[Vector3i] = []
+	for x in 3:
+		run.append(BuildingMass.edge_key(Vector2i(x, 0), 3))
+	FIXTURE.write_step_in(mass, kit, 3, [-2.0, -1.0, 0.0, 0.0] as Array[float], [&"bury", &"return"], run)
+	var parts := _parts(mass)
+	for index: int in [0, 1]:
+		var depth := 2.0 - float(index)
+		var strips := _at(parts, "frontage.return.%s" % BuildingKitAssembler.lean_suffix(depth), 3.0 * index) \
+			.filter(func(p: Dictionary) -> bool: return absf(_box(p).get_center().x - 6.0) < 0.3)
+		assert_eq(strips.size(), 1, "storey %d: one strip on the wing's line" % index)
+		var box := _box(strips[0])
+		assert_almost_eq(box.position.z, 0.0, 0.05, "from the lot line")
+		assert_almost_eq(box.end.z, depth, 0.05, "to the stepped-in wall")
+
+
+func test_a_stone_ground_storey_steps_in_a_whole_module_without_a_strip() -> void:
+	var kit := SuntailBuildingKit.create()
+	var mass := _house()
+	mass.storeys[0].material = BuildingMass.MATERIAL_STONE
+	_stepped(kit, mass)
+	var stone := _at(_parts(mass), "wall.stone.", 0.0)
+	assert_gt(stone.size(), 0)
+	for part: Dictionary in stone:
+		var box := _box(part)
+		if box.size.x > box.size.z and box.get_center().z < 3.0:
+			assert_almost_eq(box.get_center().z, 2.0, 0.3, "the stone run stands a module in")
+		elif box.size.z > box.size.x:
+			assert_true(box.position.z >= 2.0 - 0.05, "no stone side panel left in the recess")
+
+
+func test_offsets_of_zero_write_nothing() -> void:
+	var kit := SuntailBuildingKit.create()
+	var plain := _house()
+	var held := _house()
+	FIXTURE.write_step_in(held, kit, 3, [0.0, 0.0, 0.0, 0.0] as Array[float])
+	assert_eq(str(_parts(held)), str(_parts(plain)))
+	for storey: Dictionary in held.storeys:
+		for slot: Dictionary in BuildingKitAssembler.storey_slots(storey):
+			assert_eq(float(slot.short), 0.0)
+			assert_false(bool(slot.get("dropped", false)))
 ```
 
-- [ ] **Step 2: Run and see them fail.** Focused-test command for `test_growing_floors_roofs.gd`; expected: `Nonexistent function 'eave_allowance'` / `'roof_geometry'`, invalid member `gable_front_boost`.
+- [ ] **Step 3: Run and see them fail.** Focused-test command for `test_growing_floors_step_in.gd`. Expected: the wall/door/offset tests pass already (slots shift by any offset); the corner test fails (the ground's whole-module cut emits a `frontage.return.d000` lookup / a side panel at z 0 because `short` only applies when the slot's own offset is 0 and a 1.0-module cut is not dropped), the brace tests fail (braces at module centres, 3 per storey; no brace under storey 1, whose `below_growth` assumed an upper offset of 0), the floor test fails (6 boards at storey 1), the wrap and bury tests fail (no strips), the stone test fails on the side panels. Record the failure lines.
 
-- [ ] **Step 3: Assembler: a leaned gable end moves with a trimmed filler.** In `_assemble_roof` add `var first_part: int = (ctx.out as Array).size()` as its first line and, as its last lines, `if wing.has("lean_min") or wing.has("lean_max"): _lean_roof_end(ctx, wing, first_part, p_min, p_max)`. Add:
+- [ ] **Step 4: `storey_slots`: cuts from any stepped-in perpendicular face, whole-module drops.** Replace the growth-inset block (lines 460–474) with:
 
 ```gdscript
-## One roof wing's placements (fitters test a candidate wing before committing it).
-func roof_parts(mass: BuildingMass, wing: Dictionary) -> Array[Dictionary]:
+		# A stepped-in perpendicular face (offsets < 0) cuts this slot's corner panel at
+		# that end by its inset (also when this face steps in too: a wrapped corner);
+		# the corner post moves in with it (modules cut at `short_side`).
+		slot["short"]=0.0
+		slot["short_side"]=0
+		for end:int in [-1,1]:
+			if not bool(slot.right_convex if end>0 else slot.left_convex):continue
+			var perpendicular:=BuildingMass.DIRS.find(right_of(int(slot.dir))*end)
+			var corner:Vector3i=slot.edge
+			var cut:=float(offsets.get(BuildingMass.edge_key(Vector2i(corner.x,corner.y),perpendicular),0.0))
+			if cut<0.0 and float(slot.wall_offset)<=0.0:
+				slot["short"]=-cut
+				slot["short_side"]=end
+				if end>0:slot["right_extend"]=cut
+	# A whole-module cut drops the corner slot; its inner neighbour on the same run
+	# takes the corner (its convex flag; its post stands at the new corner). The cap is
+	# one module, so no cut reaches past the neighbour (bearing keeps runs >= 2 long).
+	for slot:Dictionary in slots:
+		if float(slot.short)<1.0-0.0001:continue
+		slot["dropped"]=true
+		var side:=int(slot.short_side)
+		var inner:Vector2=(slot.centre as Vector2)-Vector2(right_of(int(slot.dir)))*float(side)
+		for other:Dictionary in slots:
+			if int(other.dir)==int(slot.dir) and (other.centre as Vector2).is_equal_approx(inner):
+				other["right_convex" if side>0 else "left_convex"]=true
+				if side>0:other["right_extend"]=0.0
+	return slots
+```
+
+- [ ] **Step 5: `_assemble_storey`: cumulative overhangs and joint braces.** Make `below_growth` signed (module units, the storey below's own offset):
+
+```gdscript
+	# Stepped-in edges of the storey below (offsets < 0, module units).
+	var below_growth: Dictionary = {}
+	if not below.is_empty():
+		var lower_offsets: Dictionary = below.get("wall_offsets", {})
+		for edge: Vector3i in lower_offsets:
+			if float(lower_offsets[edge]) < 0.0:
+				below_growth[edge] = float(lower_offsets[edge])
+```
+
+In the slot loop, first line `if bool(slot.get("dropped", false)): continue`, and replace the short branch and the `below_growth` call with:
+
+```gdscript
+		var lower := float(below_growth.get(slot.edge, 0.0))
+		var overhang := below_growth.has(slot.edge) and float(slot.wall_offset) > lower + 0.0001
+		if float(slot.get("short", 0.0)) > 0.0 and bands == 2:
+			_emit_inset_end(ctx, storey, slot, wall_y)
+			_emit_corner_post(ctx, slot, wall_y, bands, kit.wall_face)
+			if overhang:
+				# The strip's bottom beam is its floor edge; it is braced at its uncut end.
+				_emit_joint_braces(ctx, storey, slot, y, lower, below)
+			continue
+		if overhang:
+			_emit_inset_jetty(ctx, storey, slot, y, lower, below)
+```
+
+Replace `_emit_inset_jetty` and add the helpers:
+
+```gdscript
+## The storey over a stepped-in storey carries its overhang the kit's way: the floor
+## beam on its own face (the corner variant at a left convex end), braces on the
+## wall-module joints of the wall below, and a return beam closing an open convex
+## side where this storey's own side wall runs full (a stepped-in storey's cut strip
+## closes that side with its bottom beam; a wrapped corner and a row joint have none).
+func _emit_inset_jetty(ctx: Dictionary, storey: Dictionary, slot: Dictionary, y: float,
+		lower: float, below: Dictionary) -> void:
+	var dir := int(slot.dir)
+	var out := Vector2(BuildingMass.DIRS[dir])
+	var right := Vector2(right_of(dir))
+	var yaw := yaw_for_dir(dir)
+	var centre: Vector2 = slot.centre
+	var cut := float(slot.wall_offset) - lower
+	_emit(ctx, &"trim.floor_beam_corner" if bool(slot.left_convex) else &"trim.floor_beam", centre, y, yaw)
+	_emit_joint_braces(ctx, storey, slot, y, lower, below)
+	if float(slot.wall_offset) < 0.0:
+		return
+	var lower_offsets: Dictionary = below.get("wall_offsets", {})
+	var edge: Vector3i = slot.edge
+	var cell := Vector2i(edge.x, edge.y)
+	for side: int in [-1, 1]:
+		if not bool(slot.right_convex if side > 0 else slot.left_convex):
+			continue
+		var corner := BuildingMass.edge_key(cell, BuildingMass.DIRS.find(right_of(dir) * side))
+		if float(lower_offsets.get(corner, 0.0)) < 0.0 or _blocked_beside(storey, cell + right_of(dir) * side):
+			continue
+		_emit(ctx, StringName("frontage.return_beam.%s" % lean_suffix(cut * kit.module_width)),
+			centre + right * 0.5 * float(side) - out * cut * 0.5, y, yaw + PI * 0.5 * float(side))
+
+
+## Braces of one overhanging slot, one per wall-module joint it owns: its right joint,
+## and its left joint only where no overhanging slot of this storey continues the run
+## and no neighbouring building's row continues it (that slot owns the joint at its
+## right end). No brace where nothing stands below: the cut end of a shortened slot,
+## or a convex end whose perpendicular face is stepped in below (a wrapped corner).
+## The kit jetty brace carries a kit step; the small bracket the light step.
+func _emit_joint_braces(ctx: Dictionary, storey: Dictionary, slot: Dictionary, y: float,
+		lower: float, below: Dictionary) -> void:
+	var dir := int(slot.dir)
+	var out := Vector2(BuildingMass.DIRS[dir])
+	var right := Vector2(right_of(dir))
+	var edge: Vector3i = slot.edge
+	var cell := Vector2i(edge.x, edge.y)
+	var cut := float(slot.wall_offset) - lower
+	var lower_offsets: Dictionary = below.get("wall_offsets", {})
+	var jetty := absf(cut * kit.module_width - kit.jetty_depth) < 0.001 and kit.has_role(&"bracket.jetty")
+	for side: int in [-1, 1]:
+		var convex := bool(slot.right_convex if side > 0 else slot.left_convex)
+		if float(slot.get("short", 0.0)) > 0.0 and int(slot.short_side) == side:
+			continue
+		var beside := cell + right_of(dir) * side
+		if convex and float(lower_offsets.get(BuildingMass.edge_key(cell,
+				BuildingMass.DIRS.find(right_of(dir) * side)), 0.0)) < 0.0:
+			continue
+		if side < 0 and not convex and (storey.cells as Dictionary).has(beside) \
+				and float(lower_offsets.get(BuildingMass.edge_key(beside, dir), 0.0)) < 0.0:
+			continue
+		if side < 0 and convex and _blocked_beside(storey, beside):
+			continue
+		var joint: Vector2 = (slot.centre as Vector2) + right * 0.5 * float(side) - out * cut
+		if jetty:
+			_emit(ctx, &"bracket.jetty", joint, y - kit.jetty_depth, yaw_for_dir(dir))
+		else:
+			_emit(ctx, &"bracket.small", joint - out * 0.15 / kit.module_width, y - .706295, yaw_for_dir(dir))
+
+
+## Another building stands in this cell at the storey's floor band (a row partner).
+func _blocked_beside(storey: Dictionary, cell: Vector2i) -> bool:
+	return not (storey.cells as Dictionary).has(cell) and external_blocked.is_valid() \
+		and bool(external_blocked.call(cell, int(storey.floor_band)))
+```
+
+(Delete the old body of `_emit_inset_jetty`; its one-storey assumption `centre - out * cut` with `cut` the lower inset is the `upper = 0` case of the code above.)
+
+- [ ] **Step 6: Trimmed upper floors.** Replace `_emit_inhabited_floor`:
+
+```gdscript
+func _emit_inhabited_floor(ctx: Dictionary, storey: Dictionary) -> void:
+	if bool(storey.get("retaining",false)) or bool(storey.get("fortified",false)):
+		return
+	var y := float(storey.floor_band)*kit.band_height()
+	var mass: BuildingMass = ctx.mass
+	var offsets: Dictionary = storey.get("wall_offsets", {})
+	# The ground storey keeps every board: the strip a step-in uncovers is the house's
+	# own paving under the overhang (and the walk to a recessed door).
+	var trim := int(storey.floor_band) > mass.ground_band and not offsets.is_empty()
+	for cell: Vector2i in storey.cells:
+		if trim and _emit_trimmed_floor(ctx, offsets, cell, y):
+			continue
+		_emit(ctx,&"deck.board",Vector2(cell)+Vector2(0.5,0.5),y,0.0)
+	_emit_front_floors(ctx,storey)
+
+
+## A stepped-in upper storey's floor ends at its own wall (a full board would stand
+## out as a ledge): the cell keeps the baked inner strip (one face stepped in), the
+## inner square (a wrapped corner: two perpendicular faces, equal insets by the
+## planner's wrap rule), or nothing (a whole-module step). False when no edge of the
+## cell is stepped in (its ordinary board follows).
+func _emit_trimmed_floor(ctx: Dictionary, offsets: Dictionary, cell: Vector2i, y: float) -> bool:
+	var insets: Array[int] = []
+	var depth := 0.0
+	for dir in 4:
+		var offset := float(offsets.get(BuildingMass.edge_key(cell, dir), 0.0))
+		if offset < 0.0:
+			insets.append(dir)
+			depth = -offset * kit.module_width
+	if insets.is_empty():
+		return false
+	var keep := kit.module_width - depth
+	if keep <= 0.001:
+		return true
+	var at := Vector2(cell) + Vector2(0.5, 0.5)
+	for dir: int in insets:
+		at -= Vector2(BuildingMass.DIRS[dir]) * depth * 0.5 / kit.module_width
+	var role := "frontage.corner" if insets.size() == 2 else "frontage.floor"
+	_emit(ctx, StringName("%s.%s" % [role, lean_suffix(keep)]), at, y, yaw_for_dir(insets[0]))
+	return true
+```
+
+- [ ] **Step 7: Step-in records and bury strips.** In `_emit_front_floors` skip a step-in record (`if bool(projection.get("growth", false)) and float(projection.depth) <= 0.0: continue` as the loop's first line). In `_emit_projected_front`, as the loop's first lines:
+
+```gdscript
+		if bool(projection.get("growth", false)) and float(projection.get("depth", 0.0)) <= 0.0:
+			_emit_step_in(ctx, storey, projection, y)
+			continue
+```
+
+and add:
+
+```gdscript
+## A stepped-in storey's own end closures (its overhang is emitted per slot from the
+## offsets, its cut corner panels by storey_slots): a `bury` end closes the recess on
+## the vertex line with the baked return strip of the inset's depth, facing the
+## recess, so no hole opens into the house's own room beside it; `return`, `wrap` and
+## `joint` ends need nothing here.
+func _emit_step_in(ctx: Dictionary, storey: Dictionary, projection: Dictionary, y: float) -> void:
+	var depth := -float(projection.depth)
+	if depth <= 0.0:
+		return
+	var dir := int(projection.dir)
+	var out := Vector2(BuildingMass.DIRS[dir])
+	var right := Vector2(right_of(dir))
+	var centres: Array = projection.centres
+	var closures: Array = projection.get("closures", [&"return", &"return"])
+	var suffix := lean_suffix(depth)
+	for side: int in [-1, 1]:
+		if StringName(closures[0 if side < 0 else 1]) != &"bury":
+			continue
+		var centre: Vector2 = centres.front() if side < 0 else centres.back()
+		var at := centre + right * 0.5 * float(side) - out * depth * 0.5 / kit.module_width
+		var yaw := yaw_for_dir(dir) - PI * 0.5 * float(side)
+		_emit(ctx, StringName("frontage.return." + suffix), at, y, yaw, 0, Transform3D.IDENTITY,
+			storey.get("tint", Color.WHITE))
+		_emit(ctx, StringName("frontage.return_beam." + suffix), at, y, yaw)
+		_emit(ctx, StringName("frontage.return_beam." + suffix), at, y + kit.storey_height - .143, yaw)
+```
+
+The bury strip's yaw is the step-out return's turned half round: the recess lies on the run's side of the vertex line, the wing on the other. If the bury test shows the strip standing in the wing's half (box centre x > 6.15), keep the yaw and move `at` by `- right * side * kit.wall_face / kit.module_width`; record the measured offset in the report.
+
+- [ ] **Step 8: Re-pin the superseded roofs tests' brace counts.** In `tests/test_growing_floors_roofs.gd`, `test_an_eave_face_steps_its_ground_run_in_instead` and `test_a_tall_eave_face_keeps_one_step_at_the_ground`: `assert_eq(_south_braces(f, 1).size(), 4, "one kit jetty brace per module joint")` (the fix-round one-face inset now carries its braces on joints; the file goes in Task 9).
+
+- [ ] **Step 9: Run to pass.** `test_growing_floors_step_in.gd` (11 passing); re-run `test_growing_floors.gd`, `test_growing_floors_guardrails.gd`, `test_growing_floors_wrap.gd`, `test_growing_floors_rows.gd`, `test_growing_floors_bury.gd`, `test_growing_floors_roofs.gd`, `test_growing_floors_knobs.gd`, `test_october3_room_projections.gd`, `test_roof_proportion.gd`, `test_town_old_look.gd` (all green: step-out data writes no negative offsets except the fix-round eave inset, whose expectations Step 8 re-pinned).
+
+- [ ] **Step 10: Gates.** Fingerprint gate → `FINGERPRINT_MATCH` (no negative offset exists at chance 0); growth-on smoke → 0 `FINGERPRINT_NO_TOWN`.
+
+- [ ] **Step 11: Commit** `BuildingKitAssembler.gd`, `tests/fixtures/growing_house.gd`, `tests/test_growing_floors_step_in.gd`, `tests/test_growing_floors_roofs.gd`: message "Towns: step-in assembly (cut corners, trimmed floors, braces on joints, bury strips)" + trailer.
+
+---
+
+### Task 9: Step in, re-referenced to the top storey (planner), recessed doors, roof code removed
+
+Spec Amendment 2, planner side. `KitGrowingFronts` keeps its fronts, joins, closure kinds, monotone capped profile, member-leaves rule, decor ride/yield and per-cause rejections, and writes every profile re-referenced to the face's top storey (`offsets_of`). Every guardrail is re-checked for step-in (spec table "Guardrails under step-in"). The superseded Task 8 roof code is removed (it has no remaining use: roofs and top storeys never move): the gable shift, clipped fillers, eave allowance/cap, crown rule (G7), the one-face eave inset planner path, `growth_gable_front_boost`. Code that can only serve an outward offset is removed with it (spec "Supersedes"); the assembler pieces the fix round added stay (Task 8 generalised them).
+
+**Files:**
+- Modify: `scripts/terrain/features/villages/kit/KitGrowingFronts.gd` (see Step 3 for the kept / changed / removed lists)
+- Modify: `scripts/terrain/features/villages/kit/BuildingKitAssembler.gd` (remove `roof_parts`, `_lean_roof_end` and its `first_part` call in `_assemble_roof` lines ~1048–1160, `_emit_wrap_end`, `WRAP_INSET`, `face_parts`, `_front_role` (inline the role: only room projections remain on that path), and the growth branches of `_emit_projected_front` (the `bracket.jetty` growth branch and the closures `match`; room projections keep their returns and `bracket.small`))
+- Modify: `scripts/terrain/features/villages/kit/BuildingDesigner.gd` (revert the Task 8 boost: member `gable_front_boost`, the first line of `articulate`, the `share` line of `_square_axis` back to `var share := square_axis_weights[preferred] / (square_axis_weights.x + square_axis_weights.y)`)
+- Modify: `scripts/terrain/features/villages/kit/KitVillageBuildings.gd` (`GROWTH.fit` call lines 215–223 without the roof geometry argument; delete the `for lean in growth.leans: walls.append(...)` loop (line 224); result keys without `growth_insets` / `growth_roofs` (line 336); delete `context["gable_boost"] = ...` (line 1592))
+- Modify: `terrain/villages/town_odds.tres` (delete the `growth_gable_front_boost` sub-resource and its entry in `knobs`; notes of `growing_house_chance`, `growth_max_lean`, `lane_sky_gap`)
+- Modify: `tests/fixtures/growing_house.gd` (`block_faces`, `block` / `lone` options, no `reserved_x`, `fit` call)
+- Modify: `tests/test_growing_floors.gd`, `tests/test_growing_floors_guardrails.gd`, `tests/test_growing_floors_wrap.gd`, `tests/test_growing_floors_rows.gd`, `tests/test_growing_floors_bury.gd`, `tests/test_growing_floors_knobs.gd` (re-pins, Step 6)
+- Delete: `tests/test_growing_floors_roofs.gd`
+- Modify: `tests/harness/suntail/building_gallery.gd` (`_grow`: `fit` call without the roof geometry), `tests/harness/suntail/growth_corpus_audit.gd` (`counts()` and totals for step-in, Step 7)
+
+**Interfaces:**
+- Consumes: Task 8's assembler contract (negative `wall_offsets`, growth records, `storey.growth`), `BuildingKitAssembler.boundary_runs`, `_inside_cell`, `right_of`, `_assemble_decor`, `KitPublicClearance.intersects_air`, catalog `measured_aabb`.
+- Produces: `KitGrowingFronts.fit(masses, kits, base, catalog, character, air, towers, reserved, solid, street) -> {leans, registry, rejections}` (registry always empty: growth writes no outward offset); chain key `ground: int`; `offsets_of(leans: Array[float]) -> Array[float]`; `apply(mass, kit, chain, leans: Array[float], closures: Array) -> {records, moved}` (closures indexed from the ground storey up); lean records `{host, dir, band, lean (signed offset <= 0), base, edges, bounds (the recess), chain, closures, pulled}`; rejections `{chain, storey (-1 = ground), lean (signed), cause}` with causes `material`, `portal`, `party`, `columns`, `bearing`, `decor`, `ends`, `air`, `obstacle.*`; fixture `block_faces(mass, dirs)`.
+
+- [ ] **Step 1: Re-pin the tests first (red).** Fixture: add
+
+```gdscript
+## Keeps faces out of their front: a skywalk passage on the first upper storey's panel at
+## the far end of each face in `dirs` (the +z or +x end, away from the south face), so
+## the face cannot step at all (cause portal) and leaves the front; the panel at the
+## south face's corner stays plain (the south step may cut it).
+static func block_faces(mass: BuildingMass, dirs: Array) -> void:
+	var first: Dictionary = GROWTH._storey_at(mass, mass.ground_band + 2)
+	for run: Dictionary in BuildingKitAssembler.boundary_runs(first.cells):
+		if not dirs.has(int(run.dir)):
+			continue
+		var edge := BuildingMass.edge_key(BuildingKitAssembler._inside_cell(int(run.dir), int(run.line),
+			int(run.end) - 1), int(run.dir))
+		first.openings[edge] = BuildingMass.OPENING_DOOR
+		var passages: Dictionary = first.get("passage_edges", {})
+		passages[edge] = true
+		first["passage_edges"] = passages
+```
+
+In `build`: after `prepare`, `var blocked: Array = options.get("block", [0, 2] if bool(options.get("lone", false)) else [])` and `if not blocked.is_empty(): block_faces(front, blocked)`; delete the `reserved_x` block (reserved columns beyond a face mean nothing under step-in); the `fit` call loses its last argument. Update the doc comment: options `block` (dirs of the front kept out of its front), `lone` (= block [0, 2]: only the south face steps; the house's door is on the south ground storey, a recessed shopfront).
+
+`tests/test_growing_floors.gd` (replace these tests; the jetty-roll, projections/bays and knob tests keep their bodies except where noted):
+
+```gdscript
+func test_each_lower_storey_steps_in_one_jetty_further() -> void:
+	var f := FIXTURE.build({"lone": true})
+	assert_eq(FIXTURE.leans_on(f.front, 3), [-2.0, -1.0, 0.0, 0.0] as Array[float],
+		"the ground two kit jetties in, the first upper storey one, the top two on the lot line")
+	assert_eq(FIXTURE.leans_on(f.front, 1), [0.0, 0.0, 0.0, 0.0] as Array[float],
+		"the back face is not rolled (other-face chance 0 in the fixture)")
+	for index in 4:
+		for slot: Dictionary in BuildingKitAssembler.storey_slots(f.front.storeys[index]):
+			if int(slot.dir) == 3:
+				assert_almost_eq(float(slot.centre.y), -FIXTURE.leans_on(f.front, 3)[index] / 2.0, 1e-5,
+					"offset in module units, storey %d" % index)
+	assert_false(f.front.storeys[3].has("wall_offsets"), "the top storey stays on the lot line")
+
+
+func test_cap_floors_to_whole_steps() -> void:
+	var f := FIXTURE.build({"lone": true, "storeys": 5, "character": FIXTURE.character({&"growth_max_lean": 1.5})})
+	assert_eq(FIXTURE.leans_on(f.front, 3), [-1.0, 0.0, 0.0, 0.0, 0.0] as Array[float])
+	var g := FIXTURE.build({"lone": true, "storeys": 5, "character": FIXTURE.character({&"growth_max_lean": 2.0}, &"0.5")})
+	assert_eq(FIXTURE.leans_on(g.front, 3), [-2.0, -1.5, -1.0, -0.5, 0.0] as Array[float])
+
+
+func test_every_overhang_rides_the_kit_jetty_on_the_joints() -> void:
+	var f := FIXTURE.build({"lone": true})
+	var catalog := EnvironmentCatalog.load_default()
+	for index: int in [1, 2]:
+		var y0 := float(f.front.storeys[index].floor_band) * 1.5
+		var braces := _braces_under(f, &"bracket.jetty", y0).filter(func(p: Dictionary) -> bool:
+			var box: AABB = p.transform * catalog.descriptor(p.asset_id).measured_aabb
+			return box.size.z > box.size.x) # the south face's braces
+		var xs := braces.map(func(p: Dictionary) -> float:
+			return snappedf((p.transform * catalog.descriptor(p.asset_id).measured_aabb).get_center().x, 0.5))
+		xs.sort()
+		assert_eq(xs, [0.0, 2.0, 4.0, 6.0], "one kit jetty brace per module joint (storey %d)" % index)
+		assert_eq(_parts_in(f, &"trim.floor_beam", y0).size() + _parts_in(f, &"trim.floor_beam_corner", y0).size(), 3,
+			"the floor beam on the overhanging face (the corner variant at its left convex end)")
+	assert_eq(_braces_under(f, &"bracket.jetty", 9.0).size(), 0, "a held storey adds no overhang")
+	assert_eq(_braces_under(f, &"bracket.small", 3.0).size(), 0, "a kit step never takes small brackets")
+
+
+func test_half_step_keeps_the_small_brackets() -> void:
+	var f := FIXTURE.build({"lone": true, "character": FIXTURE.character({}, &"0.5")})
+	assert_eq(FIXTURE.leans_on(f.front, 3), [-1.5, -1.0, -0.5, 0.0] as Array[float])
+	var y0 := float(f.front.storeys[1].floor_band) * 1.5
+	assert_eq(_braces_under(f, &"bracket.small", y0).size(), 4, "a bracket at every module joint")
+	assert_eq(_braces_under(f, &"bracket.jetty", y0).size(), 0)
+
+
+func test_growth_result_lists_each_stepped_storey() -> void:
+	var f := FIXTURE.build({"lone": true})
+	# The ground (stands in), storey 1 (stands in and overhangs), storey 2 (overhangs).
+	assert_eq(f.leans.size(), 3)
+	for lean: Dictionary in f.leans:
+		assert_eq(int(lean.dir), 3)
+		assert_true((lean.bounds as AABB).has_volume())
+		assert_true(float(lean.lean) <= 0.0)
+	assert_true((f.result.registry as Dictionary).is_empty(), "growth never steps outward")
+```
+
+In `test_projections_and_bays_skip_leaning_faces`: replace `{"reserved_x": [-1, 5], "replace_front": wide}` with `{"block": [0, 2], "replace_front": wide}`, delete the roof-axis comment, and expect `[-2.0, -1.0, 0.0, 0.0]`. `_parts_in` and `_braces_under` stay.
+
+`tests/test_growing_floors_guardrails.gd` (replace these tests; `_open`, `test_gap_ok_measures_to_the_facing_lean`, `test_face_over_a_lower_neighbour_is_a_candidate` and `test_contact_under_five_centimetres_is_touching` stay; delete `test_sky_gap_withdraws_only_the_later_houses_failing_step` and `test_probe_parts_match_the_final_assembly_at_bay_slots`):
+
+```gdscript
+func test_walking_air_withdraws_only_the_step_it_reaches() -> void:
+	# A passage's headroom inside the house, where the braces under storey 2 would hang
+	# (y 5..6, between storey 1's stepped-in face z 1 and the lot line).
+	var air: Array[Dictionary] = [_open(AABB(Vector3(-1, 5.2, 0.2), Vector3(8, 0.6, 0.6)))]
+	var f := FIXTURE.build({"lone": true, "air": air})
+	assert_eq(FIXTURE.leans_on(f.front, 3), [-1.0, 0.0, 0.0, 0.0] as Array[float],
+		"the second step is withdrawn (the cap drops one step)")
+
+
+func test_insets_never_narrow_the_lane() -> void:
+	# Two growing houses facing across a one-cell lane, with a sky gap larger than the
+	# lane: under step-in the upper storeys stay on their lot lines, so G2 cannot fire.
+	for gap: float in [0.75, 2.75]:
+		var f := FIXTURE.build({"lone": true, "facing": true, "back_grows": true,
+			"character": FIXTURE.character({&"lane_sky_gap": gap})})
+		assert_eq(FIXTURE.leans_on(f.front, 3), [-2.0, -1.0, 0.0, 0.0] as Array[float], "gap %.2f" % gap)
+		# The facing house is not kept lone: its pulled east and west faces may hold it
+		# at one jetty (bearing), but it only ever steps in, and its top stays on its line.
+		var back := FIXTURE.leans_on(f.back, 1)
+		assert_lt(back[0], 0.0, "the facing house steps in too")
+		assert_eq(back[3], 0.0, "its top storey stays on the lot line")
+		for value: float in back:
+			assert_true(value <= 0.0)
+		assert_false((f.result.rejections as Array).any(func(r: Dictionary) -> bool: return r.cause == &"gap"))
+
+
+func test_neighbouring_feature_withdraws_only_the_step_it_reaches() -> void:
+	var towers: Array[Dictionary] = [{"bounds": AABB(Vector3(-1, 5.2, 0.2), Vector3(8, 0.6, 0.6))}]
+	var f := FIXTURE.build({"lone": true, "towers": towers})
+	assert_eq(FIXTURE.leans_on(f.front, 3), [-1.0, 0.0, 0.0, 0.0] as Array[float])
+
+
+func test_a_reserved_recess_keeps_the_face_flush() -> void:
+	# A passage claim through the ground storey's front row: it cannot step in at all.
+	var f := FIXTURE.build({"lone": true, "reserved": func(_own: StringName, cell: Vector2i, band: int) -> bool:
+		return cell.y == 0 and band <= 1})
+	assert_eq(FIXTURE.leans_on(f.front, 3), [0.0, 0.0, 0.0, 0.0] as Array[float],
+		"the ground cannot stand in, so no storey above may overhang it")
+
+
+func test_footprint_change_ends_the_face_chain() -> void:
+	var mass := FIXTURE.house(&"kit.fixture.front", Rect2i(0, 0, 3, 2), 4, 3)
+	mass.add_roof(Rect2i(0, 0, 3, 2), 1, 8, &"red")["union_index"] = 0
+	mass.storeys[2].cells.erase(Vector2i(2, 0))
+	var chains := FIXTURE.GROWTH.face_chains(mass, Callable(FIXTURE, "nothing_solid"), Callable(FIXTURE, "street"))
+	var south := chains.filter(func(c: Dictionary) -> bool: return int(c.dir) == 3 and int(c.line) == 0)
+	assert_eq(south.size(), 1)
+	assert_eq((south[0].storeys as Array).size(), 1, "storey 2's run differs from storey 1's")
+	var f := FIXTURE.build({"lone": true, "replace_front": mass})
+	assert_eq(FIXTURE.leans_on(f.front, 3), [-1.0, 0.0, 0.0, 0.0] as Array[float],
+		"one storey in the chain: its top (storey 1) stays on the line, the ground steps one jetty in")
+
+
+func _portal(front: BuildingMass) -> void:
+	var edge := BuildingMass.edge_key(Vector2i(1, 0), 3)
+	front.storeys[2].openings[edge] = BuildingMass.OPENING_DOOR
+	front.storeys[2]["passage_edges"] = {edge: true}
+
+
+func test_skywalk_portal_storey_stays_on_the_lot_line() -> void:
+	# Storey 2 carries a skywalk passage: it neither stands in nor overhangs, so the
+	# cap drops until it stands on the line over a storey on the line; below it the
+	# face still steps in.
+	var f := FIXTURE.build({"lone": true, "prepare": _portal})
+	assert_eq(FIXTURE.leans_on(f.front, 3), [-1.0, 0.0, 0.0, 0.0] as Array[float])
+	var causes := (f.result.rejections as Array).map(func(r: Dictionary) -> StringName: return r.cause)
+	assert_true(causes.has(&"portal"), str(causes))
+	# A skywalk on the top storey costs nothing: the top never moves.
+	var g := FIXTURE.build({"lone": true, "prepare": func(front: BuildingMass) -> void:
+		var edge := BuildingMass.edge_key(Vector2i(1, 0), 3)
+		front.storeys[3].openings[edge] = BuildingMass.OPENING_DOOR
+		front.storeys[3]["passage_edges"] = {edge: true}})
+	assert_eq(FIXTURE.leans_on(g.front, 3), [-2.0, -1.0, 0.0, 0.0] as Array[float])
+
+
+func test_a_ground_storey_against_a_lower_neighbour_keeps_the_face_flush() -> void:
+	# A one-storey neighbour touches the ground storey's south face: a party wall never
+	# steps in, so no storey above may overhang it.
+	var low := FIXTURE.house(&"kit.fixture.low", Rect2i(0, -1, 3, 1), 1, 3)
+	var f := FIXTURE.build({"lone": true, "extra": [low]})
+	assert_eq(FIXTURE.leans_on(f.front, 3), [0.0, 0.0, 0.0, 0.0] as Array[float])
+	var causes := (f.result.rejections as Array).map(func(r: Dictionary) -> StringName: return r.cause)
+	assert_true(causes.has(&"party"), str(causes))
+
+
+func test_a_bay_keeps_its_storey_on_the_lot_line() -> void:
+	# A bay on a stepped-in run would stand under the overhang's braces: storey 1 keeps
+	# the line (the cap drops to one light step), the ground still steps in under it.
+	var f := FIXTURE.build({"lone": true, "character": FIXTURE.character({}, &"0.5"),
+		"prepare": func(front: BuildingMass) -> void:
+			front.storeys[1].openings[BuildingMass.edge_key(Vector2i(1, 0), 3)] = BuildingMass.OPENING_BAY})
+	assert_eq(FIXTURE.leans_on(f.front, 3), [-0.5, 0.0, 0.0, 0.0] as Array[float])
+	var catalog := EnvironmentCatalog.load_default()
+	var bays := (f.parts as Array).filter(func(p: Dictionary) -> bool: return String(p.role).begins_with("bay."))
+	assert_eq(bays.size(), 1)
+	assert_lt((bays[0].transform * catalog.descriptor(bays[0].asset_id).measured_aabb).get_center().z, 0.0,
+		"the bay stands on the lot-line face")
+
+
+func test_dressing_on_a_stepped_in_run_moves_in_or_yields() -> void:
+	var f := FIXTURE.build({"lone": true, "prepare": func(front: BuildingMass) -> void:
+		front.decor.append({"kind": &"ivy", "centre": Vector2(1.5, 0.0), "dir": 3, "y": 0.0, "proud": 0.0})
+		front.decor.append({"kind": &"window_box", "centre": Vector2(0.5, 0.0), "dir": 3, "y": 3.0})})
+	assert_eq(FIXTURE.leans_on(f.front, 3), [-2.0, -1.0, 0.0, 0.0] as Array[float])
+	for item: Dictionary in f.front.decor:
+		if int(item.get("dir", -1)) == 3 and item.kind in [&"ivy", &"window_box"]:
+			var expected := 1.0 if float(item.y) < 3.0 else 0.5 # its storey's offset / -2, cells
+			assert_almost_eq((item.centre as Vector2).y, expected, 1e-6,
+				"%s moved in with its wall (or yielded)" % item.kind)
+
+
+func test_withdrawn_steps_name_their_guardrail() -> void:
+	var f := FIXTURE.build({"lone": true, "reserved": func(_own: StringName, cell: Vector2i, band: int) -> bool:
+		return cell.y == 0 and band <= 1})
+	var columns := (f.result.rejections as Array).filter(func(r: Dictionary) -> bool: return r.cause == &"columns")
+	assert_gt(columns.size(), 0, str(f.result.rejections))
+	for record: Dictionary in columns:
+		assert_eq(int(record.storey), -1, "the ground storey")
+		assert_true(float(record.lean) in [-2.0, -1.0], "at its offset for the cap tried: %s" % record)
+
+
+## Moved dressing stands somewhere else: its obstacle records are replaced, so a later
+## step (another face of the house) tests against where it now is.
+func test_moved_decor_refreshes_its_obstacles() -> void:
+	var kit := SuntailBuildingKit.create()
+	var catalog := EnvironmentCatalog.load_default()
+	var mass := FIXTURE.house(&"kit.fixture.front", Rect2i(0, 0, 3, 2), 3, 1)
+	var box := {"kind": &"window_box", "centre": Vector2(1.5, 0.0), "dir": 3, "y": 3.0}
+	mass.decor.append(box)
+	var none := Callable(FIXTURE, "nothing_solid")
+	var masses: Array[BuildingMass] = [mass]
+	var chain: Dictionary = FIXTURE.GROWTH.face_chains(mass, none, Callable(FIXTURE, "street")).filter(
+		func(c: Dictionary) -> bool: return int(c.dir) == 3)[0]
+	var member := {"mass": mass, "chain": chain, "kit": kit, "seed": true}
+	var ctx := {"catalog": catalog, "air": [] as Array[Dictionary], "towers": [] as Array[Dictionary],
+		"reserved": none, "solid": none, "kit": kit, "rejections": [], "yields": {}, "planned": {},
+		"front": {"members": [member], "joins": []}, "active": [0] as Array[int],
+		"obstacles": FIXTURE.GROWTH._obstacles(masses, {&"fixture.front": kit}, kit, catalog, [], none)}
 	var out: Array[Dictionary] = []
-	_assemble_roof({"mass": mass, "out": out, "serial": 0}, wing)
+	var closures := [[&"return", &"return"], [&"return", &"return"], [&"return", &"return"]]
+	FIXTURE.GROWTH._commit(member, [1.0, 2.0] as Array[float], closures, ctx, out)
+	assert_almost_eq((box.centre as Vector2).y, 0.5, 1e-6, "the window box moved in with storey 1 (-1.0)")
+	var live := (ctx.obstacles as Array).filter(func(o: Dictionary) -> bool:
+		return o.has("decor") and is_same(o.decor, box) and not bool(o.get("gone", false)))
+	assert_gt(live.size(), 0)
+	for obstacle: Dictionary in live:
+		assert_gt((obstacle.bounds as AABB).get_center().z, 0.0, "obstacle at the moved box")
+```
+
+Also replace `test_own_bay_on_the_stepping_face_moves_with_it`, `test_own_ornaments_under_the_new_braces_yield` and `test_decor_the_step_does_not_move_never_rides` by the bay and dressing tests above (delete those three).
+
+`tests/test_growing_floors_wrap.gd` (replace the first two tests and `_corners_consistent`; delete `_wrapped_pair`, `_within`, `test_a_wrapped_corner_is_closed_by_strips_squares_and_a_post`, `test_extension_strips_are_flush_with_their_face`; keep `test_right_extend_is_zero_without_growth`):
+
+```gdscript
+func _closures(f: Dictionary, dir: int, band: int) -> Array:
+	for lean: Dictionary in f.leans:
+		if lean.host == f.front.stable_id and int(lean.dir) == dir and int(lean.band) == band:
+			return lean.closures
+	return []
+
+
+func test_a_growing_face_pulls_its_corner_neighbours_one_hop() -> void:
+	var f := FIXTURE.build() # only the south face is rolled; east and west are pulled
+	# East and west step in from both sides of a three-module plan: at the two-jetty cap
+	# they would leave a one-module stalk (bearing), so the front holds at one jetty.
+	for dir: int in [3, 0, 2]:
+		assert_eq(FIXTURE.leans_on(f.front, dir), [-1.0, 0.0, 0.0, 0.0] as Array[float], "face %d" % dir)
+	assert_eq(FIXTURE.leans_on(f.front, 1), [0.0, 0.0, 0.0, 0.0] as Array[float], "north: not pulled")
+	assert_eq(_closures(f, 3, 0), [&"wrap", &"wrap"])
+	var causes := (f.result.rejections as Array).map(func(r: Dictionary) -> StringName: return r.cause)
+	assert_true(causes.has(&"bearing"), str(causes))
+
+
+func test_a_member_that_cannot_hold_leaves_the_front() -> void:
+	# The east face's ground storey carries a passage: it cannot stand in at any cap, so
+	# it leaves; south and west refit without it and reach the cap.
+	var f := FIXTURE.build({"prepare": func(front: BuildingMass) -> void:
+		var edge := BuildingMass.edge_key(Vector2i(2, 1), 0)
+		front.storeys[0].openings[edge] = BuildingMass.OPENING_DOOR
+		front.storeys[0]["passage_edges"] = {edge: true}})
+	assert_eq(FIXTURE.leans_on(f.front, 0), [0.0, 0.0, 0.0, 0.0] as Array[float], "east left the front")
+	for dir: int in [3, 2]:
+		assert_eq(FIXTURE.leans_on(f.front, dir), [-2.0, -1.0, 0.0, 0.0] as Array[float], "face %d" % dir)
+	assert_eq(_closures(f, 3, 0), [&"return", &"wrap"], "south: east end returns, west end wraps")
+	var causes := (f.result.rejections as Array).map(func(r: Dictionary) -> StringName: return r.cause)
+	assert_true(causes.has(&"portal"), str(causes))
+
+
+## Two faces of one storey that meet at a convex corner stand in equally or one is on its line.
+func _corners_consistent(mass: BuildingMass) -> bool:
+	for storey: Dictionary in mass.storeys:
+		var offsets: Dictionary = storey.get("wall_offsets", {})
+		for slot: Dictionary in BuildingKitAssembler.storey_slots(storey):
+			if not bool(slot.right_convex):
+				continue
+			var edge: Vector3i = slot.edge
+			var side := BuildingMass.DIRS.find(BuildingKitAssembler.right_of(int(slot.dir)))
+			var mine := float(offsets.get(edge, 0.0))
+			var theirs := float(offsets.get(BuildingMass.edge_key(Vector2i(edge.x, edge.y), side), 0.0))
+			if mine < 0.0 and theirs < 0.0 and absf(mine - theirs) > 1e-6:
+				return false
+	return true
+```
+
+(`test_unequal_steps_never_meet_at_a_convex_corner` keeps its body; the options loop stays `[{}, {"character": _all_faces()}, {"lone": true}]`.)
+
+`tests/test_growing_floors_rows.gd` (`_row` and the first three tests; `test_rows_join_only_on_the_same_first_upper_storey` unchanged):
+
+```gdscript
+func _row() -> Dictionary:
+	# front (x 0..2) and side (x 3..4) share the south line z = 0; the front's west face
+	# is kept out of the front, so the row is just the two south faces.
+	var side := FIXTURE.roofed(&"kit.fixture.side", Rect2i(3, 0, 2, 2), 4, 3)
+	var f := FIXTURE.build({"extra": [side], "block": [2]})
+	f["side"] = side
+	return f
+
+
+func test_a_terrace_row_steps_in_as_one() -> void:
+	var f := _row()
+	assert_false(f.side.grows, "the neighbour did not roll growth: the row pulled it")
+	assert_eq(FIXTURE.leans_on(f.front, 3), [-2.0, -1.0, 0.0, 0.0] as Array[float])
+	assert_eq(FIXTURE.leans_on(f.side, 3), [-2.0, -1.0, 0.0, 0.0] as Array[float])
+	for band: int in [0, 2, 4]:
+		assert_eq(_record(f, &"kit.fixture.front", band).closures, [&"joint", &"return"],
+			"front: east end joined, west end open (band %d)" % band)
+		assert_eq(_record(f, &"kit.fixture.side", band).closures, [&"return", &"joint"],
+			"side: east end open, west end joined (band %d)" % band)
+
+
+func test_row_ends_close_only_at_the_open_ends() -> void:
+	var f := _row()
+	var catalog := EnvironmentCatalog.load_default()
+	var assembler := BuildingKitAssembler.new(f.kit)
+	assembler.external_blocked = func(cell: Vector2i, band: int) -> bool:
+		return bool(f.solid.call(&"fixture.side", cell, band))
+	var parts: Array = (f.parts as Array) + assembler.assemble(f.side)
+	for part: Dictionary in parts:
+		var role := String(part.role)
+		if not (role.begins_with("frontage.") or role.begins_with("bracket.")):
+			continue
+		var box: AABB = part.transform * catalog.descriptor(part.asset_id).measured_aabb
+		assert_false(absf(box.get_center().x - 6.0) < 0.3 and box.get_center().z > 0.0
+			and String(part.role).begins_with("frontage.return"), "no return piece at the shared joint x = 6")
+	var strips := parts.filter(func(p: Dictionary) -> bool: return String(p.role) == "frontage.return.d100")
+	assert_eq(strips.size(), 2, "the two open row ends' corner panels on storey 1 (the ground's are dropped)")
+	var joint_braces := parts.filter(func(p: Dictionary) -> bool:
+		var box: AABB = p.transform * catalog.descriptor(p.asset_id).measured_aabb
+		return p.role == &"bracket.jetty" and absf(box.get_center().x - 6.0) < 0.3 and box.end.y < 3.1)
+	assert_eq(joint_braces.size(), 1, "one brace at the row joint under storey 1, not one per house")
+
+
+func test_a_row_member_with_a_portal_holds_the_row_below_it() -> void:
+	# The neighbour's second upper storey carries a portal: it may not overhang, so the
+	# whole row holds one jetty (both houses step in one jetty at the ground).
+	var side := FIXTURE.roofed(&"kit.fixture.side", Rect2i(3, 0, 2, 2), 4, 3)
+	var edge := BuildingMass.edge_key(Vector2i(3, 0), 3)
+	side.storeys[2].openings[edge] = BuildingMass.OPENING_DOOR
+	side.storeys[2]["passage_edges"] = {edge: true}
+	var f := FIXTURE.build({"extra": [side], "block": [2]})
+	assert_eq(FIXTURE.leans_on(f.front, 3), [-1.0, 0.0, 0.0, 0.0] as Array[float])
+	assert_eq(FIXTURE.leans_on(side, 3), [-1.0, 0.0, 0.0, 0.0] as Array[float])
+
+
+func test_a_row_member_that_cannot_step_withdraws_the_joint_not_the_town() -> void:
+	# The neighbour's ground storey carries a passage: it cannot stand in at all and
+	# leaves the row; the front's east end then stands beside a building that does not
+	# step (blocked), so the front stays flush too. Both houses still build.
+	var side := FIXTURE.roofed(&"kit.fixture.side", Rect2i(3, 0, 2, 2), 4, 1)
+	var edge := BuildingMass.edge_key(Vector2i(3, 0), 3)
+	side.storeys[0].openings[edge] = BuildingMass.OPENING_DOOR
+	side.storeys[0]["passage_edges"] = {edge: true}
+	var f := FIXTURE.build({"extra": [side], "block": [2]})
+	assert_eq(FIXTURE.leans_on(f.front, 3), [0.0, 0.0, 0.0, 0.0] as Array[float])
+	assert_eq(FIXTURE.leans_on(side, 3), [0.0, 0.0, 0.0, 0.0] as Array[float])
+	assert_false((f.parts as Array).is_empty(), "the house still builds")
+	var causes := (f.result.rejections as Array).map(func(r: Dictionary) -> StringName: return r.cause)
+	assert_true(causes.has(&"portal") and causes.has(&"ends"), str(causes))
+```
+
+`tests/test_growing_floors_bury.gd` (whole file; the neighbour-in-front fixture now only proves it no longer matters):
+
+```gdscript
+extends GutTest
+## Inside-corner ends under step-in (spec Amendment 2): an end beside the house's own
+## cell closes its recess with a strip (bury); a building standing in front of an end
+## no longer matters (nothing moves outward).
+const FIXTURE := preload("res://tests/fixtures/growing_house.gd")
+
+
+## A five-storey neighbour standing in the lane beyond the front's east end (cells
+## x 3..4, z -2..-1), windowed on its west wall.
+func _corner() -> BuildingMass:
+	return FIXTURE.roofed(&"kit.fixture.corner", Rect2i(3, -2, 2, 2), 5, 0)
+
+
+func _east_closure(f: Dictionary, band: int) -> StringName:
+	for lean: Dictionary in f.leans:
+		if lean.host == f.front.stable_id and int(lean.dir) == 3 and int(lean.band) == band:
+			return lean.closures[0] # dir 3: left = the east end
+	return &""
+
+
+func test_a_neighbour_in_front_of_an_end_no_longer_blocks_it() -> void:
+	var f := FIXTURE.build({"extra": [_corner()], "lone": true})
+	assert_eq(FIXTURE.leans_on(f.front, 3), [-2.0, -1.0, 0.0, 0.0] as Array[float])
+	for band: int in [0, 2]:
+		assert_eq(_east_closure(f, band), &"return", "band %d" % band)
+
+
+## An L-shaped house: a four-storey body (x 0..2) and a five-storey wing (x 3,
+## z -1..1) standing out in front of the body's south face.
+func _own_wing() -> BuildingMass:
+	var mass := BuildingMass.new()
+	mass.stable_id = &"kit.fixture.front"
+	mass.seed = hash("kit.fixture.front")
+	var cells := BuildingMass.rect_cells(Rect2i(0, 0, 3, 2))
+	var wing := {Vector2i(3, -1): true, Vector2i(3, 0): true, Vector2i(3, 1): true}
+	cells.merge(wing)
+	for s in 5:
+		mass.add_storey(s * 2, (cells if s < 4 else wing).duplicate(), BuildingMass.MATERIAL_TIMBER)
+	mass.storeys[0].openings[BuildingMass.edge_key(Vector2i(1, 0), 3)] = BuildingMass.OPENING_DOOR
+	mass.add_roof(Rect2i(0, 0, 3, 2), 1, 8, &"red")["union_index"] = 0
+	mass.add_roof(Rect2i(3, -1, 1, 3), 1, 10, &"red")["union_index"] = 1
+	return mass
+
+
+func test_a_concave_end_closes_its_recess_against_the_own_wing() -> void:
+	var mass := _own_wing()
+	var f := FIXTURE.build({"replace_front": mass, "lone": true})
+	assert_eq(FIXTURE.leans_on(mass, 3), [-2.0, -1.0, 0.0, 0.0, 0.0] as Array[float])
+	for band: int in [0, 2]:
+		assert_eq(_east_closure(f, band), &"bury", "band %d" % band)
+	var catalog := EnvironmentCatalog.load_default()
+	for depth: float in [2.0, 1.0]:
+		var strips := (f.parts as Array).filter(func(p: Dictionary) -> bool:
+			var box: AABB = p.transform * catalog.descriptor(p.asset_id).measured_aabb
+			return String(p.role) == "frontage.return.%s" % BuildingKitAssembler.lean_suffix(depth) \
+				and absf(box.get_center().x - 6.0) < 0.3)
+		assert_eq(strips.size(), 1, "one recess strip of depth %.1f on the wing's line" % depth)
+
+
+func test_an_end_whose_own_wall_continues_behind_the_neighbour_is_buried() -> void:
+	# The house runs on (x 3) behind the neighbour standing in the lane: the exposed
+	# run ends at x 3 beside the house's own cell, so its recess is closed by a strip.
+	var mass := FIXTURE.roofed(&"kit.fixture.front", Rect2i(0, 0, 4, 2), 4, 3, 1, 0)
+	var f := FIXTURE.build({"replace_front": mass, "extra": [_corner()], "lone": true})
+	assert_eq(FIXTURE.leans_on(mass, 3), [-2.0, -1.0, 0.0, 0.0] as Array[float])
+	assert_eq(_east_closure(f, 0), &"bury")
+```
+
+`tests/test_growing_floors_knobs.gd`: remove `&"growth_gable_front_boost"` from `KNOBS` and the `BOOST_KNOB` assertion; add `assert_false(program.knobs.has(&"growth_gable_front_boost"), "removed by spec Amendment 2")`.
+
+Run each file: red (offsets are still step-out, `block_faces`/`offsets_of` missing, the roofs file still references removed code — delete it in this step).
+
+- [ ] **Step 2: Remove the superseded roof code.** `git show 9419f7dab:scripts/terrain/features/villages/kit/BuildingDesigner.gd > /tmp/designer_9419.gd` and restore its `articulate` first lines and `_square_axis` (the only Task 8 changes there). In `KitVillageBuildings.gd` apply the four edits listed under Files. In `town_odds.tres` delete the boost sub-resource and its `knobs` entry; notes: `growing_house_chance` "… eligible houses (two stacked storeys and an exposed face) …" (Task 1 deferred minor), `growth_max_lean` "Total step-in of the ground storey below the top storey, native m (2.0 = two kit jetties, 4 m world), floored to whole steps; the top storey and roof never move (spec Amendment 2).", `lane_sky_gap` "Inert under step-in (insets never narrow a lane); the guardrail value for any outward offset (G2, room projections facing a growth registry entry)." In `BuildingKitAssembler.gd` delete the items listed under Files.
+
+- [ ] **Step 3: `KitGrowingFronts` re-referenced.**
+
+Kept as they are: the knob constants (minus `BOOST_KNOB`), `STEP_SIZES`, `MAX_STEPS`, `LEAN_DEPTHS`, `FRONT_ROLES`, `carried_step`, `_own`, `_storey_at`, `ground_index`, `_run_key`, `_exposed_runs`, `_is_street`, `house_grows`, `CLEARANCE`, `_edges`, `_point`, `_joins`, `_convex`, `fronts`, `_closures`, `_obstacles`, `_obstacle`, `_assembler`, `clear_of`, `TOUCH`, `YIELD_DECOR`, `_seated`, `contact_clear`, `_obstacle_cause`, `_drop_decor`, `gap_ok` and `MAX_LANE_MODULES` (room projections use them), `_decor_edge`, `_on_storey`.
+
+Removed (no step-in use): `_front_step` (the leader's step is `carried_step` inline), `_publish_riders`, `_bury_contact`, `PLAIN_CONTACT`, `BURY_DROP`, `_end_open`, `_candidate`, `_moves`, `_yield`, `_bury_owners`, `OWN_OBSTACLES`, `crown_index`, `_face_slab`, the old `_parts_fault`, `_riders_of`, `_host_part`, `_columns_free`, and the whole roofs and eave-inset sections (`UNION`, `EAVE_*`, `roof_geometry`, `crown_wing`, `eave_allowance`, `_gable_shift_fault`, `_skin_meets`, `_on_face`, `_blocks_gable`, `_moves_with_front`, `_behind`, `_crown_fault`, `_eave_cap`, `INSET_DECOR`, `NO_EDGE`, `_inset_cause`, `_inset_corners`, `_corner_edges`, `_write_inset`, `_erase_inset`, `_inset_parts`, `_inset_parts_fault`, `_apply_inset`, `_try_inset`, `_record_roof`). `_decor_edge` returns `Vector3i(-1048576, 0, 0)` inline for dressing without a face.
+
+`face_chains` adds `"ground": g` to every chain. `house_eligible` and `fit` share one predicate (Task 6 deferred minor):
+
+```gdscript
+## Houses growth never touches (the town's retaining wall rooms).
+static func _excluded(mass: BuildingMass) -> bool:
+	return String(mass.stable_id).contains("wall-room")
+```
+
+`fit` drops its `roof_geometry` parameter and the roof/inset ctx keys; its ctx is `{"catalog", "air", "towers", "reserved", "solid", "registry": {}, "obstacles", "kit", "rejections": [], "planned": {}, "yields": {}, "front": {}, "active": [], "masses": {}}` and it returns `{"leans", "registry", "rejections"}`. Changed and new functions:
+
+```gdscript
+## The storeys of a face from its ground storey up.
+static func _storeys(chain: Dictionary) -> Array[int]:
+	var out: Array[int] = [int(chain.ground)]
+	out.append_array(chain.storeys)
 	return out
 
 
-## A growing house's top storey leans past its gable end: that end of the roof
-## (gable, barge boards, end slope/eave/top pieces, ridge end) moves out with it,
-## and a copy of each moved roof piece, clipped to the opened strip between the
-## last middle piece and the moved end, closes the roof. KitGrowingFronts only
-## sets lean_* on wings of kits without edge caps (pieces centred on modules).
-func _lean_roof_end(ctx: Dictionary, wing: Dictionary, first_part: int, p_min: int, p_max: int) -> void:
-	if kit.roof_edge_caps:
-		return
-	var axis := int(wing.axis)
-	var coordinate := 0 if axis == 0 else 2
-	var fillers: Array[Dictionary] = []
-	for end: int in [0, 1]:
-		var lean := float(wing.get("lean_max" if end == 1 else "lean_min", 0.0))
-		if lean <= 0.0:
-			continue
-		var sign := 1.0 if end == 1 else -1.0
-		var edge := float(p_max if end == 1 else p_min)
-		var seam := edge - sign * 0.5
-		var reach := lean / kit.module_width
-		var offset := Vector3.ZERO
-		offset[coordinate] = sign * lean
-		for i in range(first_part, (ctx.out as Array).size()):
-			var part: Dictionary = ctx.out[i]
-			var role := String(part.role)
-			if role.begins_with("chimney.") or role == "trim.ridge_peak":
+## Storey index of face storey k (k = -1: the ground storey).
+static func _storey_index(chain: Dictionary, k: int) -> int:
+	return int(chain.ground) if k < 0 else int(chain.storeys[k])
+
+
+## Offsets (native m, <= 0) of a face's storeys from the ground up for one profile
+## (spec Amendment 2): storey k stands `leans[k] - top` inside its line, the ground
+## storey `-top`, so the top storey (and the roof on it) never moves.
+static func offsets_of(leans: Array[float]) -> Array[float]:
+	var top: float = leans.back() if not leans.is_empty() else 0.0
+	var out: Array[float] = [-top]
+	for lean: float in leans:
+		out.append(lean - top)
+	return out
+
+
+## One front. The leader (its first active member that rolled growth) sets the step
+## its kit carries and the cap; a member that leaves is dropped and the rest refit.
+## Members that left are fitted alone afterwards if they were seeds.
+static func _fit_front(front: Dictionary, character: TownCharacter, ctx: Dictionary,
+		out: Array[Dictionary]) -> void:
+	var active: Array[int] = []
+	for m in (front.members as Array).size():
+		active.append(m)
+	var left: Array[int] = []
+	var leans: Array[float] = []
+	ctx.front = front
+	ctx.active = active
+	while not active.is_empty():
+		var leader: Dictionary = front.members[_leader(front, active)]
+		var step := carried_step(leader.kit, float(String(character.pick(STEP_KNOB, String(leader.mass.stable_id)))))
+		if not STEP_SIZES.has(step):
+			return
+		var cap := step * float(mini(MAX_STEPS, floori(character.value(CAP_KNOB) / step + 0.0001)))
+		var result := _front_profile(front, active, step, cap, ctx)
+		if int(result.leaves) < 0:
+			leans = result.leans
+			break
+		active.erase(int(result.leaves))
+		left.append(int(result.leaves))
+	if not leans.is_empty() and leans.max() > 0.0:
+		var closures := {}
+		for m: int in active:
+			closures[m] = _member_closures(front, active, m, ctx)
+		# Dressing on every corner panel a member cuts goes before any member is
+		# written (a wrapped partner would otherwise move it along its own run).
+		for m: int in active:
+			_drop_cut_decor(front.members[m], _slice(leans, front.members[m]), closures[m], ctx)
+		for m: int in active:
+			ctx.kit = front.members[m].kit
+			_commit(front.members[m], _slice(leans, front.members[m]), closures[m], ctx, out)
+	for m: int in left:
+		if bool(front.members[m].seed):
+			_fit_front({"members": [front.members[m]], "joins": []}, character, ctx, out)
+
+
+## The front's leader: its first active member that rolled growth (a pulled
+## neighbour never sets the step; Task 6 deferred minor), else its first member.
+static func _leader(front: Dictionary, active: Array[int]) -> int:
+	for m: int in active:
+		if bool(front.members[m].seed):
+			return m
+	return active[0]
+
+
+## A member's part of the front's profile (one lean per storey of its chain).
+static func _slice(leans: Array[float], member: Dictionary) -> Array[float]:
+	var out: Array[float] = []
+	out.assign(leans.slice(0, (member.chain.storeys as Array).size()))
+	return out
+
+
+## [left, right] closures of member m per storey from the ground up (index 0 = ground).
+static func _member_closures(front: Dictionary, active: Array[int], m: int, ctx: Dictionary) -> Array:
+	ctx.kit = front.members[m].kit
+	var out: Array = []
+	for i in _storeys(front.members[m].chain).size():
+		out.append(_closures(front, active, m, i - 1, ctx))
+	return out
+
+
+## The front's monotone capped profile (index k = k-th storey above the ground storey),
+## tested at its final step-in offsets: steps run only up to the shortest active
+## member's top storey (every member's top is then the same, so joints and wraps stay
+## equal at every shared storey; above it every member holds). On a failure the cap
+## drops one step for the whole front (the old "hold from the failing storey up"); a
+## member failing at the smallest cap leaves when others remain ({leaves: m}). A lone
+## member failing there stays flush.
+static func _front_profile(front: Dictionary, active: Array[int], step: float, cap: float,
+		ctx: Dictionary) -> Dictionary:
+	var depth := 0
+	var reach := 1000
+	for m: int in active:
+		var n := (front.members[m].chain.storeys as Array).size()
+		depth = maxi(depth, n)
+		reach = mini(reach, n)
+	var top := minf(cap, step * float(reach))
+	while top > 0.0001:
+		var leans: Array[float] = []
+		for k in depth:
+			leans.append(minf(float(k + 1) * step, top))
+		var fault := _front_fault(front, active, leans, ctx)
+		if fault.is_empty():
+			return {"leans": leans, "leaves": -1}
+		_reject(ctx, front, fault)
+		if top <= step + 0.0001 and active.size() > 1:
+			return {"leaves": int(fault.member), "fault": fault}
+		top -= step
+	var flat: Array[float] = []
+	flat.resize(depth)
+	flat.fill(0.0)
+	return {"leans": flat, "leaves": -1}
+
+
+## The first active member whose step-in fails at these leans, as {member, cause,
+## storey (-1 = ground), depth}, or {} (each member's yielding ornaments are left in
+## ctx.yields). Every storey from the ground up is tested at its final offset;
+## ctx.planned holds every active member's offsets so opposite faces of one house see
+## each other (bearing).
+static func _front_fault(front: Dictionary, active: Array[int], leans: Array[float], ctx: Dictionary) -> Dictionary:
+	ctx.planned = {}
+	for m: int in active:
+		var member: Dictionary = front.members[m]
+		var offsets := offsets_of(_slice(leans, member))
+		var indices := _storeys(member.chain)
+		for i in indices.size():
+			for edge: Vector3i in _edges(member.chain):
+				ctx.planned["%s|%d|%s" % [member.mass.stable_id, indices[i], edge]] = offsets[i]
+	for m: int in active:
+		var member: Dictionary = front.members[m]
+		var own := _slice(leans, member)
+		var offsets := offsets_of(own)
+		var closures := _member_closures(front, active, m, ctx)
+		ctx.kit = member.kit
+		for i in offsets.size():
+			var base: float = offsets[i - 1] if i > 0 else offsets[i]
+			if offsets[i] >= 0.0 and offsets[i] <= base:
 				continue
-			var original: Transform3D = part.transform
-			if sign * (original.origin[coordinate] / kit.module_width - edge) < -0.25:
-				continue
-			part.transform = Transform3D(original.basis, original.origin + offset)
-			part["lean_end"] = true
-			if role.begins_with("roof.") or role.begins_with("trim.ridge"):
-				var filler := part.duplicate()
-				filler.transform = original
-				filler.erase("lean_end")
-				filler["lean_filler"] = true
-				filler["stable_id"] = StringName("%s.lean" % String(part.stable_id))
-				filler["clip_volumes"] = preload("res://scripts/terrain/features/villages/kit/KitRoofMeshUnion.gd").clip_volumes(
-					{"axis": axis, "clip_min": minf(seam, seam + sign * reach),
-						"clip_max": maxf(seam, seam + sign * reach)}, kit)
-				fillers.append(filler)
-	(ctx.out as Array).append_array(fillers)
-```
-
-- [ ] **Step 4: Guardrail 7 and the crown rule in `KitGrowingFronts.gd`** (add `roof_geometry: Dictionary = {}` as the last `fit` parameter and `"geometry": roof_geometry, "allowances": {}` to `ctx`):
-
-```gdscript
-const UNION := preload("res://scripts/terrain/features/villages/kit/KitRoofMeshUnion.gd")
-## Keep the leaned wall face this far inside the eave's measured reach.
-const EAVE_MARGIN := 0.1
-## The cornice's top surface must stand this far above a leaned wall head.
-const EAVE_COVER := 0.05
-const EAVE_SAMPLE := 0.05
-
-
-## Baked roof skins of every kit (read once on the caller's thread).
-static func roof_geometry(kits: Array) -> Dictionary:
-	var geometry := {}
-	var loaded := {}
-	for kit: BuildingKit in kits:
-		UNION._load_geometry(kit, geometry, loaded)
-	return geometry
-
-
-## The roof wing closing this storey's crown over the face, or {} when the face is
-## covered by a storey above (not the next leaned storey), a deck, or nothing.
-static func crown_wing(mass: BuildingMass, chain: Dictionary, k: int) -> Dictionary:
-	var storey: Dictionary = mass.storeys[chain.storeys[k]]
-	var top := int(storey.floor_band) + int(storey.get("bands", 2))
-	var above := mass.cells_at_band(top)
-	for edge: Vector3i in _edges(chain):
-		if above.has(Vector2i(edge.x, edge.y)):
-			return {}
-	var index := crown_index(mass, chain, k)
-	for wing: Dictionary in mass.roofs:
-		if int(wing.eave_band) == top and int(wing.get("union_index", -1)) == index:
-			var rect: Rect2i = wing.rect
-			if _edges(chain).all(func(e: Vector3i) -> bool: return rect.has_point(Vector2i(e.x, e.y))):
-				return wing
+			var cause := &"ends" if (closures[i] as Array).has(&"blocked") \
+				else _fault(member.mass, member.chain, i - 1, offsets[i], base, ctx)
+			if cause != &"":
+				return {"member": m, "cause": cause, "storey": i - 1, "depth": offsets[i]}
+		var parts := _parts_fault(member, own, closures, ctx)
+		if not parts.is_empty():
+			parts["member"] = m
+			return parts
 	return {}
 
 
-## How far (native m) a top storey may lean under this eave: the measured reach
-## bounds the scan; the baked roof skin gives the cornice's top surface, which
-## must cover the leaned wall head (lowered by OFFSET_WALL_DROP, posts +0.074).
-static func eave_allowance(kit: BuildingKit, catalog: EnvironmentCatalog, geometry: Dictionary,
-		wing: Dictionary, side: int) -> float:
-	var colour := StringName(wing.colour)
-	if bool(BuildingKitAssembler.tight_eave_sides(wing) & (1 << side)) \
-			and kit.has_role(StringName("roof.%s.eave_tight" % colour)):
-		return 0.0
-	var role := StringName("roof.%s.eave" % colour)
-	var id := kit.asset(role)
-	var local := kit.anchor(role) * kit.asset_anchor(id)
-	var reach: float = (local * catalog.descriptor(id).measured_aabb).end.z
-	var surfaces: Array = geometry.get(id, geometry.get(kit.geometry_aliases.get(id, id), []))
-	if surfaces.is_empty():
-		return 0.0
-	var head := -BuildingKitAssembler.OFFSET_WALL_DROP + 0.074 + EAVE_COVER
-	var allowed := 0.0
-	var z := kit.wall_face
-	while z <= reach - EAVE_MARGIN:
-		var top := -INF
-		for surface: Dictionary in surfaces:
-			for v: Vector3 in local * (surface.vertices as PackedVector3Array):
-				if absf(v.z - z) <= EAVE_SAMPLE:
-					top = maxf(top, v.y)
-		if top < head:
-			break
-		allowed = z - kit.wall_face
-		z += EAVE_SAMPLE
-	return allowed
+static func _reject(ctx: Dictionary, front: Dictionary, fault: Dictionary) -> void:
+	ctx.rejections.append({"chain": String(front.members[int(fault.member)].chain.key),
+		"storey": int(fault.storey), "lean": float(fault.depth), "cause": fault.cause})
 
 
-static func _gable_shift_ok(mass: BuildingMass, chain: Dictionary, wing: Dictionary,
-		lean: float, ctx: Dictionary) -> bool:
+## How one end closes at face storey k (-1 = ground): a join to an active member
+## present at k gives its kind; otherwise the step-in end rule (spec Amendment 2).
+static func _end_kind(front: Dictionary, active: Array[int], m: int, at_end: bool, k: int,
+		ctx: Dictionary) -> StringName:
+	for join: Dictionary in front.joins:
+		var partner := -1
+		if int(join.a) == m and bool(join.a_end) == at_end:
+			partner = int(join.b)
+		elif int(join.b) == m and bool(join.b_end) == at_end:
+			partner = int(join.a)
+		if partner >= 0 and active.has(partner) \
+				and k < (front.members[partner].chain.storeys as Array).size():
+			return StringName(join.kind)
+	var member: Dictionary = front.members[m]
+	return _inset_end(member.mass, member.chain, at_end, k, ctx)
+
+
+## A stepped-in end with no front partner: &"bury" when the house's own cell stands
+## beside it at both bands (a strip closes the recess); &"return" when the cell beside
+## it is open (the perpendicular corner panel shortens); else &"blocked": another
+## building beside it (only a row stepping together admits one), own at one band only,
+## the perpendicular face already stepped by an earlier front, or a door, passage, bay
+## or blank on the corner panel the step would cut.
+static func _inset_end(mass: BuildingMass, chain: Dictionary, at_end: bool, k: int, ctx: Dictionary) -> StringName:
+	var storey: Dictionary = mass.storeys[_storey_index(chain, k)]
+	var dir := int(chain.dir)
+	var along := Vector2i(0, 1) if dir % 2 == 0 else Vector2i(1, 0)
+	var sign := 1 if at_end else -1
+	var cell := BuildingKitAssembler._inside_cell(dir, int(chain.line),
+		int(chain.end) - 1 if at_end else int(chain.start))
+	var side := cell + along * sign
+	var bands := range(int(storey.floor_band), int(storey.floor_band) + int(storey.get("bands", 2)))
+	var own := 0
+	for b: int in bands:
+		if mass.cells_at_band(b).has(side):
+			own += 1
+		elif bool((ctx.solid as Callable).call(_own(mass), side, b)):
+			return &"blocked"
+	if own == bands.size():
+		return &"bury"
+	if own > 0:
+		return &"blocked"
+	var corner := BuildingMass.edge_key(cell, BuildingMass.DIRS.find(along * sign))
+	if float((storey.get("wall_offsets", {}) as Dictionary).get(corner, 0.0)) != 0.0:
+		return &"blocked"
+	if StringName(storey.openings.get(corner, storey.default_opening)) in [BuildingMass.OPENING_DOOR,
+			BuildingMass.OPENING_BAY, BuildingMass.OPENING_NONE] \
+			or (storey.get("passage_edges", {}) as Dictionary).has(corner):
+		return &"blocked"
+	return &"return"
+
+
+## The first guardrail face storey k (-1 = ground) fails standing `depth` (<= 0)
+## inside its line over a storey standing `base` inside, or &"" when it fits
+## (spec Amendment 2 "Guardrails under step-in"; ends are checked by _front_fault).
+static func _fault(mass: BuildingMass, chain: Dictionary, k: int, depth: float, base: float,
+		ctx: Dictionary) -> StringName:
+	var storey: Dictionary = mass.storeys[_storey_index(chain, k)]
+	if depth > base and (storey.material != BuildingMass.MATERIAL_TIMBER \
+			or bool(storey.get("inset", false)) or bool(storey.get("retaining", false)) \
+			or bool(storey.get("fortified", false))):
+		return &"material" # an overhanging storey is timber on the kit's jetty
+	if not _no_portal(mass, chain, k, depth, base):
+		return &"portal"
+	if depth < 0.0:
+		if not _steps_in(storey, depth, ctx.kit):
+			return &"material"
+		if not _exposed(mass, chain, k, ctx):
+			return &"party"
+		if not _recess_free(mass, chain, k, ctx):
+			return &"columns"
+		if not _bears(mass, chain, k, depth, ctx):
+			return &"bearing"
+		if not _decor_ok(mass, chain, k):
+			return &"decor"
+	return &""
+
+
+## A storey that can stand inside its line: two bands, not a terrace skin, sunk or
+## abutted course, kit jetty or pent eave; a non-timber storey only by whole modules
+## (the kit bakes no stone half strip).
+static func _steps_in(storey: Dictionary, depth: float, kit: BuildingKit) -> bool:
+	if int(storey.get("bands", 2)) != 2 or bool(storey.get("retaining", false)) \
+			or bool(storey.get("fortified", false)) or bool(storey.get("sunk", false)) \
+			or bool(storey.get("abutted", false)) or bool(storey.get("inset", false)) \
+			or StringName(storey.get("pent_colour", &"")) != &"":
+		return false
+	if storey.material == BuildingMass.MATERIAL_TIMBER:
+		return true
+	var modules := -depth / kit.module_width
+	return absf(modules - roundf(modules)) < 0.0001
+
+
+## Party rule: the run is exposed at both bands (no party wall, no touching neighbour
+## in front of it, a lower neighbour against the ground storey included).
+static func _exposed(mass: BuildingMass, chain: Dictionary, k: int, ctx: Dictionary) -> bool:
+	var storey: Dictionary = mass.storeys[_storey_index(chain, k)]
+	var band := int(storey.floor_band)
+	for edge: Vector3i in _edges(chain):
+		var outward := Vector2i(edge.x, edge.y) + BuildingMass.DIRS[int(chain.dir)]
+		for b in range(band, band + int(storey.get("bands", 2))):
+			if mass.cells_at_band(b).has(outward) or bool((ctx.solid as Callable).call(_own(mass), outward, b)):
+				return false
+	return true
+
+
+## G3 under step-in: the recess cells themselves carry no passage, podium or other
+## owner's claim (nothing beyond the face matters any more).
+static func _recess_free(mass: BuildingMass, chain: Dictionary, k: int, ctx: Dictionary) -> bool:
+	var storey: Dictionary = mass.storeys[_storey_index(chain, k)]
+	var band := int(storey.floor_band)
+	for edge: Vector3i in _edges(chain):
+		for b in range(band, band + int(storey.get("bands", 2))):
+			if bool((ctx.reserved as Callable).call(_own(mass), Vector2i(edge.x, edge.y), b)):
+				return false
+	return true
+
+
+## Bearing: behind every stepped-in edge at least one module of floor remains, at
+## least two across an axis stepped in from both sides (the kit's jetty never leaves a
+## one-module stalk), counting the opposite face's committed or same-front offset.
+static func _bears(mass: BuildingMass, chain: Dictionary, k: int, depth: float, ctx: Dictionary) -> bool:
 	var kit: BuildingKit = ctx.kit
-	if kit.roof_edge_caps:
-		return false # capped families cannot be clipped cleanly (spec risk)
-	var axis := int(wing.axis)
-	var positive := int(chain.dir) < 2
-	var rect: Rect2i = wing.rect
-	if bool(wing.open_max if positive else wing.open_min) \
-			or int(wing.extend_max if positive else wing.extend_min) != 0 \
-			or BuildingKitAssembler.tight_eave_sides(wing) != 0:
-		return false
-	for key: String in (["verge_max", "clip_max"] if positive else ["verge_min", "clip_min"]):
-		if wing.has(key):
-			return false
-	var end_slot := rect.end[axis] if positive else rect.position[axis]
-	for side in 2:
-		if (wing.dormers as Dictionary).has(Vector2i(side, end_slot)):
-			return false
-	if rect.position[1 - axis] != int(chain.start) or rect.end[1 - axis] != int(chain.end):
-		return false
-	var probe := wing.duplicate()
-	probe["lean_max" if positive else "lean_min"] = lean
-	for part: Dictionary in BuildingKitAssembler.new(kit).roof_parts(mass, probe):
-		if bool(part.get("lean_filler", false)) and not (ctx.geometry as Dictionary).has(part.asset_id):
-			return false # an unclippable filler would overlap the moved end
-		if not bool(part.get("lean_end", false)) and not bool(part.get("lean_filler", false)):
-			continue
-		var local: AABB = (ctx.catalog as EnvironmentCatalog).descriptor(part.asset_id).measured_aabb
-		if CLEARANCE.intersects_air(local, part.transform, ctx.air):
-			return false
-		var box: AABB = (part.transform * local).grow(-0.002)
-		for obstacle: Dictionary in ctx.obstacles:
-			if not _blocks(obstacle, mass, int(wing.get("union_index", -1))) \
-					or contact_clear(box, obstacle.bounds) or _moves_with_front(obstacle, ctx):
-				continue
+	var index := _storey_index(chain, k)
+	var cells: Dictionary = mass.storeys[index].cells
+	var dir := int(chain.dir)
+	var inward: Vector2i = -BuildingMass.DIRS[dir]
+	var back := (dir + 2) % 4
+	for edge: Vector3i in _edges(chain):
+		var far := Vector2i(edge.x, edge.y)
+		var modules := 1
+		while cells.has(far + inward):
+			far += inward
+			modules += 1
+		var opposite := _planned(mass, index, BuildingMass.edge_key(far, back), kit, ctx)
+		var keep := float(modules) * kit.module_width + depth + opposite
+		var need := (2.0 if opposite < 0.0 else 1.0) * kit.module_width
+		if keep < need - 0.0001:
 			return false
 	return true
 
 
-## A piece that is not in the way of a moved gable end: a row partner's own moving
-## roof end (its crown wing; it steps with the row), or a plain wall this member's
-## end is buried in (KitRoofMeshUnion trims roof triangles at walls).
-static func _moves_with_front(obstacle: Dictionary, ctx: Dictionary) -> bool:
-	for rider: Dictionary in ctx.get("riders", []):
-		if rider.owner == obstacle.owner and int(obstacle.get("roof_index", -1)) == int(rider.get("crown", -2)):
-			return true
-	for contact: Dictionary in ctx.get("buried", []):
-		if contact.owner == obstacle.owner:
-			for prefix: String in PLAIN_CONTACT:
-				if String(obstacle.role).begins_with(prefix):
-					return true
-	return false
+## The offset (native m, <= 0) one edge will stand at: this front's plan, else committed.
+static func _planned(mass: BuildingMass, index: int, edge: Vector3i, kit: BuildingKit, ctx: Dictionary) -> float:
+	var key := "%s|%d|%s" % [mass.stable_id, index, edge]
+	if (ctx.planned as Dictionary).has(key):
+		return minf(0.0, float(ctx.planned[key]))
+	return minf(0.0, float((mass.storeys[index].get("wall_offsets", {}) as Dictionary).get(edge, 0.0))) * kit.module_width
 
 
-# G7 and the crown rule: the last storey of a face must be closed above its step.
-static func _crown_fault(mass: BuildingMass, chain: Dictionary, k: int, lean: float,
-		ctx: Dictionary) -> StringName:
-	if k < (chain.storeys as Array).size() - 1:
-		return &"" # the next storey of the chain steps at least as far
-	var wing := crown_wing(mass, chain, k)
-	if wing.is_empty():
-		return &"crown"
+## A porch post standing on or within one module in front of the run (at the storey's
+## bands) would be left in the recess or cut by the moved wall: the step is withdrawn.
+static func _decor_ok(mass: BuildingMass, chain: Dictionary, k: int) -> bool:
+	var storey: Dictionary = mass.storeys[_storey_index(chain, k)]
+	var lo := int(storey.floor_band)
+	var hi := lo + int(storey.get("bands", 2))
 	var dir := int(chain.dir)
-	if int(wing.axis) == dir % 2:
-		return &"" if _gable_shift_ok(mass, chain, wing, lean, ctx) else &"crown"
-	return &"" if lean <= _eave_cap(wing, dir, ctx) + 0.0001 else &"crown"
+	var sign := 1.0 if dir < 2 else -1.0
+	for item: Dictionary in mass.decor:
+		if StringName(item.kind) != &"post" or int(item.get("from_band", hi)) >= hi \
+				or int(item.get("to_band", lo)) <= lo:
+			continue
+		var vertex: Vector2 = item.centre
+		var line := vertex.x if dir % 2 == 0 else vertex.y
+		var along := vertex.y if dir % 2 == 0 else vertex.x
+		var ahead := (line - float(chain.line)) * sign
+		if ahead >= -0.001 and ahead <= 1.001 and along >= float(chain.start) - 0.001 \
+				and along <= float(chain.end) + 0.001:
+			return false
+	return true
 
 
-static func _eave_cap(wing: Dictionary, dir: int, ctx: Dictionary) -> float:
-	var side := 0 if dir < 2 else 1
-	var key := "%s|%s|%d|%d" % [ctx.kit.kit_id, wing.colour, side, BuildingKitAssembler.tight_eave_sides(wing)]
-	if not (ctx.allowances as Dictionary).has(key):
-		ctx.allowances[key] = eave_allowance(ctx.kit, ctx.catalog, ctx.geometry, wing, side)
-	return float(ctx.allowances[key])
+# G6 under step-in: a storey with a skywalk/bridge passage or a blank on its run, or
+# whose wall (or the storey above's) bears a balcony, neither stands in nor overhangs
+# (depth == base == 0). A bay or a door on a stepped-in UPPER storey withdraws the
+# step; a door on the ground storey is a recessed shopfront (it moves in with its wall).
+static func _no_portal(mass: BuildingMass, chain: Dictionary, k: int, depth: float, base: float) -> bool:
+	if depth >= 0.0 and base >= 0.0:
+		return true
+	var storey: Dictionary = mass.storeys[_storey_index(chain, k)]
+	if bool(storey.get("bears_balcony", false)):
+		return false
+	var above := _storey_at(mass, int(storey.floor_band) + int(storey.get("bands", 2)))
+	if not above.is_empty() and bool(above.get("bears_balcony", false)):
+		return false
+	var passages: Dictionary = storey.get("passage_edges", {})
+	for edge: Vector3i in _edges(chain):
+		if passages.has(edge):
+			return false
+		var opening := StringName(storey.openings.get(edge, storey.default_opening))
+		if opening == BuildingMass.OPENING_NONE:
+			return false
+		if depth < 0.0 and (opening == BuildingMass.OPENING_BAY or (opening == BuildingMass.OPENING_DOOR and k >= 0)):
+			return false
+	return true
 ```
 
-In `_fault`, after the parts check: `return _crown_fault(mass, chain, k, lean, ctx)` (the parts cause, when non-empty, still returns first). In `_publish_riders` (Task 6) add `"crown": crown_index(partner.mass, partner.chain, k)` to each rider. `_front_step` gains the eave fallback (it runs again whenever the leader changes, so a front whose gable-crowned leader left is re-stepped by its new leader):
+Probe, commit and apply:
 
 ```gdscript
-## The step a leader carries. A kit jetty cannot pass under an eave: an eave-crowned
-## leader takes the light step where the measured cornice admits it (else its crown
-## withdraws the step).
-static func _front_step(leader: Dictionary, character: TownCharacter, ctx: Dictionary) -> float:
-	var step := carried_step(leader.kit, float(String(character.pick(STEP_KNOB, String(leader.mass.stable_id)))))
-	if step > 0.5:
-		ctx.kit = leader.kit
-		var top := (leader.chain.storeys as Array).size() - 1
-		var wing := crown_wing(leader.mass, leader.chain, top)
-		if not wing.is_empty() and int(wing.axis) != int(leader.chain.dir) % 2 \
-				and _eave_cap(wing, int(leader.chain.dir), ctx) < step:
-			step = 0.5
-	return step
+## Pieces a step-in adds that dressing may meet (the jetty: braces, beams, strips).
+const JETTY_ROLES: Array[String] = ["bracket.", "trim.floor_beam", "frontage."]
+
+
+## The face storey (k, -1 = ground) a piece at height y belongs to.
+static func _storey_at_y(member: Dictionary, y: float, kit: BuildingKit) -> int:
+	var indices := _storeys(member.chain)
+	var found := -1
+	for i in indices.size():
+		if float((member.mass as BuildingMass).storeys[indices[i]].floor_band) * kit.band_height() <= y + 0.001:
+			found = i - 1
+	return found
+
+
+static func _snapshot(mass: BuildingMass, chain: Dictionary) -> Dictionary:
+	var storeys := {}
+	for index: int in _storeys(chain):
+		var storey: Dictionary = mass.storeys[index]
+		var keep := {}
+		for key: String in ["wall_offsets", "growth"]:
+			if storey.has(key):
+				keep[key] = (storey[key] as Dictionary).duplicate(true)
+		if storey.has("projections"):
+			keep["projections"] = (storey.projections as Array).duplicate(true)
+		storeys[index] = keep
+	var centres := []
+	for item: Dictionary in mass.decor:
+		centres.append([item, item.get("centre")])
+	return {"storeys": storeys, "centres": centres}
+
+
+static func _restore(mass: BuildingMass, saved: Dictionary) -> void:
+	for index: int in saved.storeys:
+		var storey: Dictionary = mass.storeys[index]
+		for key: String in ["wall_offsets", "projections", "growth"]:
+			storey.erase(key)
+		storey.merge(saved.storeys[index])
+	for pair: Array in saved.centres:
+		(pair[0] as Dictionary)["centre"] = pair[1]
+
+
+## One member's step-in written onto its house and undone again: the architecture
+## it adds (the house assembled with and without it, compared by asset and pose) and
+## the dressing it moves, with that dressing's new pieces.
+static func _added_parts(member: Dictionary, leans: Array[float], closures: Array, ctx: Dictionary) -> Dictionary:
+	var mass: BuildingMass = member.mass
+	var assembler := _assembler(mass, member.kit, ctx.solid)
+	var decor := mass.decor.duplicate()
+	mass.decor.clear()
+	var before := {}
+	for part: Dictionary in assembler.assemble(mass):
+		before["%s|%s" % [part.asset_id, part.transform]] = true
+	mass.decor.assign(decor)
+	var saved := _snapshot(mass, member.chain)
+	var moved: Array = apply(mass, member.kit, member.chain, leans, closures).moved
+	mass.decor.clear()
+	var added: Array[Dictionary] = []
+	for part: Dictionary in assembler.assemble(mass):
+		if not before.has("%s|%s" % [part.asset_id, part.transform]):
+			added.append(part)
+	mass.decor.assign(decor)
+	var dressing: Array[Dictionary] = []
+	for item: Dictionary in moved:
+		var assembly := {"mass": mass, "out": [] as Array[Dictionary], "serial": 0}
+		assembler._assemble_decor(assembly, item)
+		dressing.append({"item": item, "parts": assembly.out})
+	_restore(mass, saved)
+	return {"added": added, "moved": dressing}
+
+
+## G1 + G3 under step-in: the pieces one member's step-in adds clear walking air and
+## every other building (its own architecture, and an active row partner's, is what the
+## step-in rebuilds). Dressing the new jetty pieces meet — kept dressing of the house or
+## a partner, or dressing the step moved — yields when of a yielding kind (ctx.yields),
+## else the step is withdrawn (obstacle.own). Returns {cause, storey, depth} or {}.
+static func _parts_fault(member: Dictionary, leans: Array[float], closures: Array, ctx: Dictionary) -> Dictionary:
+	var mass: BuildingMass = member.mass
+	var catalog: EnvironmentCatalog = ctx.catalog
+	var probe := _added_parts(member, leans, closures, ctx)
+	var partners := {}
+	for m: int in ctx.active:
+		partners[(ctx.front.members[m].mass as BuildingMass).stable_id] = true
+	var moved: Array = (probe.moved as Array).map(func(d: Dictionary) -> Dictionary: return d.item)
+	var yields: Array = []
+	var top: float = leans.back()
+	for part: Dictionary in probe.added:
+		var local: AABB = catalog.descriptor(part.asset_id).measured_aabb
+		var box: AABB = (part.transform * local).grow(-0.002)
+		var fault := {"cause": &"", "storey": _storey_at_y(member, box.get_center().y, member.kit), "depth": -top}
+		if CLEARANCE.intersects_air(local, part.transform, ctx.air):
+			fault.cause = &"air"
+			return fault
+		var jetty := JETTY_ROLES.any(func(prefix: String) -> bool: return String(part.role).begins_with(prefix))
+		for obstacle: Dictionary in ctx.obstacles:
+			if bool(obstacle.get("gone", false)) or contact_clear(box, obstacle.bounds):
+				continue
+			if not partners.has(obstacle.owner):
+				fault.cause = _obstacle_cause(obstacle, mass)
+				return fault
+			if not jetty or not obstacle.has("decor") or moved.any(func(i: Dictionary) -> bool: return is_same(i, obstacle.decor)):
+				continue # rebuilt architecture, or dressing whose new place is tested below
+			if StringName(obstacle.decor.kind) in YIELD_DECOR:
+				if not yields.any(func(i: Dictionary) -> bool: return is_same(i, obstacle.decor)):
+					yields.append(obstacle.decor)
+				continue
+			fault.cause = &"obstacle.own"
+			return fault
+		if not jetty:
+			continue
+		for dressed: Dictionary in probe.moved:
+			for piece: Dictionary in dressed.parts:
+				if contact_clear(box, piece.transform * catalog.descriptor(piece.asset_id).measured_aabb):
+					continue
+				if not (StringName(dressed.item.kind) in YIELD_DECOR):
+					fault.cause = &"obstacle.own"
+					return fault
+				if not yields.any(func(i: Dictionary) -> bool: return is_same(i, dressed.item)):
+					yields.append(dressed.item)
+	for dressed: Dictionary in probe.moved:
+		for piece: Dictionary in dressed.parts:
+			var local: AABB = catalog.descriptor(piece.asset_id).measured_aabb
+			if CLEARANCE.intersects_air(local, piece.transform, ctx.air):
+				return {"cause": &"air", "storey": _storey_at_y(member, (piece.transform * local).get_center().y,
+					member.kit), "depth": -top}
+	(ctx.yields as Dictionary)[String(member.chain.key)] = yields
+	return {}
+
+
+## Dressing on the corner panels this member's stepped-in storeys cut (the
+## perpendicular face's end panel at a `return` or `wrap` end; a corner climber on the
+## face's own end panel there) goes: its panel is shortened or gone.
+static func _drop_cut_decor(member: Dictionary, leans: Array[float], closures: Array, ctx: Dictionary) -> void:
+	var mass: BuildingMass = member.mass
+	var chain: Dictionary = member.chain
+	var dir := int(chain.dir)
+	var along := Vector2i(0, 1) if dir % 2 == 0 else Vector2i(1, 0)
+	var offsets := offsets_of(leans)
+	var indices := _storeys(chain)
+	for i in indices.size():
+		if offsets[i] >= 0.0:
+			continue
+		var storey: Dictionary = mass.storeys[indices[i]]
+		for at_end: bool in [false, true]:
+			# _closures' order: [start, end] for dirs 1 and 2, [end, start] otherwise.
+			var side := (1 if at_end else 0) if (dir == 1 or dir == 2) else (0 if at_end else 1)
+			if not (StringName(closures[i][side]) in [&"return", &"wrap"]):
+				continue
+			var sign := 1 if at_end else -1
+			var cell := BuildingKitAssembler._inside_cell(dir, int(chain.line), int(chain.end) - 1 if at_end else int(chain.start))
+			var cut := [BuildingMass.edge_key(cell, BuildingMass.DIRS.find(along * sign)), BuildingMass.edge_key(cell, dir)]
+			for item: Dictionary in mass.decor.duplicate():
+				var edge := _decor_edge(item)
+				if _on_storey(item, storey, member.kit) and (edge == cut[0] \
+						or (StringName(item.kind) == &"ivy_corner" and edge == cut[1])):
+					mass.decor.erase(item)
+					_drop_decor(ctx, item)
+
+
+static func _commit(member: Dictionary, leans: Array[float], closures: Array, ctx: Dictionary,
+		out: Array[Dictionary]) -> void:
+	var mass: BuildingMass = member.mass
+	var kit: BuildingKit = member.kit
+	var catalog: EnvironmentCatalog = ctx.catalog
+	for item: Dictionary in (ctx.yields as Dictionary).get(String(member.chain.key), []):
+		mass.decor.erase(item)
+		_drop_decor(ctx, item)
+	var probe := _added_parts(member, leans, closures, ctx)
+	var written := apply(mass, kit, member.chain, leans, closures)
+	for item: Dictionary in written.moved:
+		_drop_decor(ctx, item)
+		var assembly := {"mass": mass, "out": [] as Array[Dictionary], "serial": 0}
+		_assembler(mass, kit, ctx.solid)._assemble_decor(assembly, item)
+		for part: Dictionary in assembly.out:
+			var obstacle := _obstacle(mass, part, catalog)
+			obstacle["decor"] = item
+			obstacle["host"] = mass
+			ctx.obstacles.append(obstacle)
+	for part: Dictionary in probe.added:
+		ctx.obstacles.append(_obstacle(mass, part, catalog))
+	for record: Dictionary in written.records:
+		out.append({"host": mass.stable_id, "dir": int(member.chain.dir), "band": int(record.band),
+			"lean": float(record.depth), "base": float(record.base), "edges": record.edges,
+			"bounds": record.bounds, "chain": member.chain.key, "closures": record.closures,
+			"pulled": not mass.grows})
+
+
+## Writes one face's step-in into its house (spec Amendment 2): storey k of the chain
+## stands `leans[k] - top` inside its line and the ground storey `-top` (offsets_of),
+## with a growth record on every storey that stands in or overhangs the one below and
+## `storey.growth[dir]` on every storey of the face (0.0 on held tops, so room
+## projections and bays keep off the face). Dressing on a stepped-in run moves in with
+## its wall. `closures[i]` belongs to storey i from the ground up. Returns {records, moved}.
+static func apply(mass: BuildingMass, kit: BuildingKit, chain: Dictionary, leans: Array[float],
+		closures: Array) -> Dictionary:
+	var dir := int(chain.dir)
+	var edges := _edges(chain)
+	var offsets := offsets_of(leans)
+	var indices := _storeys(chain)
+	var records: Array[Dictionary] = []
+	var moved: Array[Dictionary] = []
+	for i in indices.size():
+		var storey: Dictionary = mass.storeys[indices[i]]
+		var depth: float = offsets[i]
+		var base: float = offsets[i - 1] if i > 0 else depth
+		var growth: Dictionary = storey.get("growth", {})
+		growth[dir] = depth
+		storey["growth"] = growth
+		if depth >= 0.0 and depth <= base:
+			continue
+		if depth < 0.0:
+			var wall_offsets: Dictionary = storey.get("wall_offsets", {})
+			for edge: Vector3i in edges:
+				wall_offsets[edge] = depth / kit.module_width
+			storey["wall_offsets"] = wall_offsets
+			for item: Dictionary in mass.decor:
+				if item.has("dir") and int(item.dir) == dir and edges.has(_decor_edge(item)) \
+						and _on_storey(item, storey, kit) and not moved.any(func(d: Dictionary) -> bool: return is_same(d, item)):
+					item.centre = (item.centre as Vector2) + Vector2(BuildingMass.DIRS[dir]) * depth / kit.module_width
+					moved.append(item)
+		var record := _record(kit, chain, storey, depth, base, closures[i])
+		var fronts_at: Array = storey.get("projections", [])
+		fronts_at.append(record.projection)
+		storey["projections"] = fronts_at
+		records.append(record)
+	return {"records": records, "moved": moved}
+
+
+## One storey's growth record and its recess: the space between its wall (or the wall
+## below, whichever stands further in) and the lot line, from one brace drop under its
+## floor to its ceiling.
+static func _record(kit: BuildingKit, chain: Dictionary, storey: Dictionary, depth: float, base: float,
+		closures: Array) -> Dictionary:
+	var dir := int(chain.dir)
+	var edges := _edges(chain)
+	var centres: Array[Vector2] = []
+	for edge: Vector3i in edges:
+		centres.append(Vector2(edge.x, edge.y) + Vector2.ONE * .5 + Vector2(BuildingMass.DIRS[dir]) * .5)
+	var right := Vector2(BuildingKitAssembler.right_of(dir))
+	centres.sort_custom(func(a: Vector2, b: Vector2) -> bool: return a.dot(right) < b.dot(right))
+	var band := int(storey.floor_band)
+	var at: Vector2 = centres.front() * kit.module_width
+	var pose := Transform3D(Basis(Vector3.UP, BuildingKitAssembler.yaw_for_dir(dir)),
+		Vector3(at.x, band * kit.band_height(), at.y))
+	var inner := minf(depth, base)
+	var body := AABB(Vector3(-kit.module_width * .5, -kit.jetty_depth, inner),
+		Vector3(centres.size() * kit.module_width, kit.storey_height + kit.jetty_depth, -inner))
+	return {"band": band, "depth": depth, "base": base, "edges": edges, "closures": closures,
+		"bounds": pose * body,
+		"projection": {"edges": edges, "centres": centres, "dir": dir, "depth": depth, "base": base,
+			"band": band, "growth": true, "closures": closures}}
 ```
 
-In `_commit`, after the storey loop:
+`_drop_cut_decor`'s side index follows `_closures`' order; the row test pins it (the front's west end, `closures[i][1]` for dir 3, is the open one).
+
+- [ ] **Step 4: Recessed doors (spec "Recessed doors").** Nothing beyond Step 3 is needed in code: `_no_portal` admits a ground-storey door, `apply` moves its doorstep (and awning, window boxes, ivy) in with the wall, and Task 8 keeps the ground storey's boards whole. Add to `tests/test_growing_floors.gd`:
 
 ```gdscript
-	var top := profile.size() - 1
-	if top >= 0 and profile[top] > 0.0:
-		var wing := crown_wing(mass, chain, top)
-		if not wing.is_empty() and int(wing.axis) == dir % 2:
-			wing["lean_max" if dir < 2 else "lean_min"] = profile[top]
+func test_a_ground_door_is_a_recessed_shopfront() -> void:
+	# The fixture's ground door (x 2..4) is on the stepping face, with a doorstep.
+	var f := FIXTURE.build({"lone": true, "prepare": func(front: BuildingMass) -> void:
+		front.decor.append({"kind": &"doorstep", "centre": Vector2(1.5, 0.0), "dir": 3, "y": 0.0,
+			"side": 1.0, "proud": 0.0, "count": 2})})
+	assert_eq(FIXTURE.leans_on(f.front, 3), [-2.0, -1.0, 0.0, 0.0] as Array[float], "the door no longer blocks")
+	var catalog := EnvironmentCatalog.load_default()
+	var box := func(p: Dictionary) -> AABB: return p.transform * catalog.descriptor(p.asset_id).measured_aabb
+	var doors := (f.parts as Array).filter(func(p: Dictionary) -> bool: return String(p.role) == "wall.timber.door")
+	assert_eq(doors.size(), 1)
+	var threshold := (box.call(doors[0]) as AABB).get_center()
+	assert_almost_eq(threshold.z, 2.0, 0.3, "the door stands in its stepped-in wall")
+	# The walk reaches it: the ground storey's boards cover the strip from the lot line
+	# to the threshold at the floor level (the lane surface ends at the lot line).
+	var strip := (f.parts as Array).filter(func(p: Dictionary) -> bool:
+		var b: AABB = box.call(p)
+		return p.role == &"deck.board" and b.position.y < 0.3 and b.has_point(Vector3(threshold.x, b.get_center().y, 1.0)))
+	assert_eq(strip.size(), 1, "one ground board under the overhang in front of the door")
+	assert_lt((box.call(strip[0]) as AABB).position.z, 0.05, "it starts at the lot line")
+	for item: Dictionary in f.front.decor:
+		if item.kind == &"doorstep":
+			assert_almost_eq((item.centre as Vector2).y, 1.0, 1e-6, "the doorstep moved in with the door")
+
+
+func test_a_door_on_a_stepped_in_upper_storey_withdraws_the_step() -> void:
+	# A door on storey 1 opens onto an upper walk at the lot line; storey 1 keeps the line.
+	var f := FIXTURE.build({"lone": true, "prepare": func(front: BuildingMass) -> void:
+		front.storeys[1].openings[BuildingMass.edge_key(Vector2i(1, 0), 3)] = BuildingMass.OPENING_DOOR})
+	assert_eq(FIXTURE.leans_on(f.front, 3), [-1.0, 0.0, 0.0, 0.0] as Array[float])
+
+
+func test_roofs_and_the_top_storey_never_move() -> void:
+	var f := FIXTURE.build({"lone": true})
+	for wing: Dictionary in f.front.roofs:
+		assert_false(wing.has("lean_min") or wing.has("lean_max"))
+	var plain := FIXTURE.house(&"kit.fixture.front", Rect2i(0, 0, 3, 2), 4, 3)
+	plain.add_roof(Rect2i(0, 0, 3, 2), 1, 8, &"red")["union_index"] = 0
+	var roof := func(parts: Array) -> Array:
+		var out := parts.filter(func(p: Dictionary) -> bool:
+			var role := String(p.role)
+			return role.begins_with("roof.") or role.begins_with("gable.") or role.begins_with("trim.ridge") \
+				or role.begins_with("trim.barge") or role.begins_with("chimney.")).map(
+				func(p: Dictionary) -> String: return "%s %s" % [p.asset_id, p.transform])
+		out.sort()
+		return out
+	FIXTURE.block_faces(plain, [0, 2])
+	assert_eq(roof.call(f.parts), roof.call(BuildingKitAssembler.new(f.kit).assemble(plain)), "the roof is untouched")
+	for slot: Dictionary in BuildingKitAssembler.storey_slots(f.front.storeys[3]):
+		assert_eq(float(slot.wall_offset), 0.0, "the top storey stands on its line")
 ```
 
-Pass `GROWTH.roof_geometry([kit])` from the fixture and, in `KitVillageBuildings.build`, `GROWTH.roof_geometry(house_kits.values() + [kit])` only when `growth_character != null` (else `{}`), as the new last `fit` argument.
+- [ ] **Step 5: Run the re-pinned files to pass.** `test_growing_floors.gd`, `test_growing_floors_guardrails.gd`, `test_growing_floors_wrap.gd`, `test_growing_floors_rows.gd`, `test_growing_floors_bury.gd`, `test_growing_floors_knobs.gd`, `test_growing_floors_step_in.gd`, `test_october3_room_projections.gd`, `test_roof_proportion.gd`, `test_town_old_look.gd`. Where an expectation above differs from the run, decide from the spec which side is wrong: a rule-derived number (e.g. the bearing hold in `test_a_growing_face_pulls_its_corner_neighbours_one_hop`, the cap drop in the portal tests) may only change if the spec's rule says so; record any re-derivation and its reason in the task report. Never weaken a rule to match a number.
 
-- [ ] **Step 5: Designer gable-front boost.** Add member `## Growing houses favour a gable to the street (growth_gable_front_boost).\nvar gable_front_boost := 1.0`; first line of `articulate`: `gable_front_boost = float(context.get("gable_boost", 1.0)) if bool(context.get("grows", false)) else 1.0`; in `_square_axis` replace the `share` line with:
+- [ ] **Step 6: Building gallery.** `_grow` in `building_gallery.gd` loses the `GROWTH.roof_geometry([kit])` argument. Falsification renders (GUI run): `godot --path . --log-file /tmp/gal.log -s res://tests/harness/suntail/building_gallery.gd -- --set designer --count 9 --seed 4 --close --growth 1.0:2.0 --output /tmp/stepin_gallery` and inspect every `b*_c*` close: the ground storey narrowest, each upper storey on the kit jetty (beam on the face, braces on panel joints and corner posts, none over a window or door head), roofs and top storeys unchanged, cut corner panels flush with a post at each new corner, no floor ledge outside an upper wall, no doubled post or beam, recessed doors with their doorsteps. Record what you saw per image in the report; a defect goes red-first into `test_growing_floors_step_in.gd` (assembler) or the owning planner test, then is fixed.
+
+- [ ] **Step 7: Corpus counts.** In `growth_corpus_audit.gd` replace `counts()` and the totals for step-in:
 
 ```gdscript
-	var share := minf(1.0, square_axis_weights[preferred] / (square_axis_weights.x + square_axis_weights.y) * gable_front_boost)
+## Faces (chains with any growth record), records (stepped storeys), stepped-in storeys,
+## faces whose ground storey stepped in, the deepest offset, recessed ground doors,
+## closures by kind (a corner/joint counts once per record end), houses pulled into a row
+## without rolling growth, and withdrawals by cause: attempts (`causes`) and distinct
+## faces (`faces_withdrawn`; Task 4 deferred minor).
+static func counts(built: Dictionary) -> Dictionary:
+	var by_id := {}
+	for mass: BuildingMass in built.get("houses", []):
+		by_id[mass.stable_id] = mass
+	var faces := {}
+	var ground_faces := {}
+	var stepped_in := 0
+	var deepest := 0.0
+	var doors := 0
+	var kinds := {"return": 0, "wrap": 0, "joint": 0, "bury": 0}
+	var pulled := {}
+	for lean: Dictionary in built.get("growth", []):
+		faces[String(lean.chain)] = true
+		var depth := float(lean.lean)
+		if depth < 0.0:
+			stepped_in += 1
+			deepest = minf(deepest, depth)
+		var mass: BuildingMass = by_id.get(lean.host)
+		if mass != null and depth < 0.0 and int(lean.band) == mass.ground_band:
+			ground_faces[String(lean.chain)] = true
+			var ground: Dictionary = mass.storeys[GROWTH.ground_index(mass)]
+			for edge: Vector3i in lean.edges:
+				if StringName(ground.openings.get(edge, ground.default_opening)) == BuildingMass.OPENING_DOOR:
+					doors += 1
+		for kind: StringName in lean.get("closures", []):
+			if kinds.has(String(kind)):
+				kinds[String(kind)] += 1
+		if bool(lean.get("pulled", false)):
+			pulled[String(lean.host)] = true
+	var causes := {}
+	var withdrawn := {}
+	for rejection: Dictionary in built.get("growth_rejections", []):
+		var cause := String(rejection.cause)
+		causes[cause] = int(causes.get(cause, 0)) + 1
+		if not withdrawn.has(cause):
+			withdrawn[cause] = {}
+		withdrawn[cause][String(rejection.chain)] = true
+	var faces_withdrawn := {}
+	for cause: String in withdrawn:
+		faces_withdrawn[cause] = (withdrawn[cause] as Dictionary).size()
+	return {"faces": faces.size(), "storeys": (built.get("growth", []) as Array).size(),
+		"stepped_in": stepped_in, "ground_faces": ground_faces.size(), "deepest": deepest,
+		"recessed_doors": doors, "returns": kinds.return, "wraps": kinds.wrap, "joints": kinds.joint,
+		"buried": kinds.bury, "pulled": pulled.size(), "causes": causes, "faces_withdrawn": faces_withdrawn}
 ```
 
-(×1.0 is exact, so non-growing houses are unchanged.)
+(preload `KitGrowingFronts.gd` as `GROWTH` in the harness). Totals: sum every int key, `deepest` as the minimum, merge `causes` and `faces_withdrawn` by key.
 
-- [ ] **Step 6: Run to pass.** `test_growing_floors_roofs.gd` (7 passing); re-run `test_growing_floors.gd` (the gable-front lone fixture keeps `[0, 1, 2, 2]`), `test_growing_floors_rows.gd`, `test_growing_floors_bury.gd` (the plain-wall case keeps `[0, 1, 2, 2]`: its moved gable end meets only the plain wall it is buried in; if it fails on the corner house's wall, check `_moves_with_front`), `test_roof_proportion.gd`, `test_october3_room_projections.gd`.
+- [ ] **Step 8: Gates and count.** Fingerprint gate → `FINGERPRINT_MATCH`; growth-on smoke → 0 `FINGERPRINT_NO_TOWN`; `test_town_old_look.gd` passes; growth corpus count: report faces, storeys, stepped-in storeys, ground faces, recessed doors, wraps/joints/buried/returns, pulled, and both withdrawal tables. Expected well above Task 7's 21 faces (no roof blocks; the ends rule no longer sees neighbours in front). If not above 21, stop and report the per-cause tables (Global Constraints: measurement, not loosening).
 
-- [ ] **Step 7: Gallery flag and falsification render of both roof cases.** In `building_gallery.gd`: parse `"--growth": _growth = args[i + 1]` (`var _growth := ""`); before assembling each mass when `_growth` is set:
+- [ ] **Step 9: Commit** `KitGrowingFronts.gd`, `BuildingKitAssembler.gd`, `BuildingDesigner.gd`, `KitVillageBuildings.gd`, `terrain/villages/town_odds.tres`, `tests/fixtures/growing_house.gd`, the six growth test files, the deleted `tests/test_growing_floors_roofs.gd`, `building_gallery.gd`, `growth_corpus_audit.gd`: message "Towns: growing houses step in under a fixed roof (re-referenced to the top storey; recessed shopfront doors; roof-following removed)" + trailer.
 
-```gdscript
-		if not _growth.is_empty():
-			var setting := _growth.split(":")
-			var mass := masses[i]
-			for storey: Dictionary in mass.storeys:
-				storey.inset = false # growing houses take no jetty
-			mass.grows = true
-			var character := TownCharacter.draw(TownOddsProgram.builtin().with_overrides({
-				&"growing_house_chance": 1.0, &"growth_street_face_chance": 1.0,
-				&"growth_other_face_chance": 1.0, &"growth_max_lean": float(setting[1])}), _seed, 0.5)
-			character.values[&"growth_step"] = {StringName(setting[0]): 1.0}
-			var footprint := mass.cells_at_band(mass.ground_band)
-			var grow_masses: Array[BuildingMass] = [mass]
-			preload("res://scripts/terrain/features/villages/kit/KitGrowingFronts.gd").fit(grow_masses,
-				{StringName(String(mass.stable_id).trim_prefix("kit.")): kit}, kit, EnvironmentCatalog.load_default(),
-				character, [], [], func(_o: StringName, _c: Vector2i, _b: int) -> bool: return false,
-				func(_o: StringName, _c: Vector2i, _b: int) -> bool: return false,
-				func(cell: Vector2i, band: int) -> bool: return band <= mass.ground_band + 1 and not footprint.has(cell),
-				preload("res://scripts/terrain/features/villages/kit/KitGrowingFronts.gd").roof_geometry([kit]))
-```
+---
 
-Then render `godot --path . --log-file /tmp/gal.log -s res://tests/harness/suntail/building_gallery.gd -- --set designer --count 9 --seed 4 --close --growth 1.0:2.0 --output docs/qa/2026-10-08-growing-floors/roofs` (GUI run) and inspect the `b*_c*` closes: no wall head above a cornice, no gap or doubled tiles at a moved gable end, barge boards on the moved gable.
+### Task 10: Corpus audit and edge cases (step-in)
 
-- [ ] **Step 8: Re-pin earlier tests to the crown rule.**
-  - `tests/test_growing_floors_guardrails.gd::test_footprint_change_ends_the_face_chain`: expectation `[0.0, 0.0, 0.0, 0.0]`, message "storey 2 stands on the stepped strip without stepping: an uncovered ledge, so the face stays flush (crown)".
-  - `tests/test_growing_floors_wrap.gd::test_a_growing_face_pulls_its_corner_neighbours_one_hop` (default fixture: ridge along z, so east and west are eave faces): south `[0, 1, 2, 2]` with closures `[&"return", &"return"]`; east, west and north flush; the rejections hold `crown` for the east and west chains (`"kit.fixture.front|0:3:0:2"`, `"kit.fixture.front|2:0:0:2"`) — they were pulled and left.
-  - `tests/test_growing_floors_wrap.gd::test_all_four_faces_wrap_into_a_ring`: delete (superseded by `test_a_wrapped_front_keeps_only_the_faces_its_roof_covers`).
-  - `tests/test_growing_floors_wrap.gd::test_a_member_that_cannot_hold_leaves_the_front`: east and west flush, south and north `[0, 1, 2, 2]`, south closures `[&"return", &"return"]`, causes hold `portal` and `crown`.
-  - The `apply`-based geometry tests of `test_growing_floors_wrap.gd` and `test_unequal_steps_never_meet_at_a_convex_corner` are unchanged.
-  Run all growth test files: green.
-
-- [ ] **Step 9: Gates and count.** Fingerprint gate → `FINGERPRINT_MATCH`; growth-on smoke → 0 `FINGERPRINT_NO_TOWN`; `test_town_old_look.gd` passes; growth corpus count: report faces, `crown` withdrawals split by gable/eave crown (add `crown_eave` / `crown_gable` to `counts()` from the rejection's chain and the host's crown wing), wraps, joints, buried. The face total may fall below Task 7's (the crown rule is new); Diagnosis 2 counted 38 own-roof withdrawals.
-
-- [ ] **Step 10: Commit** the five code files, the gallery harness, fixture, the harness and the four test files: message "Towns: growing floors follow their roof (gable shift, eave cap, gable-front boost)" + trailer.
-
-### Task 9: Corpus audit and edge cases
-
-The original Task 6, adapted: the audit checks every closure kind, the harness from Task 4 gains the violation counts, and the edge cases add the wrap, row and bury cases. Measurable targets come from `task-4-report.md` Diagnosis 2 (8 fingerprint towns, `growing_house_chance = 1`, both face chances 1): 183 candidate faces; 18 stepping faces with the three fixes; 22 with the coplanar terrace.
+The original audit task, adapted to spec Amendment 2: the audit checks the step-in invariants (nothing outside the lot, roofs and tops fixed, closures, braces on joints, no floor ledges, bearing), the harness gains the violation counts, and the edge cases cover the cap, facing houses, skywalk ends, compound houses, set-back tops, unequal rows and wraps. Deferred minors carried here from the ledger, with their disposition: rejection totals counting attempts (closed in Task 9: `faces_withdrawn`); pin storey/lean in `test_withdrawn_steps_name_their_guardrail` (closed in Task 9); test the widened decor move (closed in Task 9: `test_dressing_on_a_stepped_in_run_moves_in_or_yields`); dead store `test_growing_floors_wrap.gd:57` (rewritten in Task 9); strip vertical alignment (closed in Task 8: the strip spans its storey); a wrap partner with fewer storeys and unequal-height rows (this task; the Task 6 ruling "the taller member continues alone above the shorter" is superseded: under step-in a front steps only up to its shortest member's top, so joints and wraps stay equal); leader among seeds and the shared `_excluded` predicate (closed in Task 9); `_publish_riders` O(m²), `ctx.kit` before `_closures`, the bury contact's stone face / windowed-panel exemption / identity match (moot: riders and the plain-wall contact are removed in Task 9; `_member_closures` sets `ctx.kit`); pulled houses' awnings under braces (Task 11 renders).
 
 **Files:**
 - Create: `tests/fixtures/growth_audit.gd`
@@ -3050,164 +4410,252 @@ The original Task 6, adapted: the audit checks every closure kind, the harness f
 - Test: `tests/test_growing_floors_corpus.gd`, `tests/test_growing_floors_edges.gd`
 
 **Interfaces:**
-- Consumes: `KitVillageBuildings.build(...)` keys `growth`, `growth_rejections`, `houses`, `house_kits`, `walls`, `masses`; `KitGrowingFronts.gap_ok`, `crown_wing`, `eave_allowance`, `roof_geometry`, `PLAIN_CONTACT`; `BuildingKitAssembler.face_parts`, `storey_slots`; `KitFloatingMassAudit.audit(spatial, fabric, masses).count`; `tests/fixtures/kit_roof_public_air_audit.gd`.audit(built, kit).intrusions.
-- Produces: `growth_audit.audit(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan, built: Dictionary, kit: BuildingKit, character: TownCharacter) -> Dictionary` with int keys `faces, air_hits, gap_failures, open_returns, open_corners, broken_joints, buried_on_ornament, unfloored, beyond_roof, floating, roof_intrusions`; `growth_audit.VIOLATIONS: Array[String]` (every key except `faces`); harness rows gain those keys, `GROWTH_AUDIT_DONE bad=<violations + null towns + invalid payloads>`.
+- Consumes: `KitVillageBuildings.build(...)` keys `growth`, `growth_rejections`, `houses`, `house_kits`, `walls`, `masses`; `KitGrowingFronts.TOUCH`, `ground_index`; `BuildingKitAssembler.storey_slots`, `lean_suffix`, `right_of`, `assemble`; `KitFloatingMassAudit.audit(spatial, fabric, masses).count`; `tests/fixtures/kit_roof_public_air_audit.gd`.audit(built, kit).intrusions.
+- Produces: `growth_audit.audit(spatial, fabric, built, kit, character) -> Dictionary` with int keys `faces` and every `VIOLATIONS` key: `outside_lot, air_hits, open_ends, broken_joints, braces_over_openings, unbraced, ledges, roof_moved, top_moved, thin_bearing, floating, roof_intrusions`; harness rows gain those keys, `GROWTH_AUDIT_DONE bad=<violations + null towns + invalid payloads>`.
 
 - [ ] **Step 1: Write the audit fixture** `tests/fixtures/growth_audit.gd`:
 
 ```gdscript
 extends RefCounted
-## Growing-floor corpus audit (spec "Testing" + amendment): every count except `faces` must be 0.
+## Growing-floor corpus audit under step-in (spec Amendment 2 "Testing"): every count
+## except `faces` must be 0.
 const GROWTH := preload("res://scripts/terrain/features/villages/kit/KitGrowingFronts.gd")
 const CLEARANCE := preload("res://scripts/terrain/features/villages/kit/KitPublicClearance.gd")
-const VIOLATIONS: Array[String] = ["air_hits", "gap_failures", "open_returns", "open_corners",
-	"broken_joints", "buried_on_ornament", "unfloored", "beyond_roof", "floating", "roof_intrusions"]
+const VIOLATIONS: Array[String] = ["outside_lot", "air_hits", "open_ends", "broken_joints",
+	"braces_over_openings", "unbraced", "ledges", "roof_moved", "top_moved", "thin_bearing",
+	"floating", "roof_intrusions"]
+const ROOF_ROLES: Array[String] = ["roof.", "gable.", "trim.ridge", "trim.barge", "chimney."]
 
 
 static func audit(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan, built: Dictionary,
-		kit: BuildingKit, character: TownCharacter) -> Dictionary:
+		kit: BuildingKit, _character: TownCharacter) -> Dictionary:
 	var catalog := EnvironmentCatalog.load_default()
 	var air: Array[Dictionary] = []
 	for wall: Dictionary in built.walls:
 		if bool(wall.get("open", false)):
 			air.append(wall)
-	var registry := {}
-	for lean: Dictionary in built.growth:
-		for band in [int(lean.band), int(lean.band) + 1]:
-			for edge: Vector3i in lean.edges:
-				registry[Vector4i(edge.x, edge.y, int(lean.dir), band)] = float(lean.lean)
 	var houses: Array = built.houses
-	var by_id := {}
-	for mass: BuildingMass in houses:
-		by_id[mass.stable_id] = mass
-	var solid := func(own: StringName, cell: Vector2i, band: int) -> bool:
-		for mass: BuildingMass in houses:
-			if StringName(String(mass.stable_id).trim_prefix("kit.")) != own and mass.cells_at_band(band).has(cell):
-				return true
-		return false
-	var geometry := GROWTH.roof_geometry((built.house_kits as Dictionary).values() + [kit])
 	var out := {"faces": 0}
 	for key: String in VIOLATIONS:
 		out[key] = 0
-	var gap := character.value(GROWTH.GAP_KNOB) if character != null else 0.75
-	var all_parts := {}
+	var chains := {}
+	for lean: Dictionary in built.growth:
+		chains[String(lean.chain)] = true
+	out.faces = chains.size()
 	for mass: BuildingMass in houses:
-		var own := StringName(String(mass.stable_id).trim_prefix("kit."))
-		var own_kit: BuildingKit = (built.house_kits as Dictionary).get(own, kit)
-		var assembler := BuildingKitAssembler.new(own_kit)
-		all_parts[mass.stable_id] = assembler.assemble(mass)
-		for index in mass.storeys.size():
-			var storey: Dictionary = mass.storeys[index]
-			for projection: Dictionary in storey.get("projections", []):
-				if not bool(projection.get("growth", false)):
-					continue
-				out.faces += 1
-				var suffix := BuildingKitAssembler.lean_suffix(float(projection.depth))
-				var parts := assembler.face_parts(mass, index, projection)
-				var count := func(role: String) -> int:
-					return parts.filter(func(p: Dictionary) -> bool: return String(p.role) == role).size()
-				var closures: Array = projection.get("closures", [&"return", &"return"])
-				if count.call("frontage.return." + suffix) != closures.count(&"return") + closures.count(&"wrap"):
-					out.open_returns += 1
-				if count.call("frontage.floor." + suffix) != 2 * (projection.centres as Array).size():
-					out.unfloored += 1
-				if StringName(closures[1]) == &"wrap" and count.call("frontage.corner." + suffix) != 2:
-					out.open_corners += 1
-				for part: Dictionary in parts:
-					if CLEARANCE.intersects_air(catalog.descriptor(part.asset_id).measured_aabb, part.transform, air):
-						out.air_hits += 1
-				var edges: Array[Vector3i] = []
-				edges.assign(projection.edges)
-				if not GROWTH.gap_ok(registry, solid, own, edges, int(projection.dir), int(projection.band),
-						float(projection.depth), own_kit, gap):
-					out.gap_failures += 1
-				if not _closed_above(mass, storey, projection, own_kit, catalog, geometry):
-					out.beyond_roof += 1
-	out.open_corners += _unequal_corners(houses)
-	out.broken_joints = _broken_joints(built.growth, by_id)
-	out.buried_on_ornament = _buried_on_ornament(built.growth, by_id, all_parts, kit, catalog)
+		var records := (built.growth as Array).filter(func(l: Dictionary) -> bool: return l.host == mass.stable_id)
+		if records.is_empty():
+			continue
+		var own_kit: BuildingKit = (built.house_kits as Dictionary).get(
+			StringName(String(mass.stable_id).trim_prefix("kit.")), kit)
+		var w := own_kit.module_width
+		var grown := _architecture(mass, own_kit, houses)
+		var plain := _without_growth(mass, own_kit, houses)
+		var before := {}
+		for part: Dictionary in plain:
+			before["%s|%s" % [part.asset_id, part.transform]] = true
+		var added := grown.filter(func(p: Dictionary) -> bool:
+			return not before.has("%s|%s" % [p.asset_id, p.transform]))
+		var box := func(p: Dictionary) -> AABB: return p.transform * catalog.descriptor(p.asset_id).measured_aabb
+		for part: Dictionary in added:
+			var b: AABB = box.call(part)
+			if not _in_lot(mass, b.get_center(), own_kit):
+				out.outside_lot += 1
+			if CLEARANCE.intersects_air(catalog.descriptor(part.asset_id).measured_aabb, part.transform, air):
+				out.air_hits += 1
+		if _roof_parts(grown) != _roof_parts(plain) \
+				or mass.roofs.any(func(r: Dictionary) -> bool: return r.has("lean_min") or r.has("lean_max")):
+			out.roof_moved += 1
+		for record: Dictionary in records:
+			var storey: Dictionary = GROWTH._storey_at(mass, int(record.band))
+			var y0 := float(record.band) * own_kit.band_height()
+			var depth := float(record.lean)
+			if depth > float(record.base) + 0.0001:
+				var under := added.filter(func(p: Dictionary) -> bool:
+					var b: AABB = box.call(p)
+					return String(p.role).begins_with("bracket.") and b.end.y >= y0 - 0.3 and b.end.y <= y0 + 0.01 \
+						and (record.bounds as AABB).grow(0.3).has_point(b.get_center()))
+				if under.size() < maxi(1, (record.edges as Array).size() - 1):
+					out.unbraced += 1
+				# Each brace stands on a wall-module joint (a multiple of the module along
+				# the face), never over a window or door head.
+				for brace: Dictionary in under:
+					var c: Vector3 = (box.call(brace) as AABB).get_center()
+					var along := c.z if int(record.dir) % 2 == 0 else c.x
+					if absf(along / w - roundf(along / w)) * w > 0.2:
+						out.braces_over_openings += 1
+			if depth < 0.0:
+				out.open_ends += _open_ends(record, storey, added, box, own_kit)
+				out.thin_bearing += 0 if _bears(storey, record, own_kit) else 1
+		out.top_moved += _tops_moved(mass, records)
+		out.ledges += _ledges(mass, grown, box, own_kit)
+	out.broken_joints = _broken_joints(built.growth)
 	out.floating = KitFloatingMassAudit.audit(spatial, fabric, built.masses).count
 	out.roof_intrusions = preload("res://tests/fixtures/kit_roof_public_air_audit.gd").audit(built, kit).intrusions
 	return out
 
 
-## The stepped strip is covered by the next storey's equal-or-larger step, by a moved
-## gable end of the same step, or stays within the measured eave allowance.
-static func _closed_above(mass: BuildingMass, storey: Dictionary, projection: Dictionary,
-		kit: BuildingKit, catalog: EnvironmentCatalog, geometry: Dictionary) -> bool:
-	var dir := int(projection.dir)
-	var lean := float(projection.depth)
-	var top := int(storey.floor_band) + int(storey.get("bands", 2))
-	for upper: Dictionary in mass.storeys:
-		if int(upper.floor_band) == top:
-			return float((upper.get("growth", {}) as Dictionary).get(dir, 0.0)) >= lean - 0.0001
-	for wing: Dictionary in mass.roofs:
-		if int(wing.eave_band) != top:
-			continue
-		if int(wing.axis) == dir % 2:
-			if absf(float(wing.get("lean_max" if dir < 2 else "lean_min", -1.0)) - lean) < 0.0001:
+## The house's architecture (dressing set aside) as the town assembles it.
+static func _architecture(mass: BuildingMass, kit: BuildingKit, houses: Array) -> Array[Dictionary]:
+	var assembler := BuildingKitAssembler.new(kit)
+	assembler.external_blocked = func(cell: Vector2i, band: int) -> bool:
+		for other: BuildingMass in houses:
+			if other != mass and other.cells_at_band(band).has(cell):
 				return true
-		elif lean <= GROWTH.eave_allowance(kit, catalog, geometry, wing, 0 if dir < 2 else 1) + 0.0001:
-			return true
+		return false
+	var decor := mass.decor.duplicate()
+	mass.decor.clear()
+	var parts := assembler.assemble(mass)
+	mass.decor.assign(decor)
+	return parts
+
+
+## The same with its growth taken out again (negative offsets and growth records).
+static func _without_growth(mass: BuildingMass, kit: BuildingKit, houses: Array) -> Array[Dictionary]:
+	var saved := []
+	for storey: Dictionary in mass.storeys:
+		saved.append([storey.get("wall_offsets"), storey.get("projections")])
+		var offsets: Dictionary = (storey.get("wall_offsets", {}) as Dictionary).duplicate()
+		for edge: Vector3i in offsets.keys():
+			if float(offsets[edge]) < 0.0:
+				offsets.erase(edge)
+		storey["wall_offsets"] = offsets
+		storey["projections"] = (storey.get("projections", []) as Array).filter(
+			func(p: Dictionary) -> bool: return not bool(p.get("growth", false)))
+	var parts := _architecture(mass, kit, houses)
+	for index in mass.storeys.size():
+		var storey: Dictionary = mass.storeys[index]
+		for slot in 2:
+			var key := "wall_offsets" if slot == 0 else "projections"
+			if saved[index][slot] == null:
+				storey.erase(key)
+			else:
+				storey[key] = saved[index][slot]
+	return parts
+
+
+static func _roof_parts(parts: Array) -> Array:
+	var out := parts.filter(func(p: Dictionary) -> bool:
+		return ROOF_ROLES.any(func(prefix: String) -> bool: return String(p.role).begins_with(prefix))).map(
+		func(p: Dictionary) -> String: return "%s %s" % [p.asset_id, p.transform])
+	out.sort()
+	return out
+
+
+## Inside the house's own cells (any storey), within the wall face plus touching contact.
+static func _in_lot(mass: BuildingMass, point: Vector3, kit: BuildingKit) -> bool:
+	var w := kit.module_width
+	for storey: Dictionary in mass.storeys:
+		for cell: Vector2i in storey.cells:
+			if Rect2(Vector2(cell) * w, Vector2(w, w)).grow(kit.wall_face + GROWTH.TOUCH).has_point(Vector2(point.x, point.z)):
+				return true
 	return false
 
 
-## Convex corners where both faces step but unequally (an open corner).
-static func _unequal_corners(houses: Array) -> int:
+## Ends of one stepped-in storey record left open: a `return` or `wrap` end whose
+## perpendicular corner panel still stands whole, or a `bury` end without its strip.
+static func _open_ends(record: Dictionary, storey: Dictionary, added: Array, box: Callable, kit: BuildingKit) -> int:
+	var dir := int(record.dir)
+	var right := BuildingKitAssembler.right_of(dir)
+	var edges: Array = record.edges
+	var sorted := edges.duplicate()
+	sorted.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+		return Vector2(a.x, a.y).dot(Vector2(right)) < Vector2(b.x, b.y).dot(Vector2(right)))
 	var bad := 0
-	for mass: BuildingMass in houses:
-		for storey: Dictionary in mass.storeys:
-			var offsets: Dictionary = storey.get("wall_offsets", {})
-			for slot: Dictionary in BuildingKitAssembler.storey_slots(storey):
-				if not bool(slot.right_convex):
-					continue
-				var mine := float(slot.wall_offset)
-				var theirs := float(slot.right_extend)
-				if mine > 0.0 and theirs > 0.0 and absf(mine - theirs) > 1e-6:
+	var slots := BuildingKitAssembler.storey_slots(storey)
+	for side in 2:
+		var kind := StringName((record.closures as Array)[side])
+		var end: Vector3i = sorted.front() if side == 0 else sorted.back()
+		var cell := Vector2i(end.x, end.y)
+		var outward := right * (-1 if side == 0 else 1)
+		if kind in [&"return", &"wrap"]:
+			var corner := BuildingMass.edge_key(cell, BuildingMass.DIRS.find(outward))
+			for slot: Dictionary in slots:
+				if slot.edge == corner and float(slot.get("short", 0.0)) <= 0.0 and not bool(slot.get("dropped", false)):
 					bad += 1
+		elif kind == &"bury":
+			# The strip stands on the vertex line, half the inset inside the lot line.
+			var corner := (Vector2(cell) + Vector2.ONE * 0.5 + Vector2(BuildingMass.DIRS[dir]) * 0.5 \
+				+ Vector2(outward) * 0.5) * kit.module_width
+			var expected := corner - Vector2(BuildingMass.DIRS[dir]) * (-float(record.lean)) * 0.5
+			var suffix := BuildingKitAssembler.lean_suffix(-float(record.lean))
+			var strip := added.any(func(p: Dictionary) -> bool:
+				var c: Vector3 = (box.call(p) as AABB).get_center()
+				return String(p.role) == "frontage.return." + suffix and Vector2(c.x, c.z).distance_to(expected) < 0.6)
+			if not strip:
+				bad += 1
 	return bad
 
 
-## A joint whose partner face (same dir and line, touching end) does not step equally.
-static func _broken_joints(growth: Array, by_id: Dictionary) -> int:
+## Bearing: behind every stepped-in edge at least one module of floor remains, two
+## across an axis stepped in from both sides.
+static func _bears(storey: Dictionary, record: Dictionary, kit: BuildingKit) -> bool:
+	var dir := int(record.dir)
+	var inward: Vector2i = -BuildingMass.DIRS[dir]
+	var back := (dir + 2) % 4
+	var offsets: Dictionary = storey.get("wall_offsets", {})
+	for edge: Vector3i in record.edges:
+		var far := Vector2i(edge.x, edge.y)
+		var modules := 1
+		while (storey.cells as Dictionary).has(far + inward):
+			far += inward
+			modules += 1
+		var opposite := minf(0.0, float(offsets.get(BuildingMass.edge_key(far, back), 0.0))) * kit.module_width
+		var keep := float(modules) * kit.module_width + float(record.lean) + opposite
+		if keep < (2.0 if opposite < 0.0 else 1.0) * kit.module_width - 0.0001:
+			return false
+	return true
+
+
+## A stepping face whose highest storey is not on its lot line.
+static func _tops_moved(mass: BuildingMass, records: Array) -> int:
 	var bad := 0
-	for lean: Dictionary in growth:
-		if not (lean.closures as Array).has(&"joint"):
-			continue
-		var partner_equal := false
-		for other: Dictionary in growth:
-			if other.host != lean.host and int(other.dir) == int(lean.dir) \
-					and int(other.band) == int(lean.band) and (other.closures as Array).has(&"joint") \
-					and absf(float(other.lean) - float(lean.lean)) < 1e-6:
-				partner_equal = true
-		if not partner_equal:
+	var dirs := {}
+	for record: Dictionary in records:
+		dirs[int(record.dir)] = true
+	for dir: int in dirs:
+		var top := {}
+		for storey: Dictionary in mass.storeys:
+			if (storey.get("growth", {}) as Dictionary).has(dir) \
+					and (top.is_empty() or int(storey.floor_band) > int(top.floor_band)):
+				top = storey
+		if not top.is_empty() and float(top.growth[dir]) != 0.0:
 			bad += 1
 	return bad
 
 
-## A buried end whose contact meets anything but plain wall pieces.
-static func _buried_on_ornament(growth: Array, by_id: Dictionary, all_parts: Dictionary,
-		kit: BuildingKit, catalog: EnvironmentCatalog) -> int:
+## A whole board on an upper storey's cell whose edge stands in (a floor ledge
+## outside its wall).
+static func _ledges(mass: BuildingMass, parts: Array, box: Callable, kit: BuildingKit) -> int:
+	var bad := 0
+	for part: Dictionary in parts:
+		if part.role != &"deck.board":
+			continue
+		var c: Vector3 = (box.call(part) as AABB).get_center()
+		var storey: Dictionary = GROWTH._storey_at(mass, roundi(c.y / kit.band_height()))
+		if storey.is_empty() or int(storey.floor_band) <= mass.ground_band:
+			continue
+		var cell := Vector2i(floori(c.x / kit.module_width), floori(c.z / kit.module_width))
+		var offsets: Dictionary = storey.get("wall_offsets", {})
+		for dir in 4:
+			if float(offsets.get(BuildingMass.edge_key(cell, dir), 0.0)) < 0.0:
+				bad += 1
+				break
+	return bad
+
+
+## A joint whose partner (another house, same dir, band and offset, joint closure) is missing.
+static func _broken_joints(growth: Array) -> int:
 	var bad := 0
 	for lean: Dictionary in growth:
-		var closures: Array = lean.closures
-		for side in 2:
-			if StringName(closures[side]) != &"bury":
-				continue
-			var bounds: AABB = lean.bounds
-			# The buried end's side of the stepped body, grown into the wall by 0.35.
-			var dir := int(lean.dir)
-			var right := Vector3(BuildingKitAssembler.right_of(dir).x, 0, BuildingKitAssembler.right_of(dir).y)
-			var end := bounds.get_center() + right * (bounds.size.dot(right.abs()) * 0.5) * (1 if side == 1 else -1)
-			var probe := AABB(end - Vector3(0.2, 0, 0.2), Vector3(0.4, bounds.size.y, 0.4))
-			for host: StringName in all_parts:
-				if host == lean.host:
-					continue
-				for part: Dictionary in all_parts[host]:
-					var box: AABB = part.transform * catalog.descriptor(part.asset_id).measured_aabb
-					if not GROWTH.contact_clear(probe, box) \
-							and not GROWTH.PLAIN_CONTACT.any(func(p: String) -> bool: return String(part.role).begins_with(p)):
-						bad += 1
+		if not (lean.closures as Array).has(&"joint"):
+			continue
+		var partner := growth.any(func(other: Dictionary) -> bool:
+			return other.host != lean.host and int(other.dir) == int(lean.dir) \
+				and int(other.band) == int(lean.band) and (other.closures as Array).has(&"joint") \
+				and absf(float(other.lean) - float(lean.lean)) < 1e-6)
+		if not partner:
+			bad += 1
 	return bad
 ```
 
@@ -3251,95 +4699,93 @@ const GROWTH := preload("res://scripts/terrain/features/villages/kit/KitGrowingF
 
 func test_house_exactly_at_the_cap() -> void:
 	var f := FIXTURE.build({"storeys": 5, "lone": true})
-	assert_eq(FIXTURE.leans_on(f.front, 3), [0.0, 1.0, 2.0, 2.0, 2.0] as Array[float],
-		"two kit jetties, then every storey holds the cap")
-	assert_almost_eq(float(f.front.roofs[0].lean_min), 2.0, 1e-6)
+	assert_eq(FIXTURE.leans_on(f.front, 3), [-2.0, -1.0, 0.0, 0.0, 0.0] as Array[float],
+		"two kit jetties below the first upper storey, then every storey on the line")
+	for wing: Dictionary in f.front.roofs:
+		assert_false(wing.has("lean_min") or wing.has("lean_max"))
 
 
 func test_facing_growing_houses_across_one_cell_lane() -> void:
-	# Gable fronts across a 2.0 native lane: the facing 1.0 verges already meet
-	# mid-lane, so no gable end can move (crown) and, with no inward step allowed,
-	# neither face steps. Eave fronts: no kit jetty passes under the cornice. One-cell
-	# lanes therefore stay flush; the sky slot holds trivially.
+	# Either roof axis: the roofs never move, so gable and eave fronts step in alike,
+	# and the upper storeys keep today's lane (2.0 native) between them.
 	for axis: int in [1, 0]:
 		var f := FIXTURE.build({"facing": true, "back_grows": true, "lone": true,
 			"roof_axis": axis, "back_roof_axis": axis})
-		var back := FIXTURE.leans_on(f.back, 1)
 		var front := FIXTURE.leans_on(f.front, 3)
-		for index in range(1, 4):
-			assert_true(2.0 - back[index] - front[index] >= 0.75 - 1e-4, "storey %d keeps the sky slot" % index)
-		if axis == 1:
-			assert_eq(front, [0.0, 0.0, 0.0, 0.0] as Array[float])
-			assert_eq(back, [0.0, 0.0, 0.0, 0.0] as Array[float])
-			var causes := (f.result.rejections as Array).map(func(r: Dictionary) -> StringName: return r.cause)
-			assert_true(causes.has(&"crown"), str(causes))
+		var back := FIXTURE.leans_on(f.back, 1)
+		assert_eq(front, [-2.0, -1.0, 0.0, 0.0] as Array[float], "axis %d" % axis)
+		for index in 4:
+			assert_true(2.0 - front[index] - back[index] >= 2.0 - 1e-6, "storey %d: the lane only widens" % index)
 
 
-func test_stepping_face_next_to_a_skywalk_end() -> void:
-	var character := FIXTURE.character({&"growth_other_face_chance": 1.0})
-	var f := FIXTURE.build({"character": character, "prepare": func(front: BuildingMass) -> void:
-		var edge := BuildingMass.edge_key(Vector2i(0, 1), 1)
+func test_a_skywalk_end_on_the_top_storey_costs_nothing() -> void:
+	var f := FIXTURE.build({"lone": true, "prepare": func(front: BuildingMass) -> void:
+		var edge := BuildingMass.edge_key(Vector2i(1, 0), 3)
 		front.storeys[3].openings[edge] = BuildingMass.OPENING_DOOR
 		front.storeys[3]["passage_edges"] = {edge: true}})
-	assert_eq(FIXTURE.leans_on(f.front, 1), [0.0, 0.0, 0.0, 0.0] as Array[float], "skywalk face stays flush")
-	assert_eq(FIXTURE.leans_on(f.front, 3), [0.0, 1.0, 2.0, 2.0] as Array[float], "street face unaffected")
+	assert_eq(FIXTURE.leans_on(f.front, 3), [-2.0, -1.0, 0.0, 0.0] as Array[float])
 
 
 func test_merged_compound_house_steps_per_edge_run() -> void:
-	# An L of two lots: the front lot's face ends in a concave corner against its own
-	# wing, whose wall carries windows (not plain), so it stays flush; the forward
-	# lot's face is whole and convex and steps.
+	# An L of two lots: the front lot's south run (x 0..2, z 0) ends beside the forward
+	# lot's own cell (bury); the forward lot's run (x 3..5, z -1) wraps or returns.
 	var mass := BuildingMass.new()
 	mass.stable_id = &"kit.fixture.front"
 	var cells := BuildingMass.rect_cells(Rect2i(0, 0, 3, 2))
 	cells.merge(BuildingMass.rect_cells(Rect2i(3, -1, 3, 3)))
 	for s in 4:
-		mass.add_storey(s * 2, cells, BuildingMass.MATERIAL_TIMBER)
+		mass.add_storey(s * 2, cells.duplicate(), BuildingMass.MATERIAL_TIMBER)
 	mass.add_roof(Rect2i(0, 0, 3, 2), 1, 8, &"red")["union_index"] = 0
 	mass.add_roof(Rect2i(3, -1, 3, 3), 1, 8, &"red")["union_index"] = 1
 	var chains := GROWTH.face_chains(mass, Callable(FIXTURE, "nothing_solid"),
 		func(cell: Vector2i, band: int) -> bool: return cell.y <= -1 and cell.y >= -2 and band <= 1)
-	var south := chains.filter(func(c: Dictionary) -> bool: return int(c.dir) == 3)
-	assert_eq(south.size(), 2, "one chain per edge run")
-	var f := FIXTURE.build({"replace_front": mass, "lane": 2, "reserved_x": [-1, 6]})
-	for edge: Vector3i in (f.front.storeys[1].get("wall_offsets", {}) as Dictionary):
-		if edge.z == 3:
-			assert_true(edge.x >= 3, "only the convex forward run steps on the south line")
+	assert_eq(chains.filter(func(c: Dictionary) -> bool: return int(c.dir) == 3).size(), 2, "one chain per edge run")
+	var f := FIXTURE.build({"replace_front": mass, "lane": 2})
+	var south := (f.leans as Array).filter(func(l: Dictionary) -> bool: return int(l.dir) == 3)
+	assert_gt(south.size(), 0)
+	for lean: Dictionary in south:
+		for kind: StringName in lean.closures:
+			assert_true(kind in [&"return", &"bury", &"wrap"], str(lean.closures))
+	assert_true(south.any(func(l: Dictionary) -> bool: return (l.closures as Array).has(&"bury")),
+		"the front lot's run closes its recess against the forward lot")
 
 
 func test_top_storey_smaller_than_the_one_below() -> void:
-	var f := FIXTURE.build({"storeys": 4, "roof_axis": 0, "lone": true, "prepare": func(front: BuildingMass) -> void:
+	# Storey 3 is set back to the back row: the face's chain is storeys 1-2, whose top
+	# (storey 2) stays on the line; the set-back storey and its roof are untouched.
+	var f := FIXTURE.build({"storeys": 4, "lone": true, "prepare": func(front: BuildingMass) -> void:
 		front.storeys[3].cells = BuildingMass.rect_cells(Rect2i(0, 1, 3, 1))
 		front.roofs.clear()
-		var shed := front.add_roof(Rect2i(0, 0, 3, 1), 0, 6, &"red")
-		shed["union_index"] = 0
-		var top := front.add_roof(Rect2i(0, 1, 3, 1), 0, 8, &"red")
-		top["union_index"] = 1})
-	var leans := FIXTURE.leans_on(f.front, 3)
-	assert_eq(leans[3], 0.0, "the set-back top storey is not part of the face")
-	var allowance := GROWTH.eave_allowance(f.kit, EnvironmentCatalog.load_default(),
-		GROWTH.roof_geometry([f.kit]), f.front.roofs[0], 1)
-	assert_true(leans[2] <= allowance + 1e-4, "storey 2 ends the face under its own eave")
-	assert_true(leans[1] <= leans[2] + 1e-4, "never an inward step")
+		front.add_roof(Rect2i(0, 0, 3, 1), 0, 6, &"red")["union_index"] = 0
+		front.add_roof(Rect2i(0, 1, 3, 1), 0, 8, &"red")["union_index"] = 1})
+	assert_eq(FIXTURE.leans_on(f.front, 3), [-2.0, -1.0, 0.0, 0.0] as Array[float])
+	assert_false(f.front.storeys[3].has("wall_offsets"))
 
 
-func test_row_with_a_shorter_neighbour_joins_only_where_both_have_storeys() -> void:
-	var side := FIXTURE.roofed(&"kit.fixture.side", Rect2i(3, 0, 2, 2), 3, 3)
-	var f := FIXTURE.build({"extra": [side], "reserved_x": [-1, 5]})
-	var front := FIXTURE.leans_on(f.front, 3)
-	var short := FIXTURE.leans_on(side, 3)
-	for index in range(1, 3):
-		assert_true(front[index] == short[index] or short[index] == 0.0,
-			"a joint steps equally or not at all (storey %d)" % index)
-	for lean: Dictionary in f.leans:
-		if lean.host == f.front.stable_id and int(lean.band) == 6:
-			assert_ne(lean.closures[0], &"joint", "no joint above the shorter neighbour")
-	for index in range(1, front.size()):
-		assert_true(front[index] >= front[index - 1], "never an inward step")
+func test_row_with_a_shorter_neighbour_holds_at_its_top() -> void:
+	# A two-storey neighbour (one storey above its ground): the row steps only up to the
+	# shorter member's top storey, so both stand one jetty in at the ground and every
+	# shared storey stays equal (spec Amendment 2; supersedes the Task 6 ruling).
+	var side := FIXTURE.roofed(&"kit.fixture.side", Rect2i(3, 0, 2, 2), 2, 3)
+	var f := FIXTURE.build({"extra": [side], "block": [2]})
+	assert_eq(FIXTURE.leans_on(f.front, 3), [-1.0, 0.0, 0.0, 0.0] as Array[float])
+	assert_eq(FIXTURE.leans_on(side, 3), [-1.0, 0.0] as Array[float])
 
 
-func test_inside_corner_bury_and_outer_wrap_never_leave_an_open_end() -> void:
-	# Every recorded end closes by exactly one rule.
+func test_a_wrapped_front_holds_at_its_shortest_face() -> void:
+	# A 3 x 3 house whose top storey lacks its back-west cell: the west face's chain is
+	# one storey shorter than the south face's. With light steps the front stops at the
+	# west chain's top, so the wrapped corner stays equal at every shared storey.
+	var mass := FIXTURE.house(&"kit.fixture.front", Rect2i(0, 0, 3, 3), 4, 1)
+	mass.storeys[3].cells.erase(Vector2i(0, 2))
+	mass.add_roof(Rect2i(0, 0, 3, 3), 1, 8, &"red")["union_index"] = 0
+	var f := FIXTURE.build({"replace_front": mass, "block": [0],
+		"character": FIXTURE.character({}, &"0.5")})
+	assert_eq(FIXTURE.leans_on(f.front, 3), [-1.0, -0.5, 0.0, 0.0] as Array[float])
+	assert_eq(FIXTURE.leans_on(f.front, 2), [-1.0, -0.5, 0.0, 0.0] as Array[float])
+
+
+func test_every_recorded_end_closes_by_one_rule() -> void:
 	for options: Dictionary in [{}, {"character": FIXTURE.character({&"growth_other_face_chance": 1.0})},
 			{"lone": true}]:
 		var f := FIXTURE.build(options)
@@ -3348,66 +4794,84 @@ func test_inside_corner_bury_and_outer_wrap_never_leave_an_open_end() -> void:
 				assert_true(kind in [&"return", &"wrap", &"joint", &"bury"], "%s %s" % [str(options), kind])
 ```
 
-- [ ] **Step 3: Run them.** Focused tests `test_growing_floors_edges.gd` and `test_growing_floors_corpus.gd`. Where an edge case is red, it is a real finding: record it in the ledger, pin the failing geometry red-first in the test of the owning function (`_front_profile`, `_end_kind`, `_bury_contact`, `crown_wing`, `gap_ok`) and fix there; never weaken the edge assertion. The one-cell-lane expectations above follow from the rules (2.0 lane, 0.75 gap, 1.0 steps): if the measured eave/gable crowns change them, recompute them from `gap_ok` and the crown rule and record the reason in the test message (ruling F3).
+- [ ] **Step 3: Run them.** Focused tests `test_growing_floors_edges.gd` and `test_growing_floors_corpus.gd`. Where an edge case is red it is a real finding: record it in the ledger, pin the failing geometry red-first in the test of the owning function (`_front_profile`, `_inset_end`, `_bears`, `apply`, `storey_slots`, `_emit_joint_braces`, `_emit_trimmed_floor`) and fix there; never weaken the edge assertion. A number derived from a rule (the shortest-member hold, the bearing rule) may be recomputed only from the spec rule; write the reason in the test message.
 
-- [ ] **Step 4: Harness violations.** In `growth_corpus_audit.gd` preload `res://tests/fixtures/growth_audit.gd` as `AUDIT`; per town merge `AUDIT.audit(spatial, fabric, built, kit, profile.character)` into the row (keep `faces`/`storeys`/`causes`/`wraps`/`joints`/`buried`/`pulled`/`crown_*` from `counts()`), add every `AUDIT.VIOLATIONS` value to `bad`, and print the summed violations in `GROWTH_TOTAL`.
+- [ ] **Step 4: Harness violations.** In `growth_corpus_audit.gd` preload `res://tests/fixtures/growth_audit.gd` as `AUDIT`; per town merge `AUDIT.audit(spatial, fabric, built, kit, profile.character)` into the row (keeping the Task 9 `counts()` keys), add every `AUDIT.VIOLATIONS` value to `bad`, and print the summed violations in `GROWTH_TOTAL`.
 
 - [ ] **Step 5: Run the corpus.**
   1. Fingerprint towns, everything on: `godot --headless --path . --log-file /tmp/ga.log -s res://tests/harness/suntail/growth_corpus_audit.gd -- --odds growing_house_chance=1 --odds growth_street_face_chance=1 --odds growth_other_face_chance=1 --out /tmp/growth_audit_fp.json > /tmp/ga.out 2>&1; echo EXIT $?; grep -E "GROWTH_(TOTAL|AUDIT_DONE)" /tmp/ga.out` → `bad=0`, EXIT 0.
-  2. The same with the default face chances (only `--odds growing_house_chance=1`).
-  3. Production sample `--towns 1:compact,2:standard,3:standard,4:large,5:compact,6:standard,8:large,9:grand,10:standard,11:compact,12:standard,14:large,15:standard,16:compact,17:large,18:grand` with `--odds growing_house_chance=1` → `bad=0`.
-  Targets for run 1, against Diagnosis 2's 18 (fixes) / 22 (terrace) stepping faces: well above 22 stepping faces; report faces, stepped storeys, wraps, joints, buried ends, pulled houses, and withdrawals per cause (portal, columns, gap, air, obstacle.*, ends, crown split into eave/gable, material). Explain any cause that still exceeds 20 faces. If faces are not above 22, stop and report the per-cause table for a controller ruling (never relax a guardrail to reach the number). Fix every violation in the owning guardrail, red-first (pin the town and face in a fixture test), before committing.
+  2. The same with the default face chances (only `--odds growing_house_chance=1`, `--out /tmp/growth_audit_default.json`).
+  3. Production sample `--towns 1:compact,2:standard,3:standard,4:large,5:compact,6:standard,8:large,9:grand,10:standard,11:compact,12:standard,14:large,15:standard,16:compact,17:large,18:grand` with `--odds growing_house_chance=1 --out /tmp/growth_audit_sample.json` → `bad=0`.
+  Target for run 1: stepping faces well above Task 7's 21 (and the superseded Task 8's 2); report faces, storeys, stepped-in storeys, ground faces, recessed doors, wraps, joints, buried ends, pulled houses, and withdrawals per cause as attempts and as distinct faces (portal, party, bearing, material, columns, decor, ends, air, obstacle.*). Explain any cause that withdraws more than 20 faces. If faces are not above 21, stop and report the per-cause tables for a controller ruling (never relax a guardrail to reach the number). Fix every violation in the owning code, red-first (pin the town and face in a fixture test), before committing.
 
 - [ ] **Step 6: Fingerprint gate** → `FINGERPRINT_MATCH`; `test_town_old_look.gd` passes.
 
-- [ ] **Step 7: Commit** the audit fixture, harness and both tests: message "Towns: growing-floor corpus audit and edge cases (wrap, row, bury)" + trailer. Save the three run outputs (`/tmp/growth_audit_*.json`) for Task 10's write-up.
+- [ ] **Step 7: Commit** the audit fixture, harness and both tests: message "Towns: step-in corpus audit and edge cases (lot, roofs, tops, joints, braces, ledges, bearing)" + trailer. Keep the three run outputs (`/tmp/growth_audit_*.json`) for Task 11's write-up.
 
 ---
 
-### Task 10: Shipped defaults, evidence, write-up
+### Task 11: Shipped defaults, evidence, write-up
 
-The original Task 7, adapted: wrap/row/bury views, the corpus counts from Task 9, and the deviations write-up required by ledger ruling F5 (every deviation from the spec, including the amendment's rulings).
+The original defaults task, adapted to spec Amendment 2: street-level Shambles views along lanes of stepped-in fronts, side views of wrapped corners, rows and buried ends, recessed shopfront doors, the corpus counts from Task 10, and the deviations write-up required by ledger ruling F5 (every deviation from the spec, including both amendments' rulings).
 
 **Files:**
 - Modify: `terrain/villages/town_odds.tres` (`growing_house_chance` at_small 0.3, at_large 0.45, spread 0.1)
 - Modify: `tests/fixtures/town_old_look.gd` (add `&"growing_house_chance": 0.0`)
-- Modify: `tests/harness/suntail/kit_town_review.gd` (`growth` and `wrap` views, ~lines 16, 147, 161, 398)
+- Modify: `tests/harness/suntail/kit_town_review.gd` (`growth`, `wrap` and `door` views, ~lines 16, 147, 161, 398)
 - Modify: `docs/qa/2026-10-07-town-odds/fingerprint/baseline.json` (re-pinned)
 - Create: `docs/qa/2026-10-08-growing-floors/result.md` and render folders `before/`, `after/`, `gallery/`, `audit/`
 - Modify: `AGENTS.md` (new top entry)
 - Test: `tests/test_growing_floors_knobs.gd` (default assertions), `tests/test_town_old_look.gd`
 
 **Interfaces:**
-- Consumes: everything above; `KitVillageBuildings.build(...).growth`.
-- Produces: shipped defaults; review views `growth` and `wrap` (kit_town_review); re-pinned fingerprint baseline; result write-up with a deviations section.
+- Consumes: everything above; `KitVillageBuildings.build(...).growth` (records with signed `lean`, `band`, `bounds` = the recess, `closures`, `host`, `edges`).
+- Produces: shipped defaults; review views `growth`, `wrap`, `door` (kit_town_review); re-pinned fingerprint baseline; result write-up with a deviations section.
 
 - [ ] **Step 1: Update the default test first (red).** In `test_growth_knobs_are_in_the_table_with_their_shipped_values` replace `assert_eq(c.value(GROWTH.HOUSE_KNOB), 0.0)` with `assert_between(c.value(GROWTH.HOUSE_KNOB), lerpf(0.3, 0.45, size) - 0.1, lerpf(0.3, 0.45, size) + 0.1)`; in `test_build_marks_houses_growing_only_when_the_chance_is_positive` keep the explicit `0.0` / `1.0` overrides (it pins the zero path). Run it: fails (`0.0` outside `0.2..0.4`).
 
-- [ ] **Step 2: Review views.** `kit_town_review.gd`: add `static var _growth_views: Array[Dictionary] = []` and `static var _wrap_views: Array[Dictionary] = []`, clear both beside `_projection_views.clear()`, and after the projection loop:
+- [ ] **Step 2: Review views.** `kit_town_review.gd`: add `static var _growth_views: Array[Dictionary] = []`, `static var _wrap_views: Array[Dictionary] = []` and `static var _door_views: Array[Dictionary] = []`, clear them beside `_projection_views.clear()`, and after the projection loop:
 
 ```gdscript
+		var houses := {}
+		for mass: BuildingMass in built.get("houses", []):
+			houses[mass.stable_id] = mass
 		for lean: Dictionary in built.get("growth", []):
 			var direction: Vector2i = BuildingMass.DIRS[int(lean.dir)]
 			var right: Vector2i = BuildingKitAssembler.right_of(int(lean.dir))
 			var box: AABB = lean.bounds
+			var mass: BuildingMass = houses.get(lean.host)
+			var ground := mass != null and int(lean.band) == mass.ground_band
+			# The recess's outer face (the lot line), where a passer-by stands in front of it.
+			var front := box.get_center() + Vector3(direction.x, 0, direction.y) * box.size.dot(
+				Vector3(absf(direction.x), 0, absf(direction.y))) * 0.5
+			if ground:
+				_growth_views.append({"at": KitVillageBuildings.native_to_lattice(kit) * front,
+					"direction": Vector3(direction.x, 0, direction.y), "lean": float(lean.lean)})
+				var storey: Dictionary = mass.storeys[preload("res://scripts/terrain/features/villages/kit/KitGrowingFronts.gd").ground_index(mass)]
+				for edge: Vector3i in lean.edges:
+					if StringName(storey.openings.get(edge, storey.default_opening)) == BuildingMass.OPENING_DOOR:
+						var door := (Vector3(edge.x + 0.5, 0, edge.y + 0.5) + Vector3(direction.x, 0, direction.y) * 0.5) \
+							* kit.module_width
+						_door_views.append({"at": KitVillageBuildings.native_to_lattice(kit) * door,
+							"direction": Vector3(direction.x, 0, direction.y), "lean": float(lean.lean)})
 			for side in 2:
 				var kind := StringName((lean.closures as Array)[side])
 				if kind in [&"wrap", &"joint", &"bury"]:
-					# The end of the stepped body where the wrap/joint/bury is.
-					var reach := (box.size.x if right.x != 0 else box.size.z) * 0.5 * (1.0 if side == 1 else -1.0)
-					_wrap_views.append({"at": KitVillageBuildings.native_to_lattice(kit) * (box.get_center() + Vector3(right.x, 0, right.y) * reach),
+					# The end of the recess where the wrap/joint/bury is (side 0 = the -right end).
+					var reach := (box.size.x if right.x != 0 else box.size.z) * 0.5 * (-1.0 if side == 0 else 1.0)
+					_wrap_views.append({"at": KitVillageBuildings.native_to_lattice(kit) * (front + Vector3(right.x, 0, right.y) * reach),
 						"direction": Vector3(direction.x, 0, direction.y), "right": Vector3(right.x, 0, right.y),
 						"kind": kind, "lean": float(lean.lean)})
-			_growth_views.append({"at": KitVillageBuildings.native_to_lattice(kit) * box.get_center(),
-				"direction": Vector3(direction.x, 0, direction.y), "lean": float(lean.lean)})
-		_growth_views.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return float(a.lean) > float(b.lean))
+		_growth_views.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return float(a.lean) < float(b.lean))
+		_door_views.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return float(a.lean) < float(b.lean))
 ```
 
-and a view beside `projections`:
+and the views beside `projections`:
 
 ```gdscript
 		if _views.has("growth"):
-			# Shambles framing: stand in the lane in front of the deepest leans and look along it.
+			# Shambles framing: stand in the lane in front of the deepest stepped-in ground
+			# storeys and look along the lane at eye height; then look up at the jetties.
 			for index in mini(6, _growth_views.size()):
 				var view: Dictionary = _growth_views[index]
 				var target: Vector3 = town.transform * (view.at as Vector3)
@@ -3417,13 +4881,13 @@ and a view beside `projections`:
 				foot.y = town.transform.origin.y + _ground_y + 1.8
 				await _shoot(stage, foot - along * 10.0, foot + along * 20.0 + Vector3.UP * 4.0,
 					"%d_%s_growth%d_lane" % [seed_value, scale, index], 70)
-				await _shoot(stage, foot + outward * 1.5, target + Vector3.UP * 3.0,
+				await _shoot(stage, foot + outward * 1.5, target + Vector3.UP * 4.0 - outward * 1.0,
 					"%d_%s_growth%d_up" % [seed_value, scale, index], 75)
 		if _views.has("wrap"):
-			# Side views of wrapped corners, row joints and buried ends: one oblique
-			# from the street at eye height, one square-on from the side.
+			# Wrapped corners, row joints and buried ends: an oblique from the street at eye
+			# height and a square-on view from the side.
 			_wrap_views.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-				return String(a.kind) + str(a.lean) > String(b.kind) + str(b.lean))
+				return String(a.kind) + str(a.lean) < String(b.kind) + str(b.lean))
 			for index in mini(9, _wrap_views.size()):
 				var view: Dictionary = _wrap_views[index]
 				var target: Vector3 = town.transform * (view.at as Vector3)
@@ -3435,55 +4899,68 @@ and a view beside `projections`:
 					"%d_%s_%s%d_street" % [seed_value, scale, view.kind, index], 70)
 				await _shoot(stage, target + side * 9.0 + outward * 1.0 + Vector3.UP * 1.0, target,
 					"%d_%s_%s%d_side" % [seed_value, scale, view.kind, index], 60)
+		if _views.has("door"):
+			# Recessed shopfront doors: from the lot line at eye height, looking in under the
+			# overhang at the door and its doorstep.
+			for index in mini(6, _door_views.size()):
+				var view: Dictionary = _door_views[index]
+				var target: Vector3 = town.transform * (view.at as Vector3)
+				var outward: Vector3 = (town.transform.basis * (view.direction as Vector3)).normalized()
+				var eye := target + outward * 4.0
+				eye.y = town.transform.origin.y + _ground_y + 1.7
+				await _shoot(stage, eye, target + Vector3.UP * 1.2,
+					"%d_%s_door%d" % [seed_value, scale, index], 70)
 ```
 
 - [ ] **Step 3: Before renders (defaults still 0).** `godot --path . --log-file /tmp/rb.log -s res://tests/harness/suntail/kit_town_review.gd -- --cities 53:grand,31:large,13:standard,43:large,83:grand,103:standard,7:compact,61:standard --views overview,orbit,street,lane --output docs/qa/2026-10-08-growing-floors/before > /tmp/rb.out 2>&1` (GUI run, no `--headless`).
 
-- [ ] **Step 4: Ship the defaults.** `growing_house_chance`: `at_small = 0.3`, `at_large = 0.45`, `spread = 0.1`, notes "… Shipped (task 10)." (`growth_other_face_chance` 0.85, `growth_step` {0.5: 1, 1.0: 3} and `growth_max_lean` 2.0 were set in Task 4.) Add `&"growing_house_chance": 0.0` to `tests/fixtures/town_old_look.gd` `VALUES`. Run `test_growing_floors_knobs.gd` → green.
+- [ ] **Step 4: Ship the defaults.** `growing_house_chance`: `at_small = 0.3`, `at_large = 0.45`, `spread = 0.1`, notes "… Shipped (task 11)." Add `&"growing_house_chance": 0.0` to `tests/fixtures/town_old_look.gd` `VALUES`. Run `test_growing_floors_knobs.gd` → green.
 
-- [ ] **Step 5: After renders and gallery.** Same cameras: the Step 3 command with `--views overview,orbit,street,lane,growth,wrap --output docs/qa/2026-10-08-growing-floors/after`. Gallery at three knob values: `godot --path . --log-file /tmp/g1.log -s res://tests/harness/suntail/building_gallery.gd -- --set designer --count 9 --seed 4 --close --growth 1.0:2.0 --output docs/qa/2026-10-08-growing-floors/gallery/step100_cap200`, then `--growth 0.5:2.0 --output .../gallery/step050_cap200` and `--growth 1.0:1.0 --output .../gallery/step100_cap100`. Look for: Shambles-style stepped-out fronts on the kit's diagonal braces, facing tops within the sky gap, no wall head through an eave, no gap at a moved gable, every overhang floored and braced, returns closed at open ends only, wrapped corners closed (post at the moved corner, squares under and over, strips flush), row joints seamless (no doubled post or return), buried ends with no slit against the wall they run into. If the `after` towns show no wrap/row/bury at the shipped 0.3–0.45 chance, add one run at `--odds growing_house_chance=1` to `docs/qa/2026-10-08-growing-floors/after_all/` so each closure kind has street and side views. Record any defect red-first (pin seed/face in a fixture test) and fix before continuing.
+- [ ] **Step 5: After renders and gallery.** Same cameras: the Step 3 command with `--views overview,orbit,street,lane,growth,wrap,door --output docs/qa/2026-10-08-growing-floors/after`. Gallery at three knob values: `godot --path . --log-file /tmp/g1.log -s res://tests/harness/suntail/building_gallery.gd -- --set designer --count 9 --seed 4 --close --growth 1.0:2.0 --output docs/qa/2026-10-08-growing-floors/gallery/step100_cap200`, then `--growth 0.5:2.0 --output .../gallery/step050_cap200` and `--growth 1.0:1.0 --output .../gallery/step100_cap100`. Look for: the Suntail reference read (a narrower ground storey — stone where the designer made it stone — with timber storeys jutting over it on the kit's diagonal braces), braces only on panel joints and corner posts (none over a window or door head, none hanging over a recess corner), roofs and top storeys exactly as in `before/`, every overhang carried by its floor beam, cut corner panels flush with one post at each new corner, no floor ledge outside an upper wall, wrapped corners with one post and no doubled beam, row joints seamless (no doubled post, return or brace), buried ends closed by their strip with no slit, recessed doors reachable over the ground boards with their doorsteps, pulled houses' awnings not crossing braces (Task 6 deferred minor). If the `after` towns show no wrap/joint/bury or recessed door at the shipped 0.3–0.45 chance, add one run at `--odds growing_house_chance=1` to `docs/qa/2026-10-08-growing-floors/after_all/` so each closure kind and a door have street and side views. Record any defect red-first (pin seed/face in a fixture test) and fix before continuing.
 
-- [ ] **Step 6: Audits with the new defaults.** `growth_corpus_audit.gd` on the 8 fingerprint towns and the Task 9 production sample with no `--odds` → `bad=0` (save `--out res://docs/qa/2026-10-08-growing-floors/audit/default_fp.json` and `.../default_sample.json`); also the production audit `godot --headless --path . -s res://docs/qa/2026-10-01-town-redesign/prefab-grammar/october6-integrated-checkpoint/unequal-roof-range-study/production-validation/oct7-range-audit-prod.gd.txt` copied to `/tmp/growth_range_audit.gd` and run with `-s /tmp/growth_range_audit.gd -- 53:grand,31:large,13:standard,43:large,83:grand,103:standard` → every row `valid_payload` true, `floating` 0, `roof.intrusions` 0.
+- [ ] **Step 6: Audits with the new defaults.** `growth_corpus_audit.gd` on the 8 fingerprint towns and the Task 10 production sample with no `--odds` → `bad=0` (save `--out res://docs/qa/2026-10-08-growing-floors/audit/default_fp.json` and `.../default_sample.json`); also the production audit `godot --headless --path . -s res://docs/qa/2026-10-01-town-redesign/prefab-grammar/october6-integrated-checkpoint/unequal-roof-range-study/production-validation/oct7-range-audit-prod.gd.txt` copied to `/tmp/growth_range_audit.gd` and run with `-s /tmp/growth_range_audit.gd -- 53:grand,31:large,13:standard,43:large,83:grand,103:standard` → every row `valid_payload` true, `floating` 0, `roof.intrusions` 0.
 
 - [ ] **Step 7: Fingerprint re-pin and old-look confirmation.**
   1. Source plans must not move: fingerprint gate with `--parts source` → `FINGERPRINT_MATCH` (growth is kit-layer only).
-  2. `godot --headless --path . --log-file /tmp/fpw.log -s res://tests/harness/town_fingerprint.gd -- --out res://docs/qa/2026-10-07-town-odds/fingerprint/baseline.json > /tmp/fpw.out 2>&1`, then the full fingerprint gate → `FINGERPRINT_MATCH`.
-  3. Zero path still reproduces the old payloads: `... town_fingerprint.gd -- --odds growing_house_chance=0 --out /tmp/fp_zero.json --compare /tmp/growth_fp_ref.json` (or the pre-Task-7 `baseline.json` from `git show HEAD:docs/qa/2026-10-07-town-odds/fingerprint/baseline.json > /tmp/fp_prev.json`) → `FINGERPRINT_MATCH`.
-  4. `godot --headless --path . -s res://tests/harness/town_fingerprint.gd -- --old-look --compare res://docs/qa/2026-10-07-town-odds/fingerprint/old_look_baseline.json --parts source` → `FINGERPRINT_MATCH`; focused `test_town_old_look.gd` passes.
+  2. Zero path first, against the pre-default baseline: `git show HEAD:docs/qa/2026-10-07-town-odds/fingerprint/baseline.json > /tmp/fp_prev.json`; `godot --headless --path . --log-file /tmp/fpz.log -s res://tests/harness/town_fingerprint.gd -- --odds growing_house_chance=0 --out /tmp/fp_zero.json --compare /tmp/fp_prev.json > /tmp/fpz.out 2>&1` → `FINGERPRINT_MATCH`.
+  3. `godot --headless --path . --log-file /tmp/fpw.log -s res://tests/harness/town_fingerprint.gd -- --out res://docs/qa/2026-10-07-town-odds/fingerprint/baseline.json > /tmp/fpw.out 2>&1`, then the full fingerprint gate → `FINGERPRINT_MATCH`.
+  4. `godot --headless --path . --log-file /tmp/fpo.log -s res://tests/harness/town_fingerprint.gd -- --old-look --compare res://docs/qa/2026-10-07-town-odds/fingerprint/old_look_baseline.json --parts source > /tmp/fpo.out 2>&1` → `FINGERPRINT_MATCH`; focused `test_town_old_look.gd` passes.
   5. Re-run every growth test file plus `test_october3_room_projections.gd`, `test_roof_proportion.gd`, `test_town_odds.gd` → green.
 
 - [ ] **Step 8: Write `docs/qa/2026-10-08-growing-floors/result.md`:**
-  - What changed: knobs and defaults; eligibility (any exposed face of a two-storey house); kit-sized steps on `bracket.jetty` (0.5 on `bracket.small`); fronts with `return` / `wrap` / `joint` / `bury` closures; guardrails (air, sky gap, measured neighbours with touch/ride/yield, reserved columns, footprint, portals, crown); roof following.
-  - Image table: before/after per town and view, `*_growth*_lane` Shambles views, `*_wrap*` / `*_joint*` / `*_bury*` street and side views, the three gallery sets; one honest sentence per image.
-  - Corpus tables from Task 9 and Step 6: stepping faces and storeys per town; wraps, joints, buried ends, pulled houses; withdrawals per cause (crown split eave/gable); every violation count 0; production rows; the comparison with Diagnosis 2 (45 → 183 candidates; 1 → 18 → 22 → this plan's count).
+  - What changed: knobs and defaults (`growth_gable_front_boost` removed; `lane_sky_gap` inert); eligibility (any exposed face of a two-storey house); the step-in (roof and top storey fixed, each lower storey one kit jetty further in, the ground narrowest; `offsets_of`); fronts with `return` / `wrap` / `joint` / `bury` closures and their step-in pieces (cut or dropped corner panels, inner floor pieces, recess strips); braces on module joints; recessed ground doors; guardrails under step-in (the spec table, which can still fire and which cannot).
+  - Image table: before/after per town and view, `*_growth*_lane` / `*_up` Shambles views, `*_wrap*` / `*_joint*` / `*_bury*` street and side views, `*_door*` recessed doors, the three gallery sets; one honest sentence per image.
+  - Corpus tables from Task 10 and Step 6: stepping faces and storeys per town; stepped-in storeys, ground faces, recessed doors, wraps, joints, buried ends, pulled houses; withdrawals per cause as attempts and distinct faces; every violation count 0; production rows; the comparison 45 → 183 candidates (Diagnosis), 1 → 18 → 22 (step-out fixes), 21 (Task 7), 2 (superseded roof following), this plan's count.
   - Fingerprint/old-look results.
-  - **Deviations from the spec (ledger ruling F5)**, each with its reason: the original plan rulings (cap quantisation; monotone profile and cap drop; crown rule; house-wide jetty removal; ordering after towers; street face as a column test; widened G6 and G4; Pure capped roofs keep gable faces flush; projections facing a step keep the sky gap; returns above 1.0 cut from the 2.0 wall start; stone/retaining/fortified storeys never step; one-cell lanes and gable verges; `lane_sky_gap` clamp) and the amendment rulings (0.25 step retired but its pieces stay baked; pulling is one hop; rows pull non-growing eligible neighbours, so more houses step than `growing_house_chance` alone; rows join only on the same first upper storey; a front's step comes from its current leader; a member that cannot hold leaves its front and is refitted alone only if it was a seed; rails, bays and architecture never yield; ornament yield extends to row members; own-wing inside corners bury by the same rule; eave-crowned faces cannot take a kit jetty and fall back to 0.5 or stay flush; a buried gable end may meet only the plain wall it runs into).
-  - Limits and open owner questions: eave-to-street faces do not step at kit size (options: a pentice over the top ledge, a baked deeper cornice, insetting the storeys below for one-step houses), so wraps and rows reach the top storey only where every member's crown is a movable gable; the planner is unaware of steps; DAYLIGHT_AIR is not a block (the sky gap protects it).
+  - **Deviations from the spec (ledger ruling F5)**, each with its reason: the original plan rulings that still stand (cap quantisation; monotone profile and cap drop; house-wide jetty removal on growing houses with rolls kept; ordering after towers; street face as a column test; widened G6; returns cut from wall starts; `lane_sky_gap` clamp), the October 8 amendment rulings that still stand (0.25 step retired, pieces kept baked; pulling is one hop; rows pull non-growing eligible neighbours, so more houses step than `growing_house_chance` alone; rows join only on the same first upper storey; a member that cannot hold leaves and is refitted alone only if it was a seed; rails, bays and architecture never yield; ornament yield extends to row members), and the Amendment 2 rulings (re-referencing to the top storey instead of a rewrite; the superseded roof-following code removed, its assembler step-in pieces kept and generalised; a front steps only up to its shortest member's top storey, superseding the Task 6 "taller continues alone" ruling; the profile found by cap iteration on final offsets; bearing: one module behind every stepped-in edge, two across an axis stepped from both sides; party rule: a run against any touching building never steps in, so a face over a lower neighbour stays flush; a stone storey steps in only by whole modules; ground doors recess, upper-storey doors and bays on a stepped-in run withdraw the step, passages/blanks/balconies keep their old effect through the re-referencing; the ground floor stays whole as the paving under the overhang, upper floors trim to their wall; no path paint is extended (towns have none inside a lot); growth braces on module joints while the kit's own non-growing jetty keeps slot-centre braces; outward-only code (step-out returns, wrap extension strips, the plain-wall bury contact, face probes, reserved columns beyond a face) removed rather than left dead; `growth_gable_front_boost` removed).
+  - Limits and open owner questions: the kit's own (non-growing) jetty still braces at slot centres, over window heads — apply the joint rule there too (changes zero-chance towns)?; stone storeys step in only by whole modules until a stone half strip is baked; faces over a lower neighbour or against a party wall never step; the planner is unaware of the recesses (the strip under an overhang is the house's own cell); `lane_sky_gap` is inert (remove it, or keep it for a future outward option?).
 
-- [ ] **Step 9: AGENTS.md entry** at the top, one paragraph: "> GROWING UPPER FLOORS (Oct 8, spec `docs/superpowers/specs/2026-10-08-growing-upper-floors-design.md` incl. its owner amendment, result `docs/qa/2026-10-08-growing-floors/result.md`): `KitGrowingFronts` (kit layer only; after towers, before projections/bays in `KitVillageBuildings.build`) steps out any exposed face of a house with two stacked storeys, one kit jetty (1.0 native m on the kit's `bracket.jetty`; 0.5 on `bracket.small`) per storey above the ground storey (`growing_house_chance` 0.3→0.45 spread 0.1, both face chances 0.85, `growth_step` {0.5:1, 1.0:3}, `growth_max_lean` 2.0, `lane_sky_gap` 0.75, `growth_gable_front_boost` 2.0). Faces step as FRONTS: convex corners of one house wrap (strips + `frontage.corner.dNNN` squares + the post moved via `storey_slots` `right_extend`), coplanar neighbours on the same first upper storey step as one row (joints, returns only at open ends; non-growing neighbours are pulled one hop), and an end may be buried in a plain perpendicular wall (inside corner, own wing included). Steps write `wall_offsets` + `projections{growth, base, closures}` + `storey.growth`; `_emit_projected_front` closes them with baked `frontage.{floor,return,return_beam,corner}.dNNN`. Profiles are monotone per front; a failing step is withdrawn for the front; a member that cannot hold leaves its front. Guardrails: public air, sky gap, measured neighbours (≤5 cm contact is touching; the face's own bay/ornaments ride; own and row ornaments under braces yield), reserved columns, per-edge footprint, portals/balcony bearings, end closure, crown (moved gable end with clipped filler, else the measured eave allowance — no kit jetty fits under a Suntail eave). Withdrawals are recorded per cause (`growth_rejections`); audit `growth_corpus_audit.gd`. Zero chance is byte-identical (old-look fixture pins 0); fingerprint baseline re-pinned for the defaults."
+- [ ] **Step 9: AGENTS.md entry** at the top, one paragraph: "> GROWING UPPER FLOORS (Oct 8–9, spec `docs/superpowers/specs/2026-10-08-growing-upper-floors-design.md` incl. its two owner amendments, result `docs/qa/2026-10-08-growing-floors/result.md`): `KitGrowingFronts` (kit layer only; after towers, before projections/bays in `KitVillageBuildings.build`) makes some houses step IN the Suntail/Shambles way: on any exposed face of a house with two stacked storeys the roof and the top storey stay on the footprint and each lower storey stands one kit jetty (1.0 native m; 0.5 for the light step) further in, so the ground storey is the narrowest and every upper storey overhangs the one below (`growing_house_chance` 0.3→0.45 spread 0.1, both face chances 0.85, `growth_step` {0.5:1, 1.0:3}, `growth_max_lean` 2.0 = the ground storey's total step-in; `lane_sky_gap` inert; no gable-front boost). Faces step as FRONTS with one monotone capped profile re-referenced to the top storey (`offsets_of`: storey k at `lean_k - top`, ground at `-top`); a front steps only up to its shortest member's top. Closures: `return` (the perpendicular corner panel shortens to the baked `frontage.return.dNNN` strip or drops for a whole module; post at the new corner), `wrap` (convex corner of one house, both panels shortened, one post, inner `frontage.corner.dNNN` floor square), `joint` (coplanar row stepping together; no pieces), `bury` (own cell beside the end: a strip on the vertex line closes the recess). Writes negative `wall_offsets` + growth records `projections{growth, depth, base, closures}` (signed) + `storey.growth[dir]`; the assembler trims stepped-in upper floors (ground floor stays whole: paving to a recessed shopfront door), carries each overhang on its floor beam with `bracket.jetty` (`bracket.small`) on wall-module joints only (never over a window/door head), and return beams at open sides. Guardrails (cap drops one step; a member that cannot take the first step leaves): air/obstacles inside the recess, recess claims, portals (passages, blanks, balconies; upper doors and bays on a stepped-in run), material (stone only whole modules), party (never against a touching building), bearing (≥1 module behind, ≥2 across a two-sided axis), porch posts, end closure. Roofs never move (the October 8 roof-following was removed). Withdrawals per cause (`growth_rejections`); audit `growth_corpus_audit.gd` + `tests/fixtures/growth_audit.gd`. Zero chance is byte-identical (old-look fixture pins 0); fingerprint baseline re-pinned for the defaults."
 
-- [ ] **Step 10: Commit** `terrain/villages/town_odds.tres`, `tests/fixtures/town_old_look.gd`, `kit_town_review.gd`, `tests/test_growing_floors_knobs.gd`, `docs/qa/2026-10-07-town-odds/fingerprint/baseline.json`, `docs/qa/2026-10-08-growing-floors/` (result, audits, renders), `AGENTS.md`: message "Towns: growing upper floors on by default (0.3-0.45), evidence and re-pinned fingerprint" + trailer.
+- [ ] **Step 10: Commit** `terrain/villages/town_odds.tres`, `tests/fixtures/town_old_look.gd`, `kit_town_review.gd`, `tests/test_growing_floors_knobs.gd`, `docs/qa/2026-10-07-town-odds/fingerprint/baseline.json`, `docs/qa/2026-10-08-growing-floors/` (result, audits, renders), `AGENTS.md`: message "Towns: growing houses step in by default (0.3-0.45), evidence and re-pinned fingerprint" + trailer.
 
 ---
 
 ## Self-Review
 
-**Spec coverage (with the October 8 amendment).** Knobs → Task 1 (+ amended values Task 4, shipped chance Task 10); baked depth family → Task 2 (+ corner squares Task 5; abutment pieces Task 7 only if measured); fitting, closing pieces, jetty replacement, projections/bays off stepping faces → Task 3; Decision 1 (step-out wording) → spec, Goal, result/AGENTS text (code names unchanged); Decision 2 (any exposed face, per-edge footprint) → Task 4 `face_chains` / `house_eligible`; Decision 3 (kit jetty 1.0 on `bracket.jetty`, 0.5 on `bracket.small`, cap 2.0, attic gable steps) → Task 4 (`STEP_SIZES`, `carried_step`, brace), Task 8 (gable shift at 2.0 = a full module); Decision 4a (coplanar rows) → Task 6; 4b (inside-corner bury, plain walls only, abutment piece if measured) → Task 7; 4c (otherwise withdraw) → `_end_kind` `blocked` (Tasks 5–7); Decision 5 (outer-corner wrap with closure) → Task 5; Decision 6 (three false blockers) → Task 4; Decision 7 (withdraw only the step; zero path byte-identical) → `_front_profile` (front-wide withdrawal, member leaves), fingerprint gate after every task. Guardrails G1–G3, G5, G6 → c8963fe9b + Task 4; G4 replaced by the end rule → Tasks 5–7; G7/crown → Task 8. Corpus targets from Diagnosis 2 (183 candidates, 18 / 22 baselines, per-cause counts) → Tasks 4–9 counts, Task 9 gate; evidence with wrap/row/bury street and side views and the F5 deviations write-up → Task 10.
+**Spec coverage (with both amendments).** Knobs → Task 1 (+ amended values Task 4, boost removed and notes Task 9, shipped chance Task 11); baked depth family → Task 2 (+ corner squares Task 5), reused for cuts, trims and strips (Task 8); fronts, joins, eligibility, rows, wraps → Tasks 4–7 (kept); Amendment 2 Decision (step in, roof and top fixed, ground narrowest) → Task 9 `offsets_of` / `apply`, Task 8 assembler; re-referencing (same profile and closures, offsets relative to the top; shortest-member hold; cap iteration ≡ hold-from-failing-storey) → Task 9 `_front_profile`, `_front_fault`; closures under step-in (`return` cut/drop + moved post, `wrap` both cut + one post + inner square, `joint` nothing, `bury` strip, `blocked`) → Task 8 `storey_slots`, `_emit_step_in`, `_emit_trimmed_floor`, Task 9 `_inset_end`; floors (ground whole, upper trimmed) → Task 8 `_emit_inhabited_floor`; "Supersedes" (roof following, gable shift, eave cap/allowance, crown G7, one-face eave inset, outward pieces, plain-wall bury) → Task 9 removals; recessed doors (ground door recesses with its doorstep; walk = ground board from the lot line; upper doors and bays block; passages, blanks, balconies through re-referencing) → Task 9 `_no_portal`, `apply`, `test_a_ground_door_is_a_recessed_shopfront`; brace placement (joints only, one owner, none over a recess) → Task 8 `_emit_joint_braces`, Task 10 `braces_over_openings`; guardrails table (G1/G3 inside the recess, G2 cannot fire, reserved claims on recess cells, G5 kept, G6, bearing, party, material/stone, decor) → Task 9 `_fault` family and its tests; knob table → Global Constraints, Task 9 Step 2, Task 11; interactions (no growth walls for roof cutting; projections/bays skip every storey of a stepping face) → Task 9 (`KitVillageBuildings`, `apply` writes `storey.growth` on held tops); testing additions and corpus targets → Tasks 8–10; evidence (Shambles lane views, side views of wraps/rows/bury, recessed doors, deviations write-up) → Task 11.
 
 **Rulings and conflicts (recorded here, in the ledger and in `result.md`):**
-1. *Eave faces vs kit steps (main conflict).* The Suntail cornice reaches 0.986 native m beyond the wall and dips at its tip, so a 1.0 kit jetty can never stay under an eave (G7). Ruling: G7 stands; an eave-crowned leader falls back to the 0.5 step where the measured allowance admits it, otherwise eave-crowned faces stay flush (cause `crown`). Consequence: an outer-corner wrap or a row reaches a top storey only where every member's crown is a movable gable end, so on plain rectangular houses Decision 5 rarely shows at the crown storey. Task 9 measures it (`crown_eave`); Task 10 reports it with the options for the owner (a pentice over the top ledge, a baked deeper cornice, insetting the storeys below on one-step houses). No option is built without an owner call.
-2. *Pulling is one hop.* A rolled face pulls its direct corner and coplanar partners; a pulled face pulls nothing further. Otherwise a single roll would step a whole block and the face knobs would mean nothing.
-3. *Rows pull non-growing neighbours.* A pulled neighbour need not have rolled growth (Decision 4a), so more houses step than `growing_house_chance` alone suggests; the corpus reports `pulled`. Its designer choices are already made: a pulled storey with an inset jetty faults `material` and leaves the row.
-4. *Rows join only on the same first upper storey*, so every member's k-th storey is the same band and every increment is one kit step (a brace fits).
-5. *Front step and leader.* The leader is the first active member in chain-key order; its house's `growth_step` pick (quantised by `carried_step`, eave fallback in Task 8) sets the front's step and cap, re-derived whenever a member leaves.
-6. *Member leaves vs withdraw.* A lean-dependent failure (air, gap, measured hit) withdraws the step for the whole front (every member holds); a member that cannot hold a storey, or cannot take the first step while others can, leaves the front and the rest refit; a member that left is fitted alone afterwards only if it was a seed. A lone face keeps the original cap-drop rule. This keeps "withdraw only the offending step" at front level and never leaves unequal steps at a corner or joint.
-7. *Own-wing inside corners bury by the same rule* as neighbours (identical geometry and plainness test); Diagnosis 2 counted 25 concave ends and 27 own wings in front.
-8. *Yield list.* Ivy, corner ivy, window boxes and awnings yield (are removed); rails, bays, roofs and other architecture never yield (rails are guards); touching contact (≤ 5 cm) covers the rail grazes Diagnosis 1 saw. Yield extends to the row's other houses (their ornaments under the row's braces).
-9. *0.25 step retired.* `STEP_SIZES` = [0.5, 1.0]; the 0.25/0.75 baked pieces stay in the catalogue (no rebake, no catalogue churn); nothing places them.
-10. *Original plan rulings that still stand:* cap quantisation (`step · min(4, floor(cap/step))`); monotone profiles with no inward ledge; the crown rule; house-wide jetty removal on growing houses (rolls kept); growth after towers and before projections/bays; street face as a column test (now only selects the face knob); widened G6 (doors/portals/passages/balcony bearings); capped (Pure) roof families keep gable faces flush; projections facing a step keep the sky gap; returns above 1.0 cut from the 2.0 wall start; stone/retaining/fortified storeys never step; `lane_sky_gap` clamp 0.25–4.0. One-cell lanes stay flush (facing verges meet mid-lane; eaves admit no kit step).
-11. *Abutment piece.* Baked only if Task 7 measures a slit (> 1 cm) between a buried end and the wall; the expected Suntail geometry needs none.
-12. *Buried gable ends.* A moved gable end may meet only the plain wall its storey is buried in (`KitRoofMeshUnion` trims roof triangles at walls); `roof_intrusions` in the audit and the Task 10 side views verify it.
+1. *Fix-round assembler code kept.* Ruling 1 asks to remove the Task 8 roof code unless a concrete use remains. `storey_slots` `short`/`short_side`, `_emit_inset_end`, `_emit_inset_jetty` and `below_growth` are exactly the step-in end and overhang closures (one storey deep), so Task 8 generalises them instead of removing them. Everything else from Task 8 goes in Task 9 (gable shift `_lean_roof_end`/`roof_parts`, `eave_allowance`/`_eave_cap`, crown G7, `_try_inset` and the one-face eave inset planner path, `growth_gable_front_boost`).
+2. *Unequal fronts.* A row or wrap of members with different chain lengths steps only up to the shortest member's top storey (above it every member holds), so every member's top storey is the same `T` and joints/wraps stay equal at every shared storey. Supersedes the Task 6 ruling "the taller member continues alone above the shorter": under step-in that would make the taller member's lower storeys deeper than the shorter's at the joint.
+3. *Profile by cap iteration.* The monotone capped profile is tested as a whole at its final offsets (an inset depends on the final top); on a failure the cap drops one step for the front. This is the same set of outcomes as the old "hold from the failing storey up"; a member failing at the smallest cap leaves (multi-member) or the face stays flush (lone).
+4. *Bearing.* "An inset never removes the cells that carry it" is made concrete as: every overhang is one step (≤ the kit jetty) on braces; behind every stepped-in edge at least one module of floor remains, two across an axis stepped in from both sides (the kit's own jetty rule: no one-module stalk). Measured consequence in the fixtures: a 3 × 2 house stepping in south, east and west holds at one jetty.
+5. *Party rule.* "A party wall / touching neighbour never insets" applies to every stepped-in storey's run at both bands, so a face over a lower neighbour (a former step-out candidate) stays flush: its ground storey is a party wall. Beside an end only a coplanar row stepping together (`joint`) admits another building.
+6. *Recessed doors.* Only ground-storey doors recess (the ruling's shopfront). A door on a stepped-in upper storey still withdraws the step: its landing is an upper walk at the lot line and the trimmed upper floor would leave a gap. No path paint is extended: a town's walk ends at the lot line and the strip to the threshold is the house's own cell, floored by its ground `deck.board` (kept whole); the test proves the board covers it.
+7. *Bays.* A bay on a stepped-in run withdraws the step (it would stand under the overhang's braces); a bay on a storey that only overhangs is unaffected. (Under step-out a bay rode out with its face.)
+8. *Stone.* Suntail bakes no stone half strip: a stone storey steps in only by whole modules (a dropped corner panel needs no strip). At the default cap the ground storey steps in one whole module, so stone grounds still step in on most houses.
+9. *Braces.* The joint rule applies to growth braces; the kit's own non-growing jetty (`_emit_jetty_trim`) keeps its slot-centre braces so zero-chance towns stay byte-identical. Raised as an open owner question in Task 11.
+10. *Outward-only code removed, not left dead.* `_emit_wrap_end`, `WRAP_INSET`, the growth branch of `_emit_projected_front`, `_front_role`, `face_parts`, `_candidate`, the ride/rider/slab machinery, `_bury_contact`/`PLAIN_CONTACT`, `_columns_free` (reserved columns beyond a face) and the gap check in the growth fault path have no step-in caller; `gap_ok` stays (room projections use it). The guardrail probe becomes the exact assembly diff (`_added_parts`), so the probe/final parity test is retired with `face_parts`.
+11. *Knobs.* `lane_sky_gap` stays as an inert guardrail value (G2 for any outward offset; room projections facing a growth registry entry, which growth no longer writes); `growth_gable_front_boost` is removed (no purpose once roofs are fixed; it would only reshuffle growing houses' ridge rolls). `growth_max_lean` keeps its name and now means the ground storey's total step-in.
+12. *Fixture `lone`.* Reserved columns beyond a face no longer withdraw anything, so `lone`/`block` keep faces out of a front with a skywalk passage on the first upper storey's far panel (cause `portal`); `reserved_x` is removed.
+13. *Task split.* The controller's suggested Task 8 is split: Task 8 assembler (data contract tested directly), Task 9 planner + removals + recessed doors; the corpus task becomes Task 10 and the defaults/evidence task Task 11.
+14. *Original plan rulings that still stand:* cap quantisation (`step · min(4, floor(cap/step))`); monotone profiles; house-wide jetty removal on growing houses (rolls kept); growth after towers and before projections/bays; street face as a column test (selects the face knob only); one-hop pulling; rows join only on the same first upper storey; rows pull non-growing eligible neighbours; yield list (ivy, corner ivy, window boxes, awnings; architecture never yields); 0.25 step retired with its pieces kept baked; `lane_sky_gap` clamp 0.25–4.0.
 
-**Placeholder scan.** No TBD; every new function has code, every test has assertions and an exact command. Measured constants (`WRAP_INSET`, the optional `ABUT_GAP`) have the exact measuring test and formula; conditional steps (Task 7 Step 5 slit branch, Task 9 Step 3 red edge cases, Task 10 Step 5 `after_all` run) name the exact action and files. Tasks 1–3 are unchanged and done.
+**Placeholder scan.** No TBD; every new function has code, every test has assertions and an exact command. Measured-but-unknown values have a named action: the bury strip's lateral position (Task 8 Step 7: measure the box centre, the exact correction and where it goes); rule-derived expectations that a run contradicts (Task 9 Step 5, Task 10 Step 3: re-derive only from the spec rule and record why); corpus misses (Task 10 Step 5: stop with the per-cause tables). Tasks 1–7 are unchanged and done.
 
-**Name consistency.** `KitGrowingFronts` (`GROWTH`): `STEP_SIZES` [0.5, 1.0], `TOUCH`, `YIELD_DECOR`, `PLAIN_CONTACT`, `BURY_DROP`, `contact_clear`, `carried_step`, `face_chains` (keys `first_band`, `start_convex`, `end_convex`), `house_eligible`, `fit(...) -> {leans, registry, rejections}` (+ `roof_geometry` in Task 8), `fronts`, `apply`, `_fit_front`, `_front_step`, `_front_profile`, `_front_fault`, `_closures`, `_end_kind`, `_end_open`, `_bury_contact`, `_publish_riders`, `_rides_with_row`, `_rider_slab`, `_fault`, `_parts_fault`, `_crown_fault`, `_eave_cap`, `_moves_with_front`, `crown_index`, `crown_wing`, `eave_allowance`, `roof_geometry`, `gap_ok`, `clear_of`; closure kinds `return` / `wrap` / `joint` / `bury` (`blocked` internal); assembler `lean_suffix`, `OFFSET_WALL_DROP`, `WRAP_INSET`, `face_parts`, `roof_parts`, `_emit_bay`, `_emit_wrap_end`, `_front_role`, `_emit_front_floors`, `_lean_roof_end`, slot key `right_extend`; storey keys `wall_offsets`, `projections[{growth, base, closures}]`, `growth`; wing keys `lean_min`/`lean_max`; placement keys `lean_end`/`lean_filler`; build result keys `growth`, `growth_rejections`; harness `growth_corpus_audit.gd` (`GROWTH_AUDIT`, `GROWTH_TOTAL`, `GROWTH_AUDIT_DONE`); audit `growth_audit.gd` (`VIOLATIONS`); knob names match the spec's amended table exactly.
+**Name consistency.** `KitGrowingFronts` (`GROWTH`): `STEP_SIZES` [0.5, 1.0], `TOUCH`, `YIELD_DECOR`, `JETTY_ROLES`, `contact_clear`, `carried_step`, `face_chains` (keys `ground`, `first_band`, `start_convex`, `end_convex`, `storeys`, `key`), `house_eligible`, `_excluded`, `fit(...) -> {leans, registry, rejections}`, `fronts`, `offsets_of`, `apply(...) -> {records, moved}`, `_storeys`, `_storey_index`, `_fit_front`, `_leader`, `_slice`, `_member_closures`, `_front_profile`, `_front_fault`, `_reject`, `_closures`, `_end_kind`, `_inset_end`, `_fault`, `_steps_in`, `_exposed`, `_recess_free`, `_bears`, `_planned`, `_decor_ok`, `_no_portal`, `_storey_at_y`, `_snapshot`, `_restore`, `_added_parts`, `_parts_fault`, `_drop_cut_decor`, `_commit`, `_record`, `gap_ok`, `clear_of`, `_obstacles`, `_obstacle`, `_obstacle_cause`, `_drop_decor`, `_decor_edge`, `_on_storey`; closure kinds `return` / `wrap` / `joint` / `bury` (`blocked` internal); causes `material`, `portal`, `party`, `columns`, `bearing`, `decor`, `ends`, `air`, `obstacle.*`; assembler `lean_suffix`, `OFFSET_WALL_DROP`, `storey_slots` (slot keys `wall_offset`, `right_extend`, `short`, `short_side`, `dropped`), `_emit_inset_end`, `_emit_inset_jetty`, `_emit_joint_braces`, `_blocked_beside`, `_emit_trimmed_floor`, `_emit_step_in`; storey keys `wall_offsets`, `projections[{growth, dir, edges, centres, band, depth, base, closures}]`, `growth`; lean record keys `host, dir, band, lean, base, edges, bounds, chain, closures, pulled`; rejection keys `chain, storey, lean, cause`; build result keys `growth`, `growth_rejections`; fixture `write_step_in`, `block_faces`, options `lone` / `block`; harness `growth_corpus_audit.gd` (`GROWTH_AUDIT`, `GROWTH_TOTAL`, `GROWTH_AUDIT_DONE`, `counts()` keys `faces, storeys, stepped_in, ground_faces, deepest, recessed_doors, returns, wraps, joints, buried, pulled, causes, faces_withdrawn`); audit `growth_audit.gd` (`VIOLATIONS`); knob names match the spec's Amendment 2 table exactly.

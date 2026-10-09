@@ -12,7 +12,9 @@ Some houses — not all, by tunable odds — grow outward storey by storey: each
 out further than the one below (walls stay vertical; "lean" in code names means this cumulative
 step-out), so upper floors overhang the lane and facing houses nearly touch at the top while the
 lane keeps a slot of sky. (Amended October 8: any exposed face, kit-sized steps, wrap-around —
-see "Amendment (October 8, owner review)", which overrides the sections above it.)
+see "Amendment (October 8, owner review)", which overrides the sections above it. Amended again
+October 9: a growing house steps its LOWER storeys in under a fixed roof and top storey — see
+"Amendment 2 (October 9): step in the kit's way", which overrides everything above it.)
 Hard rules exist only as guardrails against broken-looking geometry; a guardrail withdraws the offending step, never a house or a town. With the knobs at zero,
 towns are byte-identical to today.
 
@@ -268,3 +270,161 @@ withdrawal cause; zero violations (air, gap, open returns, open corners, broken 
 ends on non-plain walls, unfloored overhangs, walls beyond their roof, floating masses, roof/public
 air intrusions). Evidence adds street-level and side views of wrapped corners, rows and buried
 ends, and a deviations write-up (ledger ruling F5).
+
+## Amendment 2 (October 9): step in the kit's way
+
+Binding owner decision after Task 8 (ledger `.superpowers/sdd/2026-10-08-growing-upper-floors/progress.md`,
+measurements in `task-8-report.md`). Where it conflicts with anything above (the original sections and
+the October 8 amendment), this section wins.
+
+Why: making a stepped-out top storey follow its roof (gable end shifted with a clipped filler, eave faces
+capped under the measured cornice, then a one-face ground inset under eaves) collapsed the corpus from
+21 stepping faces to 2. No kit jetty fits under a Suntail eave (allowance 0.0 native m), Pure capped
+gables cannot move, and most faces met an uncovered crown at their first step.
+
+### Decision
+
+**Option 2: the step-in is the main (and only) way a house grows.** A growing house keeps its roof and its
+top storey on the footprint. Each lower storey steps IN cumulatively on its stepping faces, so the ground
+storey is the narrowest and every upper storey overhangs the one below on the kit's own jetty (floor
+beam on the face, `bracket.jetty` diagonal braces), as in the Suntail reference image (a narrower stone
+ground floor with a timber storey jutting over it) and York's Shambles. Accepted cost (owner): upper
+floors no longer lean across the lane; facing houses keep today's gap at every upper storey.
+
+### Re-referencing (how it is built)
+
+The cumulative step machinery stays: fronts (lone faces, convex-corner wraps, coplanar row joints,
+inside-corner ends), one monotone profile per front from the leader's `growth_step` and the cap, the
+closure kinds `return` / `wrap` / `joint` / `bury`, the baked `frontage.*.dNNN` families, the kit's
+jetty brace (`bracket.small` for the light 0.5 step), the guardrail framework (a failing step is withdrawn
+for the front, a member that cannot hold leaves, withdrawals recorded per cause) and the per-key rolls.
+What changes is the reference: each storey's wall offset is expressed relative to the TOP storey of its
+face. With the profile `lean_k` (k = 0 is the first storey above the ground storey, as before) and
+`T = lean_top`, storey k stands at `lean_k - T` and the ground storey at `-T` (all <= 0, native m). The
+old step-out profile [0, 1, 2, 2] becomes [-2, -1, 0, 0]: the ground storey two kit jetties in, the first
+upper storey one in, the top two on the lot line. A front steps only up to its shortest active member's
+top storey (above it every member holds), so every member's top is the same `T` and joints and wraps
+stay equal at every shared storey. The profile is still the monotone capped one; it is now found by
+testing the whole face at its final offsets and dropping the cap one step on a failure (identical to the
+old "hold from the failing storey up").
+
+Under step-in the closures mean:
+
+- `return` (the run ends convex with open ground beside it): the perpendicular wall's corner panel of
+  every stepped-in storey shortens by that storey's inset — the baked `frontage.return.dNNN` strip of the
+  remaining length (module minus inset; 1.5 / 1.0 / 0.5 for insets 0.5 / 1.0 / 1.5), or the panel is
+  dropped for a whole-module inset and the next panel takes the corner; the corner post moves to the new
+  corner. The overhang above closes its open side with the baked return beam.
+- `wrap` (a convex corner whose perpendicular face of the same house is in the front): both faces step
+  in equally; each corner panel is shortened by the other face's inset; one post at the new corner; the
+  floor of a stepped-in upper storey keeps the inner square (`frontage.corner.dNNN`).
+- `joint` (another house beside the end whose coplanar face is in the front): both step in equally; no
+  piece at the joint.
+- `bury` (the house's own cell beside the end: an own wing, or its own wall continuing behind a
+  neighbour): the recess is closed on the vertex line by the baked return strip of the inset's depth,
+  facing the recess, so no hole opens into the room beside it.
+- otherwise `blocked` (another building beside the end not stepping with it, the perpendicular face
+  already stepped by an earlier front, or a door, passage, bay or blank on the corner panel the step
+  would cut): the step is withdrawn.
+
+Floors: the ground storey keeps its full floor, so the strip it uncovers under the overhang is the house's
+own pad (paving under the overhang). A stepped-in UPPER storey's floor is trimmed to its own wall (the
+baked `frontage.floor.dNNN` inner strip, or the inner `frontage.corner.dNNN` square at a wrapped corner;
+no board for a cell the inset leaves entirely) — a full board would be a ledge outside the wall.
+
+### Supersedes
+
+- Approach: "storey k sits `k * step` outward"; "the ground storey stays on the lot line, so the lane
+  keeps its width at street level" (the ground is now the narrowest storey; the lane is never narrowed at
+  any height).
+- Success: "facing upper floors come within `lane_sky_gap`" (they keep today's gap) and "no lean projects
+  past its roof" (nothing leaves the footprint; roofs never move).
+- Guardrail 2's purpose (sky gap) and guardrail 7, the Roofs section, and the October 8 amendment's
+  Roofs paragraph: no gable shift, no clipped filler, no eave allowance/cap, no crown rule, no one-face
+  eave inset. Decision 3's "the attic gable steps out with the top storey".
+- Decision 4b's bury semantics (an end run into a plain perpendicular wall in front of the face): under
+  step-in nothing moves outward, so a neighbour standing in front of an end no longer matters, and `bury`
+  is the own-cell recess closure above. The plain-wall contact test retires.
+- Decision 5's closing pieces (extension strips past the old corner, corner floor/ceiling squares outside
+  the footprint, `WRAP_INSET`): a wrap now shortens both corner panels inward.
+- The knob table (below).
+
+### Recessed doors
+
+A door on the GROUND storey's stepped-in run no longer withdraws the step: the door panel moves in with
+its wall (a shopfront under the overhang) and its doorstep dressing moves with it. The walk still reaches
+it: a town's public walk (the lane surface) ends at the lot line and the strip between the lot line and
+the recessed threshold is the house's own cell, already floored by the ground storey's `deck.board` (kept
+whole, above), at the threshold's level; no path paint is extended (towns have none inside a lot; the
+kit layer does not paint). Other portals keep their old effect, mapped through the re-referencing: a
+storey with a skywalk/bridge passage or a blank on its run, or whose wall (or the storey above's) bears a
+balcony, neither steps in nor overhangs the storey below (the cap drops until it stands on the lot line
+over a storey on the lot line). A door on a stepped-in UPPER storey still withdraws the step (its landing
+is an upper walk at the lot line and the trimmed floor would leave a gap). A bay on a stepped-in run
+withdraws the step (it would stand under the overhang's braces); a bay on a storey that only overhangs
+is unaffected.
+
+### Brace placement
+
+Growth braces (`bracket.jetty` for a kit step, `bracket.small` for the light step) stand on wall-module
+joints of the stepped-in storey below — the panel joints between window/door slots and the corner posts —
+never over a window or door head (kit rule since September 27: braces bear on module joints). One brace
+per joint: each overhanging slot owns its right joint; it also owns its left joint unless that joint is a
+wrapped corner (the perpendicular face's slot owns it) or a row joint (the neighbour's slot owns it). The
+kit's own non-growing jetty (`_emit_jetty_trim`, slot-centre braces) is unchanged so zero-chance towns
+stay byte-identical; whether it should follow the joint rule too is an open owner question.
+
+### Guardrails under step-in
+
+Every step-in piece stands inside the house's own cells, so guardrails whose purpose was outward
+intrusion become trivially satisfied. They stay in the framework; the table says which can still fire.
+
+| Guardrail | Under step-in |
+|---|---|
+| G1 walking air | Can fire only where public air reaches inside the house (a passage or tunnel through it): the new braces, beams, strips and moved dressing are tested. |
+| G2 sky gap | Cannot fire: checked only for an outward offset, and growth writes none. `gap_ok` stays (room projections facing a growth registry entry use it; growth now registers none). |
+| G3 neighbours / features | Can fire only for pieces of another building or a tower reaching into the recess. Reserved grid claims are now tested on the recess cells themselves (a passage or podium claim through the stepped-in storey), not on the lane beyond the face. |
+| G4 → end rule | `return` / `wrap` / `joint` / `bury` / `blocked` as above. |
+| G5 footprint | Unchanged (the face chain walk). |
+| G6 portals | As in "Recessed doors". |
+| G7 crown | Removed. |
+| Bearing (new) | A stepped-in storey still bears the storey above: every overhang is one step (at most the kit jetty) carried by braces, and behind every stepped-in edge at least one module of floor remains, at least two across an axis stepped in from both sides (counting the opposite face's committed or same-front offset; the kit's own jetty never leaves a one-module stalk). |
+| Party (new) | A stepped-in storey's run must be exposed at its bands: a party wall or a touching neighbour (including a lower neighbour against the ground storey) never steps in, so such a face stays flush (cause `party`). Beside an end, only a coplanar row stepping together (`joint`) admits a neighbour. |
+| Material (new form) | A stepped-in storey is a two-band, non-retaining, non-fortified, non-sunk, non-abutted storey without a kit jetty or a pent eave. A stone (non-timber) storey steps in only by whole modules (no baked stone half strip exists, so a fractional inset of a stone storey withdraws the step; at the default cap the ground storey steps in a whole module). An overhanging storey is timber, as before. |
+| Decor (new) | Dressing on a stepped-in run (window boxes, ivy, doorsteps, awnings) moves in with its wall; dressing on a corner panel the step cuts is removed; a porch post standing on the run withdraws the step. Moved or kept dressing that the new braces/beams meet yields if it is a yielding kind (Decision 6 list), else the step is withdrawn. |
+
+Guardrails still withdraw only the failing step (the cap drops one step for the front), never a house or
+a town; `growing_house_chance = 0` stays byte-identical (fingerprint MATCH, old-look pin).
+
+### Knobs (supersedes both tables above)
+
+| Knob | Kind | Meaning | Default |
+|---|---|---|---|
+| `growing_house_chance` | CHANCE | share of eligible houses (2+ stacked storeys, at least one exposed face) that grow | 0.3 small → 0.45 large, spread 0.1 (shipped in the defaults task; 0 until then) |
+| `growth_street_face_chance` | CHANCE | per exposed face that fronts public air | 0.85 |
+| `growth_other_face_chance` | CHANCE | per other exposed face | 0.85 |
+| `growth_step` | WEIGHTS | step per storey, native m | {0.5: 1, 1.0 (the kit jetty): 3} |
+| `growth_max_lean` | RANGE_FLOAT | total step-in of the ground storey below the top storey, native m (name kept) | 2.0 (two kit steps; 4 m world) |
+| `lane_sky_gap` | RANGE_FLOAT | inert under step-in; kept as the guardrail value for any outward offset (G2, and room projections facing a growth registry entry) | 0.75 |
+
+`growth_gable_front_boost` is removed (knob, designer member and context key): it existed so a top
+storey could step under a movable gable end; with roofs fixed it would only reshuffle growing houses'
+ridge rolls for no purpose.
+
+### Interactions
+
+Growth records no longer enter the roof-cutting `walls` (nothing new stands beyond the footprint). Room
+projections and facade bays still skip a stepping face on every storey of its chain (`storey.growth` holds
+the signed offset, 0.0 on held top storeys). Towers and feature masses remain obstacles.
+
+### Testing (adds to the sections above)
+
+Re-referenced offsets per storey (ground included); cut/dropped corner panels and moved corner posts;
+upper-floor trim; bury strips; braces on joints only (none over a window or door head) with one owner
+per joint; recessed ground door with its doorstep and a floored walk to the threshold; upper-storey door,
+passage, balcony and bay rules; bearing (one-side and both-side), stone whole-module rule, party rule;
+roofs and top storeys identical to the house without growth. Corpus: stepping faces well above Task 7's
+21 (roofs no longer block), counts per cause, zero violations (pieces outside the lot, air, open ends,
+broken joints, unbraced overhangs, braces over openings, floor ledges, moved roofs or tops, thin bearing,
+floating masses, roof/public-air intrusions). Evidence: street-level views along lanes (Shambles framing),
+side views of wrapped corners, rows and buried ends, recessed shopfront doors, and the deviations write-up.
