@@ -168,7 +168,7 @@ static func fit(masses: Array[BuildingMass], kits: Dictionary, base: BuildingKit
 	var leans: Array[Dictionary] = []
 	var ctx := {"catalog": catalog, "air": air, "towers": towers, "reserved": reserved,
 		"solid": solid, "registry": {}, "obstacles": [], "gap": 0.0, "kit": base, "rejections": [],
-		"riders": []}
+		"riders": [], "buried": [], "lean": 0.0}
 	if character == null or not masses.any(func(m: BuildingMass) -> bool: return m.grows):
 		return {"leans": leans, "registry": ctx.registry, "rejections": ctx.rejections}
 	ctx.gap = character.value(GAP_KNOB)
@@ -301,25 +301,33 @@ static func _fit_front(front: Dictionary, character: TownCharacter, ctx: Diction
 		left.append(int(result.leaves))
 	var profiles := {}
 	var closures := {}
+	var buried := {}
 	for m: int in active:
 		var member: Dictionary = front.members[m]
 		var profile: Array[float] = []
 		var ends: Array = []
+		var contacts: Array = []
 		for k in (member.chain.storeys as Array).size():
 			profile.append(leans[k])
+			ctx.lean = leans[k]
+			ctx.buried = []
 			ends.append(_closures(front, active, m, k, ctx))
+			contacts.append(ctx.buried)
+		ctx.buried = []
 		profiles[m] = profile
 		closures[m] = ends
+		buried[m] = contacts
 	# Every member's yielding ornaments go before any member commits, each probed
 	# with the row's riders, so the yields are exactly those the fit accepted.
 	for m: int in active:
 		var member: Dictionary = front.members[m]
 		ctx.kit = member.kit
-		_yield(member.mass, member.kit, member.chain, profiles[m], ctx, closures[m], front, active, m)
+		_yield(member.mass, member.kit, member.chain, profiles[m], ctx, closures[m], front, active, m,
+			buried[m])
 	for m: int in active:
 		var member: Dictionary = front.members[m]
 		ctx.kit = member.kit
-		_commit(member.mass, member.kit, member.chain, profiles[m], ctx, out, closures[m])
+		_commit(member.mass, member.kit, member.chain, profiles[m], ctx, out, closures[m], buried[m])
 	for m: int in left:
 		if bool(front.members[m].seed):
 			_fit_front({"members": [front.members[m]], "joins": []}, character, ctx, out)
@@ -382,12 +390,16 @@ static func _front_fault(front: Dictionary, active: Array[int], k: int, lean: fl
 		var member: Dictionary = front.members[m]
 		if k >= (member.chain.storeys as Array).size():
 			continue
-		var closures := _closures(front, active, m, k, ctx)
+		ctx.lean = lean
 		_publish_riders(front, active, m, k, lean, base, ctx)
+		# The buried contacts are member m's own (riders' closures are computed first).
+		ctx.buried = []
+		var closures := _closures(front, active, m, k, ctx)
 		ctx.kit = member.kit
 		var cause := &"ends" if closures.has(&"blocked") \
 			else _fault(member.mass, member.chain, k, lean, base, ctx, closures)
 		ctx.riders = []
+		ctx.buried = []
 		if cause != &"":
 			return {"member": m, "cause": cause}
 	return {}
@@ -440,7 +452,113 @@ static func _end_kind(front: Dictionary, active: Array[int], m: int, at_end: boo
 				and k < (front.members[partner].chain.storeys as Array).size():
 			return StringName(join.kind)
 	var member: Dictionary = front.members[m]
-	return &"return" if _end_open(member.mass, member.chain, at_end, k, ctx) else &"blocked"
+	if _end_open(member.mass, member.chain, at_end, k, ctx):
+		return &"return"
+	var contact := _bury_contact(member.mass, member.chain, at_end, k, float(ctx.get("lean", 0.0)), ctx)
+	if not contact.is_empty():
+		(ctx.buried as Array).append_array(contact)
+		return &"bury"
+	return &"blocked"
+
+
+## Wall pieces a stepped end may run into (anything else on the wall withdraws the step).
+## Plain panels, posts and framing beams (panel heads/joints are a kit's plain
+## timber framing; retaining courses are plain masonry).
+const PLAIN_CONTACT: Array[String] = ["wall.timber.plain", "wall.stone.plain", "wall.stone.retaining",
+	"post.", "trim.floor_beam", "trim.panel_head", "trim.panel_joint"]
+## The contact reaches below the floor by the kit brace's drop.
+const BURY_DROP := 1.0
+
+
+## The plain wall an end runs into at storey k, as the owner's obstacle records
+## the contact box meets, or [] when this end cannot be buried. An own inside
+## corner (the run ends concave: the house's wing stands beside and in front of
+## the end) is run into the wing; a neighbour inside corner (another building
+## diagonally in front of the end; beside it open, the house's own cell under that
+## building, or a building) into that building's wall facing back along the run.
+## The wall must not itself step (registry) and must be plain where the end meets it.
+static func _bury_contact(mass: BuildingMass, chain: Dictionary, at_end: bool, k: int, lean: float,
+		ctx: Dictionary) -> Array:
+	if lean <= 0.0:
+		return []
+	var storey: Dictionary = mass.storeys[chain.storeys[k]]
+	var dir := int(chain.dir)
+	var along := Vector2i(0, 1) if dir % 2 == 0 else Vector2i(1, 0)
+	var sign := 1 if at_end else -1
+	var cell := BuildingKitAssembler._inside_cell(dir, int(chain.line),
+		int(chain.end) - 1 if at_end else int(chain.start))
+	var side := cell + along * sign
+	var diagonal: Vector2i = side + BuildingMass.DIRS[dir]
+	var band := int(storey.floor_band)
+	var bands := range(band, band + int(storey.get("bands", 2)))
+	var solid: Callable = ctx.solid
+	var own := _own(mass)
+	var concave := true
+	for b: int in bands:
+		concave = concave and mass.cells_at_band(b).has(side) and mass.cells_at_band(b).has(diagonal)
+	if not concave:
+		for b: int in bands:
+			if mass.cells_at_band(b).has(diagonal) or not bool(solid.call(own, diagonal, b)):
+				return []
+	# The wall run into faces back along the run; it must stand where it was built.
+	var facing := BuildingMass.DIRS.find(-along * sign)
+	for b: int in bands:
+		if float((ctx.registry as Dictionary).get(Vector4i(diagonal.x, diagonal.y, facing, b), 0.0)) > 0.0:
+			return []
+	var kit: BuildingKit = ctx.kit
+	var vertex := Vector2(_point(chain, at_end)) * kit.module_width
+	var out := Vector2(BuildingMass.DIRS[dir])
+	var y0 := band * kit.band_height()
+	var near := vertex - Vector2(along) * sign * 0.05
+	# Out to the stepped face's outer skin (its pieces stand wall_face proud of the plane).
+	var far := vertex + Vector2(along) * sign * 0.35 + out * (lean + kit.wall_face)
+	var box := AABB(Vector3(minf(near.x, far.x), y0 - BURY_DROP, minf(near.y, far.y)),
+		Vector3(absf(far.x - near.x), kit.storey_height + BURY_DROP, absf(far.y - near.y)))
+	var contact: Array = []
+	var walls := 0
+	var crown := crown_index(mass, chain, k)
+	for obstacle: Dictionary in ctx.obstacles:
+		if bool(obstacle.get("gone", false)) or contact_clear(box, obstacle.bounds):
+			continue
+		# The wall run into is the own wing (concave) or another building's.
+		if obstacle.owner == &"" or (obstacle.owner == mass.stable_id) != concave:
+			continue
+		# The roof closing this storey's own face rides with it (as in _parts_fault).
+		if concave and crown >= 0 and int(obstacle.roof_index) == crown:
+			continue
+		var role := String(obstacle.role)
+		# lo/hi: the obstacle's extent as (along the run, out of the face).
+		var bounds: AABB = obstacle.bounds
+		var lo := Vector2(bounds.position.x, bounds.position.z) if dir % 2 == 1 \
+			else Vector2(bounds.position.z, bounds.position.x)
+		var hi := Vector2(bounds.end.x, bounds.end.z) if dir % 2 == 1 \
+			else Vector2(bounds.end.z, bounds.end.x)
+		var at := vertex.x if dir % 2 == 1 else vertex.y
+		var line := vertex.y if dir % 2 == 1 else vertex.x
+		var outer := line + (out.y if dir % 2 == 1 else out.x) * lean
+		# A wall panel thin out of the face belongs to a face parallel to this one.
+		if role.begins_with("wall.") and hi.y - lo.y < kit.module_width * 0.5:
+			# On the face line: the run-into building's face continuing this face's
+			# line, facing away; the end meets only its inner half, inside the corner
+			# (under the corner post and the wall run into).
+			if lo.y < line - TOUCH and hi.y > line + TOUCH:
+				contact.append(obstacle)
+				continue
+			# On the stepped plane: a face coplanar with the step (a row joint, not
+			# a bury); the two skins would overlap, so the end stays blocked.
+			if lo.y < outer - TOUCH and hi.y > outer + TOUCH:
+				return []
+		# A floor board wholly behind the wall plane is that building's floor (hidden).
+		var behind := lo.x >= at - TOUCH if sign > 0 else hi.x <= at + TOUCH
+		if role == "deck.board" and behind:
+			contact.append(obstacle)
+			continue
+		if not PLAIN_CONTACT.any(func(prefix: String) -> bool: return role.begins_with(prefix)):
+			return []
+		if role.begins_with("wall."):
+			walls += 1
+		contact.append(obstacle)
+	return contact if walls > 0 else []
 
 
 ## The former guardrail 4, per end: the run at storey k is the chain's run and
@@ -449,10 +567,15 @@ static func _end_kind(front: Dictionary, active: Array[int], m: int, at_end: boo
 static func _end_open(mass: BuildingMass, chain: Dictionary, at_end: bool, k: int, ctx: Dictionary) -> bool:
 	var storey: Dictionary = mass.storeys[chain.storeys[k]]
 	var dir := int(chain.dir)
+	# The boundary run holding the chain's run (an exposed run may be part of a longer
+	# boundary run, split where a neighbour covers it): convex only where this end is
+	# also that run's end.
 	var convex := false
+	var point := int(chain.end) if at_end else int(chain.start)
 	for run: Dictionary in BuildingKitAssembler.boundary_runs(storey.cells):
 		if int(run.dir) == dir and int(run.line) == int(chain.line) \
-				and int(run.start) == int(chain.start) and int(run.end) == int(chain.end):
+				and int(run.start) <= int(chain.start) and int(run.end) >= int(chain.end) \
+				and int(run.end if at_end else run.start) == point:
 			convex = bool(run.end_convex if at_end else run.start_convex)
 	if not convex:
 		return false
@@ -580,24 +703,29 @@ static func apply(mass: BuildingMass, kit: BuildingKit, chain: Dictionary, profi
 ## Ornaments the new braces/strips of one member's steps meet yield: removes them
 ## and their obstacle parts (the house's own, or a row member's through `host`).
 static func _yield(mass: BuildingMass, kit: BuildingKit, chain: Dictionary, profile: Array[float],
-		ctx: Dictionary, closures: Array, front := {}, active: Array[int] = [], m := -1) -> void:
+		ctx: Dictionary, closures: Array, front := {}, active: Array[int] = [], m := -1,
+		buried: Array = []) -> void:
 	for k in profile.size():
 		if profile[k] <= 0.0:
 			continue
 		var base := 0.0 if k == 0 else profile[k - 1]
+		ctx.lean = profile[k]
 		if m >= 0:
 			_publish_riders(front, active, m, k, profile[k], base, ctx)
 		ctx.kit = kit
+		ctx.buried = buried[k] if k < buried.size() else []
 		var probe := _candidate(mass, kit, chain, k, profile[k], base, ctx.solid, closures[k])
 		_parts_fault(mass, probe, crown_index(mass, chain, k), ctx)
 		ctx.riders = []
+		ctx.buried = []
 		for obstacle: Dictionary in probe.yields:
 			(obstacle.host as BuildingMass).decor.erase(obstacle.decor)
 			_drop_decor(ctx, obstacle.decor)
 
 
 static func _commit(mass: BuildingMass, kit: BuildingKit, chain: Dictionary,
-		profile: Array[float], ctx: Dictionary, out: Array[Dictionary], closures: Array) -> void:
+		profile: Array[float], ctx: Dictionary, out: Array[Dictionary], closures: Array,
+		buried: Array = []) -> void:
 	var dir := int(chain.dir)
 	var catalog: EnvironmentCatalog = ctx.catalog
 	for candidate: Dictionary in apply(mass, kit, chain, profile, closures, ctx.solid):
@@ -620,7 +748,18 @@ static func _commit(mass: BuildingMass, kit: BuildingKit, chain: Dictionary,
 				"bounds": part.transform * catalog.descriptor(part.asset_id).measured_aabb})
 		out.append({"host": mass.stable_id, "dir": dir, "band": candidate.band, "lean": profile[k],
 			"base": candidate.projection.base, "edges": candidate.edges, "bounds": candidate.bounds,
-			"chain": chain.key, "closures": closures[k], "pulled": not mass.grows})
+			"chain": chain.key, "closures": closures[k], "pulled": not mass.grows,
+			"buried_into": _bury_owners(buried[k] if k < buried.size() else [])})
+
+
+## The owners of the walls a storey's buried ends run into (sorted, unique).
+static func _bury_owners(contacts: Array) -> Array[String]:
+	var owners: Array[String] = []
+	for obstacle: Dictionary in contacts:
+		if String(obstacle.role).begins_with("wall.") and not owners.has(String(obstacle.owner)):
+			owners.append(String(obstacle.owner))
+	owners.sort()
+	return owners
 
 
 ## Marks every obstacle record of one decor item gone.
@@ -741,13 +880,16 @@ static func _parts_fault(mass: BuildingMass, candidate: Dictionary, crown: int,
 		"crown": crown, "kit": ctx.kit}]
 	var yields: Array = []
 	candidate["yields"] = yields
+	# The plain wall a buried end runs into (contact with it is the bury).
+	var buried: Array = ctx.get("buried", [])
 	for part: Dictionary in candidate.parts:
 		var local: AABB = catalog.descriptor(part.asset_id).measured_aabb
 		if CLEARANCE.intersects_air(local, part.transform, ctx.air):
 			return &"air"
 		var box: AABB = (part.transform * local).grow(-0.002)
 		for obstacle: Dictionary in ctx.obstacles:
-			if bool(obstacle.get("gone", false)) or contact_clear(box, obstacle.bounds):
+			if bool(obstacle.get("gone", false)) or contact_clear(box, obstacle.bounds) \
+					or buried.has(obstacle):
 				continue
 			var faces := own if obstacle.owner == mass.stable_id else _riders_of(obstacle.owner, ctx)
 			if faces.is_empty():
