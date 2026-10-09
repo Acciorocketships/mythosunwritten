@@ -96,7 +96,8 @@ func test_an_end_beside_a_touching_neighbour_closes_on_the_party_plane() -> void
 			return String(p.role) == "frontage.return.%s" % BuildingKitAssembler.lean_suffix(depth) \
 				and absf((box.call(p) as AABB).get_center().x - 6.0) < 0.3)
 		assert_eq(strips.size(), 1, "one strip of depth %.1f on the party plane x = 6" % depth)
-		assert_lt((box.call(strips[0]) as AABB).end.x, 6.0 + 0.25, "it stands on our side of the party plane")
+		assert_lt((box.call(strips[0]) as AABB).end.x, 6.0 + f.kit.wall_face + FIXTURE.GROWTH.TOUCH,
+			"it stands on our side of the party plane (within a wall face)")
 	assert_eq(facade.call(plain.assemble(side)), before, "the neighbour's facade is not cut")
 	assert_false((f.parts as Array).is_empty(), "the house still builds")
 

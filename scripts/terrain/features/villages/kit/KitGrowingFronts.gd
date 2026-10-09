@@ -869,8 +869,8 @@ static func _restore(mass: BuildingMass, saved: Dictionary) -> void:
 
 
 ## One member's step-in written onto its house and undone again: the architecture
-## it adds (the house assembled with and without it, compared by asset and pose) and
-## the dressing it moves, with that dressing's new pieces.
+## it adds and removes (the house assembled with and without it, compared by asset and
+## pose) and the dressing it moves, with that dressing's new pieces.
 static func _added_parts(member: Dictionary, leans: Array[float], closures: Array, ctx: Dictionary) -> Dictionary:
 	var mass: BuildingMass = member.mass
 	var assembler := _assembler(mass, member.kit, ctx.solid)
@@ -878,15 +878,22 @@ static func _added_parts(member: Dictionary, leans: Array[float], closures: Arra
 	mass.decor.clear()
 	var before := {}
 	for part: Dictionary in assembler.assemble(mass):
-		before["%s|%s" % [part.asset_id, part.transform]] = true
+		before["%s|%s" % [part.asset_id, part.transform]] = part
 	mass.decor.assign(decor)
 	var saved := _snapshot(mass, member.chain)
 	var moved: Array = apply(mass, member.kit, member.chain, leans, closures, _plinth_of(member, ctx)).moved
 	mass.decor.clear()
 	var added: Array[Dictionary] = []
+	var after := {}
 	for part: Dictionary in assembler.assemble(mass):
-		if not before.has("%s|%s" % [part.asset_id, part.transform]):
+		var key := "%s|%s" % [part.asset_id, part.transform]
+		after[key] = true
+		if not before.has(key):
 			added.append(part)
+	var removed: Array[Dictionary] = []
+	for key: String in before:
+		if not after.has(key):
+			removed.append(before[key])
 	mass.decor.assign(decor)
 	var dressing: Array[Dictionary] = []
 	for item: Dictionary in moved:
@@ -894,7 +901,7 @@ static func _added_parts(member: Dictionary, leans: Array[float], closures: Arra
 		assembler._assemble_decor(assembly, item)
 		dressing.append({"item": item, "parts": assembly.out})
 	_restore(mass, saved)
-	return {"added": added, "moved": dressing}
+	return {"added": added, "removed": removed, "moved": dressing}
 
 
 ## G1 + G3 under step-in: the pieces one member's step-in adds clear walking air and
@@ -924,7 +931,7 @@ static func _parts_fault(member: Dictionary, leans: Array[float], closures: Arra
 			if bool(obstacle.get("gone", false)) or contact_clear(box, obstacle.bounds):
 				continue
 			if not partners.has(obstacle.owner):
-				if _at_their_lot(box.intersection(obstacle.bounds), ctx.get("masses", {}).get(obstacle.owner), member.kit):
+				if _at_their_lot(box.intersection(obstacle.bounds), ctx.get("masses", {}).get(obstacle.owner), mass, member.kit):
 					continue
 				fault.cause = _obstacle_cause(obstacle, mass)
 				return fault
@@ -961,31 +968,44 @@ static func _parts_fault(member: Dictionary, leans: Array[float], closures: Arra
 ## stands proud of its own lot by no more than its wall face (+ touching contact), as
 ## at a vertex two houses share diagonally (their corner posts already meet there):
 ## it does not reach into the recess. Every corner of the overlap lies within that
-## margin (per axis) of one of the owner's cells at the overlap's bands.
-static func _at_their_lot(overlap: AABB, owner: BuildingMass, kit: BuildingKit) -> bool:
-	if owner == null:
+## margin (per axis) of one of the owner's cells AND of one of our own cells at the
+## overlap's bands, so the overlap is a thin seam along the shared boundary, however
+## its extent.
+static func _at_their_lot(overlap: AABB, owner: BuildingMass, own: BuildingMass, kit: BuildingKit) -> bool:
+	if owner == null or own == null:
 		return false
-	var margin := kit.wall_face + TOUCH
-	var w := kit.module_width
-	var cells := {}
-	for band in range(floori(overlap.position.y / kit.band_height()), floori(overlap.end.y / kit.band_height()) + 1):
-		cells.merge(owner.cells_at_band(band))
+	var theirs := _cells_over(owner, overlap, kit)
+	var ours := _cells_over(own, overlap, kit)
 	for corner: Vector2 in [Vector2(overlap.position.x, overlap.position.z), Vector2(overlap.end.x, overlap.position.z),
 			Vector2(overlap.position.x, overlap.end.z), Vector2(overlap.end.x, overlap.end.z)]:
-		var near := false
-		var at := Vector2i((corner / w).floor())
-		for dx in range(-1, 2):
-			for dz in range(-1, 2):
-				var cell := at + Vector2i(dx, dz)
-				if not cells.has(cell):
-					continue
-				var lo := Vector2(cell) * w
-				var gap := Vector2(maxf(maxf(lo.x - corner.x, corner.x - lo.x - w), 0.0),
-					maxf(maxf(lo.y - corner.y, corner.y - lo.y - w), 0.0))
-				near = near or maxf(gap.x, gap.y) <= margin
-		if not near:
+		if not (_near_lot(corner, theirs, kit) and _near_lot(corner, ours, kit)):
 			return false
 	return true
+
+
+static func _cells_over(mass: BuildingMass, overlap: AABB, kit: BuildingKit) -> Dictionary:
+	var cells := {}
+	for band in range(floori(overlap.position.y / kit.band_height()), floori(overlap.end.y / kit.band_height()) + 1):
+		cells.merge(mass.cells_at_band(band))
+	return cells
+
+
+## True when `point` (native x, z) lies within wall_face + TOUCH (per axis) of a cell.
+static func _near_lot(point: Vector2, cells: Dictionary, kit: BuildingKit) -> bool:
+	var margin := kit.wall_face + TOUCH
+	var w := kit.module_width
+	var at := Vector2i((point / w).floor())
+	for dx in range(-1, 2):
+		for dz in range(-1, 2):
+			var cell := at + Vector2i(dx, dz)
+			if not cells.has(cell):
+				continue
+			var lo := Vector2(cell) * w
+			var gap := Vector2(maxf(maxf(lo.x - point.x, point.x - lo.x - w), 0.0),
+				maxf(maxf(lo.y - point.y, point.y - lo.y - w), 0.0))
+			if maxf(gap.x, gap.y) <= margin:
+				return true
+	return false
 
 
 ## Dressing on the corner panels this member's stepped-in storeys cut (the
@@ -1028,9 +1048,15 @@ static func _commit(member: Dictionary, leans: Array[float], closures: Array, ct
 		_drop_decor(ctx, item)
 	var probe := _added_parts(member, leans, closures, ctx)
 	var written := apply(mass, kit, member.chain, leans, closures, _plinth_of(member, ctx))
-	# A bay the step dropped is no obstacle any more.
-	for dropped: Dictionary in written.dropped:
-		_drop_bay_obstacles(ctx, mass, dropped, kit)
+	# A bay the step dropped is no obstacle any more: exactly its own pieces (by asset
+	# and pose, as the probe compared them) leave the obstacle list.
+	for part: Dictionary in probe.removed:
+		if String(part.role).begins_with("bay."):
+			var gone: AABB = part.transform * catalog.descriptor(part.asset_id).measured_aabb
+			for obstacle: Dictionary in ctx.obstacles:
+				if obstacle.owner == mass.stable_id and obstacle.role == String(part.role) \
+						and (obstacle.bounds as AABB).is_equal_approx(gone):
+					obstacle["gone"] = true
 	for item: Dictionary in written.moved:
 		_drop_decor(ctx, item)
 		var assembly := {"mass": mass, "out": [] as Array[Dictionary], "serial": 0}
@@ -1054,21 +1080,6 @@ static func _plinth_of(member: Dictionary, ctx: Dictionary) -> Array:
 	return (ctx.get("plinth", {}) as Dictionary).get(String(member.chain.key), [])
 
 
-## Marks the obstacle records of a dropped bay gone: the bay pieces of `mass` standing
-## at that edge's panel (within a module of its centre) on that storey.
-static func _drop_bay_obstacles(ctx: Dictionary, mass: BuildingMass, dropped: Dictionary, kit: BuildingKit) -> void:
-	var edge: Vector3i = dropped.edge
-	var at := (Vector2(edge.x, edge.y) + Vector2.ONE * 0.5 + Vector2(BuildingMass.DIRS[edge.z]) * 0.5) * kit.module_width
-	var y0 := float(dropped.band) * kit.band_height()
-	for obstacle: Dictionary in ctx.obstacles:
-		if obstacle.owner != mass.stable_id or not String(obstacle.role).begins_with("bay."):
-			continue
-		var centre: Vector3 = (obstacle.bounds as AABB).get_center()
-		if Vector2(centre.x, centre.z).distance_to(at) <= kit.module_width \
-				and centre.y >= y0 - 0.5 and centre.y <= y0 + kit.storey_height + 0.5:
-			obstacle["gone"] = true
-
-
 ## Writes one face's step-in into its house (spec Amendment 2): storey k of the chain
 ## stands `leans[k] - top` inside its line and the ground storey `-top` (offsets_of),
 ## with a growth record on every storey that stands in or overhangs the one below and
@@ -1077,7 +1088,7 @@ static func _drop_bay_obstacles(ctx: Dictionary, mass: BuildingMass, dropped: Di
 ## its wall. `closures[i]` belongs to storey i from the ground up. `plinth` lists the
 ## ground run's off-grade edges (storey.plinth_edges: boards trimmed to the wall, the
 ## strip capped in stone). A designer bay the step cuts is dropped. Returns {records,
-## moved, dropped: [{edge, band}]}.
+## moved}.
 static func apply(mass: BuildingMass, kit: BuildingKit, chain: Dictionary, leans: Array[float],
 		closures: Array, plinth: Array = []) -> Dictionary:
 	var dir := int(chain.dir)
@@ -1086,7 +1097,6 @@ static func apply(mass: BuildingMass, kit: BuildingKit, chain: Dictionary, leans
 	var indices := _storeys(chain)
 	var records: Array[Dictionary] = []
 	var moved: Array[Dictionary] = []
-	var dropped: Array[Dictionary] = []
 	for i in indices.size():
 		var storey: Dictionary = mass.storeys[indices[i]]
 		var depth: float = offsets[i]
@@ -1107,8 +1117,7 @@ static func apply(mass: BuildingMass, kit: BuildingKit, chain: Dictionary, leans
 					item.centre = (item.centre as Vector2) + Vector2(BuildingMass.DIRS[dir]) * depth / kit.module_width
 					moved.append(item)
 			if mass.grows:
-				for edge: Vector3i in _drop_cut_bays(chain, storey, closures[i]):
-					dropped.append({"edge": edge, "band": int(storey.floor_band)})
+				_drop_cut_bays(chain, storey, closures[i])
 			if i == 0 and not plinth.is_empty():
 				var trimmed: Dictionary = storey.get("plinth_edges", {})
 				for edge: Vector3i in plinth:
@@ -1119,14 +1128,13 @@ static func apply(mass: BuildingMass, kit: BuildingKit, chain: Dictionary, leans
 		fronts_at.append(record.projection)
 		storey["projections"] = fronts_at
 		records.append(record)
-	return {"records": records, "moved": moved, "dropped": dropped}
+	return {"records": records, "moved": moved}
 
 
 ## Ruling (b): a designer bay on a corner panel this stepped-in storey cuts (the
 ## perpendicular face's end panel at a `return` or `wrap` end) yields: it is dropped
 ## and the panel takes the storey's default opening.
-static func _drop_cut_bays(chain: Dictionary, storey: Dictionary, closures: Array) -> Array[Vector3i]:
-	var out: Array[Vector3i] = []
+static func _drop_cut_bays(chain: Dictionary, storey: Dictionary, closures: Array) -> void:
 	var dir := int(chain.dir)
 	var along := Vector2i(0, 1) if dir % 2 == 0 else Vector2i(1, 0)
 	for at_end: bool in [false, true]:
@@ -1144,8 +1152,6 @@ static func _drop_cut_bays(chain: Dictionary, storey: Dictionary, closures: Arra
 			storey.openings[corner] = BuildingMass.OPENING_WINDOW
 		if storey.has("bay_roles"):
 			(storey.bay_roles as Dictionary).erase(corner)
-		out.append(corner)
-	return out
 
 
 ## One storey's growth record and its recess: the space between its wall (or the wall

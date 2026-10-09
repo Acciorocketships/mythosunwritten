@@ -231,7 +231,8 @@ func test_a_ground_storey_over_solid_bearing_steps_onto_a_stone_plinth_top() -> 
 		sorted.sort_custom(func(a: AABB, b: AABB) -> bool: return a.position.z < b.position.z)
 		for b: AABB in sorted:
 			assert_almost_eq(b.end.y, 0.128, 0.02, "its top is level with the floor boards (just under them)")
-			assert_true(b.position.z <= reach + 0.01, "no gap in the cap at z %.2f (x %.0f)" % [reach, x])
+			# (the first row stands a centimetre or two inside the lot line: the podium skin's plane)
+			assert_true(b.position.z <= reach + 0.02, "no gap in the cap at z %.2f (x %.0f)" % [reach, x])
 			assert_true(b.position.z >= -0.01, "the cap stays inside the lot")
 			reach = maxf(reach, b.end.z)
 		assert_true(reach >= 2.0 - 0.01, "the cap reaches the stepped-in wall (x %.0f)" % x)
@@ -265,6 +266,8 @@ func test_a_dropped_bay_leaves_no_obstacle() -> void:
 	mass.grows = true
 	var edge := BuildingMass.edge_key(Vector2i(2, 0), 0)
 	mass.storeys[0].openings[edge] = BuildingMass.OPENING_BAY
+	# Another bay one module away on the east face: the step does not cut it.
+	mass.storeys[0].openings[BuildingMass.edge_key(Vector2i(2, 1), 0)] = BuildingMass.OPENING_BAY
 	var none := Callable(FIXTURE, "nothing_solid")
 	var masses: Array[BuildingMass] = [mass]
 	var chain: Dictionary = FIXTURE.GROWTH.face_chains(mass, none, Callable(FIXTURE, "street")).filter(
@@ -276,10 +279,83 @@ func test_a_dropped_bay_leaves_no_obstacle() -> void:
 		"obstacles": FIXTURE.GROWTH._obstacles(masses, {&"fixture.front": kit}, kit, catalog, [], none)}
 	var bays := func() -> Array: return (ctx.obstacles as Array).filter(func(o: Dictionary) -> bool:
 		return String(o.role).begins_with("bay.") and not bool(o.get("gone", false)))
-	assert_gt(bays.call().size(), 0, "the designer bay is an obstacle before the step")
+	var first: Array = bays.call()
+	assert_true(first.any(func(o: Dictionary) -> bool: return (o.bounds as AABB).get_center().z < 2.0),
+		"the cut designer bay is an obstacle before the step")
 	var out: Array[Dictionary] = []
 	var closures := [[&"return", &"return"], [&"return", &"return"], [&"return", &"return"]]
 	FIXTURE.GROWTH._commit(member, [1.0, 2.0] as Array[float], closures, ctx, out)
 	assert_ne(StringName(mass.storeys[0].openings.get(edge, mass.storeys[0].default_opening)), BuildingMass.OPENING_BAY)
-	assert_eq(bays.call().size(), 0, "its obstacle records are gone")
+	var live: Array = bays.call()
+	assert_gt(live.size(), 0, "the other bay is still an obstacle")
+	for obstacle: Dictionary in live:
+		assert_gt((obstacle.bounds as AABB).get_center().z, 2.0, "only the north bay (z 2..4) is left: %s" % obstacle.bounds)
+
+
+func _caps(f: Dictionary) -> Array:
+	var catalog := EnvironmentCatalog.load_default()
+	return (f.parts as Array).filter(func(p: Dictionary) -> bool: return p.role == &"plinth.cap").map(
+		func(p: Dictionary) -> AABB: return p.transform * catalog.descriptor(p.asset_id).measured_aabb)
+
+
+## Two boxes share a face plane facing the same way with an overlapping patch.
+static func _coplanar(a: AABB, b: AABB) -> String:
+	for axis in 3:
+		var others: Array[int] = [(axis + 1) % 3, (axis + 2) % 3]
+		var patch := true
+		for o: int in others:
+			patch = patch and minf(a.end[o], b.end[o]) - maxf(a.position[o], b.position[o]) > 0.001
+		if not patch:
+			continue
+		if absf(a.position[axis] - b.position[axis]) < 0.001:
+			return "min %d" % axis
+		if absf(a.end[axis] - b.end[axis]) < 0.001:
+			return "max %d" % axis
+	return ""
+
+
+## Review fix 3: no cap face shares a plane, facing the same way, with another stone
+## face: the podium skin standing on the lot lines (x 0 / 6, z 0 / 4 here) or another
+## cap row (the two faces' rows at a wrapped corner, a run's end rows and their
+## neighbours). The front stays plinth-capped all round the wrapped corner.
+func test_plinth_caps_share_no_face_plane_with_other_stone() -> void:
+	var f := FIXTURE.build({"grade": func(_cell: Vector2i, _dir: int, _band: int) -> int: return 1})
+	assert_eq(FIXTURE.leans_on(f.front, 3), [-1.0, 0.0, 0.0, 0.0] as Array[float])
+	assert_eq(FIXTURE.leans_on(f.front, 2), [-1.0, 0.0, 0.0, 0.0] as Array[float], "west wraps")
+	var caps := _caps(f)
+	assert_gt(caps.size(), 0)
+	for box: AABB in caps:
+		for value: float in [box.position.x, box.end.x]:
+			for line: float in [0.0, 6.0]:
+				assert_true(absf(value - line) > 0.001, "a cap face on the lot line x %.0f: %s" % [line, box])
+		for value: float in [box.position.z, box.end.z]:
+			for line: float in [0.0, 4.0]:
+				assert_true(absf(value - line) > 0.001, "a cap face on the lot line z %.0f: %s" % [line, box])
+	for i in caps.size():
+		for j in range(i + 1, caps.size()):
+			var why := _coplanar(caps[i], caps[j])
+			assert_eq(why, "", "coplanar cap faces (%s): %s / %s" % [why, caps[i], caps[j]])
+	# The corner square (x, z 0..1) is capped.
+	assert_true(caps.any(func(b: AABB) -> bool: return b.has_point(Vector3(0.5, b.get_center().y, 0.5))))
+
+
+## Review fix 3: a kit without the stone cap cannot close an off-grade strip.
+func test_a_kit_without_the_plinth_cap_withdraws_off_grade_steps() -> void:
+	var kit := SuntailBuildingKit.create()
+	kit.roles.erase(&"plinth.cap")
+	var f := FIXTURE.build({"lone": true, "kit": kit,
+		"grade": func(_cell: Vector2i, _dir: int, _band: int) -> int: return 1})
+	assert_eq(FIXTURE.leans_on(f.front, 3), [0.0, 0.0, 0.0, 0.0] as Array[float])
+	var causes := (f.result.rejections as Array).map(func(r: Dictionary) -> StringName: return r.cause)
+	assert_true(causes.has(&"grade"), str(causes))
+
+
+## Review fix 3: the plinth caps are stone below the floor; the shared floor placements
+## (opening and walk fitting) never list them as floor.
+func test_plinth_caps_are_not_inhabited_floor() -> void:
+	var f := FIXTURE.build({"lone": true, "grade": func(_cell: Vector2i, _dir: int, _band: int) -> int: return 1})
+	assert_gt(_caps(f).size(), 0)
+	var floors := BuildingKitAssembler.new(f.kit).inhabited_floors(f.front)
+	assert_gt(floors.size(), 0)
+	assert_false(floors.any(func(p: Dictionary) -> bool: return p.role == &"plinth.cap"))
 

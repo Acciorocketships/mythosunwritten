@@ -74,7 +74,13 @@ func inhabited_floors(mass: BuildingMass) -> Array[Dictionary]:
 	var ctx := {"mass":mass,"out":out,"serial":0}
 	for storey: Dictionary in mass.storeys:
 		_emit_inhabited_floor(ctx,storey)
-	return out
+	# A growing ground storey's plinth caps are the stone below its floor, not floor.
+	var floors: Array[Dictionary] = []
+	for part: Dictionary in out:
+		if part.role != &"plinth.cap":
+			floors.append(part)
+	return floors
+
 
 func _emit_inhabited_floor(ctx: Dictionary, storey: Dictionary) -> void:
 	if bool(storey.get("retaining",false)) or bool(storey.get("fortified",false)):
@@ -109,13 +115,27 @@ func _emit_inhabited_floor(ctx: Dictionary, storey: Dictionary) -> void:
 const PLINTH_CAP_DEPTH := 0.365
 const PLINTH_CAP_TOP := 1.5056
 const BOARD_TOP := 0.1277
+## Cap rows stand this far inside the lot line (the podium skin owns the line).
+const PLINTH_CAP_INSET := 0.01
+## A run's end-cell rows slide this far along the run, and stand this much deeper and lower.
+const PLINTH_CAP_END_SHIFT := 0.02
+const PLINTH_CAP_END_STEP := 0.002
 
 
 ## The stone top of the strip an off-grade ground storey vacates: rows of the stone
-## course standing behind the podium face from the lot line to the stepped-in wall,
-## one module wide each, their tops just under the boards' top (the last row runs on
-## under the trimmed board and the wall, hidden). Rows of the two faces at a wrapped
-## corner overlap in the corner square: the x faces stand 4 mm lower (no coplanar tops).
+## course standing behind the podium face from just inside the lot line to the
+## stepped-in wall, one module wide each, their tops just under the boards' top (the
+## last row runs on under the trimmed board and the wall, hidden). No cap face shares a
+## plane with another stone face facing the same way:
+## - row fronts stand PLINTH_CAP_INSET inside the lot line (the podium's retained skin
+##   owns that plane);
+## - the rows of a run's end cell slide PLINTH_CAP_END_SHIFT along the run away from its
+##   end (their end faces leave the perpendicular face's lot line and skin) and stand
+##   PLINTH_CAP_END_STEP (start end) or twice that (far end) deeper and lower than the
+##   next cell's rows they now overlap;
+## - at a wrapped corner the two faces' rows overlap in the corner square; the x faces
+##   stand 4 mm lower, and the end slides keep each face's end behind the other's front.
+## A one-module run cannot slide (both ends are ends): its row ends stay on the lot lines.
 func _emit_plinth_caps(ctx: Dictionary, offsets: Dictionary, y: float) -> void:
 	for edge: Vector3i in offsets:
 		var depth := -float(offsets[edge]) * kit.module_width
@@ -123,11 +143,21 @@ func _emit_plinth_caps(ctx: Dictionary, offsets: Dictionary, y: float) -> void:
 			continue
 		var dir := edge.z
 		var out := Vector2(BuildingMass.DIRS[dir])
-		var line := Vector2(edge.x, edge.y) + Vector2.ONE * 0.5 + out * 0.5
-		var top := y + BOARD_TOP - 0.01 - (0.004 if dir % 2 == 0 else 0.0)
-		for row in ceili(depth / PLINTH_CAP_DEPTH - 0.0001):
-			var at := line - out * (float(row) + 0.5) * PLINTH_CAP_DEPTH / kit.module_width
-			_emit(ctx, &"plinth.cap", at, top - PLINTH_CAP_TOP, yaw_for_dir(dir))
+		var along := Vector2i(0, 1) if dir % 2 == 0 else Vector2i(1, 0)
+		var cell := Vector2i(edge.x, edge.y)
+		var before := offsets.has(BuildingMass.edge_key(cell - along, dir))
+		var after := offsets.has(BuildingMass.edge_key(cell + along, dir))
+		var slide := 0.0
+		var step := 0.0
+		if before != after:
+			# The two ends step by different amounts: a two-module run's end rows overlap.
+			slide = PLINTH_CAP_END_SHIFT if after else -PLINTH_CAP_END_SHIFT
+			step = PLINTH_CAP_END_STEP * (1.0 if after else 2.0)
+		var line := Vector2(cell) + Vector2.ONE * 0.5 + out * 0.5 + Vector2(along) * slide / kit.module_width
+		var top := y + BOARD_TOP - 0.01 - (0.004 if dir % 2 == 0 else 0.0) - step
+		for row in ceili((depth - PLINTH_CAP_INSET) / PLINTH_CAP_DEPTH - 0.0001):
+			var inward := PLINTH_CAP_INSET + step + (float(row) + 0.5) * PLINTH_CAP_DEPTH
+			_emit(ctx, &"plinth.cap", line - out * inward / kit.module_width, top - PLINTH_CAP_TOP, yaw_for_dir(dir))
 
 
 ## A stepped-in upper storey's floor ends at its own wall (a full board would stand
@@ -1058,7 +1088,8 @@ func _emit_inset_jetty(ctx: Dictionary, storey: Dictionary, slot: Dictionary, y:
 ## and its left joint only where no overhanging slot of this storey continues the run
 ## and no neighbouring building's row continues it (that slot owns the joint at its
 ## right end). No brace where nothing stands below: the cut end of a shortened slot,
-## or a convex end whose perpendicular face is stepped in below (a wrapped corner).
+## or a convex end whose perpendicular face is stepped in below (a wrapped corner); and
+## none at a joint with another building diagonally in front of it (its wall).
 ## The kit jetty brace carries a kit step; the small bracket the light step.
 func _emit_joint_braces(ctx: Dictionary, storey: Dictionary, slot: Dictionary, y: float,
 		lower: float, below: Dictionary) -> void:
@@ -1082,6 +1113,14 @@ func _emit_joint_braces(ctx: Dictionary, storey: Dictionary, slot: Dictionary, y
 				and float(lower_offsets.get(BuildingMass.edge_key(beside, dir), 0.0)) < 0.0:
 			continue
 		if side < 0 and convex and _blocked_beside(storey, beside):
+			continue
+		# Another building standing diagonally in front of the joint: its wall runs on from
+		# this joint's line, so the overhang's end beam meets it and a brace's head would
+		# stand inside that wall.
+		var diagonal: Vector2i = beside + BuildingMass.DIRS[dir]
+		if (_blocked_beside(storey, diagonal) or (external_blocked.is_valid()
+				and not (storey.cells as Dictionary).has(diagonal)
+				and bool(external_blocked.call(diagonal, int(storey.floor_band) - 1)))):
 			continue
 		var joint: Vector2 = (slot.centre as Vector2) + right * 0.5 * float(side) - out * cut
 		if jetty:
