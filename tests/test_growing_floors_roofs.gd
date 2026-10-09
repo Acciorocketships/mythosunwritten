@@ -165,7 +165,7 @@ func test_an_eave_face_steps_its_ground_run_in_instead() -> void:
 	assert_eq(FIXTURE.leans_on(f.front, 3), [0.0, 0.0] as Array[float],
 		"the top storey stands on the footprint, under its eave")
 	assert_false(f.front.roofs[0].has("lean_min"))
-	assert_eq(_south_braces(f, 1).size(), 3, "the kit's own jetty brace per module carries the step")
+	assert_eq(_south_braces(f, 1).size(), 4, "one kit jetty brace per module joint")
 	assert_eq((f.result.insets as Array).size(), 1)
 	# The south ground walls stand one jetty in; the east and west corner panels
 	# give way to one d100 strip each, on the inner half (z 1..2), facing out.
@@ -195,7 +195,7 @@ func test_a_tall_eave_face_keeps_one_step_at_the_ground() -> void:
 	assert_eq(FIXTURE.leans_on(f.front, 3), [0.0, 0.0, 0.0, 0.0] as Array[float],
 		"a step above would stand past the cornice: the face keeps the ground step")
 	assert_true(_causes(f).has(&"crown"), str(_causes(f)))
-	assert_eq(_south_braces(f, 1).size(), 3)
+	assert_eq(_south_braces(f, 1).size(), 4, "one kit jetty brace per module joint")
 
 
 func test_a_two_module_deep_house_steps_its_ground_run_in() -> void:

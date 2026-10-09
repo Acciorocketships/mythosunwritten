@@ -80,14 +80,49 @@ func _emit_inhabited_floor(ctx: Dictionary, storey: Dictionary) -> void:
 	if bool(storey.get("retaining",false)) or bool(storey.get("fortified",false)):
 		return
 	var y := float(storey.floor_band)*kit.band_height()
+	var mass: BuildingMass = ctx.mass
+	var offsets: Dictionary = storey.get("wall_offsets", {})
+	# The ground storey keeps every board: the strip a step-in uncovers is the house's
+	# own paving under the overhang (and the walk to a recessed door).
+	var trim := int(storey.floor_band) > mass.ground_band and not offsets.is_empty()
 	for cell: Vector2i in storey.cells:
+		if trim and _emit_trimmed_floor(ctx, offsets, cell, y):
+			continue
 		_emit(ctx,&"deck.board",Vector2(cell)+Vector2(0.5,0.5),y,0.0)
 	_emit_front_floors(ctx,storey)
+
+
+## A stepped-in upper storey's floor ends at its own wall (a full board would stand
+## out as a ledge): the cell keeps the baked inner strip (one face stepped in), the
+## inner square (a wrapped corner: two perpendicular faces, equal insets by the
+## planner's wrap rule), or nothing (a whole-module step). False when no edge of the
+## cell is stepped in (its ordinary board follows).
+func _emit_trimmed_floor(ctx: Dictionary, offsets: Dictionary, cell: Vector2i, y: float) -> bool:
+	var insets: Array[int] = []
+	var depth := 0.0
+	for dir in 4:
+		var offset := float(offsets.get(BuildingMass.edge_key(cell, dir), 0.0))
+		if offset < 0.0:
+			insets.append(dir)
+			depth = -offset * kit.module_width
+	if insets.is_empty():
+		return false
+	var keep := kit.module_width - depth
+	if keep <= 0.001:
+		return true
+	var at := Vector2(cell) + Vector2(0.5, 0.5)
+	for dir: int in insets:
+		at -= Vector2(BuildingMass.DIRS[dir]) * depth * 0.5 / kit.module_width
+	var role := "frontage.corner" if insets.size() == 2 else "frontage.floor"
+	_emit(ctx, StringName("%s.%s" % [role, lean_suffix(keep)]), at, y, yaw_for_dir(insets[0]))
+	return true
 
 
 func _emit_front_floors(ctx: Dictionary, storey: Dictionary) -> void:
 	var y := float(storey.floor_band)*kit.band_height()
 	for projection:Dictionary in storey.get("projections",[]):
+		if bool(projection.get("growth", false)) and float(projection.depth) <= 0.0:
+			continue
 		var dir:=int(projection.dir)
 		var out:=Vector2(BuildingMass.DIRS[dir])
 		for centre:Vector2 in projection.centres:
@@ -104,6 +139,9 @@ func _front_role(role: StringName, projection: Dictionary) -> StringName:
 func _emit_projected_front(ctx:Dictionary,storey:Dictionary)->void:
 	var y:=float(storey.floor_band)*kit.band_height()
 	for projection:Dictionary in storey.get("projections",[]):
+		if bool(projection.get("growth", false)) and float(projection.get("depth", 0.0)) <= 0.0:
+			_emit_step_in(ctx, storey, projection, y)
+			continue
 		var dir:=int(projection.dir)
 		var depth:=float(projection.depth)
 		# A growing storey's brackets bear on the leaned face of the storey below.
@@ -139,6 +177,33 @@ func _emit_projected_front(ctx:Dictionary,storey:Dictionary)->void:
 		for joint in range(centres.size()+1):
 			var at:Vector2=centres.front()+right*(joint-.5)-out*(.15-base)/kit.module_width
 			_emit(ctx,&"bracket.small",at,y-.706295,yaw_for_dir(dir))
+
+
+## A stepped-in storey's own end closures (its overhang is emitted per slot from the
+## offsets, its cut corner panels by storey_slots): a `bury` end closes the recess on
+## the vertex line with the baked return strip of the inset's depth, facing the
+## recess, so no hole opens into the house's own room beside it; `return`, `wrap` and
+## `joint` ends need nothing here.
+func _emit_step_in(ctx: Dictionary, storey: Dictionary, projection: Dictionary, y: float) -> void:
+	var depth := -float(projection.depth)
+	if depth <= 0.0:
+		return
+	var dir := int(projection.dir)
+	var out := Vector2(BuildingMass.DIRS[dir])
+	var right := Vector2(right_of(dir))
+	var centres: Array = projection.centres
+	var closures: Array = projection.get("closures", [&"return", &"return"])
+	var suffix := lean_suffix(depth)
+	for side: int in [-1, 1]:
+		if StringName(closures[0 if side < 0 else 1]) != &"bury":
+			continue
+		var centre: Vector2 = centres.front() if side < 0 else centres.back()
+		var at := centre + right * 0.5 * float(side) - out * depth * 0.5 / kit.module_width
+		var yaw := yaw_for_dir(dir) - PI * 0.5 * float(side)
+		_emit(ctx, StringName("frontage.return." + suffix), at, y, yaw, 0, Transform3D.IDENTITY,
+			storey.get("tint", Color.WHITE))
+		_emit(ctx, StringName("frontage.return_beam." + suffix), at, y, yaw)
+		_emit(ctx, StringName("frontage.return_beam." + suffix), at, y + kit.storey_height - .143, yaw)
 
 
 ## Native offset (along the face's outward normal) that makes a wrap strip's outer
@@ -457,9 +522,9 @@ static func storey_slots(storey: Dictionary, exposed: Callable = Callable()) -> 
 			var side:=BuildingMass.DIRS.find(right_of(int(slot.dir)))
 			var edge:Vector3i=slot.edge
 			slot["right_extend"]=float(offsets.get(BuildingMass.edge_key(Vector2i(edge.x,edge.y),side),0.0))
-		# A growth inset (a face stepped in under an eave, offsets < 0): the corner
-		# panel of each perpendicular face gives way to the half strip, its corner
-		# post moving in to the stepped-in face (modules cut at `short_side`).
+		# A stepped-in perpendicular face (offsets < 0) cuts this slot's corner panel at
+		# that end by its inset (also when this face steps in too: a wrapped corner);
+		# the corner post moves in with it (modules cut at `short_side`).
 		slot["short"]=0.0
 		slot["short_side"]=0
 		for end:int in [-1,1]:
@@ -467,10 +532,22 @@ static func storey_slots(storey: Dictionary, exposed: Callable = Callable()) -> 
 			var perpendicular:=BuildingMass.DIRS.find(right_of(int(slot.dir))*end)
 			var corner:Vector3i=slot.edge
 			var cut:=float(offsets.get(BuildingMass.edge_key(Vector2i(corner.x,corner.y),perpendicular),0.0))
-			if cut<0.0 and float(slot.wall_offset)==0.0:
+			if cut<0.0 and float(slot.wall_offset)<=0.0:
 				slot["short"]=-cut
 				slot["short_side"]=end
 				if end>0:slot["right_extend"]=cut
+	# A whole-module cut drops the corner slot; its inner neighbour on the same run
+	# takes the corner (its convex flag; its post stands at the new corner). The cap is
+	# one module, so no cut reaches past the neighbour (bearing keeps runs >= 2 long).
+	for slot:Dictionary in slots:
+		if float(slot.short)<1.0-0.0001:continue
+		slot["dropped"]=true
+		var side:=int(slot.short_side)
+		var inner:Vector2=(slot.centre as Vector2)-Vector2(right_of(int(slot.dir)))*float(side)
+		for other:Dictionary in slots:
+			if int(other.dir)==int(slot.dir) and (other.centre as Vector2).is_equal_approx(inner):
+				other["right_convex" if side>0 else "left_convex"]=true
+				if side>0:other["right_extend"]=0.0
 	return slots
 
 
@@ -534,13 +611,13 @@ func _assemble_storey(ctx: Dictionary, index: int) -> void:
 				for along in range(int(run.start), int(run.end)):
 					below_inset[BuildingMass.edge_key(_inside_cell(int(run.dir),
 						int(run.line), along), int(run.dir))] = true
-	# Growth insets below (a face stepped in under an eave): edge -> depth (modules).
+	# Stepped-in edges of the storey below (offsets < 0, module units).
 	var below_growth: Dictionary = {}
 	if not below.is_empty():
 		var lower_offsets: Dictionary = below.get("wall_offsets", {})
 		for edge: Vector3i in lower_offsets:
 			if float(lower_offsets[edge]) < 0.0:
-				below_growth[edge] = -float(lower_offsets[edge])
+				below_growth[edge] = float(lower_offsets[edge])
 	if bool(storey.get("fortified", false)) and kit.has_role(&"wall.fort"):
 		_assemble_fortified(ctx, storey)
 		return
@@ -567,15 +644,22 @@ func _assemble_storey(ctx: Dictionary, index: int) -> void:
 	for slot: Dictionary in storey_slots(storey,
 			_edge_exposure(mass, floor_band, bands)):
 		var wall_y := y - (OFFSET_WALL_DROP if float(slot.get("wall_offset",0.0))>0.0 else 0.0)
+		if bool(slot.get("dropped", false)):
+			continue
 		var jettied := below_inset.has(slot.edge)
 		if not _slot_exposed(mass, slot, floor_band, bands):
 			continue
+		var lower := float(below_growth.get(slot.edge, 0.0))
+		var overhang := below_growth.has(slot.edge) and float(slot.wall_offset) > lower + 0.0001
 		if float(slot.get("short", 0.0)) > 0.0 and bands == 2:
 			_emit_inset_end(ctx, storey, slot, wall_y)
 			_emit_corner_post(ctx, slot, wall_y, bands, kit.wall_face)
+			if overhang:
+				# The strip's bottom beam is its floor edge; it is braced at its uncut end.
+				_emit_joint_braces(ctx, storey, slot, y, lower, below)
 			continue
-		if below_growth.has(slot.edge):
-			_emit_inset_jetty(ctx, storey, slot, y, float(below_growth[slot.edge]))
+		if overhang:
+			_emit_inset_jetty(ctx, storey, slot, y, lower, below)
 		if bands == 1:
 			var sunk := bool(storey.get("sunk", false)) and kit.has_role(&"wall.stone.retaining")
 			if retaining and kit.has_role(&"wall.stone.retaining_half"):
@@ -1004,28 +1088,80 @@ func _emit_inset_end(ctx: Dictionary, storey: Dictionary, slot: Dictionary, y: f
 	_emit(ctx, StringName("frontage.return_beam.%s" % suffix), at, y + kit.storey_height - .143, yaw)
 
 
-## The storey over a stepped-in ground run carries its overhang as the kit's own
-## jetty does (floor beam on the face, a jetty brace per module bearing on the
-## stepped-in wall); a convex end closes the overhang's side with a return beam
-## (unless the perpendicular face steps out over it: its floor strip closes it).
-func _emit_inset_jetty(ctx: Dictionary, storey: Dictionary, slot: Dictionary, y: float, cut: float) -> void:
+## The storey over a stepped-in storey carries its overhang the kit's way: the floor
+## beam on its own face (the corner variant at a left convex end), braces on the
+## wall-module joints of the wall below, and a return beam closing an open convex
+## side where this storey's own side wall runs full (a stepped-in storey's cut strip
+## closes that side with its bottom beam; a wrapped corner and a row joint have none).
+func _emit_inset_jetty(ctx: Dictionary, storey: Dictionary, slot: Dictionary, y: float,
+		lower: float, below: Dictionary) -> void:
 	var dir := int(slot.dir)
 	var out := Vector2(BuildingMass.DIRS[dir])
 	var right := Vector2(right_of(dir))
 	var yaw := yaw_for_dir(dir)
 	var centre: Vector2 = slot.centre
-	var depth := cut * kit.module_width
-	_emit(ctx, &"trim.floor_beam", centre, y, yaw)
-	_emit(ctx, &"bracket.jetty", centre - out * cut, y - kit.jetty_depth, yaw)
-	var offsets: Dictionary = storey.get("wall_offsets", {})
+	var cut := float(slot.wall_offset) - lower
+	_emit(ctx, &"trim.floor_beam_corner" if bool(slot.left_convex) else &"trim.floor_beam", centre, y, yaw)
+	_emit_joint_braces(ctx, storey, slot, y, lower, below)
+	if float(slot.wall_offset) < 0.0:
+		return
+	var lower_offsets: Dictionary = below.get("wall_offsets", {})
 	var edge: Vector3i = slot.edge
+	var cell := Vector2i(edge.x, edge.y)
 	for side: int in [-1, 1]:
-		var perpendicular := BuildingMass.DIRS.find(right_of(dir) * side)
-		if float(offsets.get(BuildingMass.edge_key(Vector2i(edge.x, edge.y), perpendicular), 0.0)) > 0.0:
+		if not bool(slot.right_convex if side > 0 else slot.left_convex):
 			continue
-		if bool(slot.right_convex if side > 0 else slot.left_convex):
-			_emit(ctx, StringName("frontage.return_beam.%s" % lean_suffix(depth)),
-				centre + right * 0.5 * float(side) - out * cut * 0.5, y, yaw + PI * 0.5 * float(side))
+		var corner := BuildingMass.edge_key(cell, BuildingMass.DIRS.find(right_of(dir) * side))
+		if float(lower_offsets.get(corner, 0.0)) < 0.0 or _blocked_beside(storey, cell + right_of(dir) * side):
+			continue
+		# A perpendicular face of this storey stepping OUT over the side closes it with
+		# its own floor strip (step-out data until the planner writes step-in only).
+		if float((storey.get("wall_offsets", {}) as Dictionary).get(corner, 0.0)) > 0.0:
+			continue
+		_emit(ctx, StringName("frontage.return_beam.%s" % lean_suffix(cut * kit.module_width)),
+			centre + right * 0.5 * float(side) - out * cut * 0.5, y, yaw + PI * 0.5 * float(side))
+
+
+## Braces of one overhanging slot, one per wall-module joint it owns: its right joint,
+## and its left joint only where no overhanging slot of this storey continues the run
+## and no neighbouring building's row continues it (that slot owns the joint at its
+## right end). No brace where nothing stands below: the cut end of a shortened slot,
+## or a convex end whose perpendicular face is stepped in below (a wrapped corner).
+## The kit jetty brace carries a kit step; the small bracket the light step.
+func _emit_joint_braces(ctx: Dictionary, storey: Dictionary, slot: Dictionary, y: float,
+		lower: float, below: Dictionary) -> void:
+	var dir := int(slot.dir)
+	var out := Vector2(BuildingMass.DIRS[dir])
+	var right := Vector2(right_of(dir))
+	var edge: Vector3i = slot.edge
+	var cell := Vector2i(edge.x, edge.y)
+	var cut := float(slot.wall_offset) - lower
+	var lower_offsets: Dictionary = below.get("wall_offsets", {})
+	var jetty := absf(cut * kit.module_width - kit.jetty_depth) < 0.001 and kit.has_role(&"bracket.jetty")
+	for side: int in [-1, 1]:
+		var convex := bool(slot.right_convex if side > 0 else slot.left_convex)
+		if float(slot.get("short", 0.0)) > 0.0 and int(slot.short_side) == side:
+			continue
+		var beside := cell + right_of(dir) * side
+		if convex and float(lower_offsets.get(BuildingMass.edge_key(cell,
+				BuildingMass.DIRS.find(right_of(dir) * side)), 0.0)) < 0.0:
+			continue
+		if side < 0 and not convex and (storey.cells as Dictionary).has(beside) \
+				and float(lower_offsets.get(BuildingMass.edge_key(beside, dir), 0.0)) < 0.0:
+			continue
+		if side < 0 and convex and _blocked_beside(storey, beside):
+			continue
+		var joint: Vector2 = (slot.centre as Vector2) + right * 0.5 * float(side) - out * cut
+		if jetty:
+			_emit(ctx, &"bracket.jetty", joint, y - kit.jetty_depth, yaw_for_dir(dir))
+		else:
+			_emit(ctx, &"bracket.small", joint - out * 0.15 / kit.module_width, y - .706295, yaw_for_dir(dir))
+
+
+## Another building stands in this cell at the storey's floor band (a row partner).
+func _blocked_beside(storey: Dictionary, cell: Vector2i) -> bool:
+	return not (storey.cells as Dictionary).has(cell) and external_blocked.is_valid() \
+		and bool(external_blocked.call(cell, int(storey.floor_band)))
 
 
 func _emit_jetty_trim(ctx: Dictionary, slot: Dictionary, y: float, yaw: float,

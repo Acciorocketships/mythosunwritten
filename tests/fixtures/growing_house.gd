@@ -115,3 +115,39 @@ static func leans_on(mass: BuildingMass, dir: int) -> Array[float]:
 	for storey: Dictionary in mass.storeys:
 		out.append(float((storey.get("growth", {}) as Dictionary).get(dir, 0.0)))
 	return out
+
+
+## Writes a step-in on face `dir` exactly as KitGrowingFronts.apply does (spec
+## Amendment 2): offsets[i] (native m, <= 0) for storey i from the ground up, a growth
+## record on every storey that stands in or overhangs the one below. `run` lists the
+## face's edges (default: every boundary edge facing `dir` of storey 0).
+static func write_step_in(mass: BuildingMass, kit: BuildingKit, dir: int, offsets: Array[float],
+		closures: Array = [&"return", &"return"], run: Array[Vector3i] = []) -> void:
+	var edges: Array[Vector3i] = run.duplicate()
+	if edges.is_empty():
+		for cell: Vector2i in mass.storeys[0].cells:
+			if not (mass.storeys[0].cells as Dictionary).has(cell + BuildingMass.DIRS[dir]):
+				edges.append(BuildingMass.edge_key(cell, dir))
+	var centres: Array[Vector2] = []
+	for edge: Vector3i in edges:
+		centres.append(Vector2(edge.x, edge.y) + Vector2.ONE * 0.5 + Vector2(BuildingMass.DIRS[dir]) * 0.5)
+	var right := Vector2(BuildingKitAssembler.right_of(dir))
+	centres.sort_custom(func(a: Vector2, b: Vector2) -> bool: return a.dot(right) < b.dot(right))
+	for index in offsets.size():
+		var storey: Dictionary = mass.storeys[index]
+		var depth := offsets[index]
+		var base := offsets[index - 1] if index > 0 else depth
+		var growth: Dictionary = storey.get("growth", {})
+		growth[dir] = depth
+		storey["growth"] = growth
+		if depth >= 0.0 and depth <= base:
+			continue
+		if depth < 0.0:
+			var wall_offsets: Dictionary = storey.get("wall_offsets", {})
+			for edge: Vector3i in edges:
+				wall_offsets[edge] = depth / kit.module_width
+			storey["wall_offsets"] = wall_offsets
+		var fronts: Array = storey.get("projections", [])
+		fronts.append({"edges": edges, "centres": centres, "dir": dir, "depth": depth, "base": base,
+			"band": int(storey.floor_band), "growth": true, "closures": closures})
+		storey["projections"] = fronts
