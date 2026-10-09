@@ -54,7 +54,9 @@ static func nothing_solid(_own: StringName, _cell: Vector2i, _band: int) -> bool
 ## roof_axis / back_roof_axis (1 = gable to the lane, 0 = eave), lane (1), facing,
 ## back_grows, character, air, towers, reserved, block (dirs of the front kept out of
 ## its front, block_faces), lone (= block [0, 2]: only the south face steps; the
-## house's door is on the south ground storey, a recessed shopfront), kit, extra (more
+## house's door is on the south ground storey, a recessed shopfront), grade
+## (Callable(cell, band) -> bool: the ground outside a face stands at that band; default
+## everywhere at grade), kit, extra (more
 ## masses), prepare (Callable(front) run before fitting), replace_front (a mass with
 ## its own roofs, id kit.fixture.front).
 static func build(options: Dictionary = {}) -> Dictionary:
@@ -98,7 +100,8 @@ static func build(options: Dictionary = {}) -> Dictionary:
 		return cell.y <= -1 and cell.y >= -lane and band <= 1
 	var result := GROWTH.fit(masses, kits, kit, EnvironmentCatalog.load_default(),
 		options.get("character", character()), options.get("air", [] as Array[Dictionary]),
-		options.get("towers", [] as Array[Dictionary]), reserved, solid, street)
+		options.get("towers", [] as Array[Dictionary]), reserved, solid, street,
+		options.get("grade", Callable()))
 	var assembler := BuildingKitAssembler.new(kit)
 	assembler.external_blocked = func(cell: Vector2i, band: int) -> bool:
 		return solid.call(&"fixture.front", cell, band)

@@ -12,9 +12,11 @@ func _init() -> void:
 
 ## Faces (chains with any growth record), records (stepped storeys), stepped-in storeys,
 ## faces whose ground storey stepped in, the deepest offset, recessed ground doors,
-## closures by kind (a corner/joint counts once per record end), houses pulled into a row
+## closures by kind (a corner/joint counts once per record end; `abut` = an end on a
+## touching neighbour's party plane), houses pulled into a row
 ## without rolling growth, and withdrawals by cause: attempts (`causes`) and distinct
-## faces (`faces_withdrawn`; Task 4 deferred minor).
+## faces (`faces_withdrawn`; Task 4 deferred minor); `ends_why` splits the `ends`
+## attempts by the blocked end's reason.
 static func counts(built: Dictionary) -> Dictionary:
 	var by_id := {}
 	for mass: BuildingMass in built.get("houses", []):
@@ -24,7 +26,7 @@ static func counts(built: Dictionary) -> Dictionary:
 	var stepped_in := 0
 	var deepest := 0.0
 	var doors := 0
-	var kinds := {"return": 0, "wrap": 0, "joint": 0, "bury": 0}
+	var kinds := {"return": 0, "wrap": 0, "joint": 0, "bury": 0, "abut": 0}
 	var pulled := {}
 	for lean: Dictionary in built.get("growth", []):
 		faces[String(lean.chain)] = true
@@ -46,8 +48,12 @@ static func counts(built: Dictionary) -> Dictionary:
 			pulled[String(lean.host)] = true
 	var causes := {}
 	var withdrawn := {}
+	var ends := {}
 	for rejection: Dictionary in built.get("growth_rejections", []):
 		var cause := String(rejection.cause)
+		if cause == "ends":
+			var why := String(rejection.get("why", ""))
+			ends[why] = int(ends.get(why, 0)) + 1
 		causes[cause] = int(causes.get(cause, 0)) + 1
 		if not withdrawn.has(cause):
 			withdrawn[cause] = {}
@@ -58,7 +64,7 @@ static func counts(built: Dictionary) -> Dictionary:
 	return {"faces": faces.size(), "storeys": (built.get("growth", []) as Array).size(),
 		"stepped_in": stepped_in, "ground_faces": ground_faces.size(), "deepest": deepest,
 		"recessed_doors": doors, "returns": kinds.return, "wraps": kinds.wrap, "joints": kinds.joint,
-		"buried": kinds.bury, "pulled": pulled.size(), "causes": causes, "faces_withdrawn": faces_withdrawn}
+		"buried": kinds.bury, "abut": kinds.abut, "ends_why": ends, "pulled": pulled.size(), "causes": causes, "faces_withdrawn": faces_withdrawn}
 
 
 func _run() -> void:
@@ -109,7 +115,7 @@ static func _add(total: Dictionary, row: Dictionary) -> void:
 		var value: Variant = row[key]
 		if key == "deepest":
 			total[key] = minf(float(total.get(key, 0.0)), float(value))
-		elif key in ["causes", "faces_withdrawn"]:
+		elif key in ["causes", "faces_withdrawn", "ends_why"]:
 			var merged: Dictionary = total.get(key, {})
 			for cause: String in value:
 				merged[cause] = int(merged.get(cause, 0)) + int(value[cause])

@@ -161,8 +161,9 @@ func _emit_projected_front(ctx:Dictionary,storey:Dictionary)->void:
 ## A stepped-in storey's own end closures (its overhang is emitted per slot from the
 ## offsets, its cut corner panels by storey_slots): a `bury` end closes the recess on
 ## the vertex line with the baked return strip of the inset's depth, facing the
-## recess, so no hole opens into the house's own room beside it; `return`, `wrap` and
-## `joint` ends need nothing here.
+## recess, so no hole opens into the house's own room beside it; an `abut` end (a
+## touching neighbour beside it) closes it the same way, the strip on the party plane;
+## `return`, `wrap` and `joint` ends need nothing here.
 func _emit_step_in(ctx: Dictionary, storey: Dictionary, projection: Dictionary, y: float) -> void:
 	var depth := -float(projection.depth)
 	if depth <= 0.0:
@@ -174,7 +175,7 @@ func _emit_step_in(ctx: Dictionary, storey: Dictionary, projection: Dictionary, 
 	var closures: Array = projection.get("closures", [&"return", &"return"])
 	var suffix := lean_suffix(depth)
 	for side: int in [-1, 1]:
-		if StringName(closures[0 if side < 0 else 1]) != &"bury":
+		if not (StringName(closures[0 if side < 0 else 1]) in [&"bury", &"abut"]):
 			continue
 		var centre: Vector2 = centres.front() if side < 0 else centres.back()
 		var at := centre + right * 0.5 * float(side) - out * depth * 0.5 / kit.module_width

@@ -219,7 +219,7 @@ static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 			if owner_at.has(at): return owner_at[at] != own
 			return grid.contains(at) and grid.use_at(at) in [WarrenSpatialGrid.Use.STRUCTURAL_VOLUME,
 				WarrenSpatialGrid.Use.SERVICE_VOID,WarrenSpatialGrid.Use.PRIVATE_VOLUME],
-		growth_solid,growth_street)
+		growth_solid,growth_street,_growth_grade(spatial,grid))
 	var room_projections := preload("res://scripts/terrain/features/villages/kit/KitRoomProjections.gd").fit(
 		masses,house_kits,kit,tower_catalog,public_air,towers,
 		func(own:StringName,cell:Vector2i,band:int)->bool:
@@ -331,6 +331,19 @@ static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 	return {"payload": payload, "replaced_units": replaced, "masses": masses, "houses": house_masses,
 		"house_kits": house_kits, "roof_kits": roof_kits, "towers": towers, "facade_bays": facade_bays,
 		"room_projections":room_projections,"growth":growth.leans,"growth_rejections":growth.rejections,"roof_audit": roof_audit, "placements": placements, "roofs": roofs, "walls": walls}
+
+
+## Growth ruling (e): the ground outside a face stands at `band` at that fine cell:
+## terrain whose datum is that band, or anything floored directly under it (a lane,
+## deck, court, garden or retained top: the band below is neither air nor outside).
+static func _growth_grade(spatial: WarrenSpatialPlan, grid: WarrenSpatialGrid) -> Callable:
+	var envelope := spatial.source_volume.envelope if spatial.source_volume != null else null
+	return func(cell: Vector2i, band: int) -> bool:
+		if envelope != null and envelope.ground_at(Vector2i(floori(cell.x / 2.0), floori(cell.y / 2.0))) == band:
+			return true
+		var below := Vector3i(cell.x, band - 1, cell.y)
+		return grid.contains(below) and not (grid.use_at(below) in [WarrenSpatialGrid.Use.PUBLIC_AIR,
+			WarrenSpatialGrid.Use.DAYLIGHT_AIR, WarrenSpatialGrid.Use.OUTSIDE])
 
 
 ## True when `box` misses every fitted front (`bounds`) another house hosts.

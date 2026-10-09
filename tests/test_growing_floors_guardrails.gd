@@ -189,3 +189,36 @@ func test_contact_under_five_centimetres_is_touching() -> void:
 	assert_true(FIXTURE.GROWTH.contact_clear(a, AABB(Vector3(0.97, 0, 0), Vector3.ONE)), "3 cm")
 	assert_false(FIXTURE.GROWTH.contact_clear(a, AABB(Vector3(0.94, 0, 0), Vector3.ONE)), "6 cm")
 	assert_true(FIXTURE.GROWTH.contact_clear(a, AABB(Vector3(2, 0, 0), Vector3.ONE)), "apart")
+
+
+## Ruling (e): the ground storey steps in only where the ground outside its face stands at
+## its floor (terrain or a walk surface); over a podium or a raised drop its whole floor
+## boards would read as an unrailed ledge, so the face stays flush (cause grade).
+func test_a_ground_storey_over_a_raised_drop_keeps_the_face_flush() -> void:
+	var f := FIXTURE.build({"lone": true, "grade": func(_cell: Vector2i, _band: int) -> bool: return false})
+	assert_eq(FIXTURE.leans_on(f.front, 3), [0.0, 0.0, 0.0, 0.0] as Array[float])
+	var causes := (f.result.rejections as Array).map(func(r: Dictionary) -> StringName: return r.cause)
+	assert_true(causes.has(&"grade"), str(causes))
+	var g := FIXTURE.build({"lone": true, "grade": func(cell: Vector2i, band: int) -> bool:
+		return band == 0 and cell.y == -1})
+	assert_eq(FIXTURE.leans_on(g.front, 3), [-2.0, -1.0, 0.0, 0.0] as Array[float], "the lane at its floor")
+
+
+## Ruling (b): a designer bay on the corner panel a growing house's step cuts yields
+## (it is dropped for that storey); the step is not withdrawn.
+func test_a_bay_on_a_cut_corner_panel_yields_to_growth() -> void:
+	var edge := BuildingMass.edge_key(Vector2i(2, 0), 0) # the east face's south panel, ground storey
+	var f := FIXTURE.build({"lone": true, "prepare": func(front: BuildingMass) -> void:
+		front.storeys[0].openings[edge] = BuildingMass.OPENING_BAY})
+	assert_eq(FIXTURE.leans_on(f.front, 3), [-2.0, -1.0, 0.0, 0.0] as Array[float])
+	assert_ne(StringName(f.front.storeys[0].openings.get(edge, f.front.storeys[0].default_opening)),
+		BuildingMass.OPENING_BAY, "the bay is dropped")
+	var catalog := EnvironmentCatalog.load_default()
+	assert_false((f.parts as Array).any(func(p: Dictionary) -> bool:
+		return String(p.role).begins_with("bay.") and (p.transform * catalog.descriptor(p.asset_id).measured_aabb).get_center().y < 3.0),
+		"no bay left on the ground storey")
+	# A door there still blocks the end (and so the step).
+	var g := FIXTURE.build({"lone": true, "prepare": func(front: BuildingMass) -> void:
+		front.storeys[0].openings[edge] = BuildingMass.OPENING_DOOR})
+	assert_eq(FIXTURE.leans_on(g.front, 3), [0.0, 0.0, 0.0, 0.0] as Array[float])
+

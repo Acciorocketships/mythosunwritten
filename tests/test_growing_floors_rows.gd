@@ -66,20 +66,39 @@ func test_a_row_member_with_a_portal_holds_the_row_below_it() -> void:
 	assert_eq(FIXTURE.leans_on(side, 3), [-1.0, 0.0, 0.0, 0.0] as Array[float])
 
 
-func test_a_row_member_that_cannot_step_withdraws_the_joint_not_the_town() -> void:
-	# The neighbour's ground storey carries a passage: it cannot stand in at all and
-	# leaves the row; the front's east end then stands beside a building that does not
-	# step (blocked), so the front stays flush too. Both houses still build.
+## Ruling (a): an end beside a touching neighbour that does not step with it (here the
+## neighbour's ground storey carries a passage and leaves the row) closes with the
+## front's own baked return strip on the party plane; the neighbour's facade is left
+## whole. Both houses still build.
+func test_an_end_beside_a_touching_neighbour_closes_on_the_party_plane() -> void:
 	var side := FIXTURE.roofed(&"kit.fixture.side", Rect2i(3, 0, 2, 2), 4, 1)
 	var edge := BuildingMass.edge_key(Vector2i(3, 0), 3)
 	side.storeys[0].openings[edge] = BuildingMass.OPENING_DOOR
 	side.storeys[0]["passage_edges"] = {edge: true}
+	var catalog := EnvironmentCatalog.load_default()
+	var box := func(p: Dictionary) -> AABB: return p.transform * catalog.descriptor(p.asset_id).measured_aabb
+	var plain := BuildingKitAssembler.new(SuntailBuildingKit.create())
+	var facade := func(parts: Array) -> Array:
+		var out := (parts.filter(func(p: Dictionary) -> bool:
+			var b: AABB = box.call(p)
+			return String(p.role).begins_with("wall.") and b.get_center().x > 6.0 and b.get_center().z < 0.5)
+			).map(func(p: Dictionary) -> String: return "%s %s" % [p.asset_id, p.transform])
+		out.sort()
+		return out
+	var before: Array = facade.call(plain.assemble(side))
 	var f := FIXTURE.build({"extra": [side], "block": [2]})
-	assert_eq(FIXTURE.leans_on(f.front, 3), [0.0, 0.0, 0.0, 0.0] as Array[float])
+	assert_eq(FIXTURE.leans_on(f.front, 3), [-2.0, -1.0, 0.0, 0.0] as Array[float])
 	assert_eq(FIXTURE.leans_on(side, 3), [0.0, 0.0, 0.0, 0.0] as Array[float])
+	for band: int in [0, 2]:
+		assert_eq(_record(f, &"kit.fixture.front", band).closures[0], &"abut", "east end, band %d" % band)
+	for depth: float in [2.0, 1.0]:
+		var strips := (f.parts as Array).filter(func(p: Dictionary) -> bool:
+			return String(p.role) == "frontage.return.%s" % BuildingKitAssembler.lean_suffix(depth) \
+				and absf((box.call(p) as AABB).get_center().x - 6.0) < 0.3)
+		assert_eq(strips.size(), 1, "one strip of depth %.1f on the party plane x = 6" % depth)
+		assert_lt((box.call(strips[0]) as AABB).end.x, 6.0 + 0.25, "it stands on our side of the party plane")
+	assert_eq(facade.call(plain.assemble(side)), before, "the neighbour's facade is not cut")
 	assert_false((f.parts as Array).is_empty(), "the house still builds")
-	var causes := (f.result.rejections as Array).map(func(r: Dictionary) -> StringName: return r.cause)
-	assert_true(causes.has(&"portal") and causes.has(&"ends"), str(causes))
 
 
 func test_rows_join_only_on_the_same_first_upper_storey() -> void:

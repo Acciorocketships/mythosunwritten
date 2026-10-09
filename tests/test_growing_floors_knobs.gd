@@ -39,6 +39,9 @@ func test_eligible_house_needs_two_stacked_storeys_and_an_exposed_face() -> void
 		return not Rect2i(0, 2, 3, 2).has_point(cell)
 	assert_false(GROWTH.house_eligible(FIXTURE.house(&"kit.e", Rect2i(0, 2, 3, 2), 3, 3), walled, street),
 		"a house touching other buildings on every face has nothing to step out")
+	for id: StringName in [&"kit.spatial.feature.landmark.01", &"kit.spatial.prefab.house.02"]:
+		assert_false(GROWTH.house_eligible(FIXTURE.house(id, Rect2i(0, 0, 3, 2), 3, 3), none, street),
+			"a landmark / prefab house never grows (ruling d): %s" % id)
 
 
 func test_house_roll_is_keyed_by_house_and_untouched_by_other_growth_knobs() -> void:
