@@ -167,14 +167,17 @@ static func fit(masses: Array[BuildingMass], kits: Dictionary, base: BuildingKit
 		street: Callable) -> Dictionary:
 	var leans: Array[Dictionary] = []
 	var ctx := {"catalog": catalog, "air": air, "towers": towers, "reserved": reserved,
-		"solid": solid, "registry": {}, "obstacles": [], "gap": 0.0, "kit": base, "rejections": []}
+		"solid": solid, "registry": {}, "obstacles": [], "gap": 0.0, "kit": base, "rejections": [],
+		"riders": []}
 	if character == null or not masses.any(func(m: BuildingMass) -> bool: return m.grows):
 		return {"leans": leans, "registry": ctx.registry, "rejections": ctx.rejections}
 	ctx.gap = character.value(GAP_KNOB)
 	ctx.obstacles = _obstacles(masses, kits, base, catalog, towers, solid)
+	# Candidate faces come from every eligible house (a terrace row pulls its
+	# coplanar neighbours); only growing houses seed a front and draw face rolls.
 	var members: Array[Dictionary] = []
 	for mass: BuildingMass in masses:
-		if not mass.grows or not kits.has(_own(mass)):
+		if not kits.has(_own(mass)) or String(mass.stable_id).contains("wall-room"):
 			continue
 		var kit: BuildingKit = kits[_own(mass)]
 		if not kit.has_role(StringName("frontage.return.%s" % BuildingKitAssembler.lean_suffix(STEP_SIZES[0]))):
@@ -182,7 +185,7 @@ static func fit(masses: Array[BuildingMass], kits: Dictionary, base: BuildingKit
 		for chain: Dictionary in face_chains(mass, solid, street):
 			var knob := STREET_FACE_KNOB if bool(chain.street) else OTHER_FACE_KNOB
 			members.append({"mass": mass, "chain": chain, "kit": kit,
-				"seed": character.chance(knob, String(chain.key))})
+				"seed": mass.grows and character.chance(knob, String(chain.key))})
 	for front: Dictionary in fronts(members):
 		_fit_front(front, character, ctx, leans)
 	return {"leans": leans, "registry": ctx.registry, "rejections": ctx.rejections}
@@ -194,24 +197,34 @@ static func _point(chain: Dictionary, at_end: bool) -> Vector2i:
 	return Vector2i(int(chain.line), along) if int(chain.dir) % 2 == 0 else Vector2i(along, int(chain.line))
 
 
-## Joins between candidate faces: two faces of one house that meet at a convex
-## corner of the first upper storey (same first band) wrap (Task 6 adds joints).
+## Joins between candidate faces, all on the same first upper storey (rows on
+## stepped ground never join): two faces of one house that meet at a convex corner
+## wrap; two faces of different houses on one line (same dir), end to start at a
+## vertex where each is convex in its own cells, form a terrace-row joint.
 static func _joins(members: Array[Dictionary]) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for a in members.size():
 		for b in range(a + 1, members.size()):
 			var ca: Dictionary = members[a].chain
 			var cb: Dictionary = members[b].chain
-			if members[a].mass != members[b].mass or int(ca.dir) % 2 == int(cb.dir) % 2 \
-					or int(ca.first_band) != int(cb.first_band):
+			if int(ca.first_band) != int(cb.first_band):
 				continue
-			for a_end: bool in [false, true]:
-				for b_end: bool in [false, true]:
-					if _point(ca, a_end) == _point(cb, b_end) \
-							and bool(ca.end_convex if a_end else ca.start_convex) \
-							and bool(cb.end_convex if b_end else cb.start_convex):
-						out.append({"a": a, "a_end": a_end, "b": b, "b_end": b_end, "kind": &"wrap"})
+			var same: bool = members[a].mass == members[b].mass
+			if same and int(ca.dir) % 2 != int(cb.dir) % 2:
+				for a_end: bool in [false, true]:
+					for b_end: bool in [false, true]:
+						if _point(ca, a_end) == _point(cb, b_end) and _convex(ca, a_end) and _convex(cb, b_end):
+							out.append({"a": a, "a_end": a_end, "b": b, "b_end": b_end, "kind": &"wrap"})
+			elif not same and int(ca.dir) == int(cb.dir) and int(ca.line) == int(cb.line):
+				for a_end: bool in [false, true]:
+					var b_end := not a_end
+					if _point(ca, a_end) == _point(cb, b_end) and _convex(ca, a_end) and _convex(cb, b_end):
+						out.append({"a": a, "a_end": a_end, "b": b, "b_end": b_end, "kind": &"joint"})
 	return out
+
+
+static func _convex(chain: Dictionary, at_end: bool) -> bool:
+	return bool(chain.end_convex if at_end else chain.start_convex)
 
 
 ## Seeds and their direct join partners; one front per connected component that
@@ -286,15 +299,27 @@ static func _fit_front(front: Dictionary, character: TownCharacter, ctx: Diction
 			break
 		active.erase(int(result.leaves))
 		left.append(int(result.leaves))
+	var profiles := {}
+	var closures := {}
 	for m: int in active:
 		var member: Dictionary = front.members[m]
 		var profile: Array[float] = []
-		var closures: Array = []
+		var ends: Array = []
 		for k in (member.chain.storeys as Array).size():
 			profile.append(leans[k])
-			closures.append(_closures(front, active, m, k, ctx))
+			ends.append(_closures(front, active, m, k, ctx))
+		profiles[m] = profile
+		closures[m] = ends
+	# Every member's yielding ornaments go before any member commits, each probed
+	# with the row's riders, so the yields are exactly those the fit accepted.
+	for m: int in active:
+		var member: Dictionary = front.members[m]
 		ctx.kit = member.kit
-		_commit(member.mass, member.kit, member.chain, profile, ctx, out, closures)
+		_yield(member.mass, member.kit, member.chain, profiles[m], ctx, closures[m], front, active, m)
+	for m: int in active:
+		var member: Dictionary = front.members[m]
+		ctx.kit = member.kit
+		_commit(member.mass, member.kit, member.chain, profiles[m], ctx, out, closures[m])
 	for m: int in left:
 		if bool(front.members[m].seed):
 			_fit_front({"members": [front.members[m]], "joins": []}, character, ctx, out)
@@ -357,13 +382,34 @@ static func _front_fault(front: Dictionary, active: Array[int], k: int, lean: fl
 		var member: Dictionary = front.members[m]
 		if k >= (member.chain.storeys as Array).size():
 			continue
-		ctx.kit = member.kit
 		var closures := _closures(front, active, m, k, ctx)
+		_publish_riders(front, active, m, k, lean, base, ctx)
+		ctx.kit = member.kit
 		var cause := &"ends" if closures.has(&"blocked") \
 			else _fault(member.mass, member.chain, k, lean, base, ctx, closures)
+		ctx.riders = []
 		if cause != &"":
 			return {"member": m, "cause": cause}
 	return {}
+
+
+## The faces of the other active row members present at storey k (stepping to the
+## same lean), published as ctx.riders while member m is tested: their pieces
+## step with the row, so they are no obstacle to m.
+static func _publish_riders(front: Dictionary, active: Array[int], m: int, k: int, lean: float,
+		base: float, ctx: Dictionary) -> void:
+	var riders: Array[Dictionary] = []
+	for other: int in active:
+		var partner: Dictionary = front.members[other]
+		if other == m or partner.mass == front.members[m].mass \
+				or k >= (partner.chain.storeys as Array).size():
+			continue
+		var probe := _candidate(partner.mass, partner.kit, partner.chain, k, lean, base, ctx.solid,
+			_closures(front, active, other, k, ctx))
+		riders.append({"owner": (partner.mass as BuildingMass).stable_id, "candidate": probe,
+			"slab": _face_slab(probe, partner.kit), "kit": partner.kit,
+			"crown": crown_index(partner.mass, partner.chain, k)})
+	ctx.riders = riders
 
 
 static func _reject(ctx: Dictionary, front: Dictionary, fault: Dictionary, k: int, lean: float) -> void:
@@ -421,7 +467,7 @@ static func _end_open(mass: BuildingMass, chain: Dictionary, at_end: bool, k: in
 	var diagonal: Vector2i = side + BuildingMass.DIRS[dir]
 	var solid: Callable = ctx.solid
 	var own := _own(mass)
-	for b in [int(storey.floor_band), int(storey.floor_band) + 1]:
+	for b in range(int(storey.floor_band), int(storey.floor_band) + int(storey.get("bands", 2))):
 		if bool(solid.call(own, side, b)) or bool(solid.call(own, diagonal, b)) \
 				or mass.cells_at_band(b).has(diagonal):
 			return false
@@ -531,18 +577,27 @@ static func apply(mass: BuildingMass, kit: BuildingKit, chain: Dictionary, profi
 	return out
 
 
-static func _commit(mass: BuildingMass, kit: BuildingKit, chain: Dictionary,
-		profile: Array[float], ctx: Dictionary, out: Array[Dictionary], closures: Array) -> void:
-	# Own ornaments the new braces/strips meet yield: remove them and their parts.
+## Ornaments the new braces/strips of one member's steps meet yield: removes them
+## and their obstacle parts (the house's own, or a row member's through `host`).
+static func _yield(mass: BuildingMass, kit: BuildingKit, chain: Dictionary, profile: Array[float],
+		ctx: Dictionary, closures: Array, front := {}, active: Array[int] = [], m := -1) -> void:
 	for k in profile.size():
 		if profile[k] <= 0.0:
 			continue
-		var probe := _candidate(mass, kit, chain, k, profile[k], 0.0 if k == 0 else profile[k - 1],
-			ctx.solid, closures[k])
+		var base := 0.0 if k == 0 else profile[k - 1]
+		if m >= 0:
+			_publish_riders(front, active, m, k, profile[k], base, ctx)
+		ctx.kit = kit
+		var probe := _candidate(mass, kit, chain, k, profile[k], base, ctx.solid, closures[k])
 		_parts_fault(mass, probe, crown_index(mass, chain, k), ctx)
+		ctx.riders = []
 		for obstacle: Dictionary in probe.yields:
 			(obstacle.host as BuildingMass).decor.erase(obstacle.decor)
 			_drop_decor(ctx, obstacle.decor)
+
+
+static func _commit(mass: BuildingMass, kit: BuildingKit, chain: Dictionary,
+		profile: Array[float], ctx: Dictionary, out: Array[Dictionary], closures: Array) -> void:
 	var dir := int(chain.dir)
 	var catalog: EnvironmentCatalog = ctx.catalog
 	for candidate: Dictionary in apply(mass, kit, chain, profile, closures, ctx.solid):
@@ -565,7 +620,7 @@ static func _commit(mass: BuildingMass, kit: BuildingKit, chain: Dictionary,
 				"bounds": part.transform * catalog.descriptor(part.asset_id).measured_aabb})
 		out.append({"host": mass.stable_id, "dir": dir, "band": candidate.band, "lean": profile[k],
 			"base": candidate.projection.base, "edges": candidate.edges, "bounds": candidate.bounds,
-			"chain": chain.key, "closures": closures[k]})
+			"chain": chain.key, "closures": closures[k], "pulled": not mass.grows})
 
 
 ## Marks every obstacle record of one decor item gone.
@@ -633,17 +688,6 @@ static func crown_index(mass: BuildingMass, chain: Dictionary, k: int) -> int:
 	return -1
 
 
-static func _blocks(obstacle: Dictionary, mass: BuildingMass, crown: int) -> bool:
-	if obstacle.owner != mass.stable_id:
-		return true
-	if crown >= 0 and int(obstacle.roof_index) == crown:
-		return false
-	for prefix: String in OWN_OBSTACLES:
-		if String(obstacle.role).begins_with(prefix):
-			return true
-	return false
-
-
 ## The one "is this box blocked" loop shared with the town's ornament fitter:
 ## false when `box` meets the bounds of any obstacle `blocks` keeps.
 static func clear_of(box: AABB, obstacles: Array, blocks: Callable) -> bool:
@@ -688,11 +732,13 @@ static func _obstacle_cause(obstacle: Dictionary, mass: BuildingMass) -> StringN
 
 # G1 + G3 with the false blockers removed: touching contact is clear, the face's own
 # bays and the ornaments `apply` moves ride out with it, the house's other yielding
-# ornaments yield.
+# ornaments yield. An active terrace-row member's house (ctx.riders) is treated as
+# the host is: its face steps with the row.
 static func _parts_fault(mass: BuildingMass, candidate: Dictionary, crown: int,
 		ctx: Dictionary) -> StringName:
 	var catalog: EnvironmentCatalog = ctx.catalog
-	var slab := _face_slab(candidate, ctx.kit)
+	var own: Array[Dictionary] = [{"candidate": candidate, "slab": _face_slab(candidate, ctx.kit),
+		"crown": crown, "kit": ctx.kit}]
 	var yields: Array = []
 	candidate["yields"] = yields
 	for part: Dictionary in candidate.parts:
@@ -701,25 +747,57 @@ static func _parts_fault(mass: BuildingMass, candidate: Dictionary, crown: int,
 			return &"air"
 		var box: AABB = (part.transform * local).grow(-0.002)
 		for obstacle: Dictionary in ctx.obstacles:
-			if bool(obstacle.get("gone", false)) or not _blocks(obstacle, mass, crown) \
-					or contact_clear(box, obstacle.bounds):
+			if bool(obstacle.get("gone", false)) or contact_clear(box, obstacle.bounds):
 				continue
-			if obstacle.owner == mass.stable_id:
-				if obstacle.has("decor"):
-					# Only decor `apply` moves out with this face rides; the house's
-					# other ornaments of the yielding kinds yield (are removed).
-					if _moves(obstacle.decor, int(candidate.projection.dir), candidate.centres,
-							int(candidate.first_band), int(candidate.band) + int(candidate.bands), ctx.kit):
-						continue
-					if StringName(obstacle.decor.kind) in YIELD_DECOR:
-						if not yields.has(obstacle):
-							yields.append(obstacle)
-						continue
-				elif String(obstacle.role).begins_with("bay.") \
-						and slab.has_point((obstacle.bounds as AABB).get_center()):
+			var faces := own if obstacle.owner == mass.stable_id else _riders_of(obstacle.owner, ctx)
+			if faces.is_empty():
+				return _obstacle_cause(obstacle, mass)
+			match _host_part(obstacle, faces):
+				&"rides":
+					continue
+				&"yields":
+					if not yields.has(obstacle):
+						yields.append(obstacle)
 					continue
 			return _obstacle_cause(obstacle, mass)
 	return &""
+
+
+## The stepping faces (as the host's own) of an active row member's house at the
+## storey under test.
+static func _riders_of(owner: StringName, ctx: Dictionary) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if owner == &"":
+		return out
+	for rider: Dictionary in ctx.get("riders", []):
+		if rider.owner == owner:
+			out.append(rider)
+	return out
+
+
+## How a part of a stepping house meets that house's stepping face(s): &"rides"
+## (it is no obstacle: walls, posts, the closing crown, a bay on the face, decor
+## `apply` moves out), &"yields" (an ornament of a yielding kind under the new
+## braces) or &"blocks" (roofs, chimneys, rails, decks and other ornaments).
+static func _host_part(obstacle: Dictionary, faces: Array[Dictionary]) -> StringName:
+	var role := String(obstacle.role)
+	for face: Dictionary in faces:
+		if int(face.crown) >= 0 and int(obstacle.roof_index) == int(face.crown):
+			return &"rides"
+	if not OWN_OBSTACLES.any(func(prefix: String) -> bool: return role.begins_with(prefix)):
+		return &"rides"
+	if obstacle.has("decor"):
+		for face: Dictionary in faces:
+			var c: Dictionary = face.candidate
+			if _moves(obstacle.decor, int(c.projection.dir), c.centres, int(c.first_band),
+					int(c.band) + int(c.bands), face.kit):
+				return &"rides"
+		return &"yields" if StringName(obstacle.decor.kind) in YIELD_DECOR else &"blocks"
+	if role.begins_with("bay."):
+		for face: Dictionary in faces:
+			if (face.slab as AABB).has_point((obstacle.bounds as AABB).get_center()):
+				return &"rides"
+	return &"blocks"
 
 
 # G2: distance to the facing facade across the lane, minus both leans, keeps the sky gap.

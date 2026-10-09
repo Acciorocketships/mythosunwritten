@@ -11,22 +11,34 @@ func _init() -> void:
 
 ## Faces (chains with any step), stepped storeys, wrapped storey-faces (lean
 ## records with a wrap closure), wrapped corners (one per corner and storey: the
-## record whose right end wraps owns it) and withdrawals by cause.
+## record whose right end wraps owns it), terrace-row joints (lean records with a
+## joint closure; `row_joints` one per joint and storey), houses pulled into a row
+## without rolling growth, and withdrawals by cause.
 static func counts(built: Dictionary) -> Dictionary:
 	var chains := {}
 	var wraps := 0
 	var corners := 0
+	var joints := 0
+	var row_joints := 0
+	var pulled := {}
 	for lean: Dictionary in built.get("growth", []):
 		chains[String(lean.get("chain", ""))] = true
 		if (lean.get("closures", []) as Array).has(&"wrap"):
 			wraps += 1
 		if (lean.get("closures", []) as Array).size() == 2 and lean.closures[1] == &"wrap":
 			corners += 1
+		if (lean.get("closures", []) as Array).has(&"joint"):
+			joints += 1
+		if (lean.get("closures", []) as Array).size() == 2 and lean.closures[1] == &"joint":
+			row_joints += 1
+		if bool(lean.get("pulled", false)):
+			pulled[String(lean.get("host", ""))] = true
 	var causes := {}
 	for rejection: Dictionary in built.get("growth_rejections", []):
 		causes[String(rejection.cause)] = int(causes.get(String(rejection.cause), 0)) + 1
 	return {"faces": chains.size(), "storeys": (built.get("growth", []) as Array).size(), "wraps": wraps,
-		"corners": corners, "causes": causes}
+		"corners": corners, "joints": joints, "row_joints": row_joints, "pulled": pulled.size(),
+		"causes": causes}
 
 
 func _run() -> void:
@@ -45,7 +57,8 @@ func _run() -> void:
 		program.town_odds = program.town_odds.with_overrides(overrides)
 	var rows := []
 	var bad := 0
-	var total := {"faces": 0, "storeys": 0, "wraps": 0, "corners": 0, "causes": {}}
+	var total := {"faces": 0, "storeys": 0, "wraps": 0, "corners": 0, "joints": 0, "row_joints": 0,
+		"pulled": 0, "causes": {}}
 	for town: String in towns.split(","):
 		var parts := town.split(":")
 		var profile := WarrenVillageScaleProfile.for_id(StringName(parts[1]))
@@ -65,6 +78,8 @@ func _run() -> void:
 		total.storeys += int(row.storeys)
 		total.wraps += int(row.wraps)
 		total.corners += int(row.corners)
+		for key: String in ["joints", "row_joints", "pulled"]:
+			total[key] += int(row[key])
 		for cause: String in row.causes:
 			total.causes[cause] = int(total.causes.get(cause, 0)) + int(row.causes[cause])
 		rows.append(row)

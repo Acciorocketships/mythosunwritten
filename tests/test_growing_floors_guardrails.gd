@@ -57,13 +57,6 @@ func test_reserved_column_keeps_the_face_flush() -> void:
 		"a storey that cannot lean at all pins the face (no inward ledge below it)")
 
 
-func test_neighbour_at_a_face_end_keeps_the_face_flush() -> void:
-	var neighbour := FIXTURE.house(&"kit.fixture.side", Rect2i(3, 0, 1, 2), 4, 0)
-	var f := FIXTURE.build({"extra": [neighbour]})
-	assert_eq(FIXTURE.leans_on(f.front, 3), [0.0, 0.0, 0.0, 0.0] as Array[float],
-		"the face run is not wholly exposed, so its returns would meet the neighbour")
-
-
 # Guardrail 5 is the face-chain walk itself (Task 1), so this test passes before
 # the other guardrails exist: it pins the footprint rule, it is not red-first.
 func test_footprint_change_ends_the_face_chain() -> void:
