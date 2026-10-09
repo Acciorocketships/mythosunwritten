@@ -191,17 +191,50 @@ func test_contact_under_five_centimetres_is_touching() -> void:
 	assert_true(FIXTURE.GROWTH.contact_clear(a, AABB(Vector3(2, 0, 0), Vector3.ONE)), "apart")
 
 
-## Ruling (e): the ground storey steps in only where the ground outside its face stands at
-## its floor (terrain or a walk surface); over a podium or a raised drop its whole floor
-## boards would read as an unrailed ledge, so the face stays flush (cause grade).
-func test_a_ground_storey_over_a_raised_drop_keeps_the_face_flush() -> void:
-	var f := FIXTURE.build({"lone": true, "grade": func(_cell: Vector2i, _band: int) -> bool: return false})
+## Ruling (e, fix round 2): grade(cell, dir, band) -> 2 = the ground outside the face
+## stands at the floor (whole boards: the walk to the door); 1 = off grade, but the strip
+## the step vacates stands on solid bearing (retained stone / massif top): the boards are
+## trimmed to the wall and a stone cap closes the strip (the plinth's top); 0 = air or a
+## public walk below the strip: the face stays flush (cause grade).
+func test_a_ground_storey_over_air_keeps_the_face_flush() -> void:
+	var f := FIXTURE.build({"lone": true, "grade": func(_cell: Vector2i, _dir: int, _band: int) -> int: return 0})
 	assert_eq(FIXTURE.leans_on(f.front, 3), [0.0, 0.0, 0.0, 0.0] as Array[float])
 	var causes := (f.result.rejections as Array).map(func(r: Dictionary) -> StringName: return r.cause)
 	assert_true(causes.has(&"grade"), str(causes))
-	var g := FIXTURE.build({"lone": true, "grade": func(cell: Vector2i, band: int) -> bool:
-		return band == 0 and cell.y == -1})
+	var g := FIXTURE.build({"lone": true, "grade": func(_cell: Vector2i, _dir: int, _band: int) -> int: return 2})
 	assert_eq(FIXTURE.leans_on(g.front, 3), [-2.0, -1.0, 0.0, 0.0] as Array[float], "the lane at its floor")
+	assert_eq(_ground_boards(g, 0).size(), 3, "at grade the ground keeps its whole boards on the south row")
+
+
+## The whole ground-storey boards of the cells in row z = `row`.
+func _ground_boards(f: Dictionary, row: int) -> Array:
+	var catalog := EnvironmentCatalog.load_default()
+	return (f.parts as Array).filter(func(p: Dictionary) -> bool:
+		var box: AABB = p.transform * catalog.descriptor(p.asset_id).measured_aabb
+		return p.role == &"deck.board" and box.get_center().y < 0.5 and floori(box.get_center().z / 2.0) == row)
+
+
+func test_a_ground_storey_over_solid_bearing_steps_onto_a_stone_plinth_top() -> void:
+	var f := FIXTURE.build({"lone": true, "grade": func(_cell: Vector2i, _dir: int, _band: int) -> int: return 1})
+	assert_eq(FIXTURE.leans_on(f.front, 3), [-2.0, -1.0, 0.0, 0.0] as Array[float])
+	assert_eq(_ground_boards(f, 0).size(), 0, "no whole board on the stepped-in row: no board ledge")
+	var catalog := EnvironmentCatalog.load_default()
+	var caps := (f.parts as Array).filter(func(p: Dictionary) -> bool: return p.role == &"plinth.cap")
+	assert_gt(caps.size(), 0, "the vacated strip is capped in stone")
+	for x: float in [1.0, 3.0, 5.0]:
+		# The caps standing on this module's strip cover it from the lot line to the wall.
+		var spans := caps.map(func(p: Dictionary) -> AABB: return p.transform * catalog.descriptor(p.asset_id).measured_aabb
+			).filter(func(b: AABB) -> bool: return absf(b.get_center().x - x) < 0.5)
+		assert_gt(spans.size(), 0, "x %.0f" % x)
+		var reach := 0.0
+		var sorted := spans.duplicate()
+		sorted.sort_custom(func(a: AABB, b: AABB) -> bool: return a.position.z < b.position.z)
+		for b: AABB in sorted:
+			assert_almost_eq(b.end.y, 0.128, 0.02, "its top is level with the floor boards (just under them)")
+			assert_true(b.position.z <= reach + 0.01, "no gap in the cap at z %.2f (x %.0f)" % [reach, x])
+			assert_true(b.position.z >= -0.01, "the cap stays inside the lot")
+			reach = maxf(reach, b.end.z)
+		assert_true(reach >= 2.0 - 0.01, "the cap reaches the stepped-in wall (x %.0f)" % x)
 
 
 ## Ruling (b): a designer bay on the corner panel a growing house's step cuts yields
@@ -221,4 +254,32 @@ func test_a_bay_on_a_cut_corner_panel_yields_to_growth() -> void:
 	var g := FIXTURE.build({"lone": true, "prepare": func(front: BuildingMass) -> void:
 		front.storeys[0].openings[edge] = BuildingMass.OPENING_DOOR})
 	assert_eq(FIXTURE.leans_on(g.front, 3), [0.0, 0.0, 0.0, 0.0] as Array[float])
+
+
+## A dropped bay's obstacle records go with it (a later step must not meet a bay that
+## is no longer built).
+func test_a_dropped_bay_leaves_no_obstacle() -> void:
+	var kit := SuntailBuildingKit.create()
+	var catalog := EnvironmentCatalog.load_default()
+	var mass := FIXTURE.house(&"kit.fixture.front", Rect2i(0, 0, 3, 2), 3, 1)
+	mass.grows = true
+	var edge := BuildingMass.edge_key(Vector2i(2, 0), 0)
+	mass.storeys[0].openings[edge] = BuildingMass.OPENING_BAY
+	var none := Callable(FIXTURE, "nothing_solid")
+	var masses: Array[BuildingMass] = [mass]
+	var chain: Dictionary = FIXTURE.GROWTH.face_chains(mass, none, Callable(FIXTURE, "street")).filter(
+		func(c: Dictionary) -> bool: return int(c.dir) == 3)[0]
+	var member := {"mass": mass, "chain": chain, "kit": kit, "seed": true}
+	var ctx := {"catalog": catalog, "air": [] as Array[Dictionary], "towers": [] as Array[Dictionary],
+		"reserved": none, "solid": none, "kit": kit, "rejections": [], "yields": {}, "planned": {},
+		"front": {"members": [member], "joins": []}, "active": [0] as Array[int],
+		"obstacles": FIXTURE.GROWTH._obstacles(masses, {&"fixture.front": kit}, kit, catalog, [], none)}
+	var bays := func() -> Array: return (ctx.obstacles as Array).filter(func(o: Dictionary) -> bool:
+		return String(o.role).begins_with("bay.") and not bool(o.get("gone", false)))
+	assert_gt(bays.call().size(), 0, "the designer bay is an obstacle before the step")
+	var out: Array[Dictionary] = []
+	var closures := [[&"return", &"return"], [&"return", &"return"], [&"return", &"return"]]
+	FIXTURE.GROWTH._commit(member, [1.0, 2.0] as Array[float], closures, ctx, out)
+	assert_ne(StringName(mass.storeys[0].openings.get(edge, mass.storeys[0].default_opening)), BuildingMass.OPENING_BAY)
+	assert_eq(bays.call().size(), 0, "its obstacle records are gone")
 

@@ -53,6 +53,9 @@ static func create() -> BuildingKit:
 	r[&"wall.stone.passage"] = [&"suntail.stone.stone_wall_passage_deep"]
 	r[&"wall.stone.retaining"] = [&"pure_village.wall.stone.plain"]
 	r[&"wall.stone.retaining_half"] = [&"pure_village.stone.retaining_half"]
+	# The stone top of a plinth a growing ground storey steps back from (rows of the
+	# half-height course standing behind the podium face, tops level with the floor).
+	r[&"plinth.cap"] = [&"pure_village.stone.retaining_half"]
 	r[&"plinth.stone"] = [&"suntail.stone.stone_base"]
 	# Fortification (a raised district's plinth): plain coursed stone, the
 	# kit's stone wall with its timber frame baked away.

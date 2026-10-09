@@ -544,7 +544,7 @@ static func _fault(mass: BuildingMass, chain: Dictionary, k: int, depth: float, 
 	if depth < 0.0:
 		if not _steps_in(storey, depth, ctx.kit):
 			return &"material"
-		if k < 0 and not _at_grade(mass, chain, ctx):
+		if k < 0 and not _graded(mass, chain, ctx):
 			return &"grade"
 		if not _exposed(mass, chain, k, ctx):
 			return &"party"
@@ -572,19 +572,32 @@ static func _steps_in(storey: Dictionary, depth: float, kit: BuildingKit) -> boo
 	return absf(modules - roundf(modules)) < 0.0001
 
 
-## Ruling (e): the ground storey stands in only where the ground outside its face
-## stands at its floor along the whole run (terrain, or a walk surface directly at the
-## floor band): its floor boards stay whole, so over a podium or a raised drop they
-## would read as an unrailed ledge. ctx.grade(cell, band) answers per outward cell (an
-## invalid callable: everywhere at grade).
-static func _at_grade(mass: BuildingMass, chain: Dictionary, ctx: Dictionary) -> bool:
+## Grades ctx.grade(cell, dir, band) answers per edge of a ground run (an invalid
+## callable: everywhere at grade).
+const GRADE_AT := 2 ## the ground outside stands at the floor: whole boards (the walk)
+const GRADE_PLINTH := 1 ## off grade, solid bearing under the vacated strip: a stone top
+const GRADE_NONE := 0 ## air or a public walk under the strip: no step
+
+
+## Ruling (e, fix round 2): the ground storey stands in only where every edge of its run
+## is at grade or has solid bearing under the strip it vacates (and the kit has the
+## stone cap that closes it). Off-grade edges are listed in ctx.plinth[chain key]:
+## `apply` trims their boards to the wall and the assembler caps the strip in stone, so
+## it reads as the plinth's top, never a board ledge.
+static func _graded(mass: BuildingMass, chain: Dictionary, ctx: Dictionary) -> bool:
 	var grade: Callable = ctx.get("grade", Callable())
-	if not grade.is_valid():
-		return true
-	var band := int(mass.storeys[int(chain.ground)].floor_band)
-	for edge: Vector3i in _edges(chain):
-		if not bool(grade.call(Vector2i(edge.x, edge.y) + BuildingMass.DIRS[int(chain.dir)], band)):
-			return false
+	var plinth: Array[Vector3i] = []
+	if grade.is_valid():
+		var band := int(mass.storeys[int(chain.ground)].floor_band)
+		for edge: Vector3i in _edges(chain):
+			var at := int(grade.call(Vector2i(edge.x, edge.y), int(chain.dir), band))
+			if at == GRADE_NONE or (at == GRADE_PLINTH and not (ctx.kit as BuildingKit).has_role(&"plinth.cap")):
+				return false
+			if at == GRADE_PLINTH:
+				plinth.append(edge)
+	if not ctx.has("plinth"):
+		ctx["plinth"] = {}
+	ctx.plinth[String(chain.key)] = plinth
 	return true
 
 
@@ -822,7 +835,7 @@ static func _snapshot(mass: BuildingMass, chain: Dictionary) -> Dictionary:
 	for index: int in _storeys(chain):
 		var storey: Dictionary = mass.storeys[index]
 		var keep := {}
-		for key: String in ["wall_offsets", "growth"]:
+		for key: String in ["wall_offsets", "growth", "plinth_edges"]:
 			if storey.has(key):
 				keep[key] = (storey[key] as Dictionary).duplicate(true)
 		if storey.has("projections"):
@@ -848,7 +861,7 @@ static func _restore(mass: BuildingMass, saved: Dictionary) -> void:
 			if key == "bay_roles" and live.is_empty():
 				storey.erase(key)
 			keep.erase(key)
-		for key: String in ["wall_offsets", "projections", "growth"]:
+		for key: String in ["wall_offsets", "projections", "growth", "plinth_edges"]:
 			storey.erase(key)
 		storey.merge(keep)
 	for pair: Array in saved.centres:
@@ -868,7 +881,7 @@ static func _added_parts(member: Dictionary, leans: Array[float], closures: Arra
 		before["%s|%s" % [part.asset_id, part.transform]] = true
 	mass.decor.assign(decor)
 	var saved := _snapshot(mass, member.chain)
-	var moved: Array = apply(mass, member.kit, member.chain, leans, closures).moved
+	var moved: Array = apply(mass, member.kit, member.chain, leans, closures, _plinth_of(member, ctx)).moved
 	mass.decor.clear()
 	var added: Array[Dictionary] = []
 	for part: Dictionary in assembler.assemble(mass):
@@ -1014,7 +1027,10 @@ static func _commit(member: Dictionary, leans: Array[float], closures: Array, ct
 		mass.decor.erase(item)
 		_drop_decor(ctx, item)
 	var probe := _added_parts(member, leans, closures, ctx)
-	var written := apply(mass, kit, member.chain, leans, closures)
+	var written := apply(mass, kit, member.chain, leans, closures, _plinth_of(member, ctx))
+	# A bay the step dropped is no obstacle any more.
+	for dropped: Dictionary in written.dropped:
+		_drop_bay_obstacles(ctx, mass, dropped, kit)
 	for item: Dictionary in written.moved:
 		_drop_decor(ctx, item)
 		var assembly := {"mass": mass, "out": [] as Array[Dictionary], "serial": 0}
@@ -1033,20 +1049,44 @@ static func _commit(member: Dictionary, leans: Array[float], closures: Array, ct
 			"pulled": not mass.grows})
 
 
+## The off-grade edges of a member's ground run (see _graded).
+static func _plinth_of(member: Dictionary, ctx: Dictionary) -> Array:
+	return (ctx.get("plinth", {}) as Dictionary).get(String(member.chain.key), [])
+
+
+## Marks the obstacle records of a dropped bay gone: the bay pieces of `mass` standing
+## at that edge's panel (within a module of its centre) on that storey.
+static func _drop_bay_obstacles(ctx: Dictionary, mass: BuildingMass, dropped: Dictionary, kit: BuildingKit) -> void:
+	var edge: Vector3i = dropped.edge
+	var at := (Vector2(edge.x, edge.y) + Vector2.ONE * 0.5 + Vector2(BuildingMass.DIRS[edge.z]) * 0.5) * kit.module_width
+	var y0 := float(dropped.band) * kit.band_height()
+	for obstacle: Dictionary in ctx.obstacles:
+		if obstacle.owner != mass.stable_id or not String(obstacle.role).begins_with("bay."):
+			continue
+		var centre: Vector3 = (obstacle.bounds as AABB).get_center()
+		if Vector2(centre.x, centre.z).distance_to(at) <= kit.module_width \
+				and centre.y >= y0 - 0.5 and centre.y <= y0 + kit.storey_height + 0.5:
+			obstacle["gone"] = true
+
+
 ## Writes one face's step-in into its house (spec Amendment 2): storey k of the chain
 ## stands `leans[k] - top` inside its line and the ground storey `-top` (offsets_of),
 ## with a growth record on every storey that stands in or overhangs the one below and
 ## `storey.growth[dir]` on every storey of the face (0.0 on held tops, so room
 ## projections and bays keep off the face). Dressing on a stepped-in run moves in with
-## its wall. `closures[i]` belongs to storey i from the ground up. Returns {records, moved}.
+## its wall. `closures[i]` belongs to storey i from the ground up. `plinth` lists the
+## ground run's off-grade edges (storey.plinth_edges: boards trimmed to the wall, the
+## strip capped in stone). A designer bay the step cuts is dropped. Returns {records,
+## moved, dropped: [{edge, band}]}.
 static func apply(mass: BuildingMass, kit: BuildingKit, chain: Dictionary, leans: Array[float],
-		closures: Array) -> Dictionary:
+		closures: Array, plinth: Array = []) -> Dictionary:
 	var dir := int(chain.dir)
 	var edges := _edges(chain)
 	var offsets := offsets_of(leans)
 	var indices := _storeys(chain)
 	var records: Array[Dictionary] = []
 	var moved: Array[Dictionary] = []
+	var dropped: Array[Dictionary] = []
 	for i in indices.size():
 		var storey: Dictionary = mass.storeys[indices[i]]
 		var depth: float = offsets[i]
@@ -1067,19 +1107,26 @@ static func apply(mass: BuildingMass, kit: BuildingKit, chain: Dictionary, leans
 					item.centre = (item.centre as Vector2) + Vector2(BuildingMass.DIRS[dir]) * depth / kit.module_width
 					moved.append(item)
 			if mass.grows:
-				_drop_cut_bays(chain, storey, closures[i])
+				for edge: Vector3i in _drop_cut_bays(chain, storey, closures[i]):
+					dropped.append({"edge": edge, "band": int(storey.floor_band)})
+			if i == 0 and not plinth.is_empty():
+				var trimmed: Dictionary = storey.get("plinth_edges", {})
+				for edge: Vector3i in plinth:
+					trimmed[edge] = true
+				storey["plinth_edges"] = trimmed
 		var record := _record(kit, chain, storey, depth, base, closures[i])
 		var fronts_at: Array = storey.get("projections", [])
 		fronts_at.append(record.projection)
 		storey["projections"] = fronts_at
 		records.append(record)
-	return {"records": records, "moved": moved}
+	return {"records": records, "moved": moved, "dropped": dropped}
 
 
 ## Ruling (b): a designer bay on a corner panel this stepped-in storey cuts (the
 ## perpendicular face's end panel at a `return` or `wrap` end) yields: it is dropped
 ## and the panel takes the storey's default opening.
-static func _drop_cut_bays(chain: Dictionary, storey: Dictionary, closures: Array) -> void:
+static func _drop_cut_bays(chain: Dictionary, storey: Dictionary, closures: Array) -> Array[Vector3i]:
+	var out: Array[Vector3i] = []
 	var dir := int(chain.dir)
 	var along := Vector2i(0, 1) if dir % 2 == 0 else Vector2i(1, 0)
 	for at_end: bool in [false, true]:
@@ -1097,6 +1144,8 @@ static func _drop_cut_bays(chain: Dictionary, storey: Dictionary, closures: Arra
 			storey.openings[corner] = BuildingMass.OPENING_WINDOW
 		if storey.has("bay_roles"):
 			(storey.bay_roles as Dictionary).erase(corner)
+		out.append(corner)
+	return out
 
 
 ## One storey's growth record and its recess: the space between its wall (or the wall

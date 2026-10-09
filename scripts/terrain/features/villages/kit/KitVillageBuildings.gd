@@ -333,17 +333,26 @@ static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 		"room_projections":room_projections,"growth":growth.leans,"growth_rejections":growth.rejections,"roof_audit": roof_audit, "placements": placements, "roofs": roofs, "walls": walls}
 
 
-## Growth ruling (e): the ground outside a face stands at `band` at that fine cell:
-## terrain whose datum is that band, or anything floored directly under it (a lane,
-## deck, court, garden or retained top: the band below is neither air nor outside).
+## Growth ruling (e, fix round 2), per ground-storey edge (KitGrowingFronts.GRADE_*):
+## GRADE_AT where the ground outside the face stands at `band` (terrain whose datum is
+## that band, or anything floored directly under it: a lane, deck, court, garden or
+## retained top); else GRADE_PLINTH where the strip the step vacates stands on retained
+## stone / massif (structural volume directly below the house's own cell); else
+## GRADE_NONE (air or a public walk under it).
 static func _growth_grade(spatial: WarrenSpatialPlan, grid: WarrenSpatialGrid) -> Callable:
 	var envelope := spatial.source_volume.envelope if spatial.source_volume != null else null
-	return func(cell: Vector2i, band: int) -> bool:
-		if envelope != null and envelope.ground_at(Vector2i(floori(cell.x / 2.0), floori(cell.y / 2.0))) == band:
-			return true
-		var below := Vector3i(cell.x, band - 1, cell.y)
-		return grid.contains(below) and not (grid.use_at(below) in [WarrenSpatialGrid.Use.PUBLIC_AIR,
-			WarrenSpatialGrid.Use.DAYLIGHT_AIR, WarrenSpatialGrid.Use.OUTSIDE])
+	var air := [WarrenSpatialGrid.Use.PUBLIC_AIR, WarrenSpatialGrid.Use.DAYLIGHT_AIR, WarrenSpatialGrid.Use.OUTSIDE]
+	return func(cell: Vector2i, dir: int, band: int) -> int:
+		var out: Vector2i = cell + BuildingMass.DIRS[dir]
+		if envelope != null and envelope.ground_at(Vector2i(floori(out.x / 2.0), floori(out.y / 2.0))) == band:
+			return GROWTH.GRADE_AT
+		var below := Vector3i(out.x, band - 1, out.y)
+		if grid.contains(below) and not (grid.use_at(below) in air):
+			return GROWTH.GRADE_AT
+		var under := Vector3i(cell.x, band - 1, cell.y)
+		if grid.contains(under) and grid.use_at(under) == WarrenSpatialGrid.Use.STRUCTURAL_VOLUME:
+			return GROWTH.GRADE_PLINTH
+		return GROWTH.GRADE_NONE
 
 
 ## True when `box` misses every fitted front (`bounds`) another house hosts.

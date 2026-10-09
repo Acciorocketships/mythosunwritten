@@ -55,8 +55,8 @@ static func nothing_solid(_own: StringName, _cell: Vector2i, _band: int) -> bool
 ## back_grows, character, air, towers, reserved, block (dirs of the front kept out of
 ## its front, block_faces), lone (= block [0, 2]: only the south face steps; the
 ## house's door is on the south ground storey, a recessed shopfront), grade
-## (Callable(cell, band) -> bool: the ground outside a face stands at that band; default
-## everywhere at grade), kit, extra (more
+## (Callable(cell, dir, band) -> int, KitGrowingFronts.GRADE_*: default everywhere at
+## grade), kit, extra (more
 ## masses), prepare (Callable(front) run before fitting), replace_front (a mass with
 ## its own roofs, id kit.fixture.front).
 static func build(options: Dictionary = {}) -> Dictionary:

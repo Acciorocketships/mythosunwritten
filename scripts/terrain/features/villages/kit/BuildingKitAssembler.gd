@@ -82,14 +82,52 @@ func _emit_inhabited_floor(ctx: Dictionary, storey: Dictionary) -> void:
 	var y := float(storey.floor_band)*kit.band_height()
 	var mass: BuildingMass = ctx.mass
 	var offsets: Dictionary = storey.get("wall_offsets", {})
-	# The ground storey keeps every board: the strip a step-in uncovers is the house's
-	# own paving under the overhang (and the walk to a recessed door).
+	# The ground storey keeps every board where it stands at grade: the strip a step-in
+	# uncovers is the house's own paving under the overhang (and the walk to a recessed
+	# door). Off grade (`plinth_edges`) its boards end at the wall and the strip is the
+	# plinth's stone top.
 	var trim := int(storey.floor_band) > mass.ground_band and not offsets.is_empty()
+	var plinth: Dictionary = storey.get("plinth_edges", {})
+	if not plinth.is_empty():
+		var off_grade := {}
+		for edge: Vector3i in plinth:
+			if offsets.has(edge):
+				off_grade[edge] = offsets[edge]
+		_emit_plinth_caps(ctx, off_grade, y)
+		if not trim:
+			offsets = off_grade
+			trim = not offsets.is_empty()
 	for cell: Vector2i in storey.cells:
 		if trim and _emit_trimmed_floor(ctx, offsets, cell, y):
 			continue
 		_emit(ctx,&"deck.board",Vector2(cell)+Vector2(0.5,0.5),y,0.0)
 	_emit_front_floors(ctx,storey)
+
+
+## Measured stone course behind the plinth cap (`plinth.cap`): its depth and top above
+## its origin, and the floor boards' top above the floor plane (native m).
+const PLINTH_CAP_DEPTH := 0.365
+const PLINTH_CAP_TOP := 1.5056
+const BOARD_TOP := 0.1277
+
+
+## The stone top of the strip an off-grade ground storey vacates: rows of the stone
+## course standing behind the podium face from the lot line to the stepped-in wall,
+## one module wide each, their tops just under the boards' top (the last row runs on
+## under the trimmed board and the wall, hidden). Rows of the two faces at a wrapped
+## corner overlap in the corner square: the x faces stand 4 mm lower (no coplanar tops).
+func _emit_plinth_caps(ctx: Dictionary, offsets: Dictionary, y: float) -> void:
+	for edge: Vector3i in offsets:
+		var depth := -float(offsets[edge]) * kit.module_width
+		if depth <= 0.0:
+			continue
+		var dir := edge.z
+		var out := Vector2(BuildingMass.DIRS[dir])
+		var line := Vector2(edge.x, edge.y) + Vector2.ONE * 0.5 + out * 0.5
+		var top := y + BOARD_TOP - 0.01 - (0.004 if dir % 2 == 0 else 0.0)
+		for row in ceili(depth / PLINTH_CAP_DEPTH - 0.0001):
+			var at := line - out * (float(row) + 0.5) * PLINTH_CAP_DEPTH / kit.module_width
+			_emit(ctx, &"plinth.cap", at, top - PLINTH_CAP_TOP, yaw_for_dir(dir))
 
 
 ## A stepped-in upper storey's floor ends at its own wall (a full board would stand
