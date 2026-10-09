@@ -1,3 +1,22 @@
+> October 9 second manual pass: removed all seasons of `meadow.birch_bush.03` from
+> ambient bushes. Tree mesh/card crossfade now shares a 0.45 m mask projected through
+> each tree origin (no screen-fixed blobs); rendered camera-pan test pins it. Four
+> Suntail Roof textures lacked mipmaps; `repair_roof_mipmaps.gd -- --apply` adds them
+> without changing base pixels. Local landforms: 144 m cells, 24–44 m heights, presence
+> 0.94 in both GDScript and C# (exact native parity retained).
+> `streaming_motion_guard` clips horizontal motion before and after collision sliding;
+> it permits retreat/edge sliding. Freeze is only for genuinely absent current ground
+> or startup/teleport. Finished feature payloads publish before water/tail waits.
+> Loading frontier uses a padded bilinear coverage map in a FogVolume plus a distant
+> fullscreen continuation. Both share `frontier_density.gdshaderinc`; keep colors linear.
+> `terrain/biome/visuals/*.tres` controls biome mist, bloom, saturation, exposure and shadow
+> opacity; AtmosphereDirector exposes global strengths. Orbs occur in every biome with
+> the existing light budget. Windowed play automatically writes one JSONL record/second
+> to `user://judging_logs`: wall-clock frame intervals, callback spans, streaming/water
+> stages, memory and queues. Missing GPU timing is null, not zero. Five-minute 1080p
+> traversal: no freeze, grass backlog max 5, but rendering/integration hitches remain
+> (worst frame 209 ms); no claim of a general speedup. See October 9 manual-pass QA.
+
 > October 9 tail throughput: cliff open-end detection uses `_buckets`' eight-metre
 > primitive halo instead of an all-pairs scan (12.9 -> 0.21 s on chunk (-3,0));
 > `test_cliff_endpoint_index` compares the exhaustive reference. Water mesh refinement

@@ -1,0 +1,37 @@
+Godot Engine v4.5.1.stable.mono.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[WARNING]:  Ignoring Inner Class TestStreamer because it does not extend GutTest
+
+
+res://tests/test_october9_streaming_boundary.gd
+* test_stops_at_frontier_but_retreat_and_slide_stay_available
+* test_corner_and_fast_motion_never_cross_missing_ground
+* test_finished_features_are_published_before_terrain_tail_wait
+* test_teleport_inside_guard_band_can_retreat_without_loading_neighbour
+4/4 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Warnings              1
+
+Scripts               1
+Tests                 4
+Passing Tests         4
+Asserts              18
+Time              0.362s
+
+
+---- All tests passed! ----

@@ -211,22 +211,22 @@ static func _art(id: StringName, title: String, ground: Color, tree: Color,
 static func _meadow() -> BiomeProfile:
 	return _art(&"meadow", "Sunwash Meadows", Color(0.82, 0.72, 1.04),
 		Color(0.63, 0.78, 0.34), Color("d9debe"), 0.0, 0.8,
-		Color("88cabb"), {&"motes": 0.45})
+		Color("88cabb"), {&"motes": 0.45, &"orbs": 0.10})
 
 static func _deep_forest() -> BiomeProfile:
 	return _art(&"deep_forest", "Lanternwood", Color(0.34, 0.48, 0.70),
 		Color(0.16, 0.36, 0.38), Color("477c80"), 0.017, 1.9,
-		Color("528c9c"), {&"fireflies": 1.2, &"orbs": 0.25})
+		Color("528c9c"), {&"fireflies": 1.2, &"orbs": 0.6})
 
 static func _highland() -> BiomeProfile:
 	return _art(&"highland", "Opal Highlands", Color(1.10, 0.77, 1.95),
 		Color(0.48, 0.62, 0.68), Color("a8baca"), 0.0, 0.9,
-		Color("91c6d6"), {&"motes": 0.25})
+		Color("91c6d6"), {&"motes": 0.25, &"orbs": 0.12})
 
 static func _blossom_grove() -> BiomeProfile:
 	return _art(&"blossom_grove", "Cherryveil", Color(0.98, 0.68, 1.65),
 		Color(1.0, 0.53, 0.72), Color("ddb3c9"), 0.004, 1.25,
-		Color("94cbd2"), {&"petals": 1.6, &"motes": 0.3})
+		Color("94cbd2"), {&"petals": 1.6, &"motes": 0.3, &"orbs": 0.25})
 
 static func _twilight_marsh() -> BiomeProfile:
 	return _art(&"twilight_marsh", "Moonfen", Color(0.40, 0.46, 1.28),
@@ -236,12 +236,12 @@ static func _twilight_marsh() -> BiomeProfile:
 static func _amber_heath() -> BiomeProfile:
 	return _art(&"amber_heath", "Amber Heath", Color(1.30, 0.70, 0.90),
 		Color(1.0, 0.54, 0.19), Color("cdb295"), 0.001, 0.8,
-		Color("83b6ad"), {&"leaves": 0.9, &"motes": 0.45})
+		Color("83b6ad"), {&"leaves": 0.9, &"motes": 0.45, &"orbs": 0.12})
 
 static func _jade_wetlands() -> BiomeProfile:
 	return _art(&"jade_wetlands", "Jade Estuary", Color(0.61, 0.77, 1.05),
 		Color(0.33, 0.70, 0.55), Color("8abfb8"), 0.012, 1.1,
-		Color("65bbae"), {&"fireflies": 0.6, &"motes": 0.25})
+		Color("65bbae"), {&"fireflies": 0.6, &"motes": 0.25, &"orbs": 0.35})
 
 static func local_atmosphere(pos: Vector3, world_seed: int) -> Color:
 	# RGB is scattering colour, alpha is extinction per metre. No observer input.

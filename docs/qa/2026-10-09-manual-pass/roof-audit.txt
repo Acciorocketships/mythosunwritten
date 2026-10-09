@@ -1,0 +1,9 @@
+Godot Engine v4.5.1.stable.mono.official.f62fdbde1 - https://godotengine.org
+
+ROOF_TEXTURE res://terrain/environment/textures/suntail_village_kit/173753758685fa88a5cb.res size=(2048, 2048) mips=false
+ROOF_TEXTURE res://terrain/environment/textures/suntail_village_kit/19c539ddc9e7ae32cf6b.res size=(2048, 2048) mips=false
+ROOF_TEXTURE res://terrain/environment/textures/suntail_village_kit/3939f12f65493ec760ed.res size=(2048, 2048) mips=false
+ROOF_TEXTURE res://terrain/environment/textures/suntail_village_kit/e373c53c6944687f9278.res size=(2048, 2048) mips=false
+ROOF_TEXTURE_DONE unique=4 apply=false
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)

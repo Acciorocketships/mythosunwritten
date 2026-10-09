@@ -22,7 +22,7 @@ func test_atmosphere_is_resource_free_deterministic_and_grounded() -> void:
 			assert_almost_eq(world.y, TerrainTileField.surface_y(region, world.x, world.z) + 2.5, 0.0001)
 			assert_between(point.x, 0.0, 192.0)
 			assert_between(point.z, 0.0, 192.0)
-	assert_lte(a.orbs.size(), 4, "bounded moving lights per chunk")
+	assert_lte(a.orbs.size(), 8, "bounded moving lights per chunk")
 
 func test_biome_boundaries_are_continuous_at_walking_speed() -> void:
 	var largest := 0.0
@@ -81,8 +81,9 @@ func test_rivers_and_ground_share_the_new_production_height_input() -> void:
 
 class RaisedWater:
 	extends WaterFieldContext
+	const LEVEL := 1000.0 # above the amplified terrain, so this fixture is submerged
 	func level_at(_point: Vector2) -> float:
-		return 40.0
+		return LEVEL
 
 func test_wetland_particles_float_above_water_instead_of_the_lake_bed() -> void:
 	var plan := TerrainWorldTuning.make_heightfield(2697992464)
@@ -90,10 +91,10 @@ func test_wetland_particles_float_above_water_instead_of_the_lake_bed() -> void:
 	var data := BiomeAtmosphereField.compute(Vector2i.ZERO, region,
 		plan.world_seed, RaisedWater.new())
 	for height: float in data.ground:
-		assert_almost_eq(height, 40.0, 0.0001, "Mist rests on the water surface, not the submerged bed")
+		assert_almost_eq(height, RaisedWater.LEVEL, 0.0001, "Mist rests on the water surface, not the submerged bed")
 	var checked := 0
 	for recipe: StringName in data.points:
 		for point: Vector3 in data.points[recipe]:
-			assert_almost_eq(point.y, 42.5, 0.0001)
+			assert_almost_eq(point.y, RaisedWater.LEVEL + 2.5, 0.0001)
 			checked += 1
 	assert_gt(checked, 0)

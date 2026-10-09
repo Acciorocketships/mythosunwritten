@@ -177,9 +177,17 @@ func desired_chunks(centre: Vector2i, radius: int) -> Array:
 			out.append(centre + Vector2i(dx, dz))
 	return out
 
+func _start_judging_logger() -> void:
+	if not is_inside_tree() or Helper.is_headless(): return
+	var logger := preload("res://scripts/terrain/diagnostics/ManualJudgingLogger.gd").new()
+	logger.streamer = self
+	add_child(logger)
+
 func _ready() -> void:
 	if terrain_parent == null:
 		return   # bare instance (unit test)
+	if player != null and "streaming_motion_guard" in player:
+		player.streaming_motion_guard = _guard_player_motion
 	if COLLISION_RESIDENCY:
 		_collision_actors.start(get_tree())
 		process_physics_priority = -100
@@ -191,6 +199,7 @@ func _ready() -> void:
 	if not Helper.is_headless() and (Engine.max_fps == 0 or Engine.max_fps > 30):
 		_startup_previous_max_fps = Engine.max_fps
 		Engine.max_fps = 30
+	_start_judging_logger.call_deferred()
 	_telemetry.enabled = PROFILE_STREAMING
 	_startup_support_chunks = support_chunks_at(player.global_position)
 	world_seed = SEED_OVERRIDE if SEED_OVERRIDE != 0 else randi()
@@ -741,6 +750,8 @@ func _worker() -> void:
 			_begin_worker_phase(c, &"feature_placements")
 			result["features"] = features.placements()
 			_set_startup_worker_progress(c, 0.58)
+			if job.build_terrain:
+				_publish_feature_stage(result)
 		if job.build_terrain:
 			_begin_worker_phase(c, &"heightfield_region")
 			var region := features.graded_region(_fields.region(c))
@@ -796,6 +807,18 @@ func _worker() -> void:
 ## Waiting for a tail slot is also a safe planning boundary. A background
 ## chunk must not pin the only planning thread while nearby ground becomes
 ## urgent; its complete cached inputs can be reconstructed when it resumes.
+func _publish_feature_stage(result: Dictionary) -> void:
+	# Finished structural geometry can unblock several neighbouring chunks.
+	# Publish it before water planning or tail-slot waits, which can take
+	# seconds. The active job retains ownership of its terrain until handoff.
+	var feature_result := result.duplicate()
+	feature_result.build_terrain = false
+	result.build_features = false
+	result.erase("features")
+	_mutex.lock()
+	_done.append(feature_result)
+	_mutex.unlock()
+
 func _wait_for_tail_slot() -> bool:
 	while true:
 		if _worker_should_cancel(): return false
@@ -1075,12 +1098,17 @@ func _biome_fx_data(c: Vector2i, region, water: WaterFieldContext = null) -> Dic
 static var LOG_SLOW_FRAMES := true
 const SLOW_FRAME_USEC := 8000
 var _marks: Array = []
+var last_frame_sections: Dictionary = {}
+var movement_boundary_blocks := 0
 
 func _mark(label: StringName) -> void:
 	if LOG_SLOW_FRAMES:
 		_marks.append([label, Time.get_ticks_usec()])
 
 func _report_slow_frame() -> void:
+	last_frame_sections.clear()
+	for i in range(1, _marks.size()):
+		last_frame_sections[_marks[i][0]] = _marks[i][1] - _marks[i-1][1]
 	# Gameplay frames only: behind the loading screen the main thread loads
 	# visuals on purpose.
 	if not LOG_SLOW_FRAMES or _marks.size() < 2 or not _startup_completion_emitted:
@@ -1104,11 +1132,39 @@ func _collision_ready_at(position: Vector3, margin := 12.0) -> bool:
 			if not _collision_residency.is_ready(chunk_of(position+Vector3(dx,0,dz))): return false
 	return true
 
+## Ordinary movement is blocked before the missing region, with input and
+## animation still active. Only spawn/teleport into absent ground is held.
+func _walkable_stream_position(position: Vector3, margin := PLAYER_COLLISION_MARGIN) -> bool:
+	for dx in [-margin, margin]:
+		for dz in [-margin, margin]:
+			var cell := chunk_of(position + Vector3(dx, 0, dz))
+			if not _built.has(cell) or not _feature_square_ready(cell): return false
+			if COLLISION_RESIDENCY and not _collision_residency.is_ready(cell): return false
+	return true
+
+func _guard_player_motion(from: Vector3, to: Vector3) -> Vector3:
+	var margin := PLAYER_COLLISION_MARGIN
+	# A teleport can land inside the guard band. Retain its existing clearance
+	# so retreat works immediately, then grow the margin as it moves inward.
+	if not _walkable_stream_position(from, margin):
+		var lo := 0.0
+		var hi := margin
+		for i in 10:
+			var middle := (lo + hi) * 0.5
+			if _walkable_stream_position(from, middle): lo = middle
+			else: hi = middle
+		margin = lo
+	var clipped: Vector3 = preload("res://scripts/terrain/diagnostics/StreamingMovementBoundary.gd").clip(
+		from, to, _walkable_stream_position.bind(margin))
+	if Vector2(clipped.x-to.x, clipped.z-to.z).length_squared() > 0.000001:
+		movement_boundary_blocks += 1
+	return clipped
+
 func _physics_process(_delta: float) -> void:
 	if not COLLISION_RESIDENCY or _plan == null or player == null: return
 	_collision_residency.update_interests(_collision_actors.interests())
 	_collision_actors.guard_except(player,_collision_ready_at)
-	if not _collision_ready_at(player.global_position,PLAYER_COLLISION_MARGIN): _freeze_player(true)
+	if not _collision_ready_at(player.global_position, 0.0): _freeze_player(true)
 
 func _process(_delta: float) -> void:
 	var profile_started := Time.get_ticks_usec() if PROFILE_STREAMING else 0
@@ -1192,7 +1248,7 @@ func _process(_delta: float) -> void:
 		_mutex.unlock()
 	_mark(&"priorities")
 	var current_chunk_ready := _built.has(centre) and _feature_square_ready(centre)
-	if COLLISION_RESIDENCY: current_chunk_ready = current_chunk_ready and _collision_ready_at(player.global_position,PLAYER_COLLISION_MARGIN)
+	if COLLISION_RESIDENCY: current_chunk_ready = current_chunk_ready and _collision_ready_at(player.global_position, 0.0)
 	var arrival_ready := _arrival_support_ready()
 	_settle_released_player()
 	_freeze_player(not current_chunk_ready or not startup_loading_complete() or not arrival_ready)
@@ -2169,13 +2225,18 @@ func streaming_profile_snapshot() -> Dictionary:
 	result["queued"] = _jobs.size()
 	result["done"] = _done.size()
 	result["active_job"] = _active_job.duplicate(true)
+	result["worker_phase"] = _worker_phase
+	result["phase_ms"] = Time.get_ticks_msec() - _worker_phase_started_msec
+	result["tails_in_flight"] = _tails_in_flight.keys()
 	result["arrival_support"] = _arrival_support_chunks.duplicate()
 	result["queue_head"] = _jobs.slice(0, mini(8, _jobs.size())).duplicate(true)
 	result["followups"] = _followups.size()
 	_mutex.unlock()
 	result["pending_terrain"] = _pending_terrain.size()
+	result["grass_pending"] = _grass_streamer.pending_tiles() if _grass_streamer != null else 0
 	result["built"] = _built.size()
 	result["player_frozen"] = _player_frozen
+	result["movement_boundary_blocks"] = movement_boundary_blocks
 	result["feature_pending"] = _feature_queue.pending_chunks().size() if _feature_queue != null else 0
 	result["ground_frontier"] = loading_boundary_snapshot()
 	return result

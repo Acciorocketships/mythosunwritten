@@ -1,0 +1,15 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/biome/BiomeVisualSettings.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+biome = &"jade_wetlands"
+volumetric_density = 0.002
+fog_anisotropy = 0.6
+bloom = 0.04
+glow_threshold = 1.05
+saturation = 1.14
+contrast = 1.04
+exposure = 1.01
+shadow_opacity = 0.85

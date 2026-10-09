@@ -49,22 +49,30 @@ varying vec3 instance_tint;
 varying float crown_depth;
 varying float crown_up;
 varying vec3 world_pos;
-// Continuous patches avoid the conspicuous one-pixel dot grid during the
-// mesh/card handover. All three tree shaders use the same screen-space mask
-// and complementary tests, including bark and alpha-tested Farmlands cards.
+// A tree-centred plane gives mesh and card the same mask without attaching
+// it to the screen. Camera rotation leaves the sampled world ray unchanged.
+varying flat vec3 fade_origin;
 float tree_fade_hash(vec2 p) {
-	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
-float tree_fade_mask(vec2 p) {
-	p /= 8.0;
-	vec2 cell = floor(p);
-	vec2 f = fract(p);
-	f = f * f * (3.0 - 2.0 * f);
-	return mix(mix(tree_fade_hash(cell), tree_fade_hash(cell + vec2(1.0, 0.0)), f.x),
-		mix(tree_fade_hash(cell + vec2(0.0, 1.0)), tree_fade_hash(cell + vec2(1.0)), f.x), f.y);
+float tree_fade_mask(vec3 view_position, mat4 camera_to_world) {
+ vec3 eye = camera_to_world[3].xyz;
+ vec3 direction = normalize(vec3(eye.x-fade_origin.x, 0.0, eye.z-fade_origin.z));
+ vec3 right = vec3(direction.z, 0.0, -direction.x);
+ vec3 ray = (camera_to_world * vec4(view_position, 1.0)).xyz - eye;
+ float denominator = dot(ray, direction);
+ vec3 hit = eye + ray * (dot(fade_origin-eye, direction) / min(denominator, -0.00001));
+ vec3 offset = hit-fade_origin;
+ vec2 p = vec2(dot(offset,right), offset.y) / 0.45;
+ vec2 cell = floor(p);
+ vec2 f = fract(p);
+ f = f*f*(3.0-2.0*f);
+ return mix(mix(tree_fade_hash(cell),tree_fade_hash(cell+vec2(1,0)),f.x),
+  mix(tree_fade_hash(cell+vec2(0,1)),tree_fade_hash(cell+vec2(1)),f.x),f.y);
 }
 
 void vertex() {
+	fade_origin = (MODEL_MATRIX * vec4(imposter_origin_offset, 1.0)).xyz;
 	vec3 eye = leaf_lod_camera.xyz;
 	float pixel = leaf_lod_camera.w;
 	if (pixel <= 0.0) {
@@ -131,7 +139,7 @@ void fragment() {
 	SPECULAR = 0.12;
 	BACKLIGHT = colour * translucency;
 	if (near_fade < 1.0 && (near_fade < 0.001
-			|| near_fade < tree_fade_mask(FRAGCOORD.xy))) {
+			|| near_fade < tree_fade_mask(VERTEX, INV_VIEW_MATRIX))) {
 		discard;
 	}
 }

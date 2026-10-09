@@ -1,0 +1,15 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/biome/BiomeVisualSettings.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+biome = &"meadow"
+volumetric_density = 0.0008
+fog_anisotropy = 0.6
+bloom = 0.025
+glow_threshold = 1.15
+saturation = 1.12
+contrast = 1.04
+exposure = 1.02
+shadow_opacity = 0.86

@@ -1,0 +1,39 @@
+Godot Engine v4.5.1.stable.mono.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_tree_imposters.gd
+* test_visual_carries_an_optional_imposter
+* test_a_rebake_without_the_pass_keeps_the_baked_imposter
+WARNING: stale imposter dropped (geometry changed; run the bake windowed with --imposters-only): user://imposter_carry_test/visual.tres
+* test_capture_keeps_full_crowns_and_measures_tint_response
+* test_capture_frames_a_tall_tree_about_its_vertical_axis
+* test_every_baked_tree_has_an_imposter_inside_the_environment_tree
+* test_imposter_shader_billboards_blends_frames_and_tints_by_response
+* test_imposter_renders_lit_tinted_and_rooted_from_every_side
+* test_crossfade_has_leaf_sized_patches_instead_of_a_pixel_dot_grid
+* test_crossfade_pattern_moves_with_tree_when_camera_turns
+9/9 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               1
+Tests                 9
+Passing Tests         9
+Asserts             314
+Time              10.006s
+
+
+---- All tests passed! ----

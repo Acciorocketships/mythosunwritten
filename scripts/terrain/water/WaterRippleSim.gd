@@ -8,6 +8,10 @@
 class_name WaterRippleSim
 extends Node
 
+static var last_process_usec := 0
+static var last_packets_usec := 0
+static var last_flow_usec := 0
+
 const RES := 256
 const DOMAIN := 96.0
 const TEXEL := DOMAIN / RES
@@ -375,6 +379,7 @@ func save_debug_images(prefix: String) -> void:
 
 
 func _process(delta: float) -> void:
+	var profile_start := Time.get_ticks_usec()
 	var nxt: int = 1 - _cur
 	var old_origin: Vector2 = _origin
 	var new_origin: Vector2 = _snapped_origin()
@@ -389,6 +394,7 @@ func _process(delta: float) -> void:
 	if origin_changed or samplers_changed:
 		_refresh_flow_texture()
 
+	last_flow_usec = Time.get_ticks_usec() - profile_start
 	var mat: ShaderMaterial = _mat[nxt]
 	mat.set_shader_parameter("prev_tex", _vp[_cur].get_texture())
 	mat.set_shader_parameter("flow_tex", _flow_tex)
@@ -429,7 +435,9 @@ func _process(delta: float) -> void:
 	_vp[nxt].render_target_update_mode = SubViewport.UPDATE_ONCE
 	_cur = nxt
 
+	var packets_start := Time.get_ticks_usec()
 	_update_packets(delta)
+	last_packets_usec = Time.get_ticks_usec() - packets_start
 	_upload_packets()
 
 	var wm: ShaderMaterial = WaterSurfaceBuilder.sheet_material()
@@ -440,3 +448,4 @@ func _process(delta: float) -> void:
 	wm.set_shader_parameter("packet_origin", _packet_origin)
 	wm.set_shader_parameter("packet_size", PACKET_DOMAIN)
 	wm.set_shader_parameter("packet_center", _player_xz())
+	last_process_usec = Time.get_ticks_usec() - profile_start

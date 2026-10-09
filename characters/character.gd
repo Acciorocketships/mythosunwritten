@@ -109,6 +109,8 @@ var _animation_forward_stride := DirectionalLocomotion.RUN_STRIDE
 var stride_modifier: SkeletonModifier3D
 var _animation_rate := 0.6
 var _movement_input := Vector2.ZERO
+## Installed by the world streamer; empty for standalone actors.
+var streaming_motion_guard := Callable()
 
 func _ready() -> void:
 	_setup_player_controller()
@@ -202,6 +204,11 @@ func _physics_process(delta: float) -> void:
 	velocity.x = vxz.x
 	velocity.z = vxz.y
 
+	var before_motion := global_position
+	if streaming_motion_guard.is_valid():
+		var allowed: Vector3 = streaming_motion_guard.call(before_motion, before_motion + velocity * delta)
+		velocity.x = (allowed.x - before_motion.x) / delta
+		velocity.z = (allowed.z - before_motion.z) / delta
 	var did_step: bool = _try_step_up(delta)
 	if not did_step:
 		move_and_slide()
@@ -212,6 +219,10 @@ func _physics_process(delta: float) -> void:
 				and velocity.y <= 0.0 and not in_water:
 			apply_floor_snap()
 			if is_on_floor(): velocity.y = 0.0
+	# Collision sliding and step-up may change horizontal motion after the
+	# velocity guard. Validate that final displacement as well.
+	if streaming_motion_guard.is_valid():
+		global_position = streaming_motion_guard.call(before_motion, global_position)
 	_update_step_visual_smoothing(delta)
 	movement_animation(Vector2(velocity.x, velocity.z).length(), delta)
 

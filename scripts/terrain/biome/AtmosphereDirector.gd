@@ -1,6 +1,8 @@
 class_name AtmosphereDirector
 extends Node
 
+static var last_process_usec := 0
+
 ## A continuous biome mood changes the shared sky and lighting gradually.
 ## Local mist still follows the world-space terrain and biome field.
 @export var environment_node: WorldEnvironment
@@ -10,6 +12,18 @@ extends Node
 @export var player: Node3D
 ## High adds screen-space bounce; SDFGI is an explicit review experiment.
 @export_enum("Economical", "Standard", "High") var quality: int = 1
+@export_group("Biome art direction")
+@export var biome_visual_settings: Array[Resource] = [
+	preload("res://terrain/biome/visuals/meadow.tres"),
+	preload("res://terrain/biome/visuals/deep_forest.tres"),
+	preload("res://terrain/biome/visuals/highland.tres"),
+	preload("res://terrain/biome/visuals/blossom_grove.tres"),
+	preload("res://terrain/biome/visuals/twilight_marsh.tres"),
+	preload("res://terrain/biome/visuals/amber_heath.tres"),
+	preload("res://terrain/biome/visuals/jade_wetlands.tres")
+]
+@export_range(0.0, 2.0) var atmosphere_strength := 1.0
+@export_range(0.0, 2.0) var bloom_strength := 1.0
 
 var _light_budget: Node
 var _underwater:Node
@@ -63,7 +77,7 @@ func _apply_grade() -> void:
 	env.fog_sky_affect = 0.12
 	env.volumetric_fog_enabled = true
 	env.volumetric_fog_density = 0.0
-	env.volumetric_fog_length = 144.0
+	env.volumetric_fog_length = 192.0
 	env.volumetric_fog_anisotropy = 0.45
 	env.volumetric_fog_detail_spread = 0.65
 	env.volumetric_fog_ambient_inject = 0.20
@@ -105,6 +119,7 @@ func _apply_grade() -> void:
 	set_quality(quality)
 
 func _process(dt: float) -> void:
+	var profile_start := Time.get_ticks_usec()
 	_publish_leaf_lod_camera()
 	if is_instance_valid(_light_budget): _light_budget.update_lights(camera, quality)
 	for wisp in get_tree().get_nodes_in_group("atmosphere_mist_wisp"):
@@ -120,7 +135,9 @@ func _process(dt: float) -> void:
 			streamer._grass_streamer.set_density_scale(ECONOMICAL_GRASS_DENSITY if quality == 0 else 1.0)
 		_update_mood(dt, Helper.biome_weights5(player.global_position,streamer.world_seed))
 		_underwater.update_view()
-		_frontier.update_view(camera, streamer._built, environment_node.environment.fog_light_color)
+		_frontier.update_view(camera, streamer._built, frontier_color())
+
+	last_process_usec = Time.get_ticks_usec() - profile_start
 
 func _update_mood(dt: float, target: Dictionary) -> void:
 	if _mood_weights.is_empty():
@@ -130,6 +147,7 @@ func _update_mood(dt: float, target: Dictionary) -> void:
 		for id: StringName in BiomeRegistry.biome_ids():
 			_mood_weights[id] = lerpf(float(_mood_weights.get(id,0.0)),float(target.get(id,0.0)),amount)
 	_apply_mood(BiomeRegistry.blend_atmosphere(_mood_weights))
+	_apply_visual_settings()
 
 func _apply_mood(mood: Dictionary) -> void:
 	var env := environment_node.environment
@@ -223,3 +241,32 @@ func _publish_leaf_lod_camera() -> void:
 	var eye := camera.global_position
 	RenderingServer.global_shader_parameter_set("leaf_lod_camera",
 		Vector4(eye.x, eye.y, eye.z, pixel))
+
+func _apply_visual_settings() -> void:
+	var mixed: Dictionary = {}
+	var keys := ["volumetric_density", "fog_anisotropy", "bloom", "glow_threshold",
+		"saturation", "contrast", "exposure", "shadow_opacity"]
+	var total := 0.0
+	for settings in biome_visual_settings:
+		if settings == null: continue
+		var weight := float(_mood_weights.get(settings.biome, 0.0))
+		total += weight
+		for key in keys:
+			mixed[key] = float(mixed.get(key, 0.0)) + float(settings.get(key)) * weight
+	if total <= 0.0: return
+	for key in keys: mixed[key] /= total
+	var env := environment_node.environment
+	env.volumetric_fog_density = mixed.volumetric_density * atmosphere_strength
+	env.volumetric_fog_anisotropy = mixed.fog_anisotropy
+	env.volumetric_fog_albedo = env.fog_light_color.lerp(Color.WHITE, 0.65)
+	env.glow_bloom = mixed.bloom * bloom_strength
+	env.glow_hdr_threshold = mixed.glow_threshold
+	env.adjustment_saturation = mixed.saturation
+	env.adjustment_contrast = mixed.contrast
+	env.tonemap_exposure = mixed.exposure
+	sun.shadow_opacity = mixed.shadow_opacity
+
+func frontier_color() -> Color:
+	var env := environment_node.environment
+	var sky := env.sky.sky_material as ProceduralSkyMaterial
+	return env.fog_light_color.lerp(sky.sky_horizon_color, 0.75).lerp(Color.WHITE, 0.2)

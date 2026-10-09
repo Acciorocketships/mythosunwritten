@@ -1,0 +1,66 @@
+Godot Engine v4.5.1.stable.mono.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_atmosphere_field.gd
+* test_neighbouring_fog_chunks_have_identical_edges
+* test_atmosphere_is_resource_free_deterministic_and_grounded
+* test_biome_boundaries_are_continuous_at_walking_speed
+* test_islands_preserve_ground_without_raising_or_flooding_it
+* test_every_new_biome_has_a_distinct_name_and_complete_ecology
+* test_scrolling_ground_lookup_preserves_overlapping_world_samples
+* test_rivers_and_ground_share_the_new_production_height_input
+* test_wetland_particles_float_above_water_instead_of_the_lake_bed
+8/8 passed.
+
+
+res://tests/test_atmosphere_director.gd
+* test_apply_grade_sets_render_stack
+* test_biome_lighting_changes_gradually_without_rotating_shadows
+* test_mood_response_is_independent_of_frame_partition
+* test_quality_switch_clears_expensive_effects
+* test_biome_shapes_blend_continuously_and_keep_distinct_vertical_moods
+5/5 passed.
+
+
+res://tests/test_october9_streaming_boundary.gd
+* test_stops_at_frontier_but_retreat_and_slide_stay_available
+* test_corner_and_fast_motion_never_cross_missing_ground
+* test_finished_features_are_published_before_terrain_tail_wait
+3/3 passed.
+
+
+res://tests/test_september15_streaming_yield.gd
+* test_background_job_yields_to_newly_urgent_ground_at_a_safe_boundary
+* test_equal_priority_work_does_not_requeue_itself
+* test_current_ground_feature_dependency_keeps_its_inherited_priority
+* test_yield_merges_followup_without_publishing_a_partial_payload
+[terrain-streamer] worker_job_complete seed=0 chunk=-5,-9 final_phase=idle phase_ms=22318 job_ms=22318
+* test_startup_keeps_its_complete_dependency_order
+* test_obsolete_job_cancellation_does_not_resume_a_previous_yield
+* test_sideways_dependency_yields_before_upcoming_ground_becomes_current
+7/7 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               4
+Tests                23
+Passing Tests        23
+Asserts            1414
+Time              22.699s
+
+
+---- All tests passed! ----

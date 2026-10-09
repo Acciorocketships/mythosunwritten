@@ -1,9 +1,18 @@
 shader_type spatial;
 render_mode unshaded, fog_disabled, cull_disabled, depth_draw_never, depth_test_disabled, shadows_disabled;
 uniform sampler2D scene_depth : hint_depth_texture, repeat_disable, filter_nearest;
-#include "res://scripts/terrain/diagnostics/frontier_density.gdshaderinc"
+uniform sampler2D loaded_cells : repeat_disable, filter_nearest;
+uniform vec2 first_cell;
+uniform vec2 cell_count;
 uniform vec3 owner_eye;
 uniform vec3 fog_color : source_color;
+uniform float feather = 48.0;
+
+bool loaded(vec2 cell) {
+ vec2 offset = cell - first_cell;
+ if (any(lessThan(offset,vec2(0.0))) || any(greaterThanEqual(offset,cell_count))) { return false; }
+ return textureLod(loaded_cells,(offset+0.5)/cell_count,0.0).r > 0.5;
+}
 vec2 boundary_distance(vec2 eye, vec2 ray) {
  vec2 cell = floor(eye/192.0);
  if (!loaded(cell)) { return vec2(0.0,1.0); }
@@ -33,19 +42,13 @@ void fragment() {
  float horizontal = length(relative.xz);
  vec2 ray = relative.xz/max(horizontal,0.000001);
  vec2 edge = boundary_distance(owner_eye.xz,ray);
- // Integrate continuously increasing density along the view ray. This
- // distant continuation also hides void beyond the engine's fog volume range.
- float finish=min(horizontal,edge.x+feather);
- float begin=max(0.0,edge.x-feather*2.0);
- float step_length=max(0.0,finish-begin)/16.0;
- float optical_depth=0.0;
- for(int i=0;i<16;i++) {
-  float t=begin+(float(i)+0.5)*step_length;
-  optical_depth+=frontier_density(owner_eye.xz+ray*t)*step_length;
- }
- float opacity=1.0-exp(-optical_depth);
- // The unseen side must stay opaque even if the camera is against the edge.
- opacity=max(opacity,1.0-smoothstep(0.0,4.0,edge.x-horizontal));
+ // Keep the near field clear when the camera approaches a missing neighbor.
+ // A fixed 48 m fade would otherwise wash out the actor and its footing.
+ // Measure perpendicular distance to the frontier, so an oblique look does
+ // not stretch the haze along the boundary. At and beyond it opacity is 1.
+ float fade_width = max(0.001,min(feather,edge.x*edge.y*0.35));
+ float inward_distance = (edge.x-horizontal)*edge.y;
+ float opacity = 1.0-smoothstep(0.0,fade_width,inward_distance);
  // Preserve the overhead sky; the horizon and downward void receive mist.
  if (sky) { opacity *= 1.0-smoothstep(0.0,0.18,normalize(relative).y); }
  ALBEDO = fog_color;

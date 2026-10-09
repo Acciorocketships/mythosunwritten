@@ -20,7 +20,7 @@ namespace Story.Native
             if (_localForms.TryGet(key,out var cached)) return cached;
             double H(long salt) => CellHash01(Seed+salt,x,z);
             var f = new LocalForm();
-            if (H(2310) > .82) return _localForms.Store(key,f);
+            if (H(2310) > .94) return _localForms.Store(key,f);
             V2 pos = (new V2((float)x,(float)z)+V2.D(.25+.5*H(2311),.25+.5*H(2312)))*T.LOCAL_CELL;
             if (pos.Length()-T.LOCAL_RADIUS < T.F_SPAWN_CLEAR_M) return _localForms.Store(key,f);
             f.Present=true; f.Pos=pos; f.Angle=Grain(pos)+(H(2313)-.5)*.8;

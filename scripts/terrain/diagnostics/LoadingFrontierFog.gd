@@ -5,6 +5,8 @@ extends Node
 const SHADER = preload("res://scripts/terrain/diagnostics/loading_frontier.gdshader")
 var _overlay: MeshInstance3D
 var _material: ShaderMaterial
+var _volume: FogVolume
+var _volume_material: ShaderMaterial
 var _keys: Array = []
 var _camera: Camera3D
 var _coverage_center := Vector2i(2147483647,2147483647)
@@ -15,6 +17,14 @@ func update_view(camera: Camera3D, loaded: Dictionary, color: Color) -> void:
 		clear()
 		_camera = camera
 	if _material == null:
+		_volume_material = ShaderMaterial.new()
+		_volume_material.shader = preload("res://scripts/terrain/diagnostics/loading_frontier_volume.gdshader")
+		_volume = FogVolume.new()
+		_volume.name = "LoadingFrontierVolume"
+		_volume.shape = RenderingServer.FOG_VOLUME_SHAPE_BOX
+		_volume.size = Vector3(2048, 2048, 2048)
+		_volume.material = _volume_material
+		camera.add_child(_volume)
 		_material = ShaderMaterial.new()
 		_material.shader = SHADER
 		_material.render_priority = 126 # Underwater medium remains last.
@@ -38,7 +48,8 @@ func update_view(camera: Camera3D, loaded: Dictionary, color: Color) -> void:
 		_coverage_center = center
 		_publish_coverage()
 	_material.set_shader_parameter("owner_eye",camera.global_position)
-	_material.set_shader_parameter("fog_color",color)
+	_material.set_shader_parameter("fog_color",color.srgb_to_linear())
+	_volume_material.set_shader_parameter("fog_color",color.srgb_to_linear())
 
 func _publish_coverage() -> void:
 	var lo := Vector2i.ZERO
@@ -49,6 +60,9 @@ func _publish_coverage() -> void:
 		for cell: Vector2i in _keys:
 			lo = lo.min(cell)
 			hi = hi.max(cell)
+	# Empty padding lets linear sampling begin fog inside the outermost cells.
+	lo -= Vector2i.ONE
+	hi += Vector2i.ONE
 	var size := hi-lo+Vector2i.ONE
 	# A teleport may briefly retain distant old residents. Restrict the view
 	# map, never stretch it across an unbounded gap or treat that gap as ready.
@@ -60,11 +74,16 @@ func _publish_coverage() -> void:
 		var p := cell-lo
 		if p.x>=0 and p.y>=0 and p.x<size.x and p.y<size.y:
 			coverage.set_pixel(p.x,p.y,Color.WHITE)
-	_material.set_shader_parameter("loaded_cells",ImageTexture.create_from_image(coverage))
-	_material.set_shader_parameter("first_cell",Vector2(lo))
-	_material.set_shader_parameter("cell_count",Vector2(size))
+	var texture := ImageTexture.create_from_image(coverage)
+	for material in [_material, _volume_material]:
+		material.set_shader_parameter("loaded_cells", texture)
+		material.set_shader_parameter("first_cell", Vector2(lo))
+		material.set_shader_parameter("cell_count", Vector2(size))
 
 func clear() -> void:
+	if is_instance_valid(_volume): _volume.free()
+	_volume = null
+	_volume_material = null
 	if is_instance_valid(_overlay): _overlay.free()
 	_overlay = null
 	_material = null

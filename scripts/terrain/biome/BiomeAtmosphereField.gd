@@ -60,11 +60,11 @@ static func compute(chunk: Vector2i, region, world_seed: int, water: WaterFieldC
 					recipes[recipe] = float(recipes.get(recipe, 0.0)) + weights[id] * float(BiomeRegistry.profile(id).particles[recipe])
 			for recipe: StringName in recipes:
 				var roll := Helper._cell_hash01(world_seed + 730 + int(String(recipe).hash()), cx, cz)
-				if roll > float(recipes[recipe]) * (0.12 if recipe == &"orbs" else 0.8):
+				if roll > float(recipes[recipe]) * (0.22 if recipe == &"orbs" else 0.8):
 					continue
 				var local := pos - origin
 				if recipe == &"orbs":
-					if orbs.size() < 4:
+					if orbs.size() < 8:
 						orbs.append(local)
 				else:
 					if not points.has(recipe):

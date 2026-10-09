@@ -1,0 +1,15 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/biome/BiomeVisualSettings.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+biome = &"highland"
+volumetric_density = 0.0012
+fog_anisotropy = 0.5
+bloom = 0.025
+glow_threshold = 1.2
+saturation = 1.08
+contrast = 1.06
+exposure = 1.04
+shadow_opacity = 0.87

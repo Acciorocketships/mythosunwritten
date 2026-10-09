@@ -188,7 +188,7 @@ func _imposter_material(imposter: EnvironmentImposter) -> ShaderMaterial:
 ## `sun_offset` turns the sun about the vertical from the camera's azimuth
 ## (+PI/2: low sun from the camera's right).
 func _render_imposter(imposter: EnvironmentImposter, azimuth: float, elevation: float,
-		tint: Color, distance: float, sun_offset := 0.6) -> Dictionary:
+		tint: Color, distance: float, sun_offset := 0.6, pan := 0.0) -> Dictionary:
 	var view := SubViewport.new()
 	view.size = Vector2i(RENDER_PX, RENDER_PX)
 	view.own_world_3d = true
@@ -225,6 +225,7 @@ func _render_imposter(imposter: EnvironmentImposter, azimuth: float, elevation: 
 	var e := deg_to_rad(elevation)
 	var eye := Vector3(sin(azimuth) * cos(e), sin(e), cos(azimuth) * cos(e)) * distance + Vector3(0.0, centre_y, 0.0)
 	camera.look_at_from_position(eye, Vector3(0.0, centre_y, 0.0), Vector3.UP)
+	camera.rotate_object_local(Vector3.UP, pan)
 	camera.current = true
 	for frame in 5:
 		await get_tree().process_frame
@@ -347,3 +348,31 @@ func test_crossfade_has_leaf_sized_patches_instead_of_a_pixel_dot_grid() -> void
 	assert_gt(pairs,1000,"measure inside the full crown, excluding leaf silhouette edges")
 	assert_between(float(covered)/pairs,.25,.75,"both representations still receive a substantial share halfway through")
 	assert_lt(float(transitions)/pairs,.25,"the handover cannot alternate visible/absent pixels across the crown")
+
+func test_crossfade_pattern_moves_with_tree_when_camera_turns() -> void:
+	if _headless():
+		pass_test("needs a renderer")
+		return
+	var imposter := (load(OAK) as EnvironmentVisual).imposter
+	var distance := imposter.size.y * INSTANCE_SCALE * 1.6
+	var saved := EnvironmentCommitQueue.IMPOSTER_DISTANCE
+	var centre := (imposter.pivot_height + .5 * imposter.size.y) * INSTANCE_SCALE
+	var eye := Vector3(0,centre+sin(deg_to_rad(8.0))*distance,cos(deg_to_rad(8.0))*distance)
+	EnvironmentCommitQueue.set_imposter_distance(0)
+	var full := await _render_imposter(imposter,0,8,Color.WHITE,distance)
+	EnvironmentCommitQueue.set_imposter_distance(eye.length())
+	var a := await _render_imposter(imposter,0,8,Color.WHITE,distance)
+	var b := await _render_imposter(imposter,0,8,Color.WHITE,distance,0.6,0.012)
+	EnvironmentCommitQueue.set_imposter_distance(saved)
+	var shift := Vector2i((b.base-a.base).round())
+	var compared := 0
+	var changed := 0
+	for y in range(2,RENDER_PX-2):
+		for x in range(2,RENDER_PX-2):
+			var q := Vector2i(x,y)+shift
+			if q.x<0 or q.x>=RENDER_PX or q.y<0 or q.y>=RENDER_PX: continue
+			if full.image.get_pixel(x,y).a < .99: continue
+			compared += 1
+			if (a.image.get_pixel(x,y).a>.5)!=(b.image.get_pixel(q.x,q.y).a>.5): changed += 1
+	assert_gt(compared,1000)
+	assert_lt(float(changed)/compared,.12,"turning cannot drag dissolve patches across the tree")

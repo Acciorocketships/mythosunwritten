@@ -709,10 +709,10 @@ static func link_shape(link: Dictionary, p: Vector2, detail: bool = true) -> flo
 ## terrain. Connected crests make three summits and two passes; divided hollows
 ## retain a cross-valley bridge and offset high ground. This tier adds local
 ## decisions without shrinking the continental/mountain features.
-const LOCAL_CELL := 192.0
+const LOCAL_CELL := 144.0
 const LOCAL_RADIUS := 148.0
-const LOCAL_HEIGHT_MIN := 16.0
-const LOCAL_HEIGHT_MAX := 32.0
+const LOCAL_HEIGHT_MIN := 24.0
+const LOCAL_HEIGHT_MAX := 44.0
 const _LOCAL := 5
 const LOCAL_CREST_HEIGHTS := [.84, 1.0, .9]
 
@@ -723,7 +723,7 @@ static func local_candidate(seed_value: int, cell: Vector2i) -> Dictionary:
 
 static func _local_draw(seed_value: int, cell: Vector2i) -> Dictionary:
 	var h := func(salt: int) -> float: return Helper._cell_hash01(seed_value + salt, cell.x, cell.y)
-	if h.call(2310) > .82:
+	if h.call(2310) > .94:
 		return {}
 	var pos: Vector2 = (Vector2(cell) + Vector2(.25 + .5 * h.call(2311),
 		.25 + .5 * h.call(2312))) * LOCAL_CELL
