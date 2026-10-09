@@ -34,8 +34,6 @@ var canopy_claims: Array = []
 ## Town context gently favors the less-used ridge axis on free square
 ## crowns. Equal weights preserve standalone gable/eave-front variation.
 var square_axis_weights := Vector2.ONE
-## Growing houses favour a gable to the street (growth_gable_front_boost).
-var gable_front_boost := 1.0
 
 
 func _init(p_kit: BuildingKit) -> void:
@@ -80,7 +78,6 @@ func design_standalone(seed: int) -> BuildingMass:
 ##   roof_axis: prefer complete longitudinal wings along this axis (0/1)
 ##   street_edges: Array[Vector3i] ground-storey edges facing public ways
 func articulate(mass: BuildingMass, context: Dictionary) -> void:
-	gable_front_boost = float(context.get("gable_boost", 1.0)) if bool(context.get("grows", false)) else 1.0
 	var rng := _rng(hash([mass.seed, &"articulate"]))
 	var terrain_storey := int(context.get("terrain_storey", 0))
 	var colour := StringName(context.get("colour",
@@ -622,7 +619,7 @@ static func _natural_axis(rect: Rect2i, square_axis: int) -> int:
 func _square_axis(mass: BuildingMass) -> int:
 	var front := front_dir(mass)
 	var preferred := front % 2 if front >= 0 else 0
-	var share := minf(1.0, square_axis_weights[preferred] / (square_axis_weights.x + square_axis_weights.y) * gable_front_boost)
+	var share := square_axis_weights[preferred] / (square_axis_weights.x + square_axis_weights.y)
 	var gable_front := _rng(hash([mass.seed, &"ridge"])).randf() < share
 	return preferred if gable_front else 1 - preferred
 

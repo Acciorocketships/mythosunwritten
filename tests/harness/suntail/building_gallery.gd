@@ -98,7 +98,7 @@ func _shoot(stage: Node3D, eye: Vector3, target: Vector3, name: String,
 	camera.queue_free()
 
 
-## Every exposed face of one designed house steps out (growth knobs forced on).
+## Every exposed face of one designed house steps in (growth knobs forced on).
 func _grow(mass: BuildingMass, kit: BuildingKit) -> void:
 	const GROWTH := preload("res://scripts/terrain/features/villages/kit/KitGrowingFronts.gd")
 	var setting := _growth.split(":")
@@ -115,8 +115,7 @@ func _grow(mass: BuildingMass, kit: BuildingKit) -> void:
 		EnvironmentCatalog.load_default(), character, [], [],
 		func(_o: StringName, _c: Vector2i, _b: int) -> bool: return false,
 		func(_o: StringName, _c: Vector2i, _b: int) -> bool: return false,
-		func(cell: Vector2i, band: int) -> bool: return band <= mass.ground_band + 1 and not footprint.has(cell),
-		GROWTH.roof_geometry([kit]))
+		func(cell: Vector2i, band: int) -> bool: return band <= mass.ground_band + 1 and not footprint.has(cell))
 
 
 func _run() -> void:

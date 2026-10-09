@@ -1,7 +1,8 @@
 extends SceneTree
-## Growing-floor corpus: stepping faces, stepped storeys and withdrawals per cause.
+## Growing-floor corpus under step-in: stepping faces, stepped storeys and withdrawals per cause.
 ## godot --headless --path . -s res://tests/harness/suntail/growth_corpus_audit.gd -- \
 ##   [--towns 53:grand,...] [--odds name=value ...] [--out /tmp/growth_audit.json]
+const GROWTH := preload("res://scripts/terrain/features/villages/kit/KitGrowingFronts.gd")
 const DEFAULT_TOWNS := "53:grand,31:large,13:standard,43:large,83:grand,103:standard,7:compact,61:standard"
 
 
@@ -9,79 +10,55 @@ func _init() -> void:
 	call_deferred("_run")
 
 
-## Faces (chains with any step), stepped storeys, wrapped storey-faces (lean
-## records with a wrap closure), wrapped corners (one per corner and storey: the
-## record whose right end wraps owns it), terrace-row joints (lean records with a
-## joint closure; `row_joints` one per joint and storey), houses pulled into a row
-## without rolling growth, buried storey-faces (lean records with a bury closure;
-## `buried_own` / `buried_neighbour` count the walls run into by owner),
-## withdrawals by cause, and how each face's roof closes it (Task 8): faces whose
-## top storey moved its gable end (`gable_shift`), faces given their step by the
-## house's ground storey stepping in (`inset`, `inset_houses`), eave faces on the
-## light-step fallback (`half`), faces a crown kept flush (`flush_crown`), and
-## crown withdrawals split by the crown's kind (`crown_gable`, `crown_eave`,
-## `crown_open`: no roof closes the face, a storey or nothing above) and by why
-## (`crown_why`: the gable's blocker, the eave's inset blocker).
+## Faces (chains with any growth record), records (stepped storeys), stepped-in storeys,
+## faces whose ground storey stepped in, the deepest offset, recessed ground doors,
+## closures by kind (a corner/joint counts once per record end), houses pulled into a row
+## without rolling growth, and withdrawals by cause: attempts (`causes`) and distinct
+## faces (`faces_withdrawn`; Task 4 deferred minor).
 static func counts(built: Dictionary) -> Dictionary:
-	var chains := {}
-	var wraps := 0
-	var corners := 0
-	var joints := 0
-	var row_joints := 0
+	var by_id := {}
+	for mass: BuildingMass in built.get("houses", []):
+		by_id[mass.stable_id] = mass
+	var faces := {}
+	var ground_faces := {}
+	var stepped_in := 0
+	var deepest := 0.0
+	var doors := 0
+	var kinds := {"return": 0, "wrap": 0, "joint": 0, "bury": 0}
 	var pulled := {}
-	var buried := 0
-	var buried_own := 0
-	var buried_neighbour := 0
 	for lean: Dictionary in built.get("growth", []):
-		if (lean.get("closures", []) as Array).has(&"bury"):
-			buried += 1
-			for owner: String in lean.get("buried_into", []):
-				if owner == String(lean.get("host", "")):
-					buried_own += 1
-				else:
-					buried_neighbour += 1
-		chains[String(lean.get("chain", ""))] = true
-		if (lean.get("closures", []) as Array).has(&"wrap"):
-			wraps += 1
-		if (lean.get("closures", []) as Array).size() == 2 and lean.closures[1] == &"wrap":
-			corners += 1
-		if (lean.get("closures", []) as Array).has(&"joint"):
-			joints += 1
-		if (lean.get("closures", []) as Array).size() == 2 and lean.closures[1] == &"joint":
-			row_joints += 1
+		faces[String(lean.chain)] = true
+		var depth := float(lean.lean)
+		if depth < 0.0:
+			stepped_in += 1
+			deepest = minf(deepest, depth)
+		var mass: BuildingMass = by_id.get(lean.host)
+		if mass != null and depth < 0.0 and int(lean.band) == mass.ground_band:
+			ground_faces[String(lean.chain)] = true
+			var ground: Dictionary = mass.storeys[GROWTH.ground_index(mass)]
+			for edge: Vector3i in lean.edges:
+				if StringName(ground.openings.get(edge, ground.default_opening)) == BuildingMass.OPENING_DOOR:
+					doors += 1
+		for kind: StringName in lean.get("closures", []):
+			if kinds.has(String(kind)):
+				kinds[String(kind)] += 1
 		if bool(lean.get("pulled", false)):
-			pulled[String(lean.get("host", ""))] = true
+			pulled[String(lean.host)] = true
 	var causes := {}
-	var crowned := {}
-	var crown_kinds := {"crown_gable": 0, "crown_eave": 0, "crown_open": 0}
-	var crown_why := {}
+	var withdrawn := {}
 	for rejection: Dictionary in built.get("growth_rejections", []):
-		causes[String(rejection.cause)] = int(causes.get(String(rejection.cause), 0)) + 1
-		if rejection.cause == &"crown":
-			crowned[String(rejection.chain)] = true
-			var key := "crown_%s" % String(rejection.get("crown", "open"))
-			crown_kinds[key] = int(crown_kinds.get(key, 0)) + 1
-			var why := "%s.%s" % [String(rejection.get("crown", "open")), String(rejection.get("why", ""))]
-			crown_why[why] = int(crown_why.get(why, 0)) + 1
-	var roof_faces := {"gable": {}, "inset": {}, "half": {}, "eave": {}}
-	for roof: Dictionary in built.get("growth_roofs", []):
-		if roof_faces.has(String(roof.kind)):
-			roof_faces[String(roof.kind)][String(roof.chain)] = true
-	var inset_houses := {}
-	for record: Dictionary in built.get("growth_insets", []):
-		inset_houses[String(record.host)] = true
-	var flush_crown := 0
-	for chain: String in crowned:
-		if not chains.has(chain) and not (roof_faces.inset as Dictionary).has(chain):
-			flush_crown += 1
-	return {"faces": chains.size(), "storeys": (built.get("growth", []) as Array).size(), "wraps": wraps,
-		"corners": corners, "joints": joints, "row_joints": row_joints, "pulled": pulled.size(),
-		"buried": buried, "buried_own": buried_own, "buried_neighbour": buried_neighbour,
-		"gable_shift": (roof_faces.gable as Dictionary).size(), "inset": (roof_faces.inset as Dictionary).size(),
-		"inset_houses": inset_houses.size(), "half": (roof_faces.half as Dictionary).size(),
-		"eave": (roof_faces.eave as Dictionary).size(), "flush_crown": flush_crown,
-		"crown_gable": crown_kinds.crown_gable, "crown_eave": crown_kinds.crown_eave,
-		"crown_open": crown_kinds.crown_open, "crown_why": crown_why, "causes": causes}
+		var cause := String(rejection.cause)
+		causes[cause] = int(causes.get(cause, 0)) + 1
+		if not withdrawn.has(cause):
+			withdrawn[cause] = {}
+		withdrawn[cause][String(rejection.chain)] = true
+	var faces_withdrawn := {}
+	for cause: String in withdrawn:
+		faces_withdrawn[cause] = (withdrawn[cause] as Dictionary).size()
+	return {"faces": faces.size(), "storeys": (built.get("growth", []) as Array).size(),
+		"stepped_in": stepped_in, "ground_faces": ground_faces.size(), "deepest": deepest,
+		"recessed_doors": doors, "returns": kinds.return, "wraps": kinds.wrap, "joints": kinds.joint,
+		"buried": kinds.bury, "pulled": pulled.size(), "causes": causes, "faces_withdrawn": faces_withdrawn}
 
 
 func _run() -> void:
@@ -100,10 +77,7 @@ func _run() -> void:
 		program.town_odds = program.town_odds.with_overrides(overrides)
 	var rows := []
 	var bad := 0
-	var total := {"faces": 0, "storeys": 0, "wraps": 0, "corners": 0, "joints": 0, "row_joints": 0,
-		"pulled": 0, "buried": 0, "buried_own": 0, "buried_neighbour": 0, "gable_shift": 0, "inset": 0,
-		"inset_houses": 0, "half": 0, "eave": 0, "flush_crown": 0, "crown_gable": 0, "crown_eave": 0,
-		"crown_open": 0, "crown_why": {}, "causes": {}}
+	var total := {}
 	for town: String in towns.split(","):
 		var parts := town.split(":")
 		var profile := WarrenVillageScaleProfile.for_id(StringName(parts[1]))
@@ -119,21 +93,26 @@ func _run() -> void:
 		row["valid_payload"] = built.payload.validate()
 		if not bool(row.valid_payload):
 			bad += 1
-		total.faces += int(row.faces)
-		total.storeys += int(row.storeys)
-		total.wraps += int(row.wraps)
-		total.corners += int(row.corners)
-		for key: String in ["joints", "row_joints", "pulled", "buried", "buried_own", "buried_neighbour",
-				"gable_shift", "inset", "inset_houses", "half", "eave", "flush_crown", "crown_gable",
-				"crown_eave", "crown_open"]:
-			total[key] += int(row[key])
-		for why: String in row.crown_why:
-			total.crown_why[why] = int(total.crown_why.get(why, 0)) + int(row.crown_why[why])
-		for cause: String in row.causes:
-			total.causes[cause] = int(total.causes.get(cause, 0)) + int(row.causes[cause])
+		_add(total, row)
 		rows.append(row)
 		print("GROWTH_AUDIT ", JSON.stringify(row))
 	print("GROWTH_TOTAL ", JSON.stringify(total))
 	FileAccess.open(out_path, FileAccess.WRITE).store_string(JSON.stringify(rows, "  "))
 	print("GROWTH_AUDIT_DONE bad=", bad)
 	quit(0 if bad == 0 else 1)
+
+
+## Totals: every int key summed, `deepest` the minimum, `causes` and `faces_withdrawn`
+## merged by key.
+static func _add(total: Dictionary, row: Dictionary) -> void:
+	for key: String in row:
+		var value: Variant = row[key]
+		if key == "deepest":
+			total[key] = minf(float(total.get(key, 0.0)), float(value))
+		elif key in ["causes", "faces_withdrawn"]:
+			var merged: Dictionary = total.get(key, {})
+			for cause: String in value:
+				merged[cause] = int(merged.get(cause, 0)) + int(value[cause])
+			total[key] = merged
+		elif value is int:
+			total[key] = int(total.get(key, 0)) + int(value)

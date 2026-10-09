@@ -52,10 +52,11 @@ static func nothing_solid(_own: StringName, _cell: Vector2i, _band: int) -> bool
 ## south face dir 3 on the lane) is the house under test; `back` faces it across
 ## a lane of `lane` cells (z -lane..-1) when options.facing. Options: storeys (4),
 ## roof_axis / back_roof_axis (1 = gable to the lane, 0 = eave), lane (1), facing,
-## back_grows, character, air, towers, reserved, reserved_x / lone (reserved columns
-## x; lone = [-1, 3], so only the south face steps), kit, extra (more masses),
-## prepare (Callable(front) run before fitting), replace_front (a mass with its
-## own roofs, id kit.fixture.front).
+## back_grows, character, air, towers, reserved, block (dirs of the front kept out of
+## its front, block_faces), lone (= block [0, 2]: only the south face steps; the
+## house's door is on the south ground storey, a recessed shopfront), kit, extra (more
+## masses), prepare (Callable(front) run before fitting), replace_front (a mass with
+## its own roofs, id kit.fixture.front).
 static func build(options: Dictionary = {}) -> Dictionary:
 	var kit: BuildingKit = options.get("kit", SuntailBuildingKit.create())
 	var storeys := int(options.get("storeys", 4))
@@ -68,6 +69,9 @@ static func build(options: Dictionary = {}) -> Dictionary:
 	front.grows = true
 	if options.has("prepare"):
 		(options.prepare as Callable).call(front)
+	var blocked: Array = options.get("block", [0, 2] if bool(options.get("lone", false)) else [])
+	if not blocked.is_empty():
+		block_faces(front, blocked)
 	var masses: Array[BuildingMass] = []
 	var back: BuildingMass = null
 	if bool(options.get("facing", false)):
@@ -90,23 +94,33 @@ static func build(options: Dictionary = {}) -> Dictionary:
 				return true
 		return false
 	var reserved: Callable = options.get("reserved", nothing_solid)
-	# `lone` keeps only the south face stepping: the columns beside the house (x -1
-	# and x 3) are reserved, so its corner neighbours leave the front (cause columns).
-	var blocked_x: Array = options.get("reserved_x", [-1, 3] if bool(options.get("lone", false)) else [])
-	if not blocked_x.is_empty():
-		var inner := reserved
-		reserved = func(own: StringName, cell: Vector2i, band: int) -> bool:
-			return blocked_x.has(cell.x) or bool(inner.call(own, cell, band))
 	var street := func(cell: Vector2i, band: int) -> bool:
 		return cell.y <= -1 and cell.y >= -lane and band <= 1
 	var result := GROWTH.fit(masses, kits, kit, EnvironmentCatalog.load_default(),
 		options.get("character", character()), options.get("air", [] as Array[Dictionary]),
-		options.get("towers", [] as Array[Dictionary]), reserved, solid, street, GROWTH.roof_geometry([kit]))
+		options.get("towers", [] as Array[Dictionary]), reserved, solid, street)
 	var assembler := BuildingKitAssembler.new(kit)
 	assembler.external_blocked = func(cell: Vector2i, band: int) -> bool:
 		return solid.call(&"fixture.front", cell, band)
 	return {"kit": kit, "front": front, "back": back, "masses": masses, "result": result,
 		"leans": result.leans, "parts": assembler.assemble(front), "solid": solid}
+
+
+## Keeps faces out of their front: a skywalk passage on the first upper storey's panel at
+## the far end of each face in `dirs` (the +z or +x end, away from the south face), so
+## the face cannot step at all (cause portal) and leaves the front; the panel at the
+## south face's corner stays plain (the south step may cut it).
+static func block_faces(mass: BuildingMass, dirs: Array) -> void:
+	var first: Dictionary = GROWTH._storey_at(mass, mass.ground_band + 2)
+	for run: Dictionary in BuildingKitAssembler.boundary_runs(first.cells):
+		if not dirs.has(int(run.dir)):
+			continue
+		var edge := BuildingMass.edge_key(BuildingKitAssembler._inside_cell(int(run.dir), int(run.line),
+			int(run.end) - 1), int(run.dir))
+		first.openings[edge] = BuildingMass.OPENING_DOOR
+		var passages: Dictionary = first.get("passage_edges", {})
+		passages[edge] = true
+		first["passage_edges"] = passages
 
 
 ## Lean of `mass` on face `dir` per storey index (0.0 where flush).

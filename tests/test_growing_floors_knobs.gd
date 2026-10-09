@@ -2,8 +2,7 @@ extends GutTest
 const GROWTH := preload("res://scripts/terrain/features/villages/kit/KitGrowingFronts.gd")
 const FIXTURE := preload("res://tests/fixtures/growing_house.gd")
 const KNOBS: Array[StringName] = [&"growing_house_chance", &"growth_street_face_chance",
-	&"growth_other_face_chance", &"growth_step", &"growth_max_lean", &"lane_sky_gap",
-	&"growth_gable_front_boost"]
+	&"growth_other_face_chance", &"growth_step", &"growth_max_lean", &"lane_sky_gap"]
 
 
 func test_growth_knobs_are_in_the_table_with_their_shipped_values() -> void:
@@ -11,6 +10,7 @@ func test_growth_knobs_are_in_the_table_with_their_shipped_values() -> void:
 	assert_eq(program.errors.size(), 0, str(program.errors))
 	for name: StringName in KNOBS:
 		assert_true(program.knobs.has(name), String(name))
+	assert_false(program.knobs.has(&"growth_gable_front_boost"), "removed by spec Amendment 2")
 	for size: float in [0.0, 1.0]:
 		var c := TownCharacter.draw(program, 53, size)
 		assert_eq(c.value(GROWTH.HOUSE_KNOB), 0.0)
@@ -23,7 +23,6 @@ func test_growth_knobs_are_in_the_table_with_their_shipped_values() -> void:
 			"every exposed face is treated alike")
 		assert_almost_eq(c.value(GROWTH.CAP_KNOB), 2.0, 1e-6)
 		assert_almost_eq(c.value(GROWTH.GAP_KNOB), 0.75, 1e-6)
-		assert_almost_eq(c.value(GROWTH.BOOST_KNOB), 2.0, 1e-6)
 
 
 func test_eligible_house_needs_two_stacked_storeys_and_an_exposed_face() -> void:

@@ -211,7 +211,7 @@ static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 			tower["cutters"] = preload("res://scripts/terrain/features/villages/kit/KitTowerAssembly.gd").placed_cutters(
 				(FileAccess.open(tower.cap_core_path,FileAccess.READ).get_var() as Array) if tower.has("cap_core_path") else tower_core,tower.pose*tower.parts[-1].transform)
 	# Growing upper floors (after roof joins and towers, before projections and
-	# bays): accepted leans cut roofs like any wall and are fitted around later.
+	# bays): lower storeys step in under a fixed roof (nothing moves outward).
 	var growth := GROWTH.fit(masses,house_kits,kit,tower_catalog,growth_character,ornament_air,towers,
 		func(own: StringName,cell: Vector2i,band: int) -> bool:
 			var at := Vector3i(cell.x,band,cell.y)
@@ -219,10 +219,7 @@ static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 			if owner_at.has(at): return owner_at[at] != own
 			return grid.contains(at) and grid.use_at(at) in [WarrenSpatialGrid.Use.STRUCTURAL_VOLUME,
 				WarrenSpatialGrid.Use.SERVICE_VOID,WarrenSpatialGrid.Use.PRIVATE_VOLUME],
-		growth_solid,growth_street,
-		{} if growth_character == null else GROWTH.roof_geometry(house_kits.values() + [kit]))
-	for lean: Dictionary in growth.leans:
-		walls.append(union_script.box_volume(lean.bounds))
+		growth_solid,growth_street)
 	var room_projections := preload("res://scripts/terrain/features/villages/kit/KitRoomProjections.gd").fit(
 		masses,house_kits,kit,tower_catalog,public_air,towers,
 		func(own:StringName,cell:Vector2i,band:int)->bool:
@@ -333,7 +330,7 @@ static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 	roof_audit["roof_fitted_windows"] = int(facade_context.get("substituted",0))
 	return {"payload": payload, "replaced_units": replaced, "masses": masses, "houses": house_masses,
 		"house_kits": house_kits, "roof_kits": roof_kits, "towers": towers, "facade_bays": facade_bays,
-		"room_projections":room_projections,"growth":growth.leans,"growth_rejections":growth.rejections,"growth_insets":growth.insets,"growth_roofs":growth.roofs,"roof_audit": roof_audit, "placements": placements, "roofs": roofs, "walls": walls}
+		"room_projections":room_projections,"growth":growth.leans,"growth_rejections":growth.rejections,"roof_audit": roof_audit, "placements": placements, "roofs": roofs, "walls": walls}
 
 
 ## True when `box` misses every fitted front (`bounds`) another house hosts.
@@ -1589,7 +1586,6 @@ static func _mass_for(house_id: StringName, house: Dictionary,
 		mass.grows = GROWTH.house_grows(growth.character, mass, growth.solid, growth.street)
 		if mass.grows:
 			context["grows"] = true
-			context["gable_boost"] = (growth.character as TownCharacter).value(GROWTH.BOOST_KNOB)
 	designer.articulate(mass, context)
 	# The circulation compiler can use a construction crown as a bridge
 	# landing. Replacing that flat roof with a gable leaves the accepted

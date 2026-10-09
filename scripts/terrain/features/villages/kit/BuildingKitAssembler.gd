@@ -121,61 +121,40 @@ func _emit_trimmed_floor(ctx: Dictionary, offsets: Dictionary, cell: Vector2i, y
 func _emit_front_floors(ctx: Dictionary, storey: Dictionary) -> void:
 	var y := float(storey.floor_band)*kit.band_height()
 	for projection:Dictionary in storey.get("projections",[]):
-		if bool(projection.get("growth", false)) and float(projection.depth) <= 0.0:
-			continue
+		if bool(projection.get("growth", false)):
+			continue # a step-in's floors are its trimmed boards (storey_slots, _emit_inhabited_floor)
 		var dir:=int(projection.dir)
 		var out:=Vector2(BuildingMass.DIRS[dir])
 		for centre:Vector2 in projection.centres:
-			_emit(ctx,_front_role(&"frontage.floor",projection),centre+out*float(projection.depth)*.5/kit.module_width,y,yaw_for_dir(dir))
+			_emit(ctx,&"frontage.floor",centre+out*float(projection.depth)*.5/kit.module_width,y,yaw_for_dir(dir))
 
 
-## Growth fronts use the baked piece for their cumulative depth.
-func _front_role(role: StringName, projection: Dictionary) -> StringName:
-	if not bool(projection.get("growth", false)):
-		return role
-	return StringName("%s.%s" % [role, lean_suffix(float(projection.depth))])
-
-
+## A room projection's front (KitRoomProjections): floor and ceiling strips, the floor
+## beam on its face, a return closing each side and small brackets on its joints.
+## A growth record (a step-in) closes only its buried ends (_emit_step_in).
 func _emit_projected_front(ctx:Dictionary,storey:Dictionary)->void:
 	var y:=float(storey.floor_band)*kit.band_height()
 	for projection:Dictionary in storey.get("projections",[]):
-		if bool(projection.get("growth", false)) and float(projection.get("depth", 0.0)) <= 0.0:
+		if bool(projection.get("growth", false)):
 			_emit_step_in(ctx, storey, projection, y)
 			continue
 		var dir:=int(projection.dir)
 		var depth:=float(projection.depth)
-		# A growing storey's brackets bear on the leaned face of the storey below.
-		var base:=float(projection.get("base",0.0))
 		var out:=Vector2(BuildingMass.DIRS[dir])
 		var right:=Vector2(right_of(dir))
 		var centres:Array=projection.centres
 		for centre:Vector2 in centres:
-			_emit(ctx,_front_role(&"frontage.floor",projection),centre+out*depth*.5/kit.module_width,y+kit.storey_height-.12772,yaw_for_dir(dir))
+			_emit(ctx,&"frontage.floor",centre+out*depth*.5/kit.module_width,y+kit.storey_height-.12772,yaw_for_dir(dir))
 			_emit(ctx,&"trim.floor_beam",centre+out*depth/kit.module_width,y,yaw_for_dir(dir))
-		var closures:Array=projection.get("closures",[&"return",&"return"])
 		for side:int in [-1,1]:
 			var centre:Vector2=centres.front() if side<0 else centres.back()
-			match StringName(closures[0 if side<0 else 1]):
-				&"return":
-					var at:=centre+right*.5*side+out*depth*.5/kit.module_width
-					var yaw:=yaw_for_dir(dir)+PI*.5*side
-					_emit(ctx,_front_role(&"frontage.return",projection),at,y,yaw,0,Transform3D.IDENTITY,storey.get("tint",Color.WHITE))
-					_emit(ctx,_front_role(&"frontage.return_beam",projection),at,y,yaw)
-					_emit(ctx,_front_role(&"frontage.return_beam",projection),at,y+kit.storey_height-.143,yaw)
-				&"wrap":
-					_emit_wrap_end(ctx,storey,projection,centre,side,y)
-				_:
-					pass # joint / bury (Tasks 6, 7): the neighbouring face continues the wall
-		if depth<=base+.001:
-			continue # a held storey adds no overhang: nothing to bracket
-		if absf(depth-base-kit.jetty_depth)<.001 and kit.has_role(&"bracket.jetty"):
-			# A kit-sized step rides the kit's own jetty brace: one per module, on the
-			# storey below's (stepped) face, as _emit_jetty_trim places it.
-			for centre:Vector2 in centres:
-				_emit(ctx,&"bracket.jetty",centre+out*base/kit.module_width,y-kit.jetty_depth,yaw_for_dir(dir))
-			continue
+			var at:=centre+right*.5*side+out*depth*.5/kit.module_width
+			var yaw:=yaw_for_dir(dir)+PI*.5*side
+			_emit(ctx,&"frontage.return",at,y,yaw,0,Transform3D.IDENTITY,storey.get("tint",Color.WHITE))
+			_emit(ctx,&"frontage.return_beam",at,y,yaw)
+			_emit(ctx,&"frontage.return_beam",at,y+kit.storey_height-.143,yaw)
 		for joint in range(centres.size()+1):
-			var at:Vector2=centres.front()+right*(joint-.5)-out*(.15-base)/kit.module_width
+			var at:Vector2=centres.front()+right*(joint-.5)-out*.15/kit.module_width
 			_emit(ctx,&"bracket.small",at,y-.706295,yaw_for_dir(dir))
 
 
@@ -204,88 +183,6 @@ func _emit_step_in(ctx: Dictionary, storey: Dictionary, projection: Dictionary, 
 			storey.get("tint", Color.WHITE))
 		_emit(ctx, StringName("frontage.return_beam." + suffix), at, y, yaw)
 		_emit(ctx, StringName("frontage.return_beam." + suffix), at, y + kit.storey_height - .143, yaw)
-
-
-## Native offset (along the face's outward normal) that makes a wrap strip's outer
-## face coplanar with the face's wall panels; measured in Task 5 Step 6.
-const WRAP_INSET := 0.030
-
-
-## A wrapped convex corner: the face's wall runs on `depth` past its last module (a
-## baked return strip turned to face out) with its floor beam; the face whose RIGHT
-## end the corner is also lays the corner floor and ceiling squares (one owner).
-func _emit_wrap_end(ctx: Dictionary, storey: Dictionary, projection: Dictionary,
-		centre: Vector2, side: int, y: float) -> void:
-	var dir := int(projection.dir)
-	var depth := float(projection.depth)
-	var w := kit.module_width
-	var out := Vector2(BuildingMass.DIRS[dir])
-	var right := Vector2(right_of(dir))
-	var yaw := yaw_for_dir(dir)
-	var strip := centre + right * side * (0.5 + depth * 0.5 / w) + out * (depth + WRAP_INSET) / w
-	_emit(ctx, _front_role(&"frontage.return", projection), strip, y - OFFSET_WALL_DROP, yaw, 0,
-		Transform3D.IDENTITY, storey.get("tint", Color.WHITE))
-	_emit(ctx, _front_role(&"frontage.return_beam", projection), strip, y, yaw)
-	if side > 0:
-		var corner := centre + right * (0.5 + depth * 0.5 / w) + out * depth * 0.5 / w
-		_emit(ctx, _front_role(&"frontage.corner", projection), corner, y, yaw)
-		_emit(ctx, _front_role(&"frontage.corner", projection), corner, y + kit.storey_height - .12772, yaw)
-
-
-## The pieces one candidate front adds (its moved wall slots, corner post,
-## floor/ceiling strips, beams, returns, brackets), for fitters to test before
-## committing. The storey itself is not changed.
-func face_parts(mass: BuildingMass, index: int, projection: Dictionary) -> Array[Dictionary]:
-	var storey: Dictionary = mass.storeys[index]
-	var probe := storey.duplicate()
-	var offsets: Dictionary = (storey.get("wall_offsets", {}) as Dictionary).duplicate()
-	var edges := {}
-	for edge: Vector3i in projection.edges:
-		offsets[edge] = float(projection.depth) / kit.module_width
-		edges[edge] = true
-	# A wrapped right end: its partner face steps too, so the corner post stands
-	# where the final assembly puts it.
-	var closures: Array = projection.get("closures", [&"return", &"return"])
-	if StringName(closures[1]) == &"wrap":
-		var dir := int(projection.dir)
-		var last: Vector2 = (projection.centres as Array).back()
-		var cell := Vector2i((last - Vector2(BuildingMass.DIRS[dir]) * .5 - Vector2.ONE * .5).round())
-		var side := BuildingMass.DIRS.find(right_of(dir))
-		offsets[BuildingMass.edge_key(cell, side)] = float(projection.depth) / kit.module_width
-	probe["wall_offsets"] = offsets
-	probe["projections"] = [projection]
-	var out: Array[Dictionary] = []
-	var ctx := {"mass": mass, "out": out, "serial": 0}
-	var y := float(probe.floor_band) * kit.band_height()
-	var bands := int(probe.get("bands", 2))
-	for slot: Dictionary in storey_slots(probe, _edge_exposure(mass, int(probe.floor_band), bands)):
-		if not edges.has(slot.edge):
-			continue
-		# The panel _assemble_storey picks (same pick, plain cadence and asset).
-		var yaw := yaw_for_dir(int(slot.dir))
-		var tint := probe.get("tint", Color.WHITE) as Color
-		var pick := _hash(mass, index, int(slot.centre.x * 2.0), int(slot.centre.y * 2.0))
-		var kind := StringName(probe.openings.get(slot.edge, probe.default_opening))
-		var plain_every := int(probe.get("plain_every", 0))
-		if kind == BuildingMass.OPENING_WINDOW and plain_every > 0 and pick % plain_every == 0:
-			kind = BuildingMass.OPENING_PLAIN
-		if kind == BuildingMass.OPENING_BAY:
-			# A bay replaces the panel (no post); a spire bay stands on a plain
-			# panel; a bay the kit lacks falls back to a window.
-			var bay_role := _emit_bay(ctx, probe, slot, y - OFFSET_WALL_DROP, yaw, pick, tint)
-			if bay_role != &"" and bay_role != &"bay.spire":
-				continue
-			kind = BuildingMass.OPENING_PLAIN if bay_role == &"bay.spire" else BuildingMass.OPENING_WINDOW
-		var role := StringName("wall.%s.%s" % [probe.material, kind])
-		if not kit.has_role(role):
-			role = StringName("wall.%s.window" % probe.material)
-		_emit(ctx, role, slot.centre, y - OFFSET_WALL_DROP, yaw, pick, Transform3D.IDENTITY, tint,
-			StringName((probe.get("opening_assets", {}) as Dictionary).get(slot.edge, &""))
-				if kind == BuildingMass.OPENING_WINDOW else &"")
-		_emit_corner_post(ctx, slot, y - OFFSET_WALL_DROP, bands, kit.wall_face)
-	_emit_front_floors(ctx, probe)
-	_emit_projected_front(ctx, probe)
-	return out
 
 
 ## Maps native placements into an EnvironmentInstancePayload. `native_to_frame`
@@ -1114,10 +1011,6 @@ func _emit_inset_jetty(ctx: Dictionary, storey: Dictionary, slot: Dictionary, y:
 		var corner := BuildingMass.edge_key(cell, BuildingMass.DIRS.find(right_of(dir) * side))
 		if float(lower_offsets.get(corner, 0.0)) < 0.0 or _blocked_beside(storey, cell + right_of(dir) * side):
 			continue
-		# A perpendicular face of this storey stepping OUT over the side closes it with
-		# its own floor strip (step-out data until the planner writes step-in only).
-		if float((storey.get("wall_offsets", {}) as Dictionary).get(corner, 0.0)) > 0.0:
-			continue
 		_emit(ctx, StringName("frontage.return_beam.%s" % lean_suffix(cut * kit.module_width)),
 			centre + right * 0.5 * float(side) - out * cut * 0.5, y, yaw + PI * 0.5 * float(side))
 
@@ -1182,7 +1075,6 @@ func _emit_jetty_trim(ctx: Dictionary, slot: Dictionary, y: float, yaw: float,
 # --- roofs ----------------------------------------------------------------
 
 func _assemble_roof(ctx: Dictionary, wing: Dictionary) -> void:
-	var first_part: int = (ctx.out as Array).size()
 	var mass: BuildingMass = ctx.mass
 	var rect := wing.rect as Rect2i
 	var axis := int(wing.axis)
@@ -1290,59 +1182,6 @@ func _assemble_roof(ctx: Dictionary, wing: Dictionary) -> void:
 			continue
 		_assemble_gable(ctx, axis, end, u0 if end == 0 else u1, v0, v1,
 			eave_y, profile, float(wing.get("verge_min" if end == 0 else "verge_max", -1.0)), tight_sides)
-	if wing.has("lean_min") or wing.has("lean_max"):
-		_lean_roof_end(ctx, wing, first_part, p_min, p_max)
-
-
-## One roof wing's placements (fitters test a candidate wing before committing it).
-func roof_parts(mass: BuildingMass, wing: Dictionary) -> Array[Dictionary]:
-	var out: Array[Dictionary] = []
-	_assemble_roof({"mass": mass, "out": out, "serial": 0}, wing)
-	return out
-
-
-## A growing house's top storey leans past its gable end: that end of the roof
-## (gable, barge boards, end slope/eave/top pieces, ridge end) moves out with it,
-## and a copy of each moved roof piece, clipped to the opened strip between the
-## last middle piece and the moved end, closes the roof. KitGrowingFronts only
-## sets lean_* on wings of kits without edge caps (pieces centred on modules).
-func _lean_roof_end(ctx: Dictionary, wing: Dictionary, first_part: int, p_min: int, p_max: int) -> void:
-	if kit.roof_edge_caps:
-		return
-	var axis := int(wing.axis)
-	var coordinate := 0 if axis == 0 else 2
-	var fillers: Array[Dictionary] = []
-	for end: int in [0, 1]:
-		var lean := float(wing.get("lean_max" if end == 1 else "lean_min", 0.0))
-		if lean <= 0.0:
-			continue
-		var sign := 1.0 if end == 1 else -1.0
-		var edge := float(p_max if end == 1 else p_min)
-		var seam := edge - sign * 0.5
-		var reach := lean / kit.module_width
-		var offset := Vector3.ZERO
-		offset[coordinate] = sign * lean
-		for i in range(first_part, (ctx.out as Array).size()):
-			var part: Dictionary = ctx.out[i]
-			var role := String(part.role)
-			if role.begins_with("chimney.") or role == "trim.ridge_peak":
-				continue
-			var original: Transform3D = part.transform
-			if sign * (original.origin[coordinate] / kit.module_width - edge) < -0.25:
-				continue
-			part.transform = Transform3D(original.basis, original.origin + offset)
-			part["lean_end"] = true
-			if role.begins_with("roof.") or role.begins_with("trim.ridge"):
-				var filler := part.duplicate()
-				filler.transform = original
-				filler.erase("lean_end")
-				filler["lean_filler"] = true
-				filler["stable_id"] = StringName("%s.lean" % String(part.stable_id))
-				filler["clip_volumes"] = preload("res://scripts/terrain/features/villages/kit/KitRoofMeshUnion.gd").clip_volumes(
-					{"axis": axis, "clip_min": minf(seam, seam + sign * reach),
-						"clip_max": maxf(seam, seam + sign * reach)}, kit)
-				fillers.append(filler)
-	(ctx.out as Array).append_array(fillers)
 
 
 func _roof_cap_at(wing: Dictionary, role: StringName, end: int, first: int,
