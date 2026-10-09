@@ -195,12 +195,12 @@ notes = "Town taste knobs (Oct 7) task 6: chance a reserved cottage (house site)
 script = ExtResource("2")
 name = &"growing_house_chance"
 kind = 0
-at_small = 0.0
-at_large = 0.0
-spread = 0.0
+at_small = 0.3
+at_large = 0.45
+spread = 0.1
 clamp_min = 0.0
 clamp_max = 1.0
-notes = "Growing upper floors (Oct 8) task 1, Amendment 2 (Oct 9): share of eligible houses (two stacked storeys and an exposed face) whose lower storeys step in under a fixed top storey and roof, rolled per house stable id (KitGrowingFronts.house_grows). A growing house takes no inset jetties. 0 = today. Shipped default (task 11): 0.3 small -> 0.45 large, spread 0.1."
+notes = "Growing upper floors (Oct 8) task 1, Amendment 2 (Oct 9): share of eligible houses (two stacked storeys and an exposed face) whose lower storeys step in under a fixed top storey and roof, rolled per house stable id (KitGrowingFronts.house_grows). A growing house takes no inset jetties. 0 = the pre-growth towns. Shipped (task 11): 0.3 small -> 0.45 large, spread 0.1."
 
 [sub_resource type="Resource" id="growth_street_face_chance"]
 script = ExtResource("2")

@@ -13,7 +13,7 @@ func test_growth_knobs_are_in_the_table_with_their_shipped_values() -> void:
 	assert_false(program.knobs.has(&"growth_gable_front_boost"), "removed by spec Amendment 2")
 	for size: float in [0.0, 1.0]:
 		var c := TownCharacter.draw(program, 53, size)
-		assert_eq(c.value(GROWTH.HOUSE_KNOB), 0.0)
+		assert_between(c.value(GROWTH.HOUSE_KNOB), lerpf(0.3, 0.45, size) - 0.1, lerpf(0.3, 0.45, size) + 0.1)
 		assert_almost_eq(c.value(GROWTH.STREET_FACE_KNOB), 0.85, 1e-6)
 		assert_eq(c.weights(GROWTH.STEP_KNOB).keys(), [&"0.5", &"1.0"])
 		assert_gt(float(c.weights(GROWTH.STEP_KNOB)[&"1.0"]), float(c.weights(GROWTH.STEP_KNOB)[&"0.5"]),

@@ -7,7 +7,7 @@ const VALUES := {
 	&"plaza_ring_chance": 1.0, &"clearing_ring_chance": 1.0,
 	&"clearing_deco_density": 0.0, &"well_scale": 1.0,
 	&"satellite_reach_scale": 1.0, &"suburb_house_count": 0.0,
-	&"lone_house_path_chance": 1.0,
+	&"lone_house_path_chance": 1.0, &"growing_house_chance": 0.0,
 }
 
 static func merge(overrides: Dictionary = {}) -> Dictionary:

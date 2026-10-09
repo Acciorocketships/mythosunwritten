@@ -3,7 +3,9 @@ extends SceneTree
 ## GUI only (captures need a renderer):
 ##   Godot --path . -s res://tests/harness/suntail/building_gallery.gd -- \
 ##     --output DIR [--set replica|designer] [--count N] [--seed S] [--compare]
-##     [--growth STEP:CAP] (every exposed face of each designed house steps out)
+##     [--growth STEP:CAP] (every exposed face of each designed house steps in)
+##     [--street] (two facing rows along one lane instead of a grid, with eye-height
+##     views along the lane: a Shambles-style street of the gallery's houses)
 ## `replica` rebuilds the pack's House_1 from a BuildingMass beside the source
 ## prefab; `designer` lays out BuildingDesigner results on a grid.
 const GALLERY := preload("res://tests/harness/suntail/gallery_masses.gd")
@@ -15,6 +17,7 @@ var _seed := 1
 var _compare := false
 var _close := false
 var _growth := ""
+var _street := false
 
 
 func _init() -> void:
@@ -28,6 +31,7 @@ func _init() -> void:
 			"--compare": _compare = true
 			"--close": _close = true
 			"--growth": _growth = args[i + 1]
+			"--street": _street = true
 	DirAccess.make_dir_recursive_absolute(_out)
 	call_deferred("_run")
 
@@ -132,15 +136,34 @@ func _run() -> void:
 	var masses: Array[BuildingMass] = GALLERY.masses(_set, _count, _seed, kit)
 	var spacing := 26.0
 	var columns := int(ceil(sqrt(float(masses.size()))))
+	# --street: even houses on the north side of a lane, odd ones turned to face them
+	# from the south, each row packed along x with a narrow alley between houses.
+	const LANE := 5.0 # native m between the two rows' lot lines (10 m world)
+	const ALLEY := 1.0
+	var row_x := [0.0, 0.0]
 	for i in masses.size():
 		var at := Vector3(float(i % columns) * spacing, 0.0,
 			float(i / columns) * spacing)
-		spots.append(at + Vector3(4, 4, 4))
+		var frame := Transform3D(Basis.IDENTITY, at)
+		if _street:
+			var cells := {}
+			for storey: Dictionary in masses[i].storeys:
+				cells.merge(storey.cells)
+			var rect := BuildingDesigner._bounds(cells)
+			var lo := Vector2(rect.position) * kit.module_width
+			var size := Vector2(rect.size) * kit.module_width
+			var side := i % 2
+			if side == 0: # lot line (max z) on z = 0
+				frame = Transform3D(Basis.IDENTITY, Vector3(row_x[0] - lo.x, 0.0, -(lo.y + size.y)))
+			else: # turned half round: its min-z face becomes its lot line on z = LANE
+				frame = Transform3D(Basis(Vector3.UP, PI),
+					Vector3(row_x[1] + lo.x + size.x, 0.0, LANE + lo.y + size.y))
+			row_x[side] += size.x + ALLEY
+		spots.append(frame.origin + Vector3(4, 4, 4))
 		if not _growth.is_empty():
 			_grow(masses[i], kit)
 		var placements := assembler.assemble(masses[i])
-		BuildingKitAssembler.append_to_payload(placements,
-			Transform3D(Basis.IDENTITY, at), payload)
+		BuildingKitAssembler.append_to_payload(placements, frame, payload)
 	if _set == "replica" or _compare:
 		var prefab: Node3D = (load("res://assets/Raygeas/Models/Buildings/House_1.glb") as PackedScene).instantiate()
 		prefab.position = Vector3(-24, -1, 4)
@@ -149,6 +172,17 @@ func _run() -> void:
 	await _commit(stage, payload)
 	var centre := Vector3(float(columns - 1) * spacing * 0.5, 0,
 		float((masses.size() - 1) / columns) * spacing * 0.5)
+	if _street:
+		var length := maxf(row_x[0], row_x[1])
+		var eye := 0.9 # a person's eye in kit native metres (world = native x 2)
+		await _shoot(stage, Vector3(-3, eye, LANE * 0.5), Vector3(length, eye + 2.0, LANE * 0.5), "street_west", 60)
+		await _shoot(stage, Vector3(length + 3, eye, LANE * 0.5), Vector3(0, eye + 2.0, LANE * 0.5), "street_east", 60)
+		await _shoot(stage, Vector3(length * 0.3, eye, LANE * 0.8), Vector3(length * 0.7, eye + 3.0, -1.0), "street_north", 70)
+		await _shoot(stage, Vector3(length * 0.3, eye, LANE * 0.2), Vector3(length * 0.7, eye + 3.0, LANE + 1.0), "street_south", 70)
+		await _shoot(stage, Vector3(length * 0.5, 14.0, LANE + 16.0), Vector3(length * 0.5, 2.0, LANE * 0.5), "street_above", 55)
+		print("GALLERY_DONE ", _out)
+		quit()
+		return
 	await _shoot(stage, centre + Vector3(-10, 70, 90), centre, "overview", 50)
 	for i in spots.size():
 		var c := spots[i]

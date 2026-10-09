@@ -15,6 +15,9 @@ const FROZEN := preload("res://tests/fixtures/frozen_maze_source.gd")
 
 static var _projection_views: Array[Dictionary] = []
 static var _stepped_houses: Array[Dictionary] = []
+static var _growth_views: Array[Dictionary] = []
+static var _wrap_views: Array[Dictionary] = []
+static var _door_views: Array[Dictionary] = []
 var _out := "user://kit_town_review"
 var _jobs: Array = []
 var _legacy := false
@@ -145,6 +148,9 @@ static func town_payload(spatial: WarrenSpatialPlan, fabric: SettlementFabricPla
 		legacy: bool) -> EnvironmentInstancePayload:
 	var payload: EnvironmentInstancePayload
 	_projection_views.clear()
+	_growth_views.clear()
+	_wrap_views.clear()
+	_door_views.clear()
 	if legacy:
 		payload = SettlementFabricAssembler.payload(fabric)
 	else:
@@ -160,6 +166,44 @@ static func town_payload(spatial: WarrenSpatialPlan, fabric: SettlementFabricPla
 			var direction: Vector2i = BuildingMass.DIRS[int(projection.dir)]
 			_projection_views.append({"at": KitVillageBuildings.native_to_lattice(kit) * (projection.bounds as AABB).get_center(),
 				"direction": Vector3(direction.x, 0, direction.y)})
+		var houses := {}
+		for mass: BuildingMass in built.get("houses", []):
+			houses[mass.stable_id] = mass
+		for lean: Dictionary in built.get("growth", []):
+			var direction: Vector2i = BuildingMass.DIRS[int(lean.dir)]
+			var right: Vector2i = BuildingKitAssembler.right_of(int(lean.dir))
+			var box: AABB = lean.bounds
+			var mass: BuildingMass = houses.get(lean.host)
+			var ground := mass != null and int(lean.band) == mass.ground_band
+			if not ground:
+				continue
+			# The recess's outer face (the lot line), where a passer-by stands in front of it.
+			var front := box.get_center() + Vector3(direction.x, 0, direction.y) * box.size.dot(
+				Vector3(absf(direction.x), 0, absf(direction.y))) * 0.5
+			# The ground storey's floor under that point: eye heights are measured from it,
+			# not from the flat review ground (most towns stand on a raised massif).
+			var floor_at: Vector3 = KitVillageBuildings.native_to_lattice(kit) * Vector3(front.x,
+				mass.ground_band * kit.band_height(), front.z)
+			if ground:
+				_growth_views.append({"at": KitVillageBuildings.native_to_lattice(kit) * front,
+					"floor": floor_at, "direction": Vector3(direction.x, 0, direction.y), "lean": float(lean.lean)})
+				var storey: Dictionary = mass.storeys[preload("res://scripts/terrain/features/villages/kit/KitGrowingFronts.gd").ground_index(mass)]
+				for edge: Vector3i in lean.edges:
+					if StringName(storey.openings.get(edge, storey.default_opening)) == BuildingMass.OPENING_DOOR:
+						var door := (Vector3(edge.x + 0.5, 0, edge.y + 0.5) + Vector3(direction.x, 0, direction.y) * 0.5) \
+							* kit.module_width
+						_door_views.append({"at": KitVillageBuildings.native_to_lattice(kit) * door,
+							"floor": floor_at, "direction": Vector3(direction.x, 0, direction.y), "lean": float(lean.lean)})
+			for side in 2:
+				var kind := StringName((lean.closures as Array)[side])
+				if kind in [&"wrap", &"joint", &"bury"]:
+					# The end of the recess where the wrap/joint/bury is (side 0 = the -right end).
+					var reach := (box.size.x if right.x != 0 else box.size.z) * 0.5 * (-1.0 if side == 0 else 1.0)
+					_wrap_views.append({"at": KitVillageBuildings.native_to_lattice(kit) * (front + Vector3(right.x, 0, right.y) * reach),
+						"floor": floor_at, "direction": Vector3(direction.x, 0, direction.y), "right": Vector3(right.x, 0, right.y),
+						"kind": kind, "lean": float(lean.lean)})
+		_growth_views.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return float(a.lean) < float(b.lean))
+		_door_views.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return float(a.lean) < float(b.lean))
 		_stepped_houses.clear()
 		for mass: BuildingMass in built.masses:
 			if not mass.storeys.any(func(f:Dictionary)->bool:return f.get("stepped_wing",false)): continue
@@ -188,6 +232,16 @@ static func town_payload(spatial: WarrenSpatialPlan, fabric: SettlementFabricPla
 	if not legacy:
 		payload = KitSubstitution.apply(payload)
 	return payload
+
+
+## The camera position on the way from `from` (known clear) to `to`, stopped short of
+## the first collision, so a review camera never ends up inside a wall or the massif.
+func _clear_eye(stage: Node3D, from: Vector3, to: Vector3) -> Vector3:
+	var hit := stage.get_world_3d().direct_space_state.intersect_ray(
+		PhysicsRayQueryParameters3D.create(from, to))
+	if hit.is_empty():
+		return to
+	return (hit.position as Vector3) + (from - to).normalized() * 0.4
 
 
 func _shoot(stage: Node3D, eye: Vector3, target: Vector3, name: String,
@@ -406,6 +460,65 @@ func _run() -> void:
 					print("PROJECTION_VIEW ", seed_value, " ", index, " ", sign_value, " eye=", eye, " target=", target)
 					await _shoot(stage, eye, target, "%d_%s_projection%d_%d" % [seed_value, scale, index, sign_value], 75)
 
+		if _views.has("growth") or _views.has("wrap") or _views.has("door"):
+			await physics_frame # the review cameras below ray-test the committed collision
+			await physics_frame
+		if _views.has("growth"):
+			# Shambles framing: stand in the lane in front of the deepest stepped-in ground
+			# storeys and look along the lane at eye height; then look up at the jetties.
+			for index in mini(6, _growth_views.size()):
+				var view: Dictionary = _growth_views[index]
+				var target: Vector3 = town.transform * (view.at as Vector3)
+				var outward: Vector3 = (town.transform.basis * (view.direction as Vector3)).normalized()
+				var along := outward.cross(Vector3.UP).normalized()
+				var foot := _clear_eye(stage, target + outward * 0.6, target + outward * 3.0)
+				foot.y = (town.transform * (view.floor as Vector3)).y + 1.8
+				# Look along the lane from whichever side has more room behind the camera.
+				var back := _clear_eye(stage, foot, foot - along * 10.0)
+				var other := _clear_eye(stage, foot, foot + along * 10.0)
+				if other.distance_to(foot) > back.distance_to(foot):
+					along = -along
+					back = other
+				await _shoot(stage, back, foot + along * 20.0 - outward * 2.0 + Vector3.UP * 3.0,
+					"%d_%s_growth%d_lane" % [seed_value, scale, index], 70)
+				target.y = foot.y - 1.8
+				await _shoot(stage, _clear_eye(stage, foot, target + outward * 5.0 + Vector3.UP * 1.6),
+					target + Vector3.UP * 3.5,
+					"%d_%s_growth%d_up" % [seed_value, scale, index], 75)
+		if _views.has("wrap"):
+			# Wrapped corners, row joints and buried ends: an oblique from the street at eye
+			# height and a square-on view from the side.
+			_wrap_views.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+				return String(a.kind) + str(a.lean) < String(b.kind) + str(b.lean))
+			# At most three of each closure kind, so every kind present gets its views.
+			var per_kind := {}
+			for index in _wrap_views.size():
+				var view: Dictionary = _wrap_views[index]
+				per_kind[view.kind] = int(per_kind.get(view.kind, 0)) + 1
+				if int(per_kind[view.kind]) > 3:
+					continue
+				var target: Vector3 = town.transform * (view.at as Vector3)
+				var floor_y: float = (town.transform * (view.floor as Vector3)).y
+				target.y = floor_y + 1.5
+				var outward: Vector3 = (town.transform.basis * (view.direction as Vector3)).normalized()
+				var side: Vector3 = (town.transform.basis * (view.right as Vector3)).normalized()
+				var eye := target + outward * 7.0 + side * 5.0
+				eye.y = floor_y + 1.8
+				await _shoot(stage, _clear_eye(stage, target + outward * 1.0, eye), target + Vector3.UP * 2.0,
+					"%d_%s_%s%d_street" % [seed_value, scale, view.kind, index], 70)
+				await _shoot(stage, _clear_eye(stage, target + outward * 1.0, target + side * 9.0 + outward * 1.0 + Vector3.UP * 1.0), target,
+					"%d_%s_%s%d_side" % [seed_value, scale, view.kind, index], 60)
+		if _views.has("door"):
+			# Recessed shopfront doors: from the lot line at eye height, looking in under the
+			# overhang at the door and its doorstep.
+			for index in mini(6, _door_views.size()):
+				var view: Dictionary = _door_views[index]
+				var target: Vector3 = town.transform * (view.at as Vector3)
+				var outward: Vector3 = (town.transform.basis * (view.direction as Vector3)).normalized()
+				target.y = (town.transform * (view.floor as Vector3)).y
+				var eye := _clear_eye(stage, target + outward * 0.5 + Vector3.UP * 1.7, target + outward * 4.0 + Vector3.UP * 1.7)
+				await _shoot(stage, eye, target + Vector3.UP * 1.2,
+					"%d_%s_door%d" % [seed_value, scale, index], 70)
 		if _views.has("turrets"):
 			var supports := {"transforms":[]}
 			for base: StringName in [&"pure_village.tower.base",&"pure_village.tower.half_support",&"pure_village.tower.half_base",&"pure_village.roof_turret.window"]:

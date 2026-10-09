@@ -1,3 +1,20 @@
+> GROWING UPPER FLOORS (Oct 8–9, spec `docs/superpowers/specs/2026-10-08-growing-upper-floors-design.md` incl. its two owner amendments, result
+> `docs/qa/2026-10-08-growing-floors/result.md`): `KitGrowingFronts` (kit layer only; after towers, before projections/bays in `KitVillageBuildings.build`) makes
+> some houses step IN the Suntail/Shambles way: on any exposed face of a house with two stacked storeys the roof and the top storey stay on the footprint and each
+> lower storey stands one kit jetty (1.0 native m; 0.5 for the light step) further in, so the ground storey is the narrowest and every upper storey overhangs the
+> one below (`growing_house_chance` 0.3→0.45 spread 0.1, both face chances 0.85, `growth_step` {0.5:1, 1.0:3}, `growth_max_lean` 2.0 = the ground storey's total
+> step-in; `lane_sky_gap` inert; no gable-front boost). Faces step as FRONTS with one monotone capped profile re-referenced to the top storey (`offsets_of`:
+> storey k at `lean_k - top`, ground at `-top`); a front steps only up to its shortest member's top. Closures: `return` (the perpendicular corner panel shortens
+> to the baked `frontage.return.dNNN` strip or drops for a whole module; post at the new corner), `wrap` (convex corner of one house, both panels shortened, one
+> post, inner `frontage.corner.dNNN` floor square), `joint` (coplanar row stepping together; no pieces), `bury` (own cell beside the end: a strip on the vertex
+> line closes the recess). Writes negative `wall_offsets` + growth records `projections{growth, depth, base, closures}` (signed) + `storey.growth[dir]`; the
+> assembler trims stepped-in upper floors (ground floor stays whole: paving to a recessed shopfront door), carries each overhang on its floor beam with
+> `bracket.jetty` (`bracket.small`) on wall-module joints only (never over a window/door head), and return beams at open sides. Guardrails (cap drops one step; a
+> member that cannot take the first step leaves): air/obstacles inside the recess, recess claims, portals (passages, blanks, balconies; upper doors and bays on a
+> stepped-in run), material (stone only whole modules), party (never against a touching building), bearing (≥1 module behind, ≥2 across a two-sided axis), porch
+> posts, end closure. Roofs never move (the October 8 roof-following was removed). Withdrawals per cause (`growth_rejections`); audit `growth_corpus_audit.gd` +
+> `tests/fixtures/growth_audit.gd`. Zero chance is byte-identical (old-look fixture pins 0); fingerprint baseline re-pinned for the defaults.
+
 > ROOF PROPORTION (Oct 8, `docs/qa/2026-10-08-roof-proportion/result.md`): `BuildingDesigner.roof_proportion_ok` is a guardrail on every kit pitched roof: at most
 > `MAX_GABLE_STOREYS` 2 storeys of gable and at most `MAX_ROOF_SLENDERNESS` 3x as tall as its ridge is long. A house wing that fails turns, becomes a double pile
 > (`pile_rects`) or a terrace; a one-module bridge-house whose transverse gatehouse roof fails (gap >= 5: 31/large with clearings had a 12 m roof on a 2 m ridge)
