@@ -1,0 +1,48 @@
+Godot Engine v4.5.1.stable.mono.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_water_frame_cache_eviction.gd
+[0m* test_full_frame_cache_evicts_one_entry_without_dropping_warm_frames
+[1m1/1 passed.
+[0m[4m
+
+res://tests/test_water_sampler_release.gd
+[0m* test_metadata_and_ripple_owners_release_only_after_their_frames_return
+[1m1/1 passed.
+[0m[4m
+
+res://tests/test_incremental_atmosphere_lifetime.gd
+[0m* test_attached_chunk_keeps_pending_ownership_until_its_fx_steps_finish
+[1m1/1 passed.
+[0m[4m
+
+res://tests/test_terrain_retirement_queue.gd
+[0m* test_detaches_immediately_and_destroys_at_most_the_requested_nodes
+* test_shutdown_frees_a_partly_walked_tree_and_waiting_roots
+[1m2/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               4
+Tests                 5
+Passing Tests         5
+Asserts             117
+Time              0.72s
+
+
+[32m---- All tests passed! ----
+[0m

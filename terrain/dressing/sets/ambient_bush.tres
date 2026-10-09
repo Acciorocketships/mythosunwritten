@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="DressingSet" load_steps=17 format=3]
+[gd_resource type="Resource" script_class="DressingSet" load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingChoice.gd" id="1_choice"]
 
@@ -16,11 +16,6 @@ script = ExtResource("1_choice")
 asset_id = &"meadow.birch_bush.02.summer"
 biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.0, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 1.0, &"amber_heath": 0.0, &"jade_wetlands": 1.0}
 
-[sub_resource type="Resource" id="Choice_4"]
-script = ExtResource("1_choice")
-asset_id = &"meadow.birch_bush.04.summer"
-biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.0, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 1.0, &"amber_heath": 0.0, &"jade_wetlands": 1.0}
-
 [sub_resource type="Resource" id="Choice_5"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.birch_bush.05.summer"
@@ -36,11 +31,6 @@ script = ExtResource("1_choice")
 asset_id = &"meadow.birch_bush.02.autumn"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.0, &"blossom_grove": 1.0, &"twilight_marsh": 0.0, &"amber_heath": 1.0, &"jade_wetlands": 0.0}
 
-[sub_resource type="Resource" id="Choice_9"]
-script = ExtResource("1_choice")
-asset_id = &"meadow.birch_bush.04.autumn"
-biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.0, &"blossom_grove": 1.0, &"twilight_marsh": 0.0, &"amber_heath": 1.0, &"jade_wetlands": 0.0}
-
 [sub_resource type="Resource" id="Choice_10"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.birch_bush.05.autumn"
@@ -54,11 +44,6 @@ biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 1.0, &"bloss
 [sub_resource type="Resource" id="Choice_12"]
 script = ExtResource("1_choice")
 asset_id = &"meadow.birch_bush.02.winter"
-biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 1.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.0, &"amber_heath": 0.0, &"jade_wetlands": 0.0}
-
-[sub_resource type="Resource" id="Choice_14"]
-script = ExtResource("1_choice")
-asset_id = &"meadow.birch_bush.04.winter"
 biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 1.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.0, &"amber_heath": 0.0, &"jade_wetlands": 0.0}
 
 [sub_resource type="Resource" id="Choice_15"]
@@ -79,7 +64,7 @@ script = ExtResource("2_set")
 id = &"ambient.bush"
 visual_ground_support = true
 feature_clearance = 0.3
-choices = Array[ExtResource("1_choice")]([SubResource("Choice_1"), SubResource("Choice_2"), SubResource("Choice_4"), SubResource("Choice_5"), SubResource("Choice_6"), SubResource("Choice_7"), SubResource("Choice_9"), SubResource("Choice_10"), SubResource("Choice_11"), SubResource("Choice_12"), SubResource("Choice_14"), SubResource("Choice_15")])
+choices = Array[ExtResource("1_choice")]([SubResource("Choice_1"), SubResource("Choice_2"), SubResource("Choice_5"), SubResource("Choice_6"), SubResource("Choice_7"), SubResource("Choice_10"), SubResource("Choice_11"), SubResource("Choice_12"), SubResource("Choice_15")])
 fill_per_cell = {&"meadow": 0.45, &"deep_forest": 0.7, &"highland": 0.35, &"blossom_grove": 0.6, &"twilight_marsh": 0.85, &"amber_heath": 0.45, &"jade_wetlands": 0.85}
 habitat_layers = Array[ExtResource("3_habitat")]([SubResource("CanopyEdge")])
 community_channel = &"shrub_species"

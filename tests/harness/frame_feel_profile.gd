@@ -64,6 +64,7 @@ var _return_status := {}
 var _shots_dir := ""
 var _view_shots := ""
 var _prespin := false
+var _terrain_radius := -1
 # Exact per-frame spans: this node runs first (priority -1000) and a tail
 # node runs last, so their difference is every script's _process (resp.
 # _physics_process) time this frame. The Performance monitors are not usable
@@ -88,6 +89,7 @@ func _ready() -> void:
 			"--shared-profile": TerrainTileField.cliff_end = TerrainTileField.CliffEnd.SHARED_PROFILE
 			"--seed": _seed = int(next)
 			"--phase-seconds": _phase_seconds = float(next)
+			"--terrain-radius": _terrain_radius = maxi(1, int(next))
 			"--fixed-route": _fixed_route = true
 			"--return-to-start": _return_to_start = true
 			"--report": _report_path = next
@@ -147,6 +149,9 @@ func _ready() -> void:
 	_rig = _world.get_node("Camera3D")
 	_camera = _rig as Camera3D
 	_streamer.SEED_OVERRIDE = _seed
+	if _terrain_radius > 0:
+		_streamer.CHUNK_RADIUS = _terrain_radius
+		_streamer.KEEP_RADIUS = _terrain_radius + 1
 	_player.position = Vector3(_x, 32.0, _z)
 	add_child(_world)
 	_tail = Tail.new()
@@ -615,7 +620,7 @@ func _finish() -> void:
 			"memory_mb": _stats(pick.call("memory_mb")), "nodes": _stats(pick.call("nodes")),
 			"frozen_frames": rows.filter(func(r:Dictionary)->bool:return r.frozen).size(),
 			"physics_ticks_per_frame": tick_hist, "turn_error": _stats(judder)}
-	var result := {"seed": _seed, "grass_lod_bias": GrassStreamer.BLADE_LOD_BIAS, "fixed_route": _fixed_route, "return_to_start": _return_status, "steady_render": _steady_status, "viewport": str(get_viewport().get_visible_rect().size),
+	var result := {"seed": _seed, "terrain_radius": _streamer.CHUNK_RADIUS, "keep_radius": _streamer.KEEP_RADIUS, "grass_lod_bias": GrassStreamer.BLADE_LOD_BIAS, "fixed_route": _fixed_route, "return_to_start": _return_status, "steady_render": _steady_status, "viewport": str(get_viewport().get_visible_rect().size),
 		"window": str(get_window().size), "screen_scale": DisplayServer.screen_get_scale(),
 		"refresh": DisplayServer.screen_get_refresh_rate(),
 		"vsync": DisplayServer.window_get_vsync_mode(), "max_fps": Engine.max_fps,

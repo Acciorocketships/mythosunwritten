@@ -1,0 +1,27 @@
+extends GutTest
+class FlatWater extends WaterPlan:
+	func noise_h(_p:Vector2)->float:return 80.0
+
+func test_lower_returning_reach_does_not_excavate_the_upstream_centre()->void:
+	var plan:=FlatWater.new(99,480.0,120)
+	var trace:=RiverTrace.new()
+	trace.points=PackedVector2Array([Vector2(1000,1000),Vector2(1100,1000),Vector2(1100,1012),Vector2(1000,1012)])
+	trace.widths=PackedFloat32Array([20,20,20,20])
+	trace.beds=PackedFloat32Array([32,32,8,8])
+	var bucket:=Vector2i(floori(1050.0/WaterPlan.TILE+.5),floori(1000.0/WaterPlan.TILE+.5))
+	var region:Dictionary={"ponds":[],"segments":{bucket:[trace,0,trace,1,trace,2]}}
+	var bed:=80.0-plan._carve_region(region,1050,1000)
+	assert_almost_eq(bed,32.0-WaterPlan.CARVE_BED_EXTRA,.000001,"upstream centre retains its own bed")
+	region.segments[bucket]=[trace,2,trace,1,trace,0]
+	assert_eq(80.0-plan._carve_region(region,1050,1000),bed,"segment inventory order cannot change the channel")
+
+func test_low_river_wide_bank_cannot_quarry_a_high_neighbouring_slope()->void:
+	var plan:=FlatWater.new(99,480.0,120)
+	var trace:=RiverTrace.new()
+	trace.points=PackedVector2Array([Vector2(1000,1000),Vector2(1100,1000)])
+	trace.widths=PackedFloat32Array([24,24])
+	trace.beds=PackedFloat32Array([8,8])
+	var p:=Vector2(1050,1050)
+	var bucket:=Vector2i(floori(p.x/WaterPlan.TILE+.5),floori(p.y/WaterPlan.TILE+.5))
+	var region:Dictionary={"ponds":[],"segments":{bucket:[trace,0]}}
+	assert_eq(plan._carve_region(region,p.x,p.y),0.0,"the wide bank cannot cut 50 m into a high slope")

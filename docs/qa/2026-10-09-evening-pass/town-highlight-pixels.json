@@ -1,0 +1,10 @@
+{
+  "before": {
+    "all_channels_ge_250_pct": 10.447916666666666,
+    "any_channel_ge_250_pct": 72.10673611111112
+  },
+  "after": {
+    "all_channels_ge_250_pct": 0.0,
+    "any_channel_ge_250_pct": 0.5299305555555556
+  }
+}

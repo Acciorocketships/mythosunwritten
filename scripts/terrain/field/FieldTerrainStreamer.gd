@@ -43,8 +43,11 @@ signal startup_loading_completed
 
 @export var player: Node3D
 @export var terrain_parent: Node
-@export var CHUNK_RADIUS: int = 3
-@export var KEEP_RADIUS: int = 4
+# A 7x7 detailed ring grew to ~13 GiB during the manual pass. Keep the
+# fully detailed 5x5 ring plus one eviction ring; the frontier fog covers
+# the shorter horizon. These remain inspector-tunable for larger machines.
+@export var CHUNK_RADIUS: int = 2
+@export var KEEP_RADIUS: int = 3
 # Exact nearby collision, validated through sustained travel and teleport arrival.
 static var COLLISION_RESIDENCY := true
 ## Player capsule radius is 0.398 m; at 10 m/s its next 60 Hz step is 0.167 m.
@@ -1271,6 +1274,8 @@ func _process(_delta: float) -> void:
 				_static_trample_changes[c] = null
 				_static_trample_dirty = true
 			_terrain_generation[c] = int(_terrain_generation.get(c, 0)) + 1
+			# Detaching one tree is synchronous; spread a crossed row over frames.
+			break
 	var feature_keep := KEEP_RADIUS + _feature_program.geometry_halo
 	for c: Vector2i in _feature_ready.keys():
 		if maxi(absi(c.x - centre.x), absi(c.y - centre.y)) > feature_keep:
@@ -1280,6 +1285,7 @@ func _process(_delta: float) -> void:
 				_feature_nodes.erase(c)
 			_feature_ready.erase(c)
 			_feature_generation[c] = int(_feature_generation.get(c, 0)) + 1
+			break
 	for c: Vector2i in _feature_queue.pending_chunks():
 		if maxi(absi(c.x - centre.x), absi(c.y - centre.y)) > feature_keep:
 			_feature_queue.invalidate_chunk(c)
@@ -1588,25 +1594,33 @@ func _integrate_pending_terrain(centre: Vector2i) -> void:
 			step = Callable()
 			_release_off_main(finished)
 			integrated += 1
-	# Drop results that can no longer integrate (stale or out of range).
-	var remaining: Array[Dictionary] = []
-	var stale: Array[Dictionary] = []
-	for result: Dictionary in _pending_terrain:
-		var c: Vector2i = result.chunk
-		if int(_terrain_generation.get(c, 0)) == int(result.terrain_generation) \
-				and not _built.has(c) \
-				and maxi(absi(c.x - centre.x), absi(c.y - centre.y)) <= KEEP_RADIUS:
-			remaining.append(result)
-		elif not (not _integrating.is_empty() and is_same(_integrating.result, result)):
-			stale.append(result)
-	_pending_terrain = remaining
-	_drop_box.append_array(stale)
-	stale = []
+	_prune_pending_terrain(centre)
 	var frame_usec := Time.get_ticks_usec() - frame_started
 	if LOG_SLOW_FRAMES and frame_usec >= 3 * SLOW_FRAME_USEC:
 		print("[terrain-streamer] slow_integrate_frame ms=%.1f next=%.1f index=%.1f steps=%.1f pending=%d" % [
 			frame_usec / 1000.0, t_next / 1000.0, t_index / 1000.0, t_steps / 1000.0, _pending_terrain.size()])
 	_telemetry.timing(&"main/integrate_frame", Time.get_ticks_usec() - frame_started)
+
+func _prune_pending_terrain(centre: Vector2i) -> void:
+	# Drop results that can no longer integrate (stale or out of range).
+	var remaining: Array[Dictionary] = []
+	var stale: Array[Dictionary] = []
+	for result: Dictionary in _pending_terrain:
+		if not _integrating.is_empty() and is_same(_integrating.result, result):
+			# Attach publishes _built before the incremental FX steps finish.
+			# Keep ownership until completion or explicit cancellation.
+			remaining.append(result)
+			continue
+		var c: Vector2i = result.chunk
+		if int(_terrain_generation.get(c, 0)) == int(result.terrain_generation) \
+				and not _built.has(c) \
+				and maxi(absi(c.x - centre.x), absi(c.y - centre.y)) <= KEEP_RADIUS:
+			remaining.append(result)
+		else:
+			stale.append(result)
+	_pending_terrain = remaining
+	_drop_box.append_array(stale)
+	stale = []
 
 ## Nearest pending result whose feature square is ready (_pending_terrain is
 ## kept sorted nearest-first by _drain_results).
@@ -1632,7 +1646,7 @@ func _abandon_integration() -> void:
 	for key: String in ["node", "fx"]:
 		var node: Variant = _integrating_node_ref.get(key)
 		if is_instance_valid(node) and node.get_parent() == null:
-			_retirement.enqueue(node)
+			_retire_terrain(node)
 	_integrating_node_ref = {}
 	var abandoned := _integrating
 	_integrating = {}
@@ -1662,6 +1676,9 @@ func _retire_terrain(node: Node) -> void:
 	if node.has_meta(&"grass_sampling"):
 		_drop_box.append(node.get_meta(&"grass_sampling"))
 		node.remove_meta(&"grass_sampling")
+	var water: Node = node.get_node_or_null("Water")
+	if water != null:
+		_drop_box.append(preload("res://scripts/terrain/water/WaterSamplerRelease.gd").take_from(water))
 	_retirement.enqueue(node)
 
 ## One pool task empties the box, so its payloads die there. Called at the

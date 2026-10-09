@@ -2,6 +2,7 @@ class_name AtmosphereDirector
 extends Node
 
 static var last_process_usec := 0
+static var last_sections: Dictionary = {}
 
 ## A continuous biome mood changes the shared sky and lighting gradually.
 ## Local mist still follows the world-space terrain and biome field.
@@ -60,12 +61,14 @@ func _apply_grade() -> void:
 	var env := environment_node.environment
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	env.tonemap_exposure = 1.05
+	# Reserve headroom for pale sunlit surfaces and emissive lights.
+	env.tonemap_white = 2.0
 	env.glow_enabled = true
 	env.glow_bloom = GLOW_BLOOM
 	env.glow_hdr_threshold = GLOW_HDR_THRESHOLD
 	env.glow_intensity = 0.8
-	env.glow_strength = 1.1
-	env.glow_normalized = false
+	env.glow_strength = 0.6
+	env.glow_normalized = true
 	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_ADDITIVE
 	for i in 7: env.set_glow_level(i, [0.4, 0.9, 0.65, 0.3, 0.12, 0.0, 0.0][i])
 	env.adjustment_enabled = true
@@ -120,11 +123,15 @@ func _apply_grade() -> void:
 
 func _process(dt: float) -> void:
 	var profile_start := Time.get_ticks_usec()
+	var section_start := profile_start
 	_publish_leaf_lod_camera()
 	if is_instance_valid(_light_budget): _light_budget.update_lights(camera, quality)
 	for wisp in get_tree().get_nodes_in_group("atmosphere_mist_wisp"):
 		if camera != null and wisp.get_world_3d() == camera.get_world_3d():
 			wisp.visible = quality >= 1
+	last_sections.clear()
+	last_sections["lights"] = Time.get_ticks_usec()-section_start
+	section_start = Time.get_ticks_usec()
 	if not Helper.is_headless() and streamer != null and player != null:
 		_underwater.camera=camera
 		_underwater.world_seed=streamer.world_seed
@@ -133,9 +140,16 @@ func _process(dt: float) -> void:
 		# idempotent and changes only draw counts, never worker-generated payloads.
 		if streamer._grass_streamer != null:
 			streamer._grass_streamer.set_density_scale(ECONOMICAL_GRASS_DENSITY if quality == 0 else 1.0)
+		last_sections["ground_map"] = Time.get_ticks_usec()-section_start
+		section_start = Time.get_ticks_usec()
 		_update_mood(dt, Helper.biome_weights5(player.global_position,streamer.world_seed))
+		last_sections["mood"] = Time.get_ticks_usec()-section_start
+		section_start = Time.get_ticks_usec()
 		_underwater.update_view()
+		last_sections["underwater"] = Time.get_ticks_usec()-section_start
+		section_start = Time.get_ticks_usec()
 		_frontier.update_view(camera, streamer._built, frontier_color())
+		last_sections["frontier"] = Time.get_ticks_usec()-section_start
 
 	last_process_usec = Time.get_ticks_usec() - profile_start
 

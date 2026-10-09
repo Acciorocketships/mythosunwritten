@@ -66,6 +66,9 @@ var _compression: PackedFloat32Array # nx*nz, max(0,-divergence)
 const FRAME_CELL := 0.25
 const FRAME_CACHE_CAP := 65536
 var _frames: Dictionary = {}
+var _frame_keys: Array[Vector2i] = []
+var _frame_next := 0
+var _frame_lock := Mutex.new()
 var _current_surface := preload("res://scripts/terrain/water/WaterCurrentSurface.gd").new()
 
 
@@ -291,12 +294,21 @@ func current_frame_at(xz: Vector2) -> PackedVector2Array:
 ## The surface frame at the FRAME_CELL lattice point nearest xz (memoized).
 func _surface_frame(xz: Vector2) -> PackedVector2Array:
 	var key := Vector2i((xz / FRAME_CELL).round())
+	_frame_lock.lock()
 	var frame: Variant = _frames.get(key)
+	_frame_lock.unlock()
 	if frame == null:
-		if _frames.size() >= FRAME_CACHE_CAP:
-			_frames.clear()
 		frame = WaterCurrentField.sample_surface_frame(Vector2(key) * FRAME_CELL, _current_surface_level_at)
+		_frame_lock.lock()
+		if not _frames.has(key):
+			if _frame_keys.size() < FRAME_CACHE_CAP:
+				_frame_keys.append(key)
+			else:
+				_frames.erase(_frame_keys[_frame_next])
+				_frame_keys[_frame_next] = key
+				_frame_next = (_frame_next + 1) % FRAME_CACHE_CAP
 		_frames[key] = frame
+		_frame_lock.unlock()
 	return frame
 
 
@@ -341,3 +353,10 @@ func wave_scale_at(xz: Vector2) -> float:
 	for cnr: Array in corners:
 		scale += _wave_scale[cnr[1] * _nx + cnr[0]] * cnr[2]
 	return clampf(scale, 0.0, 1.0)
+
+
+func frame_cache_size() -> int:
+	_frame_lock.lock()
+	var size := _frames.size()
+	_frame_lock.unlock()
+	return size

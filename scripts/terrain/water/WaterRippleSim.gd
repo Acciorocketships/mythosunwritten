@@ -8,6 +8,8 @@
 class_name WaterRippleSim
 extends Node
 
+static var last_sampler_count := 0
+static var last_frame_cache_entries := 0
 static var last_process_usec := 0
 static var last_packets_usec := 0
 static var last_flow_usec := 0
@@ -47,6 +49,7 @@ var _flow_tex: ImageTexture
 var _flow_image: Image
 var _flow_refresh := 0.0
 var _samplers: Array[WaterSampler] = []
+var _sampler_release := preload("res://scripts/terrain/water/WaterSamplerRelease.gd").new()
 ## Flow texel per world 3 m lattice cell. The samplers are frozen per chunk,
 ## so a texel only changes when the sampler set does (then this is cleared);
 ## a moving origin resamples just the newly exposed rows and columns.
@@ -136,6 +139,9 @@ func _refresh_samplers() -> bool:
 			continue
 		seen[key] = true
 		_samplers.append(sampler)
+	last_sampler_count = _samplers.size()
+	last_frame_cache_entries = 0
+	for sampler in _samplers: last_frame_cache_entries += sampler.frame_cache_size()
 	var ids := PackedInt64Array(seen.keys())
 	ids.sort()
 	if ids == _sampler_ids:
@@ -146,6 +152,9 @@ func _refresh_samplers() -> bool:
 	for sampler: WaterSampler in _samplers:
 		if not _sampler_ids.has(sampler.get_instance_id()): changed.append(sampler)
 	_invalidate_flow_cells(changed)
+	# The removed sampler may now have no scene owner. Hold it past this
+	# stack frame so its large frozen field/cache cannot die here.
+	_sampler_release.hold(previous)
 	_sampler_ids = ids
 	return true
 
@@ -380,6 +389,7 @@ func save_debug_images(prefix: String) -> void:
 
 func _process(delta: float) -> void:
 	var profile_start := Time.get_ticks_usec()
+	_sampler_release.flush()
 	var nxt: int = 1 - _cur
 	var old_origin: Vector2 = _origin
 	var new_origin: Vector2 = _snapped_origin()
@@ -449,3 +459,9 @@ func _process(delta: float) -> void:
 	wm.set_shader_parameter("packet_size", PACKET_DOMAIN)
 	wm.set_shader_parameter("packet_center", _player_xz())
 	last_process_usec = Time.get_ticks_usec() - profile_start
+
+
+func _exit_tree() -> void:
+	_sampler_release.hold(_samplers)
+	_samplers = []
+	_sampler_release.finish()

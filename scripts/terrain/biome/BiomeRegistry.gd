@@ -18,12 +18,12 @@ const FOLIAGE_CAST := 0.75
 # A fixed sun direction keeps shadow orientation coherent during transitions.
 const LIGHTING := {
 	&"meadow": ["8cbedb","ffecd3","c2d5e4",0.68,"ffe5bd",1.40,0.72],
-	&"deep_forest": ["354c68","84978e","91a4b0",0.34,"ffe4bb",1.05,0.92],
+	&"deep_forest": ["354c68","84978e","91a4b0",0.24,"ffe4bb",0.72,0.92],
 	&"highland": ["97bedb","e7e3e7","b8cee1",0.48,"f0edff",1.15,0.68],
 	&"blossom_grove": ["977b9e","eac0c0","94aac7",0.42,"ffd5c1",0.95,0.85],
-	&"twilight_marsh": ["1d2647","6f718f","7b85b1",0.30,"9dacce",0.28,1.05],
+	&"twilight_marsh": ["1d2647","6f718f","7b85b1",0.20,"9dacce",0.24,1.05],
 	&"amber_heath": ["af9588","f0c090","94a5bd",0.42,"ffd091",1.18,0.80],
-	&"jade_wetlands": ["558b96","bbd5c1","8dbbb2",0.48,"d8ead1",0.78,0.90],
+	&"jade_wetlands": ["558b96","bbd5c1","8dbbb2",0.34,"d8ead1",0.62,0.90],
 }
 
 # Lower mist scale, upper scale, upper contribution, emission, distant haze,

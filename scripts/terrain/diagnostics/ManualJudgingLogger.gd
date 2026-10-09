@@ -25,6 +25,7 @@ var _viewport: Viewport
 var _previous_sections: Dictionary = {}
 var _previous_components: Dictionary = {}
 var _last_frame_usec := 0
+var _runtime_probe: RefCounted
 
 func _ready() -> void:
 	process_priority = 2000
@@ -41,6 +42,10 @@ func _ready() -> void:
 		push_warning("Cannot open judging log: " + path)
 		set_process(false)
 		return
+	if ClassDB.class_exists(&"CSharpScript"):
+		var probe_script := load("res://scripts/native/NativeRuntimeProbe.cs") as Script
+		if probe_script != null and probe_script.can_instantiate():
+			_runtime_probe = probe_script.new()
 	_start = FrameStart.new()
 	_start.process_priority = -2000
 	_start.process_physics_priority = -2000
@@ -48,7 +53,8 @@ func _ready() -> void:
 	_viewport = get_viewport()
 	RenderingServer.viewport_set_measure_render_time(_viewport.get_viewport_rid(), true)
 	_file.store_line(JSON.stringify({"type": "session", "seed": streamer.world_seed,
-		"started": stamp, "engine": Engine.get_version_info(), "schema": 1}))
+		"started": stamp, "engine": Engine.get_version_info(), "schema": 2,
+		"system_memory": OS.get_memory_info()}))
 	print("[judging-log] " + ProjectSettings.globalize_path(path))
 
 func _physics_process(_dt: float) -> void:
@@ -76,14 +82,17 @@ func _process(_dt: float) -> void:
 			"physics_ms": _previous_physics_usec / 1000.0,
 			"streamer_us": _previous_sections,
 			"components_us": _previous_components,
-			"gpu_ms": gpu_ms if gpu_ms > 0.0 else null})
+			"gpu_ms": gpu_ms if gpu_ms > 0.0 else null,
+			"gc_pause_usec": _runtime_probe.PauseUsec() if _runtime_probe != null else null,
+			"managed_full_collections": _runtime_probe.FullCollections() if _runtime_probe != null else null})
 	_previous_process_usec = Time.get_ticks_usec() - _start.process_started
 	_previous_physics_usec = _physics_usec
 	_physics_usec = 0
 	_previous_sections = streamer.last_frame_sections.duplicate()
 	_previous_components = {"water": WaterRippleSim.last_process_usec,
 		"water_packets": WaterRippleSim.last_packets_usec, "water_flow": WaterRippleSim.last_flow_usec,
-		"atmosphere": AtmosphereDirector.last_process_usec}
+		"atmosphere": AtmosphereDirector.last_process_usec,
+		"atmosphere_stages": AtmosphereDirector.last_sections.duplicate()}
 	if _elapsed < 1.0: return
 	_frames.sort()
 	var position: Vector3 = streamer.player.global_position
@@ -93,6 +102,12 @@ func _process(_dt: float) -> void:
 		"p95_ms": _frames[mini(_frames.size()-1, int(_frames.size()*.95))],
 		"max_ms": _frames[-1], "hitches": _hitches,
 		"memory_mb": Performance.get_monitor(Performance.MEMORY_STATIC)/1048576.0,
+		"system_memory": OS.get_memory_info(),
+		"gc_pause_usec": _runtime_probe.PauseUsec() if _runtime_probe != null else null,
+		"managed_heap_bytes": _runtime_probe.HeapBytes() if _runtime_probe != null else null,
+		"managed_full_collections": _runtime_probe.FullCollections() if _runtime_probe != null else null,
+		"water_sampler_count": WaterRippleSim.last_sampler_count,
+		"water_frame_cache_entries": WaterRippleSim.last_frame_cache_entries,
 		"vram_mb": Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED)/1048576.0,
 		"draw_calls": Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),
 		"streaming": streamer.streaming_profile_snapshot()}))

@@ -1,3 +1,20 @@
+> October 9 evening review: wave-frame caches replace one entry at capacity (never
+> clear all 65,536 on a miss); frame cache access uses a short mutex. Frozen water
+> samplers must be retained off-main from BOTH Water/Area metadata and the ripple
+> simulator's previous sampler list (`WaterSamplerRelease`); bound release boxes
+> empty on the worker before task reaping. Eviction detaches at most one terrain
+> and one feature chunk per frame. Detailed resident ring is 5x5 (`CHUNK_RADIUS` 2,
+> `KEEP_RADIUS` 3), down from 7x7 to bound scene growth on 16 GiB machines.
+> Critical atmosphere fix: attach publishes `_built`
+> before incremental FX steps finish, so pending pruning MUST retain the active
+> `_integrating.result` until completion/cancellation; otherwise mist/orbs vanish.
+> Removed birch-bush 04 in all seasons (03 alone was the wrong photographed variant).
+> Filmic white 2, normalized glow strength .6, biome bloom reduced and threshold 1.5;
+> forest/marsh/wetland lighting darkened by different amounts. Judging logger schema 2
+> adds system memory, managed GC counters, water cache counts and atmosphere stages.
+> Water containment experiments failed visual acceptance and were reverted; evidence
+> and rejected patch: `docs/qa/2026-10-09-evening-pass/`. Do not report that issue fixed.
+
 > October 9 second manual pass: removed all seasons of `meadow.birch_bush.03` from
 > ambient bushes. Tree mesh/card crossfade now shares a 0.45 m mask projected through
 > each tree origin (no screen-fixed blobs); rendered camera-pan test pins it. Four

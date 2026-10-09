@@ -5,10 +5,10 @@
 [resource]
 script = ExtResource("1")
 biome = &"twilight_marsh"
-volumetric_density = 0.003
+volumetric_density = 0.004
 fog_anisotropy = 0.55
-bloom = 0.075
-glow_threshold = 0.85
+bloom = 0.015
+glow_threshold = 1.5
 saturation = 1.18
 contrast = 1.05
 exposure = 0.98

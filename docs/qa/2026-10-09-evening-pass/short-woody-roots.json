@@ -1,0 +1,245 @@
+{
+  "misses": 0,
+  "rows": [
+    {
+      "asset": "meadow_birch_bush_01_summer_00 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_01_summer_piece_00.res",
+      "at": "(718.1004, 27.93474, 1602.185)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_3_8/Body",
+      "kind": "bush",
+      "root_above_ground": 0.00392723083496094,
+      "visual_height": 1.79279965674061
+    },
+    {
+      "asset": "meadow_birch_bush_02_summer_00 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_02_summer_piece_00.res",
+      "at": "(742.449, 35.52138, 1562.146)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_3_8/Body",
+      "kind": "bush",
+      "root_above_ground": 0.119709014892578,
+      "visual_height": 2.30616118931835
+    },
+    {
+      "asset": "meadow_birch_bush_05_summer_00 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_05_summer_piece_00.res",
+      "at": "(731.3514, 35.99051, 1649.139)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_3_8/Body",
+      "kind": "bush",
+      "root_above_ground": 0.072998046875,
+      "visual_height": 2.76914142729356
+    },
+    {
+      "asset": "meadow_birch_bush_02_winter_00 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_02_winter_piece_00.res",
+      "at": "(441.0418, 71.37822, 1711.823)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_2_8/Body",
+      "kind": "bush",
+      "root_above_ground": -0.0345306396484375,
+      "visual_height": 2.35605130972112
+    },
+    {
+      "asset": "meadow_birch_bush_05_summer_00 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_05_summer_piece_00.res",
+      "at": "(421.0669, 67.92651, 1675.044)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_2_8/Body",
+      "kind": "bush",
+      "root_above_ground": 0.143699645996094,
+      "visual_height": 2.70546222083067
+    },
+    {
+      "asset": "meadow_birch_bush_05_winter_00 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_05_winter_piece_00.res",
+      "at": "(504.7888, 59.82646, 1718.108)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_2_8/Body",
+      "kind": "bush",
+      "root_above_ground": 0.0588188171386719,
+      "visual_height": 3.10239583096632
+    },
+    {
+      "asset": "meadow_birch_bush_02_summer_00 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_02_summer_piece_00.res",
+      "at": "(496.6876, 45.20439, 1884.256)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_2_9/Body",
+      "kind": "bush",
+      "root_above_ground": 0.0104179382324219,
+      "visual_height": 2.13561045290544
+    },
+    {
+      "asset": "meadow_birch_bush_02_winter_00 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_02_winter_piece_00.res",
+      "at": "(514.2137, 52.17292, 1870.477)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_2_9/Body",
+      "kind": "bush",
+      "root_above_ground": -0.0808982849121094,
+      "visual_height": 2.29704896599446
+    },
+    {
+      "asset": "meadow_birch_bush_05_winter_00 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_05_winter_piece_00.res",
+      "at": "(524.4369, 56.0, 1729.27)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_2_9/Body",
+      "kind": "bush",
+      "root_above_ground": 0.0,
+      "visual_height": 3.28004227329211
+    },
+    {
+      "asset": "@MultiMeshInstance3D@3839 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_05_winter_piece_00.res",
+      "at": "(536.5655, 56.0, 1750.202)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_2_9/Body",
+      "kind": "bush",
+      "root_above_ground": 0.0,
+      "visual_height": 3.00368185321463
+    },
+    {
+      "asset": "meadow_birch_bush_01_summer_00 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_01_summer_piece_00.res",
+      "at": "(646.5112, 56.00036, 1393.043)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_3_7/Body",
+      "kind": "bush",
+      "root_above_ground": -0.000949859619140625,
+      "visual_height": 1.7499613244488
+    },
+    {
+      "asset": "meadow_birch_bush_01_summer_00 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_01_summer_piece_00.res",
+      "at": "(651.8796, 56.0, 1393.781)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_3_7/Body",
+      "kind": "bush",
+      "root_above_ground": 0.0,
+      "visual_height": 1.91135462026102
+    },
+    {
+      "asset": "meadow_birch_bush_02_summer_00 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_02_summer_piece_00.res",
+      "at": "(640.484, 56.01164, 1391.176)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_3_7/Body",
+      "kind": "bush",
+      "root_above_ground": -0.0468025207519531,
+      "visual_height": 2.20660704522538
+    },
+    {
+      "asset": "@MultiMeshInstance3D@4729 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_02_summer_piece_00.res",
+      "at": "(668.9869, 56.20969, 1418.312)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_3_7/Body",
+      "kind": "bush",
+      "root_above_ground": -0.04095458984375,
+      "visual_height": 2.09211373274593
+    },
+    {
+      "asset": "@MultiMeshInstance3D@4730 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_02_summer_piece_00.res",
+      "at": "(707.4197, 48.0042, 1398.168)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_3_7/Body",
+      "kind": "bush",
+      "root_above_ground": -0.0369682312011719,
+      "visual_height": 2.32009505648989
+    },
+    {
+      "asset": "@MultiMeshInstance3D@4731 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_02_summer_piece_00.res",
+      "at": "(704.5773, 91.42577, 1452.897)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_3_7/Body",
+      "kind": "bush",
+      "root_above_ground": 0.0577545166015625,
+      "visual_height": 2.33394176115416
+    },
+    {
+      "asset": "@MultiMeshInstance3D@4732 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_02_summer_piece_00.res",
+      "at": "(765.9543, 72.0, 1454.993)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_3_7/Body",
+      "kind": "bush",
+      "root_above_ground": 0.0,
+      "visual_height": 2.11396179379108
+    },
+    {
+      "asset": "@MultiMeshInstance3D@4733 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_02_summer_piece_00.res",
+      "at": "(729.0034, 47.08891, 1527.622)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_3_7/Body",
+      "kind": "bush",
+      "root_above_ground": -0.0106124877929688,
+      "visual_height": 2.33999702749452
+    },
+    {
+      "asset": "meadow_birch_bush_05_summer_00 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_05_summer_piece_00.res",
+      "at": "(698.8209, 91.65273, 1474.44)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_3_7/Body",
+      "kind": "bush",
+      "root_above_ground": 0.0723724365234375,
+      "visual_height": 3.06544004852799
+    },
+    {
+      "asset": "meadow_birch_bush_01_summer_00 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_01_summer_piece_00.res",
+      "at": "(683.9678, 36.0, 1754.222)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_3_9/Body",
+      "kind": "bush",
+      "root_above_ground": -0.00333023071289062,
+      "visual_height": 1.89215813001408
+    },
+    {
+      "asset": "meadow_birch_bush_05_summer_00 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_05_summer_piece_00.res",
+      "at": "(576.0764, 51.99999, 1728.021)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_3_9/Body",
+      "kind": "bush",
+      "root_above_ground": 0.00398635864257812,
+      "visual_height": 3.08894241931057
+    },
+    {
+      "asset": "meadow_birch_bush_02_summer_00 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_02_summer_piece_00.res",
+      "at": "(864.9755, 46.64157, 1432.952)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_4_7/Body",
+      "kind": "bush",
+      "root_above_ground": 0.03369140625,
+      "visual_height": 2.41254353502495
+    },
+    {
+      "asset": "meadow_birch_bush_05_summer_00 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_05_summer_piece_00.res",
+      "at": "(913.5186, 32.02472, 1426.298)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_4_7/Body",
+      "kind": "bush",
+      "root_above_ground": 0.0117454528808594,
+      "visual_height": 3.24359483182025
+    },
+    {
+      "asset": "meadow_birch_bush_01_summer_00 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_01_summer_piece_00.res",
+      "at": "(782.2418, 39.61367, 1559.862)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_4_8/Body",
+      "kind": "bush",
+      "root_above_ground": 0.0659370422363281,
+      "visual_height": 1.6552090534197
+    },
+    {
+      "asset": "meadow_birch_bush_02_summer_00 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_02_summer_piece_00.res",
+      "at": "(862.3723, 91.96942, 1657.435)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_4_8/Body",
+      "kind": "bush",
+      "root_above_ground": 0.042388916015625,
+      "visual_height": 2.39928795799119
+    },
+    {
+      "asset": "meadow_birch_bush_05_summer_00 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_05_summer_piece_00.res",
+      "at": "(889.3727, 59.84979, 1668.055)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_4_8/Body",
+      "kind": "bush",
+      "root_above_ground": 0.121822357177734,
+      "visual_height": 3.21234645722097
+    },
+    {
+      "asset": "meadow_birch_bush_01_summer_00 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_01_summer_piece_00.res",
+      "at": "(947.8701, 88.04316, 1908.887)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_4_9/Body",
+      "kind": "bush",
+      "root_above_ground": -0.141868591308594,
+      "visual_height": 1.74984707553358
+    },
+    {
+      "asset": "meadow_birch_bush_01_summer_00 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_01_summer_piece_00.res",
+      "at": "(927.0654, 67.57472, 1885.422)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_4_9/Body",
+      "kind": "bush",
+      "root_above_ground": 0.0547332763671875,
+      "visual_height": 1.68227786182956
+    },
+    {
+      "asset": "meadow_birch_bush_02_summer_00 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_02_summer_piece_00.res",
+      "at": "(945.9753, 64.0, 1865.561)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_4_9/Body",
+      "kind": "bush",
+      "root_above_ground": 0.0,
+      "visual_height": 2.24927905841355
+    },
+    {
+      "asset": "meadow_birch_bush_02_summer_00 res://terrain/environment/meshes/angry_mesh_meadow/meadow_birch_bush_02_summer_piece_00.res",
+      "at": "(913.3439, 80.50415, 1856.525)",
+      "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_4_9/Body",
+      "kind": "bush",
+      "root_above_ground": 0.0284423828125,
+      "visual_height": 2.01249957949835
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+Godot Engine v4.5.1.stable.mono.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+FRAME_CACHE_COST {"miss_usec":23334,"old":true,"result":"[(0.0, 0.0), (0.0, 0.0)]","retained":1}
+FRAME_CACHE_COST {"miss_usec":12,"old":false,"result":"[(0.0, 0.0), (0.0, 0.0)]","retained":65536}
+FRAME_CACHE_COST {"miss_usec":20214,"old":true,"result":"[(0.0, 0.0), (0.0, 0.0)]","retained":1}
+FRAME_CACHE_COST {"miss_usec":8,"old":false,"result":"[(0.0, 0.0), (0.0, 0.0)]","retained":65536}

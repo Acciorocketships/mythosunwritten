@@ -1,0 +1,8 @@
+Godot Engine v4.5.1.stable.mono.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+RIPPLE_REPLAY {"digest":"75015086d087297f9a9481b582561c18d447a69a652a1907d04b716930dba133","max_ms":17.272,"mean_ms":4.77124,"p95_ms":10.647,"reference":true}
+RIPPLE_REPLAY {"digest":"75015086d087297f9a9481b582561c18d447a69a652a1907d04b716930dba133","max_ms":6.415,"mean_ms":2.28885833333333,"p95_ms":3.659,"reference":false}
+RIPPLE_REPLAY {"digest":"75015086d087297f9a9481b582561c18d447a69a652a1907d04b716930dba133","max_ms":16.407,"mean_ms":5.23170333333333,"p95_ms":10.579,"reference":true}
+RIPPLE_REPLAY {"digest":"75015086d087297f9a9481b582561c18d447a69a652a1907d04b716930dba133","max_ms":6.875,"mean_ms":2.05330666666667,"p95_ms":2.905,"reference":false}
