@@ -457,6 +457,20 @@ static func storey_slots(storey: Dictionary, exposed: Callable = Callable()) -> 
 			var side:=BuildingMass.DIRS.find(right_of(int(slot.dir)))
 			var edge:Vector3i=slot.edge
 			slot["right_extend"]=float(offsets.get(BuildingMass.edge_key(Vector2i(edge.x,edge.y),side),0.0))
+		# A growth inset (a face stepped in under an eave, offsets < 0): the corner
+		# panel of each perpendicular face gives way to the half strip, its corner
+		# post moving in to the stepped-in face (modules cut at `short_side`).
+		slot["short"]=0.0
+		slot["short_side"]=0
+		for end:int in [-1,1]:
+			if not bool(slot.right_convex if end>0 else slot.left_convex):continue
+			var perpendicular:=BuildingMass.DIRS.find(right_of(int(slot.dir))*end)
+			var corner:Vector3i=slot.edge
+			var cut:=float(offsets.get(BuildingMass.edge_key(Vector2i(corner.x,corner.y),perpendicular),0.0))
+			if cut<0.0 and float(slot.wall_offset)==0.0:
+				slot["short"]=-cut
+				slot["short_side"]=end
+				if end>0:slot["right_extend"]=cut
 	return slots
 
 
@@ -520,6 +534,13 @@ func _assemble_storey(ctx: Dictionary, index: int) -> void:
 				for along in range(int(run.start), int(run.end)):
 					below_inset[BuildingMass.edge_key(_inside_cell(int(run.dir),
 						int(run.line), along), int(run.dir))] = true
+	# Growth insets below (a face stepped in under an eave): edge -> depth (modules).
+	var below_growth: Dictionary = {}
+	if not below.is_empty():
+		var lower_offsets: Dictionary = below.get("wall_offsets", {})
+		for edge: Vector3i in lower_offsets:
+			if float(lower_offsets[edge]) < 0.0:
+				below_growth[edge] = -float(lower_offsets[edge])
 	if bool(storey.get("fortified", false)) and kit.has_role(&"wall.fort"):
 		_assemble_fortified(ctx, storey)
 		return
@@ -549,6 +570,12 @@ func _assemble_storey(ctx: Dictionary, index: int) -> void:
 		var jettied := below_inset.has(slot.edge)
 		if not _slot_exposed(mass, slot, floor_band, bands):
 			continue
+		if float(slot.get("short", 0.0)) > 0.0 and bands == 2:
+			_emit_inset_end(ctx, storey, slot, wall_y)
+			_emit_corner_post(ctx, slot, wall_y, bands, kit.wall_face)
+			continue
+		if below_growth.has(slot.edge):
+			_emit_inset_jetty(ctx, storey, slot, y, float(below_growth[slot.edge]))
 		if bands == 1:
 			var sunk := bool(storey.get("sunk", false)) and kit.has_role(&"wall.stone.retaining")
 			if retaining and kit.has_role(&"wall.stone.retaining_half"):
@@ -959,6 +986,46 @@ func _emit_bay(ctx: Dictionary, storey: Dictionary, slot: Dictionary, wall_y: fl
 	var offset: Vector2 = (storey.get("bay_offsets",{}) as Dictionary).get(slot.edge,Vector2.ZERO)
 	_emit(ctx, bay_role, (slot.centre as Vector2)+offset, wall_y + kit.band_height() * 2.0 / 3.0, yaw, pick, Transform3D.IDENTITY, tint)
 	return bay_role
+
+
+## A perpendicular wall's corner panel beside a stepped-in face: the baked return
+## strip of the inset's depth (exactly the remaining half module) on the inner
+## half, framed by its return beams, never a scaled panel.
+func _emit_inset_end(ctx: Dictionary, storey: Dictionary, slot: Dictionary, y: float) -> void:
+	var cut := float(slot.short)
+	var depth := cut * kit.module_width
+	var dir := int(slot.dir)
+	var at: Vector2 = (slot.centre as Vector2) - Vector2(right_of(dir)) * float(slot.short_side) * cut * 0.5
+	var suffix := lean_suffix(kit.module_width - depth)
+	var yaw := yaw_for_dir(dir)
+	_emit(ctx, StringName("frontage.return.%s" % suffix), at, y, yaw, 0, Transform3D.IDENTITY,
+		storey.get("tint", Color.WHITE))
+	_emit(ctx, StringName("frontage.return_beam.%s" % suffix), at, y, yaw)
+	_emit(ctx, StringName("frontage.return_beam.%s" % suffix), at, y + kit.storey_height - .143, yaw)
+
+
+## The storey over a stepped-in ground run carries its overhang as the kit's own
+## jetty does (floor beam on the face, a jetty brace per module bearing on the
+## stepped-in wall); a convex end closes the overhang's side with a return beam
+## (unless the perpendicular face steps out over it: its floor strip closes it).
+func _emit_inset_jetty(ctx: Dictionary, storey: Dictionary, slot: Dictionary, y: float, cut: float) -> void:
+	var dir := int(slot.dir)
+	var out := Vector2(BuildingMass.DIRS[dir])
+	var right := Vector2(right_of(dir))
+	var yaw := yaw_for_dir(dir)
+	var centre: Vector2 = slot.centre
+	var depth := cut * kit.module_width
+	_emit(ctx, &"trim.floor_beam", centre, y, yaw)
+	_emit(ctx, &"bracket.jetty", centre - out * cut, y - kit.jetty_depth, yaw)
+	var offsets: Dictionary = storey.get("wall_offsets", {})
+	var edge: Vector3i = slot.edge
+	for side: int in [-1, 1]:
+		var perpendicular := BuildingMass.DIRS.find(right_of(dir) * side)
+		if float(offsets.get(BuildingMass.edge_key(Vector2i(edge.x, edge.y), perpendicular), 0.0)) > 0.0:
+			continue
+		if bool(slot.right_convex if side > 0 else slot.left_convex):
+			_emit(ctx, StringName("frontage.return_beam.%s" % lean_suffix(depth)),
+				centre + right * 0.5 * float(side) - out * cut * 0.5, y, yaw + PI * 0.5 * float(side))
 
 
 func _emit_jetty_trim(ctx: Dictionary, slot: Dictionary, y: float, yaw: float,

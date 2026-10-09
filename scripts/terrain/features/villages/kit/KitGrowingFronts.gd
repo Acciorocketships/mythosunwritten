@@ -169,7 +169,7 @@ static func fit(masses: Array[BuildingMass], kits: Dictionary, base: BuildingKit
 	var ctx := {"catalog": catalog, "air": air, "towers": towers, "reserved": reserved,
 		"solid": solid, "registry": {}, "obstacles": [], "gap": 0.0, "kit": base, "rejections": [],
 		"riders": [], "buried": [], "lean": 0.0, "geometry": roof_geometry, "allowances": {},
-		"insets": {}, "inset_records": [], "inset_cache": {}, "stepped": {}, "roofs": [],
+		"inset_records": [], "eave_crowned": {}, "stepped": {}, "roofs": [],
 		"front": {}, "active": [] as Array[int], "step": 0.0, "crown_kind": &"", "crown_why": &"", "masses": {}}
 	if character == null or not masses.any(func(m: BuildingMass) -> bool: return m.grows):
 		return {"leans": leans, "registry": ctx.registry, "rejections": ctx.rejections,
@@ -295,7 +295,6 @@ static func _fit_front(front: Dictionary, character: TownCharacter, ctx: Diction
 	var left: Array[int] = []
 	var leans: Array[float] = []
 	var half := false
-	var faults := {}
 	ctx.front = front
 	ctx.active = active
 	while not active.is_empty():
@@ -312,10 +311,6 @@ static func _fit_front(front: Dictionary, character: TownCharacter, ctx: Diction
 			break
 		active.erase(int(result.leaves))
 		left.append(int(result.leaves))
-		faults[int(result.leaves)] = result.fault
-	# Eave-crowned members that kept their top step only through the inset step
-	# their house's ground storey in; every member of such a house drops one jetty.
-	var shift := _front_insets(front, active, leans, ctx, left, faults)
 	var profiles := {}
 	var closures := {}
 	var buried := {}
@@ -324,9 +319,8 @@ static func _fit_front(front: Dictionary, character: TownCharacter, ctx: Diction
 		var profile: Array[float] = []
 		var ends: Array = []
 		var contacts: Array = []
-		var drop := float(shift.get((member.mass as BuildingMass).stable_id, 0.0))
 		for k in (member.chain.storeys as Array).size():
-			profile.append(maxf(0.0, leans[k] - drop))
+			profile.append(leans[k])
 			ctx.lean = profile[k]
 			ctx.buried = []
 			ends.append(_closures(front, active, m, k, ctx))
@@ -346,17 +340,27 @@ static func _fit_front(front: Dictionary, character: TownCharacter, ctx: Diction
 		var member: Dictionary = front.members[m]
 		ctx.kit = member.kit
 		_commit(member.mass, member.kit, member.chain, profiles[m], ctx, out, closures[m], buried[m])
-		_record_roof(member, profiles[m], shift, half, ctx)
+	# An eave face its crown kept flush steps its ground run in instead (one face).
+	for m: int in active:
+		var member: Dictionary = front.members[m]
+		var flat := (profiles[m] as Array).all(func(lean: float) -> bool: return lean <= 0.0)
+		_record_roof(member, profiles[m], flat and _try_inset(member, ctx), half, ctx)
 	for m: int in left:
-		if bool(front.members[m].seed) and not faults.has(m):
+		if bool(front.members[m].seed):
 			_fit_front({"members": [front.members[m]], "joins": []}, character, ctx, out)
+		else:
+			var member: Dictionary = front.members[m]
+			var flat: Array[float] = []
+			flat.resize((member.chain.storeys as Array).size())
+			flat.fill(0.0)
+			_record_roof(member, flat, _try_inset(member, ctx), false, ctx)
 
 
 ## The step a leader carries. A kit jetty cannot pass under an eave: an
-## eave-crowned leader keeps it where its house's ground storey can step in by
-## that jetty instead (the top storey then stays on the footprint, under the
-## eave); else it takes the light step where the measured cornice admits it (else
-## its crown withdraws the step).
+## eave-crowned leader keeps it where its ground run can step in by that jetty
+## instead (the face leaves its front on its crown and takes the inset, so its
+## partners keep the kit step); else it takes the light step where the measured
+## cornice admits it (else its crown withdraws the step).
 static func _front_step(leader: Dictionary, character: TownCharacter, ctx: Dictionary) -> float:
 	var step := carried_step(leader.kit, float(String(character.pick(STEP_KNOB, String(leader.mass.stable_id)))))
 	if step > 0.5:
@@ -366,7 +370,8 @@ static func _front_step(leader: Dictionary, character: TownCharacter, ctx: Dicti
 		var wing := crown_wing(leader.mass, leader.chain, top)
 		if not wing.is_empty() and int(wing.axis) != int(leader.chain.dir) % 2 \
 				and _eave_cap(wing, int(leader.chain.dir), ctx) < step \
-				and _inset_shift(leader.mass, leader.kit, leader.chain, ctx) < step:
+				and _inset_cause(leader.mass, leader.kit, leader.chain, ctx) != &"" \
+				and _eave_cap(wing, int(leader.chain.dir), ctx) >= 0.5 - 0.0001:
 			step = 0.5
 	return step
 
@@ -467,6 +472,8 @@ static func _reject(ctx: Dictionary, front: Dictionary, fault: Dictionary, k: in
 	if fault.has("crown"):
 		record["crown"] = fault.crown
 		record["why"] = fault.get("why", &"")
+		if StringName(fault.crown) == &"eave":
+			ctx.eave_crowned[record.chain] = true
 	ctx.rejections.append(record)
 
 
@@ -789,7 +796,8 @@ static func _commit(mass: BuildingMass, kit: BuildingKit, chain: Dictionary,
 				ctx.registry[Vector4i(edge.x, edge.y, dir, band)] = profile[k]
 		for part: Dictionary in candidate.parts:
 			ctx.obstacles.append({"owner": &"", "role": String(part.role), "roof_index": -1,
-				"bounds": part.transform * catalog.descriptor(part.asset_id).measured_aabb})
+				"bounds": part.transform * catalog.descriptor(part.asset_id).measured_aabb,
+				"stepped_host": mass.stable_id})
 		out.append({"host": mass.stable_id, "dir": dir, "band": candidate.band, "lean": profile[k],
 			"base": candidate.projection.base, "edges": candidate.edges, "bounds": candidate.bounds,
 			"chain": chain.key, "closures": closures[k], "pulled": not mass.grows,
@@ -891,6 +899,12 @@ static func clear_of(box: AABB, obstacles: Array, blocks: Callable) -> bool:
 const TOUCH := 0.05
 ## The house's own ornaments that yield (are removed) where a new step's pieces meet them.
 const YIELD_DECOR: Array[StringName] = [&"ivy", &"ivy_corner", &"window_box", &"awning"]
+
+
+## Two pieces stacked with a seated seam: they overlap no deeper than 0.15 m
+## vertically (a corner post rises 0.074 past the wall head into the floor above).
+static func _seated(box: AABB, other: AABB) -> bool:
+	return box.intersection(other).size.y <= 0.15
 
 
 static func contact_clear(box: AABB, other: AABB) -> bool:
@@ -1291,20 +1305,8 @@ static func _crown_fault(mass: BuildingMass, chain: Dictionary, k: int, lean: fl
 		ctx.crown_why = _gable_shift_fault(mass, chain, wing, lean, ctx)
 		return &"" if ctx.crown_why == &"" else &"crown"
 	ctx.crown_kind = &"eave"
-	ctx.crown_why = &""
-	var shift := _inset_shift(mass, ctx.kit, chain, ctx)
-	if lean - shift <= _eave_cap(wing, dir, ctx) + 0.0001:
-		return &""
-	ctx.crown_why = &"under"
-	if shift <= 0.0:
-		# Why the ground storey could not step in (as if the front carried the kit jetty).
-		var step: float = ctx.step
-		ctx.step = (ctx.kit as BuildingKit).jetty_depth
-		ctx.crown_why = _inset_cause(mass, ctx.kit, chain, ctx)
-		ctx.step = step
-		if ctx.crown_why == &"":
-			ctx.crown_why = &"inset.light_step" # the leader's light step, not its kit jetty
-	return &"crown"
+	ctx.crown_why = &"cornice"
+	return &"" if lean <= _eave_cap(wing, dir, ctx) + 0.0001 else &"crown"
 
 
 static func _eave_cap(wing: Dictionary, dir: int, ctx: Dictionary) -> float:
@@ -1315,134 +1317,113 @@ static func _eave_cap(wing: Dictionary, dir: int, ctx: Dictionary) -> float:
 	return float(ctx.allowances[key])
 
 
-# --- the stepped-in ground storey (eave faces; controller ruling) --------------
+# --- the stepped-in ground run (eave faces; controller ruling, fix round 1) ----
 
-## Kinds of the house's own ground-storey dressing that follow its wall slots in.
-const INSET_DECOR: Array[StringName] = [&"window_box", &"ivy", &"ivy_corner", &"doorstep", &"entry_stair"]
-
-
-## How far the house's ground storey steps in under this face (native m): the
-## kit jetty where it already has, or can (for this face), else 0.
-static func _inset_shift(mass: BuildingMass, kit: BuildingKit, chain: Dictionary, ctx: Dictionary) -> float:
-	if (ctx.insets as Dictionary).has(mass.stable_id):
-		return kit.jetty_depth
-	return kit.jetty_depth if _inset_cause(mass, kit, chain, ctx) == &"" else 0.0
+## Kinds of the house's own ground dressing on the inset run that follow its wall in.
+const INSET_DECOR: Array[StringName] = [&"window_box", &"ivy", &"ivy_corner"]
+const NO_EDGE := Vector3i(-1048576, 0, 0)
 
 
-## Why the ground storey cannot step in for this face (&"" when it can): the
-## front's step must be the kit jetty, the house growing and not yet stepped by
-## an earlier front, the face's own ground run free of doors and passages (they
-## keep their line), no terrace-row joint (the partner would not step in), and the
-## kit's own inset rules for the storey (_inset_structure).
+## Why the ground storey cannot step in under this eave face (&"" when it can).
+## One face only: the run's ground walls move in by the kit jetty (wall_offsets
+## < 0), the perpendicular walls' corner panels give way to the baked d100 return
+## strip (the jetty is half a module, so the strip is exactly the remaining half),
+## and the storey above carries the overhang on its floor beam and the kit's own
+## jetty braces. Causes: inset.kit (no jetty or strip, or the jetty is not half a
+## module), inset.house (a pulled house), inset.course (stone, retaining, fortified,
+## sunk, one-band, abutted or pent-eaved ground storey), inset.above (the storey
+## above does not cover the run), inset.depth (under two modules deep), inset.portal
+## (a door, passage, bay or blank on the run or on a corner panel that gives way),
+## inset.party (anything touching the run or the corner panels: party walls never
+## step in), inset.corner (the perpendicular face already stepped in), inset.decor
+## (a porch canopy or post on the run), inset.air / inset.obstacle.* (the new
+## pieces meet walking air or another building).
 static func _inset_cause(mass: BuildingMass, kit: BuildingKit, chain: Dictionary, ctx: Dictionary) -> StringName:
-	if not kit.has_role(&"bracket.jetty") or not is_equal_approx(float(ctx.step), kit.jetty_depth) \
-			or not mass.grows:
-		return &"inset.step"
-	if (ctx.stepped as Dictionary).has(mass.stable_id):
-		return &"inset.order"
-	var g := ground_index(mass)
-	var ground: Dictionary = mass.storeys[g]
-	var passages: Dictionary = ground.get("passage_edges", {})
-	for along in range(int(chain.start), int(chain.end)):
-		var edge := BuildingMass.edge_key(BuildingKitAssembler._inside_cell(int(chain.dir), int(chain.line), along),
-			int(chain.dir))
-		if passages.has(edge) or StringName(ground.openings.get(edge, &"")) == BuildingMass.OPENING_DOOR:
-			return &"inset.portal"
-	var front: Dictionary = ctx.front
-	var active: Array = ctx.active
-	for join: Dictionary in front.get("joins", []):
-		if StringName(join.kind) != &"joint" or not active.has(int(join.a)) or not active.has(int(join.b)):
-			continue
-		if front.members[int(join.a)].mass == mass or front.members[int(join.b)].mass == mass:
-			return &"inset.row"
-	# The storey's own rules never change during the fit; the trim's clearance does
-	# (other fronts commit pieces), so it is checked every time.
-	var cache: Dictionary = ctx.inset_cache
-	if not cache.has(mass.stable_id):
-		var cause := _inset_structure(mass, kit, ctx)
-		cache[mass.stable_id] = {"cause": cause, "trim": _inset_trim(mass, kit, ctx) if cause == &"" else []}
-	var entry: Dictionary = cache[mass.stable_id]
-	if StringName(entry.cause) != &"":
-		return entry.cause
-	return _trim_fault(mass, entry.trim, ctx)
-
-
-## The kit jetty trim a stepped-in ground storey adds: clear of walking air and of
-## everything that is not this house (towers, neighbours, committed steps).
-static func _trim_fault(mass: BuildingMass, trim: Array, ctx: Dictionary) -> StringName:
-	for part: Dictionary in trim:
-		var local: AABB = (ctx.catalog as EnvironmentCatalog).descriptor(part.asset_id).measured_aabb
-		if CLEARANCE.intersects_air(local, part.transform, ctx.air):
-			return &"inset.air"
-		var box: AABB = (part.transform * local).grow(-0.002)
-		for obstacle: Dictionary in ctx.obstacles:
-			if bool(obstacle.get("gone", false)) or obstacle.owner == mass.stable_id \
-					or contact_clear(box, obstacle.bounds):
-				continue
-			return StringName("inset.%s" % String(_obstacle_cause(obstacle, mass)))
-	return &""
-
-
-## The kit's own inset rules for the ground storey (BuildingDesigner._assign_jetties):
-## identical storey above (no balcony rakers), identical bearing below, at least
-## one module left after erosion and three across, no other building touching it
-## (party walls never step in), plain timber/stone (no retaining, fortified or
-## sunk course), its doors still on an inset wall slot, and no ground dressing that
-## cannot follow its wall (porch canopies, posts).
-static func _inset_structure(mass: BuildingMass, kit: BuildingKit, ctx: Dictionary) -> StringName:
+	var depth := kit.jetty_depth
+	if not kit.has_role(&"bracket.jetty") or not is_equal_approx(depth * 2.0, kit.module_width) \
+			or not kit.has_role(StringName("frontage.return.%s" % BuildingKitAssembler.lean_suffix(depth))):
+		return &"inset.kit"
+	if not mass.grows:
+		return &"inset.house"
 	var g := ground_index(mass)
 	var ground: Dictionary = mass.storeys[g]
 	var band := int(ground.floor_band)
-	if int(ground.get("bands", 2)) != 2 or bool(ground.get("retaining", false)) \
-			or bool(ground.get("fortified", false)) or bool(ground.get("sunk", false)) \
-			or bool(ground.get("inset", false)) or bool(ground.get("abutted", false)):
+	if int(ground.get("bands", 2)) != 2 or ground.material != BuildingMass.MATERIAL_TIMBER \
+			or bool(ground.get("retaining", false)) or bool(ground.get("fortified", false)) \
+			or bool(ground.get("sunk", false)) or bool(ground.get("inset", false)) \
+			or bool(ground.get("abutted", false)) or StringName(ground.get("pent_colour", &"")) != &"":
 		return &"inset.course"
 	var above := _storey_at(mass, band + 2)
-	if above.is_empty() or not BuildingDesigner._same_cells(ground.cells, above.cells) \
-			or bool(above.get("bears_balcony", false)) or bool(ground.get("bears_balcony", false)):
-		if above.is_empty(): return &"inset.above.none"
-		var sup := (ground.cells as Dictionary).keys().all(func(c: Vector2i) -> bool: return (above.cells as Dictionary).has(c))
-		var sub := (above.cells as Dictionary).keys().all(func(c: Vector2i) -> bool: return (ground.cells as Dictionary).has(c))
-		return &"inset.above.balcony" if sup and sub else &"inset.above.bigger" if sup else &"inset.above.smaller" if sub else &"inset.above.other"
-	var bearing := _storey_at(mass, band - 2)
-	if not bearing.is_empty() and not BuildingDesigner._same_cells(bearing.cells, ground.cells):
-		return &"inset.bearing"
-	var extent := BuildingDesigner._bounds(ground.cells)
-	if not BuildingDesigner._erodable(ground.cells) or mini(extent.size.x, extent.size.y) < 3:
-		return &"inset.narrow"
+	var dir := int(chain.dir)
+	var out: Vector2i = BuildingMass.DIRS[dir]
 	var own := _own(mass)
 	var solid: Callable = ctx.solid
-	for cell: Vector2i in ground.cells:
-		for dir in 4:
-			var beside: Vector2i = cell + BuildingMass.DIRS[dir]
-			if (ground.cells as Dictionary).has(beside):
-				continue
-			for b in range(band, band + 2):
-				if bool(solid.call(own, beside, b)):
-					return &"inset.party"
-	var slots := {}
-	for slot: Dictionary in _inset_slots(mass, ground, ctx):
-		slots[slot.edge] = true
-	for edge: Vector3i in ground.openings:
-		if StringName(ground.openings[edge]) == BuildingMass.OPENING_DOOR and not slots.has(edge):
+	var offsets: Dictionary = ground.get("wall_offsets", {})
+	var cells: Dictionary = ground.cells
+	var blocked := [BuildingMass.OPENING_DOOR, BuildingMass.OPENING_BAY, BuildingMass.OPENING_NONE]
+	for edge: Vector3i in _edges(chain):
+		var cell := Vector2i(edge.x, edge.y)
+		if above.is_empty() or not (above.cells as Dictionary).has(cell):
+			return &"inset.above"
+		if not cells.has(cell) or cells.has(cell + out) or not cells.has(cell - out):
+			return &"inset.depth"
+		if StringName(ground.openings.get(edge, ground.default_opening)) in blocked \
+				or (ground.get("passage_edges", {}) as Dictionary).has(edge):
 			return &"inset.portal"
-	for edge: Vector3i in ground.get("passage_edges", {}):
-		if not slots.has(edge):
+		for b in range(band, band + 2):
+			if bool(solid.call(own, cell + out, b)):
+				return &"inset.party"
+	# The corner panel of each perpendicular face at a convex end gives way.
+	for corner: Dictionary in _inset_corners(mass, chain):
+		var edge: Vector3i = corner.edge
+		if not corner.convex:
+			return &"inset.party" # the run ends against its own wall: nothing to shorten cleanly
+		if float(offsets.get(edge, 0.0)) != 0.0:
+			return &"inset.corner"
+		if StringName(ground.openings.get(edge, ground.default_opening)) in blocked \
+				or (ground.get("passage_edges", {}) as Dictionary).has(edge):
 			return &"inset.portal"
+		for b in range(band, band + 2):
+			if bool(solid.call(own, Vector2i(edge.x, edge.y) + BuildingMass.DIRS[edge.z], b)):
+				return &"inset.party"
 	for item: Dictionary in mass.decor:
-		if not (StringName(item.kind) in INSET_DECOR) and _on_storey(item, ground, kit):
+		if _on_storey(item, ground, kit) and not (StringName(item.kind) in INSET_DECOR) \
+				and _decor_edge(item) != NO_EDGE \
+				and (_edges(chain).has(_decor_edge(item)) or _corner_edges(mass, chain).has(_decor_edge(item))):
 			return &"inset.decor"
-	return &""
+	return _inset_parts_fault(mass, kit, chain, ctx)
 
 
-## Wall slots of the ground storey once stepped in (the kit's inset slots).
-static func _inset_slots(mass: BuildingMass, ground: Dictionary, ctx: Dictionary) -> Array[Dictionary]:
-	var own := _own(mass)
-	var solid: Callable = ctx.solid
-	var probe := ground.duplicate()
-	probe["inset"] = true
-	return BuildingKitAssembler.storey_slots(probe, BuildingKitAssembler.exposure_for(mass,
-		int(ground.floor_band), 2, func(cell: Vector2i, b: int) -> bool: return bool(solid.call(own, cell, b))))
+## The perpendicular ground faces at both ends of the run: {edge, convex}.
+static func _inset_corners(mass: BuildingMass, chain: Dictionary) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var dir := int(chain.dir)
+	var along := Vector2i(0, 1) if dir % 2 == 0 else Vector2i(1, 0)
+	var ground: Dictionary = mass.storeys[ground_index(mass)]
+	for at_end: bool in [false, true]:
+		var sign := 1 if at_end else -1
+		var cell := BuildingKitAssembler._inside_cell(dir, int(chain.line), int(chain.end) - 1 if at_end else int(chain.start))
+		var side := BuildingMass.DIRS.find(along * sign)
+		out.append({"edge": BuildingMass.edge_key(cell, side),
+			"convex": not (ground.cells as Dictionary).has(cell + along * sign)})
+	return out
+
+
+static func _corner_edges(mass: BuildingMass, chain: Dictionary) -> Array[Vector3i]:
+	var out: Array[Vector3i] = []
+	for corner: Dictionary in _inset_corners(mass, chain):
+		out.append(corner.edge)
+	return out
+
+
+## The wall edge a decor item stands on (its centre is a slot centre).
+static func _decor_edge(item: Dictionary) -> Vector3i:
+	if not item.has("dir") or not item.has("centre"):
+		return NO_EDGE
+	var dir := int(item.dir)
+	var centre: Vector2 = item.centre
+	var cell := Vector2i((centre - Vector2(BuildingMass.DIRS[dir]) * 0.5 - Vector2.ONE * 0.5).round())
+	return BuildingMass.edge_key(cell, dir)
 
 
 ## True when a decor item stands on (or reaches into) this storey's height.
@@ -1455,117 +1436,126 @@ static func _on_storey(item: Dictionary, storey: Dictionary, kit: BuildingKit) -
 	return y >= lo * kit.band_height() - 0.01 and y < hi * kit.band_height()
 
 
-## The kit jetty trim (floor beams, braces) the storey above gains once the ground
-## storey steps in: the house assembled with and without the inset, compared.
-static func _inset_trim(mass: BuildingMass, kit: BuildingKit, ctx: Dictionary) -> Array[Dictionary]:
+## Writes the inset (ground wall offsets) into the house; returns the edges.
+static func _write_inset(mass: BuildingMass, kit: BuildingKit, chain: Dictionary) -> void:
 	var ground: Dictionary = mass.storeys[ground_index(mass)]
+	var offsets: Dictionary = ground.get("wall_offsets", {})
+	for edge: Vector3i in _edges(chain):
+		offsets[edge] = -kit.jetty_depth / kit.module_width
+	ground["wall_offsets"] = offsets
+
+
+static func _erase_inset(mass: BuildingMass, chain: Dictionary) -> void:
+	var ground: Dictionary = mass.storeys[ground_index(mass)]
+	var offsets: Dictionary = ground.get("wall_offsets", {})
+	for edge: Vector3i in _edges(chain):
+		offsets.erase(edge)
+	if offsets.is_empty():
+		ground.erase("wall_offsets")
+
+
+## The pieces the inset adds (the house assembled with and without it, compared):
+## the side strips, posts, floor beams, braces and return beams.
+static func _inset_parts(mass: BuildingMass, kit: BuildingKit, chain: Dictionary, ctx: Dictionary) -> Array[Dictionary]:
 	var decor := mass.decor.duplicate()
 	mass.decor.clear()
-	var was: Variant = ground.get("inset", false)
-	ground["inset"] = true
-	var parts := _assembler(mass, kit, ctx.solid).assemble(mass)
-	ground["inset"] = was
+	var assembler := _assembler(mass, kit, ctx.solid)
+	var before := {}
+	for part: Dictionary in assembler.assemble(mass):
+		before["%s|%s" % [part.asset_id, part.transform]] = true
+	_write_inset(mass, kit, chain)
+	var added: Array[Dictionary] = []
+	for part: Dictionary in assembler.assemble(mass):
+		if not before.has("%s|%s" % [part.asset_id, part.transform]):
+			added.append(part)
+	_erase_inset(mass, chain)
 	mass.decor.assign(decor)
-	var y := float(int(ground.floor_band) + 2) * kit.band_height()
-	return parts.filter(func(part: Dictionary) -> bool:
-		var role := String(part.role)
-		return (role == "bracket.jetty" or role.begins_with("trim.floor_beam")) \
-			and absf((part.transform as Transform3D).origin.y - y) < kit.jetty_depth + 0.05)
+	return added
 
 
-## After a front's profile: the houses whose eave-crowned members passed the
-## crown rule only through the inset step their ground storey in. Returns the
-## drop (native m) per house id for every house already or newly stepped in.
-static func _front_insets(front: Dictionary, active: Array[int], leans: Array[float],
-		ctx: Dictionary, left: Array[int], faults: Dictionary) -> Dictionary:
-	var shift := {}
-	# An eave-crowned member that left on its crown (its top step would stand past
-	# the cornice) keeps the ground step where its house can step in: it needs no
-	# step of its own (its top storey then stands on the footprint) and is not refit.
-	for m: int in left:
-		var fault: Dictionary = faults[m]
-		var member: Dictionary = front.members[m]
-		var mass: BuildingMass = member.mass
-		ctx.kit = member.kit
-		if StringName(fault.cause) != &"crown" or StringName(fault.get("crown", &"")) != &"eave" \
-				or _inset_shift(mass, member.kit, member.chain, ctx) <= 0.0:
-			faults.erase(m)
-			continue
-		if not (ctx.insets as Dictionary).has(mass.stable_id):
-			_apply_inset(mass, member.kit, ctx)
-		ctx.inset_records.append({"host": mass.stable_id, "chain": String(member.chain.key),
-			"depth": member.kit.jetty_depth})
-		ctx.roofs.append({"host": mass.stable_id, "chain": String(member.chain.key), "kind": &"inset"})
-	for m: int in active:
-		var member: Dictionary = front.members[m]
-		var mass: BuildingMass = member.mass
-		var kit: BuildingKit = member.kit
-		var top := (member.chain.storeys as Array).size() - 1
-		var wing := crown_wing(mass, member.chain, top)
-		ctx.kit = kit
-		if top < 0 or leans[top] <= 0.0 or wing.is_empty() \
-				or int(wing.axis) == int(member.chain.dir) % 2 \
-				or leans[top] <= _eave_cap(wing, int(member.chain.dir), ctx) + 0.0001:
-			continue
-		if not (ctx.insets as Dictionary).has(mass.stable_id):
-			_apply_inset(mass, kit, ctx)
-		ctx.inset_records.append({"host": mass.stable_id, "chain": String(member.chain.key),
-			"depth": kit.jetty_depth})
-	for m: int in active:
-		var mass: BuildingMass = front.members[m].mass
-		if (ctx.insets as Dictionary).has(mass.stable_id):
-			shift[mass.stable_id] = (front.members[m].kit as BuildingKit).jetty_depth
-	return shift
+## The new pieces stay clear of walking air and of everything not this house.
+static func _inset_parts_fault(mass: BuildingMass, kit: BuildingKit, chain: Dictionary, ctx: Dictionary) -> StringName:
+	for part: Dictionary in _inset_parts(mass, kit, chain, ctx):
+		var local: AABB = (ctx.catalog as EnvironmentCatalog).descriptor(part.asset_id).measured_aabb
+		if CLEARANCE.intersects_air(local, part.transform, ctx.air):
+			return &"inset.air"
+		var box: AABB = (part.transform * local).grow(-0.002)
+		for obstacle: Dictionary in ctx.obstacles:
+			if bool(obstacle.get("gone", false)) or obstacle.owner == mass.stable_id \
+					or contact_clear(box, obstacle.bounds):
+				continue
+			# This house's own committed steps stand on it: their braces bear on its
+			# ground walls, their floor strips on its wall heads (a seated seam).
+			if obstacle.get("stepped_host", &"") == mass.stable_id and (String(obstacle.role).begins_with("bracket.") \
+					or _seated(box, obstacle.bounds)):
+				continue
+			return StringName("inset.%s" % String(_obstacle_cause(obstacle, mass)))
+	return &""
 
 
-## Steps the house's ground storey in (the kit's own inset): its dressing follows
-## its wall slots (or yields where a slot is gone), and the kit jetty trim the
-## storey above gains joins the obstacles.
-static func _apply_inset(mass: BuildingMass, kit: BuildingKit, ctx: Dictionary) -> void:
+## Steps one eave face's ground run in: its walls (and their window boxes and ivy)
+## move in by the kit jetty, the corner panels of the perpendicular faces give way
+## to the d100 strip (their dressing yields), and the new pieces join the obstacles.
+static func _apply_inset(mass: BuildingMass, kit: BuildingKit, chain: Dictionary, ctx: Dictionary) -> void:
+	var added := _inset_parts(mass, kit, chain, ctx)
+	_write_inset(mass, kit, chain)
 	var ground: Dictionary = mass.storeys[ground_index(mass)]
-	var slots := {}
-	for slot: Dictionary in _inset_slots(mass, ground, ctx):
-		slots[slot.edge] = slot
-	var trim: Array = (ctx.inset_cache as Dictionary)[mass.stable_id].trim \
-		if (ctx.inset_cache as Dictionary).has(mass.stable_id) else _inset_trim(mass, kit, ctx)
-	ground["inset"] = true
-	ctx.insets[mass.stable_id] = true
+	var run := _edges(chain)
+	var corners := _corner_edges(mass, chain)
 	var catalog: EnvironmentCatalog = ctx.catalog
+	var dir := int(chain.dir)
 	for item: Dictionary in mass.decor.duplicate():
-		if not (StringName(item.kind) in INSET_DECOR) or not _on_storey(item, ground, kit):
+		if not _on_storey(item, ground, kit) or not (StringName(item.kind) in INSET_DECOR):
 			continue
-		var dir := int(item.dir)
-		var centre: Vector2 = item.centre
-		var cell := Vector2i((centre - Vector2(BuildingMass.DIRS[dir]) * 0.5 - Vector2.ONE * 0.5).round())
-		var slot: Dictionary = slots.get(BuildingMass.edge_key(cell, dir), {})
-		_drop_decor(ctx, item)
-		if slot.is_empty() or (StringName(item.kind) == &"ivy_corner" and not bool(slot.right_convex)):
+		var edge := _decor_edge(item)
+		if corners.has(edge) or (StringName(item.kind) == &"ivy_corner" and corners.has(
+				BuildingMass.edge_key(Vector2i(edge.x, edge.y), BuildingMass.DIRS.find(BuildingKitAssembler.right_of(edge.z))))):
+			_drop_decor(ctx, item)
 			mass.decor.erase(item)
-			continue
-		item.centre = slot.centre
-		var assembly := {"mass": mass, "out": [] as Array[Dictionary], "serial": 0}
-		_assembler(mass, kit, ctx.solid)._assemble_decor(assembly, item)
-		for part: Dictionary in assembly.out:
-			var obstacle := _obstacle(mass, part, catalog)
-			obstacle["decor"] = item
-			obstacle["host"] = mass
-			ctx.obstacles.append(obstacle)
-	for part: Dictionary in trim:
+		elif run.has(edge):
+			_drop_decor(ctx, item)
+			item.centre = (item.centre as Vector2) - Vector2(BuildingMass.DIRS[dir]) * kit.jetty_depth / kit.module_width
+			var assembly := {"mass": mass, "out": [] as Array[Dictionary], "serial": 0}
+			_assembler(mass, kit, ctx.solid)._assemble_decor(assembly, item)
+			for part: Dictionary in assembly.out:
+				var obstacle := _obstacle(mass, part, catalog)
+				obstacle["decor"] = item
+				obstacle["host"] = mass
+				ctx.obstacles.append(obstacle)
+	for part: Dictionary in added:
 		ctx.obstacles.append(_obstacle(mass, part, catalog))
+	ctx.inset_records.append({"host": mass.stable_id, "chain": String(chain.key), "depth": kit.jetty_depth})
 
 
-## How one committed member's roof closes its steps (for the corpus audit):
-## gable (its top storey moved the gable end), inset (its house stepped its
-## ground storey in for it), half (an eave-crowned front fell back to the light
-## step), eave (stays under the cornice), flush (no step at all).
-static func _record_roof(member: Dictionary, profile: Array[float], shift: Dictionary, half: bool,
+## An eave face whose crown kept it flush (an eave-crown withdrawal, no step left)
+## takes the inset where it can; recorded on the face's roof record.
+static func _try_inset(member: Dictionary, ctx: Dictionary) -> bool:
+	var chain: Dictionary = member.chain
+	if not (ctx.eave_crowned as Dictionary).has(String(chain.key)):
+		return false
+	var mass: BuildingMass = member.mass
+	ctx.kit = member.kit
+	var cause := _inset_cause(mass, member.kit, chain, ctx)
+	if cause != &"":
+		ctx.rejections.append({"chain": String(chain.key), "storey": -1, "lean": -member.kit.jetty_depth,
+			"cause": cause})
+		return false
+	_apply_inset(mass, member.kit, chain, ctx)
+	return true
+
+
+## How one member's roof closes its steps (for the corpus audit): gable (its top
+## storey moved the gable end), inset (its ground run stepped in under the eave),
+## half (an eave-crowned front fell back to the light step), eave (stays under the
+## cornice), flush (no step at all).
+static func _record_roof(member: Dictionary, profile: Array[float], inset: bool, half: bool,
 		ctx: Dictionary) -> void:
 	var mass: BuildingMass = member.mass
 	var top := profile.size() - 1
 	var wing := crown_wing(mass, member.chain, top) if top >= 0 else {}
 	var gable := not wing.is_empty() and int(wing.axis) == int(member.chain.dir) % 2
 	var kind := &"flush"
-	if shift.has(mass.stable_id) and not gable:
+	if inset:
 		kind = &"inset"
 	elif top >= 0 and profile[top] > 0.0:
 		kind = &"gable" if gable else &"half" if half else &"eave"
