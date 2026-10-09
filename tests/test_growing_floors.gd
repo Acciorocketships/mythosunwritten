@@ -144,7 +144,8 @@ func test_projections_and_bays_skip_leaning_faces() -> void:
 		assert_ne(int(projection.dir) % 2, 0, "no perpendicular front on a leaning storey")
 	# A five-module house: both long faces are long enough for a bay.
 	var wide := FIXTURE.house(&"kit.fixture.front", Rect2i(0, 0, 5, 2), 4, 3)
-	wide.add_roof(Rect2i(0, 0, 5, 2), 0, 8, &"red")["union_index"] = 0
+	# A gable to the lane (an eave would keep the face flush: Task 8 crown rule).
+	wide.add_roof(Rect2i(0, 0, 5, 2), 1, 8, &"red")["union_index"] = 0
 	var g := FIXTURE.build({"reserved_x": [-1, 5], "replace_front": wide})
 	assert_eq(FIXTURE.leans_on(g.front, 3), [0.0, 1.0, 2.0, 2.0] as Array[float])
 	var wide_masses: Array[BuildingMass] = [g.front]

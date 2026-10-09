@@ -101,7 +101,7 @@ static func build(options: Dictionary = {}) -> Dictionary:
 		return cell.y <= -1 and cell.y >= -lane and band <= 1
 	var result := GROWTH.fit(masses, kits, kit, EnvironmentCatalog.load_default(),
 		options.get("character", character()), options.get("air", [] as Array[Dictionary]),
-		options.get("towers", [] as Array[Dictionary]), reserved, solid, street)
+		options.get("towers", [] as Array[Dictionary]), reserved, solid, street, GROWTH.roof_geometry([kit]))
 	var assembler := BuildingKitAssembler.new(kit)
 	assembler.external_blocked = func(cell: Vector2i, band: int) -> bool:
 		return solid.call(&"fixture.front", cell, band)

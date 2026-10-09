@@ -219,7 +219,8 @@ static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 			if owner_at.has(at): return owner_at[at] != own
 			return grid.contains(at) and grid.use_at(at) in [WarrenSpatialGrid.Use.STRUCTURAL_VOLUME,
 				WarrenSpatialGrid.Use.SERVICE_VOID,WarrenSpatialGrid.Use.PRIVATE_VOLUME],
-		growth_solid,growth_street)
+		growth_solid,growth_street,
+		{} if growth_character == null else GROWTH.roof_geometry(house_kits.values() + [kit]))
 	for lean: Dictionary in growth.leans:
 		walls.append(union_script.box_volume(lean.bounds))
 	var room_projections := preload("res://scripts/terrain/features/villages/kit/KitRoomProjections.gd").fit(
@@ -332,7 +333,7 @@ static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 	roof_audit["roof_fitted_windows"] = int(facade_context.get("substituted",0))
 	return {"payload": payload, "replaced_units": replaced, "masses": masses, "houses": house_masses,
 		"house_kits": house_kits, "roof_kits": roof_kits, "towers": towers, "facade_bays": facade_bays,
-		"room_projections":room_projections,"growth":growth.leans,"growth_rejections":growth.rejections,"roof_audit": roof_audit, "placements": placements, "roofs": roofs, "walls": walls}
+		"room_projections":room_projections,"growth":growth.leans,"growth_rejections":growth.rejections,"growth_insets":growth.insets,"growth_roofs":growth.roofs,"roof_audit": roof_audit, "placements": placements, "roofs": roofs, "walls": walls}
 
 
 ## True when `box` misses every fitted front (`bounds`) another house hosts.

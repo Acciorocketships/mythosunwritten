@@ -3,6 +3,7 @@ extends SceneTree
 ## GUI only (captures need a renderer):
 ##   Godot --path . -s res://tests/harness/suntail/building_gallery.gd -- \
 ##     --output DIR [--set replica|designer] [--count N] [--seed S] [--compare]
+##     [--growth STEP:CAP] (every exposed face of each designed house steps out)
 ## `replica` rebuilds the pack's House_1 from a BuildingMass beside the source
 ## prefab; `designer` lays out BuildingDesigner results on a grid.
 const GALLERY := preload("res://tests/harness/suntail/gallery_masses.gd")
@@ -13,6 +14,7 @@ var _count := 12
 var _seed := 1
 var _compare := false
 var _close := false
+var _growth := ""
 
 
 func _init() -> void:
@@ -25,6 +27,7 @@ func _init() -> void:
 			"--seed": _seed = int(args[i + 1])
 			"--compare": _compare = true
 			"--close": _close = true
+			"--growth": _growth = args[i + 1]
 	DirAccess.make_dir_recursive_absolute(_out)
 	call_deferred("_run")
 
@@ -95,6 +98,27 @@ func _shoot(stage: Node3D, eye: Vector3, target: Vector3, name: String,
 	camera.queue_free()
 
 
+## Every exposed face of one designed house steps out (growth knobs forced on).
+func _grow(mass: BuildingMass, kit: BuildingKit) -> void:
+	const GROWTH := preload("res://scripts/terrain/features/villages/kit/KitGrowingFronts.gd")
+	var setting := _growth.split(":")
+	for storey: Dictionary in mass.storeys:
+		storey.inset = false # growing houses take no jetty
+	mass.grows = true
+	var character := TownCharacter.draw(TownOddsProgram.builtin().with_overrides({
+		&"growing_house_chance": 1.0, &"growth_street_face_chance": 1.0,
+		&"growth_other_face_chance": 1.0, &"growth_max_lean": float(setting[1])}), _seed, 0.5)
+	character.values[&"growth_step"] = {StringName(setting[0]): 1.0}
+	var footprint := mass.cells_at_band(mass.ground_band)
+	var grow_masses: Array[BuildingMass] = [mass]
+	GROWTH.fit(grow_masses, {StringName(String(mass.stable_id).trim_prefix("kit.")): kit}, kit,
+		EnvironmentCatalog.load_default(), character, [], [],
+		func(_o: StringName, _c: Vector2i, _b: int) -> bool: return false,
+		func(_o: StringName, _c: Vector2i, _b: int) -> bool: return false,
+		func(cell: Vector2i, band: int) -> bool: return band <= mass.ground_band + 1 and not footprint.has(cell),
+		GROWTH.roof_geometry([kit]))
+
+
 func _run() -> void:
 	get_root().size = Vector2i(1600, 900)
 	var stage := _stage()
@@ -113,6 +137,8 @@ func _run() -> void:
 		var at := Vector3(float(i % columns) * spacing, 0.0,
 			float(i / columns) * spacing)
 		spots.append(at + Vector3(4, 4, 4))
+		if not _growth.is_empty():
+			_grow(masses[i], kit)
 		var placements := assembler.assemble(masses[i])
 		BuildingKitAssembler.append_to_payload(placements,
 			Transform3D(Basis.IDENTITY, at), payload)

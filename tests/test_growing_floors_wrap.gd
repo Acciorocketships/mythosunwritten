@@ -17,20 +17,17 @@ func _closures(f: Dictionary, dir: int) -> Array:
 
 func test_a_growing_face_pulls_its_corner_neighbours_one_hop() -> void:
 	var f := FIXTURE.build() # only the south (street) face is rolled
-	for dir: int in [3, 0, 2]:
-		assert_eq(FIXTURE.leans_on(f.front, dir), [0.0, 1.0, 2.0, 2.0] as Array[float], "face %d" % dir)
-	assert_eq(FIXTURE.leans_on(f.front, 1), [0.0, 0.0, 0.0, 0.0] as Array[float],
-		"the north face is two hops away and was not rolled")
-	assert_eq(_closures(f, 3), [&"wrap", &"wrap"])
-	assert_eq(_closures(f, 0), [&"return", &"wrap"], "east: north end open, south end wrapped")
-	assert_eq(_closures(f, 2), [&"wrap", &"return"], "west: south end wrapped, north end open")
-
-
-func test_all_four_faces_wrap_into_a_ring() -> void:
-	var f := FIXTURE.build({"character": _all_faces()})
-	for dir in 4:
-		assert_eq(FIXTURE.leans_on(f.front, dir), [0.0, 1.0, 2.0, 2.0] as Array[float], "face %d" % dir)
-		assert_eq(_closures(f, dir), [&"wrap", &"wrap"], "face %d" % dir)
+	# Ridge along z: east and west are eave faces. They are pulled into the front
+	# and leave it on their crown (a kit jetty cannot pass under the cornice, and a
+	# two-module plan cannot step its ground storey in instead).
+	assert_eq(FIXTURE.leans_on(f.front, 3), [0.0, 1.0, 2.0, 2.0] as Array[float], "south")
+	for dir: int in [0, 2, 1]:
+		assert_eq(FIXTURE.leans_on(f.front, dir), [0.0, 0.0, 0.0, 0.0] as Array[float], "face %d" % dir)
+	assert_eq(_closures(f, 3), [&"return", &"return"])
+	var crowned := (f.result.rejections as Array).filter(func(r: Dictionary) -> bool:
+		return r.cause == &"crown").map(func(r: Dictionary) -> String: return String(r.chain))
+	for chain: String in ["kit.fixture.front|0:3:0:2", "kit.fixture.front|2:0:0:2"]:
+		assert_true(crowned.has(chain), "%s was pulled and left: %s" % [chain, str(crowned)])
 
 
 func test_a_member_that_cannot_hold_leaves_the_front() -> void:
@@ -38,12 +35,14 @@ func test_a_member_that_cannot_hold_leaves_the_front() -> void:
 		var edge := BuildingMass.edge_key(Vector2i(2, 0), 0)
 		front.storeys[2].openings[edge] = BuildingMass.OPENING_DOOR
 		front.storeys[2]["passage_edges"] = {edge: true}})
-	assert_eq(FIXTURE.leans_on(f.front, 0), [0.0, 0.0, 0.0, 0.0] as Array[float], "the east portal face leaves")
-	for dir: int in [3, 1, 2]:
+	for dir: int in [0, 2]:
+		assert_eq(FIXTURE.leans_on(f.front, dir), [0.0, 0.0, 0.0, 0.0] as Array[float], "face %d" % dir)
+	for dir: int in [3, 1]:
 		assert_eq(FIXTURE.leans_on(f.front, dir), [0.0, 1.0, 2.0, 2.0] as Array[float], "face %d" % dir)
-	assert_eq(_closures(f, 3), [&"return", &"wrap"], "south: its east end now closes with a return")
+	assert_eq(_closures(f, 3), [&"return", &"return"], "south: both ends close with returns")
 	var causes := (f.result.rejections as Array).map(func(r: Dictionary) -> StringName: return r.cause)
 	assert_true(causes.has(&"portal"), str(causes))
+	assert_true(causes.has(&"crown"), str(causes))
 
 
 ## Two faces of one storey that meet at a convex corner step equally or one is flush.

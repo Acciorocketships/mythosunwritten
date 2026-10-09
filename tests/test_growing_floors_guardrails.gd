@@ -68,8 +68,8 @@ func test_footprint_change_ends_the_face_chain() -> void:
 	assert_eq(south.size(), 1)
 	assert_eq((south[0].storeys as Array).size(), 1, "storey 2's run differs from storey 1's")
 	var f := FIXTURE.build({"lone": true, "replace_front": mass})
-	assert_eq(FIXTURE.leans_on(f.front, 3), [0.0, 1.0, 0.0, 0.0] as Array[float],
-		"only the storey whose footprint matches the one below leans")
+	assert_eq(FIXTURE.leans_on(f.front, 3), [0.0, 0.0, 0.0, 0.0] as Array[float],
+		"storey 2 stands on the stepped strip without stepping: an uncovered ledge, so the face stays flush (crown)")
 
 
 func _portal(front: BuildingMass) -> void:
@@ -87,7 +87,8 @@ func test_skywalk_portal_face_never_leans_but_other_face_does() -> void:
 	# ends meet stepped perpendicular faces, so it stays flush.
 	var g := FIXTURE.build({"prepare": _portal,
 		"character": FIXTURE.character({&"growth_other_face_chance": 1.0})})
-	assert_gt(FIXTURE.leans_on(g.front, 0)[1], 0.0, "another face of the house still grows")
+	# (The north face: east and west are eave faces, which the crown keeps flush.)
+	assert_gt(FIXTURE.leans_on(g.front, 1)[1], 0.0, "another face of the house still grows")
 	assert_eq(FIXTURE.leans_on(g.front, 3), [0.0, 0.0, 0.0, 0.0] as Array[float])
 
 

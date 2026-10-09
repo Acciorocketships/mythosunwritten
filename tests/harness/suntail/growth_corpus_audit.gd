@@ -14,8 +14,14 @@ func _init() -> void:
 ## record whose right end wraps owns it), terrace-row joints (lean records with a
 ## joint closure; `row_joints` one per joint and storey), houses pulled into a row
 ## without rolling growth, buried storey-faces (lean records with a bury closure;
-## `buried_own` / `buried_neighbour` count the walls run into by owner), and
-## withdrawals by cause.
+## `buried_own` / `buried_neighbour` count the walls run into by owner),
+## withdrawals by cause, and how each face's roof closes it (Task 8): faces whose
+## top storey moved its gable end (`gable_shift`), faces given their step by the
+## house's ground storey stepping in (`inset`, `inset_houses`), eave faces on the
+## light-step fallback (`half`), faces a crown kept flush (`flush_crown`), and
+## crown withdrawals split by the crown's kind (`crown_gable`, `crown_eave`,
+## `crown_open`: no roof closes the face, a storey or nothing above) and by why
+## (`crown_why`: the gable's blocker, the eave's inset blocker).
 static func counts(built: Dictionary) -> Dictionary:
 	var chains := {}
 	var wraps := 0
@@ -46,12 +52,36 @@ static func counts(built: Dictionary) -> Dictionary:
 		if bool(lean.get("pulled", false)):
 			pulled[String(lean.get("host", ""))] = true
 	var causes := {}
+	var crowned := {}
+	var crown_kinds := {"crown_gable": 0, "crown_eave": 0, "crown_open": 0}
+	var crown_why := {}
 	for rejection: Dictionary in built.get("growth_rejections", []):
 		causes[String(rejection.cause)] = int(causes.get(String(rejection.cause), 0)) + 1
+		if rejection.cause == &"crown":
+			crowned[String(rejection.chain)] = true
+			var key := "crown_%s" % String(rejection.get("crown", "open"))
+			crown_kinds[key] = int(crown_kinds.get(key, 0)) + 1
+			var why := "%s.%s" % [String(rejection.get("crown", "open")), String(rejection.get("why", ""))]
+			crown_why[why] = int(crown_why.get(why, 0)) + 1
+	var roof_faces := {"gable": {}, "inset": {}, "half": {}, "eave": {}}
+	for roof: Dictionary in built.get("growth_roofs", []):
+		if roof_faces.has(String(roof.kind)):
+			roof_faces[String(roof.kind)][String(roof.chain)] = true
+	var inset_houses := {}
+	for record: Dictionary in built.get("growth_insets", []):
+		inset_houses[String(record.host)] = true
+	var flush_crown := 0
+	for chain: String in crowned:
+		if not chains.has(chain) and not (roof_faces.inset as Dictionary).has(chain):
+			flush_crown += 1
 	return {"faces": chains.size(), "storeys": (built.get("growth", []) as Array).size(), "wraps": wraps,
 		"corners": corners, "joints": joints, "row_joints": row_joints, "pulled": pulled.size(),
 		"buried": buried, "buried_own": buried_own, "buried_neighbour": buried_neighbour,
-		"causes": causes}
+		"gable_shift": (roof_faces.gable as Dictionary).size(), "inset": (roof_faces.inset as Dictionary).size(),
+		"inset_houses": inset_houses.size(), "half": (roof_faces.half as Dictionary).size(),
+		"eave": (roof_faces.eave as Dictionary).size(), "flush_crown": flush_crown,
+		"crown_gable": crown_kinds.crown_gable, "crown_eave": crown_kinds.crown_eave,
+		"crown_open": crown_kinds.crown_open, "crown_why": crown_why, "causes": causes}
 
 
 func _run() -> void:
@@ -71,7 +101,9 @@ func _run() -> void:
 	var rows := []
 	var bad := 0
 	var total := {"faces": 0, "storeys": 0, "wraps": 0, "corners": 0, "joints": 0, "row_joints": 0,
-		"pulled": 0, "buried": 0, "buried_own": 0, "buried_neighbour": 0, "causes": {}}
+		"pulled": 0, "buried": 0, "buried_own": 0, "buried_neighbour": 0, "gable_shift": 0, "inset": 0,
+		"inset_houses": 0, "half": 0, "eave": 0, "flush_crown": 0, "crown_gable": 0, "crown_eave": 0,
+		"crown_open": 0, "crown_why": {}, "causes": {}}
 	for town: String in towns.split(","):
 		var parts := town.split(":")
 		var profile := WarrenVillageScaleProfile.for_id(StringName(parts[1]))
@@ -91,8 +123,12 @@ func _run() -> void:
 		total.storeys += int(row.storeys)
 		total.wraps += int(row.wraps)
 		total.corners += int(row.corners)
-		for key: String in ["joints", "row_joints", "pulled", "buried", "buried_own", "buried_neighbour"]:
+		for key: String in ["joints", "row_joints", "pulled", "buried", "buried_own", "buried_neighbour",
+				"gable_shift", "inset", "inset_houses", "half", "eave", "flush_crown", "crown_gable",
+				"crown_eave", "crown_open"]:
 			total[key] += int(row[key])
+		for why: String in row.crown_why:
+			total.crown_why[why] = int(total.crown_why.get(why, 0)) + int(row.crown_why[why])
 		for cause: String in row.causes:
 			total.causes[cause] = int(total.causes.get(cause, 0)) + int(row.causes[cause])
 		rows.append(row)

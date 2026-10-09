@@ -104,11 +104,14 @@ func test_a_concave_end_against_a_windowed_wing_withdraws_the_step() -> void:
 
 func test_an_end_whose_own_wall_continues_behind_the_neighbour_is_buried() -> void:
 	# The house runs on (x 3) behind the neighbour standing in the lane: the exposed
-	# run still ends at x 3, against the neighbour's plain west wall.
+	# run still ends at x 3, against the neighbour's plain west wall. Since Task 8
+	# the face's top storey must be closed above its step: its gable spans all four
+	# modules and cannot move with a three-module step, so the face stays flush
+	# (crown). (A separate gable wing over the run alone meets the fourth module's
+	# own roof: a real collision, so that variant stays flush too.) The bury end
+	# itself is still pinned by test_inside_corner_end_is_buried_in_a_plain_wall.
 	var mass := FIXTURE.roofed(&"kit.fixture.front", Rect2i(0, 0, 4, 2), 4, 3, 1, 0)
 	var f := FIXTURE.build({"replace_front": mass, "extra": [_corner(true)], "lone": true})
-	assert_eq(FIXTURE.leans_on(mass, 3), [0.0, 1.0, 2.0, 2.0] as Array[float])
-	for band: int in [2, 4, 6]:
-		assert_eq(_east_closure(f, band), &"bury", "band %d" % band)
-	for lean: Dictionary in f.leans:
-		assert_eq(lean.buried_into, ["kit.fixture.corner"] as Array[String], "the neighbour's wall")
+	assert_eq(FIXTURE.leans_on(mass, 3), [0.0, 0.0, 0.0, 0.0] as Array[float])
+	assert_true((f.result.rejections as Array).any(func(r: Dictionary) -> bool:
+		return r.cause == &"crown" and r.get("crown", &"") == &"gable"), str(f.result.rejections))

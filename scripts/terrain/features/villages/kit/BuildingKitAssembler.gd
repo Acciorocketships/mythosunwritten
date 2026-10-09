@@ -979,6 +979,7 @@ func _emit_jetty_trim(ctx: Dictionary, slot: Dictionary, y: float, yaw: float,
 # --- roofs ----------------------------------------------------------------
 
 func _assemble_roof(ctx: Dictionary, wing: Dictionary) -> void:
+	var first_part: int = (ctx.out as Array).size()
 	var mass: BuildingMass = ctx.mass
 	var rect := wing.rect as Rect2i
 	var axis := int(wing.axis)
@@ -1086,6 +1087,59 @@ func _assemble_roof(ctx: Dictionary, wing: Dictionary) -> void:
 			continue
 		_assemble_gable(ctx, axis, end, u0 if end == 0 else u1, v0, v1,
 			eave_y, profile, float(wing.get("verge_min" if end == 0 else "verge_max", -1.0)), tight_sides)
+	if wing.has("lean_min") or wing.has("lean_max"):
+		_lean_roof_end(ctx, wing, first_part, p_min, p_max)
+
+
+## One roof wing's placements (fitters test a candidate wing before committing it).
+func roof_parts(mass: BuildingMass, wing: Dictionary) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	_assemble_roof({"mass": mass, "out": out, "serial": 0}, wing)
+	return out
+
+
+## A growing house's top storey leans past its gable end: that end of the roof
+## (gable, barge boards, end slope/eave/top pieces, ridge end) moves out with it,
+## and a copy of each moved roof piece, clipped to the opened strip between the
+## last middle piece and the moved end, closes the roof. KitGrowingFronts only
+## sets lean_* on wings of kits without edge caps (pieces centred on modules).
+func _lean_roof_end(ctx: Dictionary, wing: Dictionary, first_part: int, p_min: int, p_max: int) -> void:
+	if kit.roof_edge_caps:
+		return
+	var axis := int(wing.axis)
+	var coordinate := 0 if axis == 0 else 2
+	var fillers: Array[Dictionary] = []
+	for end: int in [0, 1]:
+		var lean := float(wing.get("lean_max" if end == 1 else "lean_min", 0.0))
+		if lean <= 0.0:
+			continue
+		var sign := 1.0 if end == 1 else -1.0
+		var edge := float(p_max if end == 1 else p_min)
+		var seam := edge - sign * 0.5
+		var reach := lean / kit.module_width
+		var offset := Vector3.ZERO
+		offset[coordinate] = sign * lean
+		for i in range(first_part, (ctx.out as Array).size()):
+			var part: Dictionary = ctx.out[i]
+			var role := String(part.role)
+			if role.begins_with("chimney.") or role == "trim.ridge_peak":
+				continue
+			var original: Transform3D = part.transform
+			if sign * (original.origin[coordinate] / kit.module_width - edge) < -0.25:
+				continue
+			part.transform = Transform3D(original.basis, original.origin + offset)
+			part["lean_end"] = true
+			if role.begins_with("roof.") or role.begins_with("trim.ridge"):
+				var filler := part.duplicate()
+				filler.transform = original
+				filler.erase("lean_end")
+				filler["lean_filler"] = true
+				filler["stable_id"] = StringName("%s.lean" % String(part.stable_id))
+				filler["clip_volumes"] = preload("res://scripts/terrain/features/villages/kit/KitRoofMeshUnion.gd").clip_volumes(
+					{"axis": axis, "clip_min": minf(seam, seam + sign * reach),
+						"clip_max": maxf(seam, seam + sign * reach)}, kit)
+				fillers.append(filler)
+	(ctx.out as Array).append_array(fillers)
 
 
 func _roof_cap_at(wing: Dictionary, role: StringName, end: int, first: int,
