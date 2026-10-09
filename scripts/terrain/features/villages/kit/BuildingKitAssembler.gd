@@ -114,13 +114,20 @@ func _emit_projected_front(ctx:Dictionary,storey:Dictionary)->void:
 		for centre:Vector2 in centres:
 			_emit(ctx,_front_role(&"frontage.floor",projection),centre+out*depth*.5/kit.module_width,y+kit.storey_height-.12772,yaw_for_dir(dir))
 			_emit(ctx,&"trim.floor_beam",centre+out*depth/kit.module_width,y,yaw_for_dir(dir))
+		var closures:Array=projection.get("closures",[&"return",&"return"])
 		for side:int in [-1,1]:
 			var centre:Vector2=centres.front() if side<0 else centres.back()
-			var at:=centre+right*.5*side+out*depth*.5/kit.module_width
-			var yaw:=yaw_for_dir(dir)+PI*.5*side
-			_emit(ctx,_front_role(&"frontage.return",projection),at,y,yaw,0,Transform3D.IDENTITY,storey.get("tint",Color.WHITE))
-			_emit(ctx,_front_role(&"frontage.return_beam",projection),at,y,yaw)
-			_emit(ctx,_front_role(&"frontage.return_beam",projection),at,y+kit.storey_height-.143,yaw)
+			match StringName(closures[0 if side<0 else 1]):
+				&"return":
+					var at:=centre+right*.5*side+out*depth*.5/kit.module_width
+					var yaw:=yaw_for_dir(dir)+PI*.5*side
+					_emit(ctx,_front_role(&"frontage.return",projection),at,y,yaw,0,Transform3D.IDENTITY,storey.get("tint",Color.WHITE))
+					_emit(ctx,_front_role(&"frontage.return_beam",projection),at,y,yaw)
+					_emit(ctx,_front_role(&"frontage.return_beam",projection),at,y+kit.storey_height-.143,yaw)
+				&"wrap":
+					_emit_wrap_end(ctx,storey,projection,centre,side,y)
+				_:
+					pass # joint / bury (Tasks 6, 7): the neighbouring face continues the wall
 		if depth<=base+.001:
 			continue # a held storey adds no overhang: nothing to bracket
 		if absf(depth-base-kit.jetty_depth)<.001 and kit.has_role(&"bracket.jetty"):
@@ -134,6 +141,32 @@ func _emit_projected_front(ctx:Dictionary,storey:Dictionary)->void:
 			_emit(ctx,&"bracket.small",at,y-.706295,yaw_for_dir(dir))
 
 
+## Native offset (along the face's outward normal) that makes a wrap strip's outer
+## face coplanar with the face's wall panels; measured in Task 5 Step 6.
+const WRAP_INSET := 0.030
+
+
+## A wrapped convex corner: the face's wall runs on `depth` past its last module (a
+## baked return strip turned to face out) with its floor beam; the face whose RIGHT
+## end the corner is also lays the corner floor and ceiling squares (one owner).
+func _emit_wrap_end(ctx: Dictionary, storey: Dictionary, projection: Dictionary,
+		centre: Vector2, side: int, y: float) -> void:
+	var dir := int(projection.dir)
+	var depth := float(projection.depth)
+	var w := kit.module_width
+	var out := Vector2(BuildingMass.DIRS[dir])
+	var right := Vector2(right_of(dir))
+	var yaw := yaw_for_dir(dir)
+	var strip := centre + right * side * (0.5 + depth * 0.5 / w) + out * (depth + WRAP_INSET) / w
+	_emit(ctx, _front_role(&"frontage.return", projection), strip, y - OFFSET_WALL_DROP, yaw, 0,
+		Transform3D.IDENTITY, storey.get("tint", Color.WHITE))
+	_emit(ctx, _front_role(&"frontage.return_beam", projection), strip, y, yaw)
+	if side > 0:
+		var corner := centre + right * (0.5 + depth * 0.5 / w) + out * depth * 0.5 / w
+		_emit(ctx, _front_role(&"frontage.corner", projection), corner, y, yaw)
+		_emit(ctx, _front_role(&"frontage.corner", projection), corner, y + kit.storey_height - .12772, yaw)
+
+
 ## The pieces one candidate front adds (its moved wall slots, corner post,
 ## floor/ceiling strips, beams, returns, brackets), for fitters to test before
 ## committing. The storey itself is not changed.
@@ -145,6 +178,15 @@ func face_parts(mass: BuildingMass, index: int, projection: Dictionary) -> Array
 	for edge: Vector3i in projection.edges:
 		offsets[edge] = float(projection.depth) / kit.module_width
 		edges[edge] = true
+	# A wrapped right end: its partner face steps too, so the corner post stands
+	# where the final assembly puts it.
+	var closures: Array = projection.get("closures", [&"return", &"return"])
+	if StringName(closures[1]) == &"wrap":
+		var dir := int(projection.dir)
+		var last: Vector2 = (projection.centres as Array).back()
+		var cell := Vector2i((last - Vector2(BuildingMass.DIRS[dir]) * .5 - Vector2.ONE * .5).round())
+		var side := BuildingMass.DIRS.find(right_of(dir))
+		offsets[BuildingMass.edge_key(cell, side)] = float(projection.depth) / kit.module_width
 	probe["wall_offsets"] = offsets
 	probe["projections"] = [projection]
 	var out: Array[Dictionary] = []
@@ -154,16 +196,27 @@ func face_parts(mass: BuildingMass, index: int, projection: Dictionary) -> Array
 	for slot: Dictionary in storey_slots(probe, _edge_exposure(mass, int(probe.floor_band), bands)):
 		if not edges.has(slot.edge):
 			continue
+		# The panel _assemble_storey picks (same pick, plain cadence and asset).
+		var yaw := yaw_for_dir(int(slot.dir))
+		var tint := probe.get("tint", Color.WHITE) as Color
+		var pick := _hash(mass, index, int(slot.centre.x * 2.0), int(slot.centre.y * 2.0))
 		var kind := StringName(probe.openings.get(slot.edge, probe.default_opening))
-		if kind == BuildingMass.OPENING_BAY and _emit_bay(ctx, probe, slot, y - OFFSET_WALL_DROP,
-				yaw_for_dir(int(slot.dir)), _hash(mass, index, int(slot.centre.x * 2.0), int(slot.centre.y * 2.0)),
-				probe.get("tint", Color.WHITE)):
-			_emit_corner_post(ctx, slot, y - OFFSET_WALL_DROP, bands, kit.wall_face)
-			continue
+		var plain_every := int(probe.get("plain_every", 0))
+		if kind == BuildingMass.OPENING_WINDOW and plain_every > 0 and pick % plain_every == 0:
+			kind = BuildingMass.OPENING_PLAIN
+		if kind == BuildingMass.OPENING_BAY:
+			# A bay replaces the panel (no post); a spire bay stands on a plain
+			# panel; a bay the kit lacks falls back to a window.
+			var bay_role := _emit_bay(ctx, probe, slot, y - OFFSET_WALL_DROP, yaw, pick, tint)
+			if bay_role != &"" and bay_role != &"bay.spire":
+				continue
+			kind = BuildingMass.OPENING_PLAIN if bay_role == &"bay.spire" else BuildingMass.OPENING_WINDOW
 		var role := StringName("wall.%s.%s" % [probe.material, kind])
 		if not kit.has_role(role):
 			role = StringName("wall.%s.window" % probe.material)
-		_emit(ctx, role, slot.centre, y - OFFSET_WALL_DROP, yaw_for_dir(int(slot.dir)))
+		_emit(ctx, role, slot.centre, y - OFFSET_WALL_DROP, yaw, pick, Transform3D.IDENTITY, tint,
+			StringName((probe.get("opening_assets", {}) as Dictionary).get(slot.edge, &""))
+				if kind == BuildingMass.OPENING_WINDOW else &"")
 		_emit_corner_post(ctx, slot, y - OFFSET_WALL_DROP, bands, kit.wall_face)
 	_emit_front_floors(ctx, probe)
 	_emit_projected_front(ctx, probe)
@@ -396,6 +449,14 @@ static func storey_slots(storey: Dictionary, exposed: Callable = Callable()) -> 
 	for slot:Dictionary in slots:
 		slot["wall_offset"]=float(offsets.get(slot.edge,0.0))
 		slot.centre+=Vector2(BuildingMass.DIRS[int(slot.dir)])*float(slot.wall_offset)
+		# A wrapped convex corner: this face and the face to its right both step
+		# out, so the corner (and its post) lies that much further along. 0 where
+		# either face is flush (a return closes a lone step; room projections).
+		slot["right_extend"]=0.0
+		if bool(slot.right_convex) and float(slot.wall_offset)>0.0:
+			var side:=BuildingMass.DIRS.find(right_of(int(slot.dir)))
+			var edge:Vector3i=slot.edge
+			slot["right_extend"]=float(offsets.get(BuildingMass.edge_key(Vector2i(edge.x,edge.y),side),0.0))
 	return slots
 
 
@@ -519,14 +580,11 @@ func _assemble_storey(ctx: Dictionary, index: int) -> void:
 			kind = BuildingMass.OPENING_PLAIN
 		if kind == BuildingMass.OPENING_BAY:
 			# The bay replaces this wall panel and belongs to the same house finish.
-			if _emit_bay(ctx, storey, slot, wall_y, yaw, pick, tint):
-				var bay_role := StringName((storey.get("bay_roles",{}) as Dictionary).get(slot.edge,StringName("bay.%s" % StringName(storey.get("bay_colour", &"red")))))
-				if bay_role!=&"bay.spire":
-					_emit_jetty_trim(ctx, slot, wall_y, yaw, jettied, pick)
-					continue
-				kind = BuildingMass.OPENING_PLAIN
-			else:
-				kind = BuildingMass.OPENING_WINDOW
+			var bay_role := _emit_bay(ctx, storey, slot, wall_y, yaw, pick, tint)
+			if bay_role != &"" and bay_role != &"bay.spire":
+				_emit_jetty_trim(ctx, slot, wall_y, yaw, jettied, pick)
+				continue
+			kind = BuildingMass.OPENING_PLAIN if bay_role == &"bay.spire" else BuildingMass.OPENING_WINDOW
 		var role := StringName("wall.%s.%s" % [material, kind])
 		if kind == BuildingMass.OPENING_DOOR \
 				and (storey.get("passage_edges", {}) as Dictionary).has(slot.edge):
@@ -595,7 +653,8 @@ func _emit_corner_post(ctx: Dictionary, slot: Dictionary, y: float, bands: int,
 	# The post covers the corner square [0, face] of both faces.
 	var half := maxf(kit.corner_post_half, face * 0.5 + 0.02)
 	var inset := (face - half) / kit.module_width
-	var at := (slot.centre as Vector2) + right * 0.5 + (out + right) * inset
+	var at := (slot.centre as Vector2) + right * (0.5 + float(slot.get("right_extend", 0.0))) \
+		+ (out + right) * inset
 	var height := float(bands) * kit.band_height() + (0.074 if bands >= 2 else 0.0)
 	var girth := half / kit.corner_post_half
 	_emit(ctx, &"post.timber", at, y, yaw_for_dir(dir), 0,
@@ -890,16 +949,16 @@ func _covered_above(mass: BuildingMass, slot: Dictionary, band: int) -> bool:
 	return true
 
 
-## A bay replacing this wall panel (true when one was placed).
+## A bay replacing this wall panel: the role it placed, or &"" when none.
 func _emit_bay(ctx: Dictionary, storey: Dictionary, slot: Dictionary, wall_y: float, yaw: float,
-		pick: int, tint: Color) -> bool:
+		pick: int, tint: Color) -> StringName:
 	var colour := StringName(storey.get("bay_colour", &"red"))
 	var bay_role := StringName((storey.get("bay_roles",{}) as Dictionary).get(slot.edge,StringName("bay.%s" % colour)))
 	if not kit.has_role(bay_role):
-		return false
+		return &""
 	var offset: Vector2 = (storey.get("bay_offsets",{}) as Dictionary).get(slot.edge,Vector2.ZERO)
 	_emit(ctx, bay_role, (slot.centre as Vector2)+offset, wall_y + kit.band_height() * 2.0 / 3.0, yaw, pick, Transform3D.IDENTITY, tint)
-	return true
+	return bay_role
 
 
 func _emit_jetty_trim(ctx: Dictionary, slot: Dictionary, y: float, yaw: float,

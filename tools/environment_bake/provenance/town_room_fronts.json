@@ -1,6 +1,368 @@
 {
   "assets": [
     {
+      "descriptor": "res://terrain/environment/catalog/descriptors/town_frontage_corner_d025.tres",
+      "id": "town.frontage.corner.d025",
+      "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village and BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 12,
+        "measured_aabb": {
+          "position": [
+            -0.125,
+            -0.00000223517417907715,
+            -0.125
+          ],
+          "size": [
+            0.25,
+            0.127722099423409,
+            0.25
+          ]
+        },
+        "mesh_bytes": 1462,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 12
+      },
+      "pack": "town_room_fronts",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -0.125,
+            0.125
+          ],
+          "z": [
+            -0.125,
+            0.125
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "town.frontage.corner.d025",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 6.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Floor_2.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "town_room_fronts",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Floor_2.glb",
+      "source_sha256": "bf165097da8d211b19b9d334983fbb4272b4cdab0a0ef76d059f6b3a4f2b1e12",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 41,
+      "visual": "res://terrain/environment/visuals/town_room_fronts/town_frontage_corner_d025.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/town_frontage_corner_d050.tres",
+      "id": "town.frontage.corner.d050",
+      "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village and BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 12,
+        "measured_aabb": {
+          "position": [
+            -0.25,
+            -0.00000223517417907715,
+            -0.25
+          ],
+          "size": [
+            0.5,
+            0.127722099423409,
+            0.5
+          ]
+        },
+        "mesh_bytes": 1518,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 12
+      },
+      "pack": "town_room_fronts",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -0.25,
+            0.25
+          ],
+          "z": [
+            -0.25,
+            0.25
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "town.frontage.corner.d050",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 6.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Floor_2.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "town_room_fronts",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Floor_2.glb",
+      "source_sha256": "bf165097da8d211b19b9d334983fbb4272b4cdab0a0ef76d059f6b3a4f2b1e12",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 41,
+      "visual": "res://terrain/environment/visuals/town_room_fronts/town_frontage_corner_d050.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/town_frontage_corner_d075.tres",
+      "id": "town.frontage.corner.d075",
+      "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village and BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 12,
+        "measured_aabb": {
+          "position": [
+            -0.375,
+            -0.00000223517417907715,
+            -0.375
+          ],
+          "size": [
+            0.75,
+            0.127722099423409,
+            0.75
+          ]
+        },
+        "mesh_bytes": 1546,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 12
+      },
+      "pack": "town_room_fronts",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -0.375,
+            0.375
+          ],
+          "z": [
+            -0.375,
+            0.375
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "town.frontage.corner.d075",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 6.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Floor_2.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "town_room_fronts",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Floor_2.glb",
+      "source_sha256": "bf165097da8d211b19b9d334983fbb4272b4cdab0a0ef76d059f6b3a4f2b1e12",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 41,
+      "visual": "res://terrain/environment/visuals/town_room_fronts/town_frontage_corner_d075.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/town_frontage_corner_d100.tres",
+      "id": "town.frontage.corner.d100",
+      "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village and BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 42,
+        "measured_aabb": {
+          "position": [
+            -0.5,
+            -0.0516878701746464,
+            -0.5
+          ],
+          "size": [
+            1.0,
+            0.179407730698586,
+            1.0
+          ]
+        },
+        "mesh_bytes": 3070,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 42
+      },
+      "pack": "town_room_fronts",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -0.5,
+            0.5
+          ],
+          "z": [
+            -0.5,
+            0.5
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "town.frontage.corner.d100",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 6.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Floor_2.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "town_room_fronts",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Floor_2.glb",
+      "source_sha256": "bf165097da8d211b19b9d334983fbb4272b4cdab0a0ef76d059f6b3a4f2b1e12",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 41,
+      "visual": "res://terrain/environment/visuals/town_room_fronts/town_frontage_corner_d100.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/town_frontage_corner_d150.tres",
+      "id": "town.frontage.corner.d150",
+      "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village and BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 44,
+        "measured_aabb": {
+          "position": [
+            -0.75,
+            -0.0516878701746464,
+            -0.75
+          ],
+          "size": [
+            1.5,
+            0.179407730698586,
+            1.5
+          ]
+        },
+        "mesh_bytes": 3250,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 44
+      },
+      "pack": "town_room_fronts",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -0.75,
+            0.75
+          ],
+          "z": [
+            -0.75,
+            0.75
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "town.frontage.corner.d150",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 6.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Floor_2.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "town_room_fronts",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Floor_2.glb",
+      "source_sha256": "bf165097da8d211b19b9d334983fbb4272b4cdab0a0ef76d059f6b3a4f2b1e12",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 41,
+      "visual": "res://terrain/environment/visuals/town_room_fronts/town_frontage_corner_d150.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/town_frontage_corner_d200.tres",
+      "id": "town.frontage.corner.d200",
+      "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village and BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 36,
+        "measured_aabb": {
+          "position": [
+            -1.00000011920929,
+            -0.0516878701746464,
+            -1.00000011920929
+          ],
+          "size": [
+            2.00000023841858,
+            0.179407730698586,
+            2.00000023841858
+          ]
+        },
+        "mesh_bytes": 3034,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 36
+      },
+      "pack": "town_room_fronts",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "town.frontage.corner.d200",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 6.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Floor_2.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "town_room_fronts",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Floor_2.glb",
+      "source_sha256": "bf165097da8d211b19b9d334983fbb4272b4cdab0a0ef76d059f6b3a4f2b1e12",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 41,
+      "visual": "res://terrain/environment/visuals/town_room_fronts/town_frontage_corner_d200.tres"
+    },
+    {
       "descriptor": "res://terrain/environment/catalog/descriptors/town_frontage_floor.tres",
       "id": "town.frontage.floor",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village and BK Pure Village)",

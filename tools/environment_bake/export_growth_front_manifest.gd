@@ -1,6 +1,6 @@
 extends SceneTree
 ## Adds the growing-floor depth family to town_room_fronts.json: one floor strip,
-## return and return beam per cumulative lean (KitGrowingFronts.LEAN_DEPTHS).
+## corner square, return and return beam per cumulative lean (KitGrowingFronts.LEAN_DEPTHS).
 ## Each source is measured; a depth is cut from the narrowest source at least that
 ## wide (never scaled). Existing entries are kept; regenerated entries replaced.
 ## godot --headless --editor --path . -s res://tools/environment_bake/export_growth_front_manifest.gd
@@ -27,6 +27,13 @@ func _init() -> void:
 		var half := depth * 0.5
 		kept.append(_entry(template["town.frontage.floor"], "town.frontage.floor." + suffix,
 			FLOOR, "z", half, false))
+		# The square closing a wrapped corner (floor and ceiling): d x d of Floor_2.
+		var corner := _entry(template["town.frontage.floor"], "town.frontage.corner." + suffix,
+			FLOOR, "z", half, false)
+		corner.erase("clip_ranges")
+		if half * 2.0 < 2.0 - 0.0001: # Floor_2 is 2.0 x 2.0: clip both axes to d x d
+			corner.clip_ranges = {"x": [-half, half], "z": [-half, half]}
+		kept.append(corner)
 		kept.append(_entry(template["town.frontage.return_beam"], "town.frontage.return_beam." + suffix,
 			BEAM, "x", half, false))
 		var source := ""
@@ -40,7 +47,7 @@ func _init() -> void:
 	var file := FileAccess.open(MANIFEST, FileAccess.WRITE)
 	file.store_string(JSON.stringify(manifest, "  ", false) + "\n")
 	file.close()
-	print("GROWTH_FRONTS ", GROWTH.LEAN_DEPTHS.size() * 3)
+	print("GROWTH_FRONTS ", GROWTH.LEAN_DEPTHS.size() * 4)
 	quit()
 
 

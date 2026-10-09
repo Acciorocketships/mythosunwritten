@@ -34,6 +34,11 @@ func test_every_lean_depth_has_a_measured_floor_return_and_beam() -> void:
 					assert_gt(catalog.descriptor(id).collision_piece_count, 0, String(id))
 				&"frontage.return_beam":
 					assert_almost_eq(box.size.x, depth, 0.001, String(id))
+				&"frontage.corner":
+					assert_almost_eq(box.size.x, depth, 0.001, String(id))
+					assert_almost_eq(box.size.z, depth, 0.001, String(id))
+					assert_almost_eq(box.get_center().x, 0.0, 0.001, String(id))
+					assert_almost_eq(box.get_center().z, 0.0, 0.001, String(id))
 
 
 func test_existing_projection_fronts_are_unchanged() -> void:

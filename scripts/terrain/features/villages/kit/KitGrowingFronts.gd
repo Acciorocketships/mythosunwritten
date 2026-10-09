@@ -15,7 +15,8 @@ const BOOST_KNOB := &"growth_gable_front_boost"
 const STEP_SIZES: Array[float] = [0.5, 1.0]
 const MAX_STEPS := 4
 const LEAN_DEPTHS: Array[float] = [0.25, 0.5, 0.75, 1.0, 1.5, 2.0]
-const FRONT_ROLES: Array[StringName] = [&"frontage.floor", &"frontage.return", &"frontage.return_beam"]
+const FRONT_ROLES: Array[StringName] = [&"frontage.floor", &"frontage.return", &"frontage.return_beam",
+	&"frontage.corner"]
 
 
 ## The step this kit can carry: a kit-sized step needs the kit's own jetty brace
@@ -155,8 +156,11 @@ static func _edges(chain: Dictionary) -> Array[Vector3i]:
 
 
 ## Leans every growing house in `masses` (already in sorted id order). Returns
-## {leans, registry}: one entry per leaned storey face, and the accepted lean per
-## Vector4i(cell.x, cell.z, dir, band) for facing-gap checks by later fitters.
+## {leans, registry, rejections}: one entry per leaned storey face, the accepted
+## lean per Vector4i(cell.x, cell.z, dir, band) for facing-gap checks by later
+## fitters, and every withdrawn step with its cause. Faces step in FRONTS: a
+## rolled face pulls the faces it meets at a convex corner (one hop), and the
+## front steps together, its corners wrapped.
 static func fit(masses: Array[BuildingMass], kits: Dictionary, base: BuildingKit,
 		catalog: EnvironmentCatalog, character: TownCharacter, air: Array[Dictionary],
 		towers: Array[Dictionary], reserved: Callable, solid: Callable,
@@ -168,90 +172,284 @@ static func fit(masses: Array[BuildingMass], kits: Dictionary, base: BuildingKit
 		return {"leans": leans, "registry": ctx.registry, "rejections": ctx.rejections}
 	ctx.gap = character.value(GAP_KNOB)
 	ctx.obstacles = _obstacles(masses, kits, base, catalog, towers, solid)
+	var members: Array[Dictionary] = []
 	for mass: BuildingMass in masses:
 		if not mass.grows or not kits.has(_own(mass)):
 			continue
 		var kit: BuildingKit = kits[_own(mass)]
-		ctx.kit = kit
 		if not kit.has_role(StringName("frontage.return.%s" % BuildingKitAssembler.lean_suffix(STEP_SIZES[0]))):
 			continue
-		var step := float(String(character.pick(STEP_KNOB, String(mass.stable_id))))
-		if not STEP_SIZES.has(step):
-			continue
-		step = carried_step(kit, step)
-		var cap := step * float(mini(MAX_STEPS, floori(character.value(CAP_KNOB) / step + 0.0001)))
 		for chain: Dictionary in face_chains(mass, solid, street):
 			var knob := STREET_FACE_KNOB if bool(chain.street) else OTHER_FACE_KNOB
-			if not character.chance(knob, String(chain.key)):
-				continue
-			_commit(mass, kit, chain, _profile(mass, chain, step, cap, ctx), ctx, leans)
+			members.append({"mass": mass, "chain": chain, "kit": kit,
+				"seed": character.chance(knob, String(chain.key))})
+	for front: Dictionary in fronts(members):
+		_fit_front(front, character, ctx, leans)
 	return {"leans": leans, "registry": ctx.registry, "rejections": ctx.rejections}
 
 
-## Monotone cumulative leans for one face (index k = k-th storey of the chain):
-## storey k wants min((k+1) step, cap). A failing step is withdrawn and every
-## storey above keeps the last accepted lean; a storey that cannot hold even that
-## drops the face cap one step and the face is fitted again from the bottom, so
-## leans never decrease upward.
-static func _profile(mass: BuildingMass, chain: Dictionary, step: float, cap: float,
-		ctx: Dictionary) -> Array[float]:
-	var n := (chain.storeys as Array).size()
+## The lattice vertex at one end of a chain's run.
+static func _point(chain: Dictionary, at_end: bool) -> Vector2i:
+	var along := int(chain.end) if at_end else int(chain.start)
+	return Vector2i(int(chain.line), along) if int(chain.dir) % 2 == 0 else Vector2i(along, int(chain.line))
+
+
+## Joins between candidate faces: two faces of one house that meet at a convex
+## corner of the first upper storey (same first band) wrap (Task 6 adds joints).
+static func _joins(members: Array[Dictionary]) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for a in members.size():
+		for b in range(a + 1, members.size()):
+			var ca: Dictionary = members[a].chain
+			var cb: Dictionary = members[b].chain
+			if members[a].mass != members[b].mass or int(ca.dir) % 2 == int(cb.dir) % 2 \
+					or int(ca.first_band) != int(cb.first_band):
+				continue
+			for a_end: bool in [false, true]:
+				for b_end: bool in [false, true]:
+					if _point(ca, a_end) == _point(cb, b_end) \
+							and bool(ca.end_convex if a_end else ca.start_convex) \
+							and bool(cb.end_convex if b_end else cb.start_convex):
+						out.append({"a": a, "a_end": a_end, "b": b, "b_end": b_end, "kind": &"wrap"})
+	return out
+
+
+## Seeds and their direct join partners; one front per connected component that
+## holds a seed (pulling is one hop: a partner pulls nothing further unless it is a
+## seed itself). Members sorted by chain key (the first is the leader).
+static func fronts(members: Array[Dictionary]) -> Array[Dictionary]:
+	var joins := _joins(members)
+	var keep := {}
+	for m in members.size():
+		if bool(members[m].seed):
+			keep[m] = true
+	for join: Dictionary in joins:
+		if bool(members[join.a].seed):
+			keep[join.b] = true
+		if bool(members[join.b].seed):
+			keep[join.a] = true
+	var root := {}
+	for m: int in keep:
+		root[m] = m
+	var find := func(m: int, self_ref: Callable) -> int:
+		return m if int(root[m]) == m else int(self_ref.call(int(root[m]), self_ref))
+	for join: Dictionary in joins:
+		if keep.has(join.a) and keep.has(join.b):
+			root[find.call(join.a, find)] = find.call(join.b, find)
+	var groups := {}
+	for m: int in keep:
+		var r: int = find.call(m, find)
+		if not groups.has(r):
+			groups[r] = []
+		(groups[r] as Array).append(m)
+	var out: Array[Dictionary] = []
+	for r: int in groups:
+		var ids: Array = groups[r]
+		if not ids.any(func(m: int) -> bool: return bool(members[m].seed)):
+			continue
+		ids.sort_custom(func(x: int, y: int) -> bool:
+			return String(members[x].chain.key) < String(members[y].chain.key))
+		var index := {}
+		var front_members: Array[Dictionary] = []
+		for m: int in ids:
+			index[m] = front_members.size()
+			front_members.append(members[m])
+		var front_joins: Array[Dictionary] = []
+		for join: Dictionary in joins:
+			if index.has(join.a) and index.has(join.b):
+				front_joins.append({"a": index[join.a], "a_end": join.a_end, "b": index[join.b],
+					"b_end": join.b_end, "kind": join.kind})
+		out.append({"members": front_members, "joins": front_joins})
+	out.sort_custom(func(x: Dictionary, y: Dictionary) -> bool:
+		return String(x.members[0].chain.key) < String(y.members[0].chain.key))
+	return out
+
+
+## One front. The leader (first active member) sets the step its kit carries and the
+## cap; a member that leaves the front is dropped and the rest refit (the leader may
+## change). Members that left are fitted alone afterwards if they were seeds.
+static func _fit_front(front: Dictionary, character: TownCharacter, ctx: Dictionary,
+		out: Array[Dictionary]) -> void:
+	var active: Array[int] = []
+	for m in (front.members as Array).size():
+		active.append(m)
+	var left: Array[int] = []
 	var leans: Array[float] = []
-	leans.resize(n)
+	while not active.is_empty():
+		var step := _front_step(front.members[active[0]], character, ctx)
+		if not STEP_SIZES.has(step):
+			return
+		var cap := step * float(mini(MAX_STEPS, floori(character.value(CAP_KNOB) / step + 0.0001)))
+		var result := _front_profile(front, active, step, cap, ctx)
+		if int(result.leaves) < 0:
+			leans = result.leans
+			break
+		active.erase(int(result.leaves))
+		left.append(int(result.leaves))
+	for m: int in active:
+		var member: Dictionary = front.members[m]
+		var profile: Array[float] = []
+		var closures: Array = []
+		for k in (member.chain.storeys as Array).size():
+			profile.append(leans[k])
+			closures.append(_closures(front, active, m, k, ctx))
+		ctx.kit = member.kit
+		_commit(member.mass, member.kit, member.chain, profile, ctx, out, closures)
+	for m: int in left:
+		if bool(front.members[m].seed):
+			_fit_front({"members": [front.members[m]], "joins": []}, character, ctx, out)
+
+
+## The step a leader carries (Task 8 adds the eave fallback here).
+static func _front_step(leader: Dictionary, character: TownCharacter, _ctx: Dictionary) -> float:
+	return carried_step(leader.kit, float(String(character.pick(STEP_KNOB, String(leader.mass.stable_id)))))
+
+
+## Monotone cumulative steps for a fixed set of active members (index k = k-th
+## storey above the shared first upper storey). A failing step is withdrawn for the
+## whole front (every member holds). Returns {leans, leaves: -1}, or {leaves: m} when
+## member m cannot hold a storey, or cannot take the first step while others are
+## active (it leaves; the caller refits). A lone member that cannot hold drops the
+## cap one step and refits (no inward ledge).
+static func _front_profile(front: Dictionary, active: Array[int], step: float, cap: float,
+		ctx: Dictionary) -> Dictionary:
+	var depth := 0
+	for m: int in active:
+		depth = maxi(depth, (front.members[m].chain.storeys as Array).size())
+	var leans: Array[float] = []
+	leans.resize(depth)
 	leans.fill(0.0)
 	var face_cap := cap
 	var k := 0
-	while k < n:
+	while k < depth:
 		var held := 0.0 if k == 0 else leans[k - 1]
 		var want := minf(float(k + 1) * step, face_cap)
-		var fault := _fault(mass, chain, k, want, held, ctx) if want > held else &"held"
-		if fault == &"":
+		var fault := _front_fault(front, active, k, want, held, ctx) if want > held else {"held": true}
+		if fault.is_empty():
 			leans[k] = want
 			k += 1
 			continue
-		# Withdraw this storey's step: it and every storey above keep the last accepted lean.
-		if fault != &"held":
-			ctx.rejections.append({"chain": String(chain.key), "storey": k, "lean": want, "cause": fault})
+		if not fault.has("held"):
+			_reject(ctx, front, fault, k, want)
 		face_cap = held
 		if held <= 0.0:
+			if active.size() > 1 and fault.has("member"):
+				return {"leaves": int(fault.member)}
 			break
-		var hold := _fault(mass, chain, k, held, held, ctx)
-		if hold == &"":
+		var hold := _front_fault(front, active, k, held, held, ctx)
+		if hold.is_empty():
 			leans[k] = held
 			k += 1
 			continue
-		ctx.rejections.append({"chain": String(chain.key), "storey": k, "lean": held, "cause": hold})
-		# This storey cannot hold even the lean below it: an inward step would leave
-		# an open ledge, so the whole face drops one step and is fitted again.
+		_reject(ctx, front, hold, k, held)
+		if active.size() > 1:
+			return {"leaves": int(hold.member)}
 		face_cap = held - step
 		leans.fill(0.0)
 		k = 0
-	return leans
+	return {"leans": leans, "leaves": -1}
 
 
-## The first guardrail storey k fails at `lean` over `base`, or &"" when it fits.
-static func _fault(mass: BuildingMass, chain: Dictionary, k: int, lean: float, base: float,
+## The first active member present at storey k that fails, as {member, cause}, or {}.
+static func _front_fault(front: Dictionary, active: Array[int], k: int, lean: float, base: float,
+		ctx: Dictionary) -> Dictionary:
+	for m: int in active:
+		var member: Dictionary = front.members[m]
+		if k >= (member.chain.storeys as Array).size():
+			continue
+		ctx.kit = member.kit
+		var closures := _closures(front, active, m, k, ctx)
+		var cause := &"ends" if closures.has(&"blocked") \
+			else _fault(member.mass, member.chain, k, lean, base, ctx, closures)
+		if cause != &"":
+			return {"member": m, "cause": cause}
+	return {}
+
+
+static func _reject(ctx: Dictionary, front: Dictionary, fault: Dictionary, k: int, lean: float) -> void:
+	ctx.rejections.append({"chain": String(front.members[int(fault.member)].chain.key),
+		"storey": k, "lean": lean, "cause": fault.cause})
+
+
+## [left, right] closure kinds of member m at storey k (left = the centres.front()
+## end; a piece's right points along +along for dirs 1 and 2).
+static func _closures(front: Dictionary, active: Array[int], m: int, k: int, ctx: Dictionary) -> Array:
+	var start := _end_kind(front, active, m, false, k, ctx)
+	var end := _end_kind(front, active, m, true, k, ctx)
+	var dir := int(front.members[m].chain.dir)
+	return [start, end] if dir == 1 or dir == 2 else [end, start]
+
+
+## How one end closes at storey k: a join to an active member present at k gives
+## its kind; otherwise &"return" where the end is open, else &"blocked".
+static func _end_kind(front: Dictionary, active: Array[int], m: int, at_end: bool, k: int,
 		ctx: Dictionary) -> StringName:
+	for join: Dictionary in front.joins:
+		var partner := -1
+		if int(join.a) == m and bool(join.a_end) == at_end:
+			partner = int(join.b)
+		elif int(join.b) == m and bool(join.b_end) == at_end:
+			partner = int(join.a)
+		if partner >= 0 and active.has(partner) \
+				and k < (front.members[partner].chain.storeys as Array).size():
+			return StringName(join.kind)
+	var member: Dictionary = front.members[m]
+	return &"return" if _end_open(member.mass, member.chain, at_end, k, ctx) else &"blocked"
+
+
+## The former guardrail 4, per end: the run at storey k is the chain's run and
+## convex at this end, nothing stands beside or diagonally beyond it, and the
+## perpendicular face at this corner does not step.
+static func _end_open(mass: BuildingMass, chain: Dictionary, at_end: bool, k: int, ctx: Dictionary) -> bool:
+	var storey: Dictionary = mass.storeys[chain.storeys[k]]
+	var dir := int(chain.dir)
+	var convex := false
+	for run: Dictionary in BuildingKitAssembler.boundary_runs(storey.cells):
+		if int(run.dir) == dir and int(run.line) == int(chain.line) \
+				and int(run.start) == int(chain.start) and int(run.end) == int(chain.end):
+			convex = bool(run.end_convex if at_end else run.start_convex)
+	if not convex:
+		return false
+	var along := Vector2i(0, 1) if dir % 2 == 0 else Vector2i(1, 0)
+	var sign := 1 if at_end else -1
+	var cell := BuildingKitAssembler._inside_cell(dir, int(chain.line),
+		int(chain.end) - 1 if at_end else int(chain.start))
+	var perp := BuildingMass.DIRS.find(along * sign)
+	if float((storey.get("wall_offsets", {}) as Dictionary).get(BuildingMass.edge_key(cell, perp), 0.0)) > 0.0:
+		return false
+	var side := cell + along * sign
+	var diagonal: Vector2i = side + BuildingMass.DIRS[dir]
+	var solid: Callable = ctx.solid
+	var own := _own(mass)
+	for b in [int(storey.floor_band), int(storey.floor_band) + 1]:
+		if bool(solid.call(own, side, b)) or bool(solid.call(own, diagonal, b)) \
+				or mass.cells_at_band(b).has(diagonal):
+			return false
+	return true
+
+
+## The first guardrail storey k fails at `lean` over `base` with these end
+## closures, or &"" when it fits (ends are checked by _front_fault).
+static func _fault(mass: BuildingMass, chain: Dictionary, k: int, lean: float, base: float,
+		ctx: Dictionary, closures: Array = [&"return", &"return"]) -> StringName:
 	var storey: Dictionary = mass.storeys[chain.storeys[k]]
 	if storey.material != BuildingMass.MATERIAL_TIMBER or bool(storey.get("inset", false)) \
 			or bool(storey.get("retaining", false)) or bool(storey.get("fortified", false)):
 		return &"material"
 	if not _no_portal(mass, chain, k):
 		return &"portal"
-	if not _ends_clear(mass, chain, k, ctx):
-		return &"ends"
 	if not _columns_free(mass, chain, k, ctx):
 		return &"columns"
 	if not gap_ok(ctx.registry, ctx.solid, _own(mass), _edges(chain), int(chain.dir),
 			int(storey.floor_band), lean, ctx.kit, float(ctx.gap)):
 		return &"gap"
-	var candidate := _candidate(mass, ctx.kit, chain, k, lean, base, ctx.solid)
+	var candidate := _candidate(mass, ctx.kit, chain, k, lean, base, ctx.solid, closures)
 	return _parts_fault(mass, candidate, crown_index(mass, chain, k), ctx)
 
 
 ## One storey's leaned front: its projection record, outer body box and pieces.
 static func _candidate(mass: BuildingMass, kit: BuildingKit, chain: Dictionary, k: int,
-		lean: float, base: float, solid: Callable) -> Dictionary:
+		lean: float, base: float, solid: Callable, closures: Array = [&"return", &"return"]) -> Dictionary:
 	var index: int = chain.storeys[k]
 	var storey: Dictionary = mass.storeys[index]
 	var dir := int(chain.dir)
@@ -263,14 +461,15 @@ static func _candidate(mass: BuildingMass, kit: BuildingKit, chain: Dictionary, 
 	centres.sort_custom(func(a: Vector2, b: Vector2) -> bool: return a.dot(right) < b.dot(right))
 	var band := int(storey.floor_band)
 	var projection := {"edges": edges, "centres": centres, "dir": dir, "depth": lean,
-		"base": base, "band": band, "growth": true}
+		"base": base, "band": band, "growth": true, "closures": closures}
 	var at: Vector2 = centres.front() * kit.module_width
 	var pose := Transform3D(Basis(Vector3.UP, BuildingKitAssembler.yaw_for_dir(dir)),
 		Vector3(at.x, band * kit.band_height(), at.y))
 	var body := AABB(Vector3(-kit.module_width * .5, 0, 0),
 		Vector3(centres.size() * kit.module_width, kit.storey_height, lean + kit.wall_face))
 	return {"index": index, "k": k, "projection": projection, "edges": edges, "centres": centres,
-		"band": band, "pose": pose, "bounds": pose * body,
+		"band": band, "bands": int(storey.get("bands", 2)),
+		"first_band": int(chain.first_band), "pose": pose, "bounds": pose * body,
 		"parts": _assembler(mass, kit, solid).face_parts(mass, index, projection)}
 
 
@@ -278,60 +477,102 @@ static func _candidate(mass: BuildingMass, kit: BuildingKit, chain: Dictionary, 
 ## candidate's slots and an obstacle's parts match what is finally built.
 static func _assembler(mass: BuildingMass, kit: BuildingKit, solid: Callable) -> BuildingKitAssembler:
 	var assembler := BuildingKitAssembler.new(kit)
-	var own := _own(mass)
-	assembler.external_blocked = func(cell: Vector2i, band: int) -> bool:
-		return bool(solid.call(own, cell, band))
+	if solid.is_valid():
+		var own := _own(mass)
+		assembler.external_blocked = func(cell: Vector2i, band: int) -> bool:
+			return bool(solid.call(own, cell, band))
 	return assembler
 
 
-static func _commit(mass: BuildingMass, kit: BuildingKit, chain: Dictionary,
-		profile: Array[float], ctx: Dictionary, out: Array[Dictionary]) -> void:
-	# Own ornaments the new braces/strips meet yield: remove them and their parts.
-	for k in profile.size():
-		if profile[k] <= 0.0:
-			continue
-		var probe := _candidate(mass, kit, chain, k, profile[k], 0.0 if k == 0 else profile[k - 1], ctx.solid)
-		_parts_fault(mass, probe, crown_index(mass, chain, k), ctx)
-		for obstacle: Dictionary in probe.yields:
-			(obstacle.host as BuildingMass).decor.erase(obstacle.decor)
-			for other: Dictionary in ctx.obstacles:
-				if other.has("decor") and other.decor == obstacle.decor:
-					other["gone"] = true
+## Decor `apply` moves out with a stepping face: on the face (same dir, a module
+## centre of the run) and standing within bands [lo_band, hi_band).
+static func _moves(item: Dictionary, dir: int, centres: Array, lo_band: int, hi_band: int,
+		kit: BuildingKit) -> bool:
+	if not item.has("dir") or int(item.dir) != dir or not centres.has(item.get("centre")):
+		return false
+	var y := float(item.get("y", -INF))
+	return y >= lo_band * kit.band_height() - .01 and y < hi_band * kit.band_height()
+
+
+## Writes one face's steps into its house (wall offsets, projection with closures,
+## storey growth, decor on the face moved out) and returns the candidates (each
+## lists the decor it moved under "moved").
+static func apply(mass: BuildingMass, kit: BuildingKit, chain: Dictionary, profile: Array[float],
+		closures: Array, solid := Callable()) -> Array[Dictionary]:
 	var dir := int(chain.dir)
+	var out: Array[Dictionary] = []
 	for k in profile.size():
 		var lean := profile[k]
 		if lean <= 0.0:
 			continue
 		var base := 0.0 if k == 0 else profile[k - 1]
-		var candidate := _candidate(mass, kit, chain, k, lean, base, ctx.solid)
+		var candidate := _candidate(mass, kit, chain, k, lean, base, solid, closures[k])
 		var storey: Dictionary = mass.storeys[candidate.index]
 		var offsets: Dictionary = storey.get("wall_offsets", {})
 		for edge: Vector3i in candidate.edges:
 			offsets[edge] = lean / kit.module_width
 		storey["wall_offsets"] = offsets
-		var fronts: Array = storey.get("projections", [])
-		fronts.append(candidate.projection)
-		storey["projections"] = fronts
+		var fronts_at: Array = storey.get("projections", [])
+		fronts_at.append(candidate.projection)
+		storey["projections"] = fronts_at
 		var leaning: Dictionary = storey.get("growth", {})
 		leaning[dir] = lean
 		storey["growth"] = leaning
 		# Decor on the face of this storey moves out with it (as projections do).
+		var moved: Array = []
 		for item: Dictionary in mass.decor:
-			if not item.has("dir") or int(item.dir) != dir \
-					or float(item.get("y", -INF)) < candidate.band * kit.band_height() - .01 \
-					or float(item.get("y", -INF)) >= (candidate.band + 2) * kit.band_height():
-				continue
-			if (candidate.centres as Array).has(item.centre):
-				item.centre += Vector2(BuildingMass.DIRS[dir]) * lean / kit.module_width
-				item.y = float(item.y) - BuildingKitAssembler.OFFSET_WALL_DROP
-		for band in [candidate.band, candidate.band + 1]:
+			if _moves(item, dir, candidate.centres, candidate.band, candidate.band + candidate.bands, kit):
+				moved.append(item)
+		for item: Dictionary in moved:
+			item.centre += Vector2(BuildingMass.DIRS[dir]) * lean / kit.module_width
+			item.y = float(item.y) - BuildingKitAssembler.OFFSET_WALL_DROP
+		candidate["moved"] = moved
+		out.append(candidate)
+	return out
+
+
+static func _commit(mass: BuildingMass, kit: BuildingKit, chain: Dictionary,
+		profile: Array[float], ctx: Dictionary, out: Array[Dictionary], closures: Array) -> void:
+	# Own ornaments the new braces/strips meet yield: remove them and their parts.
+	for k in profile.size():
+		if profile[k] <= 0.0:
+			continue
+		var probe := _candidate(mass, kit, chain, k, profile[k], 0.0 if k == 0 else profile[k - 1],
+			ctx.solid, closures[k])
+		_parts_fault(mass, probe, crown_index(mass, chain, k), ctx)
+		for obstacle: Dictionary in probe.yields:
+			(obstacle.host as BuildingMass).decor.erase(obstacle.decor)
+			_drop_decor(ctx, obstacle.decor)
+	var dir := int(chain.dir)
+	var catalog: EnvironmentCatalog = ctx.catalog
+	for candidate: Dictionary in apply(mass, kit, chain, profile, closures, ctx.solid):
+		var k := int(candidate.k)
+		# Moved decor stands somewhere else now: refresh its obstacle bounds.
+		for item: Dictionary in candidate.moved:
+			_drop_decor(ctx, item)
+			var assembly := {"mass": mass, "out": [] as Array[Dictionary], "serial": 0}
+			_assembler(mass, kit, ctx.solid)._assemble_decor(assembly, item)
+			for part: Dictionary in assembly.out:
+				var obstacle := _obstacle(mass, part, catalog)
+				obstacle["decor"] = item
+				obstacle["host"] = mass
+				ctx.obstacles.append(obstacle)
+		for band in range(candidate.band, candidate.band + candidate.bands):
 			for edge: Vector3i in candidate.edges:
-				ctx.registry[Vector4i(edge.x, edge.y, dir, band)] = lean
+				ctx.registry[Vector4i(edge.x, edge.y, dir, band)] = profile[k]
 		for part: Dictionary in candidate.parts:
 			ctx.obstacles.append({"owner": &"", "role": String(part.role), "roof_index": -1,
-				"bounds": part.transform * (ctx.catalog as EnvironmentCatalog).descriptor(part.asset_id).measured_aabb})
-		out.append({"host": mass.stable_id, "dir": dir, "band": candidate.band, "lean": lean,
-			"base": base, "edges": candidate.edges, "bounds": candidate.bounds, "chain": chain.key})
+				"bounds": part.transform * catalog.descriptor(part.asset_id).measured_aabb})
+		out.append({"host": mass.stable_id, "dir": dir, "band": candidate.band, "lean": profile[k],
+			"base": candidate.projection.base, "edges": candidate.edges, "bounds": candidate.bounds,
+			"chain": chain.key, "closures": closures[k]})
+
+
+## Marks every obstacle record of one decor item gone.
+static func _drop_decor(ctx: Dictionary, item: Dictionary) -> void:
+	for other: Dictionary in ctx.obstacles:
+		if other.has("decor") and is_same(other.decor, item):
+			other["gone"] = true
 
 
 # --- guardrails -------------------------------------------------------------
@@ -446,7 +687,8 @@ static func _obstacle_cause(obstacle: Dictionary, mass: BuildingMass) -> StringN
 
 
 # G1 + G3 with the false blockers removed: touching contact is clear, the face's own
-# bay/ornaments ride out with it, the house's own lower ornaments yield.
+# bays and the ornaments `apply` moves ride out with it, the house's other yielding
+# ornaments yield.
 static func _parts_fault(mass: BuildingMass, candidate: Dictionary, crown: int,
 		ctx: Dictionary) -> StringName:
 	var catalog: EnvironmentCatalog = ctx.catalog
@@ -463,12 +705,18 @@ static func _parts_fault(mass: BuildingMass, candidate: Dictionary, crown: int,
 					or contact_clear(box, obstacle.bounds):
 				continue
 			if obstacle.owner == mass.stable_id:
-				var rides := String(obstacle.role).begins_with("bay.") or obstacle.has("decor")
-				if rides and slab.has_point((obstacle.bounds as AABB).get_center()):
-					continue
-				if obstacle.has("decor") and StringName(obstacle.decor.kind) in YIELD_DECOR:
-					if not yields.has(obstacle):
-						yields.append(obstacle)
+				if obstacle.has("decor"):
+					# Only decor `apply` moves out with this face rides; the house's
+					# other ornaments of the yielding kinds yield (are removed).
+					if _moves(obstacle.decor, int(candidate.projection.dir), candidate.centres,
+							int(candidate.first_band), int(candidate.band) + int(candidate.bands), ctx.kit):
+						continue
+					if StringName(obstacle.decor.kind) in YIELD_DECOR:
+						if not yields.has(obstacle):
+							yields.append(obstacle)
+						continue
+				elif String(obstacle.role).begins_with("bay.") \
+						and slab.has_point((obstacle.bounds as AABB).get_center()):
 					continue
 			return _obstacle_cause(obstacle, mass)
 	return &""
@@ -501,35 +749,6 @@ static func _columns_free(mass: BuildingMass, chain: Dictionary, k: int, ctx: Di
 		var outward := Vector2i(edge.x, edge.y) + BuildingMass.DIRS[int(chain.dir)]
 		for b in [band, band + 1]:
 			if bool((ctx.reserved as Callable).call(_own(mass), outward, b)):
-				return false
-	return true
-
-
-# G4: the run is a whole convex face with nothing beside or diagonally beyond its
-# ends, and no perpendicular face of this storey leans (returns would collide).
-static func _ends_clear(mass: BuildingMass, chain: Dictionary, k: int, ctx: Dictionary) -> bool:
-	var storey: Dictionary = mass.storeys[chain.storeys[k]]
-	var dir := int(chain.dir)
-	var leaning: Dictionary = storey.get("growth", {})
-	if leaning.has((dir + 1) % 4) or leaning.has((dir + 3) % 4):
-		return false
-	var whole := false
-	for run: Dictionary in BuildingKitAssembler.boundary_runs(storey.cells):
-		if int(run.dir) == dir and int(run.line) == int(chain.line) \
-				and int(run.start) == int(chain.start) and int(run.end) == int(chain.end):
-			whole = bool(run.start_convex) and bool(run.end_convex)
-	if not whole:
-		return false
-	var own := _own(mass)
-	var solid: Callable = ctx.solid
-	var band := int(storey.floor_band)
-	var along := Vector2i(0, 1) if dir % 2 == 0 else Vector2i(1, 0)
-	for end: Array in [[int(chain.start), -1], [int(chain.end) - 1, 1]]:
-		var side: Vector2i = BuildingKitAssembler._inside_cell(dir, int(chain.line), end[0]) + along * int(end[1])
-		var diagonal: Vector2i = side + BuildingMass.DIRS[dir]
-		for b in [band, band + 1]:
-			if bool(solid.call(own, side, b)) or bool(solid.call(own, diagonal, b)) \
-					or mass.cells_at_band(b).has(diagonal):
 				return false
 	return true
 

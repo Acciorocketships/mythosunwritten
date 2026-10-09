@@ -19,6 +19,14 @@ static func house(id: StringName, rect: Rect2i, storeys: int, door_dir: int) -> 
 	return mass
 
 
+## A timber house with a pitched roof over its whole rect (axis 1 = gable to the lane).
+static func roofed(id: StringName, rect: Rect2i, storeys: int, door_dir: int, axis := 1,
+		union := 7) -> BuildingMass:
+	var mass := house(id, rect, storeys, door_dir)
+	mass.add_roof(rect, axis, storeys * 2, &"red")["union_index"] = union
+	return mass
+
+
 ## Builtin odds with growth forced on for the house under test; `step` fixes
 ## growth_step ("1.0" = the kit jetty, the default; "0.5" = the light step).
 static func character(values: Dictionary = {}, step := &"1.0") -> TownCharacter:
@@ -44,7 +52,8 @@ static func nothing_solid(_own: StringName, _cell: Vector2i, _band: int) -> bool
 ## south face dir 3 on the lane) is the house under test; `back` faces it across
 ## a lane of `lane` cells (z -lane..-1) when options.facing. Options: storeys (4),
 ## roof_axis / back_roof_axis (1 = gable to the lane, 0 = eave), lane (1), facing,
-## back_grows, character, air, towers, reserved, kit, extra (more masses),
+## back_grows, character, air, towers, reserved, reserved_x / lone (reserved columns
+## x; lone = [-1, 3], so only the south face steps), kit, extra (more masses),
 ## prepare (Callable(front) run before fitting), replace_front (a mass with its
 ## own roofs, id kit.fixture.front).
 static func build(options: Dictionary = {}) -> Dictionary:
@@ -81,6 +90,13 @@ static func build(options: Dictionary = {}) -> Dictionary:
 				return true
 		return false
 	var reserved: Callable = options.get("reserved", nothing_solid)
+	# `lone` keeps only the south face stepping: the columns beside the house (x -1
+	# and x 3) are reserved, so its corner neighbours leave the front (cause columns).
+	var blocked_x: Array = options.get("reserved_x", [-1, 3] if bool(options.get("lone", false)) else [])
+	if not blocked_x.is_empty():
+		var inner := reserved
+		reserved = func(own: StringName, cell: Vector2i, band: int) -> bool:
+			return blocked_x.has(cell.x) or bool(inner.call(own, cell, band))
 	var street := func(cell: Vector2i, band: int) -> bool:
 		return cell.y <= -1 and cell.y >= -lane and band <= 1
 	var result := GROWTH.fit(masses, kits, kit, EnvironmentCatalog.load_default(),

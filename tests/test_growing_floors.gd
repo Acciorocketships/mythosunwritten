@@ -6,7 +6,7 @@ const BAYS := preload("res://scripts/terrain/features/villages/kit/KitTownFacade
 
 
 func test_each_street_storey_steps_out_one_jetty_further() -> void:
-	var f := FIXTURE.build()
+	var f := FIXTURE.build({"lone": true})
 	assert_eq(FIXTURE.leans_on(f.front, 3), [0.0, 1.0, 2.0, 2.0] as Array[float],
 		"one kit jetty per storey, capped at two")
 	assert_eq(FIXTURE.leans_on(f.front, 1), [0.0, 0.0, 0.0, 0.0] as Array[float],
@@ -20,9 +20,9 @@ func test_each_street_storey_steps_out_one_jetty_further() -> void:
 
 
 func test_cap_floors_to_whole_steps() -> void:
-	var f := FIXTURE.build({"storeys": 5, "character": FIXTURE.character({&"growth_max_lean": 1.5})})
+	var f := FIXTURE.build({"lone": true, "storeys": 5, "character": FIXTURE.character({&"growth_max_lean": 1.5})})
 	assert_eq(FIXTURE.leans_on(f.front, 3), [0.0, 1.0, 1.0, 1.0, 1.0] as Array[float])
-	var g := FIXTURE.build({"storeys": 5, "character": FIXTURE.character({&"growth_max_lean": 2.0}, &"0.5")})
+	var g := FIXTURE.build({"lone": true, "storeys": 5, "character": FIXTURE.character({&"growth_max_lean": 2.0}, &"0.5")})
 	assert_eq(FIXTURE.leans_on(g.front, 3), [0.0, 0.5, 1.0, 1.5, 2.0] as Array[float])
 
 
@@ -44,7 +44,7 @@ func _braces_under(f: Dictionary, role: StringName, y0: float) -> Array:
 
 
 func test_every_step_is_closed_by_floor_beam_returns_and_the_kit_brace() -> void:
-	var f := FIXTURE.build()
+	var f := FIXTURE.build({"lone": true})
 	var catalog := EnvironmentCatalog.load_default()
 	for index in range(1, 4):
 		var lean := minf(float(index), 2.0)
@@ -78,7 +78,7 @@ func test_every_step_is_closed_by_floor_beam_returns_and_the_kit_brace() -> void
 
 
 func test_half_step_keeps_the_small_brackets() -> void:
-	var f := FIXTURE.build({"character": FIXTURE.character({}, &"0.5")})
+	var f := FIXTURE.build({"lone": true, "character": FIXTURE.character({}, &"0.5")})
 	assert_eq(FIXTURE.leans_on(f.front, 3), [0.0, 0.5, 1.0, 1.5] as Array[float])
 	var y0 := float(f.front.storeys[1].floor_band) * 1.5
 	assert_eq(_braces_under(f, &"bracket.small", y0).size(), 4, "a bracket at every module joint")
@@ -86,7 +86,7 @@ func test_half_step_keeps_the_small_brackets() -> void:
 
 
 func test_growth_result_lists_each_leaned_storey() -> void:
-	var f := FIXTURE.build()
+	var f := FIXTURE.build({"lone": true})
 	assert_eq(f.leans.size(), 3)
 	for lean: Dictionary in f.leans:
 		assert_eq(int(lean.dir), 3)
@@ -134,7 +134,7 @@ func test_projections_and_bays_skip_leaning_faces() -> void:
 	var none := Callable(FIXTURE, "nothing_solid")
 	var anything := func(_o: StringName, _c: Vector2i, _b: int) -> bool: return true
 	var catalog := EnvironmentCatalog.load_default()
-	var f := FIXTURE.build()
+	var f := FIXTURE.build({"lone": true})
 	var masses: Array[BuildingMass] = [f.front]
 	var kits := {&"fixture.front": f.kit}
 	var projections := PROJECTIONS.fit(masses, kits, f.kit, catalog, [], [], none, anything)
@@ -145,7 +145,7 @@ func test_projections_and_bays_skip_leaning_faces() -> void:
 	# A five-module house: both long faces are long enough for a bay.
 	var wide := FIXTURE.house(&"kit.fixture.front", Rect2i(0, 0, 5, 2), 4, 3)
 	wide.add_roof(Rect2i(0, 0, 5, 2), 0, 8, &"red")["union_index"] = 0
-	var g := FIXTURE.build({"replace_front": wide})
+	var g := FIXTURE.build({"reserved_x": [-1, 5], "replace_front": wide})
 	assert_eq(FIXTURE.leans_on(g.front, 3), [0.0, 1.0, 2.0, 2.0] as Array[float])
 	var wide_masses: Array[BuildingMass] = [g.front]
 	var bays := BAYS.fit(wide_masses, kits, g.kit, catalog, [], [], none)
