@@ -359,3 +359,27 @@ func test_plinth_caps_are_not_inhabited_floor() -> void:
 	assert_gt(floors.size(), 0)
 	assert_false(floors.any(func(p: Dictionary) -> bool: return p.role == &"plinth.cap"))
 
+
+
+## Task 10 (Task 9 deferred): a one-module plinth run cannot slide its end rows along
+## the run (both ends are ends), so its rows slide PLINTH_CAP_END_SHIFT as a whole
+## toward a side whose beside cell is built (hidden there) or else toward the run's
+## start: no row end stays on a lot line (x 0 / 2 here), and the far end stays inside.
+func test_a_one_module_plinth_run_leaves_both_lot_lines() -> void:
+	var mass := BuildingMass.new()
+	mass.stable_id = &"kit.fixture.front"
+	mass.seed = hash("kit.fixture.front")
+	for s in 4:
+		mass.add_storey(s * 2, BuildingMass.rect_cells(Rect2i(0, 0, 1, 2)), BuildingMass.MATERIAL_TIMBER)
+	mass.storeys[0].openings[BuildingMass.edge_key(Vector2i(0, 0), 3)] = BuildingMass.OPENING_DOOR
+	mass.add_roof(Rect2i(0, 0, 1, 2), 1, 8, &"red")["union_index"] = 0
+	var f := FIXTURE.build({"replace_front": mass, "lone": true,
+		"grade": func(_cell: Vector2i, _dir: int, _band: int) -> int: return 1})
+	assert_eq(FIXTURE.leans_on(f.front, 3), [-2.0, -1.0, 0.0, 0.0] as Array[float])
+	var caps := _caps(f)
+	assert_gt(caps.size(), 0)
+	for box: AABB in caps:
+		for value: float in [box.position.x, box.end.x]:
+			for line: float in [0.0, 2.0]:
+				assert_true(absf(value - line) > 0.001, "a cap end on the lot line x %.0f: %s" % [line, box])
+		assert_true(box.end.x <= 2.0 + 0.021 and box.position.x >= -0.021, "within the touch of the lot: %s" % box)

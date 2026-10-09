@@ -162,7 +162,8 @@ static func fit(
 					for joint in range(centres.size() + 1):
 						var bracket_pose := (
 							Transform3D(
-								Basis.IDENTITY, Vector3((joint - .5) * kit.module_width, -.706295, -.15)
+								Basis.IDENTITY, Vector3((joint - .5) * kit.module_width, -BuildingKitAssembler.SMALL_BRACKET_DROP,
+									-BuildingKitAssembler.SMALL_BRACKET_SETBACK)
 							)
 							* kit.anchor(&"bracket.small")
 							* kit.asset_anchor(bracket_id)

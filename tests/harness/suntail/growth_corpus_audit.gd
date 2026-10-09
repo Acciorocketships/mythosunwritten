@@ -3,6 +3,7 @@ extends SceneTree
 ## godot --headless --path . -s res://tests/harness/suntail/growth_corpus_audit.gd -- \
 ##   [--towns 53:grand,...] [--odds name=value ...] [--out /tmp/growth_audit.json]
 const GROWTH := preload("res://scripts/terrain/features/villages/kit/KitGrowingFronts.gd")
+const AUDIT := preload("res://tests/fixtures/growth_audit.gd")
 const DEFAULT_TOWNS := "53:grand,31:large,13:standard,43:large,83:grand,103:standard,7:compact,61:standard"
 
 
@@ -16,7 +17,8 @@ func _init() -> void:
 ## touching neighbour's party plane), houses pulled into a row
 ## without rolling growth, and withdrawals by cause: attempts (`causes`) and distinct
 ## faces (`faces_withdrawn`; Task 4 deferred minor); `ends_why` splits the `ends`
-## attempts by the blocked end's reason.
+## attempts by the blocked end's reason. Each row also carries the step-in audit's
+## violation counts (tests/fixtures/growth_audit.gd VIOLATIONS; `bad` counts them).
 static func counts(built: Dictionary) -> Dictionary:
 	var by_id := {}
 	for mass: BuildingMass in built.get("houses", []):
@@ -93,8 +95,15 @@ func _run() -> void:
 			bad += 1
 			print("GROWTH_AUDIT ", JSON.stringify(rows.back()))
 			continue
-		var built := KitVillageBuildings.build(spatial, spatial.compiled_fabric_cache(), SuntailBuildingKit.create())
+		var fabric := spatial.compiled_fabric_cache()
+		var kit := SuntailBuildingKit.create()
+		var built := KitVillageBuildings.build(spatial, fabric, kit)
 		var row := counts(built)
+		var violations := AUDIT.audit(spatial, fabric, built, kit, profile.character)
+		for key: String in AUDIT.VIOLATIONS:
+			row[key] = int(violations[key])
+			bad += int(violations[key])
+		row["audit_faces"] = int(violations.faces)
 		row["town"] = town
 		row["valid_payload"] = built.payload.validate()
 		if not bool(row.valid_payload):
@@ -102,6 +111,10 @@ func _run() -> void:
 		_add(total, row)
 		rows.append(row)
 		print("GROWTH_AUDIT ", JSON.stringify(row))
+	var violations := 0
+	for key: String in AUDIT.VIOLATIONS:
+		violations += int(total.get(key, 0))
+	total["violations"] = violations
 	print("GROWTH_TOTAL ", JSON.stringify(total))
 	FileAccess.open(out_path, FileAccess.WRITE).store_string(JSON.stringify(rows, "  "))
 	print("GROWTH_AUDIT_DONE bad=", bad)

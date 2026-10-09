@@ -99,7 +99,7 @@ func _emit_inhabited_floor(ctx: Dictionary, storey: Dictionary) -> void:
 		for edge: Vector3i in plinth:
 			if offsets.has(edge):
 				off_grade[edge] = offsets[edge]
-		_emit_plinth_caps(ctx, off_grade, y)
+		_emit_plinth_caps(ctx, off_grade, y, storey)
 		if not trim:
 			offsets = off_grade
 			trim = not offsets.is_empty()
@@ -120,6 +120,16 @@ const PLINTH_CAP_INSET := 0.01
 ## A run's end-cell rows slide this far along the run, and stand this much deeper and lower.
 const PLINTH_CAP_END_SHIFT := 0.02
 const PLINTH_CAP_END_STEP := 0.002
+## The small bracket (`bracket.small`) under a light overhang: its origin hangs this far
+## below the floor and stands this far back from the overhang's face (native m).
+const SMALL_BRACKET_DROP := 0.706295
+const SMALL_BRACKET_SETBACK := 0.15
+## A wrapped corner's beam line (_emit_inset_end): the d025 filler runs from this far
+## behind the corner to this far past it (the strip beam stands 0.1973 proud of its wall
+## line), and the z-facing face's strip beams stand this much lower (native m).
+const WRAP_FILL_BACK := 0.0327
+const WRAP_FILL_REACH := 0.2173
+const WRAP_BEAM_DROP := 0.003
 
 
 ## The stone top of the strip an off-grade ground storey vacates: rows of the stone
@@ -135,8 +145,11 @@ const PLINTH_CAP_END_STEP := 0.002
 ##   next cell's rows they now overlap;
 ## - at a wrapped corner the two faces' rows overlap in the corner square; the x faces
 ##   stand 4 mm lower, and the end slides keep each face's end behind the other's front.
-## A one-module run cannot slide (both ends are ends): its row ends stay on the lot lines.
-func _emit_plinth_caps(ctx: Dictionary, offsets: Dictionary, y: float) -> void:
+## - a one-module run (both ends are ends) slides its rows PLINTH_CAP_END_SHIFT as a
+##   whole: toward a side whose beside cell is built (own or another building, where the
+##   2 cm poke stays hidden under its floor), else toward the run's start; neither row
+##   end then lies on a lot line.
+func _emit_plinth_caps(ctx: Dictionary, offsets: Dictionary, y: float, storey: Dictionary) -> void:
 	for edge: Vector3i in offsets:
 		var depth := -float(offsets[edge]) * kit.module_width
 		if depth <= 0.0:
@@ -153,6 +166,10 @@ func _emit_plinth_caps(ctx: Dictionary, offsets: Dictionary, y: float) -> void:
 			# The two ends step by different amounts: a two-module run's end rows overlap.
 			slide = PLINTH_CAP_END_SHIFT if after else -PLINTH_CAP_END_SHIFT
 			step = PLINTH_CAP_END_STEP * (1.0 if after else 2.0)
+		elif not before:
+			var built_after := (storey.cells as Dictionary).has(cell + along) or _blocked_beside(storey, cell + along)
+			var built_before := (storey.cells as Dictionary).has(cell - along) or _blocked_beside(storey, cell - along)
+			slide = PLINTH_CAP_END_SHIFT if built_after and not built_before else -PLINTH_CAP_END_SHIFT
 		var line := Vector2(cell) + Vector2.ONE * 0.5 + out * 0.5 + Vector2(along) * slide / kit.module_width
 		var top := y + BOARD_TOP - 0.01 - (0.004 if dir % 2 == 0 else 0.0) - step
 		for row in ceili((depth - PLINTH_CAP_INSET) / PLINTH_CAP_DEPTH - 0.0001):
@@ -161,27 +178,35 @@ func _emit_plinth_caps(ctx: Dictionary, offsets: Dictionary, y: float) -> void:
 
 
 ## A stepped-in upper storey's floor ends at its own wall (a full board would stand
-## out as a ledge): the cell keeps the baked inner strip (one face stepped in), the
-## inner square (a wrapped corner: two perpendicular faces, equal insets by the
-## planner's wrap rule), or nothing (a whole-module step). False when no edge of the
-## cell is stepped in (its ordinary board follows).
+## out as a ledge): the cell keeps the baked inner strip (one face stepped in, or two
+## opposite faces: the strip of what is left between the two walls), the inner square
+## (a wrapped corner: two perpendicular faces, equal insets by the planner's wrap rule),
+## or nothing (a whole-module step, or nothing left between two opposite walls). The
+## bearing rule (KitGrowingFronts._bears) keeps the planner from stepping one cell in on
+## opposite faces; a cell stepped in on three or four faces has no baked piece and keeps
+## no board. False when no edge of the cell is stepped in (its ordinary board follows).
 func _emit_trimmed_floor(ctx: Dictionary, offsets: Dictionary, cell: Vector2i, y: float) -> bool:
 	var insets: Array[int] = []
-	var depth := 0.0
+	var depths := {}
 	for dir in 4:
 		var offset := float(offsets.get(BuildingMass.edge_key(cell, dir), 0.0))
 		if offset < 0.0:
 			insets.append(dir)
-			depth = -offset * kit.module_width
+			depths[dir] = -offset * kit.module_width
 	if insets.is_empty():
 		return false
-	var keep := kit.module_width - depth
+	var opposite := insets.size() == 2 and insets[1] - insets[0] == 2
+	if insets.size() > 2:
+		return true
+	# A corner's insets are equal (the wrap rule); like a single strip it reads the last.
+	var depth := float(depths[insets.back()])
+	var keep := kit.module_width - depth - (float(depths[insets[0]]) if opposite else 0.0)
 	if keep <= 0.001:
 		return true
 	var at := Vector2(cell) + Vector2(0.5, 0.5)
 	for dir: int in insets:
-		at -= Vector2(BuildingMass.DIRS[dir]) * depth * 0.5 / kit.module_width
-	var role := "frontage.corner" if insets.size() == 2 else "frontage.floor"
+		at -= Vector2(BuildingMass.DIRS[dir]) * (float(depths[dir]) if opposite else depth) * 0.5 / kit.module_width
+	var role := "frontage.corner" if insets.size() == 2 and not opposite else "frontage.floor"
 	_emit(ctx, StringName("%s.%s" % [role, lean_suffix(keep)]), at, y, yaw_for_dir(insets[0]))
 	return true
 
@@ -222,8 +247,8 @@ func _emit_projected_front(ctx:Dictionary,storey:Dictionary)->void:
 			_emit(ctx,&"frontage.return_beam",at,y,yaw)
 			_emit(ctx,&"frontage.return_beam",at,y+kit.storey_height-.143,yaw)
 		for joint in range(centres.size()+1):
-			var at:Vector2=centres.front()+right*(joint-.5)-out*.15/kit.module_width
-			_emit(ctx,&"bracket.small",at,y-.706295,yaw_for_dir(dir))
+			var at:Vector2=centres.front()+right*(joint-.5)-out*SMALL_BRACKET_SETBACK/kit.module_width
+			_emit(ctx,&"bracket.small",at,y-SMALL_BRACKET_DROP,yaw_for_dir(dir))
 
 
 ## A stepped-in storey's own end closures (its overhang is emitted per slot from the
@@ -609,12 +634,12 @@ func _assemble_storey(ctx: Dictionary, index: int) -> void:
 			above_openings = other.openings
 	for slot: Dictionary in storey_slots(storey,
 			_edge_exposure(mass, floor_band, bands)):
-		var wall_y := y - (OFFSET_WALL_DROP if float(slot.get("wall_offset",0.0))>0.0 else 0.0)
 		if bool(slot.get("dropped", false)):
 			continue
 		var jettied := below_inset.has(slot.edge)
 		if not _slot_exposed(mass, slot, floor_band, bands):
 			continue
+		var wall_y := y - (OFFSET_WALL_DROP if float(slot.get("wall_offset",0.0))>0.0 else 0.0)
 		var lower := float(below_growth.get(slot.edge, 0.0))
 		var overhang := below_growth.has(slot.edge) and float(slot.wall_offset) > lower + 0.0001
 		if float(slot.get("short", 0.0)) > 0.0 and bands == 2:
@@ -1041,17 +1066,34 @@ func _emit_bay(ctx: Dictionary, storey: Dictionary, slot: Dictionary, wall_y: fl
 ## A perpendicular wall's corner panel beside a stepped-in face: the baked return
 ## strip of the inset's depth (exactly the remaining half module) on the inner
 ## half, framed by its return beams, never a scaled panel.
+## At a wrapped corner (this face steps in too) the two faces' strip beams stop at
+## their wall lines, leaving the corner square outside both lines open (Task 10): the
+## z-facing face (dir 1/3) closes it at each beam height with the baked d025 beam, from
+## WRAP_FILL_BACK behind the corner to WRAP_FILL_REACH past it (2 cm past the other
+## face's beam, like the kit's corner beam); its smaller section shares no face plane
+## with the strip beams. That face's strip beams stand WRAP_BEAM_DROP lower so their
+## bottoms do not share a plane with the other face's where the two cross inside.
 func _emit_inset_end(ctx: Dictionary, storey: Dictionary, slot: Dictionary, y: float) -> void:
 	var cut := float(slot.short)
 	var depth := cut * kit.module_width
 	var dir := int(slot.dir)
-	var at: Vector2 = (slot.centre as Vector2) - Vector2(right_of(dir)) * float(slot.short_side) * cut * 0.5
+	var right := Vector2(right_of(dir))
+	var side := float(slot.short_side)
+	var at: Vector2 = (slot.centre as Vector2) - right * side * cut * 0.5
 	var suffix := lean_suffix(kit.module_width - depth)
 	var yaw := yaw_for_dir(dir)
+	var wrap := float(slot.wall_offset) < 0.0 and dir % 2 == 1
+	var beam_y := y - (WRAP_BEAM_DROP if wrap else 0.0)
 	_emit(ctx, StringName("frontage.return.%s" % suffix), at, y, yaw, 0, Transform3D.IDENTITY,
 		storey.get("tint", Color.WHITE))
-	_emit(ctx, StringName("frontage.return_beam.%s" % suffix), at, y, yaw)
-	_emit(ctx, StringName("frontage.return_beam.%s" % suffix), at, y + kit.storey_height - .143, yaw)
+	_emit(ctx, StringName("frontage.return_beam.%s" % suffix), at, beam_y, yaw)
+	_emit(ctx, StringName("frontage.return_beam.%s" % suffix), at, beam_y + kit.storey_height - .143, yaw)
+	if not wrap:
+		return
+	var corner: Vector2 = (slot.centre as Vector2) + right * side * (0.5 - cut)
+	var fill := corner + right * side * (WRAP_FILL_REACH - WRAP_FILL_BACK) * 0.5 / kit.module_width
+	_emit(ctx, &"frontage.return_beam.d025", fill, beam_y, yaw)
+	_emit(ctx, &"frontage.return_beam.d025", fill, beam_y + kit.storey_height - .143, yaw)
 
 
 ## The storey over a stepped-in storey carries its overhang the kit's way: the floor
@@ -1126,7 +1168,8 @@ func _emit_joint_braces(ctx: Dictionary, storey: Dictionary, slot: Dictionary, y
 		if jetty:
 			_emit(ctx, &"bracket.jetty", joint, y - kit.jetty_depth, yaw_for_dir(dir))
 		else:
-			_emit(ctx, &"bracket.small", joint - out * 0.15 / kit.module_width, y - .706295, yaw_for_dir(dir))
+			_emit(ctx, &"bracket.small", joint - out * SMALL_BRACKET_SETBACK / kit.module_width,
+				y - SMALL_BRACKET_DROP, yaw_for_dir(dir))
 
 
 ## Another building stands in this cell at the storey's floor band (a row partner).

@@ -204,9 +204,12 @@ func test_a_wrapped_corner_steps_in_both_faces_with_one_post() -> void:
 	assert_eq(_braces(parts, &"bracket.jetty", 6.0).filter(func(p: Dictionary) -> bool:
 		var c := _box(p).get_center()
 		return c.x < 0.6 and c.z < 0.6).size(), 0, "storey 2's corner overhangs storey 1's recess")
+	# Storey 2's overhang closes no open side here (storey 1's strip top beams and their
+	# d025 corner filler, under storey 2's floor, are storey 1's: Task 10).
 	assert_eq(parts.filter(func(p: Dictionary) -> bool:
-		return String(p.role).begins_with("frontage.return_beam") and absf(_box(p).get_center().y - 6.0) < 0.3 \
-			and near.call(p, 0.5, 0.5, 0.6)).size(), 0, "no return beam inside a wrapped corner")
+		return String(p.role).begins_with("frontage.return_beam") and p.role != &"frontage.return_beam.d025" \
+			and absf(_box(p).get_center().y - 6.0) < 0.3 and near.call(p, 0.5, 0.5, 0.6)).size(), 0,
+		"no return beam inside a wrapped corner")
 
 
 func test_a_buried_end_closes_the_recess_against_the_own_wing() -> void:
@@ -259,3 +262,73 @@ func test_offsets_of_zero_write_nothing() -> void:
 		for slot: Dictionary in BuildingKitAssembler.storey_slots(storey):
 			assert_eq(float(slot.short), 0.0)
 			assert_false(bool(slot.get("dropped", false)))
+
+
+## Task 10 (Task 8b deferred): a cell stepped in on two opposite faces (the bearing rule
+## keeps the planner from it, but the assembler must not misread it as a wrapped
+## corner) keeps the baked strip of what is left between its two walls, centred
+## between them; a cell with nothing left between them keeps no board.
+func test_a_cell_stepped_in_on_two_opposite_faces_keeps_the_strip_between_its_walls() -> void:
+	var kit := SuntailBuildingKit.create()
+	var mass := FIXTURE.house(&"kit.fixture.front", Rect2i(0, 0, 3, 1), 4, 1)
+	FIXTURE.write_step_in(mass, kit, 3, [0.0, -0.5, 0.0, 0.0] as Array[float])
+	FIXTURE.write_step_in(mass, kit, 1, [0.0, -0.5, 0.0, 0.0] as Array[float])
+	var floor := _at(_parts(mass), "frontage.", 3.0).filter(func(p: Dictionary) -> bool:
+		return absf(_box(p).get_center().y - 3.0) < 0.3 and (String(p.role).begins_with("frontage.floor")
+			or String(p.role).begins_with("frontage.corner")))
+	assert_eq(floor.map(func(p: Dictionary) -> StringName: return p.role),
+		[&"frontage.floor.d100", &"frontage.floor.d100", &"frontage.floor.d100"])
+	for part: Dictionary in floor:
+		var box := _box(part)
+		assert_almost_eq(box.position.z, 0.5, 0.03, "the strip starts at the south wall")
+		assert_almost_eq(box.end.z, 1.5, 0.03, "and ends at the north wall")
+	var whole := FIXTURE.house(&"kit.fixture.front", Rect2i(0, 0, 3, 1), 4, 1)
+	FIXTURE.write_step_in(whole, kit, 3, [0.0, -1.0, 0.0, 0.0] as Array[float])
+	FIXTURE.write_step_in(whole, kit, 1, [0.0, -1.0, 0.0, 0.0] as Array[float])
+	assert_eq(_parts(whole).filter(func(p: Dictionary) -> bool:
+		return (String(p.role).begins_with("frontage.floor") or String(p.role).begins_with("frontage.corner")
+			or p.role == &"deck.board") and absf(_box(p).get_center().y - 3.0) < 0.3).size(), 0,
+		"walls a module apart leave no floor between them")
+
+
+## Task 10 (Task 8b deferred "sliver at a wrapped corner at y = 3", seen in
+## docs/qa/2026-10-08-growing-floors/task10/wrap_y3_under.png as an open notch): the
+## beams of a wrapped corner's two cut strips stop at their wall lines, so the corner
+## square outside both lines, at both beam heights, was open. One baked d025 beam closes
+## it at each height, at either step, without a coplanar face against the strip beams.
+func test_a_wrapped_corner_closes_its_beam_line() -> void:
+	var kit := SuntailBuildingKit.create()
+	for profile: Array[float] in [[-2.0, -1.0, 0.0, 0.0] as Array[float], [-1.0, -0.5, 0.0, 0.0] as Array[float]]:
+		var mass := _house()
+		FIXTURE.write_step_in(mass, kit, 3, profile, [&"return", &"wrap"])
+		FIXTURE.write_step_in(mass, kit, 2, profile, [&"wrap", &"return"])
+		var parts := _parts(mass)
+		var line := -profile[1] # storey 1's walls stand at x = z = line
+		var beams := parts.filter(func(p: Dictionary) -> bool:
+			return String(p.role).begins_with("frontage.return_beam") or String(p.role).begins_with("trim.floor_beam"))
+		for y: float in [3.0, 5.93]:
+			for probe: Vector3 in [Vector3(line - 0.18, y, line - 0.1), Vector3(line - 0.1, y, line - 0.18),
+					Vector3(line - 0.18, y, line - 0.18)]:
+				assert_true(beams.any(func(p: Dictionary) -> bool: return _box(p).has_point(probe)),
+					"%s: the corner square is closed at %s" % [profile, probe])
+		var near := beams.filter(func(p: Dictionary) -> bool:
+			var c := _box(p).get_center()
+			return c.x < line + 1.2 and c.z < line + 1.2 and c.y > 2.5 and c.y < 6.5)
+		for i in near.size():
+			for j in range(i + 1, near.size()):
+				assert_eq(_coplanar(_box(near[i]), _box(near[j])), "", "%s: %s / %s" % [profile, near[i].role, near[j].role])
+
+
+## Two boxes share a face plane facing the same way with an overlapping patch.
+static func _coplanar(a: AABB, b: AABB) -> String:
+	for axis in 3:
+		var patch := true
+		for o: int in [(axis + 1) % 3, (axis + 2) % 3]:
+			patch = patch and minf(a.end[o], b.end[o]) - maxf(a.position[o], b.position[o]) > 0.001
+		if not patch:
+			continue
+		if absf(a.position[axis] - b.position[axis]) < 0.001:
+			return "min %d" % axis
+		if absf(a.end[axis] - b.end[axis]) < 0.001:
+			return "max %d" % axis
+	return ""
