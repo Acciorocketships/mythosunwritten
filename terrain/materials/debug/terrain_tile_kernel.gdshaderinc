@@ -16,7 +16,7 @@ uniform float spacing = 12.0;
 uniform float storey_height = 4.0;
 // TerrainTileField.CliffEnd: 0 = E1 (blend inside the tile), 1 = E2 (full wall
 // to the tile centre, then it shortens to nothing over the slope half).
-uniform int cliff_end = 2;   // TerrainTileField.CliffEnd: 0 E1, 1 E2, 2 E3
+uniform int cliff_end = 2;   // TerrainTileField.CliffEnd: 0 E1, 1 E2, 2 E3, 3 shared profile
 
 const float TILE_NO_DATA = -1e6;
 
@@ -62,6 +62,7 @@ float tile_step(float t, int side) {
 }
 
 float tile_profile(float t, float k0, float k1, float s, int side, int side_s, bool ends) {
+	if (cliff_end == 3) return tile_smootherstep(t);
 	float k;
 	if (cliff_end == 0 || k0 == k1) {
 		k = mix(k0, k1, s);
@@ -79,6 +80,7 @@ float tile_profile(float t, float k0, float k1, float s, int side, int side_s, b
 
 // A crossing's profile inside one corner shape (TerrainTileField._corner_profile).
 float tile_corner_profile(float t, float k, float s, float corner_t, bool mixed, int side, int side_s, bool ends) {
+	if (cliff_end == 3) return tile_smootherstep(t);
 	if (k <= 0.0) return tile_smootherstep(t);
 	if (!mixed) return tile_step(t, side);
 	if (ends) return tile_step(s, side_s) == 0.0 ? tile_step(t, side) : tile_smootherstep(t);

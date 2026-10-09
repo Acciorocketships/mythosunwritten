@@ -1,0 +1,32 @@
+{
+  "diagonals": true,
+  "level_tolerance": 0.02,
+  "origin": "(-80.0, 1100.0)",
+  "probes": [
+    {
+      "at": "(-26.0, 1142.0)",
+      "level": 72.1879785325792,
+      "supplied": false
+    },
+    {
+      "at": "(-26.0, 1138.0)",
+      "level": 73.2995923046222,
+      "supplied": false
+    },
+    {
+      "at": "(-25.0, 1146.0)",
+      "level": 66.6103820800781,
+      "supplied": false
+    },
+    {
+      "at": "(-39.0, 1144.0)",
+      "level": 75.7504323323568,
+      "supplied": true
+    }
+  ],
+  "reachable": 47563,
+  "seeds": 375,
+  "size": 321,
+  "step": 0.25,
+  "wet": 49067
+}

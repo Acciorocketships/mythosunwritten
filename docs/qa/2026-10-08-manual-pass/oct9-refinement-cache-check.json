@@ -1,0 +1,48 @@
+{
+  "after_ms": 108.226,
+  "before_ms": 141.008,
+  "cases": 20,
+  "failures": 0,
+  "rows": [
+    {
+      "case": 0,
+      "digest": "476634456f8d6f1bbc7b209b61d69c19b1b8127cd577782c9d2374902e79deac",
+      "same": true,
+      "stats": {
+        "final_triangles": 32,
+        "initial_triangles": 32,
+        "rounds": 0
+      }
+    },
+    {
+      "case": 1,
+      "digest": "a4ed3c012a272a0ce16246e34802b6180a2209aa5294fc18af20a67bef8242b2",
+      "same": true,
+      "stats": {
+        "final_triangles": 950,
+        "initial_triangles": 32,
+        "rounds": 4
+      }
+    },
+    {
+      "case": 2,
+      "digest": "e5bae807a00703326be4b3972e78250ae30a5733eee18ddb288b248004dad7ba",
+      "same": true,
+      "stats": {
+        "final_triangles": 436,
+        "initial_triangles": 32,
+        "rounds": 3
+      }
+    },
+    {
+      "case": 3,
+      "digest": "ccdb59d897b714ef9845d036d41638efe7a8e1ae0d939918829ad586ae22774a",
+      "same": true,
+      "stats": {
+        "final_triangles": 278,
+        "initial_triangles": 32,
+        "rounds": 3
+      }
+    }
+  ]
+}

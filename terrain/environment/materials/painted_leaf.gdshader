@@ -36,7 +36,7 @@ uniform float shadow_card_cascade_width = 30.0;
 global uniform vec4 leaf_lod_camera;
 // Trees with a baked imposter (EnvironmentCommitQueue) hand over to it per
 // instance: (switch distance, half-width) in metres from the camera to the
-// instance origin. Both dither with one interleaved-gradient pattern and
+// instance origin. Both dissolve with one continuous patch mask and
 // complementary tests (tree_imposter.gdshader, the bark's object dither), so
 // the crossfade neither doubles nor opens a gap. Off for bushes and for the
 // shadow proxy, which keep the material without it.
@@ -49,6 +49,21 @@ varying vec3 instance_tint;
 varying float crown_depth;
 varying float crown_up;
 varying vec3 world_pos;
+// Continuous patches avoid the conspicuous one-pixel dot grid during the
+// mesh/card handover. All three tree shaders use the same screen-space mask
+// and complementary tests, including bark and alpha-tested Farmlands cards.
+float tree_fade_hash(vec2 p) {
+	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+float tree_fade_mask(vec2 p) {
+	p /= 8.0;
+	vec2 cell = floor(p);
+	vec2 f = fract(p);
+	f = f * f * (3.0 - 2.0 * f);
+	return mix(mix(tree_fade_hash(cell), tree_fade_hash(cell + vec2(1.0, 0.0)), f.x),
+		mix(tree_fade_hash(cell + vec2(0.0, 1.0)), tree_fade_hash(cell + vec2(1.0)), f.x), f.y);
+}
+
 void vertex() {
 	vec3 eye = leaf_lod_camera.xyz;
 	float pixel = leaf_lod_camera.w;
@@ -116,7 +131,7 @@ void fragment() {
 	SPECULAR = 0.12;
 	BACKLIGHT = colour * translucency;
 	if (near_fade < 1.0 && (near_fade < 0.001
-			|| near_fade < fract(52.9829189 * fract(dot(FRAGCOORD.xy, vec2(0.06711056, 0.00583715)))))) {
+			|| near_fade < tree_fade_mask(FRAGCOORD.xy))) {
 		discard;
 	}
 }

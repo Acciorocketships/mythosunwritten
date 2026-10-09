@@ -264,3 +264,30 @@ func _expect_fault_warning() -> void:
 			e.handled = true
 			warned += 1
 	assert_gt(warned, 0, "a warning names the C# failure")
+
+
+func test_source_support_matches_photographed_grid_exactly() -> void:
+	F.setup()
+	if not ClassDB.class_exists(&"CSharpScript"):
+		pass_test("standard editor uses reference"); return
+	assert_true(F.on(), "the native parity gate is enabled")
+	var support = load("res://scripts/terrain/water/WaterSourceSupport.gd")
+	var file := FileAccess.open("res://tests/fixtures/october9/water-support-branch.bin",FileAccess.READ)
+	var grid: Dictionary = file.get_var()
+	var expected: PackedFloat32Array = support.constrain(grid.levels,grid.ground,grid.size,grid.conservative_roots)
+	assert_eq(F.source_support(grid.levels,grid.ground,grid.size,grid.conservative_roots),expected)
+
+func test_source_support_fault_falls_back_for_the_same_call() -> void:
+	F.setup()
+	if not ClassDB.class_exists(&"CSharpScript"):
+		pass_test("standard editor uses reference"); return
+	var support = load("res://scripts/terrain/water/WaterSourceSupport.gd")
+	var levels := PackedFloat32Array([5,3,4,4])
+	var ground := PackedFloat32Array([0,0,3.5,0])
+	var roots := PackedInt32Array([0])
+	F.arm_fault()
+	assert_eq(support.solve(levels,ground,4,roots),support.constrain(levels,ground,4,roots))
+	assert_false(F.enabled,"a fault disables the port")
+	F._faulted = false
+	F.enabled = true
+	_expect_fault_warning()

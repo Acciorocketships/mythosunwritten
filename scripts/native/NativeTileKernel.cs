@@ -15,7 +15,7 @@ namespace Story.Native
         public string TakeError() => NativeFault.Take();
 
         const double CLIFF_END_CLEAR = 0.2;   // TerrainTileField.CLIFF_END_CLEAR
-        const int E1 = 0, E3 = 2;             // TerrainTileField.CliffEnd
+        const int E1 = 0, E3 = 2, SHARED_PROFILE = 3;             // TerrainTileField.CliffEnd
 
         public double[] SampleOwned(float[] heights, int[] storeys, int w, int h, int i0, int j0,
             double spacing, double[] xs, double[] zs, int[] ownerI, int[] ownerJ, int cliffEnd)
@@ -140,7 +140,7 @@ namespace Story.Native
 
         static double CornerProfile(double t, double k, double s, double cornerT, bool mixed, int side, int sideS, bool ends, int mode)
         {
-            if (k <= 0.0) return Smootherstep(t);
+            if (mode == SHARED_PROFILE || k <= 0.0) return Smootherstep(t);
             if (!mixed) return Step(t, side);
             if (ends) return Step(s, sideS) == 0.0 ? Step(t, side) : Smootherstep(t);
             double wall = mode == E1 ? 1.0 - s
@@ -151,6 +151,7 @@ namespace Story.Native
 
         static double Profile(double t, double k0, double k1, double s, int side, int sideS, bool ends, int mode)
         {
+            if (mode == SHARED_PROFILE) return Smootherstep(t);
             double k;
             if (mode == E1 || k0 == k1) k = Lerp(k0, k1, s);
             else if (ends) k = Step(s, sideS) == 0.0 ? k0 : k1;

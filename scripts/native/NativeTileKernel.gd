@@ -177,7 +177,7 @@ static func _parity() -> String:
 		# each with its (possibly non-point_of) owner.
 		var gx := xs.slice(0, 17); var gz := zs.slice(0, 13)
 		var gox := oi.slice(0, 17); var goz := oj.slice(0, 13)
-		for mode in 3:
+		for mode in TILE.CliffEnd.size():
 			var grid_expected: PackedFloat64Array = TILE._sample_grid_gd(window, gx, gz, gox, goz, mode)
 			var grid_actual: PackedFloat64Array = _native.SampleGrid(heights, storeys, n, n, 0, 0, 12.0,
 				gx, gz, gox, goz, mode)

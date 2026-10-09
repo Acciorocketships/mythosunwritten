@@ -299,7 +299,7 @@ static func _grass_support(id: String, centre: Vector2, radii: PackedFloat32Arra
 		"mesh_bounds": Rect2(origin, Vector2.ONE * (w - 1) * GRASS_STEP)}
 
 ## Main thread: the terrain-covering triangles as one merged ground-material
-## mesh and one collision shape.
+## mesh and bounded collision pieces on one body.
 static func commit(parent: Node3D, skirts: Array) -> void:
 	for step: Callable in commit_steps(parent, skirts):
 		step.call()
@@ -307,11 +307,13 @@ static func commit(parent: Node3D, skirts: Array) -> void:
 
 ## Skirts gathered per step on the main thread (the per-index loop was most of
 ## a 9-19 ms integration step on rocky chunks).
-const SKIRTS_PER_STEP := 24
+const SKIRTS_PER_STEP := 4
+## Bound each physics BVH build; a whole rocky chunk can exceed 25 ms.
+const COLLISION_TRIANGLES_PER_STEP := 1000
 
 ## commit as main-thread steps: gather SKIRTS_PER_STEP skirts a step, then the
-## mesh, then the collision. Running them in order builds exactly commit's
-## nodes (the same arrays, mesh, shape and child order).
+## mesh, then bounded collision pieces. Running them in order builds exactly
+## commit's nodes (the same arrays, mesh, shapes and child order).
 static func commit_steps(parent: Node3D, skirts: Array) -> Array[Callable]:
 	var steps: Array[Callable] = []
 	if skirts.is_empty():
@@ -321,7 +323,12 @@ static func commit_steps(parent: Node3D, skirts: Array) -> Array[Callable]:
 	for first in range(0, skirts.size(), SKIRTS_PER_STEP):
 		steps.append(func() -> void: _gather(acc, skirts, first, mini(first + SKIRTS_PER_STEP, skirts.size())))
 	steps.append(func() -> void: _commit_mesh(parent, acc))
-	steps.append(func() -> void: _commit_collision(parent, acc))
+	var face_count := 0
+	for skirt: Dictionary in skirts:
+		face_count += (skirt.indices as PackedInt32Array).size()
+	var piece_size := COLLISION_TRIANGLES_PER_STEP * 3
+	for first in range(0, face_count, piece_size):
+		steps.append(func() -> void: _commit_collision(parent, acc, first, piece_size))
 	return steps
 
 
@@ -372,16 +379,18 @@ static func _commit_mesh(parent: Node3D, acc: Dictionary) -> void:
 	parent.add_child(instance)
 
 
-static func _commit_collision(parent: Node3D, acc: Dictionary) -> void:
+static func _commit_collision(parent: Node3D, acc: Dictionary, first: int, count: int) -> void:
 	var faces: PackedVector3Array = acc.faces
 	if (acc.indices as PackedInt32Array).is_empty():
 		return
 	var shape := ConcavePolygonShape3D.new()
-	shape.set_faces(faces)
+	shape.set_faces(faces.slice(first, first + count))
 	var collision := CollisionShape3D.new()
-	collision.name = &"RockSkirts"
+	collision.name = "RockSkirts" if first == 0 else "RockSkirts%d" % (first / count + 1)
 	collision.shape = shape
-	var body := StaticBody3D.new()
-	body.name = &"RockSkirtCollision"
+	var body := parent.get_node_or_null("RockSkirtCollision") as StaticBody3D
+	if body == null:
+		body = StaticBody3D.new()
+		body.name = &"RockSkirtCollision"
+		parent.add_child(body)
 	body.add_child(collision)
-	parent.add_child(body)

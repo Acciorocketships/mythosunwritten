@@ -58,9 +58,22 @@ var _after_max := 0.0
 var _last_usec := 0
 var _t0 := 0
 var _idle_frames: Array[float] = []
+var _retire_profile := false
+var _retiring := false
+var _retire_nodes: Array[Node3D] = []
+var _retire_frames: Array[float] = []
+var _retire_staged := false
+var _retire_queue := preload("res://scripts/terrain/field/TerrainRetirementQueue.gd").new()
+var _retire_slice_max := 0
 
 func _init() -> void:
+	if "--shared-profile" in OS.get_cmdline_user_args():
+		TerrainTileField.cliff_end = TerrainTileField.CliffEnd.SHARED_PROFILE
 	for arg: String in OS.get_cmdline_user_args():
+		if arg == "--retire-profile": _retire_profile = true
+		if arg == "--retire-staged":
+			_retire_profile = true
+			_retire_staged = true
 		if arg.begins_with("--seed="): _seed = int(arg.trim_prefix("--seed="))
 		elif arg.begins_with("--radius="): _radius = int(arg.trim_prefix("--radius="))
 		elif arg == "--serial": _serial = true
@@ -188,9 +201,22 @@ static func _faces(a: Variant) -> int:
 	return (a as PackedVector3Array).size() / 3 if a is PackedVector3Array else 0
 
 func _process(_delta: float) -> bool:
+	if _retire_profile: RenderingServer.force_draw(false)
 	var now := Time.get_ticks_usec()
 	var frame_ms := (now - _last_usec) / 1000.0
 	_last_usec = now
+	if _retiring:
+		_retire_frames.append(frame_ms)
+		if _retire_queue.pending():
+			var began := Time.get_ticks_usec()
+			_retire_queue.drain()
+			_retire_slice_max = maxi(_retire_slice_max, Time.get_ticks_usec() - began)
+			return false
+		if _retire_frames.size() < 60: return false
+		_retire_frames.sort()
+		print("[retireprof] next_frames p50_ms=", _retire_frames[_retire_frames.size() / 2], " max_ms=", _retire_frames[-1])
+		print("[retireprof] max_slice_us=", _retire_slice_max)
+		return true
 	if _warmup_frames > 0:
 		print("[commitprof] warmup frame_ms=%.1f" % frame_ms)
 		_warmup_frames -= 1
@@ -239,6 +265,16 @@ func _process(_delta: float) -> bool:
 				busy.sort()
 				print("[commitprof] frames while worker busy (nothing attaching) p50_ms=%.1f p95_ms=%.1f max_ms=%.1f n=%d" % [
 					busy[busy.size() / 2], busy[int(busy.size() * 0.95)], busy.back(), busy.size()])
+			if _retire_profile:
+				_retiring = true
+				for node: Node3D in _retire_nodes:
+					var count := node.find_children("*", "", true, false).size()
+					var began := Time.get_ticks_usec()
+					if _retire_staged: _retire_queue.enqueue(node)
+					else: node.free()
+					print("[retireprof] staged=", _retire_staged, " nodes=", count, " free_or_detach_ms=", (Time.get_ticks_usec() - began) / 1000.0)
+				_retire_nodes.clear()
+				return false
 			print("[commitprof] DONE")
 			return true
 		return false
@@ -288,6 +324,7 @@ func _process(_delta: float) -> bool:
 				var n := full.get_node_or_null("DressingCollision")
 				if n != null: n.free()
 	_root.add_child(full)
+	if _retire_profile: _retire_nodes.append(full)
 	steps["add_child"] = Time.get_ticks_usec() - t; t = Time.get_ticks_usec()
 	if not _skip.has("dressing"):
 		var queue := EnvironmentCommitQueue.new(render_cache, &"Dressing")

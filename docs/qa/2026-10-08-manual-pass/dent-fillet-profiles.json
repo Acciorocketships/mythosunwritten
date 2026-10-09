@@ -1,0 +1,26 @@
+[
+  {
+    "mode": "baseline",
+    "position": "(-303.5, 1342.0)",
+    "sections_over_4cm": 178,
+    "worst_added_dip": 0.567863066086751
+  },
+  {
+    "mode": "full_fillet",
+    "position": "(-305.0, 1342.5)",
+    "sections_over_4cm": 165,
+    "worst_added_dip": 0.421114148029531
+  },
+  {
+    "mode": "no_lip",
+    "position": "(-302.0, 1338.0)",
+    "sections_over_4cm": 181,
+    "worst_added_dip": 0.602516740683328
+  },
+  {
+    "mode": "full_fillet_no_lip",
+    "position": "(-302.0, 1338.5)",
+    "sections_over_4cm": 170,
+    "worst_added_dip": 0.444444444444443
+  }
+]

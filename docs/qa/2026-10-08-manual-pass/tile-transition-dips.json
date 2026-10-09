@@ -1,0 +1,23 @@
+[
+  {
+    "mode": "tile_4",
+    "plain_slope_error": 0.0,
+    "position": "(-323.5, 1348.0)",
+    "sections_over_4cm": 4,
+    "worst_added_dip": 0.050997492139949
+  },
+  {
+    "mode": "tile_7",
+    "plain_slope_error": 0.0,
+    "position": "(-311.0, 1353.0)",
+    "sections_over_4cm": 0,
+    "worst_added_dip": 0.0203515254451929
+  },
+  {
+    "mode": "tile_10",
+    "plain_slope_error": 0.0,
+    "position": "(-299.5, 1340.0)",
+    "sections_over_4cm": 0,
+    "worst_added_dip": 0.00000142322561913488
+  }
+]

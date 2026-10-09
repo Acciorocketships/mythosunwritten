@@ -20,6 +20,21 @@ global uniform vec2 tree_imposter_fade;
 uniform vec3 imposter_origin_offset = vec3(0.0);
 varying flat float near_fade;
 
+// Continuous patches avoid the conspicuous one-pixel dot grid during the
+// mesh/card handover. All three tree shaders use the same screen-space mask
+// and complementary tests, including bark and alpha-tested Farmlands cards.
+float tree_fade_hash(vec2 p) {
+	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+float tree_fade_mask(vec2 p) {
+	p /= 8.0;
+	vec2 cell = floor(p);
+	vec2 f = fract(p);
+	f = f * f * (3.0 - 2.0 * f);
+	return mix(mix(tree_fade_hash(cell), tree_fade_hash(cell + vec2(1.0, 0.0)), f.x),
+		mix(tree_fade_hash(cell + vec2(0.0, 1.0)), tree_fade_hash(cell + vec2(1.0)), f.x), f.y);
+}
+
 void vertex() {
 	near_fade = 1.0;
 	if (PROJECTION_MATRIX[3][3] < 0.5) {
@@ -47,7 +62,7 @@ void fragment() {
 	// variant from this text; the camera bubble needs one self-contained file.)
 	// Complementary to tree_imposter.gdshader's test on the same cells.
 	if (near_fade < 1.0 && (near_fade < 0.001
-			|| near_fade < fract(52.9829189 * fract(dot(FRAGCOORD.xy, vec2(0.06711056, 0.00583715)))))) {
+			|| near_fade < tree_fade_mask(FRAGCOORD.xy))) {
 		discard;
 	}
 }

@@ -27,6 +27,9 @@ const KEY_SOURCES: Array[String] = [
 	"res://scripts/terrain/heightfield",
 	"res://scripts/terrain/water/WaterPlan.gd",
 	"res://scripts/terrain/water/WaterField.gd",
+	"res://scripts/terrain/water/WaterBankBound.gd",
+	"res://scripts/terrain/water/WaterSourceSupport.gd",
+	"res://scripts/terrain/field/CliffSlopeEnvelope.gd",
 	"res://scripts/terrain/water/WaterFieldContext.gd",
 	"res://scripts/terrain/water/WaterContour.gd",
 	"res://scripts/terrain/water/PondStamp.gd",
@@ -44,6 +47,8 @@ const KEY_SOURCES: Array[String] = [
 ]
 
 static var _seed := 0
+static var _mode := -1
+static var _source_support := false
 static var _dir := ""
 static var hits := 0
 static var misses := 0
@@ -55,6 +60,9 @@ static func configure(seed: int) -> void:
 	if digest.is_empty():
 		return
 	var seed_dir := "%s/%d" % [ROOT, seed]
+	if TerrainTileField.cliff_end != TerrainTileField.CliffEnd.E3:
+		seed_dir += "-tile-%d" % TerrainTileField.cliff_end
+	if WaterField.SOURCE_SUPPORT: seed_dir += "-source-support"
 	DirAccess.make_dir_recursive_absolute(seed_dir + "/" + digest)
 	# Keep only the current code's entries for this seed.
 	for old: String in DirAccess.get_directories_at(seed_dir):
@@ -62,10 +70,13 @@ static func configure(seed: int) -> void:
 			_remove_tree(seed_dir + "/" + old)
 	_dir = seed_dir + "/" + digest
 	_seed = seed
+	_mode = TerrainTileField.cliff_end
+	_source_support = WaterField.SOURCE_SUPPORT
 
 
 static func active_for(seed: int) -> bool:
-	return not _dir.is_empty() and seed == _seed
+	return not _dir.is_empty() and seed == _seed and _mode == TerrainTileField.cliff_end \
+		and _source_support == WaterField.SOURCE_SUPPORT
 
 
 ## The stored value for `key`, or null. Thread-safe (plain file reads).

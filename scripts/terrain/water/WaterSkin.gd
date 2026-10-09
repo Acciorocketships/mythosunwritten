@@ -81,6 +81,8 @@
 class_name WaterSkin
 extends Object
 
+const SURFACE_REFINEMENT := preload("res://scripts/terrain/water/WaterSurfaceRefinement.gd")
+
 const STEP := 2.0             # render lattice: resolves broad geometric wave packets without aliasing
 const SAMPLER_STEP := 3.0     # CPU/current lattice: stable gameplay resolution and bounded worker cost
 const CURRENT_HALO := 2       # matches WaterCurrentField's finite signed-distance support
@@ -346,6 +348,13 @@ static func build(water: WaterPlan, chunk: Vector2i, region,
 		_boundary_strip(st, lattice, c, ci)
 		_rim(st, c)
 	_seal_local_surface_holes(st)
+	# Refinement revisits immutable fill corners across many nearby vertices.
+	# Compile each cell once while retaining the field's exact shore arithmetic.
+	var surface_cells := preload("res://scripts/terrain/water/WaterCurrentSurface.gd").new()
+	SURFACE_REFINEMENT.refine(st, func(p: Vector2) -> float:
+		if ctx.has("fill") and WaterField._in_fill_window(ctx, p):
+			return surface_cells.sample(ctx, p)
+		return WaterField.level_at(ctx, p))
 	if st.idx.is_empty():
 		return {}
 

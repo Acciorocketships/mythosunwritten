@@ -1,4 +1,14 @@
 extends GutTest
+
+# Historical step-ground fixtures exercise the E3 envelope/fillet. The shared
+# production profile supplies continuous ground and is covered separately.
+var _fixture_saved_mode: int
+func before_each() -> void:
+	_fixture_saved_mode = TerrainTileField.cliff_end
+	TerrainTileField.cliff_end = TerrainTileField.CliffEnd.E3
+func after_each() -> void:
+	TerrainTileField.cliff_end = _fixture_saved_mode
+	STYLE.apply("sheet_bedrock")
 ## Rock foot lines of the whole-wall slope come from the terrain's own walls
 ## (TerrainTileField.wall_segments, dual-grid terrain tiles, September 30), not
 ## from native KayKit piece formations: each wall segment is split where its

@@ -77,9 +77,13 @@ func test_rock_skirt_steps_match_the_single_commit() -> void:
 	assert_gt(steps.size(), 4, "three gathers, mesh, collision")
 	for step: Callable in steps:
 		step.call()
-	assert_eq(SIGNATURE.of(stepped), SIGNATURE.of(reference))
+	assert_eq(SIGNATURE.of(stepped.get_node("RockSkirts")), SIGNATURE.of(reference.get_node("RockSkirts")),
+		"the rendered mesh is unchanged by collision partitioning")
 	var faces := func(root: Node3D) -> PackedVector3Array:
-		return ((root.get_node("RockSkirtCollision/RockSkirts") as CollisionShape3D).shape as ConcavePolygonShape3D).get_faces()
+		var combined := PackedVector3Array()
+		for node: CollisionShape3D in root.get_node("RockSkirtCollision").get_children():
+			combined.append_array((node.shape as ConcavePolygonShape3D).get_faces())
+		return combined
 	assert_eq(faces.call(stepped), faces.call(reference))
 	reference.free()
 	stepped.free()

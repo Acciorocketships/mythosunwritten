@@ -143,7 +143,7 @@ static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:
 ## 2 native (the parity gate and tests; GDScript if the C# call fails).
 ## `capture` (tests, the parity gate): a Dictionary that receives each
 ## stage's arrays; per call, so gates on pool threads share no state.
-static func _build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:int,water_at:Callable,ground_grid:Callable,ground_points:Callable,bedrock:bool,mode:int,capture=null)->RefCounted:
+static func _build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:int,water_at:Callable,ground_grid:Callable,ground_points:Callable,bedrock:bool,mode:int,capture=null,tile_mode:int=-1)->RefCounted:
  var env:=new()
  var grid:=rect.grow(PAD)
  env.origin=(grid.position/H).floor()*H
@@ -191,6 +191,13 @@ static func _build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value
  var wet_level:=_levels(env,water_at)
  var any_wet:=not wet_level.is_empty()
  mark.call("exclusion")
+ var active_tile_mode:int=TerrainTileField.cliff_end if tile_mode<0 else tile_mode
+ if active_tile_mode==TerrainTileField.CliffEnd.SHARED_PROFILE:
+  if mode==2 or (mode==0 and NativeCliffEnvelope.on()):
+   if NativeCliffEnvelope.build_shared(env,wet_level,seed_value,bedrock,capture):return env
+  _shared_bedrock(env,wet_level,seed_value,bedrock)
+  if capture!=null:capture.clear()
+  return env
  if mode==2 or (mode==0 and not always_transform and NativeCliffEnvelope.on()):
   if NativeCliffEnvelope.build_rest(env,wet_level,_wall_lines(env,ground_at,ground_points),seed_value,bedrock,capture):
    mark.call("native")
@@ -444,7 +451,10 @@ static func _walls(env,g:PackedFloat64Array,ground_at:Callable,wet:=PackedFloat6
   var mark:=func(top:int,low:int,d:float)->void:
    # Water pouring over a crest is not a rock shoulder: a rounded bank grown
    # from it buried the falling water (September 27/28).
-   if not wet.is_empty() and _wet(wet,env.ground,top):return
+   if not wet.is_empty() and _wet(wet,env.ground,top):
+    # A fully drowned cliff is still part of the bed. Only a flowing sill
+    # whose lower water lies below the crest must avoid a raised shoulder.
+    if not _wet(wet,env.ground,low) or minf(wet[top],wet[low])<=g[top]+WATER_SINK:return
    # A wall standing in deep water drops only to the water's floor.
    if g[low]>env.ground[low]+1e-6:d=minf(d,g[top]-g[low])
    if d<.02:return
@@ -1027,6 +1037,32 @@ static func _moss_grade(env,F:PackedFloat64Array)->PackedFloat64Array:
    grade[idx]=1.0-1.0/sqrt(1.0+gx*gx+gz*gz)
  return _blur(grade,w,hh,2)
 ## `any_cut`: false when `cut` is zero everywhere.
+## Continuous tile profiles already supply the complete ground. Detail is
+## confined to grades steeper than any ordinary one-storey slope, with no
+## closing/fillet capable of raising its neighbours. Wet ground stays exact.
+static func _shared_bedrock(env,wet:PackedFloat64Array,seed_value:int,bedrock:bool)->void:
+ var g:PackedFloat64Array=env.ground
+ var n:int=g.size()
+ env.surface=g.duplicate()
+ if not bedrock:return
+ var mask:=PackedFloat64Array();mask.resize(n)
+ for k in range(1,env.h-1):
+  for i in range(1,env.w-1):
+   var idx:int=k*env.w+i
+   if not env.excluded.is_empty() and env.excluded[idx]!=0:continue
+   if not wet.is_empty() and is_finite(wet[idx]):continue
+   var gx:float=(g[idx+1]-g[idx-1])/(2.0*H)
+   var gz:float=(g[idx+env.w]-g[idx-env.w])/(2.0*H)
+   mask[idx]=smoothstep(1.0,1.2,sqrt(gx*gx+gz*gz))
+   env.surface[idx]=g[idx]+.3*mask[idx]
+ var floor_level:=_erode(g,env.w,env.h,SHOULDER.y+FOOT)
+ var top:=_dilate(g,env.w,env.h,SHOULDER.y+FOOT)
+ var cut:=PackedFloat64Array();cut.resize(n)
+ _bedrock(env,floor_level,top,mask,seed_value,cut,false)
+ for idx in n:
+  env.surface[idx]=clampf(env.surface[idx],g[idx],g[idx]+.3*mask[idx])
+  env.rock[idx]*=mask[idx]
+
 static func _bedrock(env,floor_level:PackedFloat64Array,top:PackedFloat64Array,cliff:PackedFloat64Array,seed_value:int,cut:PackedFloat64Array,any_cut:=true)->void:
  var n:int=env.w*env.h;var w:int=env.w;var hh:int=env.h
  var F:PackedFloat64Array=env.surface.duplicate()

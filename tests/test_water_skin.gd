@@ -1,5 +1,13 @@
 extends GutTest
 
+var _saved_tile_mode: int
+
+func before_each() -> void:
+	_saved_tile_mode = TerrainTileField.cliff_end
+
+func after_each() -> void:
+	TerrainTileField.cliff_end = _saved_tile_mode
+
 # r3-task-4/5 (plan docs/superpowers/plans/2026-07-10-water-continuous-surface.md,
 # briefs .superpowers/sdd/r3-task-4-brief.md, r3-task-5-brief.md): WaterSkin
 # welds a 2.0m interior lattice to a conforming boundary strip whose outer
@@ -89,19 +97,20 @@ static var _regions: Dictionary = {}
 
 
 static func _water(seed_v: int) -> WaterPlan:
-	if not _waters.has(seed_v):
+	var key := [seed_v, TerrainTileField.cliff_end]
+	if not _waters.has(key):
 		var water := preload("res://tests/fixtures/ReportedWaterPlan.gd").new(seed_v)
 		var plan := water.make_heightfield()
-		_plans[seed_v] = plan
-		_waters[seed_v] = water
-	return _waters[seed_v]
+		_plans[[seed_v, TerrainTileField.cliff_end]] = plan
+		_waters[key] = water
+	return _waters[key]
 
 
 static func _region(seed_v: int, chunk: Vector2i):
-	var key := [seed_v, chunk]
+	var key := [seed_v, chunk, TerrainTileField.cliff_end]
 	if not _regions.has(key):
 		_water(seed_v)
-		_regions[key] = _plans[seed_v].compute_region(
+		_regions[key] = _plans[[seed_v, TerrainTileField.cliff_end]].compute_region(
 			chunk.x * 16 + 8, chunk.y * 16 + 8, 16)
 	return _regions[key]
 
@@ -536,6 +545,9 @@ static func _synthetic_free_rim() -> Dictionary:
 ## is pinned halfway from its nearest contour sample to the measured wall face
 ## and must be covered at the contour's level.
 func test_reported_inner_corner_minus17_keeps_level_contact() -> void:
+	# This historical fixture specifically exercises a vertical dual-cell wall.
+	# Rounded production cliffs have no such face; keep its old regression alive.
+	TerrainTileField.cliff_end = TerrainTileField.CliffEnd.E3
 	var chunk := Vector2i(-3, -3)
 	var region = _region(SEED, chunk)
 	var ctx: Dictionary = WaterField.ctx(_water(SEED), chunk, region)
@@ -1786,6 +1798,9 @@ func test_rim_normals_curl_outward() -> void:
 ## task's OTHER change (the row1/row2 meniscus bulge) since it locates
 ## vertices purely by xz column, never by y.
 func test_wall_rim_reaches_the_face() -> void:
+	# This historical fixture specifically exercises a vertical dual-cell wall.
+	# Rounded production cliffs have no such face; keep its old regression alive.
+	TerrainTileField.cliff_end = TerrainTileField.CliffEnd.E3
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)
 	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK, region)

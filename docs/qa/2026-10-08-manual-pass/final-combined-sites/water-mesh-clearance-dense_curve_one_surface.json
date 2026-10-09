@@ -1,0 +1,14 @@
+{
+  "bodies": 1,
+  "checked": 1004,
+  "failures": [
+    {
+      "at": "(-25.5, 1146.5)",
+      "field_depth": 0.760207494099916,
+      "ground": 65.3582763671875,
+      "mesh_depth": null,
+      "triangles": []
+    }
+  ],
+  "min_depth": null
+}

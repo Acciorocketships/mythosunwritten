@@ -199,6 +199,8 @@ static func _consts() -> Dictionary:
 	out["SUMMIT_STEEP_X"] = float(steep.x)
 	out["SUMMIT_STEEP_Y"] = float(steep.y)
 	out["WOBBLE"] = float(PondStamp.WOBBLE)
+	out["SURFACE_DROP"] = float(PondStamp.SURFACE_DROP)
+	out["SURFACE_RIDE"] = float(WaterField.SURFACE_RIDE)
 	out["POINT"] = float(HeightfieldPlan.POINT)
 	return out
 

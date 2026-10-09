@@ -1,0 +1,68 @@
+--- scripts/terrain/field/CliffSlopeEnvelope.gd
++++ scripts/terrain/field/CliffSlopeEnvelope.gd
+@@ -226,12 +226,12 @@
+  var along_tight:=PackedFloat64Array();along_tight.resize(n)
+  var along_tight_wide:=PackedFloat64Array();along_tight_wide.resize(n)
+  var ground_rows:={}
+- var narrow:=_close_walls(g,walls,env.w,env.h,sh.x,foot,channel,along_narrow,ground_rows)
++ var narrow:=_close_walls(g,walls,env.w,env.h,sh.x,foot,channel,along_narrow,ground_rows,wet_level)
+  mark.call("close narrow")
+  var wide_dilated:=_dilate(g,env.w,env.h,sh.y+foot)
+- var wide:=_close_walls(g,walls,env.w,env.h,sh.y,foot,channel,along_wide,ground_rows)
+- var tight:=_close_walls(g,walls,env.w,env.h,tight_sh,tight_foot,channel,along_tight,ground_rows)
+- var tight_wide:=_close_walls(g,walls,env.w,env.h,6.4,tight_foot,channel,along_tight_wide,ground_rows)
++ var wide:=_close_walls(g,walls,env.w,env.h,sh.y,foot,channel,along_wide,ground_rows,wet_level)
++ var tight:=_close_walls(g,walls,env.w,env.h,tight_sh,tight_foot,channel,along_tight,ground_rows,wet_level)
++ var tight_wide:=_close_walls(g,walls,env.w,env.h,6.4,tight_foot,channel,along_tight_wide,ground_rows,wet_level)
+  mark.call("close all four")
+  if capture!=null:
+   capture.merge({"narrow":narrow,"wide":wide,"tight":tight,"tight_wide":tight_wide,"along_narrow":along_narrow,"channel":channel})
+@@ -280,7 +280,9 @@
+  # The fillet never stands over the lip across a wall line (see _lips).
+  mark.call("blend")
+  if capture!=null:capture["blend"]=env.surface.duplicate()
+- var filleted:=_erode(_dilate(env.surface,env.w,env.h,FOOT),env.w,env.h,FOOT)
++ var fill_spread:=_dilate(env.surface,env.w,env.h,FOOT)
++ _water_obstacle(fill_spread,g,wet_level)
++ var filleted:=_erode(fill_spread,env.w,env.h,FOOT)
+  var lips:=_lips(walls,g,env.w,n)
+  mark.call("fillet transform")
+  if capture!=null:capture["lips"]=lips
+@@ -527,7 +529,7 @@
+ ## along the wall (dilated by the foot radius in the wall's own direction).
+ ## `ground_rows`: a cache, shared by calls over the same ground, of its rows'
+ ## erosions per foot radius.
+-static func _close_walls(g:PackedFloat64Array,walls:Array,w:int,h:int,shoulder:float,foot:float,channel:=PackedByteArray(),along:=PackedFloat64Array(),ground_rows=null)->PackedFloat64Array:
++static func _close_walls(g:PackedFloat64Array,walls:Array,w:int,h:int,shoulder:float,foot:float,channel:=PackedByteArray(),along:=PackedFloat64Array(),ground_rows=null,wet:=PackedFloat64Array())->PackedFloat64Array:
+  var out:=g.duplicate()
+  var n:=g.size()
+  for axis in 2:
+@@ -582,6 +584,8 @@
+     # Stay in this row/column.
+     if axis==1 and (q%w==0 and toward[idx]<0 or q%w==w-1 and toward[idx]>0):break
+     q+=toward[idx]
++  _water_obstacle(spread,g,wet)
++  _water_obstacle(fitted,g,wet)
+   var closed:=_envelope_axis(spread,w,h,H*H/(2.0*foot),axis==0,lines)
+   # Where along each stamped line the closing lifts the ground: the lines
+   # across them (rows for axis 0) that carry any lift.
+@@ -644,6 +648,7 @@
+  var a:=H*H/(2.0*foot)
+  if ground_rows==null:ground_rows={}
+  if not ground_rows.has(foot):ground_rows[foot]=_envelope_axis(g,w,h,a,false)
++ _water_obstacle(round,g,wet)
+  var lifted_rows:=_envelope_axis(round,w,h,a,false,lift_rows)
+  var row_pass:PackedFloat64Array=(ground_rows[foot] as PackedFloat64Array).duplicate()
+  for k in h:
+@@ -1201,3 +1206,11 @@
+   else:
+    a=idx+(w if gz>0.0 else -w);t=absf(gx/gz);b=a+(1 if gx>0.0 else -1)
+   env.surface[idx]=minf(env.surface[idx],minf(env.surface[a],lerpf(env.surface[a],env.surface[b],t)))
++
++# Experimental: constrain the spread before the rounding erosion so water
++# affects the adjacent bank through the same smooth foot profile.
++static func _water_obstacle(spread:PackedFloat64Array,g:PackedFloat64Array,wet:PackedFloat64Array)->void:
++ if wet.is_empty():return
++ for idx in spread.size():
++  if is_finite(wet[idx]) and wet[idx]>g[idx]:
++   spread[idx]=minf(spread[idx],maxf(g[idx],wet[idx]-.3))

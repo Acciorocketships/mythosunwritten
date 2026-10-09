@@ -14,6 +14,41 @@ namespace Story.Native
         public void ArmFault() => NativeFault.Arm("NativeGridKernels");
         public string TakeError() => NativeFault.Take();
 
+        public double[] BankBound(double[] surface, int w, int h, double[] original,
+            int columns, int rows, int[] xs, int[] zs, int intervals)
+        {
+            try
+            {
+                NativeFault.Check("NativeGridKernels");
+                var bound = (double[])original.Clone();
+                for (int z = 0; z < rows - 1; z++)
+                    for (int x = 0; x < columns - 1; x++)
+                    {
+                        int idx = z * columns + x;
+                        double a = original[idx], b = original[idx + 1];
+                        double c = original[idx + columns], d = original[idx + columns + 1];
+                        double deficit = 0.0;
+                        for (int j = 0; j <= intervals; j++)
+                        {
+                            int row = Math.Clamp(zs[z] + j, 0, h - 1) * w;
+                            double t = (double)j / intervals;
+                            double left = a + (c - a) * t, right = b + (d - b) * t;
+                            for (int i = 0; i <= intervals; i++)
+                            {
+                                double height = surface[row + Math.Clamp(xs[x] + i, 0, w - 1)];
+                                deficit = Math.Max(deficit, height - (left + (right - left) * ((double)i / intervals)));
+                            }
+                        }
+                        bound[idx] = Math.Max(bound[idx], original[idx] + deficit);
+                        bound[idx + 1] = Math.Max(bound[idx + 1], original[idx + 1] + deficit);
+                        bound[idx + columns] = Math.Max(bound[idx + columns], original[idx + columns] + deficit);
+                        bound[idx + columns + 1] = Math.Max(bound[idx + columns + 1], original[idx + columns + 1] + deficit);
+                    }
+                return bound;
+            }
+            catch (Exception e) { NativeFault.Record(e); return null!; }
+        }
+
         // _envelope1(f, n, a, out, v, z): min over p of f[p] + a*(q-p)^2.
         static void Envelope1(double[] f, int n, double a, double[] output, int[] v, double[] z)
         {

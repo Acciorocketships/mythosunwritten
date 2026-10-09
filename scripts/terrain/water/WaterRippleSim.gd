@@ -120,6 +120,7 @@ func _snapped_origin() -> Vector2:
 
 ## True when the set of loaded water samplers changed.
 func _refresh_samplers() -> bool:
+	var previous := _samplers.duplicate()
 	_samplers.clear()
 	var seen: Dictionary = {}
 	for node: Node in get_tree().get_nodes_in_group("water_volume"):
@@ -135,8 +136,26 @@ func _refresh_samplers() -> bool:
 	ids.sort()
 	if ids == _sampler_ids:
 		return false
+	var changed: Array[WaterSampler] = []
+	for sampler: WaterSampler in previous:
+		if not seen.has(sampler.get_instance_id()): changed.append(sampler)
+	for sampler: WaterSampler in _samplers:
+		if not _sampler_ids.has(sampler.get_instance_id()): changed.append(sampler)
+	_invalidate_flow_cells(changed)
 	_sampler_ids = ids
 	return true
+
+
+## A distant arrival cannot change a cached local current. Invalidate only
+## cells where an added/removed sampler could have supplied that current,
+## including overlaps where the first sampler in the group owns the point.
+func _invalidate_flow_cells(changed: Array[WaterSampler]) -> void:
+	for cell: Vector2i in _flow_cells.keys():
+		var p := (Vector2(cell) + Vector2.ONE * .5) * FLOW_STEP
+		for sampler: WaterSampler in changed:
+			if sampler.covers_current(p):
+				_flow_cells.erase(cell)
+				break
 
 
 func _sampler_at(p: Vector2) -> WaterSampler:
@@ -367,8 +386,6 @@ func _process(delta: float) -> void:
 	if _flow_refresh <= 0.0:
 		_flow_refresh = 0.5
 		samplers_changed = _refresh_samplers()
-		if samplers_changed:
-			_flow_cells.clear()
 	if origin_changed or samplers_changed:
 		_refresh_flow_texture()
 

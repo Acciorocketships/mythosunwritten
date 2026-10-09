@@ -10,10 +10,14 @@ extends Node
 ##   Godot --path . res://tests/harness/frame_feel_profile.tscn -- \
 ##     [--seed N] [--phase-seconds 8] [--report /tmp/feel.json] [--size 1920x1080]
 ##     [--no-vsync] [--turn-deg 120] [--x X --z Z] [--ablate] [--imposter-distance M] [--view-shots DIR]
+## --shared-profile selects the continuous tile candidate before any plan.
 ## --ablate then holds a slow turn and switches one render feature off at a
 ## time (ablate_* phases), so each feature's cost is the difference from the
 ## ablate_full phases before and after.
+## --steady-ablate instead waits for the full ring and compares a fixed view,
+## with streamer integration paused and a baseline before every variant.
 const WORLD := preload("res://scenes/world.tscn")
+const CALLBACK_PROBE = preload("res://tests/harness/ProcessCallbackProbe.gd")
 const PHASES := ["idle", "turn", "run", "run_turn", "idle_end"]
 const ABLATIONS := ["full", "no_shadows", "shadow_2048", "shadow_2_splits", "no_fog", "no_ssao", "no_msaa", "no_glow", "no_grass", "grass_flat_material", "grass_lod_bias_half", "grass_lod_bias_quarter", "grass_density_half",
 	"no_water", "no_dressing", "no_cliff_sheet", "no_terrain_mesh", "half_res", "full_end"]
@@ -27,6 +31,10 @@ var _video_mem_idle_end := 0.0
 var _rig: Node
 var _camera: Camera3D
 var _seed := 2697992464
+var _runtime_probe: RefCounted
+var _collision_stats: Dictionary = {}
+var _managed_heap_bytes := -1
+var _managed_full_collections := -1
 var _phase_seconds := 8.0
 var _turn_rate := deg_to_rad(120.0)
 var _report_path := "/private/tmp/frame-feel.json"
@@ -41,6 +49,18 @@ var _start := 0
 var _x := 0.5
 var _z := 0.5
 var _ablate := false
+var _steady_ablate := false
+var _steady_status := {}
+var _ablation_variants: Array = []
+var _ablation_shots := ""
+var _grass_trial_materials: Dictionary = {}
+var _profile_callbacks := false
+var _idle_only := false
+var _stop_after_run := false
+var _callback_times: Dictionary = {}
+var _fixed_route := false
+var _return_to_start := false
+var _return_status := {}
 var _shots_dir := ""
 var _view_shots := ""
 var _prespin := false
@@ -63,8 +83,13 @@ func _ready() -> void:
 	for i in args.size():
 		var next := args[i + 1] if i + 1 < args.size() else ""
 		match args[i]:
+			"--collision-residency": FieldTerrainStreamer.COLLISION_RESIDENCY = true
+			"--full-collision": FieldTerrainStreamer.COLLISION_RESIDENCY = false
+			"--shared-profile": TerrainTileField.cliff_end = TerrainTileField.CliffEnd.SHARED_PROFILE
 			"--seed": _seed = int(next)
 			"--phase-seconds": _phase_seconds = float(next)
+			"--fixed-route": _fixed_route = true
+			"--return-to-start": _return_to_start = true
 			"--report": _report_path = next
 			"--turn-deg": _turn_rate = deg_to_rad(float(next))
 			"--size": size = Vector2i(int(next.split("x")[0]), int(next.split("x")[1]))
@@ -73,6 +98,12 @@ func _ready() -> void:
 			"--x": _x = float(next)
 			"--z": _z = float(next)
 			"--ablate": _ablate = true
+			"--steady-ablate": _steady_ablate = true
+			"--ablate-variants": _ablation_variants = Array(next.split(",", false))
+			"--ablate-shots": _ablation_shots = next
+			"--profile-callbacks": _profile_callbacks = true
+			"--idle-only": _idle_only = true
+			"--stop-after-run": _stop_after_run = true
 			"--grass-shots": _shots_dir = next
 			# Close and tactical views at four headings, then quit (imposter review).
 			"--view-shots": _view_shots = next
@@ -82,13 +113,34 @@ func _ready() -> void:
 			# Bark crossfade ablation (off = trunks without the dither discard).
 			"--bark-dither": EnvironmentCommitQueue.BARK_DITHER = next != "off"
 			"--grass-workers": GrassWorkQueue.WORKERS = int(next)
+			"--grass-lod-bias": GrassStreamer.BLADE_LOD_BIAS = float(next)
 			"--grass-radius":
 				var pair := next.split(",")
 				GrassStreamer.set_radii(float(pair[0]), float(pair[1]))
 	if size != Vector2i.ZERO: get_window().size = size
 	if not vsync: DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	RenderingServer.viewport_set_measure_render_time(get_viewport().get_viewport_rid(), true)
+	if ClassDB.class_exists(&"CSharpScript"):
+		var probe_script := load("res://scripts/native/NativeRuntimeProbe.cs") as Script
+		if probe_script != null and probe_script.can_instantiate():
+			_runtime_probe = probe_script.new()
 	_start = Time.get_ticks_msec()
+	if _profile_callbacks:
+		for path: String in ["camera/camera.gd", "terrain/grass/TrampleField.gd",
+			"terrain/water/WaterRippleSim.gd", "terrain/biome/AtmosphereDirector.gd",
+			"terrain/biome/SmallSpiritOrbs.gd", "terrain/biome/SpiritOrb.gd",
+			"terrain/field/FirstViewWarmer.gd", "terrain/field/FieldTerrainStreamer.gd",
+			"terrain/tools/CoordOverlay.gd", "terrain/tools/TerrainCategoryOverlay.gd"]:
+			CALLBACK_PROBE.install("res://scripts/" + path)
+		for method: String in ["_refresh_flow_texture", "_upload_packets"]:
+			CALLBACK_PROBE.install_method("res://scripts/terrain/water/WaterRippleSim.gd", method, "", "", "void")
+		CALLBACK_PROBE.install_method("res://scripts/terrain/water/WaterRippleSim.gd", "_update_packets", "delta: float", "delta", "void")
+		CALLBACK_PROBE.install_method("res://scripts/terrain/water/WaterRippleSim.gd", "_spawn_packet", "", "", "bool")
+		CALLBACK_PROBE.install_method("res://scripts/terrain/water/WaterRippleSim.gd", "_sampler_at", "p: Vector2", "p", "WaterSampler")
+		for method: String in ["_surface_frame", "current_frame_at"]:
+			CALLBACK_PROBE.install_method("res://scripts/terrain/water/WaterSampler.gd", method, "xz: Vector2", "xz", "PackedVector2Array")
+		for method: String in ["_native_fill_level_at", "_current_fill_level_at"]:
+			CALLBACK_PROBE.install_method("res://scripts/terrain/water/WaterSampler.gd", method, "xz: Vector2", "xz", "float")
 	_world = WORLD.instantiate()
 	_player = _world.get_node("Characters/Character")
 	_streamer = _world.get_node("FieldTerrain")
@@ -112,6 +164,8 @@ class Tail extends Node:
 		process_physics_priority = 100000
 	func _process(_d: float) -> void:
 		owner_profile._process_usec = Time.get_ticks_usec() - owner_profile._process_begin
+		if owner_profile._profile_callbacks:
+			owner_profile._callback_times = CALLBACK_PROBE.samples.duplicate()
 		owner_profile._sample_camera(_d)
 	func _physics_process(_d: float) -> void:
 		owner_profile._physics_usec += Time.get_ticks_usec() - owner_profile._physics_begin
@@ -124,6 +178,7 @@ func _physics_process(_delta: float) -> void:
 
 var _pending_frame := 0
 var _pending_last := 0
+var _grass_backlog := {}
 
 
 ## pending_tiles() sorts the whole ring; sampling it every frame would sit inside the measured
@@ -132,7 +187,23 @@ func _sampled_pending() -> int:
 	if _streamer._grass_streamer == null:
 		return 0
 	if _pending_frame % 10 == 0:
-		_pending_last = _streamer._grass_streamer.pending_tiles()
+		var grass: GrassStreamer = _streamer._grass_streamer
+		var backlog := {"waiting_ground": 0, "waiting_sampler": 0,
+			"unrequested": 0, "requested": 0, "waiting_commit": 0}
+		_pending_last = 0
+		for tile: Vector2i in GrassStreamer.desired_tiles(grass._lod_origin):
+			if grass._built.has(tile): continue
+			_pending_last += 1
+			if grass._pending_tiles.has(tile): backlog.waiting_commit += 1
+			elif grass._requested.has(tile): backlog.requested += 1
+			else:
+				var chunk := GrassField.parent_chunk(tile)
+				if not _streamer._built.has(chunk): backlog.waiting_ground += 1
+				elif not (_streamer._built[chunk] as Node).has_meta(&"grass_sampling"):
+					backlog.waiting_sampler += 1
+				else: backlog.unrequested += 1
+		if _streamer._grass_work != null: backlog.worker = _streamer._grass_work.stats()
+		_grass_backlog = backlog
 	_pending_frame += 1
 	return _pending_last
 
@@ -148,10 +219,16 @@ func _process(delta: float) -> void:
 	var now := Time.get_ticks_usec()
 	var rid := get_viewport().get_viewport_rid()
 	if _last_usec != 0 and _phase in _all_phases:
+		if _frames.size() % 10 == 0:
+			_collision_stats = _streamer._collision_residency.stats()
+		if _runtime_probe != null and _frames.size() % 10 == 0:
+			_managed_heap_bytes = _runtime_probe.HeapBytes()
+			_managed_full_collections = _runtime_probe.FullCollections()
 		_frames.append({"phase": _phase, "dt": (now - _last_usec) / 1000.0, "ticks": _ticks,
 			"rate": _turn_rate if _turning else 0.0,
 			"turn": _frame_turn, "cam_move": _frame_move, "delta": _frame_delta * 1000.0,
 			"process": _process_usec / 1000.0, "physics": _physics_usec / 1000.0,
+			"callbacks_usec": _callback_times,
 			"render_cpu": RenderingServer.viewport_get_measured_render_time_cpu(rid),
 			"gpu": RenderingServer.viewport_get_measured_render_time_gpu(rid),
 			"draws": Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),
@@ -161,15 +238,25 @@ func _process(delta: float) -> void:
 			"warmed": _streamer._first_view.warmed if _streamer._first_view != null else 0,
 			"grass_tiles": _streamer._grass_streamer.built_count() if _streamer._grass_streamer != null else 0,
 			"grass_pending": _sampled_pending(),
+			"grass_backlog": _grass_backlog,
 			"chunks": _streamer._built.size(),
+			"memory_mb": Performance.get_monitor(Performance.MEMORY_STATIC) / 1048576.0,
+			"gc_pause_usec": _runtime_probe.PauseUsec() if _runtime_probe != null else -1,
+			"collision_residency": _collision_stats,
+			"managed_heap_bytes": _managed_heap_bytes,
+			"managed_full_collections": _managed_full_collections,
+			"nodes": Performance.get_monitor(Performance.OBJECT_NODE_COUNT),
+			"frozen": _streamer._player_frozen,
+			"hold_detail": _hold_detail() if _streamer._player_frozen else {},
 			"dressing_pending": _streamer._dressing_queue.pending_count()})
-	if _phase in _all_phases and now - _last_usec > 40000:
+	if _last_usec != 0 and _phase in _all_phases and now - _last_usec > 40000:
 		print("FEEL spike frame dt=%.1f process=%.1f physics=%.1f ticks=%d phase=%s pipelines=%s draws=%d" % [
 			(now - _last_usec) / 1000.0, _process_usec / 1000.0, _physics_usec / 1000.0, _ticks, _phase,
 			_pipelines(), Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)])
 	_ticks = 0
 	_physics_usec = 0
 	_process_begin = Time.get_ticks_usec()
+	if _profile_callbacks: CALLBACK_PROBE.begin_frame()
 	_last_usec = now
 
 
@@ -218,12 +305,31 @@ func _run() -> void:
 		await get_tree().create_timer(0.2).timeout
 	print("FEEL ready after %.1f s" % ((Time.get_ticks_msec() - _start) / 1000.0))
 	await get_tree().create_timer(3.0).timeout
+	if _steady_ablate:
+		await _steady_render_review()
+		_finish()
+		return
 	if not _shots_dir.is_empty(): await _grass_shots()
 	if not _view_shots.is_empty():
 		await _capture_views()
 		get_tree().quit()
 		return
-	for phase: String in PHASES:
+	# PNG encoding and temporary mesh swaps belong to visual review, not the
+	# first measured gameplay interval. Start with a fresh complete frame.
+	_last_usec = 0
+	var route_yaw: float = _rig._yaw
+	var route_pitch: float = _rig._pitch
+	var route_start: Vector3 = _player.global_position
+	var phases: Array = ["idle"] if _idle_only else PHASES
+	for phase: String in phases:
+		if _fixed_route and phase == "run":
+			# A timer ends on a frame boundary. Its last mouse-motion delta
+			# otherwise changes the next 1 km traversal by tens of metres.
+			_turning = false
+			_phase = "route_reset"
+			_rig._yaw = wrapf(route_yaw - _turn_rate * _phase_seconds, -PI, PI)
+			await get_tree().process_frame
+			_last_usec = 0
 		if phase == "turn" and _prespin:
 			_phase = "prespin"
 			_all_phases.append("prespin")
@@ -239,10 +345,57 @@ func _run() -> void:
 		if phase.begins_with("run"): Input.action_press(&"forward")
 		else: Input.action_release(&"forward")
 		await get_tree().create_timer(_phase_seconds).timeout
+		if _stop_after_run and phase == "run":
+			Input.action_release(&"forward")
+			_phase = "route_settle"
+			_all_phases.append(_phase)
+			await get_tree().create_timer(20.0).timeout
+			break
 	_turning = false
 	Input.action_release(&"forward")
+	if _return_to_start: await _profile_return(route_start, route_yaw, route_pitch)
 	if _ablate: await _run_ablations()
 	_finish()
+
+
+## Compare the original pose after traversal; final idle elsewhere may simply
+## face a denser forest. Loading is explicitly excluded and has a hard timeout.
+func _profile_return(position: Vector3, yaw: float, pitch: float) -> void:
+	_phase = "return_loading"
+	_player.velocity = Vector3.ZERO
+	_player.global_position = position + Vector3.UP * 2.0
+	_rig._yaw = yaw
+	_rig._pitch = pitch
+	_last_usec = 0
+	var centre := FieldTerrainStreamer.chunk_of(position)
+	var started := Time.get_ticks_msec()
+	var settled_since := -1
+	var settled := false
+	var ready := false
+	while Time.get_ticks_msec() - started < 180000:
+		ready = not _streamer._player_frozen
+		for c: Vector2i in _streamer.desired_chunks(centre, 1):
+			ready = ready and _streamer._built.has(c) and _streamer._feature_square_ready(c)
+		if ready and _streamer._grass_streamer != null:
+			ready = _streamer._grass_streamer.pending_tiles() == 0
+		if ready:
+			if settled_since < 0: settled_since = Time.get_ticks_msec()
+			if Time.get_ticks_msec() - settled_since >= 3000:
+				settled = true
+				break
+		else: settled_since = -1
+		await get_tree().create_timer(0.25).timeout
+	ready = ready and settled
+	_return_status = {"ready": ready, "wait_ms": Time.get_ticks_msec() - started,
+		"requested_position": str(position), "actual_position": str(_player.global_position)}
+	print("FEEL return_to_start ", JSON.stringify(_return_status))
+	if not ready:
+		push_error("Return-to-start review timed out; no matched final idle recorded")
+		return
+	_last_usec = 0
+	_phase = "idle_return"
+	_all_phases.append(_phase)
+	await get_tree().create_timer(_phase_seconds).timeout
 
 
 ## The same view with the grass blade LOD off and on, for visual comparison
@@ -303,6 +456,57 @@ func _capture_views() -> void:
 				Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)])
 
 
+## Rendering-only diagnostic: finish the whole desired ring, then hold both
+## camera and committed scene constant. Each variant follows a fresh baseline.
+func _steady_render_review() -> void:
+	_phase = "steady_loading"
+	var started := Time.get_ticks_msec()
+	var stable_since := -1
+	var ready := false
+	var settled := false
+	var centre := FieldTerrainStreamer.chunk_of(_player.global_position)
+	while Time.get_ticks_msec() - started < 900000:
+		ready = not _streamer._player_frozen
+		for c: Vector2i in _streamer.desired_chunks(centre, _streamer.CHUNK_RADIUS):
+			ready = ready and _streamer._built.has(c) and _streamer._feature_square_ready(c)
+		ready = ready and _streamer._dressing_queue.pending_count() == 0
+		if _streamer._grass_streamer != null:
+			ready = ready and _streamer._grass_streamer.pending_tiles() == 0
+		if ready:
+			if stable_since < 0: stable_since = Time.get_ticks_msec()
+			if Time.get_ticks_msec() - stable_since >= 10000:
+				settled = true
+				break
+		else: stable_since = -1
+		await get_tree().create_timer(0.5).timeout
+	ready = ready and settled
+	_steady_status = {"ready": ready, "wait_ms": Time.get_ticks_msec() - started,
+		"chunks": _streamer._built.size(), "position": str(_player.global_position)}
+	print("FEEL steady_render ", JSON.stringify(_steady_status))
+	if not ready:
+		push_error("Full-ring render review timed out")
+		return
+	_streamer.set_process(false)
+	if not _ablation_shots.is_empty():
+		DirAccess.make_dir_recursive_absolute(_ablation_shots)
+		RenderingServer.global_shader_parameter_set(&"review_visual_time", 12.0)
+	await _run_ablations()
+	_streamer.set_process(true)
+
+
+func _grass_trial_material(source: ShaderMaterial, mode: String) -> ShaderMaterial:
+	var key := str(source.get_instance_id()) + mode
+	if _grass_trial_materials.has(key): return _grass_trial_materials[key]
+	var material := source.duplicate() as ShaderMaterial
+	var shader := Shader.new()
+	var option := "vertex_lighting" if mode == "grass_vertex_lighting" else "diffuse_lambert, specular_disabled"
+	shader.code = source.shader.code.replace("render_mode cull_disabled;",
+		"render_mode cull_disabled, " + option + ";")
+	material.shader = shader
+	_grass_trial_materials[key] = material
+	return material
+
+
 func _run_ablations() -> void:
 	var env := (_world.get_node("WorldEnvironment") as WorldEnvironment).environment
 	var sun := _world.get_node("DirectionalLight3D") as DirectionalLight3D
@@ -311,9 +515,21 @@ func _run_ablations() -> void:
 		"shadow_mode": sun.directional_shadow_mode, "scale": vp.scaling_3d_scale,
 		"ssao": env.ssao_enabled, "msaa": vp.msaa_3d, "glow": env.glow_enabled}
 	_turn_rate = deg_to_rad(20.0)
-	_turning = true
-	for name: String in ABLATIONS:
-		var phase := "ablate_" + name
+	_turning = not _steady_ablate
+	var variants: Array = ABLATIONS.duplicate()
+	if not _ablation_variants.is_empty(): variants = _ablation_variants.duplicate()
+	if _steady_ablate:
+		var requested := variants.duplicate()
+		variants.clear()
+		for name: String in requested:
+			if name in ["full", "full_end"]: continue
+			variants.append("full")
+			variants.append(name)
+		variants.append("full_end")
+	var trial := 0
+	for name: String in variants:
+		var phase := "ablate_" + name + ("_%02d" % trial if _steady_ablate else "")
+		trial += 1
 		_all_phases.append(phase)
 		sun.shadow_enabled = saved.shadow and name != "no_shadows"
 		env.volumetric_fog_enabled = saved.fog and name != "no_fog"
@@ -325,7 +541,7 @@ func _run_ablations() -> void:
 		sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS \
 			if name == "shadow_2_splits" else saved.shadow_mode
 		_streamer._grass_root.visible = name != "no_grass"
-		var bias := 0.5 if name == "grass_lod_bias_half" else (0.25 if name == "grass_lod_bias_quarter" else 1.0)
+		var bias := 0.5 if name == "grass_lod_bias_half" else (0.25 if name == "grass_lod_bias_quarter" else GrassStreamer.BLADE_LOD_BIAS)
 		for tile: Node in _streamer._grass_root.get_children():
 			for child: Node in tile.get_children():
 				if child is GeometryInstance3D: (child as GeometryInstance3D).lod_bias = bias
@@ -334,11 +550,14 @@ func _run_ablations() -> void:
 			for child: Node in tile.get_children():
 				if child is GeometryInstance3D:
 					var g := child as GeometryInstance3D
+					if g.has_meta(&"feel_material"):
+						g.material_override = g.get_meta(&"feel_material")
 					if name == "grass_flat_material":
 						if not g.has_meta(&"feel_material"): g.set_meta(&"feel_material", g.material_override)
 						g.material_override = _flat_grass()
-					elif g.has_meta(&"feel_material"):
-						g.material_override = g.get_meta(&"feel_material")
+					elif name in ["grass_vertex_lighting", "grass_simple_lighting"]:
+						if not g.has_meta(&"feel_material"): g.set_meta(&"feel_material", g.material_override)
+						g.material_override = _grass_trial_material(g.material_override as ShaderMaterial, name)
 		for chunk: Node3D in _streamer._built.values():
 			for child: Node in chunk.get_children():
 				if child is Node3D:
@@ -351,7 +570,11 @@ func _run_ablations() -> void:
 		_phase = "settle"
 		await get_tree().create_timer(1.5).timeout
 		_phase = phase
-		await get_tree().create_timer(4.0).timeout
+		await get_tree().create_timer(6.0 if _steady_ablate else 4.0).timeout
+		if not _ablation_shots.is_empty():
+			_phase = "ablate_capture"
+			await RenderingServer.frame_post_draw
+			get_viewport().get_texture().get_image().save_png(_ablation_shots + "/" + phase + ".png")
 	_turning = false
 
 
@@ -389,8 +612,10 @@ func _finish() -> void:
 			"render_cpu": _stats(pick.call("render_cpu")), "gpu": _stats(pick.call("gpu")),
 			"draws": _stats(pick.call("draws")), "prims": _stats(pick.call("prims")),
 			"grass_tiles": _stats(pick.call("grass_tiles")), "grass_pending": _stats(pick.call("grass_pending")),
+			"memory_mb": _stats(pick.call("memory_mb")), "nodes": _stats(pick.call("nodes")),
+			"frozen_frames": rows.filter(func(r:Dictionary)->bool:return r.frozen).size(),
 			"physics_ticks_per_frame": tick_hist, "turn_error": _stats(judder)}
-	var result := {"seed": _seed, "viewport": str(get_viewport().get_visible_rect().size),
+	var result := {"seed": _seed, "grass_lod_bias": GrassStreamer.BLADE_LOD_BIAS, "fixed_route": _fixed_route, "return_to_start": _return_status, "steady_render": _steady_status, "viewport": str(get_viewport().get_visible_rect().size),
 		"window": str(get_window().size), "screen_scale": DisplayServer.screen_get_scale(),
 		"refresh": DisplayServer.screen_get_refresh_rate(),
 		"vsync": DisplayServer.window_get_vsync_mode(), "max_fps": Engine.max_fps,
@@ -408,3 +633,34 @@ func _finish() -> void:
 	raw.close()
 	print("FEEL_RESULT ", JSON.stringify(result))
 	get_tree().quit(0)
+
+## Only sampled while held: distinguish an unbuilt neighbor from restoration
+## backlog before changing the safety guard in response to a profile freeze.
+func _hold_detail() -> Dictionary:
+	var blocked := []
+	var margin := FieldTerrainStreamer.PLAYER_COLLISION_MARGIN
+	for dx in [-margin,margin]:
+		for dz in [-margin,margin]:
+			var chunk := FieldTerrainStreamer.chunk_of(_player.global_position+Vector3(dx,0,dz))
+			if _streamer._collision_residency.is_ready(chunk): continue
+			var entry: Dictionary = _streamer._collision_residency._entries.get(chunk,{})
+			blocked.append({"chunk":str(chunk),"built":_streamer._built.has(chunk),
+				"registered":not entry.is_empty(),
+				"archived_shapes":entry.archive.pending() if not entry.is_empty() else -1,
+				"ready_frame":entry.get("ready_frame",-1)})
+	var center := FieldTerrainStreamer.chunk_of(_player.global_position)
+	_streamer._mutex.lock()
+	var planning: Dictionary = _streamer._active_job.duplicate()
+	var tails: Array = _streamer._tails_in_flight.keys()
+	var free_slots: int = _streamer._tail_free.size()
+	_streamer._mutex.unlock()
+	var integration := {}
+	if not _streamer._integrating.is_empty():
+		integration = {"chunk":str(_streamer._integrating.result.chunk),
+			"index":_streamer._integrating.index,"steps":_streamer._integrating.steps.size()}
+	return {"position":str(_player.global_position),"center":str(center),
+		"center_built":_streamer._built.has(center),
+		"center_features":_streamer._feature_square_ready(center),
+		"collision_blocked":blocked,"physics_frame":Engine.get_physics_frames(),
+		"arrival":_streamer.arrival_status(),"planning":planning,"tails":tails,
+		"free_tail_slots":free_slots,"integration":integration}

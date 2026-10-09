@@ -51,6 +51,21 @@ varying flat float near_fade;
 varying flat vec3 axis_x;
 varying flat vec3 axis_z;
 
+// Continuous patches avoid the conspicuous one-pixel dot grid during the
+// mesh/card handover. All three tree shaders use the same screen-space mask
+// and complementary tests, including bark and alpha-tested Farmlands cards.
+float tree_fade_hash(vec2 p) {
+	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+float tree_fade_mask(vec2 p) {
+	p /= 8.0;
+	vec2 cell = floor(p);
+	vec2 f = fract(p);
+	f = f * f * (3.0 - 2.0 * f);
+	return mix(mix(tree_fade_hash(cell), tree_fade_hash(cell + vec2(1.0, 0.0)), f.x),
+		mix(tree_fade_hash(cell + vec2(0.0, 1.0)), tree_fade_hash(cell + vec2(1.0)), f.x), f.y);
+}
+
 void vertex() {
 	vec3 origin = MODEL_MATRIX[3].xyz;
 	float scale = length(MODEL_MATRIX[0].xyz);
@@ -101,11 +116,6 @@ vec3 frame_normal(vec4 texel, float frame) {
 	return local.x * axis_x + vec3(0.0, local.y, 0.0) + local.z * axis_z;
 }
 
-// Interleaved gradient noise for the top-down dissolve.
-float dither(vec2 p) {
-	return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715))));
-}
-
 void fragment() {
 	// Texture reads and derivatives come before the dither discard: screen
 	// derivatives are undefined once a quad's neighbours are discarded.
@@ -116,7 +126,7 @@ void fragment() {
 	vec4 nb = texture(normal_atlas, uv_b);
 	vec2 texel = uv_a * vec2(textureSize(albedo_atlas, 0));
 	float lod = 0.5 * log2(max(max(dot(dFdx(texel), dFdx(texel)), dot(dFdy(texel), dFdy(texel))), 1.0));
-	float cell = dither(FRAGCOORD.xy);
+	float cell = tree_fade_mask(FRAGCOORD.xy);
 	if ((fade < 1.0 && fade <= cell) || (near_fade >= 0.001 && near_fade >= cell)) {
 		discard;
 	}

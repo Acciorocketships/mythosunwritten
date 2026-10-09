@@ -49,11 +49,17 @@ static func commit_steps(parent: Node3D, payload: EnvironmentInstancePayload,
 	var steps: Array[Callable] = []
 	if items.is_empty():
 		return {"steps": steps, "count": 0}
-	var body := StaticBody3D.new()
-	body.name = body_name
-	steps.append(func() -> void: parent.add_child(body))
+	# An abandoned, not-yet-started commit must not leave an unparented Node.
+	# Callables release captured data, but do not free captured Node objects.
+	var state := {}
+	steps.append(func() -> void:
+		var body := StaticBody3D.new()
+		body.name = body_name
+		parent.add_child(body)
+		state.body = body)
 	for first in range(0, items.size(), SHAPES_PER_STEP):
 		steps.append(func() -> void:
+			var body: StaticBody3D = state.body
 			for index in range(first, mini(first + SHAPES_PER_STEP, items.size())):
 				var shape_node := CollisionShape3D.new()
 				shape_node.name = items[index][0]

@@ -138,7 +138,7 @@ static func height_m(p: Vector2, seed: int, include_detail: bool) -> float:
 	var sp := LandformSetpieces.sample(seed, p)
 	var f := LandformFeatures.sample(seed, p, include_detail)
 	var h := TerrainRegimeField.base_m(seed, p) + elevation_m(seed, p) + continental_m(seed, p) \
-		+ sp.x + LandformFeatures.net(f)
+		+ sp.x + LandformFeatures.net(f) + LandformFeatures.local_relief(seed,p)
 	var keep := 1.0 - SETPIECE_RELIEF_SUPPRESSION * sp.y
 	var out := 0.0
 	for pair: Array in TerrainRegimeField.sample(seed, p):

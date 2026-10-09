@@ -1,0 +1,29 @@
+{
+  "bodies": 1,
+  "checked": 1004,
+  "failures": [
+    {
+      "at": "(-28.5, 1143.0)",
+      "field_depth": 0.259063720703125,
+      "ground": 71.927001953125,
+      "mesh_depth": -0.152099609375,
+      "triangles": [
+        [
+          {
+            "field_level": null,
+            "position": "(-28.26548, 71.55173, 1143.386)"
+          },
+          {
+            "field_level": null,
+            "position": "(-28.45356, 72.36475, 1142.168)"
+          },
+          {
+            "field_level": null,
+            "position": "(-28.54399, 71.47674, 1143.415)"
+          }
+        ]
+      ]
+    }
+  ],
+  "min_depth": -0.152099609375
+}

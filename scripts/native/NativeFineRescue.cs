@@ -24,7 +24,7 @@ namespace Story.Native
         const double FILL_SUB_STEP = 3.0;      // WaterField.FILL_SUB_STEP
         const double SHORE_DRY_DEPTH = 0.50;   // WaterField.SHORE_DRY_DEPTH
         const double FALL_DROP_MIN = 4.0;      // WaterField.FALL_DROP_MIN
-        const double DESCENT_CLAMP = 0.10;     // WaterField.DESCENT_CLAMP
+        const double SHORE_CREST_FEATHER = 0.10;     // WaterField.SHORE_CREST_FEATHER
         const double WALL_GATE = 1.0;          // WaterField.WALL_GATE
         const float SHORE_EDGE_PROBE = 0.001f; // WaterField.SHORE_EDGE_PROBE (a Vector2 component)
 
@@ -192,10 +192,10 @@ namespace Story.Native
                 double crown = Max(ga, gb);
                 double upper = ga > gb ? a : b;
                 double lower = ga > gb ? b : a;
-                double weight = cliff * Smoothstep(crown, crown + DESCENT_CLAMP, upper)
-                    * (1.0 - Smoothstep(crown - DESCENT_CLAMP, crown, lower));
+                double weight = cliff * Smoothstep(crown, crown + SHORE_CREST_FEATHER, upper)
+                    * (1.0 - Smoothstep(crown - SHORE_CREST_FEATHER, crown, lower));
                 if (weight <= 0.0) return linear;
-                double crest = Min(upper, crown + DESCENT_CLAMP);
+                double crest = Min(upper, crown + SHORE_CREST_FEATHER);
                 double spill = s < wall ? Lerp(a, crest, (s - s0) / (wall - s0))
                     : Lerp(crest, b, (s - wall) / (s0 + FILL_STEP - wall));
                 return Lerp(linear, spill, weight);

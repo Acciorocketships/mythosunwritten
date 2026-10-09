@@ -1,4 +1,14 @@
 extends GutTest
+
+# Historical step-ground fixtures exercise the E3 envelope/fillet. The shared
+# production profile supplies continuous ground and is covered separately.
+var _fixture_saved_mode: int
+func before_each() -> void:
+ _fixture_saved_mode = TerrainTileField.cliff_end
+ TerrainTileField.cliff_end = TerrainTileField.CliffEnd.E3
+func after_each() -> void:
+ TerrainTileField.cliff_end = _fixture_saved_mode
+ STYLE.apply("sheet_bedrock")
 const SUPPORT=preload("res://scripts/terrain/grass/GrassSupportSurfaces.gd")
 const ENV=preload("res://scripts/terrain/field/CliffSlopeEnvelope.gd")
 const FIELD=preload("res://scripts/terrain/field/CliffSlopeField.gd")

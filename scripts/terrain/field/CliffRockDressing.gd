@@ -30,7 +30,7 @@ static func compute(region:HeightfieldRegion,chunk:Vector2i,seed_value:int,
   features:FeatureContext=null,water:WaterFieldContext=null,
   water_blocks:WorldFieldBlockCache=null)->Dictionary:
  var owned:=owned_rect(chunk)
- var walls:=TerrainTileField.wall_segments(region,owned.grow(WALL_HALO))
+ var walls:=TerrainTileField.wall_segments(region,owned.grow(WALL_HALO),true)
  var slope:=SLOPE_FIELD.new(walls,seed_value,region,owned,features,water,water_blocks)
  var placements:Array[Dictionary]=slope.solid(owned)
  # Basal rocks stand in the ground, which swells to meet them: the skirt over

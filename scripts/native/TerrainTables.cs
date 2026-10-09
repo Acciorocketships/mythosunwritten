@@ -101,6 +101,7 @@ namespace Story.Native
         public double STOREY, AFFINITY_FLOOR;
         public double SP_CELL, SP_FEATHER, SP_SPAWN_CLEAR_M;
         public double F_CELL, F_NORM, F_SPAWN_CLEAR_M, F_HEIGHT_SKEW, F_LINK_MAX_RADIUS, F_LINK_FIRST, F_LINK_SECOND;
+        public double LOCAL_CELL, LOCAL_RADIUS, LOCAL_HEIGHT_MIN, LOCAL_HEIGHT_MAX;
         public long F_BLOB_STRIDE;
         public double OCTAVE_TURN;
         public double BIOME_FOREST_SCALE, BIOME_ROCKY_SCALE, BIOME_MOISTURE_SCALE, BIOME_BLOSSOM_SCALE, BIOME_MARSH_SCALE;
@@ -264,6 +265,10 @@ namespace Story.Native
             tb.SP_CELL = tb.C("LandformSetpieces.CELL");
             tb.SP_FEATHER = tb.C("LandformSetpieces.FEATHER");
             tb.SP_SPAWN_CLEAR_M = tb.C("LandformSetpieces.SPAWN_CLEAR_M");
+            tb.LOCAL_CELL = tb.C("LandformFeatures.LOCAL_CELL");
+            tb.LOCAL_RADIUS = tb.C("LandformFeatures.LOCAL_RADIUS");
+            tb.LOCAL_HEIGHT_MIN = tb.C("LandformFeatures.LOCAL_HEIGHT_MIN");
+            tb.LOCAL_HEIGHT_MAX = tb.C("LandformFeatures.LOCAL_HEIGHT_MAX");
             tb.F_CELL = tb.C("LandformFeatures.CELL");
             tb.F_NORM = tb.C("LandformFeatures.NORM");
             tb.F_SPAWN_CLEAR_M = tb.C("LandformFeatures.SPAWN_CLEAR_M");

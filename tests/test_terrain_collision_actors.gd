@@ -1,0 +1,46 @@
+extends GutTest
+const ACTORS := preload("res://scripts/terrain/field/TerrainCollisionActors.gd")
+
+func test_new_actors_are_tracked_held_and_resumed_with_original_state() -> void:
+	var tracker := ACTORS.new()
+	tracker.start(get_tree())
+	var character := CharacterBody3D.new()
+	character.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(character)
+	character.global_position = Vector3(1000,10,1000)
+	character.velocity = Vector3(4,0,0)
+	var rigid := RigidBody3D.new()
+	rigid.freeze = false
+	add_child(rigid)
+	rigid.global_position = Vector3(1100,10,1000)
+	var interests := tracker.interests()
+	assert_true(interests.has(character.global_position))
+	assert_true(interests.has(character.global_position+Vector3(120,0,0)))
+	assert_true(interests.has(rigid.global_position))
+	tracker.guard_except(null,func(_p:Vector3)->bool:return false)
+	assert_eq(character.process_mode,Node.PROCESS_MODE_DISABLED)
+	assert_true(rigid.freeze)
+	tracker.guard_except(null,func(_p:Vector3)->bool:return true)
+	assert_eq(character.process_mode,Node.PROCESS_MODE_ALWAYS)
+	assert_false(rigid.freeze)
+	assert_eq(character.velocity,Vector3(4,0,0))
+	tracker.stop()
+	character.free()
+	rigid.free()
+
+func test_player_hold_is_owned_by_streamer_and_shutdown_restores_other_actors() -> void:
+	var player := CharacterBody3D.new()
+	var other := RigidBody3D.new()
+	other.freeze = true
+	add_child(player)
+	add_child(other)
+	var tracker := ACTORS.new()
+	tracker.start(get_tree())
+	tracker.guard_except(player,func(_p:Vector3)->bool:return false)
+	assert_ne(player.process_mode,Node.PROCESS_MODE_DISABLED)
+	assert_eq(other.process_mode,Node.PROCESS_MODE_DISABLED)
+	tracker.stop()
+	assert_eq(other.process_mode,Node.PROCESS_MODE_INHERIT)
+	assert_true(other.freeze,"preserve an actor that was intentionally frozen")
+	player.free()
+	other.free()

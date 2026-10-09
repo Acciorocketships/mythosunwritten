@@ -59,6 +59,14 @@ static func setup() -> void:
 ## rock and moss_grade exactly as the GDScript build does. `capture` (a
 ## Dictionary or null) receives the C# stage arrays. False (env untouched,
 ## the port off) when the C# call failed: the caller builds in GDScript.
+static func build_shared(env,wet_level:PackedFloat64Array,seed_value:int,bedrock:bool,capture)->bool:
+	var result = _native.BuildShared(env.origin,env.w,env.h,env.ground,env.excluded,wet_level,seed_value,bedrock)
+	if _fault(result):return false
+	env.surface=result[0];env.rock=result[1];env.moss_grade=result[2]
+	if capture!=null:capture.clear()
+	return true
+
+
 static func build_rest(env, wet_level: PackedFloat64Array, lines: Array, seed_value: int,
 		bedrock: bool, capture) -> bool:
 	var result = _native.Build(env.origin, env.w, env.h, env.ground, env.excluded, wet_level,
@@ -178,12 +186,16 @@ static func parity_cases() -> Array:
 		return 12.0 + 4.0 * floorf((q.y + 6.0) / 12.0) * signf(q.x)
 	var channel := func(q: Vector2) -> float: return 2.0 + 0.3 * sin(q.y * 0.2) if absf(q.x) < 8.0 else NAN
 	var rolling := func(q: Vector2) -> float: return 3.0 * sin(q.x * 0.11) + 2.0 * cos(q.y * 0.07)
-	return [
+	var cases:Array = [
 		{"rect": window(Vector2(0.0, -6.0), 14.0), "ground": walls, "excluded": road, "water": Callable(), "seed": 7, "bedrock": true},
 		{"rect": window(Vector2.ZERO, 14.0), "ground": channel_walls, "excluded": Callable(), "water": channel, "seed": 2697992464, "bedrock": true},
 		{"rect": window(Vector2(0.0, 6.0), 14.0), "ground": walls, "excluded": road, "water": channel, "seed": 3, "bedrock": false},
 		{"rect": window(Vector2.ZERO, 8.0), "ground": rolling, "excluded": road, "water": Callable(), "seed": 5, "bedrock": true},
 	]
+
+	for wet in [Callable(),channel]:
+		cases.append({"rect":window(Vector2.ZERO,14.0),"ground":func(q:Vector2)->float:return 24.0*SlopeProfile.smootherstep(clampf((q.x+6.0)/12.0,0.0,1.0)),"excluded":road,"water":wet,"seed":99,"bedrock":true,"tile_mode":TerrainTileField.CliffEnd.SHARED_PROFILE})
+	return cases
 
 
 ## GDScript against C# on one case ({rect, ground, excluded, water, seed,
@@ -197,7 +209,7 @@ static func compare(c: Dictionary, with_stages := false) -> String:
 	for mode in [1, 2]:
 		# Stages per call, never shared statics: the gate runs on a pool thread.
 		var capture = {} if with_stages else null
-		var env = _ENVELOPE._build(c.rect, c.ground, c.excluded, c.seed, c.water, grid, points, c.bedrock, mode, capture)
+		var env = _ENVELOPE._build(c.rect, c.ground, c.excluded, c.seed, c.water, grid, points, c.bedrock, mode, capture, c.get("tile_mode", TerrainTileField.CliffEnd.E3))
 		arrays.append([env.surface, env.rock, env.moss_grade, env.excluded, env.ground])
 		stage_sets.append(capture)
 	if with_stages:

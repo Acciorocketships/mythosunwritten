@@ -8,22 +8,15 @@
 #   height = t0 + sum over the gaps [t(n-1), t(n)] of gap * layer_n(u, v)
 #
 # where t0 < t1 < ... are the corners' distinct heights and layer_n sees a
-# BINARY tile (corner bit = height >= t(n)). A layer's crossing on a tile edge
-# is a SLOPE (the two endpoints are at most one storey apart) or a CLIFF (two
-# or more storeys). Slopes use the smootherstep profile across the whole
-# tile; cliffs step at the tile midline, so every wall lies on the border of
-# the 12 m "dual cell" around a lattice point. A layer with one high (or one
-# low) corner is the product of its two crossings' own edge profiles, and a
-# saddle is the sum of its two corner shapes (for slopes, the smooth bilinear
-# saddle), so every tile only rises or only falls along each axis: no divots
-# (owner review 2026-10-04). Where a tile's one cliff edge ends beside a slope
-# the rule is `cliff_end` (E3 by default: a full wall to the tile centre, a
-# vertical end face on the centre line, then exactly the slope tile; tiles
-# where walls turn a corner beside slopes keep E2).
+# BINARY tile (corner bit = height >= t(n)). Both slope and cliff crossings
+# use the same full-tile smootherstep profile. A cliff is steeper because
+# its corner height difference is larger, not because it has a different
+# transition shape. Corner products and their complements form a reusable
+# family of monotone tiles, including cliff-to-slope transitions.
 #
 # Along any tile edge the surface depends only on that edge's two endpoints,
-# so neighbouring tiles agree by construction; walls are the only
-# double-valued places, and both owners agree where they are.
+# so neighbouring tiles agree by construction. Historical E1/E2/E3 modes
+# retain their vertical walls for regression fixtures and comparison tools.
 class_name TerrainTileField
 extends RefCounted
 
@@ -44,12 +37,14 @@ enum EdgeCategory { FLAT, LEVEL, SLOPE, CLIFF }
 ## beyond it the layer is the plain slope. No wall shortens over a ramp, so
 ## there is no fan, crease or scoop at a cliff's end (owner review October 4,
 ## second photo: the E2 ramp read as a dark dent).
-enum CliffEnd { E1, E2, E3 }
+## SHARED_PROFILE: one smootherstep profile for every crossing. No vertical
+## discontinuity or extra cliff-end fillet can dent the adjoining slope.
+enum CliffEnd { E1, E2, E3, SHARED_PROFILE }
 ## Under E2 the last fifth of the tile (2.4 m) before the slope edge carries no
 ## wall at all: a road crossing that slope edge (4 m wide, on the lattice line)
 ## never meets a step (test_september13_world_paths).
 const CLIFF_END_CLEAR := 0.2
-static var cliff_end: int = CliffEnd.E3
+static var cliff_end: int = CliffEnd.SHARED_PROFILE
 
 const _CARDINALS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 
@@ -251,6 +246,8 @@ static func _layer(ba: bool, bb: bool, bc: bool, bd: bool,
 ## corner's own side: the far side of the wall stays level (no notch), and
 ## the corner only deepens toward its corner along t.
 static func _corner_profile(t: float, k: float, s: float, corner_t: float, mixed: bool, side: int, side_s: int, ends: bool, mode: int) -> float:
+	if mode == CliffEnd.SHARED_PROFILE:
+		return SlopeProfile.smootherstep(t)
 	if k <= 0.0:
 		return SlopeProfile.smootherstep(t)
 	if not mixed:
@@ -272,6 +269,8 @@ static func _corner_profile(t: float, k: float, s: float, corner_t: float, mixed
 ## Profile of one direction's crossing at coordinate t, given the cliff weight
 ## k0 of the crossing edge at s = 0 and k1 at s = 1 (s = transverse coordinate).
 static func _profile(t: float, k0: float, k1: float, s: float, side: int, side_s: int, ends: bool, mode: int) -> float:
+	if mode == CliffEnd.SHARED_PROFILE:
+		return SlopeProfile.smootherstep(t)
 	var k: float
 	if mode == CliffEnd.E1 or k0 == k1:
 		k = lerpf(k0, k1, s)
@@ -557,8 +556,13 @@ static func _window_sample(heights: PackedFloat32Array, storeys: PackedInt32Arra
 ## horizontal direction from the high owner toward the low owner. `high` is
 ## decided from the SUMMED samples along the half-segment (both ends and the
 ## middle), so under E1 it can disagree with the higher lattice endpoint.
-static func wall_segments(region, rect: Rect2) -> Array[Dictionary]:
+## `include_rounded` is for cliff dressing only: SHARED_PROFILE has no vertical
+## wall, but a classified cliff still has a shoulder and foot one half-cell
+## from its centre line. sample_offset tells consumers where to resample them.
+## Mesh walls and grass rejection use the default discontinuity-only query.
+static func wall_segments(region, rect: Rect2, include_rounded := false) -> Array[Dictionary]:
 	var s := spacing(region)
+	var rounded := include_rounded and cliff_end == CliffEnd.SHARED_PROFILE
 	var out: Array[Dictionary] = []
 	var i0 := floori(rect.position.x / s) - 1
 	var i1 := ceili(rect.end.x / s) + 1
@@ -574,6 +578,8 @@ static func wall_segments(region, rect: Rect2) -> Array[Dictionary]:
 		for i in range(i0, i1 + 1):
 			var p := Vector2i(i, j)
 			for d: Vector2i in [Vector2i(1, 0), Vector2i(0, 1)]:
+				if rounded and not is_cliff_edge(region, p, d): continue
+				var shoulder := Vector2(d) * (s * 0.5 if rounded else 0.0)
 				var q := p + d
 				var mid := (Vector2(p) + Vector2(d) * 0.5) * s
 				var along := Vector2(-d.y, d.x) * s * 0.5
@@ -587,17 +593,18 @@ static func wall_segments(region, rect: Rect2) -> Array[Dictionary]:
 					if not _tile_has_cliff(region, tile, storeys, cliff_tiles):
 						continue
 					var inset := (b - a) * 0.001
-					var pa := surface_y_on_side(region, a.x + inset.x, a.y + inset.y, p)
-					var pb := surface_y_on_side(region, b.x - inset.x, b.y - inset.y, p)
-					var qa := surface_y_on_side(region, a.x + inset.x, a.y + inset.y, q)
-					var qb := surface_y_on_side(region, b.x - inset.x, b.y - inset.y, q)
-					var mid_p := surface_y_on_side(region, (a.x + b.x) * 0.5, (a.y + b.y) * 0.5, p)
-					var mid_q := surface_y_on_side(region, (a.x + b.x) * 0.5, (a.y + b.y) * 0.5, q)
+					var pa := surface_y_on_side(region, a.x + inset.x - shoulder.x, a.y + inset.y - shoulder.y, p)
+					var pb := surface_y_on_side(region, b.x - inset.x - shoulder.x, b.y - inset.y - shoulder.y, p)
+					var qa := surface_y_on_side(region, a.x + inset.x + shoulder.x, a.y + inset.y + shoulder.y, q)
+					var qb := surface_y_on_side(region, b.x - inset.x + shoulder.x, b.y - inset.y + shoulder.y, q)
+					var mid_p := surface_y_on_side(region, (a.x + b.x) * 0.5 - shoulder.x, (a.y + b.y) * 0.5 - shoulder.y, p)
+					var mid_q := surface_y_on_side(region, (a.x + b.x) * 0.5 + shoulder.x, (a.y + b.y) * 0.5 + shoulder.y, q)
 					if maxf(maxf(absf(pa - qa), absf(pb - qb)), absf(mid_p - mid_q)) <= 0.001:
 						continue
 					var p_high := (pa + pb + mid_p) >= (qa + qb + mid_q)
 					out.append({
 						"a": a, "b": b,
+						"sample_offset": s * 0.5 if rounded else 0.0,
 						"high": p if p_high else q, "low": q if p_high else p,
 						"top": Vector2(pa, pb) if p_high else Vector2(qa, qb),
 						"bottom": Vector2(qa, qb) if p_high else Vector2(pa, pb),

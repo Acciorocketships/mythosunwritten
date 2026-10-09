@@ -614,7 +614,7 @@ func commit_steps(data: Dictionary) -> Dictionary:
 ## Each piece's BVH build is one integration step on the main thread:
 ## ~1 ms per 1,000 triangles, so 3,000 keeps a step inside the streamer's
 ## 6 ms frame budget (12,000 made every cliffy chunk a run of 10-15 ms frames).
-const ROCK_COLLISION_PIECE_TRIANGLES := 3000
+const ROCK_COLLISION_PIECE_TRIANGLES := 1000
 
 
 func _commit_surface(root: Node3D, data: Dictionary) -> void:
@@ -840,7 +840,11 @@ static func _field_slope(region, baked_cache: Dictionary, owner: Vector2i, v: Ve
 	# 0.25 m on stands on the ramp's middle, metres lower: the plateau corner
 	# leaned into the ramp and lit a dark tick at every wall end.
 	var limit := WALL_LIKE * STEEPEST_SLOPE * NORMAL_STEP
-	if not is_nan(plus) and not is_nan(minus):
+	# Shared-profile ground is continuous even at large height differences.
+	# Its steepness is not evidence of a vertical lip; dropping one sample
+	# creates a lighting crease where the derivative crosses this threshold.
+	if TerrainTileField.cliff_end != TerrainTileField.CliffEnd.SHARED_PROFILE \
+			and not is_nan(plus) and not is_nan(minus):
 		var plus_wall := absf(plus - centre) > limit
 		var minus_wall := absf(centre - minus) > limit
 		if plus_wall != minus_wall:
@@ -868,7 +872,8 @@ static func _slope_sample(region, baked_cache: Dictionary, baked: PackedFloat32A
 	if not baked_cache.has(neighbour):
 		baked_cache[neighbour] = TerrainTileField.bake_point(region, neighbour)
 	var theirs: PackedFloat32Array = baked_cache[neighbour]
-	if absf(TerrainTileField.sample_baked(baked, owner, v.x, v.z, region)
+	if TerrainTileField.cliff_end != TerrainTileField.CliffEnd.SHARED_PROFILE \
+			and absf(TerrainTileField.sample_baked(baked, owner, v.x, v.z, region)
 			- TerrainTileField.sample_baked(theirs, neighbour, v.x, v.z, region)) >= 0.0001:
 		return NAN
 	return TerrainTileField.sample_baked(theirs, neighbour, x, z, region)

@@ -59,7 +59,7 @@ namespace Story.Native
         {
             V2 sp = SetpieceSample(p);
             V2 f = FeatureSample(p, detail);
-            double h = BaseM(p) + ElevationM(p) + ContinentalM(p) + sp.X + Net(f);
+            double h = BaseM(p) + ElevationM(p) + ContinentalM(p) + sp.X + Net(f) + LocalRelief(p);
             double keep = 1.0 - T.SETPIECE_RELIEF_SUPPRESSION * sp.Y;
             var regions = _pairRegions ??= new Region[25];
             var weights = _pairWeights ??= new double[25];

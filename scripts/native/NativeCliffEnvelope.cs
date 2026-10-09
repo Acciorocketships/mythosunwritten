@@ -133,7 +133,8 @@ namespace Story.Native
                 var depth = new double[n];
                 void Mark(int top, int low, double d)
                 {
-                    if (wet.Length > 0 && Wet(wet, ground, top)) return;
+                    if (wet.Length > 0 && Wet(wet, ground, top) &&
+                        (!Wet(wet, ground, low) || Min(wet[top], wet[low]) <= g[top] + WATER_SINK)) return;
                     if (g[low] > ground[low] + 1e-6) d = Min(d, g[top] - g[low]);
                     if (d < .02) return;
                     if (d > drop[top]) { crest[top] = g[top]; drop[top] = d; toward[top] = low - top; }
@@ -683,6 +684,44 @@ namespace Story.Native
         /// samples at at -/+ 0.001 (axis 0: row 2l before, 2l+1 after, w wide;
         /// axis 1: per node row t, columns 2l before and 2l+1 after).
         /// Returns [surface, rock, moss_grade, stages].
+        public Godot.Collections.Array BuildShared(Vector2 origin, int w, int h, double[] ground,
+            byte[] excluded, double[] wetLevel, long seed, bool bedrock)
+        {
+            try
+            {
+                NativeFault.Check("NativeCliffEnvelope");
+                int n = w * h;
+                var c = new Ctx { Origin = new V2(origin.X, origin.Y), W = w, H = h, N = n,
+                    Ground = ground, WetLevel = wetLevel, Seed = seed };
+                var surface = (double[])ground.Clone();
+                var rock = Array.Empty<double>(); var moss = Array.Empty<double>();
+                if (bedrock)
+                {
+                    var mask = new double[n];
+                    for (int k = 1; k < h - 1; k++) for (int i = 1; i < w - 1; i++)
+                    {
+                        int idx = k * w + i;
+                        if (excluded.Length > 0 && excluded[idx] != 0) continue;
+                        if (wetLevel.Length > 0 && double.IsFinite(wetLevel[idx])) continue;
+                        double gx = (ground[idx + 1] - ground[idx - 1]) / (2.0 * H);
+                        double gz = (ground[idx + w] - ground[idx - w]) / (2.0 * H);
+                        mask[idx] = Smooth(1.0, 1.2, Math.Sqrt(gx * gx + gz * gz));
+                        surface[idx] = ground[idx] + .3 * mask[idx];
+                    }
+                    var floor = Erode(ground, w, h, SHOULDER_Y + FOOT);
+                    var top = Dilate(ground, w, h, SHOULDER_Y + FOOT);
+                    Bedrock(c, surface, out moss, out rock, floor, top, mask, new double[n], false);
+                    for (int idx = 0; idx < n; idx++)
+                    {
+                        surface[idx] = Clamp(surface[idx], ground[idx], ground[idx] + .3 * mask[idx]);
+                        rock[idx] *= mask[idx];
+                    }
+                }
+                return new Godot.Collections.Array { surface, rock, moss };
+            }
+            catch (Exception e) { NativeFault.Record(e); return null!; }
+        }
+
         public Godot.Collections.Array Build(Vector2 origin, int w, int h, double[] ground, byte[] excluded,
             double[] wetLevel, int[] kb0, double[] at0, double[] samples0, int[] kb1, double[] at1,
             double[] samples1, long seed, bool bedrock, bool withStages)

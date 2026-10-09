@@ -1,0 +1,52 @@
+[
+  {
+    "camera": "(-281.6375, 108.9853, 916.5118)",
+    "ground": "(-274.1, 103.531, 914.2)",
+    "id": "valley_original_direction",
+    "target": "(-274.1, 106.731, 914.2)"
+  },
+  {
+    "camera": "(-285.7341, 102.7861, 837.5525)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_-2_4/Body",
+    "ground": "(-285.7341, 99.98608, 837.5525)",
+    "ground_normal": "(0.012377, 0.999847, -0.012377)",
+    "id": "ridge_ground",
+    "target": "(-225.1508, 97.87897, 866.9043)"
+  },
+  {
+    "angle": 3.90807575165438,
+    "feature_position": "(-275.3908, 826.8104)",
+    "height": 20.4725473225117,
+    "kind": "ridge"
+  },
+  {
+    "camera": "(-248.4398, 91.25227, 942.994)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_-2_4/Body",
+    "ground": "(-248.4398, 88.45227, 942.994)",
+    "ground_normal": "(-0.45692, 0.582373, 0.672358)",
+    "id": "ridge_approach",
+    "target": "(-275.3908, 97.37225, 826.8104)"
+  },
+  {
+    "camera": "(-78.14806, 82.8, 871.9731)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_-1_4/Body",
+    "ground": "(-78.14806, 80.0, 871.9731)",
+    "ground_normal": "(0.0, 1.0, 0.0)",
+    "id": "hollow_ground",
+    "target": "(-80.59958, 88.65869, 772.0032)"
+  },
+  {
+    "angle": 3.11707508290936,
+    "feature_position": "(-71.83812, 816.8019)",
+    "height": 30.3051661327481,
+    "kind": "hollow"
+  },
+  {
+    "camera": "(29.72532, 61.5514, 879.3308)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_0_4/Body",
+    "ground": "(29.72532, 58.7514, 879.3308)",
+    "ground_normal": "(-0.485777, 0.783812, -0.386859)",
+    "id": "hollow_approach",
+    "target": "(-71.83812, 77.47559, 816.8019)"
+  }
+]

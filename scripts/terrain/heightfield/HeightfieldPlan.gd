@@ -68,6 +68,25 @@ var _sample_cursor: int = 0
 ## written under this lock, never held while a sample is computed.
 var _samples_lock := Mutex.new()
 
+# Compact water-bank bounds over fixed world tiles. Source solves overlap;
+# reuse their immutable numerical bounds without retaining envelope meshes.
+# As with the sample memo, never hold this lock while building a bound.
+var _water_bank_bounds: Dictionary = {}
+var _water_bank_lock := Mutex.new()
+
+func water_bank_bound(tile:Vector2i)->Dictionary:
+	_water_bank_lock.lock()
+	var result:Dictionary=_water_bank_bounds.get(tile,{})
+	_water_bank_lock.unlock()
+	return result
+
+func store_water_bank_bound(tile:Vector2i,bound:Dictionary)->void:
+	_water_bank_lock.lock()
+	if not _water_bank_bounds.has(tile) and _water_bank_bounds.size()>=512:
+		_water_bank_bounds.erase(_water_bank_bounds.keys()[0])
+	_water_bank_bounds[tile]=bound
+	_water_bank_lock.unlock()
+
 
 func _sample(cx: int, cz: int) -> Array:
 	if _lowpass_seen < 0.0:

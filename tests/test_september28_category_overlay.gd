@@ -80,14 +80,15 @@ func test_legend_names_lattice_edges_tiles_and_wall_lines() -> void:
 ## The shader's kernel is a port of TerrainTileField: render it on the GPU at
 ## 4096 sample positions over random lattice fields (flat, level, slope, cliff,
 ## saddles, cliff ends, three-layer tiles) and compare with the CPU kernel,
-## under both cliff-end rules. Needs a rendering device: run windowed
+## under every cliff-end rule. Needs a rendering device: run windowed
 ## (Godot --path . -s addons/gut/gut_cmdln.gd -gtest=<this file> -gexit).
 func test_gpu_kernel_matches_terrain_tile_field() -> void:
 	if DisplayServer.get_name() == "headless":
 		pending("GPU kernel comparison needs a rendering device (run this file windowed)")
 		return
 	var saved: int = TerrainTileField.cliff_end
-	for rule: int in [TerrainTileField.CliffEnd.E2, TerrainTileField.CliffEnd.E1]:
+	for rule: int in [TerrainTileField.CliffEnd.E1, TerrainTileField.CliffEnd.E2,
+			TerrainTileField.CliffEnd.E3, TerrainTileField.CliffEnd.SHARED_PROFILE]:
 		for field_seed: int in [11, 29]:
 			TerrainTileField.cliff_end = rule
 			var result: Dictionary = await _render_probe(_random_region(field_seed), rule)

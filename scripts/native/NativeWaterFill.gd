@@ -318,6 +318,14 @@ static func retain(levels: PackedFloat32Array, side: int,
 	return result[1]
 
 
+## Empty on a caught fault; the caller runs the exact reference for this call.
+static func source_support(levels: PackedFloat32Array, ground: PackedFloat32Array,
+		columns: int, roots: PackedInt32Array) -> PackedFloat32Array:
+	var result = _native.SourceSupport(levels, ground, columns, roots, WaterField.EPS)
+	if _fault(result): return PackedFloat32Array()
+	return PackedFloat32Array(result[0])
+
+
 ## WaterField._cap_hydrostatic_fill (with its SpillSearch) over a dense
 ## `ground`; `natural_ground` is the dense uncarved lattice or empty (none).
 ## Caps `levels` in place and returns the ceilings (null: C# failed).
@@ -397,6 +405,7 @@ static func _gate() -> void:
 			+ "NativeWaterProfile.cs with profile()'s _descend_segment, _shape_descent_span, "
 			+ "_dense_span_curve, _find_descent_knots, _eval_descent_knots, _descent_knot_tangents, "
 			+ "_dense_span_points and HeightfieldPlan.region_kernel) "
+			+ "NativeWaterSourceSupport.cs with WaterSourceSupport.constrain, "
 			+ "and scripts/core/PriorityQueue.gd; the water fill uses GDScript until then.")
 
 
@@ -419,6 +428,8 @@ static func _load() -> void:
 ## compared with the GDScript reference (enabled is still false here, so the
 ## WaterField functions run their GDScript bodies).
 static func _parity() -> String:
+	var support_error := _source_support_parity()
+	if not support_error.is_empty(): return support_error
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 20261007
 	# Heap order with heavy ties, pushes interleaved with pops.
@@ -1037,4 +1048,23 @@ static func _seed_parity(rng: RandomNumberGenerator) -> String:
 			return "river seeding differs (case %d, %dx%d)" % [case_index, m1, rows]
 		if heap.margins != margins:
 			return "river claim margins differ (case %d)" % case_index
+	return ""
+
+
+static func _source_support_parity() -> String:
+	var reference = load("res://scripts/terrain/water/WaterSourceSupport.gd")
+	var rng := RandomNumberGenerator.new(); rng.seed = 261009
+	for trial in 24:
+		var columns := rng.randi_range(3,25)
+		var rows := rng.randi_range(3,35)
+		var levels := PackedFloat32Array(); levels.resize(columns*rows)
+		var ground := levels.duplicate()
+		var roots := PackedInt32Array()
+		for index in levels.size():
+			ground[index] = INF if rng.randf()<.03 else rng.randi_range(-5,10)*.25
+			levels[index] = -INF if rng.randf()<.25 else ground[index]+rng.randi_range(-2,20)*.05
+			if rng.randf()<.1: roots.append(index)
+		var expected: PackedFloat32Array = reference.constrain(levels,ground,columns,roots)
+		var actual := source_support(levels,ground,columns,roots)
+		if actual != expected: return "source support case %d differs" % trial
 	return ""

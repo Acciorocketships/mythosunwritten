@@ -1,0 +1,54 @@
+[
+  {
+    "chunk": "(-1, 5)",
+    "queries": {
+      "after": 17311,
+      "before": 17311
+    },
+    "repeat": 0,
+    "same": true,
+    "times_ms": {
+      "after": 1309.52,
+      "before": 1376.034
+    }
+  },
+  {
+    "chunk": "(-1, 5)",
+    "queries": {
+      "after": 17311,
+      "before": 17311
+    },
+    "repeat": 1,
+    "same": true,
+    "times_ms": {
+      "after": 1317.781,
+      "before": 1381.117
+    }
+  },
+  {
+    "chunk": "(-1, 6)",
+    "queries": {
+      "after": 18046,
+      "before": 18046
+    },
+    "repeat": 0,
+    "same": true,
+    "times_ms": {
+      "after": 1561.279,
+      "before": 1619.796
+    }
+  },
+  {
+    "chunk": "(-1, 6)",
+    "queries": {
+      "after": 18046,
+      "before": 18046
+    },
+    "repeat": 1,
+    "same": true,
+    "times_ms": {
+      "after": 1565.796,
+      "before": 1612.755
+    }
+  }
+]

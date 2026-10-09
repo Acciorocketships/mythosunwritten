@@ -53,6 +53,9 @@ var _inputs: Dictionary = {}
 
 func _ready() -> void:
 	_read_args()
+	WaterField.SOURCE_SUPPORT = not "--no-source-support" in OS.get_cmdline_user_args()
+	if "--shared-profile" in OS.get_cmdline_user_args():
+		TerrainTileField.cliff_end = TerrainTileField.CliffEnd.SHARED_PROFILE
 	get_window().size = Vector2i(1600, 900)
 	DirAccess.make_dir_recursive_absolute(_output_dir)
 	var world := (load("res://scenes/world.tscn") as PackedScene).instantiate()

@@ -318,3 +318,32 @@ func test_imposter_renders_lit_tinted_and_rooted_from_every_side() -> void:
 	var yielded: Dictionary = await _render_imposter(imposter, 0.0, 8.0, Color.WHITE, distance)
 	assert_lt(_coverage(yielded["image"]).x, 20.0, "inside the switch distance the card yields to its tree")
 	EnvironmentCommitQueue.set_imposter_distance(switch)
+
+func test_crossfade_has_leaf_sized_patches_instead_of_a_pixel_dot_grid() -> void:
+	if _headless():
+		pass_test("needs a renderer")
+		return
+	var imposter := (load(OAK) as EnvironmentVisual).imposter
+	var distance := imposter.size.y * INSTANCE_SCALE * 1.6
+	var saved := EnvironmentCommitQueue.IMPOSTER_DISTANCE
+	EnvironmentCommitQueue.set_imposter_distance(0.0)
+	var full: Image = (await _render_imposter(imposter,0.0,8.0,Color.WHITE,distance)).image
+	var centre := (imposter.pivot_height + .5 * imposter.size.y) * INSTANCE_SCALE
+	var eye := Vector3(0.0,centre+sin(deg_to_rad(8.0))*distance,cos(deg_to_rad(8.0))*distance)
+	EnvironmentCommitQueue.set_imposter_distance(eye.length())
+	var half: Image = (await _render_imposter(imposter,0.0,8.0,Color.WHITE,distance)).image
+	EnvironmentCommitQueue.set_imposter_distance(saved)
+	var pairs := 0
+	var transitions := 0
+	var covered := 0
+	for y in full.get_height():
+		for x in range(full.get_width()-1):
+			if full.get_pixel(x,y).a < .99 or full.get_pixel(x+1,y).a < .99:continue
+			pairs += 1
+			var a := half.get_pixel(x,y).a > .5
+			var b := half.get_pixel(x+1,y).a > .5
+			if a: covered += 1
+			if a != b:transitions += 1
+	assert_gt(pairs,1000,"measure inside the full crown, excluding leaf silhouette edges")
+	assert_between(float(covered)/pairs,.25,.75,"both representations still receive a substantial share halfway through")
+	assert_lt(float(transitions)/pairs,.25,"the handover cannot alternate visible/absent pixels across the crown")

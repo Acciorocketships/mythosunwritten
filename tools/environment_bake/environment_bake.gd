@@ -2622,6 +2622,9 @@ func _bake_texture(source: Texture2D, pack: String, green_hue: float) -> Texture
 				# Palette variants remap foliage-like greens only. Bark, rock,
 				# flowers, and neutral texels retain their authored hue.
 				image.set_pixel(x, y, _remap_green(color, green_hue))
+	# Resizing drops mipmaps; palette edits also invalidate any source mip chain.
+	# Rebuild after every pixel transform so distant leaf cards filter coherently.
+	image.generate_mipmaps()
 	var hash: String = image.get_data().hex_encode().sha256_text()
 	var key := "%s:%s:%.5f" % [pack, hash, green_hue]
 	var cached := _texture_cache.get(key) as Texture2D

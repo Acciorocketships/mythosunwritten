@@ -144,11 +144,16 @@ static func mesh_arrays(rock:Dictionary,_region:HeightfieldRegion=null,seed_valu
  arrays[Mesh.ARRAY_TEX_UV]=uv
  var normals:=PackedVector3Array();normals.resize(points.size())
  var colors:=PackedColorArray();var tints:Dictionary={}
+ var vertex_colors:Dictionary={}
  var pose:Transform3D=rock.transform
  for i in points.size():
   var p:Vector3=points[i]
   var root:Array=rock.native_roots[p]
   normals[i]=root[0]
+  # The triangle soup repeats shared vertices; their biome colour is identical.
+  if vertex_colors.has(p):
+   colors.append(vertex_colors[p])
+   continue
   # RGB carries the lawn's biome tint for the moss grade (white without a
   # seed): bilinear on the terrain sheet's own 24 m tint lattice
   # (TerrainChunkMesher.CELL), so where the slope meets the terrain both
@@ -166,7 +171,9 @@ static func mesh_arrays(rock:Dictionary,_region:HeightfieldRegion=null,seed_valu
     corners.append(tints[key])
    var fx:=world.x/step-gx;var fz:=world.z/step-gz
    tint=corners[0].lerp(corners[1],fx).lerp(corners[2].lerp(corners[3],fx),fz)
-  colors.append(Color(tint.r,tint.g,tint.b,float(root[1])))
+  var color:=Color(tint.r,tint.g,tint.b,float(root[1]))
+  vertex_colors[p]=color
+  colors.append(color)
  arrays[Mesh.ARRAY_NORMAL]=normals;arrays[Mesh.ARRAY_COLOR]=colors
  var top:float=rock.get("top",NAN)
  if is_nan(top):

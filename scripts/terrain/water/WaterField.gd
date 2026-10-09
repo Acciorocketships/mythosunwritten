@@ -25,7 +25,9 @@ const CHUNK := 192.0
 const FALL_DROP_MIN := 4.0    # the only "this is a fall face" threshold in the system — now purely a TERRAIN classification (steep_spans), not a level-cut trigger
 const SURFACE_RIDE := 2.2     # river surface height above the traced bed
 const CLAIM_FEATHER := 8.0    # metres past the channel half-width a reach claims (channel membership + steep-span geometry only)
-const EPS := 0.05            # fill wetness threshold: a cell settles wet only when level > ground + EPS. COUPLED to DESCENT_CLAMP (0.10): the descent floor MUST strictly exceed EPS or the fill dries the band the envelope shaped to keep wet — see DESCENT_CLAMP's docstring before raising this.
+static var SOURCE_SUPPORT := true # canonical post-adjustment supply; review can explicitly disable
+
+const EPS := 0.05            # fill wetness threshold: a cell settles wet only when level > ground + EPS. COUPLED to DESCENT_CLAMP (0.80): the descent floor MUST strictly exceed EPS or the fill dries the band the envelope shaped to keep wet — see DESCENT_CLAMP's docstring before raising this.
 # A dry fill-lattice corner represents a small NEGATIVE water depth during
 # interpolation, not an infinitely deep void.  This makes mixed wet/dry
 # cells thin continuously to zero depth before disappearing, so the shore is
@@ -61,27 +63,16 @@ const _EASE_BAND := 2.0       # metres of (ground-hug - smooth-trend) level gap 
 # _find_descent_spans) and ease it in ONE smootherstep from the upper pool's
 # held level to the lower pool's own target — ground is consulted only as a
 # floor afterward (DESCENT_CLAMP), never as the shaping signal.
-# 0.10m descent floor, applied UNIFORMLY (every floor-pinned point: both span
-# anchors and every inserted sill knot). It MUST strictly exceed the FILL's
-# own wetness epsilon EPS(0.05) — the fill settles a cell wet only when
-# `level > ground + EPS` (see _relax_fill/_seed_rivers' shared gate). r3
-# Task 12b found (report): with DESCENT_CLAMP==EPS==0.05, a point the envelope
-# pins to `ground + DESCENT_CLAMP` reads `level - ground == EPS` EXACTLY — not
-# strictly greater — so the fill DRIES the very band the envelope shaped to
-# keep wet (reproduced at the far pond chunk (-4,-18)'s sill knot
-# (-606.135,-3432.959): curve 4.0320, ground 3.9820, depth 0.0500 == EPS). The
-# fix is a UNIFORM floor lift, NOT a knot-local margin: an earlier 12b cut
-# added the margin only at ground-DERIVED knot assignments, which raised a
-# sill knot ABOVE its own eased-curve neighbours — a level discontinuity that
-# left unhealed free edges at the pond (test_skin_handles_closed_and_border_
-# exit_curves went red). Lifting the WHOLE floor together keeps the sill-ride
-# C1 (no local peak), so floor-pinned verts read depth 0.10 (comfortably >
-# EPS, wet) with the mesh still watertight. Dormant on the pinned SITE_CHUNK
-# (its chute resolves to zero interior knots, r3-task-12a-report.md) — a
-# geometry coincidence, not an algorithm property; the pond is where it bites.
-# Sill-ride floor `dense[k] >= ground[k] + DESCENT_CLAMP` and the second-diff
-# bound move WITH the constant, so both stay consistent.
-const DESCENT_CLAMP := 0.10
+# Uniform depth at anchors and inserted ground-contact knots. A 0.10 m
+# floor cleared only the sampled points: between 4 m samples the October 8
+# river reached 0.0397 m, below EPS, before the fill interpolated it again.
+# A 0.80 m floor provides usable depth through the curved descent. It is
+# applied before the monotone spline fit, never as a local post-fit lift.
+# Fill containment must still retain the surrounding natural banks.
+const DESCENT_CLAMP := 0.80
+# Crest interpolation has a separate geometric feather; changing channel
+# depth must not widen the lip transition used by coarse/fine water queries.
+const SHORE_CREST_FEATHER := 0.10
 # r3 Task 12a: the ORIGINAL "ease, then clamp to ground+DESCENT_CLAMP, then
 # re-smooth over an >=8m box window" pipeline (3cd407d) was self-defeating —
 # the resmooth pass, run AFTER the clamp, is a plain average with the clamp's
@@ -354,7 +345,7 @@ static func _source_fill(c: Dictionary, region) -> Dictionary:
 	var rows := ceili((bounds.end.y - base.y) / FILL_STEP) + 1
 	# The solve rediscovers every contributor in this exact domain. Different
 	# initiating subsets with the same domain therefore share the same result.
-	var key := [region.plan.get_instance_id(), c.water.get_instance_id(), base, m1, rows]
+	var key := [region.plan.get_instance_id(), c.water.get_instance_id(), base, m1, rows, SOURCE_SUPPORT]
 	_basin_lock.lock()
 	if _basin_cache.has(key):
 		var cached: Dictionary = _basin_cache[key]
@@ -437,7 +428,17 @@ static func _source_fill(c: Dictionary, region) -> Dictionary:
 	var spill_finished := Time.get_ticks_usec() if profile_source_cost else 0
 	if profile_source_cost: print("WATER_SOURCE_STAGE spill ",Time.get_ticks_msec())
 	_smooth_fill_surface(owned, base, m1, levels, ground, rivers, water_ceilings)
+	# Retain the offered surface: the first pass identifies lowered nodes;
+	# the second pass respects the rendered bank without raising any offer.
+	var before_reconcile := levels.duplicate()
 	_reconcile_connected_surface(levels, ground, m1, FILL_STEP)
+	var bank_started:=Time.get_ticks_usec()
+	var bank_bound:=preload("res://scripts/terrain/water/WaterBankBound.gd").reconciliation_inputs(
+		owned,base,m1,ground,before_reconcile,levels,owned.plan.world_seed)
+	if not bank_bound.is_empty():
+		levels=before_reconcile.duplicate()
+		_reconcile_connected_surface(levels,bank_bound.ground,m1,FILL_STEP)
+	var bank_finished:=Time.get_ticks_usec()
 	var smooth_finished := Time.get_ticks_usec() if profile_source_cost else 0
 	if profile_source_cost: print("WATER_SOURCE_STAGE smooth ",Time.get_ticks_msec())
 	var dry_banks := rivers.duplicate()
@@ -445,10 +446,13 @@ static func _source_fill(c: Dictionary, region) -> Dictionary:
 		if is_finite(levels[index]): dry_banks[index] = -INF
 	if profile_fine_input.is_valid():
 		profile_fine_input.call({"base":base,"side":m1,
-			"coarse":levels,"river":dry_banks,"storeys":owned._storeys,
+			"coarse":levels,"river":dry_banks,"before_reconcile":before_reconcile,
+			"ground":ground,"native":owned.native_control_heights,"storeys":owned._storeys,
 			"levels":owned._levels,"carved":owned._carved})
 	var refined := _build_sub_lattice_rescue(owned, base, levels, dry_banks, m1,
-		PackedFloat32Array(), rescue_window)
+		PackedFloat32Array(), rescue_window,bank_bound.get("fine",PackedFloat32Array()))
+	if SOURCE_SUPPORT:
+		preload("res://scripts/terrain/water/WaterSourceSupport.gd").apply(source_context, owned, base, m1, levels, refined)
 	if profile_source_cost:
 		print("WATER_SOURCE_COST ", JSON.stringify({"side": m1, "rows": rows, "base": str(base),
 			"request_chunk": str(Vector2i(((c.fill_base + Vector2.ONE * (FILL_MARGIN * FILL_STEP + FILL_OFFSET)) / CHUNK).round())) if c.has("fill_base") else "direct_source_query",
@@ -464,6 +468,7 @@ static func _source_fill(c: Dictionary, region) -> Dictionary:
 			"cap_ms": (spill_finished-flow_finished)/1000.0,
 			"spill_ms": (spill_finished-relax_finished)/1000.0,
 			"smooth_ms": (smooth_finished-spill_finished)/1000.0,
+			"bank_ms": (bank_finished-bank_started)/1000.0,"bank_tiles":bank_bound.get("tiles",0),
 			"fine_ms": (Time.get_ticks_usec()-smooth_finished)/1000.0}))
 	queue.free()
 	var boundary_wet := 0
@@ -475,6 +480,7 @@ static func _source_fill(c: Dictionary, region) -> Dictionary:
 			if is_finite(levels[index]): boundary_wet += 1
 	var result := {"base": base, "size": m1, "rows": rows, "levels": levels, "rivers": rivers,
 		"boundary_wet": boundary_wet, "sub_levels": refined.levels, "sub_ground": refined.ground}
+	if refined.has("dry"): result["sub_dry"] = refined.dry
 	if _basin_cache.size() >= BASIN_CACHE_LIMIT: _basin_cache.erase(_basin_cache.keys()[0])
 	_basin_cache[key] = result
 	_basin_lock.unlock()
@@ -621,6 +627,8 @@ static func _build_fill(c: Dictionary, region, base: Vector2) -> Dictionary:
 			var source_sub_n := (int(source.size) - 1) * 2 + 1
 			var sub_levels := PackedFloat32Array(); sub_levels.resize(sub_n * sub_n); sub_levels.fill(-INF)
 			var sub_ground := PackedFloat32Array(); sub_ground.resize(sub_n * sub_n); sub_ground.fill(INF)
+			var sub_dry := PackedByteArray()
+			if source.has("sub_dry"): sub_dry.resize(sub_n * sub_n)
 			for j in sub_n:
 				for i in sub_n:
 					var x := i + offset.x * 2
@@ -628,8 +636,12 @@ static func _build_fill(c: Dictionary, region, base: Vector2) -> Dictionary:
 					if x < 0 or z < 0 or x >= source_sub_n or z >= (int(source.rows) - 1) * 2 + 1: continue
 					sub_levels[j * sub_n + i] = source.sub_levels[z * source_sub_n + x]
 					sub_ground[j * sub_n + i] = source.sub_ground[z * source_sub_n + x]
+					if not sub_dry.is_empty():
+						sub_dry[j * sub_n + i] = source.sub_dry[z * source_sub_n + x]
 			pq.free()
-			return {"levels": levels, "sub_levels": sub_levels, "sub_ground": sub_ground}
+			var cropped := {"levels": levels, "sub_levels": sub_levels, "sub_ground": sub_ground}
+			if not sub_dry.is_empty(): cropped["sub_dry"] = sub_dry
+			return cropped
 	else:
 		_seed_rivers(c, region, base, m1, levels, gnd, river_levels, pq)
 		_seed_ponds(c, region, base, m1, levels, gnd, pq)
@@ -782,12 +794,16 @@ static func _rescue_window(region, base: Vector2, coarse_n: int, coarse_rows: in
 ## on an ungraded HeightfieldRegion, else in GDScript (_rescue_seed_anchors,
 ## _rescue_flood: the reference); the finish is GDScript. `window`: the
 ## region's _rescue_window when the caller already built it.
+## Optional bank_floor is a rendered-bed lower bound for the final downhill
+## reconciliation only. It does not alter flood topology or sampled terrain.
+## Source solves supply the same bank bound used by their coarse pass.
 static func _build_sub_lattice_rescue(region, base: Vector2,
 		coarse_levels: PackedFloat32Array,
 		river_levels: PackedFloat32Array = PackedFloat32Array(),
 		coarse_n: int = FILL_M + 1,
 		ground_samples: PackedFloat32Array = PackedFloat32Array(),
-		window: Dictionary = {}) -> Dictionary:
+		window: Dictionary = {},
+		bank_floor: PackedFloat32Array = PackedFloat32Array()) -> Dictionary:
 	var ground_bakes: Dictionary = {}
 	var profile_started := Time.get_ticks_usec() if profile_source_cost else 0
 	var coarse_rows := int(coarse_levels.size() / coarse_n)
@@ -906,7 +922,14 @@ static func _build_sub_lattice_rescue(region, base: Vector2,
 			var p := base + Vector2(idx % sub_n, int(idx / sub_n)) * FILL_SUB_STEP
 			connected[idx] = _rescue_coarse_level(coarse_ctx, p)
 	var original_connected := connected.duplicate()
-	_reconcile_connected_surface(connected, sub_ground, sub_n, FILL_SUB_STEP)
+	var connected_ground := sub_ground
+	if not bank_floor.is_empty():
+		assert(bank_floor.size() == sub_ground.size())
+		connected_ground = sub_ground.duplicate()
+		for idx in connected_ground.size():
+			if is_finite(bank_floor[idx]) and is_finite(connected_ground[idx]):
+				connected_ground[idx] = maxf(connected_ground[idx], bank_floor[idx])
+	_reconcile_connected_surface(connected, connected_ground, sub_n, FILL_SUB_STEP)
 	for idx in connected.size():
 		if connected[idx] != original_connected[idx]:
 			sub_levels[idx] = connected[idx]
@@ -1372,22 +1395,26 @@ static func _claim_river_segment(base: Vector2, m1: int,
 ## distant source cannot fill another river's lower bank excavation. These
 ## projected heads only constrain already reachable wet points; the bank
 ## collar never becomes a seed. Use the same dense descent as channel seeds.
+## Match the carve's bank-strength fade too: a steep reach has no 96 m bank
+## excavation. Otherwise its high head can occupy a neighboring pond's cut.
 static func _carved_flow_ceilings(c: Dictionary, region, base: Vector2,
 		side: int, eligible: PackedFloat32Array) -> PackedFloat32Array:
 	var heads := eligible.duplicate(); heads.fill(-INF)
 	var margins := eligible.duplicate(); margins.fill(INF)
 	for trace: RiverTrace in c.rivers:
 		var prof := profile(trace, region)
+		var bank_weights:PackedFloat64Array=c.water.bank_strengths(trace)
 		var in_span := PackedByteArray(); in_span.resize(maxi(0, trace.points.size() - 1))
 		for descent: Dictionary in prof.get("descents", []):
 			for i in range(int(descent.lo), int(descent.hi)): in_span[i] = 1
 			for i in range(descent.pos.size() - 1):
 				_claim_river_segment(base, side, margins, heads, descent.pos[i], descent.pos[i+1],
-					descent.w[i], descent.w[i+1], descent.lvl[i], descent.lvl[i+1], WaterPlan.BANK_FEATHER, null, eligible)
+					descent.w[i], descent.w[i+1], descent.lvl[i], descent.lvl[i+1], 0.0, null, eligible)
 		for i in range(trace.points.size() - 1):
 			if in_span[i] == 1: continue
 			_claim_river_segment(base, side, margins, heads, trace.points[i], trace.points[i+1],
-				trace.widths[i], trace.widths[i+1], prof.levels[i], prof.levels[i+1], WaterPlan.BANK_FEATHER, null, eligible)
+				trace.widths[i], trace.widths[i+1], prof.levels[i], prof.levels[i+1],
+				WaterPlan.BANK_FEATHER*minf(bank_weights[i],bank_weights[i+1]), null, eligible)
 	return heads
 
 
@@ -2145,7 +2172,7 @@ static func _find_descent_knots(ground: PackedFloat32Array, steps: int,
 				run_end += 1
 			var peak_k: int = k
 			# The knot's stored value is ground + DESCENT_CLAMP (uniform floor,
-			# now 0.10 > EPS so a floor-pinned vert reads strictly wet — see
+			# above EPS so a floor-pinned vert reads strictly wet — see
 			# DESCENT_CLAMP's docstring). Every candidate in the run shares the
 			# same constant offset, so it cannot change WHICH point is the peak
 			# (a constant shift preserves argmax) or the tie-break below.
@@ -2395,15 +2422,18 @@ static func _fill_bilinear(c: Dictionary, p: Vector2) -> float:
 	if sub_levels.is_empty():
 		return coarse
 	var base: Vector2 = c.fill_base
-	var sub_n := FILL_SUB_M + 1
+	var sub_n: int = (int(c.get("fill_size", FILL_M + 1)) - 1) * 2 + 1
+	var sub_rows := int(sub_levels.size() / sub_n)
 	var fx: float = (p.x - base.x) / FILL_SUB_STEP
 	var fz: float = (p.y - base.y) / FILL_SUB_STEP
-	var i0: int = clampi(int(floor(fx)), 0, FILL_SUB_M - 1)
-	var j0: int = clampi(int(floor(fz)), 0, FILL_SUB_M - 1)
+	var i0: int = clampi(int(floor(fx)), 0, sub_n - 2)
+	var j0: int = clampi(int(floor(fz)), 0, sub_rows - 2)
+	var sub_dry: PackedByteArray = c.fill.get("sub_dry", PackedByteArray())
 	var touched := false
 	for d: Vector2i in [Vector2i(0, 0), Vector2i(1, 0),
 			Vector2i(0, 1), Vector2i(1, 1)]:
-		if sub_levels[(j0 + d.y) * sub_n + i0 + d.x] != -INF:
+		var index := (j0 + d.y) * sub_n + i0 + d.x
+		if sub_levels[index] != -INF or (not sub_dry.is_empty() and sub_dry[index] != 0):
 			touched = true
 			break
 	if not touched:
@@ -2511,16 +2541,22 @@ static func _fill_bilinear_coarse(c: Dictionary, p: Vector2,
 		base + Vector2(i0, j0) * FILL_STEP, FILL_STEP, dry_heights)
 
 
+static func _surface_ground_y(region, x: float, z: float) -> float:
+	if region.has_method("water_surface_y"):
+		return region.water_surface_y(x,z)
+	return TerrainTileField.surface_y(region,x,z)
+
+
 ## Ground at fill node (i, j), memoized in the context's `node_ground`
 ## (INF = not yet sampled) when the context carries one.
 static func _node_ground(c: Dictionary, i: int, j: int, m1: int) -> float:
 	var q: Vector2 = (c.fill_base as Vector2) + Vector2(i, j) * FILL_STEP
 	if not c.has("node_ground"):
-		return TerrainTileField.surface_y(c.region, q.x, q.y)
+		return _surface_ground_y(c.region, q.x, q.y)
 	var memo: PackedFloat64Array = c.node_ground
 	var index := j * m1 + i
 	if memo[index] == INF:
-		memo[index] = TerrainTileField.surface_y(c.region, q.x, q.y)
+		memo[index] = _surface_ground_y(c.region, q.x, q.y)
 	return memo[index]
 
 
@@ -2546,7 +2582,7 @@ static func _may_straddle_a_cliff(c: Dictionary, i0: int, j0: int, m1: int) -> b
 ## interpolate through the rock.
 ## - both ends wet, upper water above the crown and receiving water below it:
 ##   a SPILL. Each side runs toward a crest held ON the wall at
-##   crown + DESCENT_CLAMP (never above the upper water): the upper pool stays
+##   crown + SHORE_CREST_FEATHER (never above the upper water): the upper pool stays
 ##   wet to the lip and the fall starts there, down to the receiving node.
 ## - one end dry: each side keeps its own node's value up to the wall, so a
 ##   pool meets its cliff and no sheet hangs from a lip over dry ground.
@@ -2555,7 +2591,7 @@ static func _may_straddle_a_cliff(c: Dictionary, i0: int, j0: int, m1: int) -> b
 ## continuous where a cliff ends and its drop tapers to a slope (E2): the cliff
 ## weight rises from 0 at a drop of FALL_DROP_MIN / 2 to 1 at FALL_DROP_MIN,
 ## the spill weight with the upper water from the crown to crown +
-## DESCENT_CLAMP and with the receiving water from crown - DESCENT_CLAMP down.
+## SHORE_CREST_FEATHER and with the receiving water from crown - SHORE_CREST_FEATHER down.
 static func _wall_span(region, pitch: float, a: float, b: float, wet_a: bool, wet_b: bool,
 		s0: float, s: float, across: float, axis: int) -> float:
 	var linear := lerpf(a, b, (s - s0) / FILL_STEP)
@@ -2567,8 +2603,8 @@ static func _wall_span(region, pitch: float, a: float, b: float, wet_a: bool, we
 		return linear   # this cell holds a lattice point line, not a border
 	var qa := Vector2(wall - 0.001, across) if axis == 0 else Vector2(across, wall - 0.001)
 	var qb := Vector2(wall + 0.001, across) if axis == 0 else Vector2(across, wall + 0.001)
-	var ga := TerrainTileField.surface_y(region, qa.x, qa.y)
-	var gb := TerrainTileField.surface_y(region, qb.x, qb.y)
+	var ga := _surface_ground_y(region, qa.x, qa.y)
+	var gb := _surface_ground_y(region, qb.x, qb.y)
 	var cliff := smoothstep(FALL_DROP_MIN * 0.5, FALL_DROP_MIN, absf(ga - gb))
 	if cliff <= 0.0:
 		return linear
@@ -2577,11 +2613,11 @@ static func _wall_span(region, pitch: float, a: float, b: float, wet_a: bool, we
 	var crown := maxf(ga, gb)
 	var upper := a if ga > gb else b
 	var lower := b if ga > gb else a
-	var weight := cliff * smoothstep(crown, crown + DESCENT_CLAMP, upper) \
-		* (1.0 - smoothstep(crown - DESCENT_CLAMP, crown, lower))
+	var weight := cliff * smoothstep(crown, crown + SHORE_CREST_FEATHER, upper) \
+		* (1.0 - smoothstep(crown - SHORE_CREST_FEATHER, crown, lower))
 	if weight <= 0.0:
 		return linear
-	var crest := minf(upper, crown + DESCENT_CLAMP)
+	var crest := minf(upper, crown + SHORE_CREST_FEATHER)
 	var spill := lerpf(a, crest, (s - s0) / (wall - s0)) if s < wall \
 		else lerpf(crest, b, (s - wall) / (s0 + FILL_STEP - wall))
 	return lerpf(linear, spill, weight)
@@ -2595,9 +2631,13 @@ static func _wall_span(region, pitch: float, a: float, b: float, wet_a: bool, we
 static func _fill_bilinear_sub(c: Dictionary, p: Vector2, i0: int, j0: int,
 		fx: float, fz: float) -> float:
 	var base: Vector2 = c.fill_base
-	var sub_n := FILL_SUB_M + 1
+	var sub_n: int = (int(c.get("fill_size", FILL_M + 1)) - 1) * 2 + 1
 	var sub_levels: PackedFloat32Array = c.fill.sub_levels
 	var sub_ground: PackedFloat32Array = c.fill.sub_ground
+	# -INF alone means no fine override; explicit source rejection must not
+	# fall back to a still-wet coarse corner. Bytes also round-trip without
+	# NaN equality issues in the planning cache.
+	var sub_dry: PackedByteArray = c.fill.get("sub_dry", PackedByteArray())
 	var tx: float = clampf(fx - float(i0), 0.0, 1.0)
 	var tz: float = clampf(fz - float(j0), 0.0, 1.0)
 	var corners := [
@@ -2618,9 +2658,11 @@ static func _fill_bilinear_sub(c: Dictionary, p: Vector2, i0: int, j0: int,
 		var q: Vector2 = base + Vector2(cnr[0], cnr[1]) * FILL_SUB_STEP
 		var ground: float = sub_ground[idx]
 		if ground == INF:
-			ground = TerrainTileField.surface_y(c.region, q.x, q.y)
+			ground = _surface_ground_y(c.region, q.x, q.y)
 		var lvl: float = sub_levels[idx]
-		if lvl == -INF:
+		if not sub_dry.is_empty() and sub_dry[idx] != 0:
+			lvl = -INF
+		elif lvl == -INF:
 			lvl = _fill_bilinear_coarse(c, q)
 		corner_levels[k] = lvl
 		corner_ground[k] = ground
@@ -2680,7 +2722,7 @@ static func _shore_support_level(c: Dictionary, p: Vector2, interpolated: float,
 			minf(head, dry_heights[edge.y] + EPS - SHORE_DRY_DEPTH), t)
 		# Edges (0, 2) / (1, 3) run along z (x constant); (0, 1) / (2, 3) along x.
 		var off := Vector2(SHORE_EDGE_PROBE, 0.0) if edge.y - edge.x == 2 else Vector2(0.0, SHORE_EDGE_PROBE)
-		var edge_ground := TerrainTileField.surface_y(c.region, q.x + off.x, q.y + off.y)
+		var edge_ground := _surface_ground_y(c.region, q.x + off.x, q.y + off.y)
 		var edge_support := _fine_edge_support(c, q, edge_ground + EPS - SHORE_DRY_DEPTH)
 		var excess := maxf(limiting_head - edge_support, 0.0)
 		var support := clampf(p.distance_to(q) / step, 0.0, 1.0)
@@ -2695,15 +2737,19 @@ static func _shore_support_level(c: Dictionary, p: Vector2, interpolated: float,
 static func _fine_edge_support(c: Dictionary, p: Vector2, dry_height: float) -> float:
 	if not c.fill.has("sub_levels") or c.fill.sub_levels.is_empty(): return dry_height
 	var levels: PackedFloat32Array = c.fill.sub_levels
-	var sub_n := FILL_SUB_M + 1
+	var sub_n: int = (int(c.get("fill_size", FILL_M + 1)) - 1) * 2 + 1
+	var sub_rows := int(levels.size() / sub_n)
+	var sub_dry: PackedByteArray = c.fill.get("sub_dry", PackedByteArray())
 	var local := (p - (c.fill_base as Vector2)) / FILL_SUB_STEP
-	var i := clampi(floori(local.x), 0, FILL_SUB_M - 1)
-	var j := clampi(floori(local.y), 0, FILL_SUB_M - 1)
+	var i := clampi(floori(local.x), 0, sub_n - 2)
+	var j := clampi(floori(local.y), 0, sub_rows - 2)
 	var t := (local - Vector2(i, j)).clamp(Vector2.ZERO, Vector2.ONE)
 	var support := dry_height
 	for dz in 2:
 		for dx in 2:
-			var level: float = levels[(j + dz) * sub_n + i + dx]
+			var index := (j + dz) * sub_n + i + dx
+			if not sub_dry.is_empty() and sub_dry[index] != 0: continue
+			var level: float = levels[index]
 			if not is_finite(level): continue
 			var weight := (t.x if dx else 1.0 - t.x) * (t.y if dz else 1.0 - t.y)
 			support += maxf(level - dry_height, 0.0) * weight

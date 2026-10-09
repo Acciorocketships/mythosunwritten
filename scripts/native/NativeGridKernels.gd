@@ -45,6 +45,14 @@ static func blur(f: PackedFloat64Array, w: int, h: int, r: int) -> PackedFloat64
 	return out
 
 
+static func bank_bound(surface:PackedFloat64Array,w:int,h:int,original:PackedFloat64Array,
+		size:Vector2i,xs:PackedInt32Array,zs:PackedInt32Array,intervals:int)->PackedFloat64Array:
+	var out=_native.BankBound(surface,w,h,original,size.x,size.y,xs,zs,intervals)
+	if _fault(out):
+		return load("res://scripts/terrain/water/WaterBankBound.gd").reference_bound(surface,w,h,original,size,xs,zs,intervals)
+	return out
+
+
 ## True (and the port off) when the C# call behind `result` threw.
 static func _fault(result) -> bool:
 	var err := _GATES.faulted(_native, result)
@@ -124,4 +132,13 @@ static func _parity() -> String:
 		if _ENVELOPE._window(finite, w, h, reach, highest) \
 				!= _native.Window(finite, w, h, ceili(reach / _ENVELOPE.H), highest):
 			return "window differs (case %d, %dx%d reach=%.3f)" % [case_index, w, h, reach]
+		var bank=load("res://scripts/terrain/water/WaterBankBound.gd")
+		var intervals:=6 if case_index%2==0 else 12
+		var xs:=PackedInt32Array([-3,intervals-3,intervals*2-3])
+		var zs:=PackedInt32Array([-2,intervals-2,intervals*2-2])
+		var originals:=PackedFloat64Array()
+		for z in 3:
+			for x in 3:originals.append(finite[clampi(zs[z],0,h-1)*w+clampi(xs[x],0,w-1)])
+		if bank.reference_bound(finite,w,h,originals,Vector2i(3,3),xs,zs,intervals) != _native.BankBound(finite,w,h,originals,3,3,xs,zs,intervals):
+			return "bank_bound differs (case %d)" % case_index
 	return ""

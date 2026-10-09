@@ -1,0 +1,92 @@
+[
+  {
+    "chunk": "(-1, 5)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_-1_5/Body",
+    "ground": 75.5516052246094,
+    "source": "(-1, 1)",
+    "station": 6,
+    "water": null,
+    "x": -40.9107894897461,
+    "z": 1143.40380859375
+  },
+  {
+    "chunk": "(-1, 5)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_-1_5/Body",
+    "ground": 75.3646545410156,
+    "source": "(-1, 1)",
+    "station": 6,
+    "water": null,
+    "x": -40.0436325073242,
+    "z": 1143.90185546875
+  },
+  {
+    "chunk": "(-1, 5)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_-1_5/Body",
+    "ground": 75.0525512695312,
+    "source": "(-1, 1)",
+    "station": 7,
+    "water": null,
+    "x": -39.1764793395996,
+    "z": 1144.39990234375
+  },
+  {
+    "chunk": "(-1, 5)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_-1_5/Body",
+    "ground": 74.7103576660156,
+    "source": "(-1, 1)",
+    "station": 7,
+    "water": null,
+    "x": -38.3093223571777,
+    "z": 1144.89794921875
+  },
+  {
+    "chunk": "(-1, 5)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_-1_5/Body",
+    "ground": 74.3892211914062,
+    "source": "(-1, 1)",
+    "station": 7,
+    "water": null,
+    "x": -37.4421691894531,
+    "z": 1145.39599609375
+  },
+  {
+    "chunk": "(-1, 5)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_-1_5/Body",
+    "ground": 74.0796813964844,
+    "source": "(-1, 1)",
+    "station": 7,
+    "water": null,
+    "x": -36.5750122070312,
+    "z": 1145.89404296875
+  },
+  {
+    "chunk": "(-1, 5)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_-1_5/Body",
+    "ground": 73.718994140625,
+    "source": "(-1, 1)",
+    "station": 7,
+    "water": null,
+    "x": -35.7078552246094,
+    "z": 1146.39208984375
+  },
+  {
+    "chunk": "(-1, 5)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_-1_5/Body",
+    "ground": 73.2822265625,
+    "source": "(-1, 1)",
+    "station": 7,
+    "water": null,
+    "x": -34.8407020568848,
+    "z": 1146.89013671875
+  },
+  {
+    "chunk": "(-1, 5)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_-1_5/Body",
+    "ground": 72.8295593261719,
+    "source": "(-1, 1)",
+    "station": 7,
+    "water": null,
+    "x": -33.9735450744629,
+    "z": 1147.38818359375
+  }
+]

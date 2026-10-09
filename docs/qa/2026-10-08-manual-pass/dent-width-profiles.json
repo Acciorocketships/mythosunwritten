@@ -1,0 +1,26 @@
+[
+  {
+    "mode": "baseline",
+    "position": "(-303.5, 1342.0)",
+    "sections_over_4cm": 178,
+    "worst_added_dip": 0.567863066086751
+  },
+  {
+    "mode": "narrow",
+    "position": "(-302.0, 1339.0)",
+    "sections_over_4cm": 155,
+    "worst_added_dip": 0.697530864197532
+  },
+  {
+    "mode": "middle",
+    "position": "(-302.5, 1339.5)",
+    "sections_over_4cm": 173,
+    "worst_added_dip": 0.70556878781192
+  },
+  {
+    "mode": "wide",
+    "position": "(-303.0, 1340.5)",
+    "sections_over_4cm": 183,
+    "worst_added_dip": 0.877159812535659
+  }
+]

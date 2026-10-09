@@ -11,10 +11,16 @@ const Envelope := preload("res://scripts/terrain/field/CliffSlopeEnvelope.gd")
 const Field := preload("res://scripts/terrain/field/CliffSlopeField.gd")
 const Style := preload("res://scripts/terrain/field/CliffRockStyle.gd")
 
+var _fixture_saved_mode: int
+
 func before_each() -> void:
+	_fixture_saved_mode = TerrainTileField.cliff_end
+	# Exercise the legacy morphological closing, including its full reference.
+	TerrainTileField.cliff_end = TerrainTileField.CliffEnd.E3
 	Style.apply("sheet_bedrock")
 
 func after_each() -> void:
+	TerrainTileField.cliff_end = _fixture_saved_mode
 	Envelope.always_transform = false
 
 ## A plateau (storey 5) over a low plain, a one-storey slope across the plain,
@@ -122,7 +128,7 @@ static func _all_segments(region, rect: Rect2) -> Array[Dictionary]:
 					if maxf(maxf(absf(pa - qa), absf(pb - qb)), absf(mp - mq)) <= 0.001:
 						continue
 					var p_high := (pa + pb + mp) >= (qa + qb + mq)
-					out.append({"a": a, "b": b, "high": p if p_high else q, "low": q if p_high else p,
+					out.append({"a": a, "b": b, "sample_offset": 0.0, "high": p if p_high else q, "low": q if p_high else p,
 						"top": Vector2(pa, pb) if p_high else Vector2(qa, qb),
 						"bottom": Vector2(qa, qb) if p_high else Vector2(pa, pb),
 						"normal": Vector2(d) if p_high else -Vector2(d)})

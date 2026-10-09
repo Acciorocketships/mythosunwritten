@@ -1,0 +1,116 @@
+{
+  "adapter": "Apple M1 Pro (Apple7)",
+  "fixed_route": false,
+  "grass_lod_bias": 0.25,
+  "interpolation": false,
+  "max_fps": 0,
+  "memory_static_mb": 0.0,
+  "physics_tps": 60,
+  "refresh": 120.0,
+  "return_to_start": {
+
+  },
+  "scaling_3d": 1.0,
+  "screen_scale": 2.0,
+  "seed": 2697992464,
+  "steady_render": {
+
+  },
+  "summary": {
+    "idle": {
+      "draws": {
+        "max": 3689.0,
+        "mean": 1374.18,
+        "p50": 1383.0,
+        "p95": 1798.0,
+        "p99": 2908.0
+      },
+      "dt": {
+        "max": 79.62,
+        "mean": 23.54,
+        "p50": 20.03,
+        "p95": 41.39,
+        "p99": 53.39
+      },
+      "frames": 1911,
+      "frozen_frames": 0,
+      "gpu": {
+        "max": 0.0,
+        "mean": 0.0,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0
+      },
+      "grass_pending": {
+        "max": 3.0,
+        "mean": 0.41,
+        "p50": 0.0,
+        "p95": 2.0,
+        "p99": 3.0
+      },
+      "grass_tiles": {
+        "max": 151.0,
+        "mean": 144.31,
+        "p50": 145.0,
+        "p95": 149.0,
+        "p99": 151.0
+      },
+      "memory_mb": {
+        "max": 4379.42,
+        "mean": 4038.64,
+        "p50": 4196.52,
+        "p95": 4348.61,
+        "p99": 4362.0
+      },
+      "nodes": {
+        "max": 19245.0,
+        "mean": 16200.62,
+        "p50": 17282.0,
+        "p95": 19241.0,
+        "p99": 19245.0
+      },
+      "physics": {
+        "max": 4.01,
+        "mean": 0.97,
+        "p50": 0.81,
+        "p95": 1.82,
+        "p99": 2.68
+      },
+      "physics_ticks_per_frame": {
+        "1": 1230,
+        "2": 585,
+        "3": 84,
+        "4": 12
+      },
+      "prims": {
+        "max": 6080441.0,
+        "mean": 2646747.72,
+        "p50": 2662389.0,
+        "p95": 3314056.0,
+        "p99": 5008363.0
+      },
+      "process": {
+        "max": 64.53,
+        "mean": 14.31,
+        "p50": 11.81,
+        "p95": 31.87,
+        "p99": 42.91
+      },
+      "render_cpu": {
+        "max": 30.68,
+        "mean": 2.2,
+        "p50": 2.19,
+        "p95": 3.01,
+        "p99": 3.64
+      },
+      "turn_error": {
+
+      }
+    }
+  },
+  "texture_mem_mb": 0.0,
+  "video_mem_mb": 0.0,
+  "viewport": "(1920.0, 1080.0)",
+  "vsync": 0,
+  "window": "(1920, 1080)"
+}

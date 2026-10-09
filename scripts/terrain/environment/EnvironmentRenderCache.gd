@@ -5,12 +5,18 @@ extends RefCounted
 ## in asset IDs; commits resolve those IDs through this cache.
 var _catalog: EnvironmentCatalog
 var _visuals: Dictionary = {}
+# Keep duplicate source atlases only during a load batch. Otherwise replacing a
+# material could free its source and make the next visual decode it again.
+var retain_texture_sources := false
+var _texture_sources: Dictionary = {}
 
 func _init(catalog: EnvironmentCatalog) -> void:
 	_catalog = catalog
 
 func prepare(asset_ids: Array[StringName]) -> bool:
 	_assert_main_thread()
+	var was_retaining := retain_texture_sources
+	retain_texture_sources = true
 	var unique: Dictionary = {}
 	for asset_id: StringName in asset_ids:
 		unique[asset_id] = true
@@ -19,7 +25,11 @@ func prepare(asset_ids: Array[StringName]) -> bool:
 	ordered.sort_custom(func(a: StringName, b: StringName) -> bool: return String(a) < String(b))
 	for asset_id: StringName in ordered:
 		if visual(asset_id) == null:
+			retain_texture_sources = was_retaining
+			if not was_retaining: release_texture_sources()
 			return false
+	retain_texture_sources = was_retaining
+	if not was_retaining: release_texture_sources()
 	return true
 
 func visual(asset_id: StringName) -> EnvironmentVisual:
@@ -37,6 +47,8 @@ func visual(asset_id: StringName) -> EnvironmentVisual:
 	var loaded := load(descriptor_value.visual_path) as EnvironmentVisual
 	if not _validate_visual(asset_id, loaded):
 		return null
+	preload("res://scripts/terrain/environment/EnvironmentTextureSharing.gd").prepare(loaded,
+		_texture_sources if retain_texture_sources else {})
 	# Ambient stone shares the cliff stone palette; source geometry, UV detail
 	# and collision remain authored. Duplicate only the prepared visual wrapper.
 	if String(asset_id).begins_with("kaykit.rock.") or String(asset_id).begins_with("lpfv.rock.") or String(asset_id).begins_with("lpfv.big_rock."):
@@ -107,9 +119,14 @@ func prepared_ids() -> Array[StringName]:
 	out.sort_custom(func(a: StringName, b: StringName) -> bool: return String(a) < String(b))
 	return out
 
+func release_texture_sources() -> void:
+	_assert_main_thread()
+	_texture_sources.clear()
+
 func clear() -> void:
 	_assert_main_thread()
 	_visuals.clear()
+	release_texture_sources()
 
 func _validate_visual(asset_id: StringName, visual_value: EnvironmentVisual) -> bool:
 	if visual_value == null or visual_value.pieces.is_empty():

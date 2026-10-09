@@ -703,3 +703,84 @@ static func link_shape(link: Dictionary, p: Vector2, detail: bool = true) -> flo
 	if link.bench:
 		return level * (1.0 - smoothstep(0.75 if detail else 0.3, 1.0, x))
 	return level * (1.0 - link.sag * sin(PI * t)) * pow(1.0 - (x if detail else _round01(x, 0.3)), 1.3)
+
+
+## Battle-scale relief carried by the smooth river field as well as the detailed
+## terrain. Connected crests make three summits and two passes; divided hollows
+## retain a cross-valley bridge and offset high ground. This tier adds local
+## decisions without shrinking the continental/mountain features.
+const LOCAL_CELL := 192.0
+const LOCAL_RADIUS := 148.0
+const LOCAL_HEIGHT_MIN := 16.0
+const LOCAL_HEIGHT_MAX := 32.0
+const _LOCAL := 5
+const LOCAL_CREST_HEIGHTS := [.84, 1.0, .9]
+
+static func local_candidate(seed_value: int, cell: Vector2i) -> Dictionary:
+	return _memo(seed_value, cell, _LOCAL,
+		func() -> Dictionary: return _local_draw(seed_value, cell))
+
+
+static func _local_draw(seed_value: int, cell: Vector2i) -> Dictionary:
+	var h := func(salt: int) -> float: return Helper._cell_hash01(seed_value + salt, cell.x, cell.y)
+	if h.call(2310) > .82:
+		return {}
+	var pos: Vector2 = (Vector2(cell) + Vector2(.25 + .5 * h.call(2311),
+		.25 + .5 * h.call(2312))) * LOCAL_CELL
+	if pos.length() - LOCAL_RADIUS < SPAWN_CLEAR_M:
+		return {}
+	var bend: float = (h.call(2316) - .5) * 48
+	return {
+		"nodes": PackedVector2Array([Vector2(-64, -bend * .4), Vector2(0, bend), Vector2(64, -bend * .6)]),
+		"pos": pos, "angle": grain(seed_value, pos) + (h.call(2313) - .5) * .8,
+		"height": lerpf(LOCAL_HEIGHT_MIN, LOCAL_HEIGHT_MAX, h.call(2314)),
+		"hollow": h.call(2315) < .4, "offset": (h.call(2317) - .5) * 35,
+	}
+
+
+static func _local_dome(p: Vector2, a: float, b: float) -> float:
+	var t := Vector2(p.x / a, p.y / b).length_squared()
+	return pow(maxf(0, 1 - t), 2)
+
+
+static func local_shape(f: Dictionary, p: Vector2) -> float:
+	var q: Vector2 = (p - f.pos).rotated(-f.angle)
+	if q.length() >= LOCAL_RADIUS:
+		return 0
+	if f.hollow:
+		# A connected hollow interrupted by a cross-valley bridge and two
+		# offset remnants. All margins have zero height and slope.
+		var bowl := _local_dome(q, 132, 78)
+		var bridge := 1 - smoothstep(9, 27, absf(q.x - f.offset))
+		var island := maxf(_local_dome(q - Vector2(-48, 27), 27, 23),
+			_local_dome(q - Vector2(49, -26), 30, 24))
+		return -f.height * bowl * (1 - maxf(bridge, island))
+	var nodes: PackedVector2Array = f.nodes
+	var heights: Array = LOCAL_CREST_HEIGHTS
+	var result := 0.0
+	for i in 3:
+		result = maxf(result, heights[i] * _local_dome(q - nodes[i], 50, 43))
+	for i in 2:
+		var a := nodes[i]
+		var b := nodes[i + 1]
+		var axis := b - a
+		var t := clampf((q - a).dot(axis) / axis.length_squared(), 0, 1)
+		var distance := q.distance_to(a + axis * t)
+		var crest := lerpf(heights[i], heights[i + 1], t) * (1 - .42 * sin(PI * t) * sin(PI * t))
+		result = maxf(result, crest * pow(maxf(0, 1 - pow(distance / 43, 2)), 2))
+	return f.height * result
+
+
+static func local_relief(seed_value: int, p: Vector2) -> float:
+	var cell := Vector2i((p / LOCAL_CELL).floor())
+	var raised := 0.0
+	var cut := 0.0
+	for z in range(-1, 2):
+		for x in range(-1, 2):
+			var f := local_candidate(seed_value, cell + Vector2i(x, z))
+			if f.is_empty():
+				continue
+			var value := local_shape(f, p)
+			raised = _union(raised, maxf(0, value))
+			cut = _union(cut, maxf(0, -value))
+	return raised - cut

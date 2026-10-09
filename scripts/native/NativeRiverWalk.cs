@@ -26,7 +26,7 @@ namespace Story.Native
                 CONTOUR_DESCENT, MEANDER_AMP, MEANDER_SCALE, STEEP_HI, SUMMIT_STEEP_X, SUMMIT_STEEP_Y,
                 SELF_AVOID_R, SUMMIT_REACH, TRACE_REACH, GRAD_EPS, W_MIN, W_MAX, CHANNEL_DEPTH,
                 CONTAIN_DROP, BED_MIN, FEATHER, SOURCE_POOL_R, FLAT_EPS, LOWLANDS_HEIGHT,
-                SPAWN_WATER_RADIUS, WOBBLE, POINT;
+                SPAWN_WATER_RADIUS, WOBBLE, POINT, SURFACE_RIDE, SURFACE_DROP;
             public long ASCEND_MAX_STEPS, MAX_STEPS, SELF_AVOID_SKIP, MIN_STEPS;
         }
 
@@ -64,6 +64,7 @@ namespace Story.Native
                     BED_MIN = D("BED_MIN"), FEATHER = D("FEATHER"), SOURCE_POOL_R = D("SOURCE_POOL_R"),
                     FLAT_EPS = D("FLAT_EPS"), LOWLANDS_HEIGHT = D("LOWLANDS_HEIGHT"),
                     SPAWN_WATER_RADIUS = D("SPAWN_WATER_RADIUS"), WOBBLE = D("WOBBLE"), POINT = D("POINT"),
+                    SURFACE_RIDE = D("SURFACE_RIDE"), SURFACE_DROP = D("SURFACE_DROP"),
                     ASCEND_MAX_STEPS = L("ASCEND_MAX_STEPS"), MAX_STEPS = L("MAX_STEPS"),
                     SELF_AVOID_SKIP = L("SELF_AVOID_SKIP"), MIN_STEPS = L("MIN_STEPS"),
                 };
@@ -437,6 +438,10 @@ namespace Story.Native
                     arc += C.TRACE_STEP;
                     bed = ContainedBed(bed, p, dir, Lerp(C.W_MIN, C.W_MAX, arc / span));
                 }
+                // WaterPlan._fit_source_bed: the outlet cannot stand above its spring.
+                double sourceBed = (double)poolLevel * C.STOREY - C.SURFACE_DROP - C.SURFACE_RIDE;
+                for (int k = 0; k < beds.Count && beds[k] > sourceBed; k++)
+                    beds[k] = (float)sourceBed;
                 var outPoints = new Vector2[points.Count];
                 for (int k = 0; k < points.Count; k++) outPoints[k] = new Vector2(points[k].X, points[k].Y);
                 return new Godot.Collections.Dictionary

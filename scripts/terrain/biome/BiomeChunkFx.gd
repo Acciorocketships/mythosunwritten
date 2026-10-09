@@ -192,6 +192,9 @@ static func _emitter(recipe: StringName, density: float, surf_lo := 0.0, surf_hi
 ## recipe (its process shader, sprite material and textures) and the first
 ## firefly batch cost 12-15 ms each; build and drop one of each now.
 static func warm() -> void:
+	# Its three procedural maps cost ~29 ms on first use; create them while
+	# loading, rather than when the first misty chunk arrives during travel.
+	preload("res://scripts/terrain/biome/BiomeMistWisps.gd").material()
 	var data := {"lo": 0.0, "hi": 12.0}
 	var points := PackedVector3Array([Vector3(8.0, 4.0, 8.0)])
 	for recipe: StringName in RECIPES:

@@ -82,8 +82,9 @@ func _add_wall(wall:Dictionary)->void:
    bottoms.append(lerpf(float(wall.bottom.x),float(wall.bottom.y),f))
   else:
    var p:=a.lerp(b,f)
-   tops.append(TerrainTileField.surface_y_on_side(_region,p.x,p.y,wall.high))
-   bottoms.append(TerrainTileField.surface_y_on_side(_region,p.x,p.y,wall.low))
+   var offset:Vector2=wall.normal*float(wall.get("sample_offset",0.0))
+   tops.append(TerrainTileField.surface_y_on_side(_region,p.x-offset.x,p.y-offset.y,wall.high))
+   bottoms.append(TerrainTileField.surface_y_on_side(_region,p.x+offset.x,p.y+offset.y,wall.low))
  var start:=0
  for k in range(1,steps+1):
   if k<steps and absf(tops[k]-tops[start])<=WALL_SPLIT and absf(bottoms[k]-bottoms[start])<=WALL_SPLIT:continue
@@ -132,7 +133,11 @@ func _find_open_ends()->void:
 
 func _continued(s:Dictionary,point:Vector2,end:int)->bool:
  var outward:Vector2=(s.t as Vector2)*(-1.0 if end==0 else 1.0)
- for o:Dictionary in _primitives:
+ # Continuations must touch this endpoint. The existing buckets include an
+ # eight-metre halo around every primitive, larger than every .3m probe below.
+ var nearby:Array=_buckets.get(Vector2i(floori(point.x/CELL),floori(point.y/CELL)),[])
+ for index:int in nearby:
+  var o:Dictionary=_primitives[index]
   if o==s or absf(float(o.base)-float(s.base))>.5:continue
   if o.arc:
    # The arc starts where the arm ends.
@@ -379,9 +384,10 @@ func _add_rock(gi:int,along:float,out:float,rise:float,size:float,rk:Vector3,bun
  q=foot+n*surface;height=env.sample(q)
  var ground_y:=ground(q)
  # In a gully the slope meets the ground sooner: move up onto it.
- while height<ground_y+.4 and surface>1.1:
+ var shared_profile:=TerrainTileField.cliff_end==TerrainTileField.CliffEnd.SHARED_PROFILE
+ while not shared_profile and height<ground_y+.4 and surface>1.1:
   surface-=.5;q=foot+n*surface;height=env.sample(q);ground_y=ground(q)
- if height<ground_y+.2 or height>crest-1.0:return
+ if (not shared_profile and height<ground_y+.2) or height>crest-1.0:return
  var grad:=Vector2(env.sample(q+Vector2(.3,0))-env.sample(q-Vector2(.3,0)),env.sample(q+Vector2(0,.3))-env.sample(q-Vector2(0,.3)))/.6
  var normal:=Vector3(-grad.x,1,-grad.y).normalized()
  var steep:=kind!="basal"
@@ -684,26 +690,33 @@ var _grounds:Dictionary={}
 
 func _build_groups()->void:
  var by:Dictionary={}
+ var indices:Dictionary={}
  for s:Dictionary in _primitives:
   if s.arc:continue
   var n:Vector2=s.n
   var key:=[snappedf((s.a as Vector2).dot(n),.5),n.snapped(Vector2.ONE*.01),snappedf(float(s.base),.5)]
   if not by.has(key):
    by[key]={"n":n,"t":s.t,"offset":(s.a as Vector2).dot(n),"base":float(s.base),"segs":[],"u0":INF,"u1":-INF}
+   indices[key]=_groups.size()
    _groups.append(by[key])
   var g:Dictionary=by[key]
-  s["group"]=_groups.find(g)
+  s["group"]=indices[key]
   var u0:float=(s.a as Vector2).dot(s.t)
   g.segs.append(s);g.u0=minf(g.u0,u0);g.u1=maxf(g.u1,u0+float(s.length))
+ var arc_groups:Array[Dictionary]=[]
  for s:Dictionary in _primitives:
-  if s.arc:s["group"]=_groups.size();_groups.append({"arc":s,"base":float(s.base)})
+  if s.arc:
+   s["group"]=_groups.size()
+   var arc_group:Dictionary={"arc":s,"base":float(s.base)}
+   _groups.append(arc_group)
+   arc_groups.append(arc_group)
  # Line ends that continue into a corner arc.
  for g:Dictionary in _groups:
   if g.has("arc"):continue
   var a:Vector2=(g.t as Vector2)*float(g.u0)+(g.n as Vector2)*float(g.offset)
   var b:Vector2=(g.t as Vector2)*float(g.u1)+(g.n as Vector2)*float(g.offset)
-  for o:Dictionary in _groups:
-   if not o.has("arc") or absf(float(o.base)-float(g.base))>.5:continue
+  for o:Dictionary in arc_groups:
+   if absf(float(o.base)-float(g.base))>.5:continue
    for n:Vector2 in [o.arc.n1,o.arc.n2]:
     var p:Vector2=(o.arc.c as Vector2)+n*float(o.arc.r)
     if p.distance_to(a)<.3:g["arc_a"]=true

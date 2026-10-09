@@ -36,6 +36,8 @@ var _saved_end: int
 
 func before_each() -> void:
 	_saved_end = TerrainTileField.cliff_end
+	# These fixtures test historical vertical-wall rounding.
+	TerrainTileField.cliff_end = TerrainTileField.CliffEnd.E3
 	Style.apply("sheet_bedrock")
 
 func after_each() -> void:

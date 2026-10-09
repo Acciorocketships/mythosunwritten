@@ -1,3 +1,232 @@
+> October 9 tail throughput: cliff open-end detection uses `_buckets`' eight-metre
+> primitive halo instead of an all-pairs scan (12.9 -> 0.21 s on chunk (-3,0));
+> `test_cliff_endpoint_index` compares the exhaustive reference. Water mesh refinement
+> compiles immutable fill corners with `WaterCurrentSurface` (9.04 -> 1.85 s), preserving
+> the complete mesh hash. Raw contexts may omit `fill_size`: use WaterField's default.
+> Tail-slot waiting is cancellable at the complete planning boundary and reserves one
+> mesher for priority tiers 0–2 after startup; startup may use all three. Travel prediction
+> is 60 seconds, capped by the existing chunk radius. Group indices are retained when
+> assigned; corner matching scans only corner groups; repeated cliff vertices reuse their
+> exact colour. Full payload hashes stay identical. Tests cover slot balance/cancellation.
+> Final combined 120-second phases: no movement holds; run grass backlog mean 4.41/max 24,
+> run-turn mean 0/max 1, final/return idle 0. See manual-pass QA for logs and limits.
+
+> October 9 water-current runtime: late-idle CPU lag was `WaterRippleSim` (p95 ~23 ms).
+> `WaterCurrentSurface` compiles immutable coarse/fine cell data from a frozen sampler;
+> weights, shore support and wall spans retain the exact reference arithmetic, including
+> double wet accumulation then float32 mixed-shore corners. `WaterGroundSnapshot` caches
+> exact bank/wall probes, retaining both doubles behind its float32 lookup key. Both caches
+> are bounded 8,192-entry FIFOs with short mutexes, computing outside the lock; do not mutate
+> the planner's `node_ground` memo from concurrent current consumers. Scalar flow lookup
+> preserves corner accumulation order; flow texture invalidation is local to changed samplers.
+> `october9_ripple_replay.gd` replays 64 waves over 600 fixed steps: identical whole-motion
+> digest, mean ~4.2 -> 1.8 ms. `test_water_current_sampling` / `test_water_snapshot_cache`
+> cover all four terrain modes, float32-key collisions, eviction and parallel readers.
+> Final combined late-idle process p95 is 10.42 ms; return to original pose 6.53 ms.
+> Occasional rendering/retirement hitches remain; see manual-pass QA.
+
+> October 9 grass LOD: `GrassStreamer.BLADE_LOD_BIAS` is 0.25. Existing whole-
+> blade engine LODs engage earlier; no live mesh swap, density/radius/shader
+> change. Fixed 49-chunk 1080p view: frame p50/p95 22.15/22.83 -> 19.82/20.62 ms,
+> negligible foreground image change; static visual review retains the carpet.
+> Vertex lighting was slower and too bright; simple lighting gave no gain.
+> Frame harness `--grass-lod-bias 1` restores old selection. Existing grass
+> streamer suite 13/13 passes. Final combined traversal has no movement holds and
+> near-zero grass backlog after running (manual-pass QA).
+
+> October 9 water source support is ON: after fine rescue, canonical full-source
+> water heads propagate from actual trace/pond roots through submerged nodes
+> before chunk cropping. Unsupported higher branches dry, low-bed humps lower;
+> no head is raised. `WaterSourceSupport` is the reference;
+> `NativeWaterSourceSupport.cs` is gated by NativeWaterFill and falls back on
+> fault. Explicit `sub_dry` masks must survive cropping, sampling and disk cache
+> (absence still means coarse fallback). Fine grids can be rectangular. Cache
+> identity includes SOURCE_SUPPORT. Two seeds: 594 river-axis probes pass;
+> 1,219 wet samples on 24 chunk edges match exactly. Full source output is
+> byte-identical to the reference; sampling + propagation ~2.33 s per source.
+> Matched images remove the unsupported side cascade; 871 mesh clearance probes
+> pass. See docs/qa/2026-10-08-manual-pass/result.md.
+
+> October 9 water surface clearance: `WaterSkin` runs `WaterSurfaceRefinement`
+> AFTER `_seal_local_surface_holes`. Coarse shoreline triangles cut up to 0.30 m
+> into ground despite positive field depth. Adaptive shared-edge subdivision
+> resolves >8 cm underestimates (minimum edge 0.5 m, at most four rounds); both
+> incident faces split. Chunk-border decisions depend only on the shared edge,
+> not either interior. Never freeze a low border chord just to avoid a seam.
+> Buried rim faces keep their shape; new normals interpolate existing normals.
+> Owner-seed full meshes: 1,004 local + 5,910 broad clearance probes pass;
+> 470 actual seam probes pass. Focused tests `test_water_surface_refinement`,
+> existing `test_water_skin::test_free_edges_only_buried_rim_or_border` pass.
+> Extra worker build cost ~1.3–1.5 s/chunk in the trial remains to be included
+> in the final traversal profile. See the manual-pass QA result.
+
+> October 9 collision residency is ON by default after exact archive, actor,
+> teleport/physics-registration tests and a ten-minute traversal with zero holds.
+> Generated concave faces are stored losslessly outside all actors' 384 m band,
+> restored inside 256 m, with predictive interests and arrival guards. Imported or
+> scripted shapes are excluded; stored shape settings survive restoration.
+> Player guard is 1 m (0.398 m capsule + 0.167 m next step); other actors use 12 m.
+> The original 12 m player guard waited for an unrelated unbuilt diagonal chunk.
+> Frame harness `--full-collision` restores the baseline, `--collision-residency`
+> explicitly enables the default. Peak static memory 12,357 -> 9,042 MiB in the
+> sequential ten-minute runs; chunk schedules differ, so this is not an isolated
+> speedup claim. Individual residency sections can exceed their 1 ms soft budget.
+>
+> FirstViewWarmer finishes stationary poses after three orbit headings. Moving
+> 8 m or queuing new geometry refreshes them; 500 ms cadence and chunk views stay.
+> Final-idle warm draws 249 -> 46; frame p95 52.34 -> 38.95 ms. Moving phase p95
+> stays ~31 /41 ms (run/run-turn). No movement holds in the combined run. Focused
+> tests 2 /15; further visual acceptance continues in manual-pass QA.
+
+> October 9 shared-profile normals: `TerrainChunkMesher` skips legacy vertical-lip
+> half-derivative rejection and owner-border rejection in SHARED_PROFILE only. Its
+> ground is continuous even when steep. `test_shared_profile_normals` checks 119
+> samples on a 40 m rise: normal-vector error 0.06178 → 0 against the surface
+> derivative. Legacy modes keep lip handling. The seed-99 riverbed edge was
+> unchanged in the matched normal-only comparison: it is not fixed by this change.
+
+> October 9 texture memory: `EnvironmentTextureSharing` shares 23 proven-identical
+> baked texture aliases (`terrain/environment/texture_aliases.json`) on the main thread.
+> `test_environment_texture_sharing` compares every mip byte and checks resource lifetime.
+> `EnvironmentRenderCache.prepare` retains original aliases during the batch so subsequent
+> visuals do not decode them again; the incremental startup feature warm retains them until
+> it finishes, then releases them. Live review texture memory fell about 715 MiB; a fresh
+> 225 s run confirms 743 MiB lower texture memory (startup 110.9 vs 111.2 s).
+> Long frames still occur; late-play smoothness is not yet fully solved. Individual baked pack files stay intact.
+
+> October 9 judging follow-up: all three painted-leaf albedo textures now include mipmaps
+> (two Meadow, one Farmlands). Resize discarded the original chain; missing mipmaps
+> contributed to medium-distance leaf speckling. `_bake_texture` regenerates the chain
+> after resize/palette edits. `tools/environment_bake/repair_leaf_mipmaps.gd` is a
+> narrow texture-only migration (read-only unless `-- --apply`); it verifies lossless
+> mip round-trip and unchanged base pixels. `test_leaf_mipmaps` checks the catalogue.
+
+> October 9 transition rollout (supersedes the opt-in notes below):
+> `TerrainTileField.cliff_end` now defaults to `SHARED_PROFILE`. Slope and cliff
+> crossings share full-tile smootherstep; steepness comes from height difference.
+> Physical wall queries return no discontinuity; dressing explicitly requests
+> semantic shoulder/foot lines. Native and F9 GPU ports cover the same four modes.
+> Ordinary slopes match E3 exactly across 6,561 corner cases; shared edges and
+> monotonicity pass. Roads/grades: 18 tests, 9,774 assertions. Water continuity:
+> 904 physics probes on the owner seed and 1,350 on seed 99, no dry/buried probes.
+> Historical vertical-wall water fixtures explicitly select E3 and key caches by
+> mode. Broader water appearance and performance work is still open. See the QA
+> report; passing continuity is not a claim that every shoreline is satisfactory.
+>
+> Collision assembly now creates its StaticBody only in the first commit step,
+> immediately parenting it. Discarding an unstarted step list cannot leak a Node.
+> `test_environment_collision_lifetime`: 2 tests / 75 assertions.
+
+> October 9 retirement: terrain/feature evictions detach immediately and free
+> leaves through TerrainRetirementQueue (1 ms / 32 nodes per frame, main thread).
+> Grass snapshots go into the existing worker drop box before node retirement.
+> One 1241-node chunk: free 20 ms -> detach 0.67 ms, slices <=2.6 ms in CPU probe;
+> gameplay slices reached 6.1 ms. Skirt gather is 4 per step (was 24), mist material
+> is warmed at startup. Five-minute run: 0 movement freezes, run/run-turn worst
+> dt 92/142 ms (prior 473 ms running), grass p95 32/40; memory still ~8 GB and
+> system swapped heavily. Not complete performance acceptance. Shutdown now
+> abandons unattached integration terrain AND fx roots; focused lifetime tests
+> pass, full quit verification pending. See manual-pass QA for limitations.
+
+> October 9 runtime follow-up: BiomeGroundMap scrolls prepare rows across frames
+> and publish maps/origin atomically (first map / seed changes still synchronous).
+> Same output; 61–62 ms rebuild -> slices <=1.97 ms in direct probe; 2 tests pass.
+> TerrainChunkMesher collision pieces are 1000 triangles (was 3000); real whole/
+> stepped tree equivalence passes. REJECTED: 2 ms integration for all gameplay
+> doubled grass backlog in the five-minute trial. Keep 6 ms nearby / 2 ms distant.
+> Runtime remains open: largest dt 472.6 ms coincides with eviction, skirt gather
+> still 8–11 ms, first mist material 29 ms is missing from BiomeChunkFx.warm().
+> Latest two five-minute profiles have exited; evidence in manual-pass QA.
+
+> October 9 manual pass water: DESCENT_CLAMP is now 0.80 m (was 0.10).
+> The old dense curve cleared its 4 m samples but reached 0.0397 m between
+> them, below EPS, then the fill lowered it further. Keep the independent
+> SHORE_CREST_FEATHER=0.10 in GDScript/NativeFineRescue; it is not channel depth.
+> Real shared-profile gap regression: 57 wet probes, min 0.147 m, containment
+> over 7225 patch probes; nine-chunk physics audit 904 samples, 0 dry/buried
+> (was 9 dry). Native profile 3 tests/84 asserts, monotonic 519, smoothness 5.
+> No detached fine-head patch was adopted. Visual shallow areas / abrupt banks
+> and broader verification remain open; E3 still default. QA result has captures.
+
+> October 9 manual judging candidate: `SHARED_PROFILE` now has its own
+> CliffSlopeEnvelope/NativeCliffEnvelope.BuildShared bedrock path. It starts from
+> the continuous ground (no wall closing/fillet), limits lift to 0.30 m on grades
+> above 1.0, and preserves ordinary slopes / excluded / wet nodes exactly. Native
+> gate covers both modes explicitly; 5 tests/31 asserts, shared bounds 3/20 pass.
+> Chunk (0,6) render restores stone patches; dark moss bands predate this change.
+> E3 STILL DEFAULT: water's nine dry samples and player-scale cliff shading remain
+> open. Evidence: docs/qa/2026-10-08-manual-pass/shared-profile-bedrock.png.
+
+> October 9 shared-profile dressing follow-up: `wall_segments(..., true)` exposes
+> semantic shoulder/foot lines only for cliff dressing; the default query still
+> means an actual vertical discontinuity (grass and wall meshes depend on that).
+> `sample_offset` is resampled by CliffSlopeField. Shared-profile foot rocks now
+> place against raw rounded ground (132 in reviewed chunk (0,6)); exposed bedrock
+> patches and water continuity still need work. E3 remains the default.
+
+> October 9 experimental terrain review: `TerrainTileField.CliffEnd.SHARED_PROFILE`
+> is implemented and native-parity-gated; E3 is still the default. Opt in only via
+> `cliff_site_review --shared-profile`, before world creation. Alternate modes use
+> separate planning-cache seed directories. Shared-profile production sampling passes
+> 6,561 corner cases, but integrated review is NOT ready: cliff dressing currently
+> depends on owner-side discontinuities, and a 904-sample river audit has 9 dry points.
+> See the manual-pass QA report before enabling it globally.
+
+> October 9 rock-skirt integration: `RockSkirt.commit_steps` splits collision into
+> 1,000-triangle shapes on one static body; gathering alone did not bound the final
+> BVH build (observed 29.3 ms). Keep all faces/windings exact and the render mesh
+> unchanged. `test_rock_skirt_commit` reconstructs the faces. Isolated chunk (0,2)
+> has no terrain commit step above 3.2 ms after this change; full travel QA pending.
+
+> October 9 trample streaming: `TrampleField.update_static_chunks` takes changed chunk
+> footprints (null removes); the streamer batches these in `_static_trample_changes`.
+> Keep x/z chunk ordering for overlapping direction blends. Distant changes must not
+> flatten all loaded stamps or redraw the local texture (10k-footprint probe 28.6 ->
+> 0.39 ms, identical pixels). Dynamic epoch rebasing visits `_stamped_pixels` only;
+> scrolling must remap this set and expired pixels must never revive. Two-minute
+> synthetic walk epoch 4.21 -> 0.19 ms, with some additional scroll cost. 15 trample
+> tests / 86 assertions pass; whole-game lag is still under investigation.
+
+> October 8 manual judging, first fixes (`docs/qa/2026-10-08-manual-pass/result.md`).
+> Grass support grids (including rock skirts) are spatially bucketed; never restore a
+> whole-chunk grid scan per blade/footprint. Detached shoreline queries index segment
+> bounds grown by the saturated distance. Three real tiles retain exact batch hashes,
+> worker cost 1.6–3.2 s -> 0.4–0.5 s. Fully submerged cliff crests keep their rounding
+> (`CliffSlopeEnvelope._walls`, mirrored in C#); flowing sills still skip it. Tree
+> crossfades use a shared continuous patch mask in leaf, bark and imposter shaders,
+> replacing the regular pixel dot grid. Keep their masks and complementary tests equal.
+> Post-startup priority-3 scenery integrates within 2 ms per frame; startup and travel
+> priorities retain 6 ms. Single commit steps can still exceed the budget.
+> OPEN: dry river reaches/containment, slope/cliff grooves, local battle-scale relief,
+> and sustained-play lag are not all resolved by this pass. Squeezing every narrow bank
+> or clamping the final sheet below water produced sharp cuts in matched renders and
+> was rejected. The photographed short birch is a bush obscured by grass, not a proven
+> deeply buried sapling. The saved October 8 lattice pins the real groove geography.
+
+> October 9 water follow-up (same QA report; whole judging pass still open).
+> WaterBankBound caches compact 3/6 m bilinear bounds of the dry rounded bank on
+> HeightfieldPlan's 96 m tiles (short dictionary mutex; compute outside lock); both
+> coarse and fine reconciliation consume the floor. It keeps the photographed ledge
+> flow above the final sheet, but cold bound generation remains expensive (~33 s).
+> Flow ceilings use the same bank-strength footprint as carving, not an unconditional
+> 96 m collar. Pond joins require actually submerged carved ground, not nominal
+> footprint overlap; receiving-level descent spreads upstream at 1:4. Spring outlet
+> beds are capped by their source pool datum (`_fit_source_bed`, exact C# Walk mirror;
+> SURFACE_RIDE and SURFACE_DROP passed to native). The photographed site's 1,254
+> centerline probes now have no dry or buried samples; this is not a world-wide claim.
+> Flowing-crest rounding is still open: an in-memory visual trial must not be mistaken
+> for production code. Keep numerical continuity and visual containment separate.
+
+> October 9 battle-scale relief candidate (same QA report). LandformFeatures.local_relief
+> adds 16–32 m connected crests/divided hollows on a 192 m grid, preserving macro ranges.
+> The smooth river field and detailed ground share it; `LocalLandforms.cs` is the exact
+> native mirror. Native vector Dot/LengthSquared division must promote both operands
+> to double, as GDScript does. Candidate caches use the existing bounded/thread-safe
+> memos. Matched 960 m kernel sample: 8 m-prominent peaks 12→18, basins 8→15; all 29
+> existing terrain/landform/cache-key tests pass. Full-scene and tactical QA is ongoing.
+> This changes river routes: October 8 water images/counts are prior-geography evidence,
+> not proof of continuity in the new world. Recheck wet sites before accepting the pass.
+
 > October 7 frame smoothness (branch `perf/frame-smoothness`; owner: "running and moving the
 > mouse feels laggy; camera must feel instant"). Profile under the .NET binary
 > (`Godot_mono`): the standard binary has no C# heights and is ~12x slower at planning.

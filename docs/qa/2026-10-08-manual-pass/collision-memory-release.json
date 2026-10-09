@@ -1,0 +1,8 @@
+{
+  "after": 3018523080,
+  "before": 3992061844,
+  "kept_physics_chunk": "(1,6)",
+  "released_bytes": 973538764,
+  "removed_shapes": 5411,
+  "scope": "eight review chunks; scene physics deliberately removed outside the target; includes backend shape memory, not just input faces"
+}

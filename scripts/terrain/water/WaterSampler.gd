@@ -66,6 +66,7 @@ var _compression: PackedFloat32Array # nx*nz, max(0,-divergence)
 const FRAME_CELL := 0.25
 const FRAME_CACHE_CAP := 65536
 var _frames: Dictionary = {}
+var _current_surface := preload("res://scripts/terrain/water/WaterCurrentSurface.gd").new()
 
 
 ## Bakes a sampler from WaterField's own native fill arrays. The supplied
@@ -101,6 +102,8 @@ static func build(ctx: Dictionary, region, origin: Vector2, step: float, nx: int
 		if ctx.fill.has("sub_levels"):
 			fill["sub_levels"] = PackedFloat32Array(ctx.fill.sub_levels)
 			fill["sub_ground"] = PackedFloat32Array(ctx.fill.sub_ground)
+			if ctx.fill.has("sub_dry"):
+				fill["sub_dry"] = PackedByteArray(ctx.fill.sub_dry)
 		var window := Rect2(s._fill_origin, Vector2.ONE * float(s._fill_n - 1) * WaterField.FILL_STEP)
 		var node_ground := PackedFloat64Array(); node_ground.resize(s._fill_levels.size()); node_ground.fill(INF)
 		s._fill_ctx = {"fill_base": s._fill_origin, "fill_size": s._fill_n, "fill": fill,
@@ -184,10 +187,32 @@ func _corners(xz: Vector2) -> Array:
 ## points are dropped either way, so they use this instead of a full native
 ## level evaluation per candidate chunk.
 func covers_current(xz: Vector2) -> bool:
-	for cnr: Array in _corners(xz):
-		if _velocity[cnr[1] * _nx + cnr[0]] != Vector2.ZERO:
-			return true
-	return false
+	var fx: float = (xz.x - _origin.x) / _step
+	var fz: float = (xz.y - _origin.y) / _step
+	if fx < 0.0 or fz < 0.0 or fx > float(_nx-1) or fz > float(_nz-1): return false
+	var i := mini(int(floor(fx)),_nx-2)
+	var j := mini(int(floor(fz)),_nz-2)
+	var index := j*_nx+i
+	return _velocity[index] != Vector2.ZERO or _velocity[index+1] != Vector2.ZERO or _velocity[index+_nx] != Vector2.ZERO or _velocity[index+_nx+1] != Vector2.ZERO
+
+
+## Preserve the corner accumulation order without allocating four nested
+## Arrays for each wave's start and midpoint every frame.
+func _interpolated_velocity(xz: Vector2) -> Vector2:
+	var fx: float = (xz.x-_origin.x)/_step
+	var fz: float = (xz.y-_origin.y)/_step
+	if fx < 0.0 or fz < 0.0 or fx > float(_nx-1) or fz > float(_nz-1): return Vector2.ZERO
+	var i := mini(int(floor(fx)),_nx-2)
+	var j := mini(int(floor(fz)),_nz-2)
+	var tx := fx-float(i)
+	var tz := fz-float(j)
+	var index := j*_nx+i
+	var velocity := Vector2.ZERO
+	velocity += _velocity[index]*((1.0-tx)*(1.0-tz))
+	velocity += _velocity[index+1]*(tx*(1.0-tz))
+	velocity += _velocity[index+_nx]*((1.0-tx)*tz)
+	velocity += _velocity[index+_nx+1]*(tx*tz)
+	return velocity
 
 
 ## Water height at world (x,z); NAN when the field itself said dry here at
@@ -254,12 +279,7 @@ func velocity_at(xz: Vector2) -> Vector2:
 ## Current, surface gradient and inward bank direction evaluated together.
 ## This is a detached local value, not a mutable cache shared by consumers.
 func current_frame_at(xz: Vector2) -> PackedVector2Array:
-	var corners: Array = _corners(xz)
-	if corners.is_empty():
-		return PackedVector2Array([Vector2.ZERO,Vector2.ZERO,Vector2.ZERO])
-	var velocity := Vector2.ZERO
-	for cnr: Array in corners:
-		velocity += _velocity[cnr[1] * _nx + cnr[0]] * cnr[2]
+	var velocity := _interpolated_velocity(xz)
 	if velocity.length_squared() < .000001:
 		return PackedVector2Array([velocity,Vector2.ZERO,Vector2.ZERO])
 	var frame := _surface_frame(xz)
@@ -286,8 +306,14 @@ func _current_surface_level_at(xz: Vector2) -> float:
 	if not _fill_levels.is_empty():
 		var coverage := Rect2(_fill_origin, Vector2.ONE * ((_fill_n - 1) * WaterField.FILL_STEP))
 		if coverage.has_point(xz):
-			return _native_fill_level_at(xz)
+			return _current_fill_level_at(xz)
 	return level_at(xz)
+
+
+## Evaluate the same frozen surface with its immutable fine corners cached.
+func _current_fill_level_at(p: Vector2) -> float:
+	var level: float = _current_surface.sample(_fill_ctx,p)
+	return NAN if level == -INF else level
 
 
 ## (vorticity, compression) paired with velocity_at for wave turning and

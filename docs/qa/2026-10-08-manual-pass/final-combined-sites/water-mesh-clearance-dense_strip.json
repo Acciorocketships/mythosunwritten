@@ -1,0 +1,133 @@
+{
+  "bodies": 1,
+  "checked": 1004,
+  "failures": [
+    {
+      "at": "(-25.5, 1143.0)",
+      "field_depth": 1.0720329284668,
+      "ground": 70.6703491210938,
+      "mesh_depth": null,
+      "triangles": []
+    },
+    {
+      "at": "(-25.5, 1143.5)",
+      "field_depth": 0.775566736857073,
+      "ground": 70.1546630859375,
+      "mesh_depth": null,
+      "triangles": []
+    },
+    {
+      "at": "(-25.5, 1144.0)",
+      "field_depth": 0.48544820149742,
+      "ground": 69.6326293945312,
+      "mesh_depth": null,
+      "triangles": []
+    },
+    {
+      "at": "(-25.5, 1144.5)",
+      "field_depth": 0.528215408325195,
+      "ground": 68.7777099609375,
+      "mesh_depth": null,
+      "triangles": []
+    },
+    {
+      "at": "(-25.5, 1145.0)",
+      "field_depth": 0.571043650309221,
+      "ground": 67.9227294921875,
+      "mesh_depth": null,
+      "triangles": []
+    },
+    {
+      "at": "(-25.5, 1145.5)",
+      "field_depth": 0.608805974324568,
+      "ground": 67.0728149414062,
+      "mesh_depth": null,
+      "triangles": []
+    },
+    {
+      "at": "(-25.0, 1145.5)",
+      "field_depth": 0.439235263400619,
+      "ground": 67.0018310546875,
+      "mesh_depth": null,
+      "triangles": []
+    },
+    {
+      "at": "(-25.5, 1146.0)",
+      "field_depth": 0.647727966308594,
+      "ground": 66.2217407226562,
+      "mesh_depth": null,
+      "triangles": []
+    },
+    {
+      "at": "(-25.0, 1146.0)",
+      "field_depth": 0.459747314453111,
+      "ground": 66.150634765625,
+      "mesh_depth": null,
+      "triangles": []
+    },
+    {
+      "at": "(-25.5, 1146.5)",
+      "field_depth": 0.760207494099916,
+      "ground": 65.3582763671875,
+      "mesh_depth": null,
+      "triangles": []
+    },
+    {
+      "at": "(-25.0, 1146.5)",
+      "field_depth": 0.59111277262366,
+      "ground": 65.28173828125,
+      "mesh_depth": null,
+      "triangles": []
+    },
+    {
+      "at": "(-25.5, 1147.0)",
+      "field_depth": 0.864813486735045,
+      "ground": 64.502685546875,
+      "mesh_depth": null,
+      "triangles": []
+    },
+    {
+      "at": "(-25.0, 1147.0)",
+      "field_depth": 0.71967061360678,
+      "ground": 64.4156494140625,
+      "mesh_depth": null,
+      "triangles": []
+    },
+    {
+      "at": "(-25.5, 1147.5)",
+      "field_depth": 0.963438034057617,
+      "ground": 63.653076171875,
+      "mesh_depth": null,
+      "triangles": []
+    },
+    {
+      "at": "(-25.0, 1147.5)",
+      "field_depth": 0.83632659912108,
+      "ground": 63.5614624023438,
+      "mesh_depth": null,
+      "triangles": []
+    },
+    {
+      "at": "(-25.5, 1148.5)",
+      "field_depth": 0.830914179484068,
+      "ground": 62.2836303710938,
+      "mesh_depth": null,
+      "triangles": []
+    },
+    {
+      "at": "(-25.0, 1148.5)",
+      "field_depth": 0.733945210774756,
+      "ground": 62.1887817382812,
+      "mesh_depth": null,
+      "triangles": []
+    },
+    {
+      "at": "(-24.5, 1148.5)",
+      "field_depth": 0.633985519409208,
+      "ground": 62.096923828125,
+      "mesh_depth": null,
+      "triangles": []
+    }
+  ],
+  "min_depth": null
+}

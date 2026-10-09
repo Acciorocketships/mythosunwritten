@@ -1,0 +1,105 @@
+{
+  "memory_static_bytes": 3986918836.0,
+  "rows": [
+    {
+      "chunk": "(1, 6)",
+      "collision_shapes": 651,
+      "collision_triangles": 355252,
+      "mesh_instances": 3,
+      "multimesh_instances": 131,
+      "nodes": 844,
+      "unique_collision_face_bytes": 12789072,
+      "unique_mesh_array_bytes": 21847800,
+      "vertices": 242604
+    },
+    {
+      "chunk": "(1, 5)",
+      "collision_shapes": 508,
+      "collision_triangles": 275036,
+      "mesh_instances": 3,
+      "multimesh_instances": 208,
+      "nodes": 741,
+      "unique_collision_face_bytes": 9901296,
+      "unique_mesh_array_bytes": 29579728,
+      "vertices": 367808
+    },
+    {
+      "chunk": "(1, 7)",
+      "collision_shapes": 926,
+      "collision_triangles": 606258,
+      "mesh_instances": 4,
+      "multimesh_instances": 186,
+      "nodes": 1136,
+      "unique_collision_face_bytes": 21825288,
+      "unique_mesh_array_bytes": 38774276,
+      "vertices": 449202
+    },
+    {
+      "chunk": "(0, 5)",
+      "collision_shapes": 389,
+      "collision_triangles": 218830,
+      "mesh_instances": 7,
+      "multimesh_instances": 105,
+      "nodes": 513,
+      "unique_collision_face_bytes": 7877880,
+      "unique_mesh_array_bytes": 12427792,
+      "vertices": 136521
+    },
+    {
+      "chunk": "(0, 6)",
+      "collision_shapes": 596,
+      "collision_triangles": 335128,
+      "mesh_instances": 8,
+      "multimesh_instances": 123,
+      "nodes": 749,
+      "unique_collision_face_bytes": 12064608,
+      "unique_mesh_array_bytes": 18565700,
+      "vertices": 203279
+    },
+    {
+      "chunk": "(0, 7)",
+      "collision_shapes": 796,
+      "collision_triangles": 472942,
+      "mesh_instances": 3,
+      "multimesh_instances": 169,
+      "nodes": 1014,
+      "unique_collision_face_bytes": 17025912,
+      "unique_mesh_array_bytes": 25793964,
+      "vertices": 279148
+    },
+    {
+      "chunk": "(2, 5)",
+      "collision_shapes": 673,
+      "collision_triangles": 372500,
+      "mesh_instances": 8,
+      "multimesh_instances": 254,
+      "nodes": 971,
+      "unique_collision_face_bytes": 13410000,
+      "unique_mesh_array_bytes": 31664572,
+      "vertices": 395211
+    },
+    {
+      "chunk": "(2, 6)",
+      "collision_shapes": 880,
+      "collision_triangles": 560308,
+      "mesh_instances": 3,
+      "multimesh_instances": 193,
+      "nodes": 1105,
+      "unique_collision_face_bytes": 20171088,
+      "unique_mesh_array_bytes": 30317688,
+      "vertices": 328987
+    },
+    {
+      "chunk": "(2, 7)",
+      "collision_shapes": 643,
+      "collision_triangles": 365794,
+      "mesh_instances": 7,
+      "multimesh_instances": 158,
+      "nodes": 843,
+      "unique_collision_face_bytes": 13168584,
+      "unique_mesh_array_bytes": 21062068,
+      "vertices": 232046
+    }
+  ],
+  "scope": "unique reachable mesh array payload and concave face bytes, excludes backend BVHs, allocation overhead, worker/cache dictionaries and textures; shared resources counted once across all rows"
+}

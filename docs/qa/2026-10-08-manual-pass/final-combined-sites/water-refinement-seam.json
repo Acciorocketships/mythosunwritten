@@ -1,0 +1,18 @@
+[
+  {
+    "checked": 440,
+    "edges_a": 44,
+    "edges_b": 44,
+    "failures": 0,
+    "max_distance": 0.000000119209289550781,
+    "mode": "baseline"
+  },
+  {
+    "checked": 470,
+    "edges_a": 47,
+    "edges_b": 47,
+    "failures": 0,
+    "max_distance": 0.00000762939453125,
+    "mode": "refined"
+  }
+]

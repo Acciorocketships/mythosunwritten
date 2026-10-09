@@ -28,6 +28,38 @@ func test_chunk_of_world_pos():
 	assert_eq(Streamer.chunk_of(Vector3(200, 0, 10)), Vector2i(1, 0))
 	assert_eq(Streamer.chunk_of(Vector3(-5, 0, -5)), Vector2i(-1, -1))
 
+func test_retirement_releases_grass_snapshot_through_the_worker_drop_box() -> void:
+	var s := Streamer.new()
+	var chunk := Node3D.new()
+	add_child(chunk)
+	var snapshot := GrassSamplingContext.new()
+	var ref := weakref(snapshot)
+	chunk.set_meta(&"grass_sampling", snapshot)
+	snapshot = null
+	s._retire_terrain(chunk)
+	assert_false(chunk.is_inside_tree())
+	assert_false(chunk.has_meta(&"grass_sampling"))
+	s._retirement.clear()
+	assert_not_null(ref.get_ref(), "deleting the node does not release its large numerical snapshot")
+	s._flush_drops()
+	s._reap_drop_tasks(true)
+	assert_null(ref.get_ref(), "the worker consumed the detached snapshot")
+	s.free()
+
+func test_shutdown_discards_unattached_integration_nodes() -> void:
+	var s := Streamer.new()
+	var terrain := Node3D.new()
+	var effects := Node3D.new()
+	var terrain_ref := weakref(terrain)
+	var effects_ref := weakref(effects)
+	s._integrating_node_ref = {"node": terrain, "fx": effects}
+	s._integrating = {"steps": [], "result": {}}
+	s._exit_tree()
+	assert_null(terrain_ref.get_ref(), "a partially committed chunk has no scene-tree owner at quit")
+	assert_null(effects_ref.get_ref(), "the separately prepared effects root is also owned until attachment")
+	assert_true(s._integrating_node_ref.is_empty())
+	s.free()
+
 func test_startup_environment_resolves_visible_chunk_seams() -> void:
 	assert_eq(Streamer.support_chunks_at(Vector3.ZERO), [
 		Vector2i(-1,-1),Vector2i(-1,0),Vector2i(-1,1),
@@ -249,6 +281,7 @@ func test_static_dressing_publishes_a_persistent_layer_separate_from_footsteps()
 		]),
 		"radius": sqrt(2.0),
 	}]
+	s._static_trample_changes[Vector2i.ZERO] = s._dressing_trample_by_chunk[Vector2i.ZERO]
 	s._static_trample_dirty = true
 	s._refresh_static_dressing()
 	assert_gt(s._trample_field.static_strength(Vector2.ZERO), 0.99)
@@ -330,3 +363,35 @@ func test_coord_overlay_reads_the_tile_under_the_crosshair() -> void:
 	assert_eq(edge[1], "   a s2/l1  b --/-")
 	assert_eq(edge[3], "  edges: (corners not loaded)")
 	s.free()
+
+func test_grass_ring_ground_precedes_scenery_without_displacing_forward_crossings() -> void:
+	var streamer := Streamer.new()
+	var old_full := GrassStreamer.FULL_RADIUS
+	var old_edge := GrassStreamer.GRASS_RADIUS
+	GrassStreamer.set_radii(90.0, 140.0)
+	var origin := Vector2(72.0, 72.0)
+	streamer._queue_travel_offset = Vector2(0, 240)
+	# East ground begins 120 m away: inside grass, outside the old 96 m band.
+	assert_eq(streamer._terrain_priority_tier(Vector2i.RIGHT, Vector2i.ZERO, origin), 2)
+	assert_eq(streamer._terrain_priority_tier(Vector2i.DOWN, Vector2i.ZERO, origin), 1)
+	assert_eq(streamer._terrain_priority_tier(Vector2i(2, 0), Vector2i.ZERO, origin), 3)
+	streamer.GRASS_ENABLED = false
+	assert_eq(streamer._terrain_priority_tier(Vector2i.RIGHT, Vector2i.ZERO, origin), 3)
+	GrassStreamer.set_radii(old_full, old_edge)
+	streamer.free()
+
+func test_collision_guard_covers_the_player_without_waiting_for_unrelated_diagonal_ground() -> void:
+	var streamer := Streamer.new()
+	var root := Node3D.new()
+	streamer._collision_residency.register_chunk(Vector2i(-2,-4),root)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var at := Vector3(-194.4205,62.52074,-756.0471)
+	assert_true(streamer._collision_ready_at(at,Streamer.PLAYER_COLLISION_MARGIN),
+		"recorded hold: the capsule and next step are inside ready ground")
+	assert_false(streamer._collision_ready_at(Vector3(-192.2,62,-756),Streamer.PLAYER_COLLISION_MARGIN),
+		"the capsule approaching an unloaded edge must still wait")
+	assert_false(streamer._collision_ready_at(Vector3(-191,62,-756),Streamer.PLAYER_COLLISION_MARGIN),
+		"an arrival on unbuilt ground is held")
+	root.free()
+	streamer.free()

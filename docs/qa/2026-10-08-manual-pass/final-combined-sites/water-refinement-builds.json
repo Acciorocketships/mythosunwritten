@@ -1,0 +1,14 @@
+[
+  {
+    "build_ms": 4644,
+    "chunk": "(-1, 5)",
+    "triangles": 6426,
+    "vertices": 3314
+  },
+  {
+    "build_ms": 5056,
+    "chunk": "(-1, 6)",
+    "triangles": 6425,
+    "vertices": 3319
+  }
+]

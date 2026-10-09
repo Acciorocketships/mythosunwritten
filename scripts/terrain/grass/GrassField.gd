@@ -87,8 +87,11 @@ static func tile_of(world_xz: Vector2) -> Vector2i:
 
 static func compute(program: GrassProgram, world_seed: int, tile: Vector2i,
 		region: HeightfieldRegion, water: WaterFieldContext,
-		features: FeatureContext = null, supports: Array = []) -> GrassPayload:
+		features: FeatureContext = null, supports: Array = [], profile: Dictionary = {}) -> GrassPayload:
 	assert(program != null and region != null and water != null)
+	var profiling := not profile.is_empty()
+	var started := Time.get_ticks_usec() if profiling else 0
+	var stage := started
 	var payload := GrassPayload.new()
 	payload.tile = tile
 	var tile_identity := _tile_identity(world_seed, program.grass_seed_version, tile)
@@ -129,7 +132,9 @@ static func compute(program: GrassProgram, world_seed: int, tile: Vector2i,
 			var anchor := origin + Vector2(
 				(float(sx) + _roll(identity, SALT_JITTER_X)) * slot_pitch,
 				(float(sz) + _roll(identity, SALT_JITTER_Z)) * slot_pitch)
+			stage = Time.get_ticks_usec() if profiling else 0
 			var support := GrassSupportSurfaces.at_index(support_index,anchor)
+			if profiling: profile["support"] = int(profile.get("support",0)) + Time.get_ticks_usec()-stage
 			if support_layer and support.is_empty():
 				continue
 			var field_sample := _sample_tile_fields(tile_fields, anchor - origin)
@@ -141,8 +146,10 @@ static func compute(program: GrassProgram, world_seed: int, tile: Vector2i,
 			var scale := lerpf(program.scale_range.x, program.scale_range.y,
 				_roll(identity, SALT_SCALE))
 			var footprint_radius := float(asset.footprint_radius) * scale
+			stage = Time.get_ticks_usec() if profiling else 0
 			var physical_edge_scale := _cliff_scale(region, anchor, footprint_radius,
 				cliff_edge_cache)
+			if profiling: profile["cliff"] = int(profile.get("cliff",0)) + Time.get_ticks_usec()-stage
 			if not support.is_empty():
 				if not support.get("over_ground",false) \
 						and support.y <= _surface_y(region,surface_cache,anchor.x,anchor.y)+.05:
@@ -176,16 +183,20 @@ static func compute(program: GrassProgram, world_seed: int, tile: Vector2i,
 			var coverage := carpet_coverage(habitat)
 			if eligibility >= coverage * maximum_weight:
 				continue
+			stage = Time.get_ticks_usec() if profiling else 0
 			var surface := _qualified_surface(program, anchor, region, water, features,
 				footprint_radius, surface_cache, cliff_edge_cache,
 				physical_edge_scale,support)
+			if profiling: profile["qualify"] = int(profile.get("qualify",0)) + Time.get_ticks_usec()-stage
 			if surface.is_empty():
 				continue
 			var edge_scale := minf(float(surface.physical_edge_scale),
 				_coverage_edge_scale(coverage))
 			if support.get("mesh_support",false):
+				stage = Time.get_ticks_usec() if profiling else 0
 				edge_scale *= GrassSupportSurfaces.footprint_scale(support_index,anchor,support,footprint_radius*edge_scale,
 					func(q:Vector2)->float:return _surface_y(region,surface_cache,q.x,q.y))
+				if profiling: profile["footprint"] = int(profile.get("footprint",0)) + Time.get_ticks_usec()-stage
 				if edge_scale < CLIFF_MIN_VISIBLE_SCALE:continue
 			var actual_extra := _density_extra(edge_scale,
 				float(surface.area_extra))
@@ -238,6 +249,7 @@ static func compute(program: GrassProgram, world_seed: int, tile: Vector2i,
 		}
 		payload.instance_count += batch_candidates.size()
 	assert(payload.validate())
+	if profiling: profile["total"] = Time.get_ticks_usec()-started
 	return payload
 
 static func carpet_coverage(habitat: float) -> float:

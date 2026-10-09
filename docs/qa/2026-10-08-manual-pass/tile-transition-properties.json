@@ -1,0 +1,8 @@
+{
+  "bounds_error": 0.0,
+  "cases": 6561,
+  "edge_error": 0.0,
+  "monotone_error": 0.0,
+  "plain_slope_error": 0.0,
+  "worst": []
+}

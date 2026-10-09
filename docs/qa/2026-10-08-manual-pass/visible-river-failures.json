@@ -1,0 +1,290 @@
+[
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 99.2525939941406,
+    "water": null,
+    "x": 334.128295898438,
+    "z": 1163.16845703125
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 96.884033203125,
+    "water": null,
+    "x": 333.235961914062,
+    "z": 1163.61987304688
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 94.9783935546875,
+    "water": null,
+    "x": 332.343627929688,
+    "z": 1164.07116699219
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 94.1268005371094,
+    "water": null,
+    "x": 331.451293945312,
+    "z": 1164.52258300781
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 93.3941955566406,
+    "water": null,
+    "x": 330.558929443359,
+    "z": 1164.97387695312
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 92.7773742675781,
+    "water": null,
+    "x": 329.666595458984,
+    "z": 1165.42529296875
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 92.2727661132812,
+    "water": null,
+    "x": 328.774261474609,
+    "z": 1165.87670898438
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 92.0451354980469,
+    "water": null,
+    "x": 327.881927490234,
+    "z": 1166.32800292969
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 92.0104675292969,
+    "water": null,
+    "x": 326.989593505859,
+    "z": 1166.77941894531
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 92.0102844238281,
+    "water": null,
+    "x": 326.097229003906,
+    "z": 1167.23071289062
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 92.0099792480469,
+    "water": null,
+    "x": 325.204895019531,
+    "z": 1167.68212890625
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 92.01953125,
+    "water": null,
+    "x": 324.312561035156,
+    "z": 1168.13342285156
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 92.052734375,
+    "water": null,
+    "x": 323.420227050781,
+    "z": 1168.58483886719
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 92.0401306152344,
+    "water": null,
+    "x": 322.647552490234,
+    "z": 1168.07983398438
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 92.0321044921875,
+    "water": null,
+    "x": 321.874877929688,
+    "z": 1167.57482910156
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 92.0238647460938,
+    "water": null,
+    "x": 321.102203369141,
+    "z": 1167.06982421875
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 92.0176391601562,
+    "water": null,
+    "x": 320.329528808594,
+    "z": 1166.56469726562
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 92.0126037597656,
+    "water": null,
+    "x": 319.556854248047,
+    "z": 1166.05969238281
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 92.010009765625,
+    "water": null,
+    "x": 318.7841796875,
+    "z": 1165.5546875
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 92.0099792480469,
+    "water": null,
+    "x": 318.011505126953,
+    "z": 1165.04968261719
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 92.010009765625,
+    "water": null,
+    "x": 317.238830566406,
+    "z": 1164.54467773438
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 92.0067138671875,
+    "water": null,
+    "x": 316.466156005859,
+    "z": 1164.03967285156
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 91.9669494628906,
+    "water": null,
+    "x": 315.693481445312,
+    "z": 1163.53454589844
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 91.9310913085938,
+    "water": null,
+    "x": 314.920806884766,
+    "z": 1163.02954101562
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 91.8952331542969,
+    "water": null,
+    "x": 314.148132324219,
+    "z": 1162.52453613281
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 91.8594055175781,
+    "water": null,
+    "x": 313.375457763672,
+    "z": 1162.01953125
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 91.688720703125,
+    "water": null,
+    "x": 312.602783203125,
+    "z": 1161.51452636719
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 91.5150756835938,
+    "water": null,
+    "x": 311.830108642578,
+    "z": 1161.00952148438
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 91.3505249023438,
+    "water": null,
+    "x": 311.057434082031,
+    "z": 1160.50451660156
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 91.1856689453125,
+    "water": null,
+    "x": 310.284759521484,
+    "z": 1159.99938964844
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 91.0022888183594,
+    "water": null,
+    "x": 309.512084960938,
+    "z": 1159.49438476562
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 91.0785522460938,
+    "water": null,
+    "x": 304.876068115234,
+    "z": 1156.46423339844
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 91.2990112304688,
+    "water": null,
+    "x": 304.103393554688,
+    "z": 1155.95922851562
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 91.5174560546875,
+    "water": null,
+    "x": 303.330718994141,
+    "z": 1155.45422363281
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 91.3001708984375,
+    "water": null,
+    "x": 303.835754394531,
+    "z": 1154.68151855469
+  },
+  {
+    "chunk": "(1, 6)",
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "ground": 91.0188903808594,
+    "water": null,
+    "x": 304.340759277344,
+    "z": 1153.90881347656
+  }
+]

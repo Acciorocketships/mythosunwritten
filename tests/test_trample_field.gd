@@ -137,3 +137,72 @@ func test_uploads_coalesce_and_obey_thirty_hertz_ceiling() -> void:
 	field._process(0.01)
 	assert_eq(field.upload_count, 1)
 	field.free()
+
+func _polygon_stamp(at: Vector2) -> Dictionary:
+	return {"position": Vector3(at.x, 0, at.y), "points": PackedVector2Array([
+		at + Vector2(-2, -1), at + Vector2(2, -1),
+		at + Vector2(2, 1), at + Vector2(-2, 1)])}
+
+func test_chunk_updates_match_flat_order_through_overlap_removal_and_scroll() -> void:
+	var field := _field()
+	var reference := _field()
+	var left := _polygon_stamp(Vector2(-.5, 0))
+	var right := _polygon_stamp(Vector2(.5, 0))
+	var distant := _polygon_stamp(Vector2(80, 0))
+	# Completion order is opposite the canonical chunk order; overlap direction
+	# must still match the original flattened, sorted publication exactly.
+	field.update_static_chunks({Vector2i(1, 0): [right, distant]})
+	field.update_static_chunks({Vector2i.ZERO: [left]})
+	reference.set_static_stamps([left, right, distant])
+	assert_eq(field._static_image.get_data(), reference._static_image.get_data())
+	field.stamp(Vector3.ZERO, Vector2.UP, .5, 1)
+	var trail := field._image.get_data()
+	field.update_static_chunks({Vector2i.ZERO: null})
+	reference.set_static_stamps([right, distant])
+	assert_eq(field._static_image.get_data(), reference._static_image.get_data())
+	assert_eq(field._image.get_data(), trail, "removing scenery never resets the player trail")
+	field._scroll_if_needed(Vector2(80, 0))
+	reference._scroll_if_needed(Vector2(80, 0))
+	assert_eq(field._static_image.get_data(), reference._static_image.get_data(),
+		"off-screen retained chunks appear correctly on scroll")
+	field.free(); reference.free()
+
+func test_distant_changes_do_not_trigger_a_local_texture_upload() -> void:
+	var field := _field()
+	field.update_static_chunks({Vector2i.ZERO: [_polygon_stamp(Vector2.ZERO)]})
+	field._upload_if_due(TrampleField.UPLOAD_INTERVAL)
+	var uploads := field.upload_count
+	var before := field._static_image.get_data()
+	field.update_static_chunks({Vector2i(3, 0): [_polygon_stamp(Vector2(600, 0))]})
+	field._upload_if_due(TrampleField.UPLOAD_INTERVAL)
+	assert_eq(field.upload_count, uploads, "a distant arrival cannot upload the local image")
+	field.update_static_chunks({Vector2i(3, 0): null})
+	field._upload_if_due(TrampleField.UPLOAD_INTERVAL)
+	assert_eq(field.upload_count, uploads, "a distant eviction cannot upload the local image")
+	assert_eq(field._static_image.get_data(), before)
+	field.free()
+
+func test_replacing_a_chunk_clears_its_old_local_footprint() -> void:
+	var field := _field()
+	field.update_static_chunks({Vector2i.ZERO: [_polygon_stamp(Vector2.ZERO)]})
+	assert_gt(field.static_strength(Vector2.ZERO), .99)
+	field.update_static_chunks({Vector2i.ZERO: [_polygon_stamp(Vector2(100, 0))]})
+	assert_eq(field.static_strength(Vector2.ZERO), 0.0)
+	field._scroll_if_needed(Vector2(100, 0))
+	assert_gt(field.static_strength(Vector2(100, 0)), .99)
+	field.free()
+
+func test_sparse_epoch_rebase_preserves_scrolled_trails_and_never_revives_expired_pixels() -> void:
+	var field := _field()
+	field.stamp(Vector3(-5, 0, 0), Vector2.LEFT, .5, 1)
+	field._now = 59
+	field.stamp(Vector3(5, 0, 0), Vector2.RIGHT, .5, 1)
+	field._scroll_if_needed(Vector2(9, 0))
+	field._now = 61
+	var before := field.effective_strength(Vector2(5, 0))
+	field._update_time(0)
+	assert_almost_eq(field.effective_strength(Vector2(5, 0)), before, .002)
+	assert_eq(field.effective_strength(Vector2(-5, 0)), 0.0, "the old footprint cannot revive at the new epoch")
+	field._update_time(181)
+	assert_eq(field.effective_strength(Vector2(5, 0)), 0.0, "a long skipped interval expires the last trail too")
+	field.free()

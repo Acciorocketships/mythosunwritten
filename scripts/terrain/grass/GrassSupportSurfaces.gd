@@ -9,9 +9,18 @@ static func spatial_index(surfaces:Array)->Dictionary:
 	# the same choice as the full scan, including at owner boundaries.
 	for surface:Dictionary in surfaces:
 		if surface.has("grid"):
-			# A heightfield support is looked up directly, not bucketed.
-			if not cells.has(&"grids"):cells[&"grids"]=[]
-			cells[&"grids"].append(surface)
+			# Rock skirts are grids too. Scanning every skirt in a 192 m chunk
+			# at each blade/footprint probe made a tile take several seconds.
+			# Bucket their domains, preserving source order and the exact sampler.
+			if not cells.has(&"grids"):cells[&"grids"]={}
+			var grids:Dictionary=cells[&"grids"]
+			var origin:Vector2=surface.origin
+			var end:=origin+Vector2(int(surface.w)-1,int(surface.h)-1)*float(surface.step)
+			for x in range(floori(origin.x/INDEX_CELL_SIZE),floori(end.x/INDEX_CELL_SIZE)+1):
+				for z in range(floori(origin.y/INDEX_CELL_SIZE),floori(end.y/INDEX_CELL_SIZE)+1):
+					var key:=Vector2i(x,z)
+					if not grids.has(key):grids[key]=[]
+					grids[key].append(surface)
 			continue
 		var bounds:Rect2=surface.bounds
 		for x in range(floori(bounds.position.x/INDEX_CELL_SIZE),floori(bounds.end.x/INDEX_CELL_SIZE)+1):
@@ -22,9 +31,10 @@ static func spatial_index(surfaces:Array)->Dictionary:
 	return cells
 
 static func at_index(cells:Dictionary,point:Vector2)->Dictionary:
-	var result:=at_point(cells.get(Vector2i(floori(point.x/INDEX_CELL_SIZE),floori(point.y/INDEX_CELL_SIZE)),[]),point)
+	var key:=Vector2i(floori(point.x/INDEX_CELL_SIZE),floori(point.y/INDEX_CELL_SIZE))
+	var result:=at_point(cells.get(key,[]),point)
 	var blocked:=false
-	for grid:Dictionary in cells.get(&"grids",[]):
+	for grid:Dictionary in (cells.get(&"grids",{}) as Dictionary).get(key,[]):
 		var sample:=at_grid(grid,point)
 		blocked=blocked or bool(sample.get("blocked",false))
 		if not sample.is_empty() and (result.is_empty() or float(sample.y)>float(result.y)):result=sample

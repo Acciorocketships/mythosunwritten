@@ -1,0 +1,3823 @@
+{
+  "image_bytes": 2006620420,
+  "rows": [
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 22369620,
+      "mips": true,
+      "path": "res://terrain/environment/textures/fantasy_village_outcrop_interfaces/6b8ecd33a34708110ecc.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 22369620,
+      "mips": true,
+      "path": "res://terrain/environment/textures/complete_buildings/7bfa7c2f12ee312ad9d6.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 22369620,
+      "mips": true,
+      "path": "res://terrain/environment/textures/complete_buildings/6b8ecd33a34708110ecc.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 22369620,
+      "mips": true,
+      "path": "res://terrain/environment/textures/fantasy_village_retained_facades/6b8ecd33a34708110ecc.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 22369620,
+      "mips": true,
+      "path": "res://terrain/environment/textures/fantasy_village/6b8ecd33a34708110ecc.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 22369620,
+      "mips": true,
+      "path": "res://terrain/environment/textures/fantasy_village_roof_valleys/6b8ecd33a34708110ecc.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 22369620,
+      "mips": true,
+      "path": "res://terrain/environment/textures/fantasy_village_stairs/6b8ecd33a34708110ecc.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 22369620,
+      "mips": true,
+      "path": "res://terrain/environment/textures/fantasy_village_cliffs/6b8ecd33a34708110ecc.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 22369620,
+      "mips": true,
+      "path": "res://terrain/environment/textures/fantasy_village_fabric_derivatives/6b8ecd33a34708110ecc.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 22369620,
+      "mips": true,
+      "path": "res://terrain/environment/textures/fantasy_village_dormers/6b8ecd33a34708110ecc.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 22369620,
+      "mips": true,
+      "path": "res://terrain/environment/textures/fantasy_village_structures/6b8ecd33a34708110ecc.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 22369620,
+      "mips": true,
+      "path": "res://terrain/environment/textures/fantasy_village_structures/7bfa7c2f12ee312ad9d6.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 22369620,
+      "mips": true,
+      "path": "res://terrain/environment/textures/fantasy_village_tunnel/6b8ecd33a34708110ecc.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 22369620,
+      "mips": true,
+      "path": "res://terrain/environment/textures/fantasy_village_walkways/7bfa7c2f12ee312ad9d6.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 22369620,
+      "mips": true,
+      "path": "res://terrain/environment/textures/fantasy_village_fabric/6b8ecd33a34708110ecc.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 22369620,
+      "mips": true,
+      "path": "res://terrain/environment/textures/fantasy_village_wall_interfaces/6b8ecd33a34708110ecc.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/fantasy_village_fabric_derivatives/66e7853d2ac1790a17b2.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/8738d9a72c777ab60f43.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/fantasy_village_roof_valleys/66e7853d2ac1790a17b2.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/91e9b816c82e8e43ad14.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/94db37627a1019826a30.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/962f55f218a41ed046aa.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/fantasy_village_structures/66e7853d2ac1790a17b2.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/a634e65ed215e4613788.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/b0bacf9bc08ac6ac34ae.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/324da7a92a117c0e7683.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/36b11b481ec634447e57.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/2d26b58775218a50aad7.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/3939f12f65493ec760ed.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/2973b6c5d4f49ae10ce8.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/26f15e067914e744da2d.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/403651da11f06e869d8a.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/212161fe78a38aff0479.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/19c539ddc9e7ae32cf6b.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/173753758685fa88a5cb.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/4a42979c8d14a8937465.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/0f3499b29ddfc1ad37ff.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/665b6098bcd2ed4266f9.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/6f703a7a58b56f27bce0.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/complete_buildings/66e7853d2ac1790a17b2.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/fantasy_village/66e7853d2ac1790a17b2.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/fantasy_village_dormers/66e7853d2ac1790a17b2.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/840229b1859d2b481cf6.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/fantasy_village_fabric/66e7853d2ac1790a17b2.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/872eda365bdbbfd71a7d.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/ce6958a0ba18a36a6558.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/cc208e503e49a0f44873.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/c63f5a654e63d592b4cc.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/e76c53727ffdfddf0c5c.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/native_cliff_foliage/ef073354ab4b4e9338ef.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/fa3b1d71d544c4b2a029.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/bef73cd581f1ebb3af5f.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/beb5becd6778b7976178.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/b9f5d0f92675e7b8cb52.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/e373c53c6944687f9278.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/b9071ea70598cddba288.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/f3cc525e6340c02f2f54.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/fc73dea9f68d4bffa418.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/e2bee11331b06682b970.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 2048,
+      "image_bytes": 16777216,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/f3862d708d0264e0d9a3.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 2048,
+      "image_bytes": 5592432,
+      "mips": true,
+      "path": "res://terrain/environment/textures/meadow/T_Rock_05_SMA.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 2048,
+      "image_bytes": 5592432,
+      "mips": true,
+      "path": "res://terrain/environment/textures/meadow/T_Rock_05_N.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 2048,
+      "image_bytes": 5592432,
+      "mips": true,
+      "path": "res://terrain/environment/textures/meadow/T_Rock_06_A.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 2048,
+      "image_bytes": 5592432,
+      "mips": true,
+      "path": "res://terrain/environment/textures/meadow/T_Rock_05_A.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 2048,
+      "image_bytes": 5592432,
+      "mips": true,
+      "path": "res://terrain/environment/textures/meadow/T_Rock_04_SMA.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 2048,
+      "image_bytes": 5592432,
+      "mips": true,
+      "path": "res://terrain/environment/textures/meadow/T_Rock_04_N.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 2048,
+      "image_bytes": 5592432,
+      "mips": true,
+      "path": "res://terrain/environment/textures/meadow/T_Rock_04_A.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 2048,
+      "image_bytes": 5592432,
+      "mips": true,
+      "path": "res://terrain/environment/textures/meadow/T_Rock_03_SMA.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 2048,
+      "image_bytes": 5592432,
+      "mips": true,
+      "path": "res://terrain/environment/textures/meadow/T_Rock_03_N.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 2048,
+      "image_bytes": 5592432,
+      "mips": true,
+      "path": "res://terrain/environment/textures/meadow/T_Rock_06_N.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 2048,
+      "image_bytes": 5592432,
+      "mips": true,
+      "path": "res://terrain/environment/textures/meadow/T_Rock_06_SMA.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 2048,
+      "image_bytes": 5592432,
+      "mips": true,
+      "path": "res://terrain/environment/textures/meadow/T_Rock_03_A.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 2048,
+      "image_bytes": 5592432,
+      "mips": true,
+      "path": "res://terrain/environment/textures/meadow/T_Terrain_Grass_01_A.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 2048,
+      "image_bytes": 5592432,
+      "mips": true,
+      "path": "res://terrain/environment/textures/meadow/T_Terrain_Grass_01_N.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 2048,
+      "image_bytes": 5592432,
+      "mips": true,
+      "path": "res://terrain/environment/textures/meadow/T_Rock_02_SMA.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 2048,
+      "image_bytes": 5592432,
+      "mips": true,
+      "path": "res://terrain/environment/textures/meadow/T_Rock_02_N.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 2048,
+      "image_bytes": 5592432,
+      "mips": true,
+      "path": "res://terrain/environment/textures/meadow/T_Rock_02_A.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 2048,
+      "image_bytes": 5592432,
+      "mips": true,
+      "path": "res://terrain/environment/textures/meadow/T_Rock_01_SMA.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 2048,
+      "image_bytes": 5592432,
+      "mips": true,
+      "path": "res://terrain/environment/textures/meadow/T_Rock_01_N.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 2048,
+      "image_bytes": 5592432,
+      "mips": true,
+      "path": "res://terrain/environment/textures/meadow/T_Rock_01_A.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 5592404,
+      "mips": true,
+      "path": "res://terrain/environment/textures/low_poly_fantasy_village_compact_valleys/3f78d8be298b98f4015e.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 5592404,
+      "mips": true,
+      "path": "res://terrain/environment/textures/low_poly_fantasy_village_fabric/3f78d8be298b98f4015e.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 5592404,
+      "mips": true,
+      "path": "res://terrain/environment/textures/kaykit_terraces/db6c409d41d895cfc2ac.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 5592404,
+      "mips": true,
+      "path": "res://terrain/environment/textures/kaykit/db6c409d41d895cfc2ac.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 5592404,
+      "mips": true,
+      "path": "res://terrain/environment/textures/low_poly_fantasy_village/3f78d8be298b98f4015e.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/polyart_farmlands/31df81e116bc86e0bd92.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/1cb6f41c4a332a13dde0.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/polyart_farmlands/362dcea217b0acfccced.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/2192046d0b51cd1d2519.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/polyart_farmlands/654ba1bbec40dcb09ceb.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/219ef17dd2e0db32a4cd.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/polyart_farmlands/6a97231d314f76766630.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/polyart_farmlands/7b1359f6f46a039e8453.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/2a22e078a5804cf5a762.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/01330ad60e5211c9970d.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/polyart_farmlands/e77f4feb2a26952f3160.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/2f56f9e994accdcbedba.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/317865e922f55f98ceb4.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/polyart_farmlands/8c27095ff52f390ca68e.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/native_cliff_foliage/07c26a16d2f23d3e1134.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/15ea7a9c4a02c052fce2.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/15b24b53dcb035bf82a6.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/143ac9e6f2827a5c698a.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/13b144d04daf9f32868e.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/106503d58f61c402822e.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/0f1d44a15f86155de192.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/0cfb66c7cb8d388aed55.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/0c3c9b3561e957276eb0.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/0c1211a05d284f55d2cb.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/06dc9a3e3d9913a70bd1.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/02f803e03fe93aaf277f.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/06a8184712a082a0f4a7.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/068d61ddd0f14350f506.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/063b37b666f093ca3f70.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/d2ce5a927e27f196a57f.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/d0cff6b6a1c5b83ed04a.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/d05a09bef1fc862504e1.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/c600388731490af9c0c6.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/c54951e4723f0ce97907.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/c548c1aba17bd09bbc73.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/c4fd5f29862af971dc8c.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/c3721c37bdc04f59b3a4.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/b95d9bb534ec77796710.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/b780320ec2ae1a24250b.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/b44191c35b72f7ddeb45.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/b3c086055963c4256ad8.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/b35ed87e37b5aab4d7c8.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/b276d0e37013c967f659.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/ab9640a777ad4f4a174d.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/a50134c1ad7565ea4495.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/a2220738190d13f0bb9d.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/a1f0e5e0e4366e363861.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/9ef63af1a1d3aead7414.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/98df796ffdd2f19de340.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/8d2611ed2c4db405c3ca.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/ff799f30063ea31c8acc.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/fdb992192889458511a2.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/fc8280d96d344bec3363.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/fbdb058f02677d25467f.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/fa83461f7d4460691fe0.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/f89220966ff9f4ef252a.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/f81a83ea3b54a50560e1.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/f634cfe131de360da669.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/f4ac6f9e79a34a621ba7.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/f0e6167117cefc69407c.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/f05e6e8a8a7bed06dc0d.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/ecd0ecd91affd8ecac21.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/ec3b7060e7ab54ad6c79.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/ea5794d55246b176de84.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/e9389edef872288d5d37.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/e6b0737bbd494e525ad3.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/e670f7dcad7486b50e2a.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/dc4a8b3e9f86699f1be4.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/da4ffde4444a8a03ebe6.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/d8de778fdb6487396b85.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/d8051bdeabfbcdf6df42.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/61d66edc55898f5b8db7.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/61b92ac5af132825dc7b.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/58beccffe79ff50c296c.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/58833ae329eb7f6517b7.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/5561f498321c46817d30.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/4f5b76c3bf9804e9ca03.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/4aa4547b5bb156c1fb0b.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/4a7d769407cd67769b89.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/48b8a520a3e0b6412771.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/46a3c39270dc7db8f749.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/469355ad62b1b1ccd6ad.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/465b185084c0f2e0d88f.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/439a8063fe3395a3d06c.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/41eaa0d5040f05f2e3e7.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/3e312c49b651153b113b.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/3c72aac15c8c34dfbfb1.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/3a8895b7bb6484957763.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/39d29607ffd8b1fa5e5d.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/391c569e435df2040e23.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/34dd33086ceafdce6e27.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/33bb81be5a3df30cfc8b.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/8d11a00e8d7bb74ecc25.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/8cfb099af30360d8e7b9.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/8cd76a5efe016618b10f.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/8caf561e8bdacae1e293.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/8b3ed7282191b15fe16d.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/894ede395c2c4699b270.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/885343c82204213f9d32.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/86cacc5449704b96323a.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/86b2c1ab14c0276a4f23.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/82f538011f18bef49e25.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/81b61f641910bfec9f86.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/78a373d42139e47149dd.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/7653000ad09487d9e5de.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/73965aecdf27cee72c17.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/73885f516eb0ecd9dc14.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/72b8eb7caec636114d6e.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/6ec1177f854a7a30bb73.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/6ddd4ccb5f53a916ab51.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/6d707dd903562cb6ddb1.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/6bf450646f303982682d.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/6394580f1008aa70b5fd.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/62d91b016415392c426c.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/811dd46f0135f0e5acda.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/955562ad0f4849186027.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/9b47aff90e7172803fc7.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/9dcdff7c5a58590cb83a.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/9eecb41e36626e6b4c50.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/a88ddce63597b97d22ca.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/b4123b22d4219e5d0fc3.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/bb7630ee2a37ea96f7e7.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/bc927b69250454902fc7.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/bd8b8d15b472a7e1f14a.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/c61847ffa9419a8ae4d8.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/c836b5fdf399c4410863.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/c83be66b80dbda2f2f88.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/c9b0aa89f3a2af05f8c9.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/defef59994b918c58916.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/e2ee63c36e8a3e21a3b3.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/e4af0861ced0828ad1d2.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/e4f7f40d9b990f0ab202.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/cliff_moss_rocks/19d827a5da022f47d1d9.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/068a3cde96f143b7b19e.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/0c3ad98755d092cd2f4c.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/2edc88eedb119ddcec40.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/326b433513f0831fa479.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/3ae53a9f7b54eb5486ef.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/3bc090fd7b3f7199de26.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/421e1becd6f1cb866a43.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/43f82653c04604ec04e2.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/526255f719a859b905ef.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/5558a77f6485247d80c7.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/57585ed891e22983621c.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/6090ddb008759e3c6b56.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/6a6d3d6161f36244ab4f.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/6c85fe13d4cf50759f02.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/6ea40b64bde4f9feca8b.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/75866d2b26e6f2d0b12f.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/78a7976bfbd44be474f5.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 1024,
+      "image_bytes": 4194304,
+      "mips": false,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/78be014ea215c30d108c.res",
+      "width": 1024
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 512,
+      "image_bytes": 1048576,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/40f332d896c3b8d5c344.res",
+      "width": 512
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 512,
+      "image_bytes": 1048576,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/3c89ac08bfe2b4f9d41d.res",
+      "width": 512
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 512,
+      "image_bytes": 1048576,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/37e6540c557e1f8cf112.res",
+      "width": 512
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 512,
+      "image_bytes": 1048576,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/370d09c40f8545d13bb7.res",
+      "width": 512
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 512,
+      "image_bytes": 1048576,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/6e62e2a3c8633aeddf3a.res",
+      "width": 512
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 512,
+      "image_bytes": 1048576,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/97605743e724cf138368.res",
+      "width": 512
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 512,
+      "image_bytes": 1048576,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/195e85acb040c78aa49f.res",
+      "width": 512
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 512,
+      "image_bytes": 1048576,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/801df3586733a99884f4.res",
+      "width": 512
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 512,
+      "image_bytes": 1048576,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/2cd65518c269e3ef72ac.res",
+      "width": 512
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 512,
+      "image_bytes": 1048576,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/312cd16ce224bbfa9be9.res",
+      "width": 512
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 512,
+      "image_bytes": 1048576,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/2ea8c10ffcee9b826869.res",
+      "width": 512
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 512,
+      "image_bytes": 1048576,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/8ddbd0aad76bea27b516.res",
+      "width": 512
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 512,
+      "image_bytes": 1048576,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/e9e2d071a6b9e077d942.res",
+      "width": 512
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 512,
+      "image_bytes": 1048576,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/cd449af56e2c77aa403f.res",
+      "width": 512
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 512,
+      "image_bytes": 1048576,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/bb179719ec42aa5ce4d1.res",
+      "width": 512
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 512,
+      "image_bytes": 1048576,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/f12fe81c89555f6e6cf3.res",
+      "width": 512
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 512,
+      "image_bytes": 1048576,
+      "mips": false,
+      "path": "res://terrain/environment/textures/native_cliff_foliage/892852198ac28877ec7b.res",
+      "width": 512
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 512,
+      "image_bytes": 1048576,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/517c75df9f8a1544b976.res",
+      "width": 512
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 512,
+      "image_bytes": 1048576,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/ebef41769733706c8b80.res",
+      "width": 512
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 512,
+      "image_bytes": 1048576,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/e651ee48bbd437d3b2e3.res",
+      "width": 512
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_01_autumn_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_01_autumn_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_07_winter_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_07_winter_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_07_summer_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_07_summer_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_07_autumn_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_07_autumn_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_06_winter_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_03_winter_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_01_summer_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_03_summer_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_01_summer_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_03_summer_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_03_autumn_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_01_winter_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_01_winter_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_02_autumn_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_02_autumn_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_02_summer_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_02_summer_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_02_winter_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_03_autumn_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_02_winter_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_03_winter_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_03_summer_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_03_summer_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_03_autumn_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_03_autumn_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_02_winter_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_02_winter_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_02_summer_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_02_summer_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_02_autumn_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_02_autumn_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_01_winter_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_01_winter_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_01_summer_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_01_summer_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_01_autumn_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_01_autumn_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_06_winter_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_06_summer_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_06_summer_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_06_autumn_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_06_autumn_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_05_winter_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_05_winter_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_05_summer_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_05_summer_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_05_autumn_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_05_autumn_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_04_winter_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_04_winter_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_04_summer_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_04_summer_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_04_autumn_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_04_autumn_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_birch_03_winter_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/kaykit/imposter_kaykit_tree_03_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/kaykit/imposter_kaykit_tree_01_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_sapling_01_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_sapling_01_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_sapling_02_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_sapling_02_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_small_tree_01_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_small_tree_01_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_small_tree_02_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_small_tree_02_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_small_tree_03_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_small_tree_03_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_small_tree_04_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_small_tree_04_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_tree_a_full_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_tree_a_full_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_tree_a_young_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_tree_a_young_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_tree_b_full_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_tree_b_full_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_tree_b_young_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_tree_b_young_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_tree_c_full_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_tree_c_full_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_tree_c_full_red_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_tree_c_full_red_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_tree_c_young_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/low_poly_fantasy_village/imposter_lpfv_tree_09_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/low_poly_fantasy_village/imposter_lpfv_tree_09_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/low_poly_fantasy_village/imposter_lpfv_tree_08_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/low_poly_fantasy_village/imposter_lpfv_tree_08_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/low_poly_fantasy_village/imposter_lpfv_tree_07_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/low_poly_fantasy_village/imposter_lpfv_tree_07_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/low_poly_fantasy_village/imposter_lpfv_tree_06_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/low_poly_fantasy_village/imposter_lpfv_tree_06_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/low_poly_fantasy_village/imposter_lpfv_tree_05_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/low_poly_fantasy_village/imposter_lpfv_tree_05_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/low_poly_fantasy_village/imposter_lpfv_tree_04_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/low_poly_fantasy_village/imposter_lpfv_tree_04_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/low_poly_fantasy_village/imposter_lpfv_tree_03_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/low_poly_fantasy_village/imposter_lpfv_tree_03_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/low_poly_fantasy_village/imposter_lpfv_tree_02_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/low_poly_fantasy_village/imposter_lpfv_tree_02_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/low_poly_fantasy_village/imposter_lpfv_tree_01_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/low_poly_fantasy_village/imposter_lpfv_tree_01_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/kaykit/imposter_kaykit_tree_bare_01_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/kaykit/imposter_kaykit_tree_bare_01_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/kaykit/imposter_kaykit_tree_07_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/kaykit/imposter_kaykit_tree_07_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/kaykit/imposter_kaykit_tree_06_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/kaykit/imposter_kaykit_tree_06_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/kaykit/imposter_kaykit_tree_05_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/kaykit/imposter_kaykit_tree_05_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/kaykit/imposter_kaykit_tree_03_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_ivy_01_autumn_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_ivy_01_autumn_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_07_winter_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_07_winter_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_07_summer_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_07_summer_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_07_autumn_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_07_autumn_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_06_winter_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_06_winter_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_06_summer_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_06_summer_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_06_autumn_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_06_autumn_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_05_winter_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_05_winter_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_05_summer_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_05_summer_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_05_autumn_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_05_autumn_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_04_winter_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_04_winter_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_04_summer_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_04_summer_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_04_autumn_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_04_autumn_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_03_winter_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_tree_c_young_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_tree_c_young_red_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_tree_c_young_red_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_tree_d_full_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_tree_d_full_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_tree_d_young_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/polyart_farmlands/imposter_farm_tree_d_young_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/kaykit/imposter_kaykit_tree_01_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_town_birch_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_town_birch_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_ivy_04_winter_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_ivy_04_winter_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_ivy_04_summer_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_ivy_04_summer_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_ivy_04_autumn_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_ivy_04_autumn_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_ivy_02_winter_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_ivy_02_winter_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_ivy_02_summer_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_ivy_02_summer_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_ivy_02_autumn_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_ivy_02_autumn_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_ivy_01_winter_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_ivy_01_winter_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_ivy_01_summer_normal.res",
+      "width": 2048
+    },
+    {
+      "compressed": true,
+      "format": 22,
+      "height": 256,
+      "image_bytes": 699152,
+      "mips": true,
+      "path": "res://terrain/environment/textures/angry_mesh_meadow/imposter_meadow_oak_ivy_01_summer_albedo.res",
+      "width": 2048
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 256,
+      "image_bytes": 262144,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/a439edf363d05763b92a.res",
+      "width": 256
+    },
+    {
+      "compressed": false,
+      "format": 5,
+      "height": 128,
+      "image_bytes": 65536,
+      "mips": false,
+      "path": "res://terrain/environment/textures/suntail_village_kit/63bad4cefbcd09192a9d.res",
+      "width": 128
+    }
+  ],
+  "scope": "all baked environment textures, including assets not used by the current world; image storage, not a live VRAM measurement",
+  "textures": 424
+}

@@ -6,6 +6,9 @@ extends GutTest
 
 const SEED := 991177
 
+class PondJoinWater extends WaterPlan:
+	func noise_h(_point:Vector2)->float:return 8.0
+
 # Production amplitude: since the 2026-10-02 regime field (metres over the
 # 128 m amplitude) a 22 m world never reaches the 15.36 m headwater floor.
 func _plan() -> WaterPlan:
@@ -274,7 +277,7 @@ func test_join_target_hits_channel_only_when_downhill() -> void:
 		"point beyond channel width does not join")
 
 func test_join_target_hits_pond_footprint() -> void:
-	var plan: WaterPlan = _plan()
+	var plan: WaterPlan = PondJoinWater.new(SEED,160,40)
 	var other: RiverTrace = RiverTrace.new()
 	other.source_cell = Vector2i(999, 998)
 	other.priority = 1
@@ -283,11 +286,11 @@ func test_join_target_hits_pond_footprint() -> void:
 	other.beds = PackedFloat32Array([5.0])
 	other.pond = PondStamp.new(Vector2(300, 300), 60.0, 4242, 2, 3.5)
 	var index := plan._index_neighbour_rivers([other])
-	# pond.surface_y() = 2*4 - SURFACE_DROP(1) = 7. Inside footprint + bed>=7 => join.
+	# A genuinely excavated basin: water is 7 m and the carved bed is 4.5 m.
 	assert_eq(plan._join_target(Vector2(300, 300), 8.0, index), other,
 		"point inside pond footprint and downhill joins")
-	assert_null(plan._join_target(Vector2(300, 300), 6.0, index),
-		"pond surface above our bed does not accept the join")
+	assert_null(plan._join_target(Vector2(300, 300), 4.0, index),
+		"pond surface above our incoming water (bed + SURFACE_RIDE) does not accept the join")
 
 # ------------------------------------------------------------
 # Carve field — window-independent, spawn-dry, lowers toward beds

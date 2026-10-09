@@ -124,6 +124,7 @@ const MIN_STEPS := 220
 const LOWLANDS_HEIGHT := 2.56     # physical lowland floor => terminal pond
 const SPAWN_WATER_RADIUS := 200.0 # dry spawn disk (spawn clear 60+120 + margin)
 const JOIN_DEPTH := 2             # junction dependency recursion cap
+const JOIN_APPROACH_GRADE := 0.25 # maximum added grade while descending to a receiver
 # Route planning deliberately sees a slightly wider version of the source
 # geometry than the rendered-water seed. Exact validation still reads the
 # hydrostatic field through WaterFieldContext.
@@ -671,6 +672,7 @@ func _walk(sc: Vector2i, progress_start := -1.0, progress_end := -1.0) -> RiverT
 		p = next
 		arc += TRACE_STEP
 		bed = _contained_bed(bed, p, dir, lerpf(W_MIN, W_MAX, arc / (MAX_STEPS * TRACE_STEP)))
+	_fit_source_bed(t)
 	_shape_alluvial_reach(t)
 	t.pond = _make_pond(p, arc, t.beds[-1])
 	_fit_terminal_land(t)
@@ -689,10 +691,22 @@ func _trace_from_native(sc: Vector2i, w: Dictionary) -> RiverTrace:
 	t.points = w.points
 	t.beds = w.beds
 	t.widths = w.widths
+	_fit_source_bed(t)
 	_shape_alluvial_reach(t)
 	t.pond = _make_pond(w.end, float(w.arc), t.beds[-1])
 	_fit_terminal_land(t)
 	return t
+
+
+## The pool and its outlet share one hydraulic datum. A summit pool may
+## sit below the independently contained raw bed; allowing that bed to rise
+## above the pool strands the spring until the terrain drops again.
+static func _fit_source_bed(trace: RiverTrace) -> void:
+	if trace.source_pool == null: return
+	var ceiling := trace.source_pool.surface_y() - WaterField.SURFACE_RIDE
+	for i in trace.beds.size():
+		if trace.beds[i] <= ceiling: break
+		trace.beds[i] = ceiling
 
 
 ## Place the lake's dry land inside its actual wobbled boundary and clear of
@@ -739,7 +753,8 @@ func _joined_trace(sc: Vector2i, depth: int, progress_start: float,
 	var others := _neighbour_rivers(sc, depth, progress_start, progress_end)
 	var index := _index_neighbour_rivers(others)
 	for i in raw.points.size():
-		if _join_target(raw.points[i], raw.beds[i], index) == null:
+		var receiver:=_join_target(raw.points[i], raw.beds[i], index)
+		if receiver == null:
 			continue
 		var t := RiverTrace.new()
 		t.source_cell = raw.source_cell
@@ -747,6 +762,9 @@ func _joined_trace(sc: Vector2i, depth: int, progress_start: float,
 		t.source_pool = raw.source_pool
 		t.points = raw.points.slice(0, i + 1)
 		t.beds = raw.beds.slice(0, i + 1)
+		# A footprint touch is not a level handoff. Descend to the actual
+		# receiving datum rather than ending a high ribbon over a lower lake.
+		t.beds=_fit_join_beds(t.points,t.beds,_receiving_bed(raw.points[i],raw.beds[i],receiver))
 		t.widths = raw.widths.slice(0, i + 1)
 		for bar: Dictionary in raw.land_bars:
 			if int(bar.last_station)<i: t.land_bars.append(bar)
@@ -890,7 +908,8 @@ func _neighbour_rivers(sc: Vector2i, depth: int,
 
 ## The higher-priority river whose water p lands in, or null. A join needs
 ## the target's bed at the touch point to be at-or-below ours (+0.5 m slack)
-## — water never joins uphill. Pond/pool footprints count as their river.
+## — water never joins uphill. A pond's dry rim or retained island does not
+## receive water merely because it lies inside the nominal footprint.
 func _join_target(p: Vector2, bed: float,
 		index: Dictionary) -> RiverTrace:
 	var others: Array = index.rivers
@@ -900,12 +919,10 @@ func _join_target(p: Vector2, bed: float,
 	# samples use the local index below.
 	for other_index in others.size():
 		var other := others[other_index] as RiverTrace
-		if other.source_pool != null and other.source_pool.footprint_t(p) < 1.0 \
-				and other.source_pool.surface_y() <= bed + 0.5:
+		if _pond_receives(other.source_pool,p,bed):
 			first_match = other_index
 			break
-		if other.pond != null and other.pond.footprint_t(p) < 1.0 \
-				and other.pond.surface_y() <= bed + 0.5:
+		if _pond_receives(other.pond,p,bed):
 			first_match = other_index
 			break
 	for entry: Vector3i in _nearby_neighbour_points(index, p, ALLUVIAL_HALF_WIDTH):
@@ -919,6 +936,36 @@ func _join_target(p: Vector2, bed: float,
 			first_match = entry.x
 	return others[first_match] as RiverTrace if first_match < others.size() \
 		else null
+
+
+func _pond_receives(pond:PondStamp,p:Vector2,bed:float)->bool:
+	if pond==null or pond.footprint_t(p)>=1.0 or pond.surface_y()>bed+WaterField.SURFACE_RIDE+WaterField.EPS:
+		return false
+	var ground:=noise_h(p)
+	return ground-pond.carve_at(p,ground)<pond.surface_y()-WaterField.EPS
+
+
+func _receiving_bed(p:Vector2,bed:float,receiver:RiverTrace)->float:
+	var result:=INF
+	for pond:PondStamp in [receiver.source_pool,receiver.pond]:
+		if _pond_receives(pond,p,bed):result=minf(result,pond.surface_y()-WaterField.SURFACE_RIDE)
+	for i in receiver.points.size():
+		if p.distance_squared_to(receiver.points[i])<=receiver.widths[i]*receiver.widths[i] and receiver.beds[i]<=bed+.5:
+			result=minf(result,receiver.beds[i])
+	return result
+
+
+## A lower receiver must not manufacture a many-storey step in the last
+## 12 m station. Carry that added descent upstream at at most 1:4 until it
+## meets the original bed; original reaches farther upstream are untouched.
+static func _fit_join_beds(points:PackedVector2Array,beds:PackedFloat32Array,receiver:float)->PackedFloat32Array:
+	var result:=beds.duplicate()
+	result[-1]=minf(result[-1],receiver)
+	for i in range(result.size()-2,-1,-1):
+		var ceiling:=result[i+1]+points[i].distance_to(points[i+1])*JOIN_APPROACH_GRADE
+		if result[i]<=ceiling:break
+		result[i]=ceiling
+	return result
 
 
 func _index_neighbour_rivers(others: Array) -> Dictionary:

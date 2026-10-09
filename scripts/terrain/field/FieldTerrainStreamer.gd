@@ -17,7 +17,9 @@ const CHUNK_WORLD := TerrainChunkMesher.CHUNK_WORLD   # 192 m, 16 x 16 lattice p
 ## These chunks already belong to the ordinary streaming footprint.
 const STARTUP_SUPPORT_HALF_EXTENT := CHUNK_WORLD
 const TERRAIN_PREFETCH_RADIUS := CHUNK_WORLD * 0.5
-const PREFETCH_SECONDS := 30.0
+## Village planning plus cliff/water tails can exceed thirty seconds.
+## Prioritize farther along travel without expanding the loaded footprint.
+const PREFETCH_SECONDS := 60.0
 const PRIORITY_FOCUS_STEP := 8.0
 ## Keep the production spawn just inside one chunk instead of exactly on the
 ## four-way world-origin seam so the player capsule has one collision owner.
@@ -43,6 +45,13 @@ signal startup_loading_completed
 @export var terrain_parent: Node
 @export var CHUNK_RADIUS: int = 3
 @export var KEEP_RADIUS: int = 4
+# Exact nearby collision, validated through sustained travel and teleport arrival.
+static var COLLISION_RESIDENCY := true
+## Player capsule radius is 0.398 m; at 10 m/s its next 60 Hz step is 0.167 m.
+## A whole terrain tile (12 m) held it for unrelated diagonal neighbors.
+const PLAYER_COLLISION_MARGIN := 1.0
+var _collision_residency = preload("res://scripts/terrain/field/TerrainCollisionResidency.gd").new()
+var _collision_actors = preload("res://scripts/terrain/field/TerrainCollisionActors.gd").new()
 ## Finished background chunks INTEGRATED (added to the tree) per frame.
 @export var MAX_BUILD_PER_FRAME: int = 1
 ## Render-only dressing batches committed per frame. Terrain/water readiness
@@ -100,6 +109,7 @@ var _trample_field: TrampleField
 var _grass_runtime_enabled := false
 var _dressing_trample_by_chunk: Dictionary = {} # Vector2i -> Array[Dictionary]
 var _static_trample_dirty := false
+var _static_trample_changes: Dictionary = {} # chunk -> new stamps, null for removal
 var _built: Dictionary = {}        # Vector2i -> Node3D          (main thread only)
 var _storey_snapshots: Dictionary = {} # Vector2i -> PackedInt32Array per lattice point (main thread only)
 var _point_snapshots: Dictionary = {} # Vector2i -> PackedFloat32Array (height, graded) per lattice point (main thread only)
@@ -170,6 +180,9 @@ func desired_chunks(centre: Vector2i, radius: int) -> Array:
 func _ready() -> void:
 	if terrain_parent == null:
 		return   # bare instance (unit test)
+	if COLLISION_RESIDENCY:
+		_collision_actors.start(get_tree())
+		process_physics_priority = -100
 	# Native parity gates (height field, river walk, tile kernel) run on the
 	# first worker that needs them, not here on the main thread (NativeGates).
 	preload("res://scripts/native/NativeGates.gd").deferred = true
@@ -280,6 +293,7 @@ func _ready() -> void:
 	for asset_id: StringName in _feature_program.referenced_asset_ids:
 		if not _environment_cache.is_prepared(asset_id):
 			_feature_warm.append(asset_id)
+	_environment_cache.retain_texture_sources = not _feature_warm_done
 	_features_root = Node3D.new()
 	_features_root.name = &"ManmadeFeatures"
 	add_child(_features_root)
@@ -447,6 +461,8 @@ func _warm_feature_assets() -> void:
 	_feature_warm_usec += Time.get_ticks_usec() - started
 	if _feature_warm.is_empty():
 		_feature_warm_done = true
+		_environment_cache.retain_texture_sources = false
+		_environment_cache.release_texture_sources()
 		print("[terrain-streamer] feature_assets_warm ms=%d" % (_feature_warm_usec / 1000))
 		# Rebuilt by _update_render_warmup with every prepared visual.
 		if _render_warmup != null:
@@ -749,7 +765,9 @@ func _worker() -> void:
 			_begin_worker_phase(c, &"tail_wait")
 			# The rest is pure per-chunk work on immutable inputs: run it on the
 			# thread pool and go on planning the next chunk.
-			_tail_slots.wait()
+			if not _wait_for_tail_slot():
+				_publish_worker_result({}, job)
+				continue
 			_mutex.lock()
 			var exiting := _exit
 			var mesher_index := -1 if exiting else int(_tail_free.pop_back())
@@ -773,6 +791,28 @@ func _worker() -> void:
 			inputs = []
 			result["build_terrain"] = false
 		_publish_worker_result(result, job)
+
+
+## Waiting for a tail slot is also a safe planning boundary. A background
+## chunk must not pin the only planning thread while nearby ground becomes
+## urgent; its complete cached inputs can be reconstructed when it resumes.
+func _wait_for_tail_slot() -> bool:
+	while true:
+		if _worker_should_cancel(): return false
+		_mutex.lock()
+		# Reserve one mesher for visible/upcoming ground once startup is
+		# playable. Distant scenery otherwise occupies all three for tens
+		# of seconds when the player changes direction.
+		var allowed := not startup_loading_complete() or _tail_free.size() > 1 \
+			or _active_job.is_empty() or _active_job_priority_locked() < 3
+		_mutex.unlock()
+		if allowed and _tail_slots.try_wait(): break
+		OS.delay_msec(5)
+	# A higher-priority request may have arrived with the available slot.
+	if _worker_should_cancel():
+		_tail_slots.post()
+		return false
+	return true
 
 
 ## Parallel chunk tails. The planning worker (one thread, owner of the
@@ -1057,11 +1097,28 @@ func _report_slow_frame() -> void:
 			_built.size(), " ".join(parts)])
 	_marks.clear()
 
+func _collision_ready_at(position: Vector3, margin := 12.0) -> bool:
+	if not _collision_residency.is_ready(chunk_of(position)): return false
+	for dx in [-margin,margin]:
+		for dz in [-margin,margin]:
+			if not _collision_residency.is_ready(chunk_of(position+Vector3(dx,0,dz))): return false
+	return true
+
+func _physics_process(_delta: float) -> void:
+	if not COLLISION_RESIDENCY or _plan == null or player == null: return
+	_collision_residency.update_interests(_collision_actors.interests())
+	_collision_actors.guard_except(player,_collision_ready_at)
+	if not _collision_ready_at(player.global_position,PLAYER_COLLISION_MARGIN): _freeze_player(true)
+
 func _process(_delta: float) -> void:
 	var profile_started := Time.get_ticks_usec() if PROFILE_STREAMING else 0
 	if _plan == null or player == null:
 		return
 	_mark(&"start")
+	if COLLISION_RESIDENCY:
+		_collision_residency.update_interests(_collision_actors.interests())
+		_collision_residency.drain()
+		_mark(&"collision_residency")
 	var centre := chunk_of(player.global_position)
 	_mutex.lock()
 	_mark(&"stream_lock")
@@ -1135,6 +1192,7 @@ func _process(_delta: float) -> void:
 		_mutex.unlock()
 	_mark(&"priorities")
 	var current_chunk_ready := _built.has(centre) and _feature_square_ready(centre)
+	if COLLISION_RESIDENCY: current_chunk_ready = current_chunk_ready and _collision_ready_at(player.global_position,PLAYER_COLLISION_MARGIN)
 	var arrival_ready := _arrival_support_ready()
 	_settle_released_player()
 	_freeze_player(not current_chunk_ready or not startup_loading_complete() or not arrival_ready)
@@ -1149,11 +1207,12 @@ func _process(_delta: float) -> void:
 		if maxi(absi(c.x - centre.x), absi(c.y - centre.y)) > KEEP_RADIUS:
 			_dressing_queue.invalidate_chunk(c)
 			_telemetry.count(&"terrain_evictions")
-			_built[c].queue_free()
+			_retire_terrain(_built[c])
 			_built.erase(c)
 			_storey_snapshots.erase(c)
 			_point_snapshots.erase(c)
 			if _dressing_trample_by_chunk.erase(c):
+				_static_trample_changes[c] = null
 				_static_trample_dirty = true
 			_terrain_generation[c] = int(_terrain_generation.get(c, 0)) + 1
 	var feature_keep := KEEP_RADIUS + _feature_program.geometry_halo
@@ -1161,7 +1220,7 @@ func _process(_delta: float) -> void:
 		if maxi(absi(c.x - centre.x), absi(c.y - centre.y)) > feature_keep:
 			_feature_queue.invalidate_chunk(c)
 			if _feature_nodes.has(c):
-				_feature_nodes[c].queue_free()
+				_retirement.enqueue(_feature_nodes[c])
 				_feature_nodes.erase(c)
 			_feature_ready.erase(c)
 			_feature_generation[c] = int(_feature_generation.get(c, 0)) + 1
@@ -1174,6 +1233,8 @@ func _process(_delta: float) -> void:
 		_refresh_static_dressing()
 		_telemetry.timing(&"main/static_dressing", Time.get_ticks_usec() - static_started)
 	_mark(&"evict_trample")
+	_retirement.drain()
+	_mark(&"retire_nodes")
 	_report_slow_frame()
 	_telemetry.timing(&"main/streamer", Time.get_ticks_usec() - profile_started)
 
@@ -1186,11 +1247,12 @@ func rebuild_terrain(chunks: Array) -> void:
 		if not _built.has(c):
 			continue
 		_dressing_queue.invalidate_chunk(c)
-		_built[c].queue_free()
+		_retire_terrain(_built[c])
 		_built.erase(c)
 		_storey_snapshots.erase(c)
 		_point_snapshots.erase(c)
 		_dressing_trample_by_chunk.erase(c)
+		_static_trample_changes[c] = null
 		_static_trample_dirty = true
 		_terrain_generation[c] = int(_terrain_generation.get(c, 0)) + 1
 		if _grass_runtime_enabled:
@@ -1396,6 +1458,9 @@ func _accept_feature_ready(event: Dictionary) -> void:
 ## as built only after its last step, so readiness and the player freeze are
 ## unchanged; a whole-chunk commit had held single frames for 45-870 ms.
 const INTEGRATE_BUDGET_USEC := 6000
+## Once playable, distant scenery must leave room for input and rendering.
+## Startup and the predicted travel corridor keep the full arrival budget.
+const BACKGROUND_INTEGRATE_BUDGET_USEC := 2000
 var _integrating: Dictionary = {}
 var _integrating_node_ref: Dictionary = {}
 
@@ -1436,7 +1501,10 @@ func _integrate_pending_terrain(centre: Vector2i) -> void:
 				print("[terrain-streamer] slow_abandon chunk=%s ms=%.1f" % [c,
 					(Time.get_ticks_usec() - abandon_started) / 1000.0])
 			continue
-		if stepped and Time.get_ticks_usec() - frame_started >= INTEGRATE_BUDGET_USEC:
+		var budget := INTEGRATE_BUDGET_USEC
+		if startup_loading_complete() and _terrain_priority_tier(c,centre,_queue_lod_origin) == 3:
+			budget = BACKGROUND_INTEGRATE_BUDGET_USEC
+		if stepped and Time.get_ticks_usec() - frame_started >= budget:
 			break
 		var step_started := Time.get_ticks_usec()
 		var steps: Array = _integrating.steps
@@ -1505,9 +1573,11 @@ func _pending_index_of(result: Dictionary) -> int:
 	return -1
 
 func _abandon_integration() -> void:
-	var node := _integrating_node_ref.get("node") as Node3D
-	if node != null and is_instance_valid(node) and node.get_parent() == null:
-		node.free()
+	for key: String in ["node", "fx"]:
+		var node: Variant = _integrating_node_ref.get(key)
+		if is_instance_valid(node) and node.get_parent() == null:
+			_retirement.enqueue(node)
+	_integrating_node_ref = {}
 	var abandoned := _integrating
 	_integrating = {}
 	_release_off_main(abandoned)
@@ -1526,6 +1596,17 @@ func _release_off_main(integration: Dictionary) -> void:
 
 ## Payloads to release off the main thread (main thread only).
 var _drop_box: Array = []
+var _retirement := preload("res://scripts/terrain/field/TerrainRetirementQueue.gd").new()
+
+func _retire_terrain(node: Node) -> void:
+	if node.has_meta(&"collision_residency_chunk"):
+		_drop_box.append(_collision_residency.unregister_chunk(node.get_meta(&"collision_residency_chunk")))
+	# The grass snapshot owns large plain-data support/field dictionaries.
+	# Do not let the last node reference release them in the deletion queue.
+	if node.has_meta(&"grass_sampling"):
+		_drop_box.append(node.get_meta(&"grass_sampling"))
+		node.remove_meta(&"grass_sampling")
+	_retirement.enqueue(node)
 
 ## One pool task empties the box, so its payloads die there. Called at the
 ## end of _process: the box must hold the last reference, and the frames that
@@ -1600,9 +1681,13 @@ func _integration_steps(result: Dictionary) -> Array[Callable]:
 		if _grass_runtime_enabled:
 			node.set_meta(&"grass_sampling", result.grass_sampling)
 		_built[c] = node
+		if COLLISION_RESIDENCY:
+			_collision_residency.register_chunk(c,node)
+			node.set_meta(&"collision_residency_chunk",c)
 		_storey_snapshots[c] = result.storeys
 		_point_snapshots[c] = result.get("points", PackedFloat32Array())
 		_dressing_trample_by_chunk[c] = _dressing_trample_stamps(result.dressing)
+		_static_trample_changes[c] = _dressing_trample_by_chunk[c]
 		_static_trample_dirty = true
 		var t3 := Time.get_ticks_usec()
 		var generation: int = result.terrain_generation
@@ -1618,7 +1703,7 @@ func _integration_steps(result: Dictionary) -> Array[Callable]:
 	steps.append_array(fx_steps)
 	for label in fx_labels: labels.append("fx:" + label)
 	_step_labels = labels
-	_integrating_node_ref = {"node": node}
+	_integrating_node_ref = {"node": node, "fx": fx_root}
 	return steps
 
 ## Publish loaded structural dressing as a persistent layer, separate from the
@@ -1627,15 +1712,8 @@ func _integration_steps(result: Dictionary) -> Array[Callable]:
 func _refresh_static_dressing() -> void:
 	if _trample_field == null:
 		return
-	var chunk_keys: Array[Vector2i] = []
-	chunk_keys.assign(_dressing_trample_by_chunk.keys())
-	chunk_keys.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
-		return a.x < b.x or (a.x == b.x and a.y < b.y))
-	var all_stamps: Array[Dictionary] = []
-	for chunk: Vector2i in chunk_keys:
-		for stamp: Dictionary in _dressing_trample_by_chunk[chunk]:
-			all_stamps.append(stamp)
-	_trample_field.set_static_stamps(all_stamps)
+	_trample_field.update_static_chunks(_static_trample_changes)
+	_static_trample_changes.clear()
 	_static_trample_dirty = false
 
 func _dressing_trample_stamps(payload: EnvironmentInstancePayload) -> Array[Dictionary]:
@@ -1747,7 +1825,12 @@ func _terrain_priority_tier(chunk: Vector2i, centre: Vector2i,
 		return 0
 	if is_finite(_travel_entry_distance(chunk,lod_origin)):
 		return 1
-	if distance_to_chunk(lod_origin, chunk) < TERRAIN_PREFETCH_RADIUS:
+	# The visible grass ring reaches farther than the collision look-ahead.
+	# Ground supporting that ring is nearby work too; treating its outer band
+	# as distant scenery delays both its planner dependencies and integration.
+	var nearby_radius := maxf(TERRAIN_PREFETCH_RADIUS,
+		GrassStreamer.GRASS_RADIUS if GRASS_ENABLED else 0.0)
+	if distance_to_chunk(lod_origin, chunk) < nearby_radius:
 		# Upcoming crossings precede lateral scenery while moving. Giving both
 		# the same tier lets a cold lateral dependency monopolize the worker
 		# until the crossing has already become missing current ground.
@@ -2040,7 +2123,14 @@ static func _key_less(a: Vector2i, b: Vector2i) -> bool:
 	return a.x < b.x or (a.x == b.x and a.y < b.y)
 
 func _exit_tree() -> void:
+	_collision_actors.stop()
+	for chunk: Vector2i in _collision_residency._entries.keys():
+		_drop_box.append(_collision_residency.unregister_chunk(chunk))
 	_restore_startup_render_limit()
+	# A quit can land halfway through a commit, before either root is attached.
+	# Such nodes are not owned by the scene tree and must be retired explicitly.
+	_abandon_integration()
+	_retirement.clear()
 	# The cliff style is process-wide: leave the default (`chosen`) behind.
 	if not CLIFF_STYLE.is_empty():
 		var style := preload("res://scripts/terrain/field/CliffRockStyle.gd")
@@ -2091,6 +2181,18 @@ func streaming_profile_snapshot() -> Dictionary:
 	return result
 
 
+## Caller holds _mutex. Feature dependencies retain their inherited urgency.
+func _active_job_priority_locked() -> int:
+	var tier := _terrain_priority_tier(_active_job.chunk, _profile_player_chunk, _queue_lod_origin)
+	if bool(_active_job.build_features):
+		var halo := _feature_program.geometry_halo if _feature_program != null else 0
+		for parent: Vector2i in _terrain_feature_parents:
+			if maxi(absi(parent.x-_profile_player_chunk.x),absi(parent.y-_profile_player_chunk.y)) <= KEEP_RADIUS \
+					and maxi(absi(parent.x-_active_job.chunk.x),absi(parent.y-_active_job.chunk.y)) <= halo:
+				tier = mini(tier,_terrain_priority_tier(parent,_profile_player_chunk,_queue_lod_origin))
+	return tier
+
+
 ## Called only between complete, cached planning operations. A teleport may
 ## abandon an active road context, but never publishes a partial feature plan.
 func _worker_should_cancel() -> bool:
@@ -2108,13 +2210,7 @@ func _worker_should_cancel() -> bool:
 		# Only a strictly more urgent tier can interrupt work. Equal-priority
 		# neighbors run to completion rather than repeatedly yielding to one
 		# another. Feature dependencies inherit their terrain parent's urgency.
-		var tier := _terrain_priority_tier(_active_job.chunk, _profile_player_chunk, _queue_lod_origin)
-		if bool(_active_job.build_features):
-			var halo := _feature_program.geometry_halo if _feature_program != null else 0
-			for parent: Vector2i in _terrain_feature_parents:
-				if maxi(absi(parent.x-_profile_player_chunk.x),absi(parent.y-_profile_player_chunk.y)) <= KEEP_RADIUS \
-						and maxi(absi(parent.x-_active_job.chunk.x),absi(parent.y-_active_job.chunk.y)) <= halo:
-					tier = mini(tier,_terrain_priority_tier(parent,_profile_player_chunk,_queue_lod_origin))
+		var tier := _active_job_priority_locked()
 		if int(_jobs[0].priority_tier) < tier:
 			_active_job_yield_requested = true
 	cancelled = cancelled or _active_job_yield_requested

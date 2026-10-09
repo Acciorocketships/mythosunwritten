@@ -1,5 +1,13 @@
 extends GutTest
 
+var _saved_tile_mode: int
+
+func before_each() -> void:
+	_saved_tile_mode = TerrainTileField.cliff_end
+
+func after_each() -> void:
+	TerrainTileField.cliff_end = _saved_tile_mode
+
 # r3-task-2 (plan docs/superpowers/plans/2026-07-10-water-continuous-surface.md,
 # brief .superpowers/sdd/r3-task-2-brief.md) recorded the RED evidence that the
 # pre-WaterContour boundary (the old marching-squares mesher's own
@@ -37,19 +45,20 @@ static var _regions: Dictionary = {}
 
 
 static func _water(seed_v: int) -> WaterPlan:
-	if not _waters.has(seed_v):
+	var key := [seed_v, TerrainTileField.cliff_end]
+	if not _waters.has(key):
 		var water := preload("res://tests/fixtures/ReportedWaterPlan.gd").new(seed_v)
 		var plan := water.make_heightfield()
-		_plans[seed_v] = plan
-		_waters[seed_v] = water
-	return _waters[seed_v]
+		_plans[[seed_v, TerrainTileField.cliff_end]] = plan
+		_waters[key] = water
+	return _waters[key]
 
 
 static func _region(seed_v: int, chunk: Vector2i):
-	var key := [seed_v, chunk]
+	var key := [seed_v, chunk, TerrainTileField.cliff_end]
 	if not _regions.has(key):
 		_water(seed_v)
-		_regions[key] = _plans[seed_v].compute_region(
+		_regions[key] = _plans[[seed_v, TerrainTileField.cliff_end]].compute_region(
 			chunk.x * 16 + 8, chunk.y * 16 + 8, 16)
 	return _regions[key]
 
@@ -432,6 +441,9 @@ func test_border_curves_weld() -> void:
 ## vertical reach instead: its wall samples may round by <0.75m at the corner
 ## after contour smoothing, but they may not fan or wobble away from x=36.
 func test_wall_stays_straight() -> void:
+	# This historical fixture specifically exercises a vertical dual-cell wall.
+	# Rounded production cliffs have no such face; keep its old regression alive.
+	TerrainTileField.cliff_end = TerrainTileField.CliffEnd.E3
 	var ctx: Dictionary = _ctx(SEED, SITE_CHUNK)
 	var curves: Array = WaterContour.curves(ctx, _rect(SITE_CHUNK))
 	const WALL_X := 42.0   # dual-cell border 12 * 3 + 6

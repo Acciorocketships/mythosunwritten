@@ -1,0 +1,15 @@
+{
+  "compressed_bytes": 3050573,
+  "face_hash_mismatches": 0,
+  "max_restore_usec": 2322,
+  "max_suspend_usec": 4388,
+  "memory_before": 3015598948,
+  "memory_suspended": 2915967932,
+  "raw_bytes": 12791928,
+  "ray_mismatches": 0,
+  "rays": 64,
+  "released_bytes": 99631016,
+  "restored": true,
+  "shapes": 357,
+  "target": "(1,6)"
+}

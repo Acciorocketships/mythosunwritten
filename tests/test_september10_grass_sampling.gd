@@ -71,3 +71,22 @@ func test_detached_water_keeps_completed_fine_shores_without_source_or_memo_owne
 			same = same and WaterField.level_at(copy.water._ctx,point)==WaterField.level_at(water._ctx,point)
 			same = same and copy.water.shore_distance_at(point)==water.shore_distance_at(point)
 	assert_true(same,"wet/dry shore interpolation is bit-identical over the detached arrays")
+
+func test_identical_ground_is_copied_once_but_distinct_water_ground_stays_distinct() -> void:
+	var region := HeightfieldRegion.new({Vector2i.ZERO: 2}, {Vector2i.ZERO: 1})
+	var water := WaterFieldContext.new()
+	water._region = region
+	water._ctx = {"ponds": [], "rivers": [], "buckets": {}, "region": region}
+	water._shore_curves_ready = true
+	var copy := Sampling.detached(region, water)
+	assert_same(copy.region, copy.water._region)
+	assert_not_same(copy.region, region)
+	copy.region._storeys[Vector2i.ZERO] = 3
+	assert_eq(region._storeys[Vector2i.ZERO], 2, "the private shared copy cannot mutate canonical ground")
+	var other := HeightfieldRegion.new({Vector2i.ZERO: 1}, {Vector2i.ZERO: 0})
+	water._region = other
+	water._ctx.region = other
+	copy = Sampling.detached(region, water)
+	assert_not_same(copy.region, copy.water._region)
+	assert_eq(copy.region._storeys[Vector2i.ZERO], 2)
+	assert_eq(copy.water._region._storeys[Vector2i.ZERO], 1)

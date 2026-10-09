@@ -20,15 +20,16 @@ const NEUTRAL := Color(0.5, 0.5, 0.0, 0.0)
 
 @export var player: Node3D
 
+## Only pixels ever stamped need timestamp rebasing; untouched pixels have
+## zero strength. Scrolling remaps this bounded set with the image.
+var _stamped_pixels: Dictionary = {}
 var _image: Image
 var _texture: ImageTexture
 var _static_image: Image
 var _static_texture: ImageTexture
-var _static_stamps: Array[Dictionary] = []
-## World-XZ bounds of each static stamp's polygon: a rebuild (every scroll)
-## rasterizes only the few stamps that reach the 64 m domain, not every
-## structural asset in the loaded chunks.
-var _static_bounds: Array[Rect2] = []
+## Chunk-owned copies and precomputed bounds. Replacing distant scenery must
+## not recopy every loaded polygon or redraw the player's local texture.
+var _static_chunks: Dictionary = {}
 var _origin := Vector2.ZERO
 # The GPU texture and its world origin are one render-state snapshot. Scrolling
 # changes the CPU image immediately, but the published origin must keep matching
@@ -105,6 +106,7 @@ func stamp(world_pos: Vector3, direction: Vector2, radius: float,
 				+ resolved_direction * new_strength
 			var merged_direction := resolved_direction if merged.length_squared() <= 0.000001 \
 				else merged.normalized()
+			_stamped_pixels[y * RESOLUTION + x] = true
 			_image.set_pixel(x, y, Color(
 				merged_direction.x * 0.5 + 0.5,
 				merged_direction.y * 0.5 + 0.5,
@@ -141,17 +143,41 @@ func effective_strength(world_xz: Vector2) -> float:
 ## It never touches the recovering player image, so a footstep can override
 ## the visible bend and then blend back without a periodic reset.
 func set_static_stamps(stamps: Array[Dictionary]) -> void:
-	_static_stamps.clear()
-	_static_bounds.clear()
-	for stamp: Dictionary in stamps:
-		# Shallow: the packed point array is a copy-on-write value.
-		_static_stamps.append(stamp.duplicate())
-		var points: PackedVector2Array = stamp.get("points", PackedVector2Array())
-		var bounds := Rect2(points[0], Vector2.ZERO) if not points.is_empty() else Rect2()
-		for point: Vector2 in points:
-			bounds = bounds.expand(point)
-		_static_bounds.append(bounds)
-	if _static_image != null:
+	_static_chunks.clear()
+	update_static_chunks({Vector2i.ZERO: stamps}, true)
+
+
+## Apply one batch of changed chunk footprints. Null removes a chunk. Stable
+## x/z order preserves directional blending where polygons overlap, regardless
+## of the order in which terrain workers finish their chunks.
+func update_static_chunks(changes: Dictionary, force_rebuild := false) -> void:
+	var domain := Rect2(_origin, Vector2.ONE * DOMAIN_SIZE)
+	var affected := force_rebuild
+	for chunk: Vector2i in changes:
+		if _static_chunks.has(chunk):
+			affected = affected or (_static_chunks[chunk].extent as Rect2).intersects(domain, true)
+		if changes[chunk] == null:
+			_static_chunks.erase(chunk)
+			continue
+		var stamps: Array[Dictionary] = []
+		var bounds: Array[Rect2] = []
+		var extent := Rect2()
+		for stamp: Dictionary in changes[chunk]:
+			var points: PackedVector2Array = stamp.get("points", PackedVector2Array())
+			if points.size() < 3:
+				continue
+			var box := Rect2(points[0], Vector2.ZERO)
+			for point: Vector2 in points:
+				box = box.expand(point)
+			extent = box if stamps.is_empty() else extent.merge(box)
+			stamps.append(stamp.duplicate())
+			bounds.append(box)
+		if stamps.is_empty():
+			_static_chunks.erase(chunk)
+		else:
+			_static_chunks[chunk] = {"stamps": stamps, "bounds": bounds, "extent": extent}
+			affected = affected or extent.intersects(domain, true)
+	if affected and _static_image != null:
 		_rebuild_static_image()
 
 func static_sample(world_xz: Vector2) -> Color:
@@ -166,6 +192,7 @@ func static_strength(world_xz: Vector2) -> float:
 	return static_sample(world_xz).b
 
 func _initialize(centre: Vector2) -> void:
+	_stamped_pixels.clear()
 	_image = Image.create(RESOLUTION, RESOLUTION, false, Image.FORMAT_RGBAH)
 	_image.fill(NEUTRAL)
 	_texture = ImageTexture.create_from_image(_image)
@@ -176,7 +203,7 @@ func _initialize(centre: Vector2) -> void:
 	_texture_origin = _origin
 	_epoch_start = Time.get_ticks_msec() / 1000.0
 	_now = 0.0
-	if not _static_stamps.is_empty():
+	if not _static_chunks.is_empty():
 		_rebuild_static_image()
 	_publish_globals()
 
@@ -184,13 +211,18 @@ func _update_time(delta: float) -> void:
 	_now += delta
 	if _now < EPOCH_SECONDS:
 		return
-	for y in RESOLUTION:
-		for x in RESOLUTION:
-			var value := _image.get_pixel(x, y)
-			value.a -= EPOCH_SECONDS
-			_image.set_pixel(x, y, value)
-	_now -= EPOCH_SECONDS
-	_epoch_start += EPOCH_SECONDS
+	var shift := floorf(_now / EPOCH_SECONDS) * EPOCH_SECONDS
+	for index: int in _stamped_pixels.keys():
+		var pixel := Vector2i(index % RESOLUTION, index / RESOLUTION)
+		var value := _image.get_pixelv(pixel)
+		if _now - value.a >= RECOVERY_SECONDS:
+			_image.set_pixelv(pixel, NEUTRAL)
+			_stamped_pixels.erase(index)
+		else:
+			value.a -= shift
+			_image.set_pixelv(pixel, value)
+	_now -= shift
+	_epoch_start += shift
 	_dirty = true
 
 func _scroll_if_needed(centre: Vector2) -> void:
@@ -207,6 +239,12 @@ func _scroll_if_needed(centre: Vector2) -> void:
 			RESOLUTION - absi(delta.x), RESOLUTION - absi(delta.y))
 		var destination := Vector2i(maxi(-delta.x, 0), maxi(-delta.y, 0))
 		shifted.blit_rect(_image, source, destination)
+	var moved: Dictionary = {}
+	for index: int in _stamped_pixels:
+		var pixel := Vector2i(index % RESOLUTION, index / RESOLUTION) - delta
+		if pixel.x >= 0 and pixel.y >= 0 and pixel.x < RESOLUTION and pixel.y < RESOLUTION:
+			moved[pixel.y * RESOLUTION + pixel.x] = true
+	_stamped_pixels = moved
 	_image = shifted
 	_origin = new_origin
 	_dirty = true
@@ -218,15 +256,19 @@ func _rebuild_static_image() -> void:
 	_static_image = Image.create(RESOLUTION, RESOLUTION, false, Image.FORMAT_RGBAH)
 	_static_image.fill(NEUTRAL)
 	var domain := Rect2(_origin, Vector2.ONE * DOMAIN_SIZE)
-	for index in _static_stamps.size():
-		if not _static_bounds[index].intersects(domain, true):
+	var chunks: Array = _static_chunks.keys()
+	chunks.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		return a.x < b.x or (a.x == b.x and a.y < b.y))
+	for chunk: Vector2i in chunks:
+		var group: Dictionary = _static_chunks[chunk]
+		if not (group.extent as Rect2).intersects(domain, true):
 			continue
-		var stamp: Dictionary = _static_stamps[index]
-		var points: PackedVector2Array = stamp.get("points", PackedVector2Array())
-		if points.size() < 3:
-			continue
-		var position: Vector3 = stamp.get("position", Vector3.ZERO)
-		_raster_static_polygon(points, Vector2(position.x, position.z))
+		for index in group.stamps.size():
+			if not (group.bounds[index] as Rect2).intersects(domain, true):
+				continue
+			var stamp: Dictionary = group.stamps[index]
+			var position: Vector3 = stamp.get("position", Vector3.ZERO)
+			_raster_static_polygon(stamp.points, Vector2(position.x, position.z))
 	_static_dirty = true
 
 func _raster_static_polygon(points: PackedVector2Array, centre: Vector2) -> void:

@@ -1,0 +1,16 @@
+[
+  {
+    "chunk": "(-1, 5)",
+    "final_triangles": 6418,
+    "initial_triangles": 3495,
+    "ms": 1284.294,
+    "rounds": 4
+  },
+  {
+    "chunk": "(-1, 6)",
+    "final_triangles": 6418,
+    "initial_triangles": 3058,
+    "ms": 1531.463,
+    "rounds": 3
+  }
+]

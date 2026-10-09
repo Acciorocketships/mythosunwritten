@@ -85,6 +85,11 @@ func test_synthetic_regions_match_exactly() -> void:
 			c.ground_grid = grid
 			c.ground_points = points
 		assert_eq(N.compare(c, true), "", "synthetic case %d (kind %d)" % [case_index, kind])
+		var saved_mode := TerrainTileField.cliff_end
+		TerrainTileField.cliff_end = TerrainTileField.CliffEnd.SHARED_PROFILE
+		c.tile_mode = TerrainTileField.CliffEnd.SHARED_PROFILE
+		assert_eq(N.compare(c, true), "", "shared profile case %d (kind %d)" % [case_index, kind])
+		TerrainTileField.cliff_end = saved_mode
 
 ## The dispatch itself (build with native on vs forced off).
 func test_build_dispatch_matches_the_reference() -> void:

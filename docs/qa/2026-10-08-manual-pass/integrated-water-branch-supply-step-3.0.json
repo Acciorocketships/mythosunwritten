@@ -1,0 +1,53 @@
+{
+  "diagonals": true,
+  "level_tolerance": 0.001,
+  "origin": "(-81.0, 1098.0)",
+  "probes": [
+    {
+      "at": "(-26.0, 1142.0)",
+      "conservative_head": null,
+      "level": null,
+      "sample_at": "(-27.0, 1143.0)",
+      "supplied": false,
+      "supported_head": null
+    },
+    {
+      "at": "(-26.0, 1138.0)",
+      "conservative_head": null,
+      "level": null,
+      "sample_at": "(-27.0, 1137.0)",
+      "supplied": false,
+      "supported_head": null
+    },
+    {
+      "at": "(-25.0, 1146.0)",
+      "conservative_head": null,
+      "level": null,
+      "sample_at": "(-24.0, 1146.0)",
+      "supplied": false,
+      "supported_head": null
+    },
+    {
+      "at": "(-39.0, 1144.0)",
+      "conservative_head": 76.0543823242188,
+      "level": 76.0543823242188,
+      "sample_at": "(-39.0, 1143.0)",
+      "supplied": true,
+      "supported_head": 76.0543823242188
+    }
+  ],
+  "reachable": 336,
+  "seeds": 32,
+  "size": 28,
+  "step": 3.0,
+  "support_trial": {
+    "conservative_dried": 0,
+    "conservative_lowered": 0,
+    "conservative_roots": 105,
+    "dried": 6,
+    "lowered": 6,
+    "milliseconds": 1.612,
+    "pond_roots": 34
+  },
+  "wet": 362
+}

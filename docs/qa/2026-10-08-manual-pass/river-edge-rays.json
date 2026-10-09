@@ -1,0 +1,50 @@
+[
+  {
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "grades": 0,
+    "kernel": 55.7254467812467,
+    "pixel": "(1000.0, 430.0)",
+    "point": "(325.1952, 55.70713, 1209.333)",
+    "water": 58.3125036029727
+  },
+  {
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "grades": 0,
+    "kernel": 60.0001115852718,
+    "pixel": "(1100.0, 455.0)",
+    "point": "(336.2759, 60.00171, 1212.252)",
+    "water": 60.6433046974793
+  },
+  {
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "grades": 0,
+    "kernel": 63.3363514511879,
+    "pixel": "(1200.0, 480.0)",
+    "point": "(344.8984, 63.21831, 1214.326)",
+    "water": nan
+  },
+  {
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/CliffRockFormations/RockSkirtCollision",
+    "grades": 0,
+    "kernel": 63.9049578554117,
+    "pixel": "(1300.0, 515.0)",
+    "point": "(351.7581, 63.94225, 1214.304)",
+    "water": nan
+  },
+  {
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "grades": 0,
+    "kernel": 52.0032923155269,
+    "pixel": "(1100.0, 440.0)",
+    "point": "(330.0899, 52.01525, 1199.14)",
+    "water": 57.7000007629395
+  },
+  {
+    "collider": "/root/CliffSiteReview/World/FieldTerrain/Chunk_1_6/Body",
+    "grades": 0,
+    "kernel": 59.9076510402927,
+    "pixel": "(1100.0, 470.0)",
+    "point": "(337.3075, 59.95306, 1213.969)",
+    "water": 61.7662045576579
+  }
+]

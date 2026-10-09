@@ -20,7 +20,7 @@ func test_sample_window_equals_surface_y_on_side() -> void:
 	K.setup()   # compare the production dispatch (native when it passed its gate)
 	var rng := RandomNumberGenerator.new(); rng.seed = 7
 	var saved := Tile.cliff_end
-	for mode in [Tile.CliffEnd.E1, Tile.CliffEnd.E2, Tile.CliffEnd.E3]:
+	for mode in [Tile.CliffEnd.E1, Tile.CliffEnd.E2, Tile.CliffEnd.E3, Tile.CliffEnd.SHARED_PROFILE]:
 		Tile.cliff_end = mode
 		var region = _random_region(rng)
 		var window := Tile.dense_window(region, Vector2i(-2, -2), Vector2i(10, 10))

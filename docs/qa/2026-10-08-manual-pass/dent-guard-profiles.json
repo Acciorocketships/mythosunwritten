@@ -1,0 +1,20 @@
+[
+  {
+    "mode": "baseline",
+    "position": "(-303.5, 1342.0)",
+    "sections_over_4cm": 178,
+    "worst_added_dip": 0.567863066086751
+  },
+  {
+    "mode": "slope_guard_2",
+    "position": "(-301.0, 1338.0)",
+    "sections_over_4cm": 171,
+    "worst_added_dip": 0.393711419753089
+  },
+  {
+    "mode": "slope_guard_4",
+    "position": "(-300.5, 1342.0)",
+    "sections_over_4cm": 138,
+    "worst_added_dip": 0.25536506558641
+  }
+]
