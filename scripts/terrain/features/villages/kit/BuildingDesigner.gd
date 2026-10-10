@@ -1174,8 +1174,9 @@ func _assign_dressing(mass: BuildingMass, rng: RandomNumberGenerator,
 					and (above.cells as Dictionary).has(Vector2i(slot.edge.x, slot.edge.y)) \
 					and StringName((above.openings as Dictionary).get(slot.edge, &"")) \
 						!= BuildingMass.OPENING_BAY
-				# A growing house's front leans over its door instead (the 0.9
-				# roll is still drawn, so later rolls are unchanged).
+				# A growing house's door is sheltered by the storey overhanging its
+				# stepped-in front instead (the 0.9 roll is still drawn, so later
+				# rolls are unchanged).
 				if not sheltered and flush_above and rng.randf() < 0.9 \
 						and _awning_room(slot, int(storey.floor_band)) \
 						and not bool(context.get("grows", false)):

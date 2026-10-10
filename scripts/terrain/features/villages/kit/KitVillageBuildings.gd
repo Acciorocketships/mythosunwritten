@@ -26,11 +26,13 @@ static func wall_face_lattice(kit: BuildingKit) -> float:
 	return kit.wall_face * FabricRecipe.CELL_SIZE / kit.module_width
 
 
+const GROWTH := preload("res://scripts/terrain/features/villages/kit/KitGrowingFronts.gd")
+## Fine spatial-grid cells per envelope macro cell along each axis.
+const FINE_PER_MACRO := 2.0
 ## Feature kinds whose legacy recipe units are superseded by kit buildings.
 ## Arcade support frames retain their measured native recipe: its four
 ## corner posts are proved clear of the body lanes. Cell-based replacement
 ## posts were all dropped at public floors, leaving their upper rooms floating.
-const GROWTH := preload("res://scripts/terrain/features/villages/kit/KitGrowingFronts.gd")
 const REPLACED_FEATURE_KINDS: Array[StringName] = [
 	&"facade_bay", &"prefab_landmark", &"balcony", &"room_overhang_support",
 ]
@@ -62,6 +64,9 @@ static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 	# house, so a failed grower is identical to one that never rolled. A plain house's
 	# jetty or awning can withdraw another grower's last step, so this repeats until
 	# every remaining grower keeps a step (the withheld set only grows).
+	# Each retry re-runs all of _plan_town, including the tower proposal and its cutter
+	# reads from disk, and builds a payload that is thrown away; only the last plan is
+	# assembled.
 	var growth_withheld := {}
 	var plan := _plan_town(spatial, fabric, kit, mixed_styles, native_roofs, growth_withheld)
 	while true:
@@ -78,7 +83,6 @@ static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 		plan = _plan_town(spatial, fabric, kit, mixed_styles, native_roofs, growth_withheld)
 	var grid: WarrenSpatialGrid = plan.grid
 	var growth: Dictionary = plan.growth
-	var growth_character: TownCharacter = plan.growth_character
 	var house_kits: Dictionary = plan.house_kits
 	var joins = plan.joins
 	var map: Transform3D = plan.map
@@ -110,8 +114,7 @@ static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 			var at:=Vector3i(cell.x,band,cell.y)
 			return podium.has(at) or fabric.surface_plan.has_cell(at) or _walked(grid,at) or public_crowns.has(at) or _solid_other(grid,owner_at,own,at),
 		func(own:StringName,cell:Vector2i,band:int)->bool:return _solid_other(grid,owner_at,own,Vector3i(cell.x,band,cell.y)),
-		func(cell:Vector2i,band:int)->bool:return fabric.surface_plan.has_cell(Vector3i(cell.x,band,cell.y)),
-		growth.registry,growth_character.value(GROWTH.GAP_KNOB) if growth_character != null else 0.0)
+		func(cell:Vector2i,band:int)->bool:return fabric.surface_plan.has_cell(Vector3i(cell.x,band,cell.y)))
 	for projection:Dictionary in room_projections:
 		walls.append(union_script.box_volume(projection.bounds))
 	var facade_bays := preload("res://scripts/terrain/features/villages/kit/KitTownFacadeBays.gd").fit(
@@ -385,7 +388,7 @@ static func _plan_town(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 			return grid.contains(at) and grid.use_at(at) in [WarrenSpatialGrid.Use.STRUCTURAL_VOLUME,
 				WarrenSpatialGrid.Use.SERVICE_VOID,WarrenSpatialGrid.Use.PRIVATE_VOLUME],
 		growth_solid,growth_street,_growth_grade(spatial,grid))
-	return {"grid": grid, "growth": growth, "growth_character": growth_character, "house_kits": house_kits, "joins": joins, "map": map, "masses": masses, "ornament_air": ornament_air, "owner_at": owner_at, "parallel_joins": parallel_joins, "payload": payload, "podium": podium, "public_air": public_air, "public_crowns": public_crowns, "roof_kits": roof_kits, "roofs": roofs, "seated_balcony_brackets": seated_balcony_brackets, "tower_audit": tower_audit, "tower_catalog": tower_catalog, "tower_hosts": tower_hosts, "towers": towers, "union_script": union_script, "walls": walls, "replaced": replaced, "house_masses": house_masses}
+	return {"grid": grid, "growth": growth, "house_kits": house_kits, "joins": joins, "map": map, "masses": masses, "ornament_air": ornament_air, "owner_at": owner_at, "parallel_joins": parallel_joins, "payload": payload, "podium": podium, "public_air": public_air, "public_crowns": public_crowns, "roof_kits": roof_kits, "roofs": roofs, "seated_balcony_brackets": seated_balcony_brackets, "tower_audit": tower_audit, "tower_catalog": tower_catalog, "tower_hosts": tower_hosts, "towers": towers, "union_script": union_script, "walls": walls, "replaced": replaced, "house_masses": house_masses}
 
 
 ## Growth ruling (e, fix round 2), per ground-storey edge (KitGrowingFronts.GRADE_*):
@@ -393,13 +396,17 @@ static func _plan_town(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 ## that band, or anything floored directly under it: a lane, deck, court, garden or
 ## retained top); else GRADE_PLINTH where the strip the step vacates stands on retained
 ## stone / massif (structural volume directly below the house's own cell); else
-## GRADE_NONE (air or a public walk under it).
+## GRADE_NONE (air or a public walk under it). Note: any non-air use directly under
+## the outside cell counts as at grade, including another house's room (the outside
+## cell is then that room's top, not floored ground). Left as is: changing it would
+## re-grade shipped towns; revisit if a step-in reads wrong over a neighbour's room.
 static func _growth_grade(spatial: WarrenSpatialPlan, grid: WarrenSpatialGrid) -> Callable:
 	var envelope := spatial.source_volume.envelope if spatial.source_volume != null else null
 	var air := [WarrenSpatialGrid.Use.PUBLIC_AIR, WarrenSpatialGrid.Use.DAYLIGHT_AIR, WarrenSpatialGrid.Use.OUTSIDE]
 	return func(cell: Vector2i, dir: int, band: int) -> int:
 		var out: Vector2i = cell + BuildingMass.DIRS[dir]
-		if envelope != null and envelope.ground_at(Vector2i(floori(out.x / 2.0), floori(out.y / 2.0))) == band:
+		var macro := Vector2i(floori(out.x / FINE_PER_MACRO), floori(out.y / FINE_PER_MACRO))
+		if envelope != null and envelope.ground_at(macro) == band:
 			return GROWTH.GRADE_AT
 		var below := Vector3i(out.x, band - 1, out.y)
 		if grid.contains(below) and not (grid.use_at(below) in air):

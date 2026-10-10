@@ -505,14 +505,10 @@ static func storey_slots(storey: Dictionary, exposed: Callable = Callable()) -> 
 	for slot:Dictionary in slots:
 		slot["wall_offset"]=float(offsets.get(slot.edge,0.0))
 		slot.centre+=Vector2(BuildingMass.DIRS[int(slot.dir)])*float(slot.wall_offset)
-		# A wrapped convex corner: this face and the face to its right both step
-		# out, so the corner (and its post) lies that much further along. 0 where
-		# either face is flush (a return closes a lone step; room projections).
+		# How far this slot's right corner moves along the run: only a stepped-in
+		# perpendicular face moves it (below). Faces never step out on both sides of a
+		# corner (one room projection per storey, kept off growth faces and their returns).
 		slot["right_extend"]=0.0
-		if bool(slot.right_convex) and float(slot.wall_offset)>0.0:
-			var side:=BuildingMass.DIRS.find(right_of(int(slot.dir)))
-			var edge:Vector3i=slot.edge
-			slot["right_extend"]=float(offsets.get(BuildingMass.edge_key(Vector2i(edge.x,edge.y),side),0.0))
 		# A stepped-in perpendicular face (offsets < 0) cuts this slot's corner panel at
 		# that end by its inset (also when this face steps in too: a wrapped corner);
 		# the corner post moves in with it (modules cut at `short_side`).

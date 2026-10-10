@@ -77,7 +77,7 @@ func test_growth_result_lists_each_stepped_storey() -> void:
 		assert_eq(int(lean.dir), 3)
 		assert_true((lean.bounds as AABB).has_volume())
 		assert_true(float(lean.lean) <= 0.0)
-	assert_true((f.result.registry as Dictionary).is_empty(), "growth never steps outward")
+	assert_false(f.result.has("registry"), "growth never steps outward, so it keeps no outward registry")
 
 
 ## Removing the jetty must not reshuffle the house's other rolls: the jetty

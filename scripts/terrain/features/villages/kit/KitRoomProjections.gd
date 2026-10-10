@@ -3,7 +3,6 @@ extends RefCounted
 ## remains the bearing; the extension has its own floor, ceiling and returns.
 const DEPTH := 0.65
 const CLEARANCE := preload("res://scripts/terrain/features/villages/kit/KitPublicClearance.gd")
-const GROWTH := preload("res://scripts/terrain/features/villages/kit/KitGrowingFronts.gd")
 
 
 static func fit(
@@ -16,9 +15,7 @@ static func fit(
 	blocked: Callable,
 	capped: Callable,
 	solid: Callable = Callable(),
-	walked: Callable = Callable(),
-	facing: Dictionary = {},
-	sky_gap := 0.0
+	walked: Callable = Callable()
 ) -> Array[Dictionary]:
 	var has_upper_front := false
 	for mass: BuildingMass in masses:
@@ -185,16 +182,13 @@ static func fit(
 							break
 					if not valid:
 						continue
-					# Keep the lane's sky gap to a growing house's leaned facade across it.
-					if not facing.is_empty() and solid.is_valid() and not GROWTH.gap_ok(
-							facing, solid, own, edges, dir, band, DEPTH, kit, sky_gap):
-						continue
 					var projection := {
 						"edges": edges, "centres": centres, "dir": dir, "depth": DEPTH, "band": band
 					}
 					var fronts: Array = storey.get("projections", [])
 					fronts.append(projection)
 					storey["projections"] = fronts
+					# Merge into the storey's existing offsets: a growth step-in on another face keeps its own.
 					var offsets: Dictionary = storey.get("wall_offsets", {})
 					storey["wall_offsets"] = offsets
 					for edge: Vector3i in edges:

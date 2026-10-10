@@ -10,7 +10,6 @@ const STREET_FACE_KNOB := &"growth_street_face_chance"
 const OTHER_FACE_KNOB := &"growth_other_face_chance"
 const STEP_KNOB := &"growth_step"
 const CAP_KNOB := &"growth_max_lean"
-const GAP_KNOB := &"lane_sky_gap"
 ## Baked step sizes (native m): 0.5 on bracket.small, 1.0 = the kit jetty on bracket.jetty.
 const STEP_SIZES: Array[float] = [0.5, 1.0]
 const MAX_STEPS := 4
@@ -163,9 +162,9 @@ static func _edges(chain: Dictionary) -> Array[Vector3i]:
 
 
 ## Steps every growing house in `masses` (already in sorted id order) in. Returns
-## {leans, registry, rejections}: one growth record per storey that stands in or
-## overhangs, the outward-offset registry later fitters read for facing gaps (always
-## empty: growth never steps outward), and every withdrawn step with its cause. Faces
+## {leans, rejections}: one growth record per storey that steps in (the storeys
+## above it overhanging it on the kit's jetty braces), and every withdrawn step with
+## its cause. Growth never steps a storey outward, so no lane narrows. Faces
 ## step in FRONTS: a rolled face pulls the faces it meets at a convex corner (one hop)
 ## and coplanar row neighbours, and the front steps together, its corners wrapped.
 static func fit(masses: Array[BuildingMass], kits: Dictionary, base: BuildingKit,
@@ -174,10 +173,10 @@ static func fit(masses: Array[BuildingMass], kits: Dictionary, base: BuildingKit
 		street: Callable, grade: Callable = Callable()) -> Dictionary:
 	var leans: Array[Dictionary] = []
 	var ctx := {"catalog": catalog, "air": air, "towers": towers, "reserved": reserved,
-		"solid": solid, "grade": grade, "registry": {}, "obstacles": [], "kit": base, "rejections": [],
+		"solid": solid, "grade": grade, "obstacles": [], "kit": base, "rejections": [],
 		"planned": {}, "yields": {}, "front": {}, "active": [] as Array[int], "masses": {}}
 	if character == null or not masses.any(func(m: BuildingMass) -> bool: return m.grows):
-		return {"leans": leans, "registry": ctx.registry, "rejections": ctx.rejections}
+		return {"leans": leans, "rejections": ctx.rejections}
 	for mass: BuildingMass in masses:
 		ctx.masses[mass.stable_id] = mass
 	ctx.obstacles = _obstacles(masses, kits, base, catalog, towers, solid)
@@ -196,7 +195,7 @@ static func fit(masses: Array[BuildingMass], kits: Dictionary, base: BuildingKit
 				"seed": mass.grows and character.chance(knob, String(chain.key))})
 	for front: Dictionary in fronts(members):
 		_fit_front(front, character, ctx, leans)
-	return {"leans": leans, "registry": ctx.registry, "rejections": ctx.rejections}
+	return {"leans": leans, "rejections": ctx.rejections}
 
 
 ## The lattice vertex at one end of a chain's run.
@@ -325,7 +324,7 @@ static func _fit_front(front: Dictionary, character: TownCharacter, ctx: Diction
 		var leader: Dictionary = front.members[_leader(front, active)]
 		var step := carried_step(leader.kit, float(String(character.pick(STEP_KNOB, String(leader.mass.stable_id)))))
 		if not STEP_SIZES.has(step):
-			return
+			break
 		var cap := step * float(mini(MAX_STEPS, floori(character.value(CAP_KNOB) / step + 0.0001)))
 		var result := _front_profile(front, active, step, cap, ctx)
 		if int(result.leaves) < 0:
@@ -725,10 +724,6 @@ static func _drop_decor(ctx: Dictionary, item: Dictionary) -> void:
 
 # --- guardrails -------------------------------------------------------------
 
-## Furthest facing facade (in modules) a lane is measured to for the sky gap.
-const MAX_LANE_MODULES := 4
-
-
 ## Every house's assembled parts plus towers; the pieces each accepted step-in adds are appended by _commit.
 static func _obstacles(masses: Array[BuildingMass], kits: Dictionary, base: BuildingKit,
 		catalog: EnvironmentCatalog, towers: Array[Dictionary], solid: Callable) -> Array:
@@ -795,25 +790,6 @@ static func _obstacle_cause(obstacle: Dictionary, mass: BuildingMass) -> StringN
 		return &"obstacle.tower" if String(obstacle.role) == "tower" else &"obstacle.lean"
 	var token := String(obstacle.owner).trim_prefix("kit.")
 	return StringName("obstacle.%s" % token.get_slice(".", 0))
-
-
-# G2: distance to the facing facade across the lane, minus both leans, keeps the sky gap.
-static func gap_ok(registry: Dictionary, solid: Callable, own: StringName, edges: Array[Vector3i],
-		dir: int, band: int, depth: float, kit: BuildingKit, gap: float) -> bool:
-	var step: Vector2i = BuildingMass.DIRS[dir]
-	var back := (dir + 2) % 4
-	for edge: Vector3i in edges:
-		var cell := Vector2i(edge.x, edge.y)
-		for n in range(1, MAX_LANE_MODULES + 1):
-			var column := cell + step * n
-			if not (bool(solid.call(own, column, band)) or bool(solid.call(own, column, band + 1))):
-				continue
-			var facing := maxf(float(registry.get(Vector4i(column.x, column.y, back, band), 0.0)),
-				float(registry.get(Vector4i(column.x, column.y, back, band + 1), 0.0)))
-			if float(n - 1) * kit.module_width - depth - facing < gap - 0.0001:
-				return false
-			break
-	return true
 
 
 ## Pieces a step-in adds that dressing may meet (the jetty: braces, beams, strips).

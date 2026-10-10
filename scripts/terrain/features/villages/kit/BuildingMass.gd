@@ -28,8 +28,9 @@ var seed := 0
 ## Floor band of the storey standing on terrain. Storeys above it whose cells
 ## have nothing beneath receive an underside (soffit) closure.
 var ground_band := 0
-## Set by the town adapter (KitGrowingFronts.house_grows): this house's upper
-## storeys may lean over its street faces. False everywhere else.
+## Set by the town adapter (KitGrowingFronts.house_grows): on chosen faces this
+## house's lower storeys step in under its top storey and roof, each upper storey
+## overhanging the one below. False everywhere else.
 var grows := false
 ## Each storey: {
 ##   floor_band: int            -- lower band; the storey spans two bands

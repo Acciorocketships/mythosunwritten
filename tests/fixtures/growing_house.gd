@@ -31,7 +31,7 @@ static func roofed(id: StringName, rect: Rect2i, storeys: int, door_dir: int, ax
 ## growth_step ("1.0" = the kit jetty, the default; "0.5" = the light step).
 static func character(values: Dictionary = {}, step := &"1.0") -> TownCharacter:
 	var fixed := {&"growing_house_chance": 1.0, &"growth_street_face_chance": 1.0,
-		&"growth_other_face_chance": 0.0, &"growth_max_lean": 2.0, &"lane_sky_gap": 0.75}
+		&"growth_other_face_chance": 0.0, &"growth_max_lean": 2.0}
 	fixed.merge(values, true)
 	var c := TownCharacter.draw(TownOddsProgram.builtin().with_overrides(fixed), 1, 0.5)
 	c.values[&"growth_step"] = {&"0.5": 1.0 if step == &"0.5" else 0.0,

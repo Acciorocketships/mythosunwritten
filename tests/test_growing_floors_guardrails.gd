@@ -21,20 +21,17 @@ func test_walking_air_withdraws_only_the_step_it_reaches() -> void:
 
 
 func test_insets_never_narrow_the_lane() -> void:
-	# Two growing houses facing across a one-cell lane, with a sky gap larger than the
-	# lane: under step-in the upper storeys stay on their lot lines, so G2 cannot fire.
-	for gap: float in [0.75, 2.75]:
-		var f := FIXTURE.build({"lone": true, "facing": true, "back_grows": true,
-			"character": FIXTURE.character({&"lane_sky_gap": gap})})
-		assert_eq(FIXTURE.leans_on(f.front, 3), [-2.0, -1.0, 0.0, 0.0] as Array[float], "gap %.2f" % gap)
-		# The facing house is not kept lone: its pulled east and west faces may hold it
-		# at one jetty (bearing), but it only ever steps in, and its top stays on its line.
-		var back := FIXTURE.leans_on(f.back, 1)
-		assert_lt(back[0], 0.0, "the facing house steps in too")
-		assert_eq(back[3], 0.0, "its top storey stays on the lot line")
-		for value: float in back:
-			assert_true(value <= 0.0)
-		assert_false((f.result.rejections as Array).any(func(r: Dictionary) -> bool: return r.cause == &"gap"))
+	# Two growing houses facing across a one-cell lane: under step-in the upper storeys
+	# stay on their lot lines, so no storey ever reaches into the lane.
+	var f := FIXTURE.build({"lone": true, "facing": true, "back_grows": true})
+	assert_eq(FIXTURE.leans_on(f.front, 3), [-2.0, -1.0, 0.0, 0.0] as Array[float])
+	# The facing house is not kept lone: its pulled east and west faces may hold it
+	# at one jetty (bearing), but it only ever steps in, and its top stays on its line.
+	var back := FIXTURE.leans_on(f.back, 1)
+	assert_lt(back[0], 0.0, "the facing house steps in too")
+	assert_eq(back[3], 0.0, "its top storey stays on the lot line")
+	for value: float in back:
+		assert_true(value <= 0.0)
 
 
 func test_neighbouring_feature_withdraws_only_the_step_it_reaches() -> void:
@@ -158,17 +155,6 @@ func test_moved_decor_refreshes_its_obstacles() -> void:
 	assert_gt(live.size(), 0)
 	for obstacle: Dictionary in live:
 		assert_gt((obstacle.bounds as AABB).get_center().z, 0.0, "obstacle at the moved box")
-
-
-func test_gap_ok_measures_to_the_facing_lean() -> void:
-	var kit := SuntailBuildingKit.create()
-	var edges: Array[Vector3i] = [BuildingMass.edge_key(Vector2i(0, 0), 3)]
-	var solid := func(_own: StringName, cell: Vector2i, _band: int) -> bool: return cell.y == -3
-	var registry := {Vector4i(0, -3, 1, 4): 0.75}
-	assert_true(FIXTURE.GROWTH.gap_ok(registry, solid, &"a", edges, 3, 4, 0.5, kit, 2.75))
-	assert_false(FIXTURE.GROWTH.gap_ok(registry, solid, &"a", edges, 3, 4, 0.75, kit, 2.75))
-	assert_true(FIXTURE.GROWTH.gap_ok({}, solid, &"a", edges, 3, 4, 0.75, kit, 2.75),
-		"an unleaned facing facade leaves 4.0 - 0.75")
 
 
 func test_face_over_a_lower_neighbour_is_a_candidate() -> void:

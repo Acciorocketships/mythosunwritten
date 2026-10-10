@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="TownOddsTable" load_steps=26 format=3]
+[gd_resource type="Resource" script_class="TownOddsTable" load_steps=25 format=3]
 
 [ext_resource type="Script" path="res://scripts/terrain/features/villages/odds/TownOddsTable.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/terrain/features/villages/odds/TownKnob.gd" id="2"]
@@ -249,17 +249,6 @@ clamp_min = 0.0
 clamp_max = 2.0
 notes = "Total step-in of the ground storey below the top storey, native m (2.0 = two kit jetties, 4 m world), floored to whole steps; the top storey and roof never move (spec Amendment 2)."
 
-[sub_resource type="Resource" id="lane_sky_gap"]
-script = ExtResource("2")
-name = &"lane_sky_gap"
-kind = 1
-at_small = 0.75
-at_large = 0.75
-spread = 0.0
-clamp_min = 0.25
-clamp_max = 4.0
-notes = "Inert under step-in (insets never narrow a lane); the guardrail value for any outward offset (G2, room projections facing a growth registry entry)."
-
 [resource]
 script = ExtResource("1")
-knobs = Array[Resource]([SubResource("clearing_count"), SubResource("clearing_block_bias"), SubResource("clearing_ground_weight"), SubResource("clearing_area"), SubResource("clearing_shape"), SubResource("clearing_extra_link_chance"), SubResource("clearing_cover"), SubResource("clearing_purpose"), SubResource("clearing_lobe_bias"), SubResource("clearing_enclosure_bias"), SubResource("plaza_ring_chance"), SubResource("clearing_ring_chance"), SubResource("clearing_deco_density"), SubResource("well_scale"), SubResource("satellite_reach_scale"), SubResource("suburb_house_count"), SubResource("lone_house_path_chance"), SubResource("growing_house_chance"), SubResource("growth_street_face_chance"), SubResource("growth_other_face_chance"), SubResource("growth_step"), SubResource("growth_max_lean"), SubResource("lane_sky_gap")])
+knobs = Array[Resource]([SubResource("clearing_count"), SubResource("clearing_block_bias"), SubResource("clearing_ground_weight"), SubResource("clearing_area"), SubResource("clearing_shape"), SubResource("clearing_extra_link_chance"), SubResource("clearing_cover"), SubResource("clearing_purpose"), SubResource("clearing_lobe_bias"), SubResource("clearing_enclosure_bias"), SubResource("plaza_ring_chance"), SubResource("clearing_ring_chance"), SubResource("clearing_deco_density"), SubResource("well_scale"), SubResource("satellite_reach_scale"), SubResource("suburb_house_count"), SubResource("lone_house_path_chance"), SubResource("growing_house_chance"), SubResource("growth_street_face_chance"), SubResource("growth_other_face_chance"), SubResource("growth_step"), SubResource("growth_max_lean")])
