@@ -1,6 +1,6 @@
 # October 9 follow-up
 
-The photographed water defects and several measured loading stalls have fixes. **The full hitch investigation remains open:** a clean traversal still has occasional 100–141 ms frames. The earlier 1.4-second pause was caused by automatic replay capture in the profiling harness, not normal gameplay.
+The photographed water defects and several measured loading stalls have fixes. **The full hitch investigation remains open:** the latest traversal peaked at 93 ms (none over 100 ms), while earlier clean traversals had occasional 100–141 ms frames. The earlier 1.4-second pause was caused by automatic replay capture in the profiling harness, not normal gameplay.
 
 | Issue | Cause and change | Evidence |
 | --- | --- | --- |
@@ -68,3 +68,16 @@ The warm-up experiment divides each hidden view into four off-axis sections over
 The logger now records main-thread CPU time for hitches (schema 5). An injected 180 ms sleep is logged as wall time without being mistaken for 180 ms of CPU work. Unsupported platforms report unavailable CPU timing. The test uses rendered projection matrices to check off-axis coverage: Godot's ray-normal helper does not incorporate the frustum offset in its ray construction ([Godot 4.5 camera source](https://github.com/godotengine/godot/blob/4.5/scene/3d/camera_3d.cpp#L372)).
 
 The final alternating comparison holds the same 25-chunk world and full-view coverage per four frames. Vertical sections are selected: main-thread CPU p95 was 26.16/26.75 ms versus whole-view 32.05/30.43 ms; peak was 30.34/29.57 versus 35.83/36.08 ms. Mean CPU stayed similar (24.28/24.68 versus 25.17/24.15 ms). Quadrants had less balanced results (p95 29.75/26.07 ms). Vertical sections reduced peak extra draw calls from about 1,872 to 597. This reduces render warm-up spikes without removing scenery or effects. It does not eliminate all wall-time stalls: a baseline interval with no warm-up still reached 126.43 ms with only 32.06 ms peak main-thread CPU. Data: `warm-balanced.json` and compressed per-frame capture.
+
+## Cliff draw-call isolation
+
+A second alternating same-world test separates the nested rock batches from cliff surfaces and their ground skirts. Baseline median CPU was 20.75–21.54 ms and 4,022–4,024 draws. Hiding slope rocks reduced it to 14.53–14.58 ms and 2,703 draws. Hiding the remaining cliff surfaces/skirts gave 18.99–19.12 ms and 3,722 draws. This identifies individual rock batching as the larger cost; no production geometry was removed. The test-only rebatcher preserves exact instance transforms, tints, contact planes, mesh/material identity and LOD bias (13 assertions with the real renderer; headless dummy MultiMesh readback is unsuitable). The following comparison tests larger batches before production adoption.
+
+
+The 64 m large-rock trial reduced median CPU from 20.51–20.96 ms to 16.87–16.96 ms in alternating intervals, and total draws from about 4,024 to 3,334. Median wall-frame time stayed around 23 ms: this adds CPU headroom but is not an overall FPS win at this pose. The 96 m trial saved another ~1 ms CPU without improving wall time; 64 m retains finer spatial culling. The production candidate keeps the original 32 m cells and 70 m fade for pebbles, all source meshes/materials and every collision hull. Two renderer tests pass 49 assertions, including negative coordinates and exact instance preservation. Only known catalogue UID fallback warnings are excluded; other errors remain failures. Production traversal completed: 6,977 frames over six 30-second phases, no frozen frames, none over 100 ms, maximum 93.18 ms. Running-and-turning p95 was 35.09 ms; return-idle maximum 36.06 ms. The guarded teleport return required 8.97 seconds of readiness waiting outside the phases. Engine memory ended at 7,930 MiB. This is an acceptance observation, not a controlled improvement claim against earlier traversals with different background load and streaming progress. The largest frame still combined 17.0 ms script time, 13.8 ms physics and additional rendering/waiting, so occasional smaller hitches remain.
+
+| Original rock batches | 64 m large-rock trial |
+| --- | --- |
+| ![Original](/Users/ryko/story/docs/qa/2026-10-09-followup/rock-batches-before.png) | ![Same rocks, fewer submissions](/Users/ryko/story/docs/qa/2026-10-09-followup/rock-batches-64.png) |
+
+Same scene and fixed camera; animated particles may differ. No rocks or effects are intentionally removed.

@@ -1,3 +1,14 @@
+> October 9 rock submission follow-up: large slope/face rocks batch in 64 m cells;
+> pebbles retain 32 m cells, 70 m fade and no shadows. Meshes, per-instance data
+> and collision hulls are unchanged. Same-world alternating render trial reduced
+> CPU median ~20.7 -> ~16.9 ms and draws 4,024 -> 3,334; wall time stayed ~23 ms,
+> so this is CPU headroom, not an overall FPS claim. The prototype rebatches loaded
+> render pivots; production groups placement pivots, so traversal validates it too.
+> Renderer tests (not headless dummy readback) pass 49 instance/batch/hull assertions.
+> Production traversal: 6,977 frames, none frozen or over 100 ms; max 93.18 ms.
+> Teleport return readiness wait 8.97 s lies outside measured phases. Background
+> load and streaming progress vary; do not claim controlled whole-route FPS gains.
+
 > October 9 render warm-up: `FirstViewWarmer` divides each hidden view into four
 > off-axis vertical sections over four frames, with a fixed camera pose until complete.
 > 47 coverage/queue assertions pass. Same-world alternating trials: CPU p95

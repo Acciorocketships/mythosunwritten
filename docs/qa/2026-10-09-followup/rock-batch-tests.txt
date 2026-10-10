@@ -1,0 +1,264 @@
+Godot Engine v4.5.1.stable.mono.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_rock_batch_size.gd
+[0m* test_large_batches_keep_every_rock_and_pebble_fades_stay_local
+WARNING: res://terrain/environment/visuals/kaykit/kaykit_cliff_wall.tres:5 - ext_resource, invalid UID: uid://cnclg6ri5afbe - using text path instead: res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd
+     at: load (scene/resources/resource_format_text.cpp:444)
+     GDScript backtrace (most recent call first):
+         [0] _piece (res://scripts/terrain/field/CliffDressing.gd:232)
+         [1] _ensure_loaded (res://scripts/terrain/field/CliffDressing.gd:138)
+         [2] ground_uv (res://scripts/terrain/field/CliffDressing.gd:108)
+         [3] apply_moss (res://scripts/terrain/field/CliffRockCrags.gd:26)
+         [4] make (res://scripts/terrain/field/MeadowRockMaterial.gd:9)
+         [5] prepare (res://scripts/terrain/field/CliffSlopeRocks.gd:49)
+         [6] build_steps (res://scripts/terrain/field/CliffSlopeRocks.gd:91)
+         [7] build (res://scripts/terrain/field/CliffSlopeRocks.gd:79)
+         [8] test_large_batches_keep_every_rock_and_pebble_fades_stay_local (res://tests/test_rock_batch_size.gd:14)
+         [9] _run_test (res://addons/gut/gut.gd:612)
+         [10] _test_the_scripts (res://addons/gut/gut.gd:815)
+         [11] test_scripts (res://addons/gut/gut.gd:1027)
+         [12] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+         [13] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+         [14] main (res://addons/gut/cli/gut_cli.gd:284)
+         [15] _init (res://addons/gut/gut_cmdln.gd:39)
+WARNING: res://terrain/environment/visuals/kaykit/kaykit_cliff_wall.tres:7 - ext_resource, invalid UID: uid://dm72bncnoday5 - using text path instead: res://scripts/terrain/environment/model/EnvironmentVisual.gd
+     at: load (scene/resources/resource_format_text.cpp:444)
+     GDScript backtrace (most recent call first):
+         [0] _piece (res://scripts/terrain/field/CliffDressing.gd:232)
+         [1] _ensure_loaded (res://scripts/terrain/field/CliffDressing.gd:138)
+         [2] ground_uv (res://scripts/terrain/field/CliffDressing.gd:108)
+         [3] apply_moss (res://scripts/terrain/field/CliffRockCrags.gd:26)
+         [4] make (res://scripts/terrain/field/MeadowRockMaterial.gd:9)
+         [5] prepare (res://scripts/terrain/field/CliffSlopeRocks.gd:49)
+         [6] build_steps (res://scripts/terrain/field/CliffSlopeRocks.gd:91)
+         [7] build (res://scripts/terrain/field/CliffSlopeRocks.gd:79)
+         [8] test_large_batches_keep_every_rock_and_pebble_fades_stay_local (res://tests/test_rock_batch_size.gd:14)
+         [9] _run_test (res://addons/gut/gut.gd:612)
+         [10] _test_the_scripts (res://addons/gut/gut.gd:815)
+         [11] test_scripts (res://addons/gut/gut.gd:1027)
+         [12] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+         [13] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+         [14] main (res://addons/gut/cli/gut_cli.gd:284)
+         [15] _init (res://addons/gut/gut_cmdln.gd:39)
+WARNING: res://terrain/environment/visuals/kaykit/kaykit_cliff_lip.tres:4 - ext_resource, invalid UID: uid://cnclg6ri5afbe - using text path instead: res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd
+     at: load (scene/resources/resource_format_text.cpp:444)
+     GDScript backtrace (most recent call first):
+         [0] _piece (res://scripts/terrain/field/CliffDressing.gd:232)
+         [1] _ensure_loaded (res://scripts/terrain/field/CliffDressing.gd:138)
+         [2] ground_uv (res://scripts/terrain/field/CliffDressing.gd:108)
+         [3] apply_moss (res://scripts/terrain/field/CliffRockCrags.gd:26)
+         [4] make (res://scripts/terrain/field/MeadowRockMaterial.gd:9)
+         [5] prepare (res://scripts/terrain/field/CliffSlopeRocks.gd:49)
+         [6] build_steps (res://scripts/terrain/field/CliffSlopeRocks.gd:91)
+         [7] build (res://scripts/terrain/field/CliffSlopeRocks.gd:79)
+         [8] test_large_batches_keep_every_rock_and_pebble_fades_stay_local (res://tests/test_rock_batch_size.gd:14)
+         [9] _run_test (res://addons/gut/gut.gd:612)
+         [10] _test_the_scripts (res://addons/gut/gut.gd:815)
+         [11] test_scripts (res://addons/gut/gut.gd:1027)
+         [12] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+         [13] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+         [14] main (res://addons/gut/cli/gut_cli.gd:284)
+         [15] _init (res://addons/gut/gut_cmdln.gd:39)
+WARNING: res://terrain/environment/visuals/kaykit/kaykit_cliff_lip.tres:6 - ext_resource, invalid UID: uid://dm72bncnoday5 - using text path instead: res://scripts/terrain/environment/model/EnvironmentVisual.gd
+     at: load (scene/resources/resource_format_text.cpp:444)
+     GDScript backtrace (most recent call first):
+         [0] _piece (res://scripts/terrain/field/CliffDressing.gd:232)
+         [1] _ensure_loaded (res://scripts/terrain/field/CliffDressing.gd:138)
+         [2] ground_uv (res://scripts/terrain/field/CliffDressing.gd:108)
+         [3] apply_moss (res://scripts/terrain/field/CliffRockCrags.gd:26)
+         [4] make (res://scripts/terrain/field/MeadowRockMaterial.gd:9)
+         [5] prepare (res://scripts/terrain/field/CliffSlopeRocks.gd:49)
+         [6] build_steps (res://scripts/terrain/field/CliffSlopeRocks.gd:91)
+         [7] build (res://scripts/terrain/field/CliffSlopeRocks.gd:79)
+         [8] test_large_batches_keep_every_rock_and_pebble_fades_stay_local (res://tests/test_rock_batch_size.gd:14)
+         [9] _run_test (res://addons/gut/gut.gd:612)
+         [10] _test_the_scripts (res://addons/gut/gut.gd:815)
+         [11] test_scripts (res://addons/gut/gut.gd:1027)
+         [12] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+         [13] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+         [14] main (res://addons/gut/cli/gut_cli.gd:284)
+         [15] _init (res://addons/gut/gut_cmdln.gd:39)
+WARNING: res://terrain/environment/visuals/kaykit/kaykit_cliff_outer_wall.tres:4 - ext_resource, invalid UID: uid://cnclg6ri5afbe - using text path instead: res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd
+     at: load (scene/resources/resource_format_text.cpp:444)
+     GDScript backtrace (most recent call first):
+         [0] _piece (res://scripts/terrain/field/CliffDressing.gd:232)
+         [1] _ensure_loaded (res://scripts/terrain/field/CliffDressing.gd:138)
+         [2] ground_uv (res://scripts/terrain/field/CliffDressing.gd:108)
+         [3] apply_moss (res://scripts/terrain/field/CliffRockCrags.gd:26)
+         [4] make (res://scripts/terrain/field/MeadowRockMaterial.gd:9)
+         [5] prepare (res://scripts/terrain/field/CliffSlopeRocks.gd:49)
+         [6] build_steps (res://scripts/terrain/field/CliffSlopeRocks.gd:91)
+         [7] build (res://scripts/terrain/field/CliffSlopeRocks.gd:79)
+         [8] test_large_batches_keep_every_rock_and_pebble_fades_stay_local (res://tests/test_rock_batch_size.gd:14)
+         [9] _run_test (res://addons/gut/gut.gd:612)
+         [10] _test_the_scripts (res://addons/gut/gut.gd:815)
+         [11] test_scripts (res://addons/gut/gut.gd:1027)
+         [12] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+         [13] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+         [14] main (res://addons/gut/cli/gut_cli.gd:284)
+         [15] _init (res://addons/gut/gut_cmdln.gd:39)
+WARNING: res://terrain/environment/visuals/kaykit/kaykit_cliff_outer_wall.tres:6 - ext_resource, invalid UID: uid://dm72bncnoday5 - using text path instead: res://scripts/terrain/environment/model/EnvironmentVisual.gd
+     at: load (scene/resources/resource_format_text.cpp:444)
+     GDScript backtrace (most recent call first):
+         [0] _piece (res://scripts/terrain/field/CliffDressing.gd:232)
+         [1] _ensure_loaded (res://scripts/terrain/field/CliffDressing.gd:138)
+         [2] ground_uv (res://scripts/terrain/field/CliffDressing.gd:108)
+         [3] apply_moss (res://scripts/terrain/field/CliffRockCrags.gd:26)
+         [4] make (res://scripts/terrain/field/MeadowRockMaterial.gd:9)
+         [5] prepare (res://scripts/terrain/field/CliffSlopeRocks.gd:49)
+         [6] build_steps (res://scripts/terrain/field/CliffSlopeRocks.gd:91)
+         [7] build (res://scripts/terrain/field/CliffSlopeRocks.gd:79)
+         [8] test_large_batches_keep_every_rock_and_pebble_fades_stay_local (res://tests/test_rock_batch_size.gd:14)
+         [9] _run_test (res://addons/gut/gut.gd:612)
+         [10] _test_the_scripts (res://addons/gut/gut.gd:815)
+         [11] test_scripts (res://addons/gut/gut.gd:1027)
+         [12] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+         [13] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+         [14] main (res://addons/gut/cli/gut_cli.gd:284)
+         [15] _init (res://addons/gut/gut_cmdln.gd:39)
+WARNING: res://terrain/environment/visuals/kaykit/kaykit_cliff_outer_lip.tres:4 - ext_resource, invalid UID: uid://cnclg6ri5afbe - using text path instead: res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd
+     at: load (scene/resources/resource_format_text.cpp:444)
+     GDScript backtrace (most recent call first):
+         [0] _piece (res://scripts/terrain/field/CliffDressing.gd:232)
+         [1] _ensure_loaded (res://scripts/terrain/field/CliffDressing.gd:138)
+         [2] ground_uv (res://scripts/terrain/field/CliffDressing.gd:108)
+         [3] apply_moss (res://scripts/terrain/field/CliffRockCrags.gd:26)
+         [4] make (res://scripts/terrain/field/MeadowRockMaterial.gd:9)
+         [5] prepare (res://scripts/terrain/field/CliffSlopeRocks.gd:49)
+         [6] build_steps (res://scripts/terrain/field/CliffSlopeRocks.gd:91)
+         [7] build (res://scripts/terrain/field/CliffSlopeRocks.gd:79)
+         [8] test_large_batches_keep_every_rock_and_pebble_fades_stay_local (res://tests/test_rock_batch_size.gd:14)
+         [9] _run_test (res://addons/gut/gut.gd:612)
+         [10] _test_the_scripts (res://addons/gut/gut.gd:815)
+         [11] test_scripts (res://addons/gut/gut.gd:1027)
+         [12] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+         [13] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+         [14] main (res://addons/gut/cli/gut_cli.gd:284)
+         [15] _init (res://addons/gut/gut_cmdln.gd:39)
+WARNING: res://terrain/environment/visuals/kaykit/kaykit_cliff_outer_lip.tres:6 - ext_resource, invalid UID: uid://dm72bncnoday5 - using text path instead: res://scripts/terrain/environment/model/EnvironmentVisual.gd
+     at: load (scene/resources/resource_format_text.cpp:444)
+     GDScript backtrace (most recent call first):
+         [0] _piece (res://scripts/terrain/field/CliffDressing.gd:232)
+         [1] _ensure_loaded (res://scripts/terrain/field/CliffDressing.gd:138)
+         [2] ground_uv (res://scripts/terrain/field/CliffDressing.gd:108)
+         [3] apply_moss (res://scripts/terrain/field/CliffRockCrags.gd:26)
+         [4] make (res://scripts/terrain/field/MeadowRockMaterial.gd:9)
+         [5] prepare (res://scripts/terrain/field/CliffSlopeRocks.gd:49)
+         [6] build_steps (res://scripts/terrain/field/CliffSlopeRocks.gd:91)
+         [7] build (res://scripts/terrain/field/CliffSlopeRocks.gd:79)
+         [8] test_large_batches_keep_every_rock_and_pebble_fades_stay_local (res://tests/test_rock_batch_size.gd:14)
+         [9] _run_test (res://addons/gut/gut.gd:612)
+         [10] _test_the_scripts (res://addons/gut/gut.gd:815)
+         [11] test_scripts (res://addons/gut/gut.gd:1027)
+         [12] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+         [13] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+         [14] main (res://addons/gut/cli/gut_cli.gd:284)
+         [15] _init (res://addons/gut/gut_cmdln.gd:39)
+WARNING: res://terrain/environment/visuals/kaykit/kaykit_cliff_inner_wall.tres:4 - ext_resource, invalid UID: uid://cnclg6ri5afbe - using text path instead: res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd
+     at: load (scene/resources/resource_format_text.cpp:444)
+     GDScript backtrace (most recent call first):
+         [0] _piece (res://scripts/terrain/field/CliffDressing.gd:232)
+         [1] _ensure_loaded (res://scripts/terrain/field/CliffDressing.gd:138)
+         [2] ground_uv (res://scripts/terrain/field/CliffDressing.gd:108)
+         [3] apply_moss (res://scripts/terrain/field/CliffRockCrags.gd:26)
+         [4] make (res://scripts/terrain/field/MeadowRockMaterial.gd:9)
+         [5] prepare (res://scripts/terrain/field/CliffSlopeRocks.gd:49)
+         [6] build_steps (res://scripts/terrain/field/CliffSlopeRocks.gd:91)
+         [7] build (res://scripts/terrain/field/CliffSlopeRocks.gd:79)
+         [8] test_large_batches_keep_every_rock_and_pebble_fades_stay_local (res://tests/test_rock_batch_size.gd:14)
+         [9] _run_test (res://addons/gut/gut.gd:612)
+         [10] _test_the_scripts (res://addons/gut/gut.gd:815)
+         [11] test_scripts (res://addons/gut/gut.gd:1027)
+         [12] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+         [13] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+         [14] main (res://addons/gut/cli/gut_cli.gd:284)
+         [15] _init (res://addons/gut/gut_cmdln.gd:39)
+WARNING: res://terrain/environment/visuals/kaykit/kaykit_cliff_inner_wall.tres:6 - ext_resource, invalid UID: uid://dm72bncnoday5 - using text path instead: res://scripts/terrain/environment/model/EnvironmentVisual.gd
+     at: load (scene/resources/resource_format_text.cpp:444)
+     GDScript backtrace (most recent call first):
+         [0] _piece (res://scripts/terrain/field/CliffDressing.gd:232)
+         [1] _ensure_loaded (res://scripts/terrain/field/CliffDressing.gd:138)
+         [2] ground_uv (res://scripts/terrain/field/CliffDressing.gd:108)
+         [3] apply_moss (res://scripts/terrain/field/CliffRockCrags.gd:26)
+         [4] make (res://scripts/terrain/field/MeadowRockMaterial.gd:9)
+         [5] prepare (res://scripts/terrain/field/CliffSlopeRocks.gd:49)
+         [6] build_steps (res://scripts/terrain/field/CliffSlopeRocks.gd:91)
+         [7] build (res://scripts/terrain/field/CliffSlopeRocks.gd:79)
+         [8] test_large_batches_keep_every_rock_and_pebble_fades_stay_local (res://tests/test_rock_batch_size.gd:14)
+         [9] _run_test (res://addons/gut/gut.gd:612)
+         [10] _test_the_scripts (res://addons/gut/gut.gd:815)
+         [11] test_scripts (res://addons/gut/gut.gd:1027)
+         [12] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+         [13] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+         [14] main (res://addons/gut/cli/gut_cli.gd:284)
+         [15] _init (res://addons/gut/gut_cmdln.gd:39)
+WARNING: res://terrain/environment/visuals/kaykit/kaykit_cliff_inner_lip.tres:4 - ext_resource, invalid UID: uid://cnclg6ri5afbe - using text path instead: res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd
+     at: load (scene/resources/resource_format_text.cpp:444)
+     GDScript backtrace (most recent call first):
+         [0] _piece (res://scripts/terrain/field/CliffDressing.gd:232)
+         [1] _ensure_loaded (res://scripts/terrain/field/CliffDressing.gd:138)
+         [2] ground_uv (res://scripts/terrain/field/CliffDressing.gd:108)
+         [3] apply_moss (res://scripts/terrain/field/CliffRockCrags.gd:26)
+         [4] make (res://scripts/terrain/field/MeadowRockMaterial.gd:9)
+         [5] prepare (res://scripts/terrain/field/CliffSlopeRocks.gd:49)
+         [6] build_steps (res://scripts/terrain/field/CliffSlopeRocks.gd:91)
+         [7] build (res://scripts/terrain/field/CliffSlopeRocks.gd:79)
+         [8] test_large_batches_keep_every_rock_and_pebble_fades_stay_local (res://tests/test_rock_batch_size.gd:14)
+         [9] _run_test (res://addons/gut/gut.gd:612)
+         [10] _test_the_scripts (res://addons/gut/gut.gd:815)
+         [11] test_scripts (res://addons/gut/gut.gd:1027)
+         [12] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+         [13] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+         [14] main (res://addons/gut/cli/gut_cli.gd:284)
+         [15] _init (res://addons/gut/gut_cmdln.gd:39)
+WARNING: res://terrain/environment/visuals/kaykit/kaykit_cliff_inner_lip.tres:6 - ext_resource, invalid UID: uid://dm72bncnoday5 - using text path instead: res://scripts/terrain/environment/model/EnvironmentVisual.gd
+     at: load (scene/resources/resource_format_text.cpp:444)
+     GDScript backtrace (most recent call first):
+         [0] _piece (res://scripts/terrain/field/CliffDressing.gd:232)
+         [1] _ensure_loaded (res://scripts/terrain/field/CliffDressing.gd:138)
+         [2] ground_uv (res://scripts/terrain/field/CliffDressing.gd:108)
+         [3] apply_moss (res://scripts/terrain/field/CliffRockCrags.gd:26)
+         [4] make (res://scripts/terrain/field/MeadowRockMaterial.gd:9)
+         [5] prepare (res://scripts/terrain/field/CliffSlopeRocks.gd:49)
+         [6] build_steps (res://scripts/terrain/field/CliffSlopeRocks.gd:91)
+         [7] build (res://scripts/terrain/field/CliffSlopeRocks.gd:79)
+         [8] test_large_batches_keep_every_rock_and_pebble_fades_stay_local (res://tests/test_rock_batch_size.gd:14)
+         [9] _run_test (res://addons/gut/gut.gd:612)
+         [10] _test_the_scripts (res://addons/gut/gut.gd:815)
+         [11] test_scripts (res://addons/gut/gut.gd:1027)
+         [12] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+         [13] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+         [14] main (res://addons/gut/cli/gut_cli.gd:284)
+         [15] _init (res://addons/gut/gut_cmdln.gd:39)
+[1m1/1 passed.
+[0m[4m
+
+res://tests/test_rock_batch_trial.gd
+[0m* test_rebatch_preserves_instances_and_render_resources
+[1m1/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               2
+Tests                 2
+Passing Tests         2
+Asserts              49
+Time              7.657s
+
+
+[32m---- All tests passed! ----
+[0m

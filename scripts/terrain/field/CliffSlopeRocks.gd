@@ -64,6 +64,8 @@ static func prepare() -> void:
 ## triangles a frame). Small tiles let the renderer cull them and pick each
 ## tile's mesh LOD by distance.
 const ROCK_TILE := 32.0
+## Large rocks need fewer submissions; pebbles retain their original fade tiles.
+const LARGE_ROCK_TILE := 64.0
 ## Rocks no larger than this (the Meadow 06-12 pebbles) cast no shadow and fade
 ## out past SMALL_ROCK_RANGE.
 const SMALL_ROCK_SIZE := 1.3
@@ -96,9 +98,10 @@ static func build_steps(entries: Dictionary, seed_value: int) -> Dictionary:
 		if STYLE.sheet_study == "stamp" and name.begins_with("face_"):
 			continue
 		var tiles: Dictionary = {}
+		var tile_size := ROCK_TILE if _is_small(name) else LARGE_ROCK_TILE
 		for rock: Dictionary in entries[name]:
 			var origin: Vector3 = (rock.transform as Transform3D).origin
-			var key := Vector2i(floori(origin.x / ROCK_TILE), floori(origin.z / ROCK_TILE))
+			var key := Vector2i(floori(origin.x / tile_size), floori(origin.z / tile_size))
 			if not tiles.has(key):
 				tiles[key] = []
 			tiles[key].append(rock)
@@ -110,6 +113,11 @@ static func build_steps(entries: Dictionary, seed_value: int) -> Dictionary:
 			labels.append("rocks:%s(%d)" % [name, rocks.size()])
 	_add_collision_steps(root, entries, steps, labels)
 	return {"root": root, "steps": steps, "labels": labels}
+
+
+static func _is_small(name: String) -> bool:
+	var size: Vector3 = PIECES[name][1]
+	return maxf(size.x, maxf(size.y, size.z)) <= SMALL_ROCK_SIZE
 
 
 static func _batch(name: String, rocks: Array, seed_value: int) -> MultiMeshInstance3D:
@@ -140,8 +148,7 @@ static func _batch(name: String, rocks: Array, seed_value: int) -> MultiMeshInst
 	node.multimesh = mm
 	node.material_override = piece[2]
 	node.add_to_group("tactical_solid_earth", true)
-	var size: Vector3 = PIECES[name][1]
-	if maxf(size.x, maxf(size.y, size.z)) <= SMALL_ROCK_SIZE:
+	if _is_small(name):
 		node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		node.visibility_range_end = SMALL_ROCK_RANGE
 		node.visibility_range_end_margin = SMALL_ROCK_FADE

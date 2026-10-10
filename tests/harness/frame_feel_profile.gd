@@ -185,6 +185,7 @@ func _physics_process(_delta: float) -> void:
 	_physics_begin = Time.get_ticks_usec()
 
 
+var _rock_trial: RefCounted
 var _warm_trial: RefCounted
 var _last_thread_cpu := -1
 var _pending_frame := 0
@@ -547,6 +548,8 @@ func _run_ablations() -> void:
 	if "warm_full" in variants or "warm_strips" in variants or "warm_quads" in variants:
 		_warm_trial = preload("res://tests/harness/WarmupRenderTrial.gd").new(_streamer._first_view,
 			_streamer._chunk_centre(FieldTerrainStreamer.chunk_of(_player.global_position)))
+	if "rock_tiles_64" in variants or "rock_tiles_96" in variants:
+		_rock_trial = preload("res://tests/harness/RockBatchTrial.gd").new(_streamer._built.values())
 	var trial := 0
 	for name: String in variants:
 		if _warm_trial != null: _warm_trial.mode(name)
@@ -589,6 +592,12 @@ func _run_ablations() -> void:
 						or (name == "no_cliff_sheet" and (n.contains("Cliff") or n.contains("Slope"))) \
 						or (name == "no_terrain_mesh" and n == "Surface")
 					(child as Node3D).visible = not hide
+					if n == "CliffRockFormations":
+						for part: Node in child.get_children():
+							if part is Node3D:
+								var slope := String(part.name) == "CliffSlopeRocks"
+								(part as Node3D).visible = not ((name == "no_slope_rocks" and slope) or (name == "no_cliff_tiles" and not slope))
+		if _rock_trial != null: _rock_trial.mode(name)
 		_phase = "settle"
 		await get_tree().create_timer(1.5).timeout
 		_phase = phase
@@ -598,6 +607,9 @@ func _run_ablations() -> void:
 			await RenderingServer.frame_post_draw
 			get_viewport().get_texture().get_image().save_png(_ablation_shots + "/" + phase + ".png")
 	_turning = false
+	if _rock_trial != null:
+		_rock_trial.restore()
+		_rock_trial = null
 	if _warm_trial != null:
 		_warm_trial.restore()
 		_warm_trial = null
