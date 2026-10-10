@@ -1,3 +1,16 @@
+> October 10 town texture memory: 52 opaque, albedo-only Suntail textures use BC7
+> at the original resolution/mip count. Normal/scalar/emission/cutout textures unchanged.
+> Fresh nine-chunk town renderer texture memory 1,750.27 -> 1,640.96 MiB, same
+> 1,629 draws and buffers. No claim that all long-session hitches are eliminated.
+> After a Suntail rebake run `tools/environment_bake/compress_village_colors.gd -- --apply`
+> with .NET Godot; dry run without --apply, already-compressed resources are skipped.
+> Inspect all material usages before selecting textures; never compress an atlas used
+> by a cutout or non-albedo slot through its opaque usage. Preserve compressed buffers
+> before loading/re-saving PortableCompressedTexture2D, or serialization loses data.
+> `tests/harness/village_compression_check.gd` fresh-loads all 52 and checks size/mips/bytes;
+> texture-sharing tests pass 100 assertions. Close/far before/after shots and measurements
+> are in `docs/qa/2026-10-09-followup/result.md`. Disk +24.53 MiB trades for GPU savings.
+
 > October 9 rock submission follow-up: large slope/face rocks batch in 64 m cells;
 > pebbles retain 32 m cells, 70 m fade and no shadows. Meshes, per-instance data
 > and collision hulls are unchanged. Same-world alternating render trial reduced

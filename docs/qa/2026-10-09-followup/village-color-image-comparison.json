@@ -1,0 +1,12 @@
+{
+  "town": {
+    "mean_absolute_byte_error": 0.011990277777777779,
+    "p99_max_channel_byte_error": 1.0,
+    "pixels_over_8_bytes_percent": 0.0010416666666666667
+  },
+  "roof": {
+    "mean_absolute_byte_error": 0.07222824074074075,
+    "p99_max_channel_byte_error": 1.0,
+    "pixels_over_8_bytes_percent": 0.0001388888888888889
+  }
+}

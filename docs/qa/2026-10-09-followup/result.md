@@ -90,3 +90,20 @@ The prior traversal repeatedly logged whole mist creation at 10–16 ms. A candi
 The trial also recorded a 352.88 ms idle frame using 220.67 ms of main-thread CPU but only 8.84 ms of script callbacks. Warm-up count, draw counts, pipeline counts, and managed collection/pause counters were unchanged. Across that frame, macOS page-ins rose 21, disk reads rose 2,400,256 bytes, and resident bytes fell 111,001,600 while physical footprint stayed about 9.6 GB. This is evidence of concurrent memory activity, not proof that paging alone caused the stall or that the mist candidate regressed it. Other agents' Godot tests were running and were left untouched.
 
 The next concrete target is texture storage. A fresh on-disk inventory confirms 424 baked textures; after existing aliases, 401 unique paths hold 1,528.3 MiB of decoded image data. Suntail village textures account for 1,040.6 MiB of that offline inventory. The earlier live cache inventory held 549.3 MiB from that kit after alias sharing. These counts are not additive with engine VRAM/physical memory. A reviewed GPU-compression trial can target this remaining allocation without changing town geometry or lighting. No texture assets have been changed by this investigation.
+
+
+## Opaque village texture compression
+
+Fifty-two opaque, albedo-only Suntail textures now use BC7 GPU compression at their original resolution and mip count. Normal maps, scalar maps, emission and any texture shared with a transparent material are excluded. Their image data totals 344.67 → 86.17 MiB across the catalogue. Actual renderer texture memory at the same nine-chunk town scene is **1,750.27 → 1,640.96 MiB**, saving **109.31 MiB**; buffers remain 482.73 MiB and draws remain 1,629. The larger image-byte estimate is not an additional GPU saving.
+
+Close-up walls, windows and roofs were reviewed by swapping materials in the same live scene, then again from the final files in a fresh process. Mean RGB byte difference is 0.072 in the close-up and 0.012 in the town view; the 99th percentile maximum-channel difference is one byte in both. These comparisons isolate compression; the earlier lighting fixes remain in place.
+
+| Original town textures | Compressed textures, fresh process |
+| --- | --- |
+| ![Before](/Users/ryko/story/docs/qa/2026-10-09-followup/village-compression-roof-before.png) | ![After](/Users/ryko/story/docs/qa/2026-10-09-followup/village-compression-roof-final.png) |
+
+Fresh-loader validation passes for all 52 textures (dimensions, mip presence, compressed format and byte counts). Texture-sharing regressions pass three tests / 100 assertions. Repeating the maintenance command changes zero textures. A packaging trial initially lost retained compressed buffers when re-saving loaded resources; the final path explicitly retains them before loading and the corrected assets pass fresh visual and readback checks.
+
+This trades disk size (34.66 → 59.19 MiB) for lower renderer memory. The 300-frame stationary checks were 12.77/13.42 ms median/p95 before and 11.95/13.06 ms after; background load varies, so these are smoke checks, not an FPS claim. It does not establish that occasional long-session stalls are eliminated.
+
+After a Suntail rebake, run `.NET Godot --headless --path . -s tools/environment_bake/compress_village_colors.gd -- --apply`. Without `--apply` it is a dry run. Selection inspects every material usage first, preserves mip chains, and skips already compressed resources to avoid repeated lossy compression. Validate with `tests/harness/village_compression_check.gd`. Evidence: `village-color-compression-audit.json`, `village-color-image-comparison.json`, and `village-texture-memory-{before,after}.json`.

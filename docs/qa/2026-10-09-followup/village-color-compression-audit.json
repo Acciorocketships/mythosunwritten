@@ -1,0 +1,938 @@
+[
+  {
+    "elapsed_ms": 1756,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 7.99999952316284,
+    "mean_error": 0.993408152494339,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/068d61ddd0f14350f506.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 1748,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 5.99999964237213,
+    "mean_error": 0.419372547512467,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/0f1d44a15f86155de192.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 2675,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 10.9999993443489,
+    "mean_error": 0.679016218455217,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/106503d58f61c402822e.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 1965,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 12.9999992251396,
+    "mean_error": 0.688110335131569,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/13b144d04daf9f32868e.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 1971,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 5.99999964237213,
+    "mean_error": 0.702148397040219,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/15b24b53dcb035bf82a6.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 1835,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 2048,
+    "max_alpha_byte_error": 3.00000172108412,
+    "max_error": 5.99999964237213,
+    "mean_error": 0.122344963410796,
+    "mips": true,
+    "packed_bytes": 5592432,
+    "path": "res://terrain/environment/textures/suntail_village_kit/173753758685fa88a5cb.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 65536,
+    "source_bytes": 22369620,
+    "width": 2048
+  },
+  {
+    "elapsed_ms": 2410,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 7.99999952316284,
+    "mean_error": 0.844482389165933,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/1cb6f41c4a332a13dde0.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 1394,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 2048,
+    "max_alpha_byte_error": 11.9999992847443,
+    "max_error": 15.0000067055225,
+    "mean_error": 0.475128153973401,
+    "mips": false,
+    "packed_bytes": 4194304,
+    "path": "res://terrain/environment/textures/suntail_village_kit/2d26b58775218a50aad7.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 65536,
+    "source_bytes": 16777216,
+    "width": 2048
+  },
+  {
+    "elapsed_ms": 542,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 512,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 3.99999976158142,
+    "mean_error": 0.748046841545147,
+    "mips": false,
+    "packed_bytes": 262144,
+    "path": "res://terrain/environment/textures/suntail_village_kit/312cd16ce224bbfa9be9.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 4096,
+    "source_bytes": 1048576,
+    "width": 512
+  },
+  {
+    "elapsed_ms": 2109,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 15.9999990463257,
+    "mean_error": 0.552124014880064,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/34dd33086ceafdce6e27.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 2001,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 2048,
+    "max_alpha_byte_error": 7.99999952316284,
+    "max_error": 5.99999964237213,
+    "mean_error": 0.378860455109589,
+    "mips": false,
+    "packed_bytes": 4194304,
+    "path": "res://terrain/environment/textures/suntail_village_kit/36b11b481ec634447e57.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 65536,
+    "source_bytes": 16777216,
+    "width": 2048
+  },
+  {
+    "elapsed_ms": 2301,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 2048,
+    "max_alpha_byte_error": 2.00000368058681,
+    "max_error": 2.99999982118607,
+    "mean_error": 0.117340083505724,
+    "mips": true,
+    "packed_bytes": 5592432,
+    "path": "res://terrain/environment/textures/suntail_village_kit/3939f12f65493ec760ed.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 65536,
+    "source_bytes": 22369620,
+    "width": 2048
+  },
+  {
+    "elapsed_ms": 556,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 512,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 6.99999958276749,
+    "mean_error": 0.900146450203465,
+    "mips": false,
+    "packed_bytes": 262144,
+    "path": "res://terrain/environment/textures/suntail_village_kit/40f332d896c3b8d5c344.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 4096,
+    "source_bytes": 1048576,
+    "width": 512
+  },
+  {
+    "elapsed_ms": 494,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 512,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 6.99999958276749,
+    "mean_error": 0.652343742658559,
+    "mips": false,
+    "packed_bytes": 262144,
+    "path": "res://terrain/environment/textures/suntail_village_kit/517c75df9f8a1544b976.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 4096,
+    "source_bytes": 1048576,
+    "width": 512
+  },
+  {
+    "elapsed_ms": 294,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 1.99999988079071,
+    "max_error": 1.99999988079071,
+    "mean_error": 0.0820922802631685,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/58833ae329eb7f6517b7.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 2298,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 16.0000066459179,
+    "mean_error": 1.37756355053625,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/58beccffe79ff50c296c.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 6918,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 5.99999964237213,
+    "mean_error": 0.714660603789525,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/61b92ac5af132825dc7b.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 3570,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 5.99999964237213,
+    "mean_error": 0.802917479459211,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/61d66edc55898f5b8db7.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 2690,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 6.99999958276749,
+    "mean_error": 0.738037067239929,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/62d91b016415392c426c.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 2431,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 5.00000350177288,
+    "mean_error": 0.635070794701278,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/6ec1177f854a7a30bb73.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 2684,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 6.99999958276749,
+    "mean_error": 0.906127887274124,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/73965aecdf27cee72c17.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 2660,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 5.99999964237213,
+    "mean_error": 0.829162724494381,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/78a373d42139e47149dd.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 3351,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 5.99999964237213,
+    "mean_error": 0.981079054217844,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/81b61f641910bfec9f86.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 12510,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 2048,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 15.0000067055225,
+    "mean_error": 0.759338335037683,
+    "mips": false,
+    "packed_bytes": 4194304,
+    "path": "res://terrain/environment/textures/suntail_village_kit/840229b1859d2b481cf6.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 65536,
+    "source_bytes": 16777216,
+    "width": 2048
+  },
+  {
+    "elapsed_ms": 8270,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 2048,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 3.00000742077827,
+    "mean_error": 0.570419284945274,
+    "mips": false,
+    "packed_bytes": 4194304,
+    "path": "res://terrain/environment/textures/suntail_village_kit/8738d9a72c777ab60f43.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 65536,
+    "source_bytes": 16777216,
+    "width": 2048
+  },
+  {
+    "elapsed_ms": 2373,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 8.9999994635582,
+    "mean_error": 0.753478973374513,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/894ede395c2c4699b270.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 2180,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 13.999999165535,
+    "mean_error": 0.439147927232568,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/8cd76a5efe016618b10f.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 2210,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 9.99999940395355,
+    "mean_error": 0.492248523441958,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/8cfb099af30360d8e7b9.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 611,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 512,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 3.99999976158142,
+    "mean_error": 0.707763649170374,
+    "mips": false,
+    "packed_bytes": 262144,
+    "path": "res://terrain/environment/textures/suntail_village_kit/97605743e724cf138368.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 4096,
+    "source_bytes": 1048576,
+    "width": 512
+  },
+  {
+    "elapsed_ms": 2147,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 7.000000057742,
+    "mean_error": 0.540222164701163,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/98df796ffdd2f19de340.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 2137,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 13.999999165535,
+    "mean_error": 0.79498313597469,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/a1f0e5e0e4366e363861.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 9294,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 2048,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 8.9999994635582,
+    "mean_error": 0.828842183781262,
+    "mips": false,
+    "packed_bytes": 4194304,
+    "path": "res://terrain/environment/textures/suntail_village_kit/a634e65ed215e4613788.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 65536,
+    "source_bytes": 16777216,
+    "width": 2048
+  },
+  {
+    "elapsed_ms": 2968,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 12.9999992251396,
+    "mean_error": 0.984313980483051,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/b276d0e37013c967f659.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 3055,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 8.9999994635582,
+    "mean_error": 0.957519489484184,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/b35ed87e37b5aab4d7c8.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 2721,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 3.00000742077827,
+    "mean_error": 0.540100097468894,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/c3721c37bdc04f59b3a4.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 3124,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 7.99999952316284,
+    "mean_error": 0.846313515639849,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/c54951e4723f0ce97907.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 9786,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 2048,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 5.99999964237213,
+    "mean_error": 0.24513245288432,
+    "mips": false,
+    "packed_bytes": 4194304,
+    "path": "res://terrain/environment/textures/suntail_village_kit/c63f5a654e63d592b4cc.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 65536,
+    "source_bytes": 16777216,
+    "width": 2048
+  },
+  {
+    "elapsed_ms": 1526,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 2048,
+    "max_alpha_byte_error": 0.999999940395355,
+    "max_error": 2.99999982118607,
+    "mean_error": 0.0111999505043059,
+    "mips": false,
+    "packed_bytes": 4194304,
+    "path": "res://terrain/environment/textures/suntail_village_kit/cc208e503e49a0f44873.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 65536,
+    "source_bytes": 16777216,
+    "width": 2048
+  },
+  {
+    "elapsed_ms": 18923,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 2048,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 14.9999991059303,
+    "mean_error": 0.921615697583462,
+    "mips": false,
+    "packed_bytes": 4194304,
+    "path": "res://terrain/environment/textures/suntail_village_kit/ce6958a0ba18a36a6558.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 65536,
+    "source_bytes": 16777216,
+    "width": 2048
+  },
+  {
+    "elapsed_ms": 4501,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 5.99999964237213,
+    "mean_error": 0.560913053432159,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/d2ce5a927e27f196a57f.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 4094,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 6.99999958276749,
+    "mean_error": 0.780944785092288,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/da4ffde4444a8a03ebe6.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 4515,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 8.9999994635582,
+    "mean_error": 0.846862766379672,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/e670f7dcad7486b50e2a.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 2230,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 2048,
+    "max_alpha_byte_error": 2.00000178068876,
+    "max_error": 1.99999988079071,
+    "mean_error": 0.057556148913136,
+    "mips": false,
+    "packed_bytes": 4194304,
+    "path": "res://terrain/environment/textures/suntail_village_kit/e76c53727ffdfddf0c5c.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 65536,
+    "source_bytes": 16777216,
+    "width": 2048
+  },
+  {
+    "elapsed_ms": 3413,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 6.99999958276749,
+    "mean_error": 0.778930789720107,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/e9389edef872288d5d37.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 5664,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 12.0000068843365,
+    "mean_error": 0.481933566416046,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/ea5794d55246b176de84.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 1149,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 512,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 4.99999970197678,
+    "mean_error": 0.560790987765358,
+    "mips": false,
+    "packed_bytes": 262144,
+    "path": "res://terrain/environment/textures/suntail_village_kit/ebef41769733706c8b80.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 4096,
+    "source_bytes": 1048576,
+    "width": 512
+  },
+  {
+    "elapsed_ms": 6805,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 6.00000724196434,
+    "mean_error": 0.463562016557262,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/ec3b7060e7ab54ad6c79.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 7620,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 5.99999964237213,
+    "mean_error": 0.556030255602309,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/ecd0ecd91affd8ecac21.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 956,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 512,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 4.99999970197678,
+    "mean_error": 0.62597661610198,
+    "mips": false,
+    "packed_bytes": 262144,
+    "path": "res://terrain/environment/textures/suntail_village_kit/f12fe81c89555f6e6cf3.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 4096,
+    "source_bytes": 1048576,
+    "width": 512
+  },
+  {
+    "elapsed_ms": 15294,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 2048,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 9.99999940395355,
+    "mean_error": 0.8865814150181,
+    "mips": false,
+    "packed_bytes": 4194304,
+    "path": "res://terrain/environment/textures/suntail_village_kit/f3cc525e6340c02f2f54.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 65536,
+    "source_bytes": 16777216,
+    "width": 2048
+  },
+  {
+    "elapsed_ms": 3620,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 5.99999964237213,
+    "mean_error": 0.894103961281871,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/fbdb058f02677d25467f.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  },
+  {
+    "elapsed_ms": 3225,
+    "error_unit": "maximum_rgb_byte_error",
+    "format": 22,
+    "height": 1024,
+    "max_alpha_byte_error": 0.0,
+    "max_error": 5.99999964237213,
+    "mean_error": 0.911621044515414,
+    "mips": false,
+    "packed_bytes": 1048576,
+    "path": "res://terrain/environment/textures/suntail_village_kit/fdb992192889458511a2.res",
+    "roles": [
+      "albedo_texture"
+    ],
+    "samples": 16384,
+    "source_bytes": 4194304,
+    "width": 1024
+  }
+]
