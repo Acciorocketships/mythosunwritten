@@ -152,58 +152,6 @@
       }
     },
     {
-      "id": "town.frontage.floor.d025",
-      "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Floor_2.glb",
-      "merge_pieces": true,
-      "tags": [
-        "village",
-        "town_room_fronts",
-        "building"
-      ],
-      "tint_group": "identity",
-      "supports_instance_color": true,
-      "max_mesh_bytes": 8388608,
-      "max_visual_triangles": 12000,
-      "max_surfaces": 6,
-      "collision_profile": "building_trimesh",
-      "max_collision_triangles": 12000,
-      "max_collision_pieces": 1,
-      "clip_ranges": {
-        "z": [
-          -0.125,
-          0.125
-        ]
-      }
-    },
-    {
-      "id": "town.frontage.corner.d025",
-      "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Floor_2.glb",
-      "merge_pieces": true,
-      "tags": [
-        "village",
-        "town_room_fronts",
-        "building"
-      ],
-      "tint_group": "identity",
-      "supports_instance_color": true,
-      "max_mesh_bytes": 8388608,
-      "max_visual_triangles": 12000,
-      "max_surfaces": 6,
-      "collision_profile": "building_trimesh",
-      "max_collision_triangles": 12000,
-      "max_collision_pieces": 1,
-      "clip_ranges": {
-        "x": [
-          -0.125,
-          0.125
-        ],
-        "z": [
-          -0.125,
-          0.125
-        ]
-      }
-    },
-    {
       "id": "town.frontage.return_beam.d025",
       "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Crossbar_2.glb",
       "merge_pieces": true,
@@ -220,35 +168,6 @@
       "max_collision_triangles": 12000,
       "max_collision_pieces": 1,
       "collision_profile": "building_trimesh",
-      "clip_ranges": {
-        "x": [
-          -0.125,
-          0.125
-        ]
-      }
-    },
-    {
-      "id": "town.frontage.return.d025",
-      "source": "res://assets/PureVillage/Models/Architecture/Wall_Start_10x30_0.glb",
-      "merge_pieces": true,
-      "tags": [
-        "village",
-        "town_room_fronts",
-        "building"
-      ],
-      "tint_group": "identity",
-      "supports_instance_color": true,
-      "max_mesh_bytes": 8388608,
-      "max_visual_triangles": 20000,
-      "max_surfaces": 12,
-      "collision_profile": "building_trimesh",
-      "max_collision_triangles": 12000,
-      "max_collision_pieces": 1,
-      "pivot": [
-        -0.125,
-        0,
-        0
-      ],
       "clip_ranges": {
         "x": [
           -0.125,
@@ -358,111 +277,6 @@
         "x": [
           -0.25,
           0.25
-        ]
-      }
-    },
-    {
-      "id": "town.frontage.floor.d075",
-      "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Floor_2.glb",
-      "merge_pieces": true,
-      "tags": [
-        "village",
-        "town_room_fronts",
-        "building"
-      ],
-      "tint_group": "identity",
-      "supports_instance_color": true,
-      "max_mesh_bytes": 8388608,
-      "max_visual_triangles": 12000,
-      "max_surfaces": 6,
-      "collision_profile": "building_trimesh",
-      "max_collision_triangles": 12000,
-      "max_collision_pieces": 1,
-      "clip_ranges": {
-        "z": [
-          -0.375,
-          0.375
-        ]
-      }
-    },
-    {
-      "id": "town.frontage.corner.d075",
-      "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Floor_2.glb",
-      "merge_pieces": true,
-      "tags": [
-        "village",
-        "town_room_fronts",
-        "building"
-      ],
-      "tint_group": "identity",
-      "supports_instance_color": true,
-      "max_mesh_bytes": 8388608,
-      "max_visual_triangles": 12000,
-      "max_surfaces": 6,
-      "collision_profile": "building_trimesh",
-      "max_collision_triangles": 12000,
-      "max_collision_pieces": 1,
-      "clip_ranges": {
-        "x": [
-          -0.375,
-          0.375
-        ],
-        "z": [
-          -0.375,
-          0.375
-        ]
-      }
-    },
-    {
-      "id": "town.frontage.return_beam.d075",
-      "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Crossbar_2.glb",
-      "merge_pieces": true,
-      "tags": [
-        "village",
-        "town_room_fronts",
-        "building"
-      ],
-      "tint_group": "identity",
-      "supports_instance_color": true,
-      "max_mesh_bytes": 8388608,
-      "max_visual_triangles": 20000,
-      "max_surfaces": 6,
-      "max_collision_triangles": 12000,
-      "max_collision_pieces": 1,
-      "collision_profile": "building_trimesh",
-      "clip_ranges": {
-        "x": [
-          -0.375,
-          0.375
-        ]
-      }
-    },
-    {
-      "id": "town.frontage.return.d075",
-      "source": "res://assets/PureVillage/Models/Architecture/Wall_Start_10x30_0.glb",
-      "merge_pieces": true,
-      "tags": [
-        "village",
-        "town_room_fronts",
-        "building"
-      ],
-      "tint_group": "identity",
-      "supports_instance_color": true,
-      "max_mesh_bytes": 8388608,
-      "max_visual_triangles": 20000,
-      "max_surfaces": 12,
-      "collision_profile": "building_trimesh",
-      "max_collision_triangles": 12000,
-      "max_collision_pieces": 1,
-      "pivot": [
-        -0.375,
-        0,
-        0
-      ],
-      "clip_ranges": {
-        "x": [
-          -0.375,
-          0.375
         ]
       }
     },
@@ -669,42 +483,6 @@
           0.75
         ]
       }
-    },
-    {
-      "id": "town.frontage.floor.d200",
-      "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Floor_2.glb",
-      "merge_pieces": true,
-      "tags": [
-        "village",
-        "town_room_fronts",
-        "building"
-      ],
-      "tint_group": "identity",
-      "supports_instance_color": true,
-      "max_mesh_bytes": 8388608,
-      "max_visual_triangles": 12000,
-      "max_surfaces": 6,
-      "collision_profile": "building_trimesh",
-      "max_collision_triangles": 12000,
-      "max_collision_pieces": 1
-    },
-    {
-      "id": "town.frontage.corner.d200",
-      "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Floor_2.glb",
-      "merge_pieces": true,
-      "tags": [
-        "village",
-        "town_room_fronts",
-        "building"
-      ],
-      "tint_group": "identity",
-      "supports_instance_color": true,
-      "max_mesh_bytes": 8388608,
-      "max_visual_triangles": 12000,
-      "max_surfaces": 6,
-      "collision_profile": "building_trimesh",
-      "max_collision_triangles": 12000,
-      "max_collision_pieces": 1
     },
     {
       "id": "town.frontage.return_beam.d200",

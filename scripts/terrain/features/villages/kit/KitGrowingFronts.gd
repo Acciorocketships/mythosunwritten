@@ -13,9 +13,19 @@ const CAP_KNOB := &"growth_max_lean"
 ## Baked step sizes (native m): 0.5 on bracket.small, 1.0 = the kit jetty on bracket.jetty.
 const STEP_SIZES: Array[float] = [0.5, 1.0]
 const MAX_STEPS := 4
-const LEAN_DEPTHS: Array[float] = [0.25, 0.5, 0.75, 1.0, 1.5, 2.0]
 const FRONT_ROLES: Array[StringName] = [&"frontage.floor", &"frontage.return", &"frontage.return_beam",
 	&"frontage.corner"]
+## The baked depths (native m) of each front piece: exactly those the assembler can ask
+## for. Step-ins are whole steps of 0.5 up to one module (2.0). A trimmed floor strip or
+## corner square keeps what is left of the module (2.0 - inset: 0.5..1.5); a return and
+## its beams span an inset (0.5..2.0) or the rest of a cut corner panel (0.5..1.5); the
+## 0.25 return beam is the wrapped corner's filler (BuildingKitAssembler._emit_inset_end).
+const FRONT_DEPTHS := {
+	&"frontage.floor": [0.5, 1.0, 1.5],
+	&"frontage.corner": [0.5, 1.0, 1.5],
+	&"frontage.return": [0.5, 1.0, 1.5, 2.0],
+	&"frontage.return_beam": [0.25, 0.5, 1.0, 1.5, 2.0],
+}
 
 
 ## The step this kit can carry: a kit-sized step needs the kit's own jetty brace

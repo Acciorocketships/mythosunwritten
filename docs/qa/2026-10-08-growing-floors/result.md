@@ -15,9 +15,8 @@ step in the kit's way"). Plan: `docs/superpowers/plans/2026-10-08-growing-upper-
 | `growth_other_face_chance` | CHANCE | 0.85 (every exposed face alike) |
 | `growth_step` | WEIGHTS | {0.5 native m: 1, 1.0 native m (the kit jetty): 3} |
 | `growth_max_lean` | RANGE_FLOAT | 2.0 native m = the ground storey's total step-in below the top storey |
-| `lane_sky_gap` | RANGE_FLOAT | 0.75; inert under step-in (kept for any outward offset) |
 
-`growth_gable_front_boost` was removed. `tests/fixtures/town_old_look.gd` pins
+`growth_gable_front_boost` and `lane_sky_gap` were removed (the latter in the final review: inert under step-in). `tests/fixtures/town_old_look.gd` pins
 `growing_house_chance = 0.0`, so the old look still reproduces the pre-growth towns.
 
 **Eligibility.** Any exposed face (not touching another building at the storey's bands) of a house
@@ -245,11 +244,11 @@ Original plan rulings that still stand:
 5. The street face is a column test; it only selects which face knob applies.
 6. G6 (portals) is widened to passages, blanks and balconies on the run or the storey above.
 7. Returns are cut from wall starts (no runtime scaling).
-8. `lane_sky_gap` is clamped to 0.25–4.0.
+8. (Removed in the final review: `lane_sky_gap` and its G2 sky-gap guardrail; an inset never narrows a lane.)
 
 October 8 amendment rulings that still stand:
 
-1. The 0.25 step is retired; its baked pieces stay in the catalogue.
+1. The 0.25 step is retired; its baked pieces were removed in the final review (only the d025 return beam, the wrapped-corner filler, stays).
 2. Pulling is one hop: a growing face pulls only its direct coplanar or convex-corner neighbours.
 3. Rows pull non-growing eligible neighbours, so more houses can step than `growing_house_chance` alone
    gives (0 pulled houses in every corpus run so far).
@@ -357,7 +356,9 @@ Controller rulings in the ledger that changed behaviour (plain language):
 9. **Stone storeys** step in only by whole modules until a stone half strip is baked.
 10. **Flush faces:** faces over a lower neighbour or against a party wall never step.
 11. **The planner is unaware of the recesses:** the strip under an overhang is the house's own cell.
-12. **`lane_sky_gap` is inert:** remove it, or keep it for a future outward option?
+12. **`lane_sky_gap` removed (final review):** the knob, the G2 sky-gap guardrail (`gap_ok`,
+    `MAX_LANE_MODULES`), the always-empty outward registry, `KitRoomProjections`' `facing`/`sky_gap`
+    parameters and the unreachable outward wrapped-corner branch of `storey_slots` are gone.
 
 ## Fix round 1 (controller ruling): failed growers
 
@@ -411,3 +412,26 @@ keeps a step. The withheld set only grows, so this ends; one extra pass in pract
   - Zero path against the pre-default baseline: MATCH.
   - Old look: MATCH.
   - Growth-on smoke: 0 NO_TOWN.
+
+## Final review fixes
+
+- **Dead outward code removed:** `lane_sky_gap` (knob and table entry), `KitGrowingFronts.gap_ok`,
+  `MAX_LANE_MODULES`, `GAP_KNOB`, the always-empty outward `registry` in `fit`'s result,
+  `KitRoomProjections.fit`'s `facing`/`sky_gap` parameters (and `KitVillageBuildings` feeding them),
+  and the outward wrapped-corner branch of `BuildingKitAssembler.storey_slots` (unreachable: positive
+  wall offsets come only from room projections, one per storey and never on or beside a growth face).
+  Tests that pinned the dead behaviour (`test_gap_ok_measures_to_the_facing_lean`, the knob cases) are
+  gone or rewritten. Knobs draw per-name streams, so no other draw moved.
+- **Unused baked front pieces removed:** the depths are now per piece
+  (`KitGrowingFronts.FRONT_DEPTHS`): floor and corner 0.5/1.0/1.5 (what is left of the module), return
+  0.5–2.0, return beam 0.25 (the wrapped-corner filler) and 0.5–2.0. Nine pieces were never requested
+  and are gone with their oak/walnut copies, meshes, materials, collision, visuals, manifest and
+  provenance entries and index rows: floor and corner d025/d075/d200, return d025/d075, return beam
+  d075. An instrumented run of all growth tests plus the growth-on corpus requested exactly the kept
+  set (corner d050 is reachable through a wrapped 1.5 step). `test_growth_front_family` pins it.
+- Gates: fingerprint MATCH against the shipped baseline; old look, odds, room projections, roof
+  proportion and all growth files green; growth-on smoke 0 NO_TOWN; corpus 4 faces (fingerprint
+  towns) and 19 at chance 1, 0 violations. `test_october3_stepped_wings` is 9/11 at both the plan
+  commit 7adf075c4 and here, with the same failing assertions (834/838 asserts both): of the 53/63
+  regression houses one is not built under its id and the other has no stepped wing, and 8:grand
+  builds no house.014. Pre-existing town drift, not growth.

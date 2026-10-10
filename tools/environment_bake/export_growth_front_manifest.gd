@@ -1,8 +1,8 @@
 extends SceneTree
-## Adds the growing-floor depth family to town_room_fronts.json: one floor strip,
-## corner square, return and return beam per cumulative lean (KitGrowingFronts.LEAN_DEPTHS).
+## Adds the growing-floor depth family to town_room_fronts.json: the floor strips,
+## corner squares, returns and return beams at KitGrowingFronts.FRONT_DEPTHS.
 ## Each source is measured; a depth is cut from the narrowest source at least that
-## wide (never scaled). Existing entries are kept; regenerated entries replaced.
+## wide (never scaled). Other entries are kept; the depth family is replaced whole.
 ## godot --headless --editor --path . -s res://tools/environment_bake/export_growth_front_manifest.gd
 const MANIFEST := "res://tools/environment_bake/manifests/town_room_fronts.json"
 const GROWTH := preload("res://scripts/terrain/features/villages/kit/KitGrowingFronts.gd")
@@ -22,33 +22,52 @@ func _init() -> void:
 		template[String(entry.id)] = entry
 		if family.search(String(entry.id)) == null:
 			kept.append(entry)
-	for depth: float in GROWTH.LEAN_DEPTHS:
-		var suffix := BuildingKitAssembler.lean_suffix(depth)
+	# Depth by depth (each part only where it is baked), so a re-export keeps the
+	# manifest's existing order.
+	var depths: Array[float] = []
+	for role: StringName in GROWTH.FRONT_DEPTHS:
+		for depth: float in GROWTH.FRONT_DEPTHS[role]:
+			if not depths.has(depth):
+				depths.append(depth)
+	depths.sort()
+	var made := 0
+	for depth: float in depths:
 		var half := depth * 0.5
-		kept.append(_entry(template["town.frontage.floor"], "town.frontage.floor." + suffix,
-			FLOOR, "z", half, false))
-		# The square closing a wrapped corner (floor and ceiling): d x d of Floor_2.
-		var corner := _entry(template["town.frontage.floor"], "town.frontage.corner." + suffix,
-			FLOOR, "z", half, false)
-		corner.erase("clip_ranges")
-		if half * 2.0 < 2.0 - 0.0001: # Floor_2 is 2.0 x 2.0: clip both axes to d x d
-			corner.clip_ranges = {"x": [-half, half], "z": [-half, half]}
-		kept.append(corner)
-		kept.append(_entry(template["town.frontage.return_beam"], "town.frontage.return_beam." + suffix,
-			BEAM, "x", half, false))
-		var source := ""
-		for candidate: String in RETURNS:
-			if source.is_empty() and _extent(candidate).size.x >= depth - 0.0001:
-				source = candidate
-		assert(not source.is_empty(), "no Pure Village wall start is %.2f m wide" % depth)
-		kept.append(_entry(template["town.frontage.return"], "town.frontage.return." + suffix,
-			source, "x", half, true))
+		if _baked("floor", depth):
+			kept.append(_entry(template["town.frontage.floor"], _id("floor", depth), FLOOR, "z", half, false))
+		if _baked("corner", depth):
+			# The square closing a wrapped corner (floor and ceiling): d x d of Floor_2.
+			var corner := _entry(template["town.frontage.floor"], _id("corner", depth), FLOOR, "z", half, false)
+			corner.erase("clip_ranges")
+			if half * 2.0 < 2.0 - 0.0001: # Floor_2 is 2.0 x 2.0: clip both axes to d x d
+				corner.clip_ranges = {"x": [-half, half], "z": [-half, half]}
+			kept.append(corner)
+		if _baked("return_beam", depth):
+			kept.append(_entry(template["town.frontage.return_beam"], _id("return_beam", depth), BEAM, "x",
+				half, false))
+		if _baked("return", depth):
+			var source := ""
+			for candidate: String in RETURNS:
+				if source.is_empty() and _extent(candidate).size.x >= depth - 0.0001:
+					source = candidate
+			assert(not source.is_empty(), "no Pure Village wall start is %.2f m wide" % depth)
+			kept.append(_entry(template["town.frontage.return"], _id("return", depth), source, "x", half, true))
+	for role: StringName in GROWTH.FRONT_DEPTHS:
+		made += (GROWTH.FRONT_DEPTHS[role] as Array).size()
 	manifest.assets = _ints(kept)
 	var file := FileAccess.open(MANIFEST, FileAccess.WRITE)
 	file.store_string(JSON.stringify(manifest, "  ", false) + "\n")
 	file.close()
-	print("GROWTH_FRONTS ", GROWTH.LEAN_DEPTHS.size() * 4)
+	print("GROWTH_FRONTS ", made)
 	quit()
+
+
+static func _baked(part: String, depth: float) -> bool:
+	return (GROWTH.FRONT_DEPTHS[StringName("frontage." + part)] as Array).has(depth)
+
+
+static func _id(part: String, depth: float) -> String:
+	return "town.frontage.%s.%s" % [part, BuildingKitAssembler.lean_suffix(depth)]
 
 
 ## Copy budgets, tags and collision from the 0.65 m entry; clip only when the

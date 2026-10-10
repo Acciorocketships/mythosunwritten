@@ -155,12 +155,14 @@ static func create() -> BuildingKit:
 		kit.anchors[StringName("wallhood."+part)] = Transform3D(Basis.IDENTITY,Vector3(0,0.85,0))
 	for part: String in ["floor","return","return_beam"]:
 		r[StringName("frontage."+part)] = [StringName("town.frontage."+part)]
-	# Growing upper floors: one baked floor strip, corner square, return and return beam per
-	# cumulative lean (KitGrowingFronts.LEAN_DEPTHS), never a scaled piece.
-	for depth: float in preload("res://scripts/terrain/features/villages/kit/KitGrowingFronts.gd").LEAN_DEPTHS:
-		var suffix := BuildingKitAssembler.lean_suffix(depth)
-		for part: String in ["floor", "corner", "return", "return_beam"]:
-			r[StringName("frontage.%s.%s" % [part, suffix])] = [StringName("town.frontage.%s.%s" % [part, suffix])]
+	# Growing upper floors: the baked floor strips, corner squares, returns and return
+	# beams at each depth the assembler asks for (KitGrowingFronts.FRONT_DEPTHS), never a
+	# scaled piece.
+	var front_depths: Dictionary = preload("res://scripts/terrain/features/villages/kit/KitGrowingFronts.gd").FRONT_DEPTHS
+	for role: StringName in front_depths:
+		for depth: float in front_depths[role]:
+			var variant := "%s.%s" % [role, BuildingKitAssembler.lean_suffix(depth)]
+			r[StringName(variant)] = [StringName("town." + variant)]
 	r[&"deck.board"] = [&"suntail.floor.floor_2"]
 	r[&"rail.low"] = [&"suntail.stair.wooden_railings_1"]
 	r[&"rail.stair"] = [&"suntail.stair.wooden_railings_2"]
