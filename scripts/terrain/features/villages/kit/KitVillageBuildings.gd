@@ -55,8 +55,171 @@ static func house_id_for(building_id: StringName) -> StringName:
 ## replaced_units: Dictionary unit stable_id -> true, masses: Array, plus the
 ## native-frame roof union inputs placements / roofs / walls}.
 static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
-		kit: BuildingKit, mixed_styles := true, native_roofs := true,
-		growth_withheld: Dictionary = {}) -> Dictionary:
+		kit: BuildingKit, mixed_styles := true, native_roofs := true) -> Dictionary:
+	# A house that rolled growth was designed for it (no kit jetty, no porch awning).
+	# If none of its faces kept a step, plan the town again (houses, roofs, towers and
+	# the growth fit; nothing is assembled yet) with that house designed as a plain
+	# house, so a failed grower is identical to one that never rolled. A plain house's
+	# jetty or awning can withdraw another grower's last step, so this repeats until
+	# every remaining grower keeps a step (the withheld set only grows).
+	var growth_withheld := {}
+	var plan := _plan_town(spatial, fabric, kit, mixed_styles, native_roofs, growth_withheld)
+	while true:
+		var stepped := {}
+		for lean: Dictionary in plan.growth.leans:
+			stepped[lean.host] = true
+		var failed := growth_withheld.duplicate()
+		for mass: BuildingMass in plan.masses:
+			if mass.grows and not stepped.has(mass.stable_id):
+				failed[mass.stable_id] = true
+		if failed.size() == growth_withheld.size():
+			break
+		growth_withheld = failed
+		plan = _plan_town(spatial, fabric, kit, mixed_styles, native_roofs, growth_withheld)
+	var grid: WarrenSpatialGrid = plan.grid
+	var growth: Dictionary = plan.growth
+	var growth_character: TownCharacter = plan.growth_character
+	var house_kits: Dictionary = plan.house_kits
+	var joins = plan.joins
+	var map: Transform3D = plan.map
+	var masses: Array[BuildingMass] = plan.masses
+	var ornament_air: Array[Dictionary] = plan.ornament_air
+	var owner_at: Dictionary = plan.owner_at
+	var parallel_joins = plan.parallel_joins
+	var payload: EnvironmentInstancePayload = plan.payload
+	var podium: Dictionary = plan.podium
+	var public_air: Array[Dictionary] = plan.public_air
+	var public_crowns: Dictionary = plan.public_crowns
+	var roof_kits: Dictionary = plan.roof_kits
+	var roofs: Array[Dictionary] = plan.roofs
+	var seated_balcony_brackets = plan.seated_balcony_brackets
+	var tower_audit: Dictionary = plan.tower_audit
+	var tower_catalog: EnvironmentCatalog = plan.tower_catalog
+	var tower_hosts: Dictionary = plan.tower_hosts
+	var towers: Array[Dictionary] = plan.towers
+	var union_script := preload("res://scripts/terrain/features/villages/kit/KitRoofMeshUnion.gd")
+	var walls: Array[Dictionary] = plan.walls
+	var replaced: Dictionary = plan.replaced
+	var house_masses: Array[BuildingMass] = plan.house_masses
+	var room_projections := preload("res://scripts/terrain/features/villages/kit/KitRoomProjections.gd").fit(
+		masses,house_kits,kit,tower_catalog,public_air,towers,
+		func(own:StringName,cell:Vector2i,band:int)->bool:
+			var at:=Vector3i(cell.x,band,cell.y)
+			return grid.use_at(at)!=WarrenSpatialGrid.Use.PUBLIC_AIR and _keep_clear(grid,owner_at,own,at),
+		func(own:StringName,cell:Vector2i,band:int)->bool:
+			var at:=Vector3i(cell.x,band,cell.y)
+			return podium.has(at) or fabric.surface_plan.has_cell(at) or _walked(grid,at) or public_crowns.has(at) or _solid_other(grid,owner_at,own,at),
+		func(own:StringName,cell:Vector2i,band:int)->bool:return _solid_other(grid,owner_at,own,Vector3i(cell.x,band,cell.y)),
+		func(cell:Vector2i,band:int)->bool:return fabric.surface_plan.has_cell(Vector3i(cell.x,band,cell.y)),
+		growth.registry,growth_character.value(GROWTH.GAP_KNOB) if growth_character != null else 0.0)
+	for projection:Dictionary in room_projections:
+		walls.append(union_script.box_volume(projection.bounds))
+	var facade_bays := preload("res://scripts/terrain/features/villages/kit/KitTownFacadeBays.gd").fit(
+		masses,house_kits,kit,tower_catalog,public_air,towers,
+		func(own: StringName,cell: Vector2i,band: int) -> bool:
+			var at := Vector3i(cell.x,band,cell.y)
+			return grid.use_at(at) != WarrenSpatialGrid.Use.PUBLIC_AIR and _keep_clear(grid,owner_at,own,at))
+	var placements: Array[Dictionary] = []
+	var fitted_eaves := preload("res://scripts/terrain/features/villages/kit/KitRoofEaveFits.gd").fit(roofs,kit,roof_kits,walls)
+	var fitted_dormers := preload("res://scripts/terrain/features/villages/kit/KitRoofDormerFits.gd").fit(roofs,kit,roof_kits,walls)
+	var facade_contacts := preload("res://scripts/terrain/features/villages/kit/KitFacadeRoofContacts.gd")
+	var facade_context := facade_contacts.prepare(roofs,kit,roof_kits,walls)
+	var floor_contacts := {"volumes":[],"skins":[],"openings":facade_context.openings,
+		"frames":facade_context.frames}
+	for mesh: Dictionary in preload("res://scripts/terrain/features/villages/kit/KitPublicClearance.gd").floor_meshes(spatial,fabric):
+		facade_contacts.add_floor(floor_contacts,mesh,map.affine_inverse())
+	var floor_catalog := EnvironmentCatalog.load_default()
+	for mass: BuildingMass in masses:
+		var own := StringName(String(mass.stable_id).trim_prefix("kit."))
+		var floor_assembler := BuildingKitAssembler.new(house_kits.get(own,kit))
+		facade_contacts.add_inhabited_floors(floor_contacts,mass,floor_assembler,floor_catalog)
+	facade_context.volumes.append_array(floor_contacts.volumes)
+	facade_context.skins.append_array(floor_contacts.skins)
+	var roof_blocked_windows := 0
+	var fitted_window_boxes := 0
+	for mass: BuildingMass in masses:
+		var own := StringName(String(mass.stable_id).trim_prefix("kit."))
+		var assembler := BuildingKitAssembler.new(house_kits.get(own, kit))
+		assembler.prop_scale = VillageWorldScale.kit_human_prop_scale()
+		assembler.overhead_solids = walls
+		assembler.external_blocked = func(cell: Vector2i, band: int) -> bool:
+			return _solid_other(grid, owner_at, own, Vector3i(cell.x, band, cell.y))
+		assembler.public_floor = func(cell: Vector2i, band: int) -> bool:
+			return fabric.surface_plan != null and fabric.surface_plan.has_cell(Vector3i(cell.x,band,cell.y))
+		assembler.ornament_clear = func(id: StringName, pose: Transform3D) -> bool:
+			var local_box: AABB = tower_catalog.descriptor(id).measured_aabb
+			if preload("res://scripts/terrain/features/villages/kit/KitPublicClearance.gd").intersects_air(
+					local_box,pose,ornament_air): return false
+			var box: AABB = pose*local_box
+			for tower: Dictionary in towers:
+				if box.intersects(tower.bounds): return false
+			for bay: Dictionary in facade_bays:
+				if box.intersects(bay.bounds): return false
+			return _clear_of_others(box,mass.stable_id,room_projections) \
+				and _clear_of_others(box,mass.stable_id,growth.leans)
+		roof_blocked_windows += facade_contacts.fit(mass,assembler,facade_context,tower_catalog)
+		var parts := assembler.assemble(mass)
+		fitted_window_boxes += preload("res://scripts/terrain/features/villages/kit/KitWindowBoxes.gd").fit(
+			parts, assembler.kit, tower_catalog, facade_context.openings)
+		if tower_hosts.has(mass.stable_id):
+			var tower: Dictionary = tower_hosts[mass.stable_id]
+			if tower.attachment != &"roof":
+				preload("res://scripts/terrain/features/villages/kit/KitTowerHostFit.gd").fit_parts(parts,tower,assembler.kit,tower_catalog)
+			for part: Dictionary in parts:
+				if int(part.get("roof_index",-1)) < 0: continue
+				var box: AABB = part.transform*tower_catalog.descriptor(part.asset_id).measured_aabb
+				var cutters: Array = part.get("clip_volumes",[]).duplicate()
+				for cutter: Dictionary in tower.cutters:
+					if box.grow(0.001).intersects(cutter.bounds): cutters.append(cutter)
+				part["clip_volumes"] = cutters
+		_fit_retaining_ceiling(parts,floor_catalog)
+		roof_blocked_windows += facade_contacts.fit_gables(parts,assembler.kit,floor_contacts)
+		placements.append_array(parts)
+	var retaining_flight_joints := preload("res://scripts/terrain/features/villages/kit/KitRetainingFlightJoints.gd").fit(
+		placements,spatial.source_volume.transitions if spatial.source_volume != null else [],map,floor_catalog)
+	var retaining_windows := preload("res://scripts/terrain/features/villages/kit/KitRetainingWindows.gd").fit(masses,placements,kit,floor_catalog,public_air,towers,facade_context)
+	placements.append_array(retaining_windows)
+	var fortified_windows := preload("res://scripts/terrain/features/villages/kit/KitFortifiedFacades.gd").fit(placements,kit,floor_catalog,public_air,facade_context)
+	var retaining_relief := preload("res://scripts/terrain/features/villages/kit/KitRetainingRelief.gd").fit(masses,placements,kit,floor_catalog,public_air,towers)
+	placements.append_array(retaining_relief)
+	var decor_clearance := preload("res://scripts/terrain/features/villages/kit/KitPublicClearance.gd").fit_decor(
+		placements,walls,EnvironmentCatalog.load_default())
+	var roof_audit := union_script.append_prepared(placements,facade_context.roof_context,map,payload)
+	for tower: Dictionary in towers:
+		for index in tower.parts.size():
+			var part: Dictionary = tower.parts[index]
+			payload.add(part.asset_id,map*tower.pose*part.transform,Color.WHITE,
+				StringName("%s/tower.%d" % [tower.host.stable_id,index]),true)
+	tower_audit["accepted"] = towers.size()
+	roof_audit["towers"] = tower_audit
+	roof_audit["facade_bays"] = facade_bays.size()
+	roof_audit["room_projections"] = room_projections.size()
+	roof_audit["growth_faces"] = growth.leans.size()
+	roof_audit["retaining_relief"] = retaining_relief.size()
+	roof_audit["retaining_flight_joints"] = retaining_flight_joints
+	roof_audit["retaining_windows"] = retaining_windows.size()
+	roof_audit["fortified_windows"] = fortified_windows
+	roof_audit["retaining_recesses"] = placements.filter(func(part: Dictionary) -> bool: return bool(part.get("retaining_recess",false))).size()
+	roof_audit["decor_clearance"] = decor_clearance
+	roof_audit["fitted_window_boxes"] = fitted_window_boxes
+	roof_audit["joins"] = joins
+	roof_audit["parallel_joins"] = parallel_joins
+	roof_audit["fitted_eaves"] = fitted_eaves
+	roof_audit["dormers"] = fitted_dormers
+	roof_audit["seated_balcony_brackets"] = seated_balcony_brackets
+	roof_audit["roof_blocked_windows"] = roof_blocked_windows
+	roof_audit["roof_fitted_windows"] = int(facade_context.get("substituted",0))
+	return {"growth_withheld": growth_withheld,
+		"payload": payload, "replaced_units": replaced, "masses": masses, "houses": house_masses,
+		"house_kits": house_kits, "roof_kits": roof_kits, "towers": towers, "facade_bays": facade_bays,
+		"room_projections":room_projections,"growth":growth.leans,"growth_rejections":growth.rejections,"roof_audit": roof_audit, "placements": placements, "roofs": roofs, "walls": walls}
+
+
+## Everything before assembly: houses designed, roofs joined, towers and the growth
+## fit. Houses in `growth_withheld` are designed and fitted as plain houses.
+static func _plan_town(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
+		kit: BuildingKit, mixed_styles: bool, native_roofs: bool,
+		growth_withheld: Dictionary) -> Dictionary:
 	var grid := spatial.grid
 	var houses := _houses(spatial)
 	var owner_at: Dictionary = {}
@@ -222,132 +385,7 @@ static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 			return grid.contains(at) and grid.use_at(at) in [WarrenSpatialGrid.Use.STRUCTURAL_VOLUME,
 				WarrenSpatialGrid.Use.SERVICE_VOID,WarrenSpatialGrid.Use.PRIVATE_VOLUME],
 		growth_solid,growth_street,_growth_grade(spatial,grid))
-	var room_projections := preload("res://scripts/terrain/features/villages/kit/KitRoomProjections.gd").fit(
-		masses,house_kits,kit,tower_catalog,public_air,towers,
-		func(own:StringName,cell:Vector2i,band:int)->bool:
-			var at:=Vector3i(cell.x,band,cell.y)
-			return grid.use_at(at)!=WarrenSpatialGrid.Use.PUBLIC_AIR and _keep_clear(grid,owner_at,own,at),
-		func(own:StringName,cell:Vector2i,band:int)->bool:
-			var at:=Vector3i(cell.x,band,cell.y)
-			return podium.has(at) or fabric.surface_plan.has_cell(at) or _walked(grid,at) or public_crowns.has(at) or _solid_other(grid,owner_at,own,at),
-		func(own:StringName,cell:Vector2i,band:int)->bool:return _solid_other(grid,owner_at,own,Vector3i(cell.x,band,cell.y)),
-		func(cell:Vector2i,band:int)->bool:return fabric.surface_plan.has_cell(Vector3i(cell.x,band,cell.y)),
-		growth.registry,growth_character.value(GROWTH.GAP_KNOB) if growth_character != null else 0.0)
-	for projection:Dictionary in room_projections:
-		walls.append(union_script.box_volume(projection.bounds))
-	var facade_bays := preload("res://scripts/terrain/features/villages/kit/KitTownFacadeBays.gd").fit(
-		masses,house_kits,kit,tower_catalog,public_air,towers,
-		func(own: StringName,cell: Vector2i,band: int) -> bool:
-			var at := Vector3i(cell.x,band,cell.y)
-			return grid.use_at(at) != WarrenSpatialGrid.Use.PUBLIC_AIR and _keep_clear(grid,owner_at,own,at))
-	var placements: Array[Dictionary] = []
-	var fitted_eaves := preload("res://scripts/terrain/features/villages/kit/KitRoofEaveFits.gd").fit(roofs,kit,roof_kits,walls)
-	var fitted_dormers := preload("res://scripts/terrain/features/villages/kit/KitRoofDormerFits.gd").fit(roofs,kit,roof_kits,walls)
-	var facade_contacts := preload("res://scripts/terrain/features/villages/kit/KitFacadeRoofContacts.gd")
-	var facade_context := facade_contacts.prepare(roofs,kit,roof_kits,walls)
-	var floor_contacts := {"volumes":[],"skins":[],"openings":facade_context.openings,
-		"frames":facade_context.frames}
-	for mesh: Dictionary in preload("res://scripts/terrain/features/villages/kit/KitPublicClearance.gd").floor_meshes(spatial,fabric):
-		facade_contacts.add_floor(floor_contacts,mesh,map.affine_inverse())
-	var floor_catalog := EnvironmentCatalog.load_default()
-	for mass: BuildingMass in masses:
-		var own := StringName(String(mass.stable_id).trim_prefix("kit."))
-		var floor_assembler := BuildingKitAssembler.new(house_kits.get(own,kit))
-		facade_contacts.add_inhabited_floors(floor_contacts,mass,floor_assembler,floor_catalog)
-	facade_context.volumes.append_array(floor_contacts.volumes)
-	facade_context.skins.append_array(floor_contacts.skins)
-	var roof_blocked_windows := 0
-	var fitted_window_boxes := 0
-	for mass: BuildingMass in masses:
-		var own := StringName(String(mass.stable_id).trim_prefix("kit."))
-		var assembler := BuildingKitAssembler.new(house_kits.get(own, kit))
-		assembler.prop_scale = VillageWorldScale.kit_human_prop_scale()
-		assembler.overhead_solids = walls
-		assembler.external_blocked = func(cell: Vector2i, band: int) -> bool:
-			return _solid_other(grid, owner_at, own, Vector3i(cell.x, band, cell.y))
-		assembler.public_floor = func(cell: Vector2i, band: int) -> bool:
-			return fabric.surface_plan != null and fabric.surface_plan.has_cell(Vector3i(cell.x,band,cell.y))
-		assembler.ornament_clear = func(id: StringName, pose: Transform3D) -> bool:
-			var local_box: AABB = tower_catalog.descriptor(id).measured_aabb
-			if preload("res://scripts/terrain/features/villages/kit/KitPublicClearance.gd").intersects_air(
-					local_box,pose,ornament_air): return false
-			var box: AABB = pose*local_box
-			for tower: Dictionary in towers:
-				if box.intersects(tower.bounds): return false
-			for bay: Dictionary in facade_bays:
-				if box.intersects(bay.bounds): return false
-			return _clear_of_others(box,mass.stable_id,room_projections) \
-				and _clear_of_others(box,mass.stable_id,growth.leans)
-		roof_blocked_windows += facade_contacts.fit(mass,assembler,facade_context,tower_catalog)
-		var parts := assembler.assemble(mass)
-		fitted_window_boxes += preload("res://scripts/terrain/features/villages/kit/KitWindowBoxes.gd").fit(
-			parts, assembler.kit, tower_catalog, facade_context.openings)
-		if tower_hosts.has(mass.stable_id):
-			var tower: Dictionary = tower_hosts[mass.stable_id]
-			if tower.attachment != &"roof":
-				preload("res://scripts/terrain/features/villages/kit/KitTowerHostFit.gd").fit_parts(parts,tower,assembler.kit,tower_catalog)
-			for part: Dictionary in parts:
-				if int(part.get("roof_index",-1)) < 0: continue
-				var box: AABB = part.transform*tower_catalog.descriptor(part.asset_id).measured_aabb
-				var cutters: Array = part.get("clip_volumes",[]).duplicate()
-				for cutter: Dictionary in tower.cutters:
-					if box.grow(0.001).intersects(cutter.bounds): cutters.append(cutter)
-				part["clip_volumes"] = cutters
-		_fit_retaining_ceiling(parts,floor_catalog)
-		roof_blocked_windows += facade_contacts.fit_gables(parts,assembler.kit,floor_contacts)
-		placements.append_array(parts)
-	var retaining_flight_joints := preload("res://scripts/terrain/features/villages/kit/KitRetainingFlightJoints.gd").fit(
-		placements,spatial.source_volume.transitions if spatial.source_volume != null else [],map,floor_catalog)
-	var retaining_windows := preload("res://scripts/terrain/features/villages/kit/KitRetainingWindows.gd").fit(masses,placements,kit,floor_catalog,public_air,towers,facade_context)
-	placements.append_array(retaining_windows)
-	var fortified_windows := preload("res://scripts/terrain/features/villages/kit/KitFortifiedFacades.gd").fit(placements,kit,floor_catalog,public_air,facade_context)
-	var retaining_relief := preload("res://scripts/terrain/features/villages/kit/KitRetainingRelief.gd").fit(masses,placements,kit,floor_catalog,public_air,towers)
-	placements.append_array(retaining_relief)
-	var decor_clearance := preload("res://scripts/terrain/features/villages/kit/KitPublicClearance.gd").fit_decor(
-		placements,walls,EnvironmentCatalog.load_default())
-	var roof_audit := union_script.append_prepared(placements,facade_context.roof_context,map,payload)
-	for tower: Dictionary in towers:
-		for index in tower.parts.size():
-			var part: Dictionary = tower.parts[index]
-			payload.add(part.asset_id,map*tower.pose*part.transform,Color.WHITE,
-				StringName("%s/tower.%d" % [tower.host.stable_id,index]),true)
-	tower_audit["accepted"] = towers.size()
-	roof_audit["towers"] = tower_audit
-	roof_audit["facade_bays"] = facade_bays.size()
-	roof_audit["room_projections"] = room_projections.size()
-	roof_audit["growth_faces"] = growth.leans.size()
-	roof_audit["retaining_relief"] = retaining_relief.size()
-	roof_audit["retaining_flight_joints"] = retaining_flight_joints
-	roof_audit["retaining_windows"] = retaining_windows.size()
-	roof_audit["fortified_windows"] = fortified_windows
-	roof_audit["retaining_recesses"] = placements.filter(func(part: Dictionary) -> bool: return bool(part.get("retaining_recess",false))).size()
-	roof_audit["decor_clearance"] = decor_clearance
-	roof_audit["fitted_window_boxes"] = fitted_window_boxes
-	roof_audit["joins"] = joins
-	roof_audit["parallel_joins"] = parallel_joins
-	roof_audit["fitted_eaves"] = fitted_eaves
-	roof_audit["dormers"] = fitted_dormers
-	roof_audit["seated_balcony_brackets"] = seated_balcony_brackets
-	roof_audit["roof_blocked_windows"] = roof_blocked_windows
-	roof_audit["roof_fitted_windows"] = int(facade_context.get("substituted",0))
-	# A house that rolled growth was designed for it (no kit jetty, no porch awning).
-	# If none of its faces kept a step, build the town again with that house designed
-	# as a plain house, so a failed grower is identical to one that never rolled. A
-	# plain house's jetty or awning can withdraw another grower's last step, so this
-	# repeats until every remaining grower keeps a step (the withheld set only grows).
-	var stepped := {}
-	for lean: Dictionary in growth.leans:
-		stepped[lean.host] = true
-	var failed := growth_withheld.duplicate()
-	for mass: BuildingMass in masses:
-		if mass.grows and not stepped.has(mass.stable_id):
-			failed[mass.stable_id] = true
-	if failed.size() > growth_withheld.size():
-		return build(spatial, fabric, kit, mixed_styles, native_roofs, failed)
-	return {"growth_withheld": growth_withheld,
-		"payload": payload, "replaced_units": replaced, "masses": masses, "houses": house_masses,
-		"house_kits": house_kits, "roof_kits": roof_kits, "towers": towers, "facade_bays": facade_bays,
-		"room_projections":room_projections,"growth":growth.leans,"growth_rejections":growth.rejections,"roof_audit": roof_audit, "placements": placements, "roofs": roofs, "walls": walls}
+	return {"grid": grid, "growth": growth, "growth_character": growth_character, "house_kits": house_kits, "joins": joins, "map": map, "masses": masses, "ornament_air": ornament_air, "owner_at": owner_at, "parallel_joins": parallel_joins, "payload": payload, "podium": podium, "public_air": public_air, "public_crowns": public_crowns, "roof_kits": roof_kits, "roofs": roofs, "seated_balcony_brackets": seated_balcony_brackets, "tower_audit": tower_audit, "tower_catalog": tower_catalog, "tower_hosts": tower_hosts, "towers": towers, "union_script": union_script, "walls": walls, "replaced": replaced, "house_masses": house_masses}
 
 
 ## Growth ruling (e, fix round 2), per ground-storey edge (KitGrowingFronts.GRADE_*):

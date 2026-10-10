@@ -258,6 +258,9 @@ October 8 amendment rulings that still stand:
    growth).
 6. Rails, bays and architecture never yield; only ornament yields.
 7. The ornament yield extends to row members.
+8. Outer (convex) corners of the same house wrap: both faces step together and the corner is closed.
+   This overrides original plan ruling 7 ("never two faces that meet at a corner"); two faces that
+   meet at a convex corner step equally (wrapped), or one of them stays flush at that storey.
 
 Amendment 2 rulings:
 
@@ -298,8 +301,10 @@ Controller rulings in the ledger that changed behaviour (plain language):
 - Task 7: an inside-corner end counts when the cell beside it is the house's own cell or another
   building. `_end_open` was fixed so a run that is part of a longer wall is not blocked. Plain
   structural trim counted as plain contact (that contact test was later retired).
-- Task 8 (superseded): the eave inset ruling, so a stepped top storey could stay under its eave by
-  insetting the storey below. That idea became Amendment 2.
+- Task 8 (superseded; amendment conflict 1): the eave inset ruling. A stepped top storey would stay
+  under its eave by insetting the storey below, falling back to 0.5/flush only if the inset was blocked.
+  Ruled cost: ground floors on some faces shrink by 1 native m, so the lane is wider at ground; revert
+  = the Task 8 fallback. That idea became Amendment 2.
 - Owner option 2 (October 9): step in the kit's way, with roofs and top storeys fixed. Implemented by
   re-referencing (Amendment 2).
 - Braces stand on wall-module joints, never over a window head.
@@ -313,8 +318,11 @@ Controller rulings in the ledger that changed behaviour (plain language):
 - Task 9, ruling (d): landmarks and prefabs never grow.
 - Task 9: the at-grade rule (e) was replaced. An off-grade storey may step in where the vacated strip
   has solid bearing below, and that strip becomes a stone plinth cap. Air or a public walk below still
-  withdraws (`grade`). The "another building's room below" bearing case still withdraws
-  (conservative).
+  withdraws (`grade`).
+  - Omitted on purpose and accepted as conservative: the ruling's third bearing case, "a lower
+    storey's roof-free solid". It is not implemented: where another building's room stands below the
+    vacated strip, nothing caps that room under our boards, so trimming would open a hole into it.
+    That strip still withdraws with cause `grade`.
 - Task 9: 19 faces accepted below the "well above 21" target. The remaining withdrawals are real
   geometry.
 - Task 10: crossing braces at an inside corner where two buried strips meet are accepted as one
@@ -365,8 +373,24 @@ keeps a step. The withheld set only grows, so this ends; one extra pass in pract
 
 - The build stays pure and deterministic: the same inputs, the same keyed rolls, and the withheld set
   is a plain argument.
-- Cost: towns with a failed grower build their kit layer twice. That is most towns at the shipped
-  chance, because most rolled houses keep no step.
+- Fix round 2: the retry restarts only the planning half of the kit layer (`_plan_town`: house design,
+  roof joins, towers and the growth fit). Assembly, facade fits, the roof mesh union and the payload run
+  once, on the final plan.
+- Cost, measured as a clean A/B. Same machine, one process, the same generated plans, the two settings
+  alternating back to back, 3 rounds. `KitVillageBuildings.build` ms, median (min–max):
+
+  | Town | growth 0 | shipped defaults | withheld growers | delta |
+  |---|---|---|---|---|
+  | 31:large | 24 629 (22 642–25 369) | 22 784 (21 924–24 842) | 1 | -7% (noise) |
+  | 83:grand | 27 638 (27 109–28 347) | 30 304 (29 235–30 777) | 1 | +10% |
+  | 53:grand | 31 450 (31 343–31 651) | 33 600 (32 077–33 707) | 6 | +7% |
+  | 13:standard | 8 702 (8 633–9 093) | 9 117 (8 502–10 014) | 0 | +5% |
+
+  Town planning (`WarrenVolumetricSolver.generate`) is unaffected by growth. Its run-to-run spread on
+  this machine is large: 83:grand took 145 s and then 98 s for identical inputs. That spread, not
+  growth, explains most of the `ms` rise in the re-pinned fingerprint baseline.
+- The fingerprint harness records `ms` per town but compares only `source`, `payload` and `error`
+  (`--parts`), so `ms` changes are diff noise in `baseline.json`, never a mismatch.
 - Red-first test `tests/test_growing_floors_failed_growers.gd`, on 31:large at the defaults: no face
   steps, house.000 is withheld, the awning count is equal, no mass grows, and the kit payload is
   byte-identical to `growing_house_chance = 0`. It was red with 4 failures (awnings 3 vs 4,
@@ -381,3 +405,9 @@ keeps a step. The withheld set only grows, so this ends; one extra pass in pract
   and the production range audit (valid, floating 0, intrusions 0).
 - The `before`/`after` renders were made before this fix. Their 31/43/103 differences (one awning in
   31) are gone in the code.
+- Fix round 2 gates: all 15 focused files are green.
+  - The fingerprint gate against the re-pinned baseline MATCHes, so the restructure is byte-identical
+    and the baseline is not re-pinned again.
+  - Zero path against the pre-default baseline: MATCH.
+  - Old look: MATCH.
+  - Growth-on smoke: 0 NO_TOWN.

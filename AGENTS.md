@@ -7,7 +7,7 @@
 > storey k at `lean_k - top`, ground at `-top`); a front steps only up to its shortest member's top. Closures: `return` (the perpendicular corner panel shortens
 > to the baked `frontage.return.dNNN` strip or drops for a whole module; post at the new corner), `wrap` (convex corner of one house, both panels shortened, one
 > post, inner `frontage.corner.dNNN` floor square), `joint` (coplanar row stepping together; no pieces), `bury` (own cell beside the end: a strip on the vertex
-> line closes the recess). Writes negative `wall_offsets` + growth records `projections{growth, depth, base, closures}` (signed) + `storey.growth[dir]`; the
+> line closes the recess), `abut` (end beside a touching neighbour: our own strip on the party plane). Writes negative `wall_offsets` + growth records `projections{growth, depth, base, closures}` (signed) + `storey.growth[dir]`; the
 > assembler trims stepped-in upper floors (ground floor stays whole: paving to a recessed shopfront door), carries each overhang on its floor beam with
 > `bracket.jetty` (`bracket.small`) on wall-module joints only (never over a window/door head), and return beams at open sides. Guardrails (cap drops one step; a
 > member that cannot take the first step leaves): air/obstacles inside the recess, recess claims, portals (passages, blanks, balconies; upper doors and bays on a
