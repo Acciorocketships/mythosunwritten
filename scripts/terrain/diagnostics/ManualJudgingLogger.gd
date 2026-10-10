@@ -53,7 +53,7 @@ func _ready() -> void:
 	_viewport = get_viewport()
 	RenderingServer.viewport_set_measure_render_time(_viewport.get_viewport_rid(), true)
 	_file.store_line(JSON.stringify({"type": "session", "seed": streamer.world_seed,
-		"started": stamp, "engine": Engine.get_version_info(), "schema": 3,
+		"started": stamp, "engine": Engine.get_version_info(), "schema": 4,
 		"system_memory": OS.get_memory_info()}))
 	print("[judging-log] " + ProjectSettings.globalize_path(path))
 
@@ -62,6 +62,9 @@ func _physics_process(_dt: float) -> void:
 		_physics_usec += Time.get_ticks_usec() - _start.physics_started
 
 func _process(_dt: float) -> void:
+	_record_frame(_dt)
+
+func _record_frame(_dt: float) -> void:
 	if _file == null: return
 	# Engine delta can be clamped during a long stall. Log wall time so the
 	# manual pass retains the full hitch, including time outside callbacks.
@@ -84,6 +87,7 @@ func _process(_dt: float) -> void:
 			"components_us": _previous_components,
 			"gpu_ms": gpu_ms if gpu_ms > 0.0 else null,
 			"render_cpu_ms": RenderingServer.viewport_get_measured_render_time_cpu(_viewport.get_viewport_rid()),
+			"os_usage": _runtime_probe.OsUsage() if _runtime_probe != null else {},
 			"gc_pause_usec": _runtime_probe.PauseUsec() if _runtime_probe != null else null,
 			"managed_full_collections": _runtime_probe.FullCollections() if _runtime_probe != null else null})
 	_previous_process_usec = Time.get_ticks_usec() - _start.process_started
@@ -104,6 +108,7 @@ func _process(_dt: float) -> void:
 		"max_ms": _frames[-1], "hitches": _hitches,
 		"memory_mb": Performance.get_monitor(Performance.MEMORY_STATIC)/1048576.0,
 		"system_memory": OS.get_memory_info(),
+		"os_usage": _runtime_probe.OsUsage() if _runtime_probe != null else {},
 		"gc_pause_usec": _runtime_probe.PauseUsec() if _runtime_probe != null else null,
 		"managed_heap_bytes": _runtime_probe.HeapBytes() if _runtime_probe != null else null,
 		"managed_full_collections": _runtime_probe.FullCollections() if _runtime_probe != null else null,

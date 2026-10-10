@@ -1,6 +1,6 @@
 # October 9 follow-up
 
-The photographed water defects and several measured loading stalls have fixes. **The full hitch investigation remains open:** the final traversal still captured a 1.4-second pause that was mostly outside instrumented game callbacks.
+The photographed water defects and several measured loading stalls have fixes. **The full hitch investigation remains open:** a clean traversal still has occasional 100–141 ms frames. The earlier 1.4-second pause was caused by automatic replay capture in the profiling harness, not normal gameplay.
 
 | Issue | Cause and change | Evidence |
 | --- | --- | --- |
@@ -32,9 +32,19 @@ Same forest geometry and camera, applying each biome's production lighting setti
 
 .NET Godot, 1600×900, no vsync, seed 2697992464, start (679,1539), fixed run/turn route and return to the initial pose. Final run: six 30-second phases, 6,033 sampled frames, no frozen frames. Running grass backlog p95 six tiles; running-and-turning p95 two; idle zero. Engine memory ended at 8,715 MiB. The earlier 45-second-phase run is longer and covers more ground, so aggregate before/after FPS is not a controlled comparison.
 
-Final worst frame: 1,391.9 ms, process span 1,264.1 ms, measured water callback 34.5 ms, streamer 5.4 ms, atmosphere 6.0 ms, no increment in managed GC pause time. Other 150–187 ms frames also have much smaller script, physics and render-CPU spans. Do not attribute those pauses to the grass or attachment fixes. A native sample from the earlier traversal reported a 14.5 GiB physical process footprint on this 16 GiB Mac and substantial Metal command submission work; other heavy jobs were running. Memory pressure or engine/render synchronization remains a hypothesis requiring targeted profiling.
+Correction: the former worst frame (1,391.9 ms) coincides exactly with the harness’s first qualifying water replay capture. That capture serialized frozen water samplers on the main thread after the callback timer ended. Replay capture is now opt-in (`--capture-ripple`) and explicitly marked as intrusive. Other 150–187 ms frames also have much smaller script, physics and render-CPU spans. Do not attribute those pauses to the grass or attachment fixes. A native sample from the earlier traversal reported a 14.5 GiB physical process footprint on this 16 GiB Mac and substantial Metal command submission work; other heavy jobs were running. Memory pressure or engine/render synchronization remains a hypothesis requiring targeted profiling.
 
-Automatic judging logs now also record render CPU time and separate texture/buffer memory (schema 3), alongside existing frame, streaming, water, atmosphere, system-memory and managed-GC counters.
+Automatic judging logs now also record render CPU time, separate texture/buffer memory, and macOS process footprint, resident memory, disk I/O and page-in counters (schema 4), alongside existing frame, streaming, water, atmosphere, system-memory and managed-GC counters.
+
+Clean repeat with replay capture disabled: 6,509 frames over six 30-second phases; zero frozen frames; worst frame 141.4 ms, 21 frames over 100 ms. The logger itself peaked at 11.4 ms. No claim of a controlled FPS improvement: background workload varied.
+
+The cached river carving region no longer retains its obsolete point-bucket index after building the segment index. Three regions retained 9.47 MiB instead of 21.71 MiB, with all 3,072 sampled double-precision carve values identical. Ten carving tests pass 101,068 assertions. This is a bounded memory saving, not a complete explanation of the multi-gigabyte footprint.
+
+## Collision memory follow-up
+
+A destructive test of the settled nine-chunk world released 1,401 MiB by removing collision shapes; clearing the measured planning caches released about 241 MiB. This identifies collision as a major memory owner. Production now compresses exact generated collision farther than 160 m from every actor/predicted position and restores it within 96 m (formerly 384/256 m). Prediction already extends up to 192 m ahead. Rendered geometry is unchanged.
+
+The repeated route and guarded return completed with zero frozen frames during the six measured phases. Final engine memory was 6,534 MiB versus 8,572 MiB, and running/turning p95 was 35.55 ms versus 51.81 ms. These are observations, not a controlled FPS claim: background load changed and the later run had 19 registered chunks at its worst return frame versus 24 in the earlier run. The deliberate teleport return needed 10.25 seconds of readiness waiting versus 11.18 seconds previously; this interval is outside the measured phases. Nine of 7,236 frames still exceeded 100 ms, maximum 139.1 ms. **Occasional hitches remain open.** Four collision residency tests pass 23 assertions, including partial suspension, reversal, budgets, and physics registration.
 
 ## Validation
 

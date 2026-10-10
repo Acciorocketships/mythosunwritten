@@ -62,12 +62,16 @@ static func install_method(
 	assert(script.reload(true) == OK)
 
 
+## Replay serialization is deliberately opt-in: doing it automatically after a
+## slow callback creates a large unmeasured hitch in the profiling harness.
+static var capture_ripple_enabled := false
 static var ripple_captured := false
 
 
 static func capture_ripple(sim: Node) -> void:
 	if (
-		ripple_captured
+		not capture_ripple_enabled
+		or ripple_captured
 		or sim._packets.size() < 12
 		or (
 			int(samples.get("res://scripts/terrain/water/WaterRippleSim.gd:_update_packets", 0))
@@ -76,6 +80,7 @@ static func capture_ripple(sim: Node) -> void:
 	):
 		return
 	ripple_captured = true
+	var capture_start := Time.get_ticks_usec()
 	var state := {
 		"samplers": [],
 		"packets": sim._packets.duplicate(true),
@@ -98,3 +103,4 @@ static func capture_ripple(sim: Node) -> void:
 		row._fill_ctx = ctx
 		state.samplers.append(row)
 	FileAccess.open("/tmp/oct9-ripple-replay.bin", FileAccess.WRITE).store_var(state)
+	print("REPLAY_CAPTURE excluded_from_gameplay=true total_usec=",Time.get_ticks_usec()-capture_start)

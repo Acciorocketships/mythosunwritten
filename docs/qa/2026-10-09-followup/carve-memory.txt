@@ -1,0 +1,7 @@
+Godot Engine v4.5.1.stable.mono.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+CARVE_MEMORY {"kind":"before","mb":21.7051467895508,"point_entries":40561,"seconds":16.550823,"segments":42597}
+CARVE_MEMORY {"kind":"after","mb":9.47073745727539,"point_entries":0,"seconds":4.134547,"segments":42597}
+CARVE_MEMORY identical=3072

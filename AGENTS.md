@@ -1,3 +1,11 @@
+> October 9 collision memory follow-up: exact concave collision residency now
+> restores within 96 m and compresses beyond 160 m of every actor/prediction
+> (prediction already extends up to 192 m). Nine-chunk teardown attributed
+> 1,401 MiB to shapes. Follow-up travel/return retained ~2 GiB less memory,
+> but committed counts and background load differed; do not call this a
+> controlled FPS result. No measured-phase freezes; teleport readiness wait
+> still ~10 s, outside those phases. Occasional 100–139 ms frames remain.
+
 > October 9 follow-up: `WaterPlan` retains a separate immutable first-pass drainage
 > forest. Already-joined branches may connect to terminal roots and lower their beds
 > against those roots' actual excavation; raw terminal roots remain unchanged. New
@@ -13,7 +21,11 @@
 > Forest volumetric range is 60 m (sun shadow range), with per-biome fog range,
 > sky/ambient scattering and shadow softness. Logger schema 3 adds render CPU and
 > texture/buffer memory. Final diagnostic travel: no loading freezes, largest logged
-> terrain attach 10.3 ms, but a 1.4 s frame outside most measured callbacks remains.
+> terrain attach 10.3 ms. CORRECTION: the 1.4 s pause was automatic replay capture
+> in ProcessCallbackProbe, now opt-in (--capture-ripple). Clean repeat max 141 ms;
+> real hitches remain. Logger schema 4 adds macOS footprint/page-in/I/O counters.
+> WaterPlan carving regions retain only the segment index, not obsolete point
+> buckets (3-region retention 21.71 -> 9.47 MiB; exact carve outputs unchanged).
 > Do NOT claim all hitches resolved. Evidence: docs/qa/2026-10-09-followup/result.md.
 
 > October 9 evening review: wave-frame caches replace one entry at capacity (never

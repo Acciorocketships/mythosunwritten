@@ -1,0 +1,19 @@
+MEMORY_CATEGORY {"label":"stopped","objects":73556.0,"static_mb":4761.50199985504,"video_mb":2961.84375}
+MEMORY_CACHE _entries entries=34
+MEMORY_CATEGORY {"label":"_entries","objects":73511.0,"static_mb":4739.64426898956,"video_mb":2961.84375}
+MEMORY_CACHE _samples entries=341115
+MEMORY_CATEGORY {"label":"_samples","objects":73511.0,"static_mb":4651.16448307037,"video_mb":2961.84375}
+MEMORY_CACHE _water_bank_bounds entries=222
+MEMORY_CATEGORY {"label":"_water_bank_bounds","objects":73511.0,"static_mb":4646.43312168121,"video_mb":2961.84375}
+MEMORY_CACHE _region_cache entries=131
+MEMORY_CATEGORY {"label":"_region_cache","objects":73511.0,"static_mb":4646.42862033844,"video_mb":2961.84375}
+MEMORY_CACHE _native_regions entries=131
+MEMORY_CATEGORY {"label":"_native_regions","objects":73511.0,"static_mb":4524.49895572662,"video_mb":2961.84375}
+MEMORY_CACHE _smooth_samples entries=32768
+MEMORY_CATEGORY {"label":"_smooth_samples","objects":73511.0,"static_mb":4522.502617836,"video_mb":2961.84375}
+MEMORY_CACHE _detail_samples entries=32768
+MEMORY_CATEGORY {"label":"_detail_samples","objects":73511.0,"static_mb":4520.50835514069,"video_mb":2961.84375}
+MEMORY_CATEGORY {"label":"collision_shapes_removed","objects":66471.0,"static_mb":3119.44921207428,"video_mb":2961.84375}
+MEMORY_CATEGORY {"label":"scene_meshes_removed","objects":64766.0,"static_mb":3108.1298456192,"video_mb":2931.75}
+MEMORY_CATEGORY {"label":"scene_multimeshes_removed","objects":62264.0,"static_mb":3091.03683185577,"video_mb":2785.8125}
+MEMORY_CATEGORY_DONE

@@ -5,8 +5,11 @@ extends RefCounted
 ## Rendering and shared/imported collision resources are unchanged.
 const ARCHIVE := preload("res://scripts/terrain/field/TerrainCollisionArchive.gd")
 const CHUNK_SIZE := 192.0
-const RESTORE_RADIUS := 256.0
-const SUSPEND_RADIUS := 384.0
+# Actor interests already include up to 192 m of travel prediction. Keep the
+# full collision near those interests, rather than another two chunks beyond
+# them; distant scenery retains exact compressed faces for restoration.
+const RESTORE_RADIUS := 96.0
+const SUSPEND_RADIUS := 160.0
 var _entries: Dictionary = {}
 
 func register_chunk(chunk: Vector2i, root: Node) -> void:

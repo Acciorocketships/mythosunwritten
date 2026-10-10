@@ -1100,7 +1100,7 @@ func _nearby_neighbour_points(index: Dictionary, p: Vector2,
 # Carve field (hot path: called for every cell of every region window)
 # ---------------------------------------------------------------
 
-var _region_cache: Dictionary = {}   # Vector2i super_cell -> {"rivers", "buckets", "ponds", "segments"}
+var _region_cache: Dictionary = {}   # Vector2i super_cell -> {"rivers", "ponds", "segments"}
 ## Verified C# copies of carve regions (NativeCarve.region_for), built lazily
 ## when HeightfieldPlan's batched prefetch first needs one: rc -> [region, obj].
 ## A separate cache under _lock: the published region dictionaries are read by
@@ -1171,7 +1171,10 @@ func _region_for(rc: Vector2i) -> Dictionary:
 			ponds.append(t.source_pool)
 		if t.pond != null:
 			ponds.append(t.pond)
-	var out: Dictionary = {"rivers": rivers, "buckets": buckets, "ponds": ponds,
+	# Only the flat segment index is queried after construction. Retaining the
+	# per-point [trace, station] arrays alongside it kept millions of tiny
+	# allocations alive in the regional cache.
+	var out: Dictionary = {"rivers": rivers, "ponds": ponds,
 		"segments": segment_index(buckets)}
 	_cache_put(_region_cache, rc, out, CARVE_REGION_CACHE_LIMIT)
 	_report_planning_progress(1.0, true)

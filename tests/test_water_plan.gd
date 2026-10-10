@@ -460,9 +460,21 @@ func _carve_reference(w: WaterPlan, cx: int, cz: int) -> float:
 		if t.pond != null:
 			best = maxf(best, t.pond.carve_at(p, ground))
 	var key := Vector2i(cx, cz)
-	if region.buckets.has(key):
+	# Reconstruct the original point bucket independently of the retained
+	# segment index: production no longer keeps both representations alive.
+	var bucket := []
+	for t: RiverTrace in region.rivers:
+		for i in t.points.size():
+			var infl := t.widths[i] + WaterPlan.BANK_FEATHER
+			var lo := Vector2i(floori((t.points[i].x-infl)/WaterPlan.TILE+0.5),
+				floori((t.points[i].y-infl)/WaterPlan.TILE+0.5))
+			var hi := Vector2i(floori((t.points[i].x+infl)/WaterPlan.TILE+0.5),
+				floori((t.points[i].y+infl)/WaterPlan.TILE+0.5))
+			if key.x >= lo.x and key.x <= hi.x and key.y >= lo.y and key.y <= hi.y:
+				bucket.append([t,i])
+	if not bucket.is_empty():
 		var seen_segments: Dictionary = {}
-		for entry in region.buckets[key]:
+		for entry in bucket:
 			var t: RiverTrace = entry[0]
 			var i: int = entry[1]
 			for si in [i - 1, i]:

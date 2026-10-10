@@ -1,0 +1,47 @@
+Godot Engine v4.5.1.stable.mono.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_native_carve.gd
+[0m* test_native_carve_prefetch_matches_serial_samples_or_stays_off
+    checked 3000 points, 658 carved, 58 native regions
+[1m1/1 passed.
+[0m[4m
+
+res://tests/test_water_plan.gd
+[0m* test_carve_zero_in_spawn_disk
+* test_carve_positive_under_a_terminal_pond
+* test_carve_identical_across_instances_and_query_order
+* test_bodies_near_finds_the_water_that_carved
+* test_bodies_near_covers_carved_cells_when_window_straddles_super_cells
+* test_carve_lazy_gates_match_reference
+* test_carve_at_is_zero_in_the_spawn_disk_at_odd_points
+* test_carve_at_is_pure_in_position_across_instances_and_order
+* test_carve_at_twelve_metre_points_match_bruteforce_reference
+[1m9/9 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               2
+Tests                10
+Passing Tests        10
+Asserts           101068
+Time              188.74s
+
+
+Ran Tests matching "carve"
+[32m---- All tests passed! ----
+[0m

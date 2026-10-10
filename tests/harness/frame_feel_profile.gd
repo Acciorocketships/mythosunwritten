@@ -104,6 +104,9 @@ func _ready() -> void:
 			"--ablate-variants": _ablation_variants = Array(next.split(",", false))
 			"--ablate-shots": _ablation_shots = next
 			"--profile-callbacks": _profile_callbacks = true
+			"--capture-ripple":
+				_profile_callbacks = true
+				CALLBACK_PROBE.capture_ripple_enabled = true
 			"--idle-only": _idle_only = true
 			"--stop-after-run": _stop_after_run = true
 			"--grass-shots": _shots_dir = next
@@ -134,6 +137,7 @@ func _ready() -> void:
 			"terrain/field/FirstViewWarmer.gd", "terrain/field/FieldTerrainStreamer.gd",
 			"terrain/tools/CoordOverlay.gd", "terrain/tools/TerrainCategoryOverlay.gd"]:
 			CALLBACK_PROBE.install("res://scripts/" + path)
+		CALLBACK_PROBE.install_method("res://scripts/terrain/diagnostics/ManualJudgingLogger.gd", "_record_frame", "_dt: float", "_dt", "void")
 		for method: String in ["_refresh_flow_texture", "_upload_packets"]:
 			CALLBACK_PROBE.install_method("res://scripts/terrain/water/WaterRippleSim.gd", method, "", "", "void")
 		CALLBACK_PROBE.install_method("res://scripts/terrain/water/WaterRippleSim.gd", "_update_packets", "delta: float", "delta", "void")
@@ -247,6 +251,7 @@ func _process(delta: float) -> void:
 			"chunks": _streamer._built.size(),
 			"memory_mb": Performance.get_monitor(Performance.MEMORY_STATIC) / 1048576.0,
 			"gc_pause_usec": _runtime_probe.PauseUsec() if _runtime_probe != null else -1,
+			"os_usage": _runtime_probe.OsUsage() if _runtime_probe != null else {},
 			"collision_residency": _collision_stats,
 			"managed_heap_bytes": _managed_heap_bytes,
 			"managed_full_collections": _managed_full_collections,
