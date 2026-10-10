@@ -12,7 +12,7 @@
 > `bracket.jetty` (`bracket.small`) on wall-module joints only (never over a window/door head), and return beams at open sides. Guardrails (cap drops one step; a
 > member that cannot take the first step leaves): air/obstacles inside the recess, recess claims, portals (passages, blanks, balconies; upper doors and bays on a
 > stepped-in run), material (stone only whole modules), party (never against a touching building), bearing (≥1 module behind, ≥2 across a two-sided axis), porch
-> posts, end closure. Roofs never move (the October 8 roof-following was removed). Withdrawals per cause (`growth_rejections`); audit `growth_corpus_audit.gd` +
+> posts, end closure. Roofs never move (the October 8 roof-following was removed). A house that rolls growth but keeps no step is rebuilt plain (`build(..., growth_withheld)` repeats until every grower keeps a step), so its jetty and awnings stay. Withdrawals per cause (`growth_rejections`); audit `growth_corpus_audit.gd` +
 > `tests/fixtures/growth_audit.gd`. Zero chance is byte-identical (old-look fixture pins 0); fingerprint baseline re-pinned for the defaults.
 
 > ROOF PROPORTION (Oct 8, `docs/qa/2026-10-08-roof-proportion/result.md`): `BuildingDesigner.roof_proportion_ok` is a guardrail on every kit pitched roof: at most

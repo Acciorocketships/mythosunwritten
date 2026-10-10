@@ -85,7 +85,10 @@ func test_build_marks_houses_growing_only_when_the_chance_is_positive() -> void:
 			assert_not_null(spatial, town)
 			var built := KitVillageBuildings.build(spatial, spatial.compiled_fabric_cache(),
 				SuntailBuildingKit.create())
-			growing += (built.houses as Array).filter(func(m: BuildingMass) -> bool: return m.grows).size()
+			# A house that rolled growth but kept no step is rebuilt plain (Task 11 fix round 1)
+			# and listed in growth_withheld, so count both.
+			growing += (built.houses as Array).filter(func(m: BuildingMass) -> bool: return m.grows).size() \
+				+ (built.get("growth_withheld", {}) as Dictionary).size()
 		if chance == 0.0:
 			assert_eq(growing, 0)
 		else:

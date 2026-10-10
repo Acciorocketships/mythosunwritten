@@ -55,7 +55,8 @@ static func house_id_for(building_id: StringName) -> StringName:
 ## replaced_units: Dictionary unit stable_id -> true, masses: Array, plus the
 ## native-frame roof union inputs placements / roofs / walls}.
 static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
-		kit: BuildingKit, mixed_styles := true, native_roofs := true) -> Dictionary:
+		kit: BuildingKit, mixed_styles := true, native_roofs := true,
+		growth_withheld: Dictionary = {}) -> Dictionary:
 	var grid := spatial.grid
 	var houses := _houses(spatial)
 	var owner_at: Dictionary = {}
@@ -89,7 +90,8 @@ static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 		var at := Vector3i(cell.x, band, cell.y)
 		return grid.contains(at) and grid.use_at(at) == WarrenSpatialGrid.Use.PUBLIC_AIR
 	var growth_context := {} if growth_character == null else \
-		{"character": growth_character, "solid": growth_solid, "street": growth_street}
+		{"character": growth_character, "solid": growth_solid, "street": growth_street,
+			"withheld": growth_withheld}
 	var payload := EnvironmentInstancePayload.new()
 	var map := native_to_lattice(kit)
 	var masses: Array[BuildingMass] = []
@@ -328,7 +330,22 @@ static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 	roof_audit["seated_balcony_brackets"] = seated_balcony_brackets
 	roof_audit["roof_blocked_windows"] = roof_blocked_windows
 	roof_audit["roof_fitted_windows"] = int(facade_context.get("substituted",0))
-	return {"payload": payload, "replaced_units": replaced, "masses": masses, "houses": house_masses,
+	# A house that rolled growth was designed for it (no kit jetty, no porch awning).
+	# If none of its faces kept a step, build the town again with that house designed
+	# as a plain house, so a failed grower is identical to one that never rolled. A
+	# plain house's jetty or awning can withdraw another grower's last step, so this
+	# repeats until every remaining grower keeps a step (the withheld set only grows).
+	var stepped := {}
+	for lean: Dictionary in growth.leans:
+		stepped[lean.host] = true
+	var failed := growth_withheld.duplicate()
+	for mass: BuildingMass in masses:
+		if mass.grows and not stepped.has(mass.stable_id):
+			failed[mass.stable_id] = true
+	if failed.size() > growth_withheld.size():
+		return build(spatial, fabric, kit, mixed_styles, native_roofs, failed)
+	return {"growth_withheld": growth_withheld,
+		"payload": payload, "replaced_units": replaced, "masses": masses, "houses": house_masses,
 		"house_kits": house_kits, "roof_kits": roof_kits, "towers": towers, "facade_bays": facade_bays,
 		"room_projections":room_projections,"growth":growth.leans,"growth_rejections":growth.rejections,"roof_audit": roof_audit, "placements": placements, "roofs": roofs, "walls": walls}
 
@@ -1605,7 +1622,8 @@ static func _mass_for(house_id: StringName, house: Dictionary,
 				context["stone_chance"] = 0.0
 				break
 	if not growth.is_empty():
-		mass.grows = GROWTH.house_grows(growth.character, mass, growth.solid, growth.street)
+		mass.grows = not (growth.withheld as Dictionary).has(mass.stable_id) \
+			and GROWTH.house_grows(growth.character, mass, growth.solid, growth.street)
 		if mass.grows:
 			context["grows"] = true
 	designer.articulate(mass, context)

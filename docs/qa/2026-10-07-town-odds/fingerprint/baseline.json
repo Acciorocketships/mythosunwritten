@@ -1,41 +1,41 @@
 {
   "103:standard": {
-    "ms": 21269,
-    "payload": "75363a088680431ecbdbbdce04ede0468bd92b905b769703d069a25c940b189c",
+    "ms": 29498,
+    "payload": "aba3abc6cb4dc2b667684c81ca4d13ba2351fa0073cc3d8d25deafa8e4887116",
     "source": "e57207e5e9d0adece0d7fde5282099b88fc803c88be3757cb97a7e52a5149c93"
   },
   "13:standard": {
-    "ms": 10541,
+    "ms": 12805,
     "payload": "7d293ec10ec0982dc708b30fd1dabccceb7be9c793d9359e82b54e13bbc61212",
     "source": "ccf75bf3d786f718fb21485aca461cc253ef3d94d994e8e1946f9e7073242f58"
   },
   "31:large": {
-    "ms": 28673,
-    "payload": "54d74840843a07124890ac5625cb99beda5c65cb8cd7ccca8f17916aa088ea03",
+    "ms": 50786,
+    "payload": "25affb005d6349e6a16f92c1e2d0c3cb808b62c5caa9eac5f93b05acda6ef28a",
     "source": "737ddb35bf8be8a189869552f2763e7ac2590f497fffe03563f64ef0bd38c978"
   },
   "43:large": {
-    "ms": 36319,
-    "payload": "bfc9c49fce2d8930b410007e68435e92b942286f252f8a0375f84218648b05f6",
+    "ms": 62669,
+    "payload": "e4cb988e68bf14c7a054f79f59f1219a17971277f27ba6b28bace070b937ff24",
     "source": "fdc75d260788e6afb75d27fbca1f01225f4ea7f7f35edfff8a1e89f4509e6743"
   },
   "53:grand": {
-    "ms": 73945,
-    "payload": "89a39ab4d0baa82d8843bb22e85a62f495a005fd469a52fbcdeb6a3223398e56",
+    "ms": 111237,
+    "payload": "a36eda6615a5f571addfd545116893e05a0fd62ce553e9a6fb9c48f7394b8190",
     "source": "632de261a756a83f3c453ba09634360db8c1e0d59ec2aa75f131265c8fb39b30"
   },
   "61:standard": {
-    "ms": 12115,
+    "ms": 10612,
     "payload": "e5c8dd8c6028c82582b4737f20bbeeb24e186bb7ce0ab9fa19b976f754f8a499",
     "source": "ce1d7b96b5d17339df2e8b1ee2d5e298b2d7dc53880ef5ab4f2889482899c83e"
   },
   "7:compact": {
-    "ms": 10602,
+    "ms": 9435,
     "payload": "fd77a942dc416d7406e56cef1f82ae605f3dd48aa1f124dda8a9773e27fb1b79",
     "source": "1dc9322f50eb7f97c4954848e8140661f2dd8e40ec993268156670e9cdfd9f71"
   },
   "83:grand": {
-    "ms": 137997,
+    "ms": 176898,
     "payload": "787355cd1cf005adc706952c41df7cacd5fbe614dddfd3486ba3119eeb76a676",
     "source": "c58d2c15e2bc1170a14a16c78d083dbacfab2f36f42293c473c1706347fd39ae"
   }

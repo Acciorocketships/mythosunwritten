@@ -7,31 +7,23 @@
     "broken_joints": 0,
     "buried": 0,
     "causes": {
-      "air": 7,
-      "bearing": 6,
-      "ends": 6,
-      "grade": 2,
-      "obstacle.spatial": 3,
+      "bearing": 2,
+      "ends": 2,
+      "obstacle.spatial": 2,
       "obstacle.tower": 1,
-      "party": 6,
-      "portal": 8
+      "portal": 2
     },
     "deepest": -1.0,
     "ends_why": {
-      "door": 1,
-      "partial": 3,
       "stepped": 2
     },
     "faces": 1,
     "faces_withdrawn": {
-      "air": 6,
-      "bearing": 5,
-      "ends": 5,
-      "grade": 2,
-      "obstacle.spatial": 3,
+      "bearing": 1,
+      "ends": 1,
+      "obstacle.spatial": 2,
       "obstacle.tower": 1,
-      "party": 4,
-      "portal": 6
+      "portal": 2
     },
     "floating": 0,
     "ground_faces": 1,
@@ -61,7 +53,7 @@
     "broken_joints": 0,
     "buried": 0,
     "causes": {
-      "air": 3
+
     },
     "deepest": 0.0,
     "ends_why": {
@@ -69,7 +61,7 @@
     },
     "faces": 0,
     "faces_withdrawn": {
-      "air": 2
+
     },
     "floating": 0,
     "ground_faces": 0,
@@ -141,26 +133,15 @@
     "broken_joints": 0,
     "buried": 0,
     "causes": {
-      "air": 1,
-      "bearing": 2,
-      "ends": 9,
-      "grade": 3,
-      "party": 4,
-      "portal": 3
+
     },
     "deepest": 0.0,
     "ends_why": {
-      "door": 4,
-      "partial": 5
+
     },
     "faces": 0,
     "faces_withdrawn": {
-      "air": 1,
-      "bearing": 2,
-      "ends": 8,
-      "grade": 3,
-      "party": 3,
-      "portal": 1
+
     },
     "floating": 0,
     "ground_faces": 0,
@@ -190,7 +171,7 @@
     "broken_joints": 0,
     "buried": 3,
     "causes": {
-      "grade": 7
+      "grade": 1
     },
     "deepest": -1.0,
     "ends_why": {
@@ -198,7 +179,7 @@
     },
     "faces": 1,
     "faces_withdrawn": {
-      "grade": 4
+      "grade": 1
     },
     "floating": 0,
     "ground_faces": 1,
@@ -228,7 +209,7 @@
     "broken_joints": 0,
     "buried": 0,
     "causes": {
-      "portal": 8
+
     },
     "deepest": 0.0,
     "ends_why": {
@@ -236,7 +217,7 @@
     },
     "faces": 0,
     "faces_withdrawn": {
-      "portal": 4
+
     },
     "floating": 0,
     "ground_faces": 0,

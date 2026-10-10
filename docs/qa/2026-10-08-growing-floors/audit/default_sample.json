@@ -45,22 +45,15 @@
     "broken_joints": 0,
     "buried": 0,
     "causes": {
-      "air": 1,
-      "bearing": 1,
-      "ends": 4,
-      "party": 1
+
     },
     "deepest": 0.0,
     "ends_why": {
-      "door": 1,
-      "partial": 3
+
     },
     "faces": 0,
     "faces_withdrawn": {
-      "air": 1,
-      "bearing": 1,
-      "ends": 3,
-      "party": 1
+
     },
     "floating": 0,
     "ground_faces": 0,
@@ -215,24 +208,15 @@
     "broken_joints": 0,
     "buried": 0,
     "causes": {
-      "air": 3,
-      "bearing": 1,
-      "ends": 3,
-      "obstacle.spatial": 1,
-      "party": 3
+
     },
     "deepest": 0.0,
     "ends_why": {
-      "door": 2,
-      "partial": 1
+
     },
     "faces": 0,
     "faces_withdrawn": {
-      "air": 3,
-      "bearing": 1,
-      "ends": 3,
-      "obstacle.spatial": 1,
-      "party": 2
+
     },
     "floating": 0,
     "ground_faces": 0,
@@ -262,29 +246,19 @@
     "broken_joints": 0,
     "buried": 1,
     "causes": {
-      "air": 2,
-      "bearing": 1,
-      "ends": 8,
-      "obstacle.spatial": 4,
+      "ends": 1,
       "obstacle.tunnel-ceilings": 1,
-      "party": 3,
-      "portal": 2
+      "party": 1
     },
     "deepest": -1.0,
     "ends_why": {
-      "door": 5,
-      "partial": 2,
       "stepped": 1
     },
     "faces": 2,
     "faces_withdrawn": {
-      "air": 2,
-      "bearing": 1,
-      "ends": 6,
-      "obstacle.spatial": 3,
+      "ends": 1,
       "obstacle.tunnel-ceilings": 1,
-      "party": 2,
-      "portal": 2
+      "party": 1
     },
     "floating": 0,
     "ground_faces": 2,
@@ -314,31 +288,29 @@
     "broken_joints": 0,
     "buried": 7,
     "causes": {
-      "air": 5,
+      "air": 3,
       "bearing": 3,
-      "ends": 11,
+      "ends": 8,
       "grade": 6,
-      "obstacle.own": 1,
-      "obstacle.spatial": 4,
-      "party": 4,
-      "portal": 20
+      "obstacle.spatial": 2,
+      "party": 2,
+      "portal": 6
     },
     "deepest": -1.0,
     "ends_why": {
-      "door": 6,
+      "door": 3,
       "partial": 2,
       "stepped": 3
     },
     "faces": 6,
     "faces_withdrawn": {
-      "air": 3,
+      "air": 2,
       "bearing": 2,
-      "ends": 7,
+      "ends": 5,
       "grade": 2,
-      "obstacle.own": 1,
-      "obstacle.spatial": 3,
-      "party": 3,
-      "portal": 15
+      "obstacle.spatial": 2,
+      "party": 1,
+      "portal": 5
     },
     "floating": 0,
     "ground_faces": 6,
@@ -444,8 +416,7 @@
     "broken_joints": 0,
     "buried": 0,
     "causes": {
-      "bearing": 1,
-      "portal": 4
+
     },
     "deepest": 0.0,
     "ends_why": {
@@ -453,8 +424,7 @@
     },
     "faces": 0,
     "faces_withdrawn": {
-      "bearing": 1,
-      "portal": 3
+
     },
     "floating": 0,
     "ground_faces": 0,
@@ -484,26 +454,15 @@
     "broken_joints": 0,
     "buried": 0,
     "causes": {
-      "air": 2,
-      "bearing": 1,
-      "ends": 9,
-      "material": 12,
-      "party": 7,
-      "portal": 4
+
     },
     "deepest": 0.0,
     "ends_why": {
-      "door": 3,
-      "partial": 6
+
     },
     "faces": 0,
     "faces_withdrawn": {
-      "air": 2,
-      "bearing": 1,
-      "ends": 8,
-      "material": 8,
-      "party": 5,
-      "portal": 2
+
     },
     "floating": 0,
     "ground_faces": 0,
@@ -611,26 +570,15 @@
     "broken_joints": 0,
     "buried": 0,
     "causes": {
-      "air": 1,
-      "bearing": 1,
-      "ends": 7,
-      "grade": 2,
-      "material": 6,
-      "portal": 2
+
     },
     "deepest": 0.0,
     "ends_why": {
-      "door": 3,
-      "passage": 4
+
     },
     "faces": 0,
     "faces_withdrawn": {
-      "air": 1,
-      "bearing": 1,
-      "ends": 3,
-      "grade": 2,
-      "material": 4,
-      "portal": 1
+
     },
     "floating": 0,
     "ground_faces": 0,
@@ -661,28 +609,17 @@
     "buried": 0,
     "causes": {
       "air": 1,
-      "ends": 11,
-      "grade": 6,
-      "material": 1,
-      "obstacle.spatial": 1,
-      "party": 4,
-      "portal": 1
+      "ends": 3
     },
     "deepest": -1.0,
     "ends_why": {
-      "door": 5,
-      "partial": 4,
+      "door": 1,
       "stepped": 2
     },
     "faces": 1,
     "faces_withdrawn": {
       "air": 1,
-      "ends": 6,
-      "grade": 4,
-      "material": 1,
-      "obstacle.spatial": 1,
-      "party": 1,
-      "portal": 1
+      "ends": 2
     },
     "floating": 0,
     "ground_faces": 1,

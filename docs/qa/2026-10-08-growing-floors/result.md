@@ -90,21 +90,21 @@ violation count is 0.
 | Pulled houses | 0 | 0 |
 | Violations (12 kinds) | 0 | 0 |
 
-Withdrawals at the defaults, as attempts / distinct faces:
+Withdrawals at the defaults, as attempts / distinct faces. These are the final build pass only (fix
+round 1 below): houses that rolled growth but kept no step are rebuilt as plain houses, so their
+withdrawn attempts are no longer reported.
 
 | Cause | 8 fingerprint towns | 16-town sample |
 |---|---|---|
-| ends | 18 / 16 | 58 / 39 |
-| portal | 19 / 11 | 33 / 24 |
-| air | 13 / 11 | 20 / 17 |
-| party | 12 / 9 | 22 / 14 |
-| grade | 12 / 9 | 16 / 10 |
-| bearing | 9 / 8 | 12 / 10 |
-| material | 0 / 0 | 19 / 13 |
-| obstacle.* | 4 / 4 | 13 / 11 |
+| ends | 5 / 4 | 17 / 11 |
+| portal | 2 / 2 | 6 / 5 |
+| air | 2 / 2 | 9 / 7 |
+| party | 2 / 2 | 3 / 2 |
+| grade | 1 / 1 | 8 / 4 |
+| bearing | 3 / 2 | 6 / 4 |
+| obstacle.* | 3 / 3 | 4 / 4 |
 
-`ends_why`: door 6, partial 9, stepped 3 (fingerprint towns); door 27, partial 18, stepped 9,
-passage 4 (sample).
+`ends_why`: door 1, partial 1, stepped 3 (fingerprint towns); door 6, partial 2, stepped 9 (sample).
 
 **At `growing_house_chance = 1`** (Task 10; every eligible house rolls growth):
 
@@ -134,7 +134,9 @@ passage 4 (sample).
   FINGERPRINT_MATCH.
 - **Re-pinned** `docs/qa/2026-10-07-town-odds/fingerprint/baseline.json` for the shipped defaults:
   - Source hashes are unchanged in all 8 towns.
-  - Payload hashes changed in 7 (7:compact is unchanged).
+  - Payload hashes changed only in the 4 towns with a stepping face (53, 13, 83, 61). Against the
+    pre-default baseline, 31, 43, 103 and 7 MATCH again after fix round 1; before the fix, 7 towns
+    differed because of failed growers.
   - The full gate against the new baseline: FINGERPRINT_MATCH.
 - **Old look:** `--old-look --compare old_look_baseline.json --parts source`: FINGERPRINT_MATCH;
   `test_town_old_look` 1/1.
@@ -151,6 +153,7 @@ passage 4 (sample).
   - test_growing_floors_step_in 13/13
   - test_growing_floors_edges 8/8
   - test_growing_floors_corpus 1/1
+  - test_growing_floors_failed_growers 1/1 (fix round 1)
   - test_growth_front_family 3/3
   - test_october3_room_projections 9/9
   - test_roof_proportion 4/4
@@ -177,7 +180,7 @@ Camera notes:
 | `gallery_b07_before_after.jpg` | One house without/with growth from the same camera. Roof, top storey and window boxes are unchanged; the ground storey is narrower on braces. The ivy and the stone footing course on that storey yield (decor rule). |
 | `gallery_grid_step100_cap200.jpg` | The 9 gallery houses (1–4 storeys, timber and stone grounds) at step 1.0, cap 2.0. |
 | `83_grand_`, `53_grand_`, `31_large_`, `61_standard_overview_before_after.jpg` | Town overviews at growth 0 vs shipped defaults. Honest result: from overview distance the difference is invisible. Roofs never move, and at the defaults each of these towns has at most one stepping face (31 has none). |
-| `53_grand_street0_before_after.jpg` | Same camera. A posted wooden canopy is gone: a house that rolls growth is designed without porch awnings and without its kit jetty (`BuildingDesigner`). 53 loses 4 `wooden_canopy_1` town-wide for its one growing house (house.045). See limit 8. |
+| `53_grand_street0_before_after.jpg` | Same camera. A posted wooden canopy is gone: a house that rolls growth is designed without porch awnings and without its kit jetty (`BuildingDesigner`). 53 loses its canopies for its one growing house (house.045), which keeps a step. See limit 8. |
 | `53_grand_street2_`, `61_standard_street1_`, `61_standard_lane0_before_after.jpg` | Random street cameras. They pick their direction by ray tests against collision, so the cameras differ slightly between runs; not a like-for-like comparison. |
 
 **Before/after town sets** (`final/before/`, `final/after/`): 8 towns × overview, orbit0-3, street0-5,
@@ -339,16 +342,42 @@ Controller rulings in the ledger that changed behaviour (plain language):
    2 cm coping lip on an open side. Not seen in these renders.
 8. **Dressing a growing house loses.**
    - Ivy and window boxes that the braces meet yield (the spec's yield rule).
-   - A house that ROLLS growth is designed without porch awnings and without its kit inset jetty
-     BEFORE its faces are fitted. So a house whose every step later withdraws stays plain.
-   - Measured: 31:large has 0 stepping faces at the defaults, yet its house.000 rolled growth (all its
-     steps withdrew for `air`) and lost one porch awning. 53:grand loses 4 canopies for its one
-     growing house.
-   - This is why the payload hash changes in 7 of the 8 fingerprint towns although only 4 have a
-     stepping face.
-   - Open question: should a rolled house that ends with no stepping face get its jetty and awnings
-     back? That needs a second design pass after the fit.
+   - A house that keeps a step is still designed without porch awnings and without its kit jetty
+     (house-wide). 53's house.045 loses its canopies (`53_grand_street0_before_after.jpg`).
+   - A house that rolls growth but keeps no step is now identical to one that never rolled (fix round
+     1 below).
 9. **Stone storeys** step in only by whole modules until a stone half strip is baked.
 10. **Flush faces:** faces over a lower neighbour or against a party wall never step.
 11. **The planner is unaware of the recesses:** the strip under an overhang is the house's own cell.
 12. **`lane_sky_gap` is inert:** remove it, or keep it for a future outward option?
+
+## Fix round 1 (controller ruling): failed growers
+
+A house rolls growth before its faces are fitted, and its design depends on that roll (no kit inset
+jetty, no porch awning; the rolls themselves are still drawn). A grower whose every step withdrew used
+to stay plain: 31:large house.000 kept no step but lost a porch awning, and 7 of the 8 fingerprint
+payloads changed although only 4 towns step.
+
+`KitVillageBuildings.build` now rebuilds the town with every grower that kept no step marked in
+`growth_withheld` (designed and fitted as a plain house), and repeats until every remaining grower
+keeps a step. The withheld set only grows, so this ends; one extra pass in practice. The result reports
+`growth_withheld`.
+
+- The build stays pure and deterministic: the same inputs, the same keyed rolls, and the withheld set
+  is a plain argument.
+- Cost: towns with a failed grower build their kit layer twice. That is most towns at the shipped
+  chance, because most rolled houses keep no step.
+- Red-first test `tests/test_growing_floors_failed_growers.gd`, on 31:large at the defaults: no face
+  steps, house.000 is withheld, the awning count is equal, no mass grows, and the kit payload is
+  byte-identical to `growing_house_chance = 0`. It was red with 4 failures (awnings 3 vs 4,
+  house.000 still `grows`, payload differs) and is now green.
+- Fingerprint against the pre-default baseline: 31, 43, 103 and 7 MATCH. 53, 13, 83 and 61 differ only
+  through their surviving steps. The baseline is re-pinned and the gate MATCHes.
+- Corpus counts are unchanged: 4 faces (fingerprint towns), 12 (sample), 19 at chance 1, with 0
+  violations in every run.
+- `test_growing_floors_knobs` "build marks houses growing" now counts withheld growers as well:
+  7:compact and 103:standard roll growth but keep no step, so their houses no longer end with `grows`.
+- All 15 focused files are green again, along with the old-look gate, the growth-on smoke (0 NO_TOWN)
+  and the production range audit (valid, floating 0, intrusions 0).
+- The `before`/`after` renders were made before this fix. Their 31/43/103 differences (one awning in
+  31) are gone in the code.
