@@ -81,3 +81,12 @@ The 64 m large-rock trial reduced median CPU from 20.51–20.96 ms to 16.87–16
 | ![Original](/Users/ryko/story/docs/qa/2026-10-09-followup/rock-batches-before.png) | ![Same rocks, fewer submissions](/Users/ryko/story/docs/qa/2026-10-09-followup/rock-batches-64.png) |
 
 Same scene and fixed camera; animated particles may differ. No rocks or effects are intentionally removed.
+
+
+## Mist staging trial — not adopted
+
+The prior traversal repeatedly logged whole mist creation at 10–16 ms. A candidate split the three texture uploads and final attachment into four commit steps. Eleven renderer assertions proved identical field bytes, volume bounds, and no early publication. However, live travel still logged one atmosphere texture upload at 16.1 ms. This did not establish a benefit, so the source change was reverted; the patch and evidence are retained here. Main remains on the verified rock-batching build.
+
+The trial also recorded a 352.88 ms idle frame using 220.67 ms of main-thread CPU but only 8.84 ms of script callbacks. Warm-up count, draw counts, pipeline counts, and managed collection/pause counters were unchanged. Across that frame, macOS page-ins rose 21, disk reads rose 2,400,256 bytes, and resident bytes fell 111,001,600 while physical footprint stayed about 9.6 GB. This is evidence of concurrent memory activity, not proof that paging alone caused the stall or that the mist candidate regressed it. Other agents' Godot tests were running and were left untouched.
+
+The next concrete target is texture storage. A fresh on-disk inventory confirms 424 baked textures; after existing aliases, 401 unique paths hold 1,528.3 MiB of decoded image data. Suntail village textures account for 1,040.6 MiB of that offline inventory. The earlier live cache inventory held 549.3 MiB from that kit after alias sharing. These counts are not additive with engine VRAM/physical memory. A reviewed GPU-compression trial can target this remaining allocation without changing town geometry or lighting. No texture assets have been changed by this investigation.

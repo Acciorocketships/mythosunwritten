@@ -1,0 +1,69 @@
+diff --git a/scripts/terrain/biome/BiomeChunkFx.gd b/scripts/terrain/biome/BiomeChunkFx.gd
+index def7bc932..0b9f1cecf 100644
+--- a/scripts/terrain/biome/BiomeChunkFx.gd
++++ b/scripts/terrain/biome/BiomeChunkFx.gd
+@@ -257,8 +257,7 @@ static func build_field_steps(data: Dictionary) -> Dictionary:
+ 	for atmosphere: Color in data.fog:
+ 		density_max = maxf(density_max, atmosphere.a)
+ 	if density_max > 0.0001:
+-		steps.append(func() -> void: root.add_child(_mist_volume(data)))
+-		labels.append("mist")
++		_append_mist_steps(root, data, steps, labels)
+ 	steps.append(func() -> void: preload("res://scripts/terrain/biome/BiomeMistWisps.gd").attach(root, data))
+ 	labels.append("wisps")
+ 	for recipe: StringName in data.points:
+@@ -272,15 +271,33 @@ static func build_field_steps(data: Dictionary) -> Dictionary:
+ 		labels.append("orb")
+ 	return {"root": root, "steps": steps, "labels": labels}
+ 
+-static func _mist_volume(data: Dictionary) -> FogVolume:
+-	# Clear chunks and orb-only previews need no fog textures or shape data.
+-	var fog_image := Image.create_empty(13, 13, false, Image.FORMAT_RGBAF)
+-	var ground_image := Image.create_empty(13, 13, false, Image.FORMAT_RF)
+-	var shape_image := Image.create_empty(13, 13, false, Image.FORMAT_RGBAF)
++## Upload each field separately: three ImageTexture creations plus volume
++## attachment in one commit repeatedly cost 10-16 ms during traversal.
++static func _append_mist_steps(root: Node3D, data: Dictionary, steps: Array[Callable], labels: PackedStringArray) -> void:
++	var textures := {}
++	for field: String in ["fog", "ground", "mist_shape"]:
++		steps.append(func() -> void:
++			textures[field] = _mist_texture(data, field))
++		labels.append("mist_texture:" + field)
++	steps.append(func() -> void:
++		root.add_child(_mist_from_textures(data, textures))
++		textures.clear())
++	labels.append("mist_attach")
++
++static func _mist_texture(data: Dictionary, field: String) -> ImageTexture:
++	var ground := field == "ground"
++	var image := Image.create_empty(13, 13, false, Image.FORMAT_RF if ground else Image.FORMAT_RGBAF)
+ 	for i in 169:
+-		fog_image.set_pixel(i % 13, i / 13, data.fog[i])
+-		shape_image.set_pixel(i % 13, i / 13, data.mist_shape[i])
+-		ground_image.set_pixel(i % 13, i / 13, Color(data.ground[i], 0, 0))
++		image.set_pixel(i % 13, i / 13, Color(data[field][i], 0, 0) if ground else data[field][i])
++	return ImageTexture.create_from_image(image)
++
++static func _mist_volume(data: Dictionary) -> FogVolume:
++	var textures := {}
++	for field: String in ["fog", "ground", "mist_shape"]:
++		textures[field] = _mist_texture(data, field)
++	return _mist_from_textures(data, textures)
++
++static func _mist_from_textures(data: Dictionary, textures: Dictionary) -> FogVolume:
+ 	var volume := FogVolume.new()
+ 	volume.name = "WorldMist"
+ 	volume.shape = RenderingServer.FOG_VOLUME_SHAPE_BOX
+@@ -288,9 +305,9 @@ static func _mist_volume(data: Dictionary) -> FogVolume:
+ 	volume.position = Vector3(CHUNK * 0.5, (data.lo + data.hi) * 0.5 + 60.0, CHUNK * 0.5)
+ 	var material := ShaderMaterial.new()
+ 	material.shader = load("res://terrain/materials/biome_mist.gdshader")
+-	material.set_shader_parameter("atmosphere_field", ImageTexture.create_from_image(fog_image))
+-	material.set_shader_parameter("ground_field", ImageTexture.create_from_image(ground_image))
+-	material.set_shader_parameter("mist_shape_field", ImageTexture.create_from_image(shape_image))
++	material.set_shader_parameter("atmosphere_field", textures.fog)
++	material.set_shader_parameter("ground_field", textures.ground)
++	material.set_shader_parameter("mist_shape_field", textures.mist_shape)
+ 	material.set_shader_parameter("chunk_origin", Vector2(data.origin.x, data.origin.z))
+ 	volume.material = material
+ 	return volume
