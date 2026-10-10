@@ -147,6 +147,7 @@ var max_storeys: int
 const SOURCE_MEMO_LIMIT := 8192
 const CARVE_REGION_CACHE_LIMIT := 256
 
+var _priority_trace_cache: Dictionary = {} # immutable first-pass drainage forest
 var _trace_cache: Dictionary = {}    # Vector3i(sc.x, sc.y, depth) -> RiverTrace | null
 var _source_pos_cache: Dictionary = {}   # Vector2i -> Vector2 (summit-ascended)
 var _has_source_cache: Dictionary = {}   # Vector2i -> bool
@@ -501,11 +502,121 @@ func river_for(sc: Vector2i, depth: int = JOIN_DEPTH,
 		if progress_start >= 0.0:
 			_report_planning_progress(progress_end)
 		return cached
-	var t: RiverTrace = _trace(sc, depth, progress_start, progress_end)
+	var t := _priority_river_for(sc, depth, progress_start, progress_end)
+	if depth == JOIN_DEPTH and t != null and t.joined:
+		var receivers := _terminal_receivers(t, depth)
+		t = _join_terminal_receiver(t, receivers)
+		t = _contain_terminal_banks(t, receivers)
 	_cache_put(_trace_cache, key, t, SOURCE_MEMO_LIMIT)
 	if progress_start >= 0.0:
 		_report_planning_progress(progress_end)
 	return t
+
+
+## Keep the priority-resolved forest separate from the final branch corrections.
+## A terminal root is immutable: only an already-joined branch can redirect to
+## one. Every new edge therefore ends at a root, never creating a join cycle or
+## depending on a receiver segment another correction can subsequently remove.
+func _priority_river_for(sc: Vector2i, depth: int,
+		progress_start := -1.0, progress_end := -1.0) -> RiverTrace:
+	var key := Vector3i(sc.x, sc.y, depth)
+	var cached: Variant = _cache_get(_priority_trace_cache, key)
+	if not (cached is StringName and cached == _MISSING): return cached
+	var trace := _trace(sc, depth, progress_start, progress_end)
+	_cache_put(_priority_trace_cache, key, trace, SOURCE_MEMO_LIMIT)
+	return trace
+
+func _terminal_receivers(branch: RiverTrace, depth: int) -> Array:
+	var receivers := []
+	var bounds := _bounds_for(branch).grow(SENSE_RADIUS + W_MAX)
+	var candidates: Array[Vector2i] = []
+	for z in range(-REACH_SUPERS * 2, REACH_SUPERS * 2 + 1):
+		for x in range(-REACH_SUPERS * 2, REACH_SUPERS * 2 + 1):
+			var cell := branch.source_cell + Vector2i(x,z)
+			# All terminal roots contribute excavation, regardless of priority.
+			if cell != branch.source_cell:
+				candidates.append(cell)
+	prefetch_sources(candidates)
+	for cell: Vector2i in candidates:
+		var raw := river_for(cell, 0)
+		if raw == null or not _bounds_for(raw).intersects(bounds): continue
+		var receiver := _priority_river_for(cell, depth)
+		if receiver != null and not receiver.joined:
+			receivers.append(receiver)
+	return receivers
+
+func _join_terminal_receiver(branch: RiverTrace, receivers: Array) -> RiverTrace:
+	if not branch.joined: return branch
+	var terminals := []
+	for receiver: RiverTrace in receivers:
+		if not receiver.joined and receiver.source_cell != branch.source_cell:
+			terminals.append(receiver)
+	if terminals.is_empty(): return branch
+	var index := _index_neighbour_rivers(terminals)
+	for i in range(branch.points.size()-1):
+		var receiver := _join_target(branch.points[i], branch.beds[i], index)
+		if receiver != null:
+			return _truncate_at_receiver(branch, i, receiver)
+	return branch
+
+## Reconcile the branch with excavation already owned by terminal channels.
+## The raw walk surveys natural banks; a neighbouring low river can later cut
+## those banks away. Lower this branch into that ground, never below its outlet.
+func _contain_terminal_banks(branch: RiverTrace, receivers: Array) -> RiverTrace:
+	if receivers.is_empty() or branch.points.size() < 2: return branch
+	var flat: Array = []
+	var ponds: Array = []
+	for receiver: RiverTrace in receivers:
+		if receiver.source_pool != null: ponds.append(receiver.source_pool)
+		if receiver.pond != null: ponds.append(receiver.pond)
+		for i in range(receiver.points.size()-1): flat.append_array([receiver,i])
+	var beds := branch.beds.duplicate()
+	var outlet := beds[-1]
+	var region := {"ponds":ponds,"segments":{}}
+	var changed := false
+	for i in branch.points.size():
+		var p := branch.points[i]
+		var direction := (branch.points[mini(i+1,branch.points.size()-1)]-branch.points[maxi(i-1,0)]).normalized()
+		var normal := Vector2(-direction.y,direction.x)
+		var bank := INF
+		for distance: float in [branch.widths[i]+FEATHER+HeightfieldPlan.POINT*0.5,branch.widths[i]+FEATHER+HeightfieldPlan.POINT*1.5]:
+			for side: float in [-1.0,1.0]:
+				var q := p+normal*distance*side
+				var key := Vector2i(floori(q.x/TILE+0.5),floori(q.y/TILE+0.5))
+				region.segments = {key:flat}
+				var ground := noise_h(q)
+				var carved := ground-_carve_region(region,q.x,q.y,ground)
+				bank = minf(bank,roundf(carved/STOREY)*STOREY)
+		var contained := maxf(outlet,bank-CONTAIN_DROP)
+		beds[i] = minf(beds[i],contained)
+		if i > 0: beds[i] = minf(beds[i],beds[i-1])
+		changed = changed or beds[i] != branch.beds[i]
+	if not changed: return branch
+	var result := RiverTrace.new()
+	result.source_cell = branch.source_cell
+	result.priority = branch.priority
+	result.points = branch.points
+	result.widths = branch.widths
+	result.beds = beds
+	result.source_pool = branch.source_pool
+	result.pond = branch.pond
+	result.land_bars = branch.land_bars
+	result.joined = branch.joined
+	return result
+
+func _truncate_at_receiver(raw: RiverTrace, station: int, receiver: RiverTrace) -> RiverTrace:
+	var trace := RiverTrace.new()
+	trace.source_cell = raw.source_cell
+	trace.priority = raw.priority
+	trace.source_pool = raw.source_pool
+	trace.points = raw.points.slice(0, station+1)
+	trace.widths = raw.widths.slice(0, station+1)
+	trace.beds = _fit_join_beds(trace.points, raw.beds.slice(0, station+1),
+		_receiving_bed(raw.points[station], raw.beds[station], receiver))
+	for bar: Dictionary in raw.land_bars:
+		if int(bar.last_station) < station: trace.land_bars.append(bar)
+	trace.joined = true
+	return trace
 
 
 func _make_pool(p: Vector2) -> PondStamp:
@@ -756,20 +867,7 @@ func _joined_trace(sc: Vector2i, depth: int, progress_start: float,
 		var receiver:=_join_target(raw.points[i], raw.beds[i], index)
 		if receiver == null:
 			continue
-		var t := RiverTrace.new()
-		t.source_cell = raw.source_cell
-		t.priority = raw.priority
-		t.source_pool = raw.source_pool
-		t.points = raw.points.slice(0, i + 1)
-		t.beds = raw.beds.slice(0, i + 1)
-		# A footprint touch is not a level handoff. Descend to the actual
-		# receiving datum rather than ending a high ribbon over a lower lake.
-		t.beds=_fit_join_beds(t.points,t.beds,_receiving_bed(raw.points[i],raw.beds[i],receiver))
-		t.widths = raw.widths.slice(0, i + 1)
-		for bar: Dictionary in raw.land_bars:
-			if int(bar.last_station)<i: t.land_bars.append(bar)
-		t.joined = true
-		return t
+		return _truncate_at_receiver(raw, i, receiver)
 	return raw
 
 

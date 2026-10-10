@@ -907,6 +907,7 @@ func _run_tail(inputs: Array) -> void:
 	result["dressing"] = DressingField.compute(_dressing_program, world_seed,
 		core, region, water_context, dressing_features,
 		result.terrain.cliff_terraces.ground_reservations)
+	result["trample_stamps"] = _dressing_trample_stamps(result.dressing)
 	if _grass_runtime_enabled:
 		# Embedded rocks' ground skirts carry their own grass support.
 		var grass_supports: Array = result.terrain.cliff_terraces.grass_supports.duplicate()
@@ -1645,7 +1646,8 @@ func _pending_index_of(result: Dictionary) -> int:
 func _abandon_integration() -> void:
 	for key: String in ["node", "fx"]:
 		var node: Variant = _integrating_node_ref.get(key)
-		if is_instance_valid(node) and node.get_parent() == null:
+		if is_instance_valid(node) and (node.get_parent() == null or \
+				(key == "node" and not _integrating_node_ref.get("published", false))):
 			_retire_terrain(node)
 	_integrating_node_ref = {}
 	var abandoned := _integrating
@@ -1715,11 +1717,14 @@ func _integration_steps(result: Dictionary) -> Array[Callable]:
 	var c: Vector2i = result.chunk
 	var commit := _mesher.commit_steps(result.terrain)
 	var node: Node3D = commit.root
-	var steps: Array[Callable] = []
+	node.visible = false
+	# Register each bounded piece with the scene/physics servers as it is built.
+	# Attaching the completed thousand-node tree took 40 ms in the travel log.
+	var steps: Array[Callable] = [func() -> void: terrain_parent.add_child(node)]
 	steps.append_array(commit.steps)
 	# Names for the slow-step log (one per step, same order).
-	var labels := PackedStringArray()
-	for index in steps.size(): labels.append("terrain#%d:%s" % [index, commit.labels[index]])
+	var labels := PackedStringArray(["attach_empty_root"])
+	for index in commit.steps.size(): labels.append("terrain#%d:%s" % [index, commit.labels[index]])
 	steps.append(func() -> void:
 		var water_node: Node3D = _water_builder.commit_chunk(result.water)
 		if water_node != null:
@@ -1744,9 +1749,15 @@ func _integration_steps(result: Dictionary) -> Array[Callable]:
 		fx_root.position = result.fx.origin
 		fx_steps = fx.steps
 		fx_labels = fx.labels
+	if COLLISION_RESIDENCY:
+		steps.append(func() -> void:
+			_collision_residency.register_chunk(c,node)
+			node.set_meta(&"collision_residency_chunk",c))
+		labels.append("collision_residency")
 	steps.append(func() -> void:
 		var t0 := Time.get_ticks_usec()
-		terrain_parent.add_child(node)
+		node.visible = true
+		_integrating_node_ref["published"] = true
 		var t1 := Time.get_ticks_usec()
 		if fx_root != null:
 			node.add_child(fx_root)
@@ -1754,12 +1765,9 @@ func _integration_steps(result: Dictionary) -> Array[Callable]:
 		if _grass_runtime_enabled:
 			node.set_meta(&"grass_sampling", result.grass_sampling)
 		_built[c] = node
-		if COLLISION_RESIDENCY:
-			_collision_residency.register_chunk(c,node)
-			node.set_meta(&"collision_residency_chunk",c)
 		_storey_snapshots[c] = result.storeys
 		_point_snapshots[c] = result.get("points", PackedFloat32Array())
-		_dressing_trample_by_chunk[c] = _dressing_trample_stamps(result.dressing)
+		_dressing_trample_by_chunk[c] = result.trample_stamps
 		_static_trample_changes[c] = _dressing_trample_by_chunk[c]
 		_static_trample_dirty = true
 		var t3 := Time.get_ticks_usec()
@@ -1769,7 +1777,7 @@ func _integration_steps(result: Dictionary) -> Array[Callable]:
 		_first_view_waiting[c] = Time.get_ticks_msec()
 		var t4 := Time.get_ticks_usec()
 		if LOG_SLOW_FRAMES and t4 - t0 >= SLOW_FRAME_USEC:
-			print("[terrain-streamer] slow_attach chunk=%s add_child=%.1f fx=%.1f trample=%.1f dressing_enqueue=%.1f nodes=%d" % [
+			print("[terrain-streamer] slow_attach chunk=%s reveal=%.1f fx=%.1f trample=%.1f dressing_enqueue=%.1f nodes=%d" % [
 				c, (t1 - t0) / 1000.0, (t2 - t1) / 1000.0, (t3 - t2) / 1000.0, (t4 - t3) / 1000.0,
 				node.get_child_count()]))
 	labels.append("attach")
@@ -1953,6 +1961,7 @@ func _queue_grass_jobs(lod_origin: Vector2) -> void:
 	_grass_scan_origin = lod_origin
 	_grass_scan_built = _built.size()
 	_grass_scan_msec = now
+	var requests: Array[Dictionary] = []
 	for tile: Vector2i in GrassStreamer.desired_tiles(lod_origin):
 		if not _grass_streamer.needs_request(tile):
 			continue
@@ -1962,8 +1971,9 @@ func _queue_grass_jobs(lod_origin: Vector2) -> void:
 		var sampling: GrassSamplingContext = (_built[parent] as Node3D).get_meta(&"grass_sampling", null)
 		if sampling == null:
 			continue
-		if _grass_work.request(tile,_grass_streamer.generation(tile),sampling):
-			_grass_streamer.mark_requested(tile)
+		requests.append({"tile":tile,"generation":_grass_streamer.generation(tile),"sampling":sampling})
+	for tile: Vector2i in _grass_work.request_batch(requests):
+		_grass_streamer.mark_requested(tile)
 
 ## Schedule the complete activation dependency set before waking the worker.
 ## Collision readiness still gates terrain integration; it no longer discovers

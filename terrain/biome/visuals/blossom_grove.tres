@@ -13,3 +13,8 @@ saturation = 1.14
 contrast = 1.03
 exposure = 1.03
 shadow_opacity = 0.82
+
+fog_length = 80
+fog_sky_affect = 0.18
+fog_ambient_inject = 0.14
+shadow_blur = 1.7

@@ -1,0 +1,6 @@
+Godot Engine v4.5.1.stable.mono.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+TOPOLOGY_AUDIT seed=2697992464 checked=16 roots=5 corrected=10 failures=0 elapsed_ms=5904
+TOPOLOGY_AUDIT seed=99 checked=19 roots=9 corrected=9 failures=0 elapsed_ms=8422

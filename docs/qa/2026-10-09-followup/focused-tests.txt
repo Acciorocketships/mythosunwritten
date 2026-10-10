@@ -1,0 +1,65 @@
+Godot Engine v4.5.1.stable.mono.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_grass_request_batch.gd
+[0m* test_batch_preserves_priority_updates_and_rejections
+* test_scan_cost_is_measured_without_worker_scheduling_noise
+GRASS_BATCH_COST tiles=132 single_us=35263 batch_us=800
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_terminal_river_confluence.gd
+[0m* test_high_priority_branch_drains_into_a_lower_terminal_channel
+* test_joined_receivers_and_uphill_water_are_not_terminal_handoffs
+* test_terminal_roots_never_redirect_to_each_other
+* test_photographed_hillside_branch_joins_the_first_lower_channel
+* test_receiver_excavation_cannot_leave_a_high_branch_over_a_missing_bank
+[1m5/5 passed.
+[0m[4m
+
+res://tests/test_atmosphere_director.gd
+[0m* test_apply_grade_sets_render_stack
+* test_biome_lighting_changes_gradually_without_rotating_shadows
+* test_mood_response_is_independent_of_frame_partition
+* test_quality_switch_clears_expensive_effects
+* test_biome_shapes_blend_continuously_and_keep_distinct_vertical_moods
+[1m5/5 passed.
+[0m[4m
+
+res://tests/test_incremental_atmosphere_lifetime.gd
+[0m* test_attached_chunk_keeps_pending_ownership_until_its_fx_steps_finish
+[1m1/1 passed.
+[0m[4m
+
+res://tests/test_terrain_collision_residency.gd
+[0m* test_near_actor_and_prediction_keep_collision_resident
+* test_hysteresis_restore_budget_and_physics_registration
+* test_empty_actor_inventory_restores_and_retirement_drops_ownership
+* test_turning_back_during_suspension_restores_before_more_retirement
+[1m4/4 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               5
+Tests                17
+Passing Tests        17
+Asserts              87
+Time              13.403s
+
+
+[32m---- All tests passed! ----
+[0m

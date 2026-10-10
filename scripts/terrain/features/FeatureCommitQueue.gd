@@ -80,6 +80,11 @@ func drain(max_asset_loads: int, max_collision_shapes: int,
 			loaded += 1
 		if int(job.asset_index) == ids.size():
 			job.collision_items = _collision_items(job.payload)
+			# Enter the scene while empty. Each budgeted collision step then
+			# registers only its own shapes, instead of one large final attach.
+			var parent := (job.parent as WeakRef).get_ref() as Node3D
+			if is_instance_valid(parent):
+				parent.add_child(job.block)
 			job.state = State.COLLISION
 	var committed := 0
 	for job: Dictionary in _jobs:
@@ -174,7 +179,6 @@ func _finalize_collision_complete() -> void:
 			_jobs.remove_at(index)
 			continue
 		var block := job.block as Node3D
-		parent.add_child(block)
 		_visuals.register_chunk(job.chunk, int(job.generation))
 		_visuals.enqueue(job.chunk, int(job.generation), block, job.payload)
 		var meshes := (job.payload as EnvironmentInstancePayload).surface_meshes
@@ -405,7 +409,6 @@ static func _time_exhausted(started: int, max_usec: int) -> bool:
 static func _free_pending_block(block: Node3D) -> void:
 	if block == null or not is_instance_valid(block):
 		return
-	if block.is_inside_tree():
-		block.queue_free()
-	else:
-		block.free()
+	if block.get_parent() != null:
+		block.get_parent().remove_child(block)
+	block.free()

@@ -53,7 +53,7 @@ func _ready() -> void:
 	_viewport = get_viewport()
 	RenderingServer.viewport_set_measure_render_time(_viewport.get_viewport_rid(), true)
 	_file.store_line(JSON.stringify({"type": "session", "seed": streamer.world_seed,
-		"started": stamp, "engine": Engine.get_version_info(), "schema": 2,
+		"started": stamp, "engine": Engine.get_version_info(), "schema": 3,
 		"system_memory": OS.get_memory_info()}))
 	print("[judging-log] " + ProjectSettings.globalize_path(path))
 
@@ -83,6 +83,7 @@ func _process(_dt: float) -> void:
 			"streamer_us": _previous_sections,
 			"components_us": _previous_components,
 			"gpu_ms": gpu_ms if gpu_ms > 0.0 else null,
+			"render_cpu_ms": RenderingServer.viewport_get_measured_render_time_cpu(_viewport.get_viewport_rid()),
 			"gc_pause_usec": _runtime_probe.PauseUsec() if _runtime_probe != null else null,
 			"managed_full_collections": _runtime_probe.FullCollections() if _runtime_probe != null else null})
 	_previous_process_usec = Time.get_ticks_usec() - _start.process_started
@@ -109,6 +110,8 @@ func _process(_dt: float) -> void:
 		"water_sampler_count": WaterRippleSim.last_sampler_count,
 		"water_frame_cache_entries": WaterRippleSim.last_frame_cache_entries,
 		"vram_mb": Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED)/1048576.0,
+		"texture_mb": Performance.get_monitor(Performance.RENDER_TEXTURE_MEM_USED)/1048576.0,
+		"buffer_mb": Performance.get_monitor(Performance.RENDER_BUFFER_MEM_USED)/1048576.0,
 		"draw_calls": Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),
 		"streaming": streamer.streaming_profile_snapshot()}))
 	_file.flush()

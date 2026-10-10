@@ -259,7 +259,8 @@ func _publish_leaf_lod_camera() -> void:
 func _apply_visual_settings() -> void:
 	var mixed: Dictionary = {}
 	var keys := ["volumetric_density", "fog_anisotropy", "bloom", "glow_threshold",
-		"saturation", "contrast", "exposure", "shadow_opacity"]
+		"saturation", "contrast", "exposure", "shadow_opacity",
+		"fog_length", "fog_sky_affect", "fog_ambient_inject", "shadow_blur"]
 	var total := 0.0
 	for settings in biome_visual_settings:
 		if settings == null: continue
@@ -272,6 +273,9 @@ func _apply_visual_settings() -> void:
 	var env := environment_node.environment
 	env.volumetric_fog_density = mixed.volumetric_density * atmosphere_strength
 	env.volumetric_fog_anisotropy = mixed.fog_anisotropy
+	env.volumetric_fog_length = mixed.fog_length
+	env.volumetric_fog_sky_affect = mixed.fog_sky_affect
+	env.volumetric_fog_ambient_inject = mixed.fog_ambient_inject
 	env.volumetric_fog_albedo = env.fog_light_color.lerp(Color.WHITE, 0.65)
 	env.glow_bloom = mixed.bloom * bloom_strength
 	env.glow_hdr_threshold = mixed.glow_threshold
@@ -279,6 +283,7 @@ func _apply_visual_settings() -> void:
 	env.adjustment_contrast = mixed.contrast
 	env.tonemap_exposure = mixed.exposure
 	sun.shadow_opacity = mixed.shadow_opacity
+	sun.shadow_blur = mixed.shadow_blur
 
 func frontier_color() -> Color:
 	var env := environment_node.environment

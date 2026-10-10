@@ -1,0 +1,41 @@
+Godot Engine v4.5.1.stable.mono.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_grass_request_batch.gd
+[0m* test_batch_preserves_priority_updates_and_rejections
+* test_scan_cost_is_measured_without_worker_scheduling_noise
+GRASS_BATCH_COST tiles=132 single_us=43277 batch_us=963
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_terminal_river_confluence.gd
+[0m* test_high_priority_branch_drains_into_a_lower_terminal_channel
+* test_joined_receivers_and_uphill_water_are_not_terminal_handoffs
+* test_terminal_roots_never_redirect_to_each_other
+[1m3/3 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               2
+Tests                 5
+Passing Tests         5
+Asserts              18
+Time              5.724s
+
+
+[32m---- All tests passed! ----
+[0m

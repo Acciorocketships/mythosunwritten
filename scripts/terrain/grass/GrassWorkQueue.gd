@@ -57,23 +57,32 @@ func update_origin(origin: Vector2) -> void:
 	_mutex.unlock()
 
 func request(tile: Vector2i, generation: int, sampling: GrassSamplingContext) -> bool:
+	return not request_batch([{"tile":tile,"generation":generation,"sampling":sampling}]).is_empty()
+
+## Publish a scan atomically and sort once, rather than sorting the growing
+## queue for every tile. Workers see the same nearest-first order.
+func request_batch(requests: Array[Dictionary]) -> Array[Vector2i]:
+	var accepted: Array[Vector2i] = []
+	var wakes := 0
 	_mutex.lock()
-	if _exit or GrassStreamer.distance_to_tile(_origin,tile) >= GrassStreamer.GRASS_RADIUS \
-		or _active.has(tile):
-		_mutex.unlock()
-		return false
-	if _queued.has(tile):
-		_queued[tile].generation = generation
-		_queued[tile].sampling = sampling
-		_mutex.unlock()
-		return true
-	var job := {"tile":tile,"generation":generation,"sampling":sampling}
-	_jobs.append(job)
-	_queued[tile] = job
-	_sort_locked()
+	for request_data: Dictionary in requests:
+		var tile: Vector2i = request_data.tile
+		if _exit or GrassStreamer.distance_to_tile(_origin,tile) >= GrassStreamer.GRASS_RADIUS \
+			or _active.has(tile):
+			continue
+		if _queued.has(tile):
+			_queued[tile].generation = request_data.generation
+			_queued[tile].sampling = request_data.sampling
+		else:
+			var job := request_data.duplicate()
+			_jobs.append(job)
+			_queued[tile] = job
+			wakes += 1
+		accepted.append(tile)
+	if wakes > 0: _sort_locked()
 	_mutex.unlock()
-	_sem.post()
-	return true
+	for index in wakes: _sem.post()
+	return accepted
 
 func drain_results() -> Array[Dictionary]:
 	_mutex.lock()

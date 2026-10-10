@@ -1,3 +1,21 @@
+> October 9 follow-up: `WaterPlan` retains a separate immutable first-pass drainage
+> forest. Already-joined branches may connect to terminal roots and lower their beds
+> against those roots' actual excavation; raw terminal roots remain unchanged. New
+> joins end at roots, but preserve the actual-receiver topology audit for existing
+> dependents (37 joined rivers over two seeds passed). Owner branch (0,2) now joins
+> (-1,0) rather than crossing it 36 m high; 525 channel samples wet, minimum .449 m.
+> Grass scans use `GrassWorkQueue.request_batch` (one sort per scan). Terrain roots
+> enter the scene empty and hidden, so bounded commit steps register pieces with
+> physics incrementally; final publication reveals the root. Cancellation MUST
+> retire attached unpublished roots, while preserving published roots during FX.
+> Feature collision roots likewise attach empty; readiness still requires all shapes.
+> Trample footprints are pure worker data, stored as result.trample_stamps.
+> Forest volumetric range is 60 m (sun shadow range), with per-biome fog range,
+> sky/ambient scattering and shadow softness. Logger schema 3 adds render CPU and
+> texture/buffer memory. Final diagnostic travel: no loading freezes, largest logged
+> terrain attach 10.3 ms, but a 1.4 s frame outside most measured callbacks remains.
+> Do NOT claim all hitches resolved. Evidence: docs/qa/2026-10-09-followup/result.md.
+
 > October 9 evening review: wave-frame caches replace one entry at capacity (never
 > clear all 65,536 on a miss); frame cache access uses a short mutex. Frozen water
 > samplers must be retained off-main from BOTH Water/Area metadata and the ripple

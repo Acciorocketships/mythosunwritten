@@ -60,6 +60,24 @@ func test_shutdown_discards_unattached_integration_nodes() -> void:
 	assert_true(s._integrating_node_ref.is_empty())
 	s.free()
 
+func test_cancelling_live_unpublished_chunk_retires_it_but_keeps_published_chunk() -> void:
+	for published in [false, true]:
+		var s := Streamer.new()
+		var terrain := Node3D.new()
+		var effects := Node3D.new()
+		add_child(terrain)
+		terrain.add_child(effects)
+		s._integrating_node_ref = {"node": terrain, "fx": effects, "published": published}
+		s._integrating = {"steps": [], "result": {}}
+		s._abandon_integration()
+		assert_eq(terrain.is_inside_tree(), published,
+			"only published chunks remain owned by the live world after cancellation")
+		s._retirement.clear()
+		s._flush_drops()
+		s._reap_drop_tasks(true)
+		if published: terrain.free()
+		s.free()
+
 func test_startup_environment_resolves_visible_chunk_seams() -> void:
 	assert_eq(Streamer.support_chunks_at(Vector3.ZERO), [
 		Vector2i(-1,-1),Vector2i(-1,0),Vector2i(-1,1),

@@ -206,7 +206,7 @@ func test_trace_never_enters_spawn_disk() -> void:
 			"polyline stays out of the spawn disk")
 
 # ------------------------------------------------------------
-# Junctions — strict priority, bounded depth, joins land in real water
+# Junctions — bounded priority pass, immutable terminal corrections, real water
 # ------------------------------------------------------------
 
 func _all_rivers(plan: WaterPlan, r: int) -> Array:
@@ -226,7 +226,7 @@ func test_full_depth_rivers_deterministic_across_instances() -> void:
 		assert_eq(a[i].points, b[i].points, "river %d identical polyline" % i)
 		assert_eq(a[i].joined, b[i].joined, "river %d identical join outcome" % i)
 
-func test_joined_rivers_touch_higher_priority_water() -> void:
+func test_joined_rivers_touch_realized_receiving_water() -> void:
 	var plan: WaterPlan = _plan()
 	var rivers: Array = _all_rivers(plan, 4)
 	for t: RiverTrace in rivers:
@@ -234,9 +234,15 @@ func test_joined_rivers_touch_higher_priority_water() -> void:
 			continue
 		# The discovery halo extends beyond the measured window. Validate the
 		# actual immutable dependency set, including those outside its edges.
-		var index := plan._index_neighbour_rivers(plan._neighbour_rivers(t.source_cell, WaterPlan.JOIN_DEPTH))
+		var candidates := plan._neighbour_rivers(t.source_cell, WaterPlan.JOIN_DEPTH)
+		candidates.append_array(plan._terminal_receivers(t, WaterPlan.JOIN_DEPTH))
+		var realized: Array = []
+		for candidate: RiverTrace in candidates:
+			var receiver := plan.river_for(candidate.source_cell)
+			if receiver != null: realized.append(receiver)
+		var index := plan._index_neighbour_rivers(realized)
 		assert_not_null(plan._join_target(t.points[-1], t.beds[-1], index),
-			"joined tail touches lower water on a higher-priority dependency")
+			"joined tail touches water that remains in the realized network")
 
 func test_junction_dependencies_remain_in_the_realized_network() -> void:
 	var plan := _plan()

@@ -17,8 +17,10 @@ func test_assets_and_collision_are_staged_before_readiness() -> void:
 		"enqueue carries ids and plain transforms without eager resource loading")
 	assert_true(queue.drain(1, 0, 0, 100000).is_empty())
 	assert_true(cache.is_prepared(asset_id))
-	assert_eq(parent.get_child_count(), 0,
-		"a detached block cannot become ready before collision finishes")
+	assert_eq(parent.get_child_count(), 1,
+		"the empty block enters the scene before bounded collision steps")
+	assert_false(parent.get_child(0).has_node("Visuals"),
+		"attachment does not publish visuals or a readiness event")
 	var events: Array[Dictionary] = []
 	for _iteration in 64:
 		events = queue.drain(0, 1, 0, 100000)
