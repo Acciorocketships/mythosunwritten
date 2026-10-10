@@ -1,3 +1,27 @@
+> October 10 town texture memory: 52 opaque, albedo-only Suntail textures use BC7
+> at the original resolution/mip count. Normal/scalar/emission/cutout textures unchanged.
+> Fresh nine-chunk town renderer texture memory 1,750.27 -> 1,640.96 MiB, same
+> 1,629 draws and buffers. No claim that all long-session hitches are eliminated.
+> After a Suntail rebake run `tools/environment_bake/compress_village_colors.gd -- --apply`
+> with .NET Godot; dry run without --apply, already-compressed resources are skipped.
+> Inspect all material usages before selecting textures; never compress an atlas used
+> by a cutout or non-albedo slot through its opaque usage. Preserve compressed buffers
+> before loading/re-saving PortableCompressedTexture2D, or serialization loses data.
+> `tests/harness/village_compression_check.gd` fresh-loads all 52 and checks size/mips/bytes;
+> texture-sharing tests pass 100 assertions. Close/far before/after shots and measurements
+> are in `docs/qa/2026-10-09-followup/result.md`. Disk +24.53 MiB trades for GPU savings.
+
+> October 9 rock submission follow-up: large slope/face rocks batch in 64 m cells;
+> pebbles retain 32 m cells, 70 m fade and no shadows. Meshes, per-instance data
+> and collision hulls are unchanged. Same-world alternating render trial reduced
+> CPU median ~20.7 -> ~16.9 ms and draws 4,024 -> 3,334; wall time stayed ~23 ms,
+> so this is CPU headroom, not an overall FPS claim. The prototype rebatches loaded
+> render pivots; production groups placement pivots, so traversal validates it too.
+> Renderer tests (not headless dummy readback) pass 49 instance/batch/hull assertions.
+> Production traversal: 6,977 frames, none frozen or over 100 ms; max 93.18 ms.
+> Teleport return readiness wait 8.97 s lies outside measured phases. Background
+> load and streaming progress vary; do not claim controlled whole-route FPS gains.
+
 > October 9 render warm-up: `FirstViewWarmer` divides each hidden view into four
 > off-axis vertical sections over four frames, with a fixed camera pose until complete.
 > 47 coverage/queue assertions pass. Same-world alternating trials: CPU p95
