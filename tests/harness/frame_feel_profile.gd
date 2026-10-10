@@ -101,7 +101,7 @@ func _ready() -> void:
 			"--z": _z = float(next)
 			"--ablate": _ablate = true
 			"--steady-ablate": _steady_ablate = true
-			"--ablate-variants": _ablation_variants = Array(next.split(",", false))
+			"--ablate-variants", "--ablation-variants": _ablation_variants = Array(next.split(",", false))
 			"--ablate-shots": _ablation_shots = next
 			"--profile-callbacks": _profile_callbacks = true
 			"--capture-ripple":
@@ -185,6 +185,8 @@ func _physics_process(_delta: float) -> void:
 	_physics_begin = Time.get_ticks_usec()
 
 
+var _warm_trial: RefCounted
+var _last_thread_cpu := -1
 var _pending_frame := 0
 var _pending_last := 0
 var _grass_backlog := {}
@@ -226,6 +228,7 @@ func _process(delta: float) -> void:
 		motion.relative = Vector2(pixels, 0.0)
 		_rig._apply_look_motion(motion.relative)
 	var now := Time.get_ticks_usec()
+	var thread_cpu: int = _runtime_probe.ThreadCpuUsec() if _runtime_probe != null else -1
 	var rid := get_viewport().get_viewport_rid()
 	if _last_usec != 0 and _phase in _all_phases:
 		if _frames.size() % 10 == 0:
@@ -236,6 +239,7 @@ func _process(delta: float) -> void:
 		_frames.append({"phase": _phase, "dt": (now - _last_usec) / 1000.0, "ticks": _ticks,
 			"rate": _turn_rate if _turning else 0.0,
 			"turn": _frame_turn, "cam_move": _frame_move, "delta": _frame_delta * 1000.0,
+			"thread_cpu_ms": (thread_cpu - _last_thread_cpu) / 1000.0 if _last_thread_cpu >= 0 and thread_cpu >= 0 else -1,
 			"process": _process_usec / 1000.0, "physics": _physics_usec / 1000.0,
 			"callbacks_usec": _callback_times,
 			"render_cpu": RenderingServer.viewport_get_measured_render_time_cpu(rid),
@@ -245,6 +249,7 @@ func _process(delta: float) -> void:
 			"objects": Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME),
 			"pipe": _pipelines(),
 			"warmed": _streamer._first_view.warmed if _streamer._first_view != null else 0,
+			"warm_slices": _streamer._first_view.rendered_slices if _streamer._first_view != null else 0,
 			"grass_tiles": _streamer._grass_streamer.built_count() if _streamer._grass_streamer != null else 0,
 			"grass_pending": _sampled_pending(),
 			"grass_backlog": _grass_backlog,
@@ -268,6 +273,8 @@ func _process(delta: float) -> void:
 	_process_begin = Time.get_ticks_usec()
 	if _profile_callbacks: CALLBACK_PROBE.begin_frame()
 	_last_usec = now
+	_last_thread_cpu = thread_cpu
+	if _warm_trial != null: _warm_trial.step()
 
 
 ## After every script moved this frame (from the tail node): the camera's
@@ -523,7 +530,8 @@ func _run_ablations() -> void:
 	var vp := get_viewport()
 	var saved := {"shadow": sun.shadow_enabled, "fog": env.volumetric_fog_enabled,
 		"shadow_mode": sun.directional_shadow_mode, "scale": vp.scaling_3d_scale,
-		"ssao": env.ssao_enabled, "msaa": vp.msaa_3d, "glow": env.glow_enabled}
+		"ssao": env.ssao_enabled, "msaa": vp.msaa_3d, "glow": env.glow_enabled,
+		"shadow_size": int(ProjectSettings.get_setting_with_override("rendering/lights_and_shadows/directional_shadow/size"))}
 	_turn_rate = deg_to_rad(20.0)
 	_turning = not _steady_ablate
 	var variants: Array = ABLATIONS.duplicate()
@@ -536,8 +544,12 @@ func _run_ablations() -> void:
 			variants.append("full")
 			variants.append(name)
 		variants.append("full_end")
+	if "warm_full" in variants or "warm_strips" in variants or "warm_quads" in variants:
+		_warm_trial = preload("res://tests/harness/WarmupRenderTrial.gd").new(_streamer._first_view,
+			_streamer._chunk_centre(FieldTerrainStreamer.chunk_of(_player.global_position)))
 	var trial := 0
 	for name: String in variants:
+		if _warm_trial != null: _warm_trial.mode(name)
 		var phase := "ablate_" + name + ("_%02d" % trial if _steady_ablate else "")
 		trial += 1
 		_all_phases.append(phase)
@@ -547,7 +559,7 @@ func _run_ablations() -> void:
 		env.glow_enabled = saved.glow and name != "no_glow"
 		vp.msaa_3d = Viewport.MSAA_DISABLED if name == "no_msaa" else saved.msaa
 		vp.scaling_3d_scale = saved.scale * 0.5 if name == "half_res" else saved.scale
-		RenderingServer.directional_shadow_atlas_set_size(2048 if name == "shadow_2048" else 4096, true)
+		RenderingServer.directional_shadow_atlas_set_size(2048 if name == "shadow_2048" else int(saved.shadow_size), true)
 		sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS \
 			if name == "shadow_2_splits" else saved.shadow_mode
 		_streamer._grass_root.visible = name != "no_grass"
@@ -586,6 +598,9 @@ func _run_ablations() -> void:
 			await RenderingServer.frame_post_draw
 			get_viewport().get_texture().get_image().save_png(_ablation_shots + "/" + phase + ".png")
 	_turning = false
+	if _warm_trial != null:
+		_warm_trial.restore()
+		_warm_trial = null
 
 
 static func _stats(values: Array) -> Dictionary:
@@ -618,6 +633,7 @@ func _finish() -> void:
 				var expect: float = float(r.rate) * float(r.delta) / 1000.0
 				judder.append(absf(r.turn - expect) / maxf(expect, 1e-6))
 		summary[phase] = {"frames": rows.size(), "dt": _stats(pick.call("dt")),
+			"thread_cpu_ms": _stats(pick.call("thread_cpu_ms")),
 			"process": _stats(pick.call("process")), "physics": _stats(pick.call("physics")),
 			"render_cpu": _stats(pick.call("render_cpu")), "gpu": _stats(pick.call("gpu")),
 			"draws": _stats(pick.call("draws")), "prims": _stats(pick.call("prims")),

@@ -23,6 +23,18 @@ namespace Story.Native
         [DllImport("/usr/lib/libproc.dylib", EntryPoint = "proc_pid_rusage")]
         private static extern int ReadUsage(int pid, int flavor, out UsageV2 usage);
 
+        [DllImport("/usr/lib/libSystem.B.dylib", EntryPoint = "clock_gettime_nsec_np")]
+        private static extern ulong ReadThreadClock(int clockId);
+
+        // Darwin _time.h: CLOCK_THREAD_CPUTIME_ID = 16. Unlike wall time,
+        // this excludes time asleep or descheduled. Diagnostic only.
+        public long ThreadCpuUsec()
+        {
+            if (!OperatingSystem.IsMacOS()) return -1;
+            try { return (long)(ReadThreadClock(16) / 1000); }
+            catch (Exception) { return -1; }
+        }
+
         public Godot.Collections.Dictionary OsUsage()
         {
             var result = new Godot.Collections.Dictionary();

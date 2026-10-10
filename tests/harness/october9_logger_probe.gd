@@ -31,7 +31,10 @@ func _run() -> void:
 		if record.type != "second": continue
 		found_second = true
 		for hitch in record.hitches:
-			if hitch.frame_ms >= 170.0: found_hitch = true
+			if hitch.frame_ms >= 170.0:
+				found_hitch = true
+				if OS.get_name() == "macOS":
+					assert(hitch.thread_cpu_ms != null and hitch.thread_cpu_ms < hitch.frame_ms - 100.0, "logger distinguishes sleeping from CPU work")
 	assert(found_second and found_hitch, "Logger must retain the full 180 ms wall-clock stall")
 	print("LOGGER_PROBE_PASS ", path)
 	quit()

@@ -1,0 +1,5 @@
+Godot Engine v4.5.1.stable.mono.official.f62fdbde1 - https://godotengine.org
+
+OS_PROBE {"first":{"disk_read_bytes":65536,"disk_written_bytes":0,"pageins":7,"physical_bytes":77334976,"resident_bytes":157794304},"last":{"disk_read_bytes":65536,"disk_written_bytes":0,"pageins":7,"physical_bytes":95242688,"resident_bytes":180568064},"mean_usec":6.047}
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)

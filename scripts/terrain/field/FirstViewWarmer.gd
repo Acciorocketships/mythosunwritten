@@ -4,9 +4,10 @@ extends Node
 ## on the first turn after loading, then 30-50 ms ones): its pipelines,
 ## specializations and GPU buffers are made when it is first drawn, not when it
 ## is committed. This tiny viewport shares the game's World3D and, once per
-## committed chunk or feature block, draws that area from above for one frame,
-## so the game camera later sees it already prepared. One small extra render
-## (and its shadow pass) every few seconds while new terrain arrives.
+## committed chunk or feature block, draws that area from above,
+## so the game camera later sees it already prepared. Each view is split into
+## four sub-frusta over four frames: a tiny target still incurred thousands
+## of Metal draw submissions when the whole scene was drawn at once.
 ## Between those, every ORBIT_INTERVAL_MSEC it draws from the game camera's
 ## own position turned 90, 180 or 270 degrees (cycling), so whatever is near
 ## the player is drawn from every side at the distances, LODs and visibility
@@ -32,12 +33,18 @@ var _orbit_anchor := Vector3.INF
 var _orbit_remaining := 3
 var _rendering := false
 var warmed := 0
+var rendered_slices := 0
+const SLICE_GRID := Vector2i(4, 1)
+const SLICE_COUNT := 4
+var _slice := 0
+var _slice_fov := FOV
+var _slicing := false
 
 
 func setup(world: World3D, msaa: Viewport.MSAA) -> void:
 	_viewport = SubViewport.new()
 	_viewport.name = &"FirstViewWarmer"
-	_viewport.size = SIZE
+	_viewport.size = SIZE / SLICE_GRID
 	_viewport.world_3d = world
 	_viewport.msaa_3d = msaa
 	_viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
@@ -49,7 +56,7 @@ func setup(world: World3D, msaa: Viewport.MSAA) -> void:
 	add_child(_viewport)
 
 
-## Draw the area around `centre` once, soon (one area per frame).
+## Queue the area around `centre`; each view completes over four frames.
 func warm(centre: Vector3) -> void:
 	_queue.append(centre)
 	_orbit_remaining = 3
@@ -76,22 +83,50 @@ func _process(_delta: float) -> void:
 	if _rendering:
 		_viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
 		_rendering = false
+	if _slicing:
+		_draw_slice()
+		return
 	var main := get_viewport()
 	var game_camera := main.get_camera_3d()
 	if _queue.is_empty():
 		if game_camera == null or not _next_orbit_due(game_camera.global_position,Time.get_ticks_msec()):
 			return
 		_orbit_step = _orbit_step % 3 + 1
-		_camera.fov = game_camera.fov
+		_slice_fov = game_camera.fov
 		_camera.global_transform = Transform3D(game_camera.global_basis.rotated(Vector3.UP,
 			_orbit_step * PI * 0.5), game_camera.global_position)
 	else:
 		var centre: Vector3 = _queue.pop_front()
-		_camera.fov = FOV
+		_slice_fov = FOV
 		_camera.global_position = centre + Vector3(0.0, HEIGHT, BACK)
 		_camera.look_at(centre, Vector3.UP)
 	_viewport.msaa_3d = main.msaa_3d
+	_slice = 0
+	_slicing = true
+	_draw_slice()
+
+
+## Four narrow off-axis sub-frusta exactly cover the old view. Dividing
+## horizontally avoids two sky-only slices and two heavy terrain slices.
+## Proportionate targets preserve the original pixel density and LOD footprint. The camera pose
+## is fixed for all four slices, even while the player moves.
+func _draw_slice() -> void:
+	configure_slice(_camera, _slice_fov, _slice)
 	_camera.current = true
 	_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
 	_rendering = true
-	warmed += 1
+	rendered_slices += 1
+	_slice += 1
+	if _slice == SLICE_COUNT:
+		_slicing = false
+		warmed += 1
+
+
+static func configure_slice(camera: Camera3D, vertical_fov: float, index: int, grid := SLICE_GRID) -> void:
+	assert(index >= 0 and index < grid.x * grid.y)
+	var height := 2.0 * camera.near * tan(deg_to_rad(vertical_fov) * 0.5)
+	var width := height * float(SIZE.x) / float(SIZE.y)
+	var centre := Vector2(float(index % grid.x) + 0.5,
+		float(index / grid.x) + 0.5) / Vector2(grid) - Vector2.ONE * 0.5
+	camera.keep_aspect = Camera3D.KEEP_HEIGHT
+	camera.set_frustum(height / grid.y, centre * Vector2(width,height), camera.near,camera.far)

@@ -5,9 +5,12 @@ extends Node
 class FrameStart:
 	extends Node
 	var process_started := 0
+	var thread_cpu_started := -1
+	var runtime_probe: RefCounted
 	var physics_started := 0
 	func _process(_dt: float) -> void:
 		process_started = Time.get_ticks_usec()
+		thread_cpu_started = runtime_probe.ThreadCpuUsec() if runtime_probe != null else -1
 	func _physics_process(_dt: float) -> void:
 		physics_started = Time.get_ticks_usec()
 
@@ -25,6 +28,7 @@ var _viewport: Viewport
 var _previous_sections: Dictionary = {}
 var _previous_components: Dictionary = {}
 var _last_frame_usec := 0
+var _last_thread_cpu := -1
 var _runtime_probe: RefCounted
 
 func _ready() -> void:
@@ -47,13 +51,14 @@ func _ready() -> void:
 		if probe_script != null and probe_script.can_instantiate():
 			_runtime_probe = probe_script.new()
 	_start = FrameStart.new()
+	_start.runtime_probe = _runtime_probe
 	_start.process_priority = -2000
 	_start.process_physics_priority = -2000
 	add_child(_start)
 	_viewport = get_viewport()
 	RenderingServer.viewport_set_measure_render_time(_viewport.get_viewport_rid(), true)
 	_file.store_line(JSON.stringify({"type": "session", "seed": streamer.world_seed,
-		"started": stamp, "engine": Engine.get_version_info(), "schema": 4,
+		"started": stamp, "engine": Engine.get_version_info(), "schema": 5,
 		"system_memory": OS.get_memory_info()}))
 	print("[judging-log] " + ProjectSettings.globalize_path(path))
 
@@ -72,7 +77,12 @@ func _record_frame(_dt: float) -> void:
 	var now := _start.process_started
 	if _last_frame_usec == 0:
 		_last_frame_usec = now
+		_last_thread_cpu = _start.thread_cpu_started
 		return
+	var cpu_ms := -1.0
+	if _last_thread_cpu >= 0 and _start.thread_cpu_started >= 0:
+		cpu_ms = (_start.thread_cpu_started - _last_thread_cpu) / 1000.0
+	_last_thread_cpu = _start.thread_cpu_started
 	var dt := (now - _last_frame_usec) / 1000000.0
 	_last_frame_usec = now
 	_elapsed += dt
@@ -81,6 +91,7 @@ func _record_frame(_dt: float) -> void:
 	if dt >= 0.05 and _hitches.size() < 32:
 		var gpu_ms := RenderingServer.viewport_get_measured_render_time_gpu(_viewport.get_viewport_rid())
 		_hitches.append({"at_s": _seconds, "frame_ms": dt * 1000.0,
+			"thread_cpu_ms": cpu_ms if cpu_ms >= 0 else null,
 			"process_ms": _previous_process_usec / 1000.0,
 			"physics_ms": _previous_physics_usec / 1000.0,
 			"streamer_us": _previous_sections,

@@ -1,0 +1,5 @@
+Godot Engine v4.5.1.stable.mono.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+[judging-log] /Users/ryko/Library/Application Support/Godot/app_userdata/Story/judging_logs/judging-2026-10-09T22-10-57.jsonl
+LOGGER_PROBE_PASS /Users/ryko/Library/Application Support/Godot/app_userdata/Story/judging_logs/judging-2026-10-09T22-10-57.jsonl

@@ -56,3 +56,15 @@ The repeated route and guarded return completed with zero frozen frames during t
 - Full streamer test run hit its 60-second background-build deadline under concurrent load and also reported preexisting UID warnings. Isolated repeat also misses that deadline (17/19 assertions); the full windowed nine-chunk review completes successfully in about 140 seconds. This timing failure remains open rather than weakening the test deadline.
 
 PNG images are local QA artifacts, copied to the primary checkout for review. Numeric reports, tests and audit scripts are retained with the change.
+
+## Render warm-up investigation
+
+The next diagnostic separates macOS main-thread CPU time from wall time. Several 100–125 ms frames used only 20–32 ms of CPU; other frames used 80–99 ms of CPU despite short script callbacks. The latter coincided with the first-view warmer drawing extra scenery (5,308–6,174 total draws). A bounded native sample shows substantial Metal draw submission work. The sample is intrusive, so this run is diagnostic evidence rather than an uncontaminated FPS benchmark.
+
+A same-world render-category comparison at the settled forest pose reduced median main-thread CPU from 20.74 to 13.19 ms when the cliff group was hidden (4,024 to 2,403 draws). Fog/glow were much smaller costs. No production effects were removed by this test. This identifies cliff submission as a further optimization target.
+
+The warm-up experiment divides each hidden view into four off-axis sections over four frames. Coverage and queue ordering pass 47 assertions. In traversal, quadrants reduced the largest warm-frame CPU observation from 99.0 to 51.9 ms; vertical sections reached 70.7 ms. Background load and streaming progress differed, so these separate runs do not decide the layout. The actual game camera and visible materials are unchanged.
+
+The logger now records main-thread CPU time for hitches (schema 5). An injected 180 ms sleep is logged as wall time without being mistaken for 180 ms of CPU work. Unsupported platforms report unavailable CPU timing. The test uses rendered projection matrices to check off-axis coverage: Godot's ray-normal helper does not incorporate the frustum offset in its ray construction ([Godot 4.5 camera source](https://github.com/godotengine/godot/blob/4.5/scene/3d/camera_3d.cpp#L372)).
+
+The final alternating comparison holds the same 25-chunk world and full-view coverage per four frames. Vertical sections are selected: main-thread CPU p95 was 26.16/26.75 ms versus whole-view 32.05/30.43 ms; peak was 30.34/29.57 versus 35.83/36.08 ms. Mean CPU stayed similar (24.28/24.68 versus 25.17/24.15 ms). Quadrants had less balanced results (p95 29.75/26.07 ms). Vertical sections reduced peak extra draw calls from about 1,872 to 597. This reduces render warm-up spikes without removing scenery or effects. It does not eliminate all wall-time stalls: a baseline interval with no warm-up still reached 126.43 ms with only 32.06 ms peak main-thread CPU. Data: `warm-balanced.json` and compressed per-frame capture.

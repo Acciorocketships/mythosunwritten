@@ -1,3 +1,13 @@
+> October 9 render warm-up: `FirstViewWarmer` divides each hidden view into four
+> off-axis vertical sections over four frames, with a fixed camera pose until complete.
+> 47 coverage/queue assertions pass. Same-world alternating trials: CPU p95
+> 30.4–32.1 -> 26.2–26.8 ms, similar mean CPU; extra peak draw calls 1,872 -> 597.
+> Main game camera/materials unchanged. `ManualJudgingLogger` schema 5 records macOS
+> main-thread CPU via `NativeRuntimeProbe.ThreadCpuUsec` separately from wall time;
+> unavailable elsewhere. Some >100 ms wall frames use only ~30 ms CPU. Cliff-group
+> ablation removes ~1,621 draws and ~7.5 ms median CPU at the forest pose; further
+> optimization target, not yet changed. See October 9 follow-up QA report.
+
 > October 9 collision memory follow-up: exact concave collision residency now
 > restores within 96 m and compresses beyond 160 m of every actor/prediction
 > (prediction already extends up to 192 m). Nine-chunk teardown attributed
