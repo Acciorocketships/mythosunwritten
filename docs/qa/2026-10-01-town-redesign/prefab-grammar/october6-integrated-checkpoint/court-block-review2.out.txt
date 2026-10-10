@@ -1,0 +1,14 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+BLOCK_ACCESS house.017 columns=29 connection={ "anchor": (4, 2, -6), "cells": [(4, 2, -7), (4, 2, -8), (4, 2, -9)] }
+TUNNELS 31 large [(-1, 0, 1), (-1, 0, 2), (0, 0, 2), (0, 0, 5), (-3, 0, 1), (2, 4, 0), (2, 4, 1)]
+SCRIPT ERROR: Assertion failed: maze deck carve rejected: required use changed at (8, 2, -12)
+          at: spatial (/tmp/oct6-court-frozen.gd:35)
+          GDScript backtrace (most recent call first):
+              [0] spatial (/tmp/oct6-court-frozen.gd:35)
+              [1] _run (/tmp/oct6-court-block-review.gd:259)
+SCRIPT ERROR: Invalid call. Nonexistent function 'compiled_fabric_cache' in base 'Nil'.
+          at: _run (/tmp/oct6-court-block-review.gd:260)
+          GDScript backtrace (most recent call first):
+              [0] _run (/tmp/oct6-court-block-review.gd:260)

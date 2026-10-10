@@ -1,0 +1,15 @@
+{
+	"failures": 0,
+	"houses": [
+		{
+			"complete": true,
+			"meshes": 186,
+			"modules": 182,
+			"passed": true,
+			"source": "assets/PureVillage/Models/Houses/House_16c.glb",
+			"unmatched_generated": [],
+			"unmatched_source": 0,
+			"vertices": 265731
+		}
+	]
+}

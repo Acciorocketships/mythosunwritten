@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_vlj74"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/town_props/tavern_bench_001_piece_00.res" id="2_3n6jm"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_tmbju"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/town_props/tavern_bench_001_piece_00.res" id="4_vy5j4"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_86cin"]
+
+[sub_resource type="Resource" id="Resource_v336k"]
+script = ExtResource("1_vlj74")
+shape = ExtResource("2_3n6jm")
+
+[sub_resource type="Resource" id="Resource_kc0u1"]
+script = ExtResource("3_tmbju")
+mesh = ExtResource("4_vy5j4")
+
+[resource]
+script = ExtResource("5_86cin")
+pieces = Array[ExtResource("3_tmbju")]([SubResource("Resource_kc0u1")])
+collisions = Array[ExtResource("1_vlj74")]([SubResource("Resource_v336k")])

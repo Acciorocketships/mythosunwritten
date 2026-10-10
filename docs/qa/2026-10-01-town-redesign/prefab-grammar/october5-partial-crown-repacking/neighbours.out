@@ -1,0 +1,8 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+NEIGHBOUR kit.spatial.maze_bridge_end.00.01 floor=7 cells=[(-3, 0), (-3, 1)]
+NEIGHBOUR kit.spatial.parcel.maze.bridge.00.end.1.lower floor=6 cells=[(0, 0), (1, 0), (0, 1), (1, 1), (0, 2), (1, 2)]
+NEIGHBOUR kit.spatial.parcel.maze.bridge.00.end.1.lower floor=8 cells=[(0, 0), (1, 0), (0, 1), (1, 1), (0, 2), (1, 2)]
+NEIGHBOUR kit.spatial.parcel.maze.bridge.00.end.1.lower floor=10 cells=[(0, 0), (1, 0), (0, 1), (1, 1), (0, 2), (1, 2)]

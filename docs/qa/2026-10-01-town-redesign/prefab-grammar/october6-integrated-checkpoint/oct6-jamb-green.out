@@ -1,0 +1,34 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_tunnel_prefab_bearing.gd
+[0m* test_prefab_reservation_is_not_a_solid_tunnel_jamb
+* test_existing_masonry_below_a_raised_asset_remains_a_bearing
+* test_asset_starting_at_the_crown_cannot_supply_its_top_bearing
+[1m3/3 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               1
+Tests                 3
+Passing Tests         3
+Asserts               3
+Time              0.388s
+
+
+[32m---- All tests passed! ----
+[0m

@@ -1,0 +1,228 @@
+{
+	"63:grand": [
+		{
+			"floors": [
+				{
+					"abutted": false,
+					"balcony": false,
+					"band": 4,
+					"bounds": "[P: (-2, -6), S: (6, 2)]",
+					"cells": 12,
+					"inset": false,
+					"openings": {
+						"(-2, -6, 3)": "plain",
+						"(-2, -5, 2)": "plain",
+						"(-1, -6, 3)": "plain",
+						"(-1, -5, 1)": "door",
+						"(0, -6, 3)": "plain",
+						"(1, -5, 1)": "door",
+						"(2, -6, 3)": "plain",
+						"(3, -6, 3)": "plain",
+						"(3, -5, 1)": "door"
+					},
+					"projections": []
+				},
+				{
+					"abutted": false,
+					"balcony": false,
+					"band": 6,
+					"bounds": "[P: (-2, -6), S: (6, 2)]",
+					"cells": 9,
+					"inset": false,
+					"openings": {
+						"(-1, -6, 3)": "plain",
+						"(0, -6, 1)": "plain",
+						"(3, -5, 0)": "plain",
+						"(3, -5, 2)": "door"
+					},
+					"projections": []
+				},
+				{
+					"abutted": false,
+					"balcony": false,
+					"band": 8,
+					"bounds": "[P: (-2, -6), S: (6, 2)]",
+					"cells": 12,
+					"inset": false,
+					"openings": {
+						"(-2, -5, 1)": "plain",
+						"(-1, -6, 3)": "plain",
+						"(0, -5, 1)": "plain",
+						"(3, -6, 0)": "window",
+						"(3, -6, 3)": "plain",
+						"(3, -5, 0)": "window"
+					},
+					"projections": [
+						{
+							"band": 8,
+							"centres": [
+								"(4.0, -4.5)",
+								"(4.0, -5.5)"
+							],
+							"depth": 0.65,
+							"dir": 0,
+							"edges": [
+								"(3, -6, 0)",
+								"(3, -5, 0)"
+							]
+						}
+					]
+				},
+				{
+					"abutted": false,
+					"balcony": false,
+					"band": 10,
+					"bounds": "[P: (-2, -6), S: (6, 2)]",
+					"cells": 9,
+					"inset": false,
+					"openings": {
+						"(-2, -5, 2)": "plain",
+						"(-1, -6, 1)": "plain",
+						"(0, -6, 1)": "door",
+						"(0, -6, 3)": "bay",
+						"(3, -6, 0)": "bay",
+						"(3, -6, 3)": "plain"
+					},
+					"projections": []
+				},
+				{
+					"abutted": false,
+					"balcony": true,
+					"band": 12,
+					"bounds": "[P: (-4, -6), S: (8, 4)]",
+					"cells": 17,
+					"inset": false,
+					"openings": {
+						"(-4, -6, 2)": "window",
+						"(-4, -5, 2)": "plain",
+						"(-3, -6, 3)": "door",
+						"(-2, -5, 1)": "window",
+						"(-1, -6, 0)": "plain",
+						"(-1, -5, 1)": "plain",
+						"(0, -5, 3)": "plain",
+						"(1, -5, 1)": "plain",
+						"(1, -5, 3)": "plain",
+						"(3, -6, 0)": "plain",
+						"(3, -6, 2)": "door",
+						"(3, -5, 0)": "door",
+						"(3, -3, 0)": "plain",
+						"(3, -3, 1)": "window"
+					},
+					"projections": []
+				}
+			],
+			"host": "kit.spatial.parcel.maze.house.010",
+			"longest": 5,
+			"seed": 285684476
+		},
+		{
+			"floors": [
+				{
+					"abutted": false,
+					"balcony": false,
+					"band": 4,
+					"bounds": "[P: (0, -10), S: (4, 2)]",
+					"cells": 8,
+					"inset": false,
+					"openings": {
+						"(0, -10, 2)": "plain",
+						"(0, -9, 2)": "door",
+						"(1, -9, 1)": "plain",
+						"(2, -10, 3)": "plain",
+						"(3, -10, 3)": "plain"
+					},
+					"projections": []
+				},
+				{
+					"abutted": false,
+					"balcony": false,
+					"band": 6,
+					"bounds": "[P: (0, -10), S: (4, 2)]",
+					"cells": 6,
+					"inset": false,
+					"openings": {
+						"(0, -10, 3)": "plain",
+						"(0, -9, 0)": "door",
+						"(0, -9, 2)": "plain",
+						"(1, -10, 1)": "window",
+						"(1, -10, 3)": "bay",
+						"(2, -10, 1)": "window",
+						"(3, -10, 0)": "bay",
+						"(3, -9, 0)": "plain",
+						"(3, -9, 1)": "plain"
+					},
+					"projections": [
+						{
+							"band": 6,
+							"centres": [
+								"(1.5, -9.0)",
+								"(2.5, -9.0)"
+							],
+							"depth": 0.65,
+							"dir": 1,
+							"edges": [
+								"(1, -10, 1)",
+								"(2, -10, 1)"
+							]
+						}
+					]
+				},
+				{
+					"abutted": false,
+					"balcony": true,
+					"band": 8,
+					"bounds": "[P: (0, -10), S: (4, 2)]",
+					"cells": 8,
+					"inset": false,
+					"openings": {
+						"(0, -10, 2)": "plain",
+						"(1, -10, 3)": "door",
+						"(3, -10, 0)": "bay"
+					},
+					"projections": []
+				},
+				{
+					"abutted": false,
+					"balcony": true,
+					"band": 10,
+					"bounds": "[P: (0, -10), S: (4, 2)]",
+					"cells": 6,
+					"inset": false,
+					"openings": {
+						"(0, -10, 2)": "bay",
+						"(0, -9, 1)": "plain",
+						"(1, -9, 1)": "door",
+						"(1, -9, 3)": "door",
+						"(2, -9, 3)": "plain",
+						"(3, -10, 0)": "bay",
+						"(3, -10, 2)": "plain",
+						"(3, -10, 3)": "plain"
+					},
+					"projections": []
+				},
+				{
+					"abutted": false,
+					"balcony": false,
+					"band": 12,
+					"bounds": "[P: (0, -9), S: (4, 2)]",
+					"cells": 8,
+					"inset": false,
+					"openings": {
+						"(0, -9, 2)": "window",
+						"(0, -9, 3)": "door",
+						"(0, -8, 1)": "plain",
+						"(1, -8, 1)": "window",
+						"(2, -9, 3)": "window",
+						"(3, -9, 0)": "window",
+						"(3, -9, 3)": "door",
+						"(3, -8, 1)": "plain"
+					},
+					"projections": []
+				}
+			],
+			"host": "kit.spatial.parcel.maze.house.015",
+			"longest": 5,
+			"seed": 1704656575
+		}
+	]
+}

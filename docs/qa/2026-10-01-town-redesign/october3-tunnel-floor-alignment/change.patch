@@ -1,0 +1,51 @@
+--- /tmp/tunnel-cover-before.gd
++++ scripts/terrain/features/villages/fabric/WarrenPlotPlanner.gd
+@@ -996,8 +996,12 @@
+ ## continues a real host storey. Here the walls must stand solid over the whole
+ ## headroom on two opposing jambs (either lane of a two-lane bore), or on both
+ ## outer walls of a turn, as the finished town's rock shoulders leave them.
+-## Stone between crown and floor is at most TUNNEL_OVER_MAX_LIFT - 1 bands.
+-const TUNNEL_OVER_MAX_LIFT := 1
++## Keep the first real storey above the solid crown for either floor phase.
++## Houses advance in two-band storeys; limiting the lift to one silently
++## excludes the common same-phase house beside a two-band bore. This does not
++## raise a house: its existing room and full roof reservation must already fit.
++## At most one extra alignment band stands above the crown course.
++const TUNNEL_OVER_MAX_LIFT := WarrenBuildingParcel.STOREY_BANDS
+ 
+ 
+ static func cover_tunnels(plan: WarrenMazeSourcePlan) -> Array[Dictionary]:
+--- /tmp/tunnel-cover-solver-before.gd
++++ scripts/terrain/features/villages/fabric/WarrenVolumetricSolver.gd
+@@ -1214,6 +1214,17 @@
+ 		var macro := Vector3i(walk.x, roof, walk.z)
+ 		if source.solid_at(macro):
+ 			for fine: Vector3i in _fine_square(macro): out[fine] = true
++	# A phase-aligned host may stand one band above the first crown course.
++	# That intervening course is bearing, not spare mass for another roof or
++	# residual room. Reserve the whole run; normal unborne release removes it
++	# if the planned cover never becomes an actual room.
++	for plot: Dictionary in source.plots:
++		if plot.kind != WarrenMazeSourcePlan.PLOT_OVER: continue
++		for column: Vector2i in plot.cells:
++			for band in range(int(plot.crown)+1,int(plot.floor)):
++				var macro := Vector3i(column.x,band,column.y)
++				if source.solid_at(macro):
++					for fine: Vector3i in _fine_square(macro): out[fine]=true
+ 	var parents: Dictionary = {}
+ 	for parent_value: Variant in (WarrenMazeBlockPartitioner.stack_parents(
+ 			source)["parents"] as Dictionary).values():
+@@ -8647,9 +8658,10 @@
+ 	## erosion may still lower it.
+ 	var crown := int(record.get("crown", band - 1))
+ 	for column: Vector2i in columns:
+-		for fine: Vector3i in _fine_square(Vector3i(column.x, crown, column.y)):
+-			if grid.use_at(fine) != WarrenSpatialGrid.Use.STRUCTURAL_VOLUME:
+-				return false
++		for bearing_band in range(crown,int(record.get("floor",band))):
++			for fine: Vector3i in _fine_square(Vector3i(column.x,bearing_band,column.y)):
++				if grid.use_at(fine) != WarrenSpatialGrid.Use.STRUCTURAL_VOLUME:
++					return false
+ 	for jamb_value: Variant in record.get("jambs", []) as Array:
+ 		var jamb := jamb_value as Vector2i
+ 		for jamb_band in [crown - 1, crown]:

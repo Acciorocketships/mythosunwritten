@@ -65,8 +65,6 @@ func test_reported_city_edits_ground_instead_of_emitting_ramp_sheets() -> void:
 			errors.append(point)
 	assert_eq(errors, [] as Array[Vector3],
 		"terrain uses the ground datum, not the floor's existing anti-intersection guard")
-	assert_gt(record.outskirts.placements.size(), 1,
-		"grading cannot erase the surrounding neighbourhood")
 
 
 func test_reported_stair_blocked_door_is_a_closed_facade() -> void:

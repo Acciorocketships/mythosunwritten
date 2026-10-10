@@ -1,8 +1,8 @@
 [gd_resource type="StandardMaterial3D" load_steps=4 format=3]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/6ec1177f854a7a30bb73.res" id="1_qi6dd"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/f634cfe131de360da669.res" id="2_1kiim"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/06a8184712a082a0f4a7.res" id="3_nl02h"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/97a1734944a0490a7d1e.res" id="1_qi6dd"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/5ebeb4de6307cfb6c419.res" id="2_1kiim"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/c3494b6ccebb77459881.res" id="3_nl02h"]
 
 [resource]
 resource_name = "Chest_2"

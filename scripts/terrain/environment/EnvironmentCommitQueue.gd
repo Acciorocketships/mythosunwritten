@@ -4,6 +4,7 @@ extends RefCounted
 ## Main-thread visual queue. Each item creates one (asset, visual-piece)
 ## MultiMesh batch; generation checks discard stale work.
 const LANTERN_LIGHTS := preload("res://scripts/terrain/environment/EnvironmentLanternLights.gd")
+const CAMPFIRES := preload("res://scripts/terrain/environment/EnvironmentCampfires.gd")
 
 var _render_cache: EnvironmentRenderCache
 var _container_name: StringName
@@ -191,6 +192,7 @@ func _commit_batch(parent: Node3D, item: Dictionary) -> void:
 	preload("res://scripts/terrain/biome/CanopyShadows.gd").attach(instance)
 	if int(item.piece_index) == 0:
 		LANTERN_LIGHTS.attach(container,item.asset_id,transforms)
+		CAMPFIRES.attach(container,item.asset_id,transforms)
 
 ## Trees hand over to their baked imposter (EnvironmentImposter, one camera-
 ## facing card per tree) at IMPOSTER_DISTANCE from the camera to each tree,

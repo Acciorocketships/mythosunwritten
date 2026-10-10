@@ -1,0 +1,50 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_october2_range_roofs.gd
+[0m* test_end_pavilion_tries_the_other_end_when_only_one_end_is_blocked
+* test_long_halls_gain_connected_cross_gables_on_their_own_rooms
+* test_transverse_bay_yields_to_reserved_headroom_without_mutation
+* test_cross_gable_does_not_face_into_a_partial_taller_neighbor
+* test_medium_and_broad_ranges_also_gain_full_size_cross_wings
+* test_central_pavilion_survives_when_both_ends_face_taller_neighbors
+* test_cross_gable_can_close_against_a_complete_taller_wall
+* test_lower_cross_wing_fits_below_the_taller_pavilion_limit
+* test_dense_grand_ranges_use_lower_cross_wings_with_closed_finished_roofs
+[31m    [Failed]:  [0m[1] expected to equal [2]:  
+      at line 160
+* test_cross_gable_keeps_its_native_ridge_trim_away_from_elevated_walk_rails
+* test_two_to_one_ranges_always_seek_a_connected_cross_gable
+[1m10/11 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_october2_range_roofs.gd
+[0m- test_dense_grand_ranges_use_lower_cross_wings_with_closed_finished_roofs
+[31m    [Failed]:  [0m[1] expected to equal [2]:  
+          at line 160
+
+Totals
+------
+Scripts               1
+Tests                11
+Passing Tests        10
+Failing Tests         1
+Asserts           6446/6447
+Time              84.367s
+
+
+[31m---- 1 failing tests ----
+[0m

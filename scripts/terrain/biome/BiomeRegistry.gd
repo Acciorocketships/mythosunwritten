@@ -128,6 +128,20 @@ static func ground_tint_at(pos: Vector3, world_seed: int) -> Color:
 	var tint := blended_ground_tint(Helper.biome_weights5(pos, world_seed))
 	return tint * ground_patch_tint(pos, world_seed)
 
+## The terrain mesher interpolates this world-aligned 24 m colour lattice.
+## Raised lawns and grass use the same field; elevation changes support only.
+## Caller-owned cache is scoped to one seed/build, never shared across workers.
+static func terrain_tint_at(pos: Vector3, world_seed: int, cache: Dictionary = {}) -> Color:
+	var base := Vector2i(floori(pos.x / 24.0), floori(pos.z / 24.0))
+	var colors: Array[Color] = []
+	for offset: Vector2i in [Vector2i.ZERO, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.ONE]:
+		var corner := base + offset
+		if not cache.has(corner):
+			cache[corner] = ground_tint_at(Vector3(corner.x * 24.0, 0.0, corner.y * 24.0), world_seed)
+		colors.append(cache[corner])
+	var blend := Vector2(pos.x / 24.0 - base.x, pos.z / 24.0 - base.y)
+	return colors[0].lerp(colors[1], blend.x).lerp(colors[2].lerp(colors[3], blend.x), blend.y)
+
 static func ground_patch_tint(pos: Vector3, world_seed: int) -> Color:
 	var value_noise := Helper._value_noise01(pos, world_seed + 83,
 		GROUND_PATCH_SCALE)

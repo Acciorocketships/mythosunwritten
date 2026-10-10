@@ -1,0 +1,34 @@
+extends GutTest
+
+
+func _massif() -> WarrenMassif:
+	var columns := {}
+	for x in range(-4, 5):
+		for z in range(-4, 5):
+			columns[Vector2i(x, z)] = {"base": 0, "top": 18}
+	return WarrenMassif.with_columns(1, columns, 18)
+
+
+func test_upper_street_cannot_count_house_above_cottage_height_limit() -> void:
+	var massif := _massif()
+	massif.columns[Vector2i.ZERO]["house_storeys"] = 1
+	var excavation := WarrenExcavation.new(1)
+	assert_true(WarrenMazeCarver._column_carries_house_at(massif, excavation, Vector2i.ZERO, 0))
+	assert_false(WarrenMazeCarver._column_carries_house_at(massif, excavation, Vector2i.ZERO, 2),
+		"Raw massif height must not promise a facade construction will cap below this street")
+
+
+func test_upper_street_cannot_count_house_above_nearby_plinth_limit() -> void:
+	var massif := _massif()
+	massif.columns[Vector2i.RIGHT]["plinth"] = 4
+	var excavation := WarrenExcavation.new(1)
+	assert_true(WarrenMazeCarver._column_carries_house_at(massif, excavation, Vector2i.ZERO, 0))
+	assert_false(WarrenMazeCarver._column_carries_house_at(massif, excavation, Vector2i.ZERO, 2))
+
+
+func test_interior_mass_still_offers_upper_frontage() -> void:
+	var massif := _massif()
+	var excavation := WarrenExcavation.new(1)
+	assert_true(WarrenMazeCarver._column_carries_house_at(massif, excavation, Vector2i.ZERO, 6))
+	excavation.carved[Vector3i(0, 7, 0)] = true
+	assert_false(WarrenMazeCarver._column_carries_house_at(massif, excavation, Vector2i.ZERO, 6))

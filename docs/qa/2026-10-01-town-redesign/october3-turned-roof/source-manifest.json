@@ -1,0 +1,4 @@
+{
+  "scripts/terrain/features/villages/fabric/FabricContinuousRoofPlan.gd": "53f98ecaede64537ac85670cad4e52423ce9a2595f5d24fa5a4d2423cd96209c",
+  "tests/test_roof_construction_reservations.gd": "75b11ff2999db7bdeb37dfccede38785c28b4f83f7747f77aa1dc67286a26622"
+}

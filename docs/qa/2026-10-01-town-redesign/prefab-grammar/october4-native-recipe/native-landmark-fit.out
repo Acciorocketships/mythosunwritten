@@ -1,0 +1,13 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+NATIVE_LANDMARK_FIT 7 spatial.feature.landmark.00 0/24
+NATIVE_LANDMARK_FIT 7 spatial.feature.landmark.01 0/24
+NATIVE_LANDMARK_FIT 31 spatial.feature.landmark.00 0/24
+NATIVE_LANDMARK_FIT 31 spatial.feature.landmark.01 0/24
+NATIVE_LANDMARK_FIT 31 spatial.feature.landmark.02 0/24
+NATIVE_LANDMARK_FIT 13 spatial.feature.landmark.00 0/24
+NATIVE_LANDMARK_FIT 43 spatial.feature.landmark.00 0/24
+NATIVE_LANDMARK_FIT 43 spatial.feature.landmark.01 0/24
+NATIVE_LANDMARK_FIT 43 spatial.feature.landmark.02 0/24

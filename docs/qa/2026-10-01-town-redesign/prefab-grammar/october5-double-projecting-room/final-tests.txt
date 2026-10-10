@@ -1,0 +1,52 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_pure_village_street_house.gd
+[0m* test_new_lengths_keep_roof_side_rows_and_projecting_floor_closed
+* test_sampled_facades_preserve_structural_connections_and_coherent_window_family
+* test_projecting_bays_are_seeded_complete_lower_panels
+* test_projecting_window_glass_is_not_buried_by_neighboring_walls_or_the_roof
+* test_upper_window_compatibility_uses_visible_glazing_below_real_eave
+* test_rear_jetty_is_a_closed_supported_room_with_a_complete_extended_roof
+* test_rear_jetty_glazing_is_clear_of_the_complete_host
+[1m7/7 passed.
+[0m[4m
+
+res://tests/test_native_street_site.gd
+[0m* test_street_derivations_preserve_complete_supported_projection_and_entry
+* test_street_site_rejects_invalid_dimensions_scale_and_frame
+* test_double_projection_reserves_its_new_rear_reach_without_moving_the_entrance
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_native_house_town.gd
+[0m* test_procedurally_reserved_native_house_survives_kit_substitution_whole
+* test_native_pitched_roof_does_not_accept_a_street_at_its_box_ceiling
+* test_native_raised_site_is_not_reserved_without_a_private_approach_floor
+[1m3/3 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               3
+Tests                13
+Passing Tests        13
+Asserts            4885
+Time              131.502s
+
+
+[32m---- All tests passed! ----
+[0m

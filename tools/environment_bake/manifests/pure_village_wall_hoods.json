@@ -1,0 +1,169 @@
+{
+  "pack": "pure_village_wall_hoods",
+  "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+  "default_scale": [
+    1,
+    1,
+    1
+  ],
+  "assets": [
+    {
+      "id": "pure_village.wall_hood.middle",
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Bottom_30x5_1.glb",
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "pure_village_wall_hoods",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 20000,
+      "max_surfaces": 12,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 20000,
+      "max_collision_pieces": 1,
+      "clip_ranges": {
+        "x": [
+          -1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "pure_village.wall_hood.left",
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Bottom_Left_20x5_1.glb",
+      "pivot": [
+        -1,
+        0,
+        0
+      ],
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "pure_village_wall_hoods",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 20000,
+      "max_surfaces": 12,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 20000,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "pure_village.wall_hood.right",
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Bottom_Right_20x5_1.glb",
+      "pivot": [
+        1,
+        0,
+        0
+      ],
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "pure_village_wall_hoods",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 20000,
+      "max_surfaces": 12,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 20000,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "pure_village.wall_hood.outer_corner",
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Bottom_OutCorner_5x5_1.glb",
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "pure_village_wall_hoods",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 20000,
+      "max_surfaces": 12,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 20000,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "pure_village.wall_hood.inner_corner",
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Bottom_InCorner_5x5_1.glb",
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "pure_village_wall_hoods",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 20000,
+      "max_surfaces": 12,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 20000,
+      "max_collision_pieces": 1,
+      "exclude_materials": [
+        "RoofTransition_1"
+      ]
+    },
+    {
+      "id": "pure_village.wall_hood.middle_half",
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Bottom_30x5_1.glb",
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "pure_village_wall_hoods",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 20000,
+      "max_surfaces": 12,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 20000,
+      "max_collision_pieces": 1,
+      "clip_ranges": {
+        "x": [
+          -0.25,
+          0.25
+        ]
+      }
+    }
+  ],
+  "texture_policy": {
+    "compression": "basis_universal",
+    "mipmaps": true,
+    "namespace": "pure_village_kit"
+  }
+}

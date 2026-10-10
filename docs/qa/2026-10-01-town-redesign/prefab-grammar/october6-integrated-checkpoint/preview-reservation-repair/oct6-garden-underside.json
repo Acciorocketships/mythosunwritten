@@ -1,0 +1,528 @@
+{
+  "sets": {
+    "capped_ground": [
+      "(14, 4, 4)",
+      "(14, 4, 5)",
+      "(14, 4, 6)",
+      "(14, 4, 7)",
+      "(15, 4, 7)",
+      "(15, 4, 6)",
+      "(15, 4, 5)",
+      "(15, 4, 4)",
+      "(3, 8, 8)",
+      "(3, 8, 9)",
+      "(4, 8, 9)",
+      "(5, 8, 9)",
+      "(5, 8, 8)",
+      "(4, 8, 8)",
+      "(4, 8, 7)",
+      "(5, 8, 7)",
+      "(6, 8, 8)",
+      "(6, 8, 9)",
+      "(3, 8, 10)",
+      "(4, 8, 10)",
+      "(5, 8, 10)",
+      "(6, 8, 10)"
+    ],
+    "garden": [
+      "(14, 4, 4)",
+      "(14, 4, 5)",
+      "(14, 4, 6)",
+      "(14, 4, 7)",
+      "(15, 4, 7)",
+      "(15, 4, 6)",
+      "(15, 4, 5)",
+      "(15, 4, 4)",
+      "(3, 8, 8)",
+      "(3, 8, 9)",
+      "(4, 8, 9)",
+      "(5, 8, 9)",
+      "(5, 8, 8)",
+      "(4, 8, 8)"
+    ],
+    "suspended_plaza": [
+      "(2, 8, 6)",
+      "(3, 8, 6)",
+      "(2, 8, 7)",
+      "(3, 8, 7)",
+      "(4, 8, 6)",
+      "(5, 8, 6)",
+      "(4, 8, 7)",
+      "(5, 8, 7)",
+      "(6, 8, 6)",
+      "(7, 8, 6)",
+      "(6, 8, 7)",
+      "(7, 8, 7)",
+      "(6, 8, 8)",
+      "(7, 8, 8)",
+      "(6, 8, 9)",
+      "(7, 8, 9)",
+      "(2, 8, 10)",
+      "(3, 8, 10)",
+      "(2, 8, 11)",
+      "(3, 8, 11)",
+      "(4, 8, 10)",
+      "(5, 8, 10)",
+      "(4, 8, 11)",
+      "(5, 8, 11)",
+      "(6, 8, 10)",
+      "(7, 8, 10)",
+      "(6, 8, 11)",
+      "(7, 8, 11)"
+    ]
+  },
+  "storeys": [
+    {
+      "bands": 1,
+      "cells": [
+        {
+          "below_owner": "public.route",
+          "below_use": 2,
+          "cell": "(9, 4)"
+        },
+        {
+          "below_owner": "public.route",
+          "below_use": 2,
+          "cell": "(9, 5)"
+        }
+      ],
+      "floor": 3,
+      "mass": "kit.tunnel-ceilings",
+      "soffit": true
+    },
+    {
+      "bands": 2,
+      "cells": [
+        {
+          "below_owner": "public.route",
+          "below_use": 2,
+          "cell": "(10, 6)"
+        },
+        {
+          "below_owner": "public.route",
+          "below_use": 2,
+          "cell": "(10, 7)"
+        }
+      ],
+      "floor": 3,
+      "mass": "kit.tunnel-ceilings",
+      "soffit": true
+    },
+    {
+      "bands": 1,
+      "cells": [
+        {
+          "below_owner": "public.route",
+          "below_use": 2,
+          "cell": "(9, 8)"
+        },
+        {
+          "below_owner": "public.route",
+          "below_use": 2,
+          "cell": "(9, 9)"
+        }
+      ],
+      "floor": 4,
+      "mass": "kit.tunnel-ceilings",
+      "soffit": true
+    },
+    {
+      "bands": 2,
+      "cells": [
+        {
+          "below_owner": "spatial.feature.maze_stone.00",
+          "below_use": 5,
+          "cell": "(9, 8)"
+        },
+        {
+          "below_owner": "spatial.feature.maze_stone.00",
+          "below_use": 5,
+          "cell": "(9, 9)"
+        }
+      ],
+      "floor": 5,
+      "mass": "kit.tunnel-ceilings",
+      "soffit": true
+    },
+    {
+      "bands": 2,
+      "cells": [
+        {
+          "below_owner": "spatial.feature.maze_stone.00",
+          "below_use": 5,
+          "cell": "(9, 8)"
+        },
+        {
+          "below_owner": "spatial.feature.maze_stone.00",
+          "below_use": 5,
+          "cell": "(9, 9)"
+        }
+      ],
+      "floor": 7,
+      "mass": "kit.tunnel-ceilings",
+      "soffit": true
+    },
+    {
+      "bands": 1,
+      "cells": [
+        {
+          "below_owner": "public.route",
+          "below_use": 2,
+          "cell": "(9, 6)"
+        },
+        {
+          "below_owner": "public.route",
+          "below_use": 2,
+          "cell": "(9, 7)"
+        }
+      ],
+      "floor": 8,
+      "mass": "kit.tunnel-ceilings",
+      "soffit": true
+    },
+    {
+      "bands": 1,
+      "cells": [
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(10, 4)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(11, 4)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(10, 5)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(11, 5)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(9, 6)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(10, 6)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(11, 6)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(9, 7)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(10, 7)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(11, 7)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(9, 8)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(9, 9)"
+        }
+      ],
+      "floor": 0,
+      "mass": "kit.retained",
+      "soffit": false
+    },
+    {
+      "bands": 2,
+      "cells": [
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(14, 8)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(15, 8)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(14, 9)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(15, 9)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(14, 10)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(15, 10)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(14, 11)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(15, 11)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(12, 12)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(13, 12)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(12, 13)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(13, 13)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(10, 8)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(11, 8)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(12, 8)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(13, 8)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(10, 9)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(11, 9)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(12, 9)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(13, 9)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(9, 10)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(10, 10)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(11, 10)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(12, 10)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(13, 10)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(9, 11)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(10, 11)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(11, 11)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(12, 11)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(13, 11)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(9, 12)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(10, 12)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(11, 12)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(9, 13)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(10, 13)"
+        },
+        {
+          "below_owner": "",
+          "below_use": 0,
+          "cell": "(11, 13)"
+        }
+      ],
+      "floor": 0,
+      "mass": "kit.retained",
+      "soffit": false
+    },
+    {
+      "bands": 1,
+      "cells": [
+        {
+          "below_owner": "spatial.feature.maze_stone.00",
+          "below_use": 5,
+          "cell": "(12, 4)"
+        },
+        {
+          "below_owner": "spatial.feature.maze_stone.00",
+          "below_use": 5,
+          "cell": "(13, 4)"
+        },
+        {
+          "below_owner": "spatial.feature.maze_stone.00",
+          "below_use": 5,
+          "cell": "(14, 4)"
+        },
+        {
+          "below_owner": "spatial.feature.maze_stone.00",
+          "below_use": 5,
+          "cell": "(15, 4)"
+        },
+        {
+          "below_owner": "spatial.feature.maze_stone.00",
+          "below_use": 5,
+          "cell": "(12, 5)"
+        },
+        {
+          "below_owner": "spatial.feature.maze_stone.00",
+          "below_use": 5,
+          "cell": "(13, 5)"
+        },
+        {
+          "below_owner": "spatial.feature.maze_stone.00",
+          "below_use": 5,
+          "cell": "(14, 5)"
+        },
+        {
+          "below_owner": "spatial.feature.maze_stone.00",
+          "below_use": 5,
+          "cell": "(15, 5)"
+        },
+        {
+          "below_owner": "spatial.feature.maze_stone.00",
+          "below_use": 5,
+          "cell": "(12, 6)"
+        },
+        {
+          "below_owner": "spatial.feature.maze_stone.00",
+          "below_use": 5,
+          "cell": "(13, 6)"
+        },
+        {
+          "below_owner": "spatial.feature.maze_stone.00",
+          "below_use": 5,
+          "cell": "(14, 6)"
+        },
+        {
+          "below_owner": "spatial.feature.maze_stone.00",
+          "below_use": 5,
+          "cell": "(15, 6)"
+        },
+        {
+          "below_owner": "spatial.feature.maze_stone.00",
+          "below_use": 5,
+          "cell": "(12, 7)"
+        },
+        {
+          "below_owner": "spatial.feature.maze_stone.00",
+          "below_use": 5,
+          "cell": "(13, 7)"
+        },
+        {
+          "below_owner": "spatial.feature.maze_stone.00",
+          "below_use": 5,
+          "cell": "(14, 7)"
+        },
+        {
+          "below_owner": "spatial.feature.maze_stone.00",
+          "below_use": 5,
+          "cell": "(15, 7)"
+        }
+      ],
+      "floor": 4,
+      "mass": "kit.retained",
+      "soffit": true
+    }
+  ]
+}

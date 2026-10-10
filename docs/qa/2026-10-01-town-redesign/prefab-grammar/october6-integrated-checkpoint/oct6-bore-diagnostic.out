@@ -1,0 +1,6 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+BORE_DIAGNOSTIC { "seed": 13, "kinds_by_covered_quarters": { "spine": [6, 0, 0, 0, 0], "market": [2, 0, 0, 0, 0], "alley": [62, 0, 0, 0, 0] }, "fully_covered": [], "original_cell": (2, 0, -4), "original_kind": "absent" }
+BORE_DIAGNOSTIC { "seed": 31, "kinds_by_covered_quarters": { "spine": [6, 0, 0, 0, 0], "market": [2, 0, 0, 0, 0], "alley": [36, 0, 0, 0, 0] }, "fully_covered": [], "original_cell": (-2, 0, 0), "original_kind": &"spine" }

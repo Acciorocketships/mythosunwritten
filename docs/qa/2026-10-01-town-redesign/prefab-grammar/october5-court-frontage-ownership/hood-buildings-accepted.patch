@@ -1,0 +1,20 @@
+--- scripts/terrain/features/villages/kit/KitVillageBuildings.gd
++++ scripts/terrain/features/villages/kit/KitVillageBuildings.gd
+@@ -159,6 +159,8 @@
+ 	# Open air still cannot cut a gable wall and leave a hole in the attic.
+ 	var public_air := preload("res://scripts/terrain/features/villages/kit/KitPublicClearance.gd").build(
+ 		spatial, fabric, kit)
++	var ornament_air := public_air.duplicate()
++	ornament_air.append_array(preload("res://scripts/terrain/features/villages/kit/KitPublicClearance.gd").skywalk_ornament_air(spans, kit))
+ 	walls.append_array(public_air)
+ 	var tower_catalog := EnvironmentCatalog.load_default()
+ 	var tower_audit := {}
+@@ -237,7 +239,7 @@
+ 		assembler.ornament_clear = func(id: StringName, pose: Transform3D) -> bool:
+ 			var local_box: AABB = tower_catalog.descriptor(id).measured_aabb
+ 			if preload("res://scripts/terrain/features/villages/kit/KitPublicClearance.gd").intersects_air(
+-					local_box,pose,public_air): return false
++					local_box,pose,ornament_air): return false
+ 			var box: AABB = pose*local_box
+ 			for tower: Dictionary in towers:
+ 				if box.intersects(tower.bounds): return false

@@ -54,8 +54,15 @@ func test_platform_towns_are_a_deterministic_subset() -> void:
 		raised += 1
 		assert_gte(columns.size(), WarrenTownPlatform.MIN_COLUMNS,
 			"seed %d raises a platform too small to be a district" % seed_value)
-		assert_eq(massif.platform_bands, 4,
-			"seed %d: a two-storey plinth the lower town can huddle under" % seed_value)
+		var lowest := 2147483647
+		var highest := 0
+		for column: Vector2i in columns:
+			var bands := massif.plinth_at(column)
+			lowest = mini(lowest,bands)
+			highest = maxi(highest,bands)
+			assert_eq(bands % 4,0,"each nested district adds a complete two-storey tier")
+		assert_eq(lowest,4,"the outer plinth remains two storeys")
+		assert_eq(massif.platform_bands,highest,"the summary records the highest tier")
 		assert_true(massif.is_platform(massif.crown_column),
 			"seed %d: the citadel is the town's crown" % seed_value)
 	var share := float(raised) / float(total)
@@ -210,15 +217,23 @@ func test_plinth_is_a_grounded_stone_fortification() -> void:
 	assert_gt(rim_pieces, 0, "parapet, turret and gate stone rises above the rim")
 
 
-## Invariant 6: a town without a platform is unchanged.
-func test_town_without_platform_is_unchanged() -> void:
+## Invariant 6: ordinary towns remain unfortified and deterministic.
+func test_town_without_platform_stays_plain_and_deterministic() -> void:
 	var source := _source(PLAIN_TOWN)
 	assert_eq(source.massif.platform_bands, 0)
 	assert_true(source.massif.platform_columns().is_empty())
 	assert_eq(source.deterministic_signature().sha256_text(), PLAIN_SIGNATURE)
+	var rebuilt := WarrenMazeSitePlanner.plan(int(PLAIN_TOWN[0]), {},
+		WarrenVillageScaleProfile.for_id(PLAIN_TOWN[1]), &"", false)
+	assert_eq(rebuilt.deterministic_signature(), source.deterministic_signature(),
+		"compare independent construction, not the cached source with itself")
 
 
 ## Re-pinned by the edges stream (September 29): the perimeter lane and the
 ## at-grade edge rings re-lay every town, platform or not; again for the
 ## held landmark sites (follow-up).
-const PLAIN_SIGNATURE := "d041885315922100395fd17c5ecd5aa33b60b0331ea304264a6801aaf78d6fa9"
+# October 1: bridge load paths are reserved before optional streets, and
+# secondary gate seeds now obey the same boring restrictions as later steps.
+# The requested redesign changes ordinary layouts too. Previous signature:
+# d041885315922100395fd17c5ecd5aa33b60b0331ea304264a6801aaf78d6fa9.
+const PLAIN_SIGNATURE := "5ae4c01fe993d8e71d258440646a61f9a3d0efb12bd55ee25bf6795c718bef51"

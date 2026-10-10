@@ -1,0 +1,321 @@
+[
+  {
+    "abut": 2,
+    "air_hits": 0,
+    "audit_faces": 1,
+    "braces_over_openings": 0,
+    "broken_joints": 0,
+    "buried": 0,
+    "causes": {
+      "bearing": 2,
+      "ends": 2,
+      "obstacle.spatial": 2,
+      "obstacle.tower": 1,
+      "portal": 2
+    },
+    "deepest": -1.0,
+    "ends_why": {
+      "stepped": 2
+    },
+    "faces": 1,
+    "faces_withdrawn": {
+      "bearing": 1,
+      "ends": 1,
+      "obstacle.spatial": 2,
+      "obstacle.tower": 1,
+      "portal": 2
+    },
+    "floating": 0,
+    "ground_faces": 1,
+    "joints": 0,
+    "ledges": 0,
+    "open_ends": 0,
+    "outside_lot": 0,
+    "pulled": 0,
+    "recessed_doors": 0,
+    "returns": 2,
+    "roof_intrusions": 0,
+    "roof_moved": 0,
+    "stepped_in": 1,
+    "storeys": 2,
+    "thin_bearing": 0,
+    "top_moved": 0,
+    "town": "53:grand",
+    "unbraced": 0,
+    "valid_payload": true,
+    "wraps": 0
+  },
+  {
+    "abut": 0,
+    "air_hits": 0,
+    "audit_faces": 0,
+    "braces_over_openings": 0,
+    "broken_joints": 0,
+    "buried": 0,
+    "causes": {
+
+    },
+    "deepest": 0.0,
+    "ends_why": {
+
+    },
+    "faces": 0,
+    "faces_withdrawn": {
+
+    },
+    "floating": 0,
+    "ground_faces": 0,
+    "joints": 0,
+    "ledges": 0,
+    "open_ends": 0,
+    "outside_lot": 0,
+    "pulled": 0,
+    "recessed_doors": 0,
+    "returns": 0,
+    "roof_intrusions": 0,
+    "roof_moved": 0,
+    "stepped_in": 0,
+    "storeys": 0,
+    "thin_bearing": 0,
+    "top_moved": 0,
+    "town": "31:large",
+    "unbraced": 0,
+    "valid_payload": true,
+    "wraps": 0
+  },
+  {
+    "abut": 1,
+    "air_hits": 0,
+    "audit_faces": 1,
+    "braces_over_openings": 0,
+    "broken_joints": 0,
+    "buried": 1,
+    "causes": {
+      "air": 2,
+      "bearing": 1,
+      "ends": 1
+    },
+    "deepest": -0.5,
+    "ends_why": {
+      "stepped": 1
+    },
+    "faces": 1,
+    "faces_withdrawn": {
+      "air": 2,
+      "bearing": 1,
+      "ends": 1
+    },
+    "floating": 0,
+    "ground_faces": 1,
+    "joints": 0,
+    "ledges": 0,
+    "open_ends": 0,
+    "outside_lot": 0,
+    "pulled": 0,
+    "recessed_doors": 0,
+    "returns": 2,
+    "roof_intrusions": 0,
+    "roof_moved": 0,
+    "stepped_in": 1,
+    "storeys": 2,
+    "thin_bearing": 0,
+    "top_moved": 0,
+    "town": "13:standard",
+    "unbraced": 0,
+    "valid_payload": true,
+    "wraps": 0
+  },
+  {
+    "abut": 0,
+    "air_hits": 0,
+    "audit_faces": 0,
+    "braces_over_openings": 0,
+    "broken_joints": 0,
+    "buried": 0,
+    "causes": {
+
+    },
+    "deepest": 0.0,
+    "ends_why": {
+
+    },
+    "faces": 0,
+    "faces_withdrawn": {
+
+    },
+    "floating": 0,
+    "ground_faces": 0,
+    "joints": 0,
+    "ledges": 0,
+    "open_ends": 0,
+    "outside_lot": 0,
+    "pulled": 0,
+    "recessed_doors": 0,
+    "returns": 0,
+    "roof_intrusions": 0,
+    "roof_moved": 0,
+    "stepped_in": 0,
+    "storeys": 0,
+    "thin_bearing": 0,
+    "top_moved": 0,
+    "town": "43:large",
+    "unbraced": 0,
+    "valid_payload": true,
+    "wraps": 0
+  },
+  {
+    "abut": 0,
+    "air_hits": 0,
+    "audit_faces": 1,
+    "braces_over_openings": 0,
+    "broken_joints": 0,
+    "buried": 3,
+    "causes": {
+      "grade": 1
+    },
+    "deepest": -1.0,
+    "ends_why": {
+
+    },
+    "faces": 1,
+    "faces_withdrawn": {
+      "grade": 1
+    },
+    "floating": 0,
+    "ground_faces": 1,
+    "joints": 0,
+    "ledges": 0,
+    "open_ends": 0,
+    "outside_lot": 0,
+    "pulled": 0,
+    "recessed_doors": 1,
+    "returns": 1,
+    "roof_intrusions": 0,
+    "roof_moved": 0,
+    "stepped_in": 1,
+    "storeys": 2,
+    "thin_bearing": 0,
+    "top_moved": 0,
+    "town": "83:grand",
+    "unbraced": 0,
+    "valid_payload": true,
+    "wraps": 0
+  },
+  {
+    "abut": 0,
+    "air_hits": 0,
+    "audit_faces": 0,
+    "braces_over_openings": 0,
+    "broken_joints": 0,
+    "buried": 0,
+    "causes": {
+
+    },
+    "deepest": 0.0,
+    "ends_why": {
+
+    },
+    "faces": 0,
+    "faces_withdrawn": {
+
+    },
+    "floating": 0,
+    "ground_faces": 0,
+    "joints": 0,
+    "ledges": 0,
+    "open_ends": 0,
+    "outside_lot": 0,
+    "pulled": 0,
+    "recessed_doors": 0,
+    "returns": 0,
+    "roof_intrusions": 0,
+    "roof_moved": 0,
+    "stepped_in": 0,
+    "storeys": 0,
+    "thin_bearing": 0,
+    "top_moved": 0,
+    "town": "103:standard",
+    "unbraced": 0,
+    "valid_payload": true,
+    "wraps": 0
+  },
+  {
+    "abut": 0,
+    "air_hits": 0,
+    "audit_faces": 0,
+    "braces_over_openings": 0,
+    "broken_joints": 0,
+    "buried": 0,
+    "causes": {
+
+    },
+    "deepest": 0.0,
+    "ends_why": {
+
+    },
+    "faces": 0,
+    "faces_withdrawn": {
+
+    },
+    "floating": 0,
+    "ground_faces": 0,
+    "joints": 0,
+    "ledges": 0,
+    "open_ends": 0,
+    "outside_lot": 0,
+    "pulled": 0,
+    "recessed_doors": 0,
+    "returns": 0,
+    "roof_intrusions": 0,
+    "roof_moved": 0,
+    "stepped_in": 0,
+    "storeys": 0,
+    "thin_bearing": 0,
+    "top_moved": 0,
+    "town": "7:compact",
+    "unbraced": 0,
+    "valid_payload": true,
+    "wraps": 0
+  },
+  {
+    "abut": 2,
+    "air_hits": 0,
+    "audit_faces": 1,
+    "braces_over_openings": 0,
+    "broken_joints": 0,
+    "buried": 1,
+    "causes": {
+      "ends": 2,
+      "party": 2
+    },
+    "deepest": -0.5,
+    "ends_why": {
+      "door": 1,
+      "partial": 1
+    },
+    "faces": 1,
+    "faces_withdrawn": {
+      "ends": 2,
+      "party": 2
+    },
+    "floating": 0,
+    "ground_faces": 1,
+    "joints": 0,
+    "ledges": 0,
+    "open_ends": 0,
+    "outside_lot": 0,
+    "pulled": 0,
+    "recessed_doors": 1,
+    "returns": 1,
+    "roof_intrusions": 0,
+    "roof_moved": 0,
+    "stepped_in": 1,
+    "storeys": 2,
+    "thin_bearing": 0,
+    "top_moved": 0,
+    "town": "61:standard",
+    "unbraced": 0,
+    "valid_payload": true,
+    "wraps": 0
+  }
+]

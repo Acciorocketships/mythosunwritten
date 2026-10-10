@@ -1,0 +1,49 @@
+--- scripts/terrain/features/villages/fabric/SettlementFabricAssembler.gd
++++ scripts/terrain/features/villages/fabric/SettlementFabricAssembler.gd
+@@ -618,6 +618,7 @@
+ const PLAZA_COURT_TREES: Array[StringName] = [&"lpfv.tree.01", &"lpfv.tree.02"]
+ const PLAZA_WIDE_FEATURES: Array[StringName] = [PLAZA_WELL, PLAZA_MARKET_STALL,
+ 	PLAZA_TREE]
++const PLAZA_CANOPY_AREA_SHARE := 1.0 / 3.0
+ const PLAZA_WIDE_BLOCK := 3
+ const PLAZA_NARROW_BLOCK := 2
+ const PLAZA_FEATURE_SALT := 53
+@@ -5747,6 +5748,8 @@
+ 			var feature := {"asset": PLAZA_WIDE_FEATURES[
+ 				posmod(pick + offset, PLAZA_WIDE_FEATURES.size())], "cell": cell,
+ 				"origin": origin, "quarter": quarter, "cells": wide.cells}
++			if planted_island and STALL_CANOPIES.has(feature.asset) and not _plaza_canopy_proportional(feature, plaza, occupied, footprints):
++				continue
+ 			if planted_island and feature.asset == PLAZA_TREE:
+ 				# Large beds use the same complete leafy crown/root proof as
+ 				# small and notched beds. The old bare tree is not a canopy.
+@@ -5803,6 +5806,29 @@
+ 		if _maze_plaza_feature_is_clear(feature, footprints, skin):
+ 			return feature
+ 	return {}
++
++
++## Collision-free furniture can still consume a whole small garden. Compare a
++## canopy against its own connected, unreserved bed, never other nearby courts.
++static func _plaza_canopy_proportional(feature: Dictionary, plaza: Dictionary,
++		occupied: Dictionary, footprints: Dictionary) -> bool:
++	var bounds: Dictionary = footprints.get("asset_bounds", {})
++	if not bounds.has(feature.asset): return false
++	var first: Vector3i = feature.cell
++	var connected := {first: true}
++	var pending: Array[Vector3i] = [first]
++	while not pending.is_empty():
++		var cell: Vector3i = pending.pop_back()
++		for step: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT, Vector3i.FORWARD, Vector3i.BACK]:
++			var next := cell + step
++			if not plaza.has(next) or occupied.has(next) or connected.has(next): continue
++			connected[next] = true
++			pending.append(next)
++	var box: AABB = bounds[feature.asset]
++	var scale_value := float(feature.get("scale", 1.0))
++	var canopy_area := box.size.x * box.size.z * scale_value * scale_value
++	var bed_area := connected.size() * FabricRecipe.CELL_SIZE * FabricRecipe.CELL_SIZE
++	return canopy_area <= bed_area * PLAZA_CANOPY_AREA_SHARE
+ 
+ 
+ ## Small seats occupy only the reserved planting island, never public floor.

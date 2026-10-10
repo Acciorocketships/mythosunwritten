@@ -1,0 +1,562 @@
+{
+  "pack": "pure_village_roof_sage",
+  "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+  "default_scale": [
+    1,
+    1,
+    1
+  ],
+  "material_palette": {
+    "RoofTiles": [
+      0.8,
+      0.83,
+      0.53,
+      1
+    ],
+    "RoofTopTiles": [
+      0.8,
+      0.83,
+      0.53,
+      1
+    ]
+  },
+  "material_roughness": {
+    "RoofTiles": 0.9,
+    "RoofTopTiles": 0.9
+  },
+  "assets": [
+    {
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "pure_village_kit",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 12000,
+      "max_surfaces": 12,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 12000,
+      "max_collision_pieces": 1,
+      "clip_ranges": {
+        "x": [
+          -1,
+          1
+        ]
+      },
+      "id": "pure_village.roof.slope.sage",
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Base_30x30_1.glb",
+      "scale": [
+        1,
+        1,
+        1.3333333333333333
+      ],
+      "pivot": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "pure_village_kit",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 12000,
+      "max_surfaces": 12,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 12000,
+      "max_collision_pieces": 1,
+      "clip_ranges": {
+        "x": [
+          -1,
+          1
+        ]
+      },
+      "id": "pure_village.roof.eave.sage",
+      "source": "res://tools/environment_bake/assembly_sources/pure_village/roof_eave.tscn",
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "pivot": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "pure_village_kit",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 12000,
+      "max_surfaces": 12,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 12000,
+      "max_collision_pieces": 1,
+      "clip_ranges": {
+        "x": [
+          -1,
+          1
+        ]
+      },
+      "id": "pure_village.roof.top.sage",
+      "source": "res://tools/environment_bake/assembly_sources/pure_village/roof_top.tscn",
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "pivot": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "pure_village_kit",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 12000,
+      "max_surfaces": 12,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 12000,
+      "max_collision_pieces": 1,
+      "clip_ranges": {
+        "x": [
+          -1,
+          1
+        ]
+      },
+      "id": "pure_village.roof.ridge.sage",
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Top30_Start_x30_1.glb",
+      "scale": [
+        1,
+        1,
+        1.5
+      ],
+      "pivot": [
+        0,
+        0.3,
+        0
+      ]
+    },
+    {
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "pure_village_kit",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 12000,
+      "max_surfaces": 12,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 12000,
+      "max_collision_pieces": 1,
+      "clip_ranges": {
+        "x": [
+          -1,
+          1
+        ]
+      },
+      "id": "pure_village.roof.eave.start.sage",
+      "source": "res://tools/environment_bake/assembly_sources/pure_village/roof_eave_start.tscn",
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "pivot": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "pure_village_kit",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 12000,
+      "max_surfaces": 12,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 12000,
+      "max_collision_pieces": 1,
+      "clip_ranges": {
+        "x": [
+          -1,
+          1
+        ]
+      },
+      "id": "pure_village.roof.top.start.sage",
+      "source": "res://tools/environment_bake/assembly_sources/pure_village/roof_top_start.tscn",
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "pivot": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "pure_village_kit",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 12000,
+      "max_surfaces": 12,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 12000,
+      "max_collision_pieces": 1,
+      "clip_ranges": {
+        "x": [
+          -1,
+          1
+        ]
+      },
+      "id": "pure_village.roof.slope.start.sage",
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Base_Start_5x30_1.glb",
+      "scale": [
+        1,
+        1,
+        1.3333333333333333
+      ],
+      "pivot": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "pure_village_kit",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 12000,
+      "max_surfaces": 12,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 12000,
+      "max_collision_pieces": 1,
+      "clip_ranges": {
+        "x": [
+          -1,
+          1
+        ]
+      },
+      "id": "pure_village.roof.ridge.start.sage",
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Top30_Start_x5_1.glb",
+      "scale": [
+        1,
+        1,
+        1.5
+      ],
+      "pivot": [
+        0,
+        0.3,
+        0
+      ]
+    },
+    {
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "pure_village_kit",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 12000,
+      "max_surfaces": 12,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 12000,
+      "max_collision_pieces": 1,
+      "clip_ranges": {
+        "x": [
+          -1,
+          1
+        ]
+      },
+      "id": "pure_village.roof.eave.end.sage",
+      "source": "res://tools/environment_bake/assembly_sources/pure_village/roof_eave_end.tscn",
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "pivot": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "pure_village_kit",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 12000,
+      "max_surfaces": 12,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 12000,
+      "max_collision_pieces": 1,
+      "clip_ranges": {
+        "x": [
+          -1,
+          1
+        ]
+      },
+      "id": "pure_village.roof.top.end.sage",
+      "source": "res://tools/environment_bake/assembly_sources/pure_village/roof_top_end.tscn",
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "pivot": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "pure_village_kit",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 12000,
+      "max_surfaces": 12,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 12000,
+      "max_collision_pieces": 1,
+      "clip_ranges": {
+        "x": [
+          -1,
+          1
+        ]
+      },
+      "id": "pure_village.roof.slope.end.sage",
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Base_End_5x30_1.glb",
+      "scale": [
+        1,
+        1,
+        1.3333333333333333
+      ],
+      "pivot": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "pure_village_kit",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 12000,
+      "max_surfaces": 12,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 12000,
+      "max_collision_pieces": 1,
+      "clip_ranges": {
+        "x": [
+          -1,
+          1
+        ]
+      },
+      "id": "pure_village.roof.ridge.end.sage",
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Top30_End_x5_1.glb",
+      "scale": [
+        1,
+        1,
+        1.5
+      ],
+      "pivot": [
+        0,
+        0.3,
+        0
+      ]
+    },
+    {
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "pure_village_kit",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 12000,
+      "max_surfaces": 13,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 12000,
+      "max_collision_pieces": 1,
+      "clip_ranges": {
+        "x": [
+          -1,
+          1
+        ]
+      },
+      "id": "pure_village.roof.dormer.sage",
+      "source": "res://tools/environment_bake/assembly_sources/pure_village/roof_dormer.tscn",
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "exclude_materials": [
+        "RoofTransition"
+      ]
+    },
+    {
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "pure_village_kit",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 12000,
+      "max_surfaces": 13,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 12000,
+      "max_collision_pieces": 1,
+      "clip_ranges": {
+        "x": [
+          -1,
+          1
+        ]
+      },
+      "id": "pure_village.roof.dormer_tight.sage",
+      "source": "res://tools/environment_bake/assembly_sources/pure_village/roof_dormer_tight.tscn",
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "exclude_materials": [
+        "RoofTransition"
+      ]
+    },
+    {
+      "id": "pure_village.tower.roof.sage",
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Tower_1.glb",
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "pure_village_towers",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 20000,
+      "max_surfaces": 12,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 20000,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "pure_village.roof_turret.roof.sage",
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Tower_2.glb",
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "pure_village_roof_turrets",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 20000,
+      "max_surfaces": 12,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 20000,
+      "max_collision_pieces": 1
+    }
+  ],
+  "texture_policy": {
+    "compression": "basis_universal",
+    "mipmaps": true,
+    "namespace": "pure_village_kit"
+  }
+}

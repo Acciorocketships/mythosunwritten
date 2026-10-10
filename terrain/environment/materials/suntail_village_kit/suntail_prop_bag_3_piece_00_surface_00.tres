@@ -1,8 +1,8 @@
 [gd_resource type="StandardMaterial3D" load_steps=4 format=3]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/8738d9a72c777ab60f43.res" id="1_o4851"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/2973b6c5d4f49ae10ce8.res" id="2_f1tex"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/bef73cd581f1ebb3af5f.res" id="3_hkm8l"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/b227dfb7790ca103fa9b.res" id="1_o4851"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/10081e4329ce752dc38c.res" id="2_f1tex"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/34381c68fd879dabb105.res" id="3_hkm8l"]
 
 [resource]
 resource_name = "Bag"

@@ -12,7 +12,7 @@ extends RefCounted
 ##   slab hanging over the lane (`WarrenVolumetricSolver.unborne_crown_cells`).
 ## - `floating_storey_cells`: roofless kit storeys (retained terrain, tunnel
 ##   ceilings) hanging over public air whose top carries no kit house storey
-##   and no walked floor -- the stone-walled, plank-bottomed box with no roof.
+##   and no walked or explicitly reserved garden floor -- the stone-walled, plank-bottomed box with no roof.
 ## - `incomplete_skywalks`: a skywalk mass that is neither a complete enclosed
 ##   corridor (a storey under a roof) nor an open railed timber deck.
 
@@ -67,7 +67,7 @@ static func audit(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 				var above := Vector3i(cell.x, top, cell.y)
 				while roofless_cells.has(above):
 					above += Vector3i.UP
-				if house_cells.has(above) or KitVillageBuildings._walked(grid, above):
+				if house_cells.has(above) or WarrenVolumetricSolver.bears_construction(grid,above,house_cells):
 					continue
 				floating.append(Vector3i(cell.x, floor, cell.y))
 	var unborne_list: Array[Vector3i] = []

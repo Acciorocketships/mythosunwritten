@@ -1,9 +1,9 @@
 [gd_resource type="StandardMaterial3D" load_steps=5 format=3]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/b276d0e37013c967f659.res" id="1_n2o11"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/465b185084c0f2e0d88f.res" id="2_6ccdr"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/b780320ec2ae1a24250b.res" id="3_8jtkw"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/317865e922f55f98ceb4.res" id="4_rd8jd"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/cd81ab25935d1c2efb49.res" id="1_n2o11"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/d58f22e50ee15b42e292.res" id="2_6ccdr"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/3ad24a2d2cb4ad51c821.res" id="3_8jtkw"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/d91b6aaecb09daeb2cbd.res" id="4_rd8jd"]
 
 [resource]
 resource_name = "Bonfire"

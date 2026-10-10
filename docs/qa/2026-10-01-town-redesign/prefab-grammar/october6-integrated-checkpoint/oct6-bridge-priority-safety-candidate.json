@@ -1,0 +1,40 @@
+{
+  "31:large": {
+    "air": 0,
+    "floating": 0,
+    "roof": {
+      "air_roofs": 0,
+      "air_unsupported": 0,
+      "eaves_cut": 0,
+      "examples": [],
+      "gable_ends": 72,
+      "gable_holes": 0,
+      "open_ends": 32,
+      "open_exposed": 0,
+      "roofs": 52,
+      "tiny": 0,
+      "tiny_beside": 0,
+      "uncapped_towers": 0
+    }
+  },
+  "53:grand": {
+    "air": 0,
+    "floating": 0,
+    "roof": {
+      "air_roofs": 0,
+      "air_unsupported": 0,
+      "eaves_cut": 0,
+      "examples": [
+        "tiny kit.spatial.parcel.maze.house.030 [P: (10, 3), S: (2, 1)] axis=0 eave=8"
+      ],
+      "gable_ends": 115,
+      "gable_holes": 0,
+      "open_ends": 53,
+      "open_exposed": 0,
+      "roofs": 84,
+      "tiny": 1,
+      "tiny_beside": 0,
+      "uncapped_towers": 0
+    }
+  }
+}

@@ -177,8 +177,7 @@ func _probe(city_seed: int, scale_id: StringName,
 	line += " parcels=%d" % parcels.parcels.size()
 
 	started_ms = Time.get_ticks_msec()
-	var plan := WarrenVolumetricSolver.from_volume(volume, -1, program,
-		profile.requires_elevated_courtyard)
+	var plan := WarrenVolumetricSolver.from_volume(volume, -1, program)
 	var compose_ms := Time.get_ticks_msec() - started_ms
 	timings.append("compose=%d" % compose_ms)
 	if plan == null:

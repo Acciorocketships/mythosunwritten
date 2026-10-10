@@ -1,0 +1,181 @@
+{
+  "assets": [
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_roof_turret_middle.tres",
+      "id": "pure_village.roof_turret.middle",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 296,
+        "measured_aabb": {
+          "position": [
+            -0.870891094207764,
+            -0.125,
+            -0.874997556209564
+          ],
+          "size": [
+            1.74178218841553,
+            3.125,
+            1.75
+          ]
+        },
+        "mesh_bytes": 12225,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 296
+      },
+      "pack": "pure_village_roof_turrets",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.roof_turret.middle",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 20000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 20000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/StoneTower_Middle2_15x30.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_roof_turrets",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/StoneTower_Middle2_15x30.glb",
+      "source_sha256": "88572811a78d0ba0f130371d4bbd7787ac2699354c9edf16a46c826d39567436",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true,
+        "namespace": "pure_village_kit"
+      },
+      "tool_version": 40,
+      "visual": "res://terrain/environment/visuals/pure_village_roof_turrets/pure_village_roof_turret_middle.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_roof_turret_roof.tres",
+      "id": "pure_village.roof_turret.roof",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 5314,
+        "measured_aabb": {
+          "position": [
+            -1.32634079456329,
+            -0.0880822762846947,
+            -1.33322334289551
+          ],
+          "size": [
+            2.66097211837769,
+            3.37859773635864,
+            2.68001174926758
+          ]
+        },
+        "mesh_bytes": 212440,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 5314
+      },
+      "pack": "pure_village_roof_turrets",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.roof_turret.roof",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 20000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 20000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/Roof_Tower_2.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_roof_turrets",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Tower_2.glb",
+      "source_sha256": "8ab6fc67d3756f837f0f25e18cd76a38819026d445cd4a9a1bfcaafbc78c5c7f",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true,
+        "namespace": "pure_village_kit"
+      },
+      "tool_version": 40,
+      "visual": "res://terrain/environment/visuals/pure_village_roof_turrets/pure_village_roof_turret_roof.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_roof_turret_window.tres",
+      "id": "pure_village.roof_turret.window",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 3112,
+        "measured_aabb": {
+          "position": [
+            -0.952772200107574,
+            -0.125,
+            -0.960620105266571
+          ],
+          "size": [
+            1.90554547309875,
+            3.24343585968018,
+            1.94347906112671
+          ]
+        },
+        "mesh_bytes": 114308,
+        "surface_count": 6,
+        "visual_piece_count": 1,
+        "visual_triangles": 3112
+      },
+      "pack": "pure_village_roof_turrets",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.roof_turret.window",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 20000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 20000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/StoneTower_Window_15x30.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_roof_turrets",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/StoneTower_Window_15x30.glb",
+      "source_sha256": "1106ed3e49e5e001a6bc68f1ebac0fb7b68b59c8da551e46ad413d66be28c806",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true,
+        "namespace": "pure_village_kit"
+      },
+      "tool_version": 40,
+      "visual": "res://terrain/environment/visuals/pure_village_roof_turrets/pure_village_roof_turret_window.tres"
+    }
+  ],
+  "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+  "pack": "pure_village_roof_turrets",
+  "tool_version": 40
+}

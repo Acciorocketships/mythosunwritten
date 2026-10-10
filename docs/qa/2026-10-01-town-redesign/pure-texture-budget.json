@@ -1,0 +1,983 @@
+{
+  "textures": [
+    {
+      "bytes": 16777216,
+      "file": "0b5a3c60277ab7b3c52f.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "1087eef4c5d754b32d62.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "1b1b402308017e79faf2.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "24ae2da82fc7110adb59.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "257781fbd538830f25e6.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "3384cb2cd4bba3990c32.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "33a68f8a28834064f787.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 1048576,
+      "file": "43b2adf42beadcb7ff22.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 128
+    },
+    {
+      "bytes": 16777216,
+      "file": "45e3bd45f8eb817ca6f3.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "463b8bda842d34ec7663.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "48da0bbc0886bdf59421.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "4e458e924330f45830b3.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "4efef7adc9566f1232b6.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "58607d4b6b780c0f2881.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "6140eca9a3b64327fd41.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 1048576,
+      "file": "66dfa84be3ba43790fab.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 128
+    },
+    {
+      "bytes": 16777216,
+      "file": "6985296c072fe743102f.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "73e812a43fb3ad1cffd4.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "73ead8e8c678760718b3.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "768cc41af4f698e3b651.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "7d4c0d9b1933353140c4.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "831ab3214b142f3e5dba.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "8f8f02bd965b2c970fd8.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "9bc0fc305e37da35e46a.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 1048576,
+      "file": "9e563125e3b4962bd768.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 128
+    },
+    {
+      "bytes": 16777216,
+      "file": "a17bafd69c43d82924c3.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "a8488ba01bedea6c64be.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "aba5da693d746c4e7124.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "acf51cf46a8cb35ecdd6.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "ad7982bc02c17ebce1e2.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "b177555ab39d37f03dde.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "c0fb243670a34f42b9ee.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "c157972564fbca3e13a8.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "c5d160ab8e58ec57ad49.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "d2e72f6b5982b4051751.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "d50ea468092af4db81e3.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "d736532d6d11b9b06f74.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "d8cfdfed736b9e193172.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "ddc0f5d506f303833c20.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "de9f30501367a9fa461b.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "e20839f35058170fa30b.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "f37cda2438a864cfb174.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "fb6da8692ef274c60bdf.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    },
+    {
+      "bytes": 16777216,
+      "file": "fdf350b5dd660ffe555f.res",
+      "format": 5,
+      "height": 2048,
+      "mips": false,
+      "width": 2048
+    }
+  ],
+  "total_bytes": 691011584,
+  "active": {
+    "bytes": 691011584,
+    "textures": [
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/6985296c072fe743102f.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/aba5da693d746c4e7124.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/b177555ab39d37f03dde.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/463b8bda842d34ec7663.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/d8cfdfed736b9e193172.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/de9f30501367a9fa461b.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/48da0bbc0886bdf59421.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/d50ea468092af4db81e3.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/c157972564fbca3e13a8.res",
+        "width": 2048
+      },
+      {
+        "bytes": 1048576,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/66dfa84be3ba43790fab.res",
+        "width": 128
+      },
+      {
+        "bytes": 1048576,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/43b2adf42beadcb7ff22.res",
+        "width": 128
+      },
+      {
+        "bytes": 1048576,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/9e563125e3b4962bd768.res",
+        "width": 128
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/f37cda2438a864cfb174.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/a8488ba01bedea6c64be.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/0b5a3c60277ab7b3c52f.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/73ead8e8c678760718b3.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/d736532d6d11b9b06f74.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/1087eef4c5d754b32d62.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/a17bafd69c43d82924c3.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/45e3bd45f8eb817ca6f3.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/c0fb243670a34f42b9ee.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/33a68f8a28834064f787.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/73e812a43fb3ad1cffd4.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/257781fbd538830f25e6.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/8f8f02bd965b2c970fd8.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/ad7982bc02c17ebce1e2.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/4efef7adc9566f1232b6.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/e20839f35058170fa30b.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/768cc41af4f698e3b651.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/fdf350b5dd660ffe555f.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/fb6da8692ef274c60bdf.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/3384cb2cd4bba3990c32.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/6140eca9a3b64327fd41.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/acf51cf46a8cb35ecdd6.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/4e458e924330f45830b3.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/24ae2da82fc7110adb59.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/9bc0fc305e37da35e46a.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/58607d4b6b780c0f2881.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/7d4c0d9b1933353140c4.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/d2e72f6b5982b4051751.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/1b1b402308017e79faf2.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/831ab3214b142f3e5dba.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/c5d160ab8e58ec57ad49.res",
+        "width": 2048
+      },
+      {
+        "bytes": 16777216,
+        "height": 2048,
+        "mips": false,
+        "path": "res://terrain/environment/textures/pure_village_kit/ddc0f5d506f303833c20.res",
+        "width": 2048
+      }
+    ]
+  },
+  "compressed": {
+    "bytes": 230338848,
+    "textures": [
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/629cdad09e4da27c4af0.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/0e010d272fc2f900dbbd.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/5ed94bd8db7e71c23db4.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/5c9680459e062de69b4b.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/b3b0394de585722a3ece.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/b77deffd045f057c11e3.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/279db7efddb2bb44c5a0.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/37b1d11fbd844603b53e.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/e0ddb9be2f28cc41aaa4.res",
+        "width": 2048
+      },
+      {
+        "bytes": 349712,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/8d8aa277c161652d6e01.res",
+        "width": 128
+      },
+      {
+        "bytes": 349712,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/cb727f4e009e94f6035d.res",
+        "width": 128
+      },
+      {
+        "bytes": 349712,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/825b4f28769094ed28fa.res",
+        "width": 128
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/e530d89854388a007d3f.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/2e3f34b39bae4b4babef.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/f17e1dcca81efb7985b0.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/a1149a4fd6005c6ecb74.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/c180d32000c7917452b2.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/a28875fddafe7ca7566f.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/cab2255d7a8350398b28.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/3df558b37699d00a2d0a.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/d26111bc2023d73735de.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/fd8923e97c766fd83762.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/4932be9896047ec46091.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/cf243aca428479077639.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/2e3d7d32450bde8b0102.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/36d50729850d879736d6.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/44eef1f6eea3eba000ec.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/57d2262528e425814d02.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/c4278803ba194fecb7ee.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/7f346f59c33cd4d81a32.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/79165c6b705f92f05568.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/f19c811250a26652909c.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/ede033c81475f580e777.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/c2984923c7c08d50ca35.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/51802515c92aeb594f84.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/b7728bec25f6398e1eb0.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/76f98dc0d9206be04380.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/4f2115c66db7b067cb21.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/58324d0249111dd01b43.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/2233cd04604008dea2ea.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/94d4fa5547f977fca268.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/93ab2214aa8d92d43231.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/0d2f2de40a9d59941eb0.res",
+        "width": 2048
+      },
+      {
+        "bytes": 5592432,
+        "height": 2048,
+        "mips": true,
+        "path": "res://terrain/environment/textures/pure_village_kit/5025e6fcc22621b9d3e4.res",
+        "width": 2048
+      }
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_rsory"]
+
+[resource]
+script = ExtResource("1_rsory")
+id = &"pure_village.native.wood_beam_3x30_3"
+visual_path = "res://terrain/environment/visuals/pure_village_turret_grammar/pure_village_native_wood_beam_3x30_3.tres"
+tags = Array[StringName]([&"building", &"pure_village_native_grammar", &"village"])
+measured_aabb = AABB(-0.16516961, -1.4851693, -0.15280037, 0.32856965, 3.016561, 0.31187505)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"pure_village_turret_grammar:pure_village.native.wood_beam_3x30_3"

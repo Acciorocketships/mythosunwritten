@@ -36,7 +36,7 @@ func seal(grid: WarrenSpatialGrid) -> bool:
 	last_rejection = ""
 	if _sealed or grid == null or stable_id.is_empty() or owner_id.is_empty() \
 			or face_kind < WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR \
-			or face_kind > WarrenSpatialGrid.FaceKind.CONSTRUCTION_JOINT \
+			or face_kind > WarrenSpatialGrid.FaceKind.GARDEN_FLOOR \
 			or not _canonical_direction(direction) or face_cells.is_empty():
 		return _reject("invalid construction-region identity")
 	var plane := _plane_coordinate(face_cells[0])

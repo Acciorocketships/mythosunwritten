@@ -1,0 +1,45 @@
+--- before/scripts/terrain/features/villages/kit/KitFacadeRoofContacts.gd
++++ after/scripts/terrain/features/villages/kit/KitFacadeRoofContacts.gd
+@@ -99,9 +99,15 @@
+ 	prism.position.z -= 0.02
+ 	prism.size.z += 0.32
+ 	var world_prism := pose * prism
+-	var cutter := UNION.box_volume(world_prism)
+-	for skin: Dictionary in context.get("skins",[]):
+-		if not world_prism.intersects(skin.bounds): continue
++	return intersects_skins(world_prism, context.get("skins",[]))
++
++
++## Whole projecting assemblies must clear the finished roof skin, including
++## their hood above the glass. A glazing-only check misses that collision.
++static func intersects_skins(bounds: AABB, skins: Array) -> bool:
++	var cutter := UNION.box_volume(bounds)
++	for skin: Dictionary in skins:
++		if not bounds.intersects(skin.bounds): continue
+ 		for i in range(0,skin.indices.size(),3):
+ 			var triangle: Array = []
+ 			for j in 3:
+@@ -126,7 +132,8 @@
+ 	return opening.position.y >= min_y
+ 
+ 
+-static func fit(mass: BuildingMass, assembler: BuildingKitAssembler, context: Dictionary) -> int:
++static func fit(mass: BuildingMass, assembler: BuildingKitAssembler, context: Dictionary,
++		catalog: EnvironmentCatalog = null) -> int:
+ 	var kit := assembler.kit
+ 	var blanked := {}
+ 	var count := 0
+@@ -155,7 +162,12 @@
+ 			var min_y := float((storey.get("opening_min_y",{}) as Dictionary).get(slot.edge,-INF))
+ 			var pose := Transform3D(Basis(Vector3.UP,BuildingKitAssembler.yaw_for_dir(int(slot.dir))),
+ 				Vector3(centre.x*kit.module_width,opening_y,centre.y*kit.module_width))*kit.anchor(role)*kit.asset_anchor(asset)
+-			if _clears_backing(asset,pose,min_y,context) and not obstructed(asset,pose,context): continue
++			var hood_obstructed := false
++			if kind == BuildingMass.OPENING_BAY and catalog != null:
++				var bounds: AABB = pose * catalog.descriptor(asset).measured_aabb
++				hood_obstructed = intersects_skins(bounds.grow(-0.01),context.get("skins",[]))
++			if not hood_obstructed and _clears_backing(asset,pose,min_y,context) \
++					and not obstructed(asset,pose,context): continue
+ 			# Prefer another complete opening in the same family before using
+ 			# a plain panel. A shorter window often fits below a curved cornice.
+ 			var window_role := StringName("wall.%s.window" % storey.material)

@@ -1,0 +1,6 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ASSET suntail.roof.roof_1_red BOUNDS [P: (-0.999996, -0.101245, -2.123564), S: (1.999999, 3.219783, 2.242103)]
+ASSET suntail.roof.roof_1_cornice_red BOUNDS [P: (-1.00001, -0.59912, -2.110956), S: (2.000019, 3.717658, 3.097341)]
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)

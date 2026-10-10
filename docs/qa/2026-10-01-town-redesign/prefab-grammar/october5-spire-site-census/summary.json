@@ -1,0 +1,46 @@
+{
+  "83:grand": {
+    "attached_towers": 0,
+    "realized_cap_instances": 0,
+    "native_cap_instances": 0,
+    "opaque_prefabs": []
+  },
+  "8:grand": {
+    "attached_towers": 0,
+    "realized_cap_instances": 1,
+    "native_cap_instances": 1,
+    "opaque_prefabs": []
+  },
+  "103:grand": {
+    "attached_towers": 1,
+    "realized_cap_instances": 1,
+    "native_cap_instances": 0,
+    "opaque_prefabs": [
+      {
+        "id": "spatial.fabric.spatial.feature.landmark.01.component.00",
+        "recipe": "anchor.prefab.16"
+      },
+      {
+        "id": "spatial.fabric.spatial.feature.landmark.02.component.00",
+        "recipe": "anchor.prefab.12"
+      }
+    ]
+  },
+  "13:grand": {
+    "attached_towers": 2,
+    "realized_cap_instances": 2,
+    "native_cap_instances": 0,
+    "opaque_prefabs": []
+  },
+  "43:grand": {
+    "attached_towers": 1,
+    "realized_cap_instances": 1,
+    "native_cap_instances": 0,
+    "opaque_prefabs": [
+      {
+        "id": "spatial.fabric.spatial.feature.landmark.00.component.00",
+        "recipe": "anchor.prefab.11"
+      }
+    ]
+  }
+}

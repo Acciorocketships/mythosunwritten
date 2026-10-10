@@ -1,7 +1,7 @@
 [gd_resource type="StandardMaterial3D" load_steps=3 format=3]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/e76c53727ffdfddf0c5c.res" id="1_wpkg6"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/665b6098bcd2ed4266f9.res" id="2_5ysk2"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/c033a6bf3663a6a3f1ce.res" id="1_wpkg6"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/b32f6cd691ac80b6c012.res" id="2_5ysk2"]
 
 [resource]
 resource_name = "Wall"

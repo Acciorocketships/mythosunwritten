@@ -1,0 +1,8 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+SOURCE 43 { "proposal": { "cells": [(-5, -3), (-4, -3), (-3, -3), (-5, -2), (-4, -2), (-3, -2), (-5, -1), (-4, -1), (-3, -1)], "floor": 7, "entrance": (-2, 7, -2), "houses": { (-4, -4): true, (-2, -3): true, (-3, -4): true, (-4, 0): true, (-2, -1): true, (-3, 0): true }, "ring": 4, "cost": 27, "sides": 3, "tie": 1630150584 }, "visits": 20, "squares": [{ "id": &"plaza.00", "cells": 9, "floor": 7 }, { "id": &"deck.00", "cells": 4, "floor": 6 }] }
+SOURCE 83 { "proposal": { "cells": [(-3, -4), (-2, -4), (-1, -4), (-3, -3), (-2, -3), (-1, -3), (-3, -2), (-2, -2), (-1, -2)], "floor": 3, "entrance": (-2, 3, -1), "houses": { (-4, -4): true, (-3, -5): true, (-2, -5): true, (0, -4): true, (-1, -5): true, (-4, -3): true, (0, -3): true }, "ring": 3, "cost": 27, "sides": 3, "tie": 930870039 }, "visits": 7669, "squares": [{ "id": &"plaza.00", "cells": 9, "floor": 3 }] }
+SOURCE 211 { "proposal": { "cells": [(-6, -2), (-5, -2), (-4, -2), (-6, -1), (-5, -1), (-4, -1), (-6, 0), (-5, 0), (-4, 0)], "floor": 7, "entrance": (-3, 7, -1), "houses": { (-5, -3): true, (-3, -2): true, (-4, -3): true, (-5, 1): true, (-3, 0): true, (-4, 1): true }, "ring": 6, "cost": 27, "sides": 3, "tie": 878040774 }, "visits": 343, "squares": [{ "id": &"plaza.00", "cells": 9, "floor": 7 }] }
+SOURCE 257 { "proposal": {  }, "visits": 40020, "squares": [{ "id": &"plaza.00", "cells": 6, "floor": 4 }, { "id": &"deck.00", "cells": 4, "floor": 4 }, { "id": &"deck.01", "cells": 4, "floor": 0 }, { "id": &"deck.02", "cells": 4, "floor": 0 }] }

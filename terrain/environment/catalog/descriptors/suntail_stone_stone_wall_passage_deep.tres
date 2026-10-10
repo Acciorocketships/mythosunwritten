@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_xatbu"]
+
+[resource]
+script = ExtResource("1_xatbu")
+id = &"suntail.stone.stone_wall_passage_deep"
+visual_path = "res://terrain/environment/visuals/suntail_village_kit/suntail_stone_stone_wall_passage_deep.tres"
+tags = Array[StringName]([&"building", &"stone", &"suntail_kit", &"village"])
+measured_aabb = AABB(-1.1600262, 1.19209275e-07, -0.15703282, 2.160026, 3.0741968, 0.5140661)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"suntail_village_kit:suntail.stone.stone_wall_passage_deep"

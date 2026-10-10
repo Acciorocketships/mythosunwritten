@@ -1,0 +1,7 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+RANGE_JOIN  [P: (2, 14), S: (6, 2)] + [P: (0, 16), S: (8, 2)] -> [P: (2, 14), S: (6, 4)] axis=0 remnants=1
+RANGE_JOIN  [P: (14, 2), S: (2, 6)] + [P: (16, 0), S: (2, 8)] -> [P: (14, 2), S: (4, 6)] axis=1 remnants=1
+RANGE_PROOF_PASS both axes; exact footprint and multiplicity; refusal; idempotence
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)

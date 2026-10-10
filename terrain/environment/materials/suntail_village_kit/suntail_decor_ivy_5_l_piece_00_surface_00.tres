@@ -1,6 +1,6 @@
 [gd_resource type="StandardMaterial3D" load_steps=2 format=3]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/8ddbd0aad76bea27b516.res" id="1_yvekt"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/f22fd80bda5ad9a6b102.res" id="1_yvekt"]
 
 [resource]
 resource_name = "Ivy"

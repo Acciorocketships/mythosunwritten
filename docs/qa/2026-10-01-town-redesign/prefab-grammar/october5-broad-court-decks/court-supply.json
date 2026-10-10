@@ -1,0 +1,428 @@
+{
+	"103:grand": [],
+	"301:grand": [],
+	"31:large": [
+		{
+			"anchor": "(2, -6)",
+			"cost": 24,
+			"floor": 2,
+			"shape": "(3, 3)",
+			"sides": [
+				{
+					"direction": "(1, 0)",
+					"edge": 3,
+					"fronts": 2,
+					"reasons": {
+						"would overtop the citadel's plinth": 1
+					}
+				},
+				{
+					"direction": "(0, 1)",
+					"edge": 3,
+					"fronts": 0,
+					"reasons": {
+						"support rule refuses this floor": 3
+					}
+				},
+				{
+					"direction": "(-1, 0)",
+					"edge": 3,
+					"fronts": 2,
+					"reasons": {
+						"would overtop the citadel's plinth": 1
+					}
+				},
+				{
+					"direction": "(0, -1)",
+					"edge": 3,
+					"fronts": 3,
+					"reasons": {
+
+					}
+				}
+			]
+		},
+		{
+			"anchor": "(2, 6)",
+			"cost": 26,
+			"floor": 0,
+			"shape": "(3, 3)",
+			"sides": [
+				{
+					"direction": "(1, 0)",
+					"edge": 3,
+					"fronts": 2,
+					"reasons": {
+						"column already spoken for": 1
+					}
+				},
+				{
+					"direction": "(0, 1)",
+					"edge": 3,
+					"fronts": 0,
+					"reasons": {
+						"column already spoken for": 3
+					}
+				},
+				{
+					"direction": "(-1, 0)",
+					"edge": 3,
+					"fronts": 0,
+					"reasons": {
+						"column already spoken for": 2,
+						"support rule refuses this floor": 1
+					}
+				},
+				{
+					"direction": "(0, -1)",
+					"edge": 3,
+					"fronts": 3,
+					"reasons": {
+
+					}
+				}
+			]
+		}
+	],
+	"53:grand": [],
+	"63:grand": [
+		{
+			"anchor": "(-5, -2)",
+			"cost": 4,
+			"floor": 4,
+			"shape": "(3, 3)",
+			"sides": [
+				{
+					"direction": "(1, 0)",
+					"edge": 3,
+					"fronts": 0,
+					"reasons": {
+						"support rule refuses this floor": 1,
+						"would overtop the citadel's plinth": 2
+					}
+				},
+				{
+					"direction": "(0, 1)",
+					"edge": 3,
+					"fronts": 3,
+					"reasons": {
+
+					}
+				},
+				{
+					"direction": "(-1, 0)",
+					"edge": 3,
+					"fronts": 3,
+					"reasons": {
+
+					}
+				},
+				{
+					"direction": "(0, -1)",
+					"edge": 3,
+					"fronts": 0,
+					"reasons": {
+						"support rule refuses this floor": 2,
+						"would overtop the citadel's plinth": 1
+					}
+				}
+			]
+		},
+		{
+			"anchor": "(-4, -1)",
+			"cost": 12,
+			"floor": 4,
+			"shape": "(3, 3)",
+			"sides": [
+				{
+					"direction": "(1, 0)",
+					"edge": 3,
+					"fronts": 0,
+					"reasons": {
+						"support rule refuses this floor": 1,
+						"would overtop the citadel's plinth": 2
+					}
+				},
+				{
+					"direction": "(0, 1)",
+					"edge": 3,
+					"fronts": 3,
+					"reasons": {
+
+					}
+				},
+				{
+					"direction": "(-1, 0)",
+					"edge": 3,
+					"fronts": 2,
+					"reasons": {
+						"would overtop the citadel's plinth": 1
+					}
+				},
+				{
+					"direction": "(0, -1)",
+					"edge": 3,
+					"fronts": 0,
+					"reasons": {
+						"support rule refuses this floor": 1,
+						"would overtop the citadel's plinth": 2
+					}
+				}
+			]
+		},
+		{
+			"anchor": "(-5, -2)",
+			"cost": 14,
+			"floor": 4,
+			"shape": "(3, 4)",
+			"sides": [
+				{
+					"direction": "(1, 0)",
+					"edge": 4,
+					"fronts": 1,
+					"reasons": {
+						"support rule refuses this floor": 1,
+						"would overtop the citadel's plinth": 2
+					}
+				},
+				{
+					"direction": "(0, 1)",
+					"edge": 3,
+					"fronts": 3,
+					"reasons": {
+
+					}
+				},
+				{
+					"direction": "(-1, 0)",
+					"edge": 4,
+					"fronts": 4,
+					"reasons": {
+
+					}
+				},
+				{
+					"direction": "(0, -1)",
+					"edge": 3,
+					"fronts": 0,
+					"reasons": {
+						"support rule refuses this floor": 2,
+						"would overtop the citadel's plinth": 1
+					}
+				}
+			]
+		},
+		{
+			"anchor": "(-6, -2)",
+			"cost": 4,
+			"floor": 4,
+			"shape": "(4, 3)",
+			"sides": [
+				{
+					"direction": "(1, 0)",
+					"edge": 3,
+					"fronts": 0,
+					"reasons": {
+						"support rule refuses this floor": 1,
+						"would overtop the citadel's plinth": 2
+					}
+				},
+				{
+					"direction": "(0, 1)",
+					"edge": 4,
+					"fronts": 4,
+					"reasons": {
+
+					}
+				},
+				{
+					"direction": "(-1, 0)",
+					"edge": 3,
+					"fronts": 0,
+					"reasons": {
+						"support rule refuses this floor": 3
+					}
+				},
+				{
+					"direction": "(0, -1)",
+					"edge": 4,
+					"fronts": 0,
+					"reasons": {
+						"support rule refuses this floor": 3,
+						"would overtop the citadel's plinth": 1
+					}
+				}
+			]
+		},
+		{
+			"anchor": "(-5, -1)",
+			"cost": 18,
+			"floor": 4,
+			"shape": "(4, 3)",
+			"sides": [
+				{
+					"direction": "(1, 0)",
+					"edge": 3,
+					"fronts": 0,
+					"reasons": {
+						"support rule refuses this floor": 1,
+						"would overtop the citadel's plinth": 2
+					}
+				},
+				{
+					"direction": "(0, 1)",
+					"edge": 4,
+					"fronts": 4,
+					"reasons": {
+
+					}
+				},
+				{
+					"direction": "(-1, 0)",
+					"edge": 3,
+					"fronts": 3,
+					"reasons": {
+
+					}
+				},
+				{
+					"direction": "(0, -1)",
+					"edge": 4,
+					"fronts": 0,
+					"reasons": {
+						"support rule refuses this floor": 1,
+						"would overtop the citadel's plinth": 3
+					}
+				}
+			]
+		}
+	],
+	"83:grand": [
+		{
+			"anchor": "(0, -3)",
+			"cost": 12,
+			"floor": 4,
+			"shape": "(3, 3)",
+			"sides": [
+				{
+					"direction": "(1, 0)",
+					"edge": 3,
+					"fronts": 1,
+					"reasons": {
+						"would overtop the citadel's plinth": 2
+					}
+				},
+				{
+					"direction": "(0, 1)",
+					"edge": 3,
+					"fronts": 1,
+					"reasons": {
+						"support rule refuses this floor": 1,
+						"would overtop the citadel's plinth": 1
+					}
+				},
+				{
+					"direction": "(-1, 0)",
+					"edge": 3,
+					"fronts": 1,
+					"reasons": {
+						"support rule refuses this floor": 1,
+						"would overtop the citadel's plinth": 1
+					}
+				},
+				{
+					"direction": "(0, -1)",
+					"edge": 3,
+					"fronts": 3,
+					"reasons": {
+
+					}
+				}
+			]
+		},
+		{
+			"anchor": "(0, -4)",
+			"cost": 24,
+			"floor": 4,
+			"shape": "(3, 4)",
+			"sides": [
+				{
+					"direction": "(1, 0)",
+					"edge": 4,
+					"fronts": 2,
+					"reasons": {
+						"would overtop the citadel's plinth": 2
+					}
+				},
+				{
+					"direction": "(0, 1)",
+					"edge": 3,
+					"fronts": 1,
+					"reasons": {
+						"support rule refuses this floor": 1,
+						"would overtop the citadel's plinth": 1
+					}
+				},
+				{
+					"direction": "(-1, 0)",
+					"edge": 4,
+					"fronts": 2,
+					"reasons": {
+						"support rule refuses this floor": 1,
+						"would overtop the citadel's plinth": 1
+					}
+				},
+				{
+					"direction": "(0, -1)",
+					"edge": 3,
+					"fronts": 3,
+					"reasons": {
+
+					}
+				}
+			]
+		},
+		{
+			"anchor": "(0, -3)",
+			"cost": 12,
+			"floor": 4,
+			"shape": "(4, 3)",
+			"sides": [
+				{
+					"direction": "(1, 0)",
+					"edge": 3,
+					"fronts": 0,
+					"reasons": {
+						"column already spoken for": 3
+					}
+				},
+				{
+					"direction": "(0, 1)",
+					"edge": 4,
+					"fronts": 1,
+					"reasons": {
+						"support rule refuses this floor": 1,
+						"would overtop the citadel's plinth": 2
+					}
+				},
+				{
+					"direction": "(-1, 0)",
+					"edge": 3,
+					"fronts": 1,
+					"reasons": {
+						"support rule refuses this floor": 1,
+						"would overtop the citadel's plinth": 1
+					}
+				},
+				{
+					"direction": "(0, -1)",
+					"edge": 4,
+					"fronts": 4,
+					"reasons": {
+
+					}
+				}
+			]
+		}
+	]
+}

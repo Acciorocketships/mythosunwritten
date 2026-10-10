@@ -1,0 +1,254 @@
+[gd_resource type="Resource" script_class="TownOddsTable" load_steps=25 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/features/villages/odds/TownOddsTable.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/terrain/features/villages/odds/TownKnob.gd" id="2"]
+
+[sub_resource type="Resource" id="clearing_count"]
+script = ExtResource("2")
+name = &"clearing_count"
+kind = 2
+at_small = 0.0
+at_large = 0.0
+spread = 0.0
+clamp_min = 0.0
+clamp_max = 6.0
+
+[sub_resource type="Resource" id="clearing_block_bias"]
+script = ExtResource("2")
+name = &"clearing_block_bias"
+kind = 1
+at_small = 1.5
+at_large = 1.5
+spread = 0.5
+clamp_min = 0.0
+clamp_max = 4.0
+
+[sub_resource type="Resource" id="clearing_ground_weight"]
+script = ExtResource("2")
+name = &"clearing_ground_weight"
+kind = 1
+at_small = 2.0
+at_large = 2.0
+spread = 0.0
+clamp_min = 1.0
+clamp_max = 6.0
+
+[sub_resource type="Resource" id="clearing_area"]
+script = ExtResource("2")
+name = &"clearing_area"
+kind = 2
+at_small = 6.0
+at_large = 14.0
+spread = 3.0
+clamp_min = 4.0
+clamp_max = 24.0
+
+[sub_resource type="Resource" id="clearing_shape"]
+script = ExtResource("2")
+name = &"clearing_shape"
+kind = 3
+at_small = 0
+at_large = 0
+spread = 0.3
+clamp_min = 0.0
+clamp_max = 1.0
+options = PackedStringArray("rect", "two_rect", "three_rect", "blob")
+weights_small = PackedFloat32Array(0.4, 0.3, 0.1, 0.2)
+weights_large = PackedFloat32Array(0.3, 0.35, 0.15, 0.2)
+
+[sub_resource type="Resource" id="clearing_extra_link_chance"]
+script = ExtResource("2")
+name = &"clearing_extra_link_chance"
+kind = 0
+at_small = 0.4
+at_large = 0.4
+spread = 0.15
+clamp_min = 0.0
+clamp_max = 1.0
+
+[sub_resource type="Resource" id="clearing_cover"]
+script = ExtResource("2")
+name = &"clearing_cover"
+kind = 3
+at_small = 0
+at_large = 0
+spread = 0.0
+clamp_min = 0.0
+clamp_max = 1.0
+options = PackedStringArray("open")
+weights_small = PackedFloat32Array(1.0)
+weights_large = PackedFloat32Array(1.0)
+
+[sub_resource type="Resource" id="clearing_purpose"]
+script = ExtResource("2")
+name = &"clearing_purpose"
+kind = 3
+at_small = 0
+at_large = 0
+spread = 0.4
+clamp_min = 0.0
+clamp_max = 1.0
+options = PackedStringArray("green", "paved", "market", "workyard")
+weights_small = PackedFloat32Array(0.45, 0.3, 0.1, 0.15)
+weights_large = PackedFloat32Array(0.4, 0.3, 0.15, 0.15)
+
+[sub_resource type="Resource" id="clearing_lobe_bias"]
+script = ExtResource("2")
+name = &"clearing_lobe_bias"
+kind = 1
+at_small = 2.0
+at_large = 2.0
+spread = 0.0
+clamp_min = 0.0
+clamp_max = 4.0
+notes = "Town taste knobs (Oct 7) task 1: a grown clearing is kept with probability max(0.05, (mean lobe depth of its cells / deepest depth a full clearing could reach)^bias), rolled on its own stream; lobe depth = massif layer over ground averaged over a 3-column diamond, normalised (WarrenCourtClearings.lobe_depth). Pulls courtyards into the town field's Gaussian lobes where houses stand. A pull rejection does not use up the ordinary attempt budget (pulls have their own, equally large) and is kept as a fallback: if the draw ends short, the best-kept rejected clearings that still fit fill the count, so a pull never under-fills clearing_count by itself. 0 = off (today)."
+
+[sub_resource type="Resource" id="clearing_enclosure_bias"]
+script = ExtResource("2")
+name = &"clearing_enclosure_bias"
+kind = 1
+at_small = 2.0
+at_large = 2.0
+spread = 0.0
+clamp_min = 0.0
+clamp_max = 4.0
+notes = "Town taste knobs (Oct 7) task 1: a grown clearing is kept with probability max(0.05, ((1 + sides houses can front) / 5)^bias), rolled on its own stream; a rejection does not use up the ordinary attempt budget and is kept as a fallback (the best-kept rejected clearings that still fit fill a short draw). 0 = always kept (today)."
+
+[sub_resource type="Resource" id="plaza_ring_chance"]
+script = ExtResource("2")
+name = &"plaza_ring_chance"
+kind = 0
+at_small = 1.0
+at_large = 1.0
+spread = 0.0
+clamp_min = 0.0
+clamp_max = 1.0
+notes = "Town taste knobs (Oct 7) task 2: chance the primary green plaza (plaza.00) keeps its one-cell walking ring round the lawn, rolled per plot id. Without a ring the lawn reaches every court edge that faces built mass; walk is kept only on edges facing a street, open air or a drop (those keep their guards), on every door/entrance landing, and on 1-cell strips joining them (WarrenVolumetricSolver._ringless_court_walk). 1 = always ringed (today)."
+
+[sub_resource type="Resource" id="clearing_ring_chance"]
+script = ExtResource("2")
+name = &"clearing_ring_chance"
+kind = 0
+at_small = 0.25
+at_large = 0.25
+spread = 0.0
+clamp_min = 0.0
+clamp_max = 1.0
+notes = "Town taste knobs (Oct 7) task 2: chance a green clearing court (clearing.NN, purpose green) keeps its walking ring, rolled per plot id; ringless greens as for plaza_ring_chance. 1 = always ringed (today)."
+
+[sub_resource type="Resource" id="clearing_deco_density"]
+script = ExtResource("2")
+name = &"clearing_deco_density"
+kind = 1
+at_small = 0.7
+at_large = 0.7
+spread = 0.0
+clamp_min = 0.0
+clamp_max = 1.0
+notes = "Town taste knobs (Oct 7) task 3: how fully a courtyard clearing (clearing.NN) is furnished for its purpose -- each clearing places up to round(density x capacity) prop groups (capacity = deco cells / 6, clamped 2..6) on its non-walk cells (green: the lawn island; paved/market/workyard: the court minus its kept walk of landings, street mouths and joining strips). Green: benches, planters, plants, a lantern post; paved: a stocked stall, crates, barrels, a bench; market: stocked stalls and goods; workyard: anvil, work table, firewood, crates. Order rolled per plot id; every piece passes the optional-dressing clearance gate and never overlaps the centre features or another piece (SettlementFabricAssembler.maze_clearing_decor). 0 = bare (today)."
+
+[sub_resource type="Resource" id="well_scale"]
+script = ExtResource("2")
+name = &"well_scale"
+kind = 1
+at_small = 0.7
+at_large = 0.7
+spread = 0.0
+clamp_min = 0.4
+clamp_max = 1.25
+notes = "Town taste knobs (Oct 7) task 4: size factor of a green's well (sfv.well.001 -> suntail well), applied to the placement's scale before the clearance check so a smaller well also frees room. Wells only ever stand on ground-level greens (a hard rule, not a knob: a raised green gets the next piece in its seeded rotation). 1 = the authored kit fit (today)."
+
+[sub_resource type="Resource" id="satellite_reach_scale"]
+script = ExtResource("2")
+name = &"satellite_reach_scale"
+kind = 1
+at_small = 0.7
+at_large = 0.7
+spread = 0.15
+clamp_min = 0.3
+clamp_max = 1.5
+notes = "Town taste knobs (Oct 7) task 6: multiplies how far the town field's satellite lobes stand from the town centre (radius x spread x 0.75..1.2), the gap clearings between them, and (up to 1.0) the central-green ring (1.25..MAX_GREEN_REACH x radius). Applied after the field's own draws, so no other roll moves, but the whole layout follows the lobes (shoulders, house/massif classification, terraces, streets), so a changed reach reshapes the town, not just its satellites. The central-green ring is capped at 1.0 (a wider ring would leave the discovery bound). A suburb cottage pushed against other mass (no clear 1-column ring, COTTAGE_CLEARANCE) is refused as a cottage site, never the town. Below 1 pulls satellite houses and districts in toward the core. 1 = today."
+
+[sub_resource type="Resource" id="suburb_house_count"]
+script = ExtResource("2")
+name = &"suburb_house_count"
+kind = 2
+at_small = 1.0
+at_large = 4.0
+spread = 1.0
+clamp_min = 0.0
+clamp_max = 12.0
+notes = "Town taste knobs (Oct 7) task 6: up to this many small one-storey house lobes in an annulus 1.0-1.4 x radius round the town centre (a suburban band of detached cottages between the dense core and the countryside), drawn after every other lobe on this knob's own stream. Each steps outward (0.25 cells at a time, trying its drawn direction and two tangential neighbours) from its drawn 1.0-1.4 radius to the first spot with a clear 1-column (Chebyshev, COTTAGE_CLEARANCE) ring between its footprint and every other lobe's built footprint, never past 1.6 x radius (SUBURB_MAX_REACH) nor the sampled box; a direction with no such spot is redrawn (SUBURB_TRIES 8), then the cottage is dropped (never the town); survivors become house sites through the ordinary house-site admission (a whole 2x2 block, a garden of 4+ columns, clear of the raised district), so steep, wet or crowded ground drops them. 0 = today."
+
+[sub_resource type="Resource" id="lone_house_path_chance"]
+script = ExtResource("2")
+name = &"lone_house_path_chance"
+kind = 0
+at_small = 0.2
+at_large = 0.2
+spread = 0.0
+clamp_min = 0.0
+clamp_max = 1.0
+notes = "Town taste knobs (Oct 7) task 6: chance a reserved cottage (house site) not already on the street network gets a painted access road, rolled per site id. When the roll fails and the cottage stands on its own ground with its whole approach over open ground at that grade, its approach is a footway (feature_kind house_site_footway): still walk for the door and the audits, but no worn-path paint (PublicRealmSurfacePlan.footway_columns). Otherwise the road is carved regardless. 1 = always a road (today)."
+
+[sub_resource type="Resource" id="growing_house_chance"]
+script = ExtResource("2")
+name = &"growing_house_chance"
+kind = 0
+at_small = 0.3
+at_large = 0.45
+spread = 0.1
+clamp_min = 0.0
+clamp_max = 1.0
+notes = "Growing upper floors (Oct 8) task 1, Amendment 2 (Oct 9): share of eligible houses (two stacked storeys and an exposed face) whose lower storeys step in under a fixed top storey and roof, rolled per house stable id (KitGrowingFronts.house_grows). A growing house takes no inset jetties. 0 = the pre-growth towns. Shipped (task 11): 0.3 small -> 0.45 large, spread 0.1."
+
+[sub_resource type="Resource" id="growth_street_face_chance"]
+script = ExtResource("2")
+name = &"growth_street_face_chance"
+kind = 0
+at_small = 0.85
+at_large = 0.85
+spread = 0.0
+clamp_min = 0.0
+clamp_max = 1.0
+notes = "Growing upper floors (Oct 8) task 1: per street-facing exposed face of a growing house (every edge's outward column is public air at some band from the ground up to the storey), rolled per face key."
+
+[sub_resource type="Resource" id="growth_other_face_chance"]
+script = ExtResource("2")
+name = &"growth_other_face_chance"
+kind = 0
+at_small = 0.85
+at_large = 0.85
+spread = 0.0
+clamp_min = 0.0
+clamp_max = 1.0
+notes = "Growing upper floors (Oct 8) task 1: per other exposed face of a growing house, rolled per face key. Amended Oct 8: equal to growth_street_face_chance by default, every exposed face alike."
+
+[sub_resource type="Resource" id="growth_step"]
+script = ExtResource("2")
+name = &"growth_step"
+kind = 3
+at_small = 0.0
+at_large = 0.0
+spread = 0.0
+clamp_min = 0.0
+clamp_max = 1.0
+options = PackedStringArray("0.5", "1.0")
+weights_small = PackedFloat32Array(1, 3)
+weights_large = PackedFloat32Array(1, 3)
+notes = "Step added per storey, native m: 1.0 = the Suntail jetty (half a module, 2.0 m world) on bracket.jetty; 0.5 = the light step on bracket.small. Picked per front leader; quantised to what the kit carries (KitGrowingFronts.carried_step)."
+
+[sub_resource type="Resource" id="growth_max_lean"]
+script = ExtResource("2")
+name = &"growth_max_lean"
+kind = 1
+at_small = 2.0
+at_large = 2.0
+spread = 0.0
+clamp_min = 0.0
+clamp_max = 2.0
+notes = "Total step-in of the ground storey below the top storey, native m (2.0 = two kit jetties, 4 m world), floored to whole steps; the top storey and roof never move (spec Amendment 2)."
+
+[resource]
+script = ExtResource("1")
+knobs = Array[Resource]([SubResource("clearing_count"), SubResource("clearing_block_bias"), SubResource("clearing_ground_weight"), SubResource("clearing_area"), SubResource("clearing_shape"), SubResource("clearing_extra_link_chance"), SubResource("clearing_cover"), SubResource("clearing_purpose"), SubResource("clearing_lobe_bias"), SubResource("clearing_enclosure_bias"), SubResource("plaza_ring_chance"), SubResource("clearing_ring_chance"), SubResource("clearing_deco_density"), SubResource("well_scale"), SubResource("satellite_reach_scale"), SubResource("suburb_house_count"), SubResource("lone_house_path_chance"), SubResource("growing_house_chance"), SubResource("growth_street_face_chance"), SubResource("growth_other_face_chance"), SubResource("growth_step"), SubResource("growth_max_lean")])

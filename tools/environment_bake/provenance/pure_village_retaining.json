@@ -1,0 +1,239 @@
+{
+  "assets": [
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_stone_plinth.tres",
+      "id": "pure_village.stone.plinth",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 410,
+        "measured_aabb": {
+          "position": [
+            -1.0,
+            0.0,
+            -0.165415033698082
+          ],
+          "size": [
+            2.0,
+            1.0,
+            0.345002412796021
+          ]
+        },
+        "mesh_bytes": 16314,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 410
+      },
+      "pack": "pure_village_retaining",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.stone.plinth",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/WallStone_Start_20x10_1.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_retaining",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/WallStone_Start_20x10_1.glb",
+      "source_sha256": "eaa0eba07b8bae7f1ba6ca56792c15dcb501ed4b699a19dd5cb1be8f051fd215",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true,
+        "namespace": "pure_village_kit"
+      },
+      "tool_version": 41,
+      "visual": "res://terrain/environment/visuals/pure_village_retaining/pure_village_stone_plinth.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_stone_retaining_corbel.tres",
+      "id": "pure_village.stone.retaining_corbel",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1752,
+        "measured_aabb": {
+          "position": [
+            -1.80849850177765,
+            -0.00494454242289066,
+            -0.523417949676514
+          ],
+          "size": [
+            3.61342573165894,
+            1.6684650182724,
+            1.65793943405151
+          ]
+        },
+        "mesh_bytes": 65330,
+        "surface_count": 3,
+        "visual_piece_count": 1,
+        "visual_triangles": 1752
+      },
+      "pack": "pure_village_retaining",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.stone.retaining_corbel",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/SupportStone_Middle_30x15.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_retaining",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/SupportStone_Middle_30x15.glb",
+      "source_sha256": "39d5e6a0e2a73ab7b90b41fd5de5cda53dfee1b04e90ec2f2229cf38480d9782",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true,
+        "namespace": "pure_village_kit"
+      },
+      "tool_version": 41,
+      "visual": "res://terrain/environment/visuals/pure_village_retaining/pure_village_stone_retaining_corbel.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_stone_retaining_half.tres",
+      "id": "pure_village.stone.retaining_half",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 438,
+        "measured_aabb": {
+          "position": [
+            -1.0,
+            -0.0110288774594665,
+            -0.182666018605232
+          ],
+          "size": [
+            2.0,
+            1.51656723022461,
+            0.365290522575378
+          ]
+        },
+        "mesh_bytes": 18962,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 438
+      },
+      "pack": "pure_village_retaining",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.stone.retaining_half",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/WallStone_Start_20x15_1.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_retaining",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/WallStone_Start_20x15_1.glb",
+      "source_sha256": "65a72465654e3e47abf82e7aa7162748a624279d2a59f6b4abc477db6abd01e5",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true,
+        "namespace": "pure_village_kit"
+      },
+      "tool_version": 41,
+      "visual": "res://terrain/environment/visuals/pure_village_retaining/pure_village_stone_retaining_half.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_stone_retaining_window.tres",
+      "id": "pure_village.stone.retaining_window",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1230,
+        "measured_aabb": {
+          "position": [
+            -0.661611318588257,
+            -0.997516810894012,
+            -0.185984760522842
+          ],
+          "size": [
+            1.29005002975464,
+            1.74047195911407,
+            0.34360945224762
+          ]
+        },
+        "mesh_bytes": 47754,
+        "surface_count": 3,
+        "visual_piece_count": 1,
+        "visual_triangles": 1230
+      },
+      "pack": "pure_village_retaining",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.stone.retaining_window",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/WindowSolo_3.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_retaining",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/WindowSolo_3.glb",
+      "source_sha256": "65803ce331eb053964dec0e8e67058921448f069cf69ab20a5ce99966287f5c1",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true,
+        "namespace": "pure_village_kit"
+      },
+      "tool_version": 41,
+      "visual": "res://terrain/environment/visuals/pure_village_retaining/pure_village_stone_retaining_window.tres"
+    }
+  ],
+  "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+  "pack": "pure_village_retaining",
+  "tool_version": 41
+}

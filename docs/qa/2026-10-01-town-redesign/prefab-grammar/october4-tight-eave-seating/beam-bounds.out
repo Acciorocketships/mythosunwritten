@@ -1,0 +1,7 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+suntail.decor.crossbar_2 [P: (-1.0, -0.142435, -0.083873), S: (2.0, 0.286729, 0.281136)]
+suntail.floor.beam_1 [P: (-1.0, -0.122632, -0.117397), S: (2.0, 0.239059, 0.234795)]
+suntail.frame.frame_wall_1 [P: (-1.158332, -0.00115, -0.161411), S: (2.159498, 3.07564, 0.313669)]
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)

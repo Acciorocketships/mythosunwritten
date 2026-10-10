@@ -1,0 +1,54 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_october1_facade_roof_contacts.gd
+[0m* test_roof_crossing_an_opening_replaces_its_panel_and_window_box_only
+* test_roofs_below_a_sill_do_not_remove_clear_windows
+* test_every_window_and_bay_variant_has_measured_opening_bounds
+* test_a_lower_variant_preserves_windows_below_a_cornice
+* test_off_center_source_window_is_not_cropped_through_its_frame
+* test_cached_native_roof_geometry_survives_payload_mapping
+* test_native_curved_cornice_uses_finished_skin_not_only_attic_volume
+* test_raised_floor_crossing_a_window_fits_a_complete_higher_opening
+* test_floor_mapping_and_guards_do_not_confuse_opening_contacts
+* test_neighboring_inhabited_half_storey_floor_cannot_cut_a_window
+* test_finished_mixed_town_windows_clear_all_inhabited_floors
+* test_attachment_cut_is_not_hidden_by_an_earlier_cached_roof
+* test_half_backed_facade_uses_a_native_high_window_without_looking_into_stone
+* test_reported_upper_street_keeps_high_native_windows_on_its_suntail_house
+[31m    [Failed]:  [0m[0] expected to be > than [2]:  the long formerly blank upper-street facade gains real openings
+      at line 254
+* test_roof_through_bay_hood_is_rejected_even_when_glass_is_clear
+[1m14/15 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_october1_facade_roof_contacts.gd
+[0m- test_reported_upper_street_keeps_high_native_windows_on_its_suntail_house
+[31m    [Failed]:  [0m[0] expected to be > than [2]:  the long formerly blank upper-street facade gains real openings
+          at line 254
+
+Totals
+------
+Scripts               1
+Tests                15
+Passing Tests        14
+Failing Tests         1
+Asserts           290/291
+Time              39.106s
+
+
+[31m---- 1 failing tests ----
+[0m

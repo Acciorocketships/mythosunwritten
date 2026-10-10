@@ -14,7 +14,7 @@ func _run() -> void:
 	var source := preload("res://tests/fixtures/frozen_maze_source.gd").read(
 		"res://tests/fixtures/september11-unified-roof-source.txt")
 	var spatial := WarrenVolumetricSolver.from_volume(
-		WarrenMazeVolumeAdapter.to_volume_plan(source), -1, program, false, true)
+		WarrenMazeVolumeAdapter.to_volume_plan(source), -1, program, true)
 	var fabric := WarrenSpatialFabricCompiler.generate(spatial, program, true)
 	assert(fabric != null, WarrenSpatialFabricCompiler.last_failure)
 	var selected: Array[Dictionary] = []

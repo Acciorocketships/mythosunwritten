@@ -6031,7 +6031,7 @@ func test_the_square_s_feature_stands_in_its_middle() -> void:
 		var entries := SettlementFabricAssembler.maze_plaza_entries(plaza,
 			walked)
 		var feature := SettlementFabricAssembler.maze_plaza_centre_feature(
-			plaza, entries)
+			plaza, entries, {}, [] as Array[AABB], {}, false, 1)
 		if feature.is_empty():
 			continue
 		checked += 1
@@ -6112,11 +6112,11 @@ func test_a_public_turf_square_cannot_gain_late_furniture_or_planting() -> void:
 			plaza[support] = true
 			walked[support + Vector3i.UP] = true
 	var feature := SettlementFabricAssembler.maze_plaza_centre_feature(plaza,
-		{}, {}, [] as Array[AABB], walked)
+		{}, {}, [] as Array[AABB], walked, false, 1)
 	assert_true(feature.is_empty(),
 		"a source-planned public square may not acquire a late centre obstacle")
 	var sites := SettlementFabricAssembler.maze_garden_planting_sites(plaza,
-		plaza, {}, {}, {}, {}, [] as Array[AABB], walked)
+		plaza, {}, {}, {}, {}, [] as Array[AABB], walked, 1)
 	assert_eq(sites.size(), 0,
 		"public turf cells may not acquire boundary planting after route proof")
 
@@ -11084,6 +11084,10 @@ func test_the_production_site_builds_a_maze_town_on_real_terrain() -> void:
 	assert_true(urban.validate(site.program as VillageProgram, &"village"),
 		("the production town failed the sealed materialization contract " \
 			+ "the streamed payload is built from"))
+	assert_false(urban.ground_dressing_audit.is_empty(),
+		"the production ground dressing pass must publish its disposition")
+	assert_true(urban._fabric_audit_matches_plan(),
+		"world-ground dressing must preserve the sealed local construction audit")
 	assert_lt(int(outcome.ms), scaled_ceiling(PRODUCTION_SOLVE_MS_CEILING),
 		("the production solve has fallen back into a search: the whole " \
 			+ "one-pass path is seconds, the searched pipeline it replaced " \

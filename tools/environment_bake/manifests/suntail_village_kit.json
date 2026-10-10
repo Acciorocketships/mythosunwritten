@@ -2115,6 +2115,11 @@
    "id": "suntail.prop.lamp_1",
    "source": "res://assets/Raygeas/Models/Environment/Lamp_1.glb",
    "merge_pieces": true,
+   "material_tint_variants": {
+    "dark_wood": {
+     "Lamp_1": [0.62, 0.42, 0.28, 1.0]
+    }
+   },
    "tags": [
     "village",
     "suntail_kit",
@@ -2735,5 +2740,9 @@
    "albedo_texture": "res://assets/Raygeas/Textures/Building_Modules/Boards_AlbedoSmoothness.png",
    "normal_texture": "res://assets/Raygeas/Textures/Building_Modules/Boards_Normal.png"
   }
+ },
+ "texture_policy": {
+  "compression": "basis_universal",
+  "mipmaps": true
  }
 }

@@ -1,0 +1,39 @@
+{
+  "pack": "pure_village_cantilevers",
+  "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+  "default_scale": [
+    1,
+    1,
+    1
+  ],
+  "assets": [
+    {
+      "id": "pure_village.support.cantilever",
+      "source": "res://assets/PureVillage/Models/Architecture/Support_8.glb",
+      "pivot": [
+        0,
+        0,
+        0
+      ],
+      "merge_pieces": true,
+      "tags": [
+        "village",
+        "pure_village_cantilevers",
+        "building"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 20000,
+      "max_surfaces": 12,
+      "collision_profile": "building_trimesh",
+      "max_collision_triangles": 20000,
+      "max_collision_pieces": 1
+    }
+  ],
+  "texture_policy": {
+    "compression": "basis_universal",
+    "mipmaps": true,
+    "namespace": "pure_village_kit"
+  }
+}

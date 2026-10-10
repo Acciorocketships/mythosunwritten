@@ -1,0 +1,9 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+TUNNELS 53 grand [(3, 0, 1), (2, 0, -1), (1, 0, -1), (-1, 0, 0), (-2, 0, 0), (-2, 0, -1), (-4, 0, -1), (4, 0, -3), (1, 0, -5), (0, 0, -5), (-1, 0, -5), (-1, 0, -7), (-1, 0, -8), (-1, 0, -10), (5, 0, -2), (5, 0, -1), (-2, 0, -9), (-3, 0, -10), (-2, 0, -11), (-4, 0, -9), (-5, 0, -9), (-6, 0, -9), (-4, 0, -11), (-1, 1, 6)]
+STEPPED_HOUSES [{ "id": &"kit.spatial.feature.landmark.03", "at": (-14.25, 3.0, -21.75), "reach": 24.0 }, { "id": &"kit.spatial.parcel.maze.house.013", "at": (-5.25, 3.0, -18.75), "reach": 32.0 }]
+ROOF_AUDIT { "clipped": 333, "removed": 96, "chimneys": { "moved": 0, "omitted": 0, "checked": 4 }, "towers": { "corner_attempts": 65, "corner_join_quadrants": 16, "corner_no_host_join": 16, "corner_supported": 6, "corner_public_blocked": 5, "corner_accepted": 1, "corner_bearing_rejected": 30, "corner_bearing_example": "kit.spatial.parcel.maze.house.036 / (5, 5, -6) / base 6", "corner_no_bearing_or_space": 43, "attempts": 222, "supported": 4, "host_fit": 4, "public_clear": 3, "neighbor_clear": 2, "corner_reservation_rejected": 13, "corner_reservation_example": "kit.spatial.parcel.maze.house.032 / (-3, 9, -6) / base 5", "accepted": 2 }, "facade_bays": 3, "room_projections": 4, "retaining_relief": 16, "retaining_windows": 40, "retaining_recesses": 12, "decor_clearance": { &"window_box": 43, &"prop.doorstep": 14 }, "joins": 6, "fitted_eaves": 3, "dormers": { "moved": 1, "omitted": 0, "checked": 5 }, "roof_blocked_windows": 128, "roof_fitted_windows": 35 }
+TOWN 53 grand buildings=84 instances=4538 ms=28968
+BOUNDS cells=[P: (-64.0, 0.0, -104.0), S: (116.0, 45.0, 180.0)] payload=[P: (-66.34, -6.0, -106.34), S: (126.59, 60.6, 184.654)]
+REVIEW_DONE /tmp/stone-frame-review

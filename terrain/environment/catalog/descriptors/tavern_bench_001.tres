@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_coegg"]
+
+[resource]
+script = ExtResource("1_coegg")
+id = &"tavern.bench.001"
+visual_path = "res://terrain/environment/visuals/town_props/tavern_bench_001.tres"
+tags = Array[StringName]([&"TavernandKitchenFBX", &"decoration", &"village"])
+measured_aabb = AABB(-0.2103404, 5.9476135e-09, -1.3554674, 0.42068088, 0.56395763, 2.7109349)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"town_props:tavern.bench.001"

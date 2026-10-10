@@ -1,0 +1,36 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_warren_maze_composition.gd
+[0m* test_the_production_site_builds_a_maze_town_on_real_terrain
+MAZE_PRODUCTION settlement=settlement.29bc5c240c52f84a cell=(10, -16) city_seed=166029932451774690 scale=compact ms=6274 accepted=true reason=accepted
+MAZE_PRODUCTION entries=1825 meshes=831 lift=0.080 relief=4.000 origin=(264.0, 8.08, -382.0) advisory={ "covered_market": 0, "hero_courtyard_bridges": 0, "hero_landmarks": 1, "hero_landmarks_target": 0, "hero_skywalks": 0, "hero_skywalks_target": 1, "bridges": 1, "landmarks": 1, "landmarks_target": 5, "skywalks": 0, "skywalks_target": 1 }
+MACHINE_FACTOR reference_ms=[132, 132, 132] median=132 calibration=137 raw=0.964 applied=1.000
+[1m1/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests         1
+Asserts             125
+Time              57.382s
+
+
+Ran Tests matching "test_the_production_site_builds_a_maze_town_on_real_terrain"
+[32m---- All tests passed! ----
+[0m

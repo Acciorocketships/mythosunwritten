@@ -1,0 +1,16 @@
+extends SceneTree
+func _init():call_deferred('run')
+func run():
+ var fixture=load('res://tests/test_warren_maze_composition.gd').new()
+ root.add_child(fixture)
+ var site:Dictionary=fixture._production_site()
+ var rows:=[]
+ for attempt in 3:
+  var result:Dictionary=fixture._solve_production(site)
+  var town:VillageUrbanFabricPlan=result.urban
+  var row:={'attempt':attempt,'ms':result.ms,'signature':result.signature,'accepted':town.accepted,'entries':town.entries.size(),'meshes':town.surface_meshes.size(),'stages':town.volumetric_spatial.audit.get('maze_stage_ms',{})}
+  rows.append(row)
+  print('REPEATED_PRODUCTION ',row)
+  FileAccess.open('/tmp/oct6-production-repeat.json',FileAccess.WRITE).store_string(JSON.stringify(rows,'\t'))
+ fixture.queue_free()
+ quit()

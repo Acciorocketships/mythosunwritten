@@ -172,6 +172,10 @@ static func _generate(world_seed: int, ground_bands: Dictionary,
 		return null
 	var profile := scale_profile if scale_profile != null \
 		else WarrenVillageScaleProfile.review_fixture()
+	TownCharacter.attach(profile,
+		construction_program.town_odds if construction_program.town_odds != null \
+			else TownOddsProgram.builtin(),
+		world_seed)
 	return _solve_maze(world_seed, ground_bands, construction_program, profile, collect_diagnostics)
 
 
@@ -199,48 +203,24 @@ static func _solve_maze(world_seed: int, ground_bands: Dictionary,
 	## carve -> reserve -> partition -> seal), never the bare bore: a plan
 	## without plots carries no town to translate, and the block partitioner
 	## rightly refuses one.
-	var started_ms := Time.get_ticks_msec()
 	last_advisory_shortfalls = {}
 	last_maze_stage_ms = {}
+	var started_ms := Time.get_ticks_msec()
 	var maze := WarrenMazeSitePlanner.plan(world_seed, ground_bands, profile,
 		&"", collect_diagnostics)
 	if maze == null:
 		last_failure = "maze source rejected: %s" \
 			% WarrenMazeSitePlanner.last_failure
 		return null
-	# TASK D1 FIX 1, controller ruling. The source's addressed-frontage bar
-	# is advisory: `WarrenMazeCarver`'s ratchets still steer growth by it,
-	# and a town that cannot reach it on real ground ships and says so.
-	# Recorded here rather than in the carver because this dictionary is
-	# the one place a maze town's shortfalls are collected, and it is what
-	# reaches the sealed plan's audit.
-	var frontage := float(maze.audit.get("frontage_ratio", 1.0))
-	if frontage < WarrenMazeSourcePlan.FRONTAGE_FLOOR:
-		last_advisory_shortfalls["frontage"] = frontage
-		last_advisory_shortfalls["frontage_target"] = \
-			WarrenMazeSourcePlan.FRONTAGE_FLOOR
-	var volume := WarrenMazeVolumeAdapter.to_volume_plan(maze, collect_diagnostics)
-	if volume == null:
-		last_failure = "maze volume adapter rejected: %s" \
-			% WarrenMazeVolumeAdapter.last_failure
-		return null
 	var source_ms := Time.get_ticks_msec() - started_ms
-	var spatial_started_ms := Time.get_ticks_msec()
-	# The maze partitioner is deterministic and ignores the variant index, so
-	# the eight-variant rotation is meaningless here: pass -1 for "the one".
-	# Compose the source once, without a speculative paired rebuild.
-	var plan := from_volume(volume, -1, construction_program, false, collect_diagnostics)
-	var spatial_ms := Time.get_ticks_msec() - spatial_started_ms
-	if plan == null:
-		last_failure = "maze composition rejected: %s" % last_failure
+	var composed := compose_maze_source(maze, construction_program, collect_diagnostics)
+	if composed.is_empty():
 		return null
-	var fabric_started_ms := Time.get_ticks_msec()
-	var fabric := WarrenSpatialFabricCompiler.generate(plan, construction_program, collect_diagnostics)
-	var fabric_ms := Time.get_ticks_msec() - fabric_started_ms
-	if fabric == null:
-		last_failure = "maze fabric gate failed: %s" \
-			% WarrenSpatialFabricCompiler.last_failure
-		return null
+	var volume := composed.volume as WarrenVolumePlan
+	var plan := composed.plan as WarrenSpatialPlan
+	var fabric := composed.fabric as SettlementFabricPlan
+	var spatial_ms := int(composed.spatial_ms)
+	var fabric_ms := int(composed.fabric_ms)
 	if diagnostic_trace_skywalk_timing:
 		print("SKYWALK_TIMING maze_source ms=", source_ms)
 		print("SKYWALK_TIMING partition_spatial source=", volume.stable_id,
@@ -252,6 +232,8 @@ static func _solve_maze(world_seed: int, ground_bands: Dictionary,
 	if finalized == null:
 		last_failure = "maze finalization rejected: %s" % last_failure
 		return null
+	finalized.audit["roof_withdrawn_room_ids"] = composed.withdrawn_room_ids
+	finalized.audit["roof_withdrawn_cell_count"] = int(composed.withdrawn_cell_count)
 	# The pipeline label, and the four counters the searched pipeline used to
 	# vary, kept at the constants a one-pass solve makes them so a sealed audit
 	# keeps the same shape for every reader that already knows it.
@@ -269,6 +251,108 @@ static func _solve_maze(world_seed: int, ground_bands: Dictionary,
 	finalized.audit["advisory_shortfalls"] = last_advisory_shortfalls.duplicate()
 	finalized.audit["advisory_shortfall_count"] = last_advisory_shortfalls.size()
 	return finalized
+
+
+## Rooms the roof gate may withdraw before a town is given up (each one is
+## a full recomposition of the same source; see `_solve_maze`).
+const MAX_ROOF_WITHDRAWALS := 4
+
+
+static func compose_maze_source(maze: WarrenMazeSourcePlan,
+		construction_program: SettlementFabricProgram,
+		collect_diagnostics: bool) -> Dictionary:
+	## Compose and compile one sealed maze source: {volume, plan, fabric,
+	## spatial_ms, fabric_ms, withdrawn_room_ids, withdrawn_cell_count}, or {}
+	## with `last_failure` set.
+	##
+	## ROOF WITHDRAWAL (October 8). The roof gate is a guardrail, not a town
+	## veto: when no roof in the vocabulary can close one room's setback
+	## shoulder (`macro setback roof ... rejected`), that room's storey and
+	## every storey standing on it are withdrawn (the composition planner's
+	## room-support clearance token ends an optional crown there) and the same
+	## source composes again. Deterministic: the withdrawn cells are a function
+	## of the town, and the source plan is not mutated by composition. A room
+	## the town cannot do without (a required doorway, market or bridge
+	## course) still fails the town, as before.
+	var withdrawn_cells: Dictionary = {}
+	var withdrawn_room_ids: Array[StringName] = []
+	for withdrawal in MAX_ROOF_WITHDRAWALS + 1:
+		var volume := _maze_volume(maze, collect_diagnostics)
+		if volume == null:
+			return {}
+		volume.mass_context[&"roof_withdrawn_cells"] = withdrawn_cells.duplicate()
+		var spatial_started_ms := Time.get_ticks_msec()
+		# The maze partitioner is deterministic and ignores the variant index, so
+		# the eight-variant rotation is meaningless here: pass -1 for "the one".
+		# Compose the source once, without a speculative paired rebuild.
+		var plan := from_volume(volume, -1, construction_program, collect_diagnostics)
+		var spatial_ms := Time.get_ticks_msec() - spatial_started_ms
+		if plan == null:
+			last_failure = "maze composition rejected: %s" % last_failure
+			return {}
+		var fabric_started_ms := Time.get_ticks_msec()
+		var fabric := WarrenSpatialFabricCompiler.generate(plan,
+			construction_program, collect_diagnostics)
+		if fabric != null:
+			return {"volume": volume, "plan": plan, "fabric": fabric,
+				"spatial_ms": spatial_ms,
+				"fabric_ms": Time.get_ticks_msec() - fabric_started_ms,
+				"withdrawn_room_ids": withdrawn_room_ids,
+				"withdrawn_cell_count": withdrawn_cells.size()}
+		last_failure = "maze fabric gate failed: %s" \
+			% WarrenSpatialFabricCompiler.last_failure
+		var room_id := WarrenSpatialFabricCompiler.last_failure_room_id
+		var room_cells := _room_private_cells(plan, room_id)
+		if room_cells.is_empty() or withdrawal == MAX_ROOF_WITHDRAWALS:
+			return {}
+		withdrawn_room_ids.append(room_id)
+		for cell: Vector3i in room_cells:
+			withdrawn_cells[cell] = true
+		# Advisories from the withdrawn composition do not describe the town.
+		last_advisory_shortfalls = {}
+		last_maze_stage_ms = {}
+	return {}
+
+
+static func _maze_volume(maze: WarrenMazeSourcePlan,
+		collect_diagnostics: bool) -> WarrenVolumePlan:
+	# TASK D1 FIX 1, controller ruling. The source's addressed-frontage bar
+	# is advisory: `WarrenMazeCarver`'s ratchets still steer growth by it,
+	# and a town that cannot reach it on real ground ships and says so.
+	# Recorded here rather than in the carver because this dictionary is
+	# the one place a maze town's shortfalls are collected, and it is what
+	# reaches the sealed plan's audit.
+	var frontage := float(maze.audit.get("frontage_ratio", 1.0))
+	if frontage < WarrenMazeSourcePlan.FRONTAGE_FLOOR:
+		last_advisory_shortfalls["frontage"] = frontage
+		last_advisory_shortfalls["frontage_target"] = \
+			WarrenMazeSourcePlan.FRONTAGE_FLOOR
+	_forward_aesthetic_shortfalls(maze.audit.get("aesthetic_shortfalls", {}))
+	var volume := WarrenMazeVolumeAdapter.to_volume_plan(maze, collect_diagnostics)
+	if volume == null:
+		last_failure = "maze volume adapter rejected: %s" \
+			% WarrenMazeVolumeAdapter.last_failure
+	return volume
+
+
+static func _room_private_cells(plan: WarrenSpatialPlan,
+		room_id: StringName) -> Array[Vector3i]:
+	var out: Array[Vector3i] = []
+	if plan == null or room_id.is_empty():
+		return out
+	for building: WarrenBuildingVolume in plan.buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			if room.stable_id == room_id:
+				out.assign(room.private_cells)
+				return out
+	return out
+
+
+static func _forward_aesthetic_shortfalls(record: Dictionary) -> void:
+	## Source-seal look rules (loop join, straight runs) join the town's
+	## advisory shortfalls, each as {"limit", "found"}.
+	for key: Variant in record:
+		last_advisory_shortfalls[key] = record[key]
 
 
 static func _finalize_candidate(volume: WarrenVolumePlan,
@@ -368,7 +452,6 @@ static func solve_selected(world_seed: int, selected: WarrenSpatialPlan,
 static func from_volume(volume: WarrenVolumePlan,
 		partition_variant: int = 0,
 		construction_program: SettlementFabricProgram = null,
-		enable_paired_registration_relief: bool = true,
 		collect_diagnostics: bool = true) -> WarrenSpatialPlan:
 	last_failure = ""
 	if volume == null or not volume.is_sealed() or construction_program == null:
@@ -378,7 +461,7 @@ static func from_volume(volume: WarrenVolumePlan,
 	if massif == null or not massif.is_sealed():
 		last_failure = "macro volume carries no sealed inhabited massif"
 		return null
-	var bounds := _grid_bounds(massif)
+	var bounds := _grid_bounds(massif, construction_program)
 	var grid := WarrenSpatialGrid.new(bounds.minimum, bounds.size)
 	if not grid.is_valid() or not _project_massif(grid, massif):
 		last_failure = "spatial grid invalid or massif projection failed"
@@ -442,7 +525,7 @@ static func from_volume(volume: WarrenVolumePlan,
 			courtyard_parcel_sides
 	var partition_started_ms := Time.get_ticks_msec()
 	var partition := _partition_rooms(grid, volume, parcel_plan,
-		construction_program, enable_paired_registration_relief, collect_diagnostics)
+		construction_program, collect_diagnostics)
 	_stamp_maze_stage(volume, &"partition_rooms", partition_started_ms)
 	if partition.is_empty():
 		if last_failure.is_empty():
@@ -787,7 +870,7 @@ static func _parcel_courtyard_address_side_count(grid: WarrenSpatialGrid,
 	return side_count
 
 
-static func _grid_bounds(massif: WarrenMassif) -> Dictionary:
+static func _grid_bounds(massif: WarrenMassif, program: SettlementFabricProgram = null) -> Dictionary:
 	var minimum_x := 2147483647
 	var maximum_x := -2147483648
 	var minimum_z := 2147483647
@@ -801,10 +884,15 @@ static func _grid_bounds(massif: WarrenMassif) -> Dictionary:
 		maximum_z = maxi(maximum_z, column.y * 2 + 1)
 		minimum_y = mini(minimum_y, massif.base_at(column))
 		maximum_y = maxi(maximum_y, massif.top_at(column))
-	# Native feet and foundation slabs can cross the ground datum. Keep one
-	# exterior band for their measured clearance, just as X/Z keep an eave halo.
-	# This does not add massif, walking surfaces or terrain bearing.
-	var minimum := Vector3i(minimum_x - GRID_PADDING_CELLS, minimum_y - 1,
+	# Native foundation geometry can extend below the datum. Size this air
+	# padding from the admitted vocabulary instead of assuming one shallow
+	# bevel band. This adds neither terrain nor walkable support.
+	var footing_bands := 1
+	if program != null:
+		for recipe: FabricRecipe in program.recipes():
+			if recipe.has_tag(&"native_grammar"):
+				footing_bands = maxi(footing_bands, -floori(recipe.local_clearance_bounds.position.y / FabricRecipe.CELL_SIZE))
+	var minimum := Vector3i(minimum_x - GRID_PADDING_CELLS, minimum_y - footing_bands,
 		minimum_z - GRID_PADDING_CELLS)
 	var maximum := Vector3i(maximum_x + GRID_PADDING_CELLS,
 		maximum_y + ROOF_CLEARANCE_CELLS,
@@ -852,7 +940,7 @@ static func _maze_bridge_compound_plans(volume: WarrenVolumePlan) \
 	for transition: WarrenVolumeTransition in volume.transitions:
 		for fine_floor: Vector3i in transition.surface_cells():
 			route_floors[fine_floor] = true
-	for deck_floor_value: Variant in _maze_deck_floor_cells(volume).keys():
+	for deck_floor_value: Variant in _maze_deck_walk_cells(volume).keys():
 		route_floors[deck_floor_value as Vector3i] = true
 	var seeded := source.excavation.bridge_span_audit.get("seeded", []) as Array
 	# Only a span the plot planner actually allocated is a bridge: a refused
@@ -1092,7 +1180,8 @@ static func _pave_maze_decks(grid: WarrenSpatialGrid,
 	##     deck cells count as uncovered route floors and as frontage sides.
 	##     The greedy scan is therefore biased toward roofing and fronting the
 	##     plazas, exactly as it is toward streets.
-	var floors := _maze_deck_floor_cells(volume)
+	var floors := _maze_deck_walk_cells(volume)
+	var planting := _maze_court_planting_cells(volume)
 	if floors.is_empty():
 		return 0
 	var air: Dictionary = {}
@@ -1112,6 +1201,27 @@ static func _pave_maze_decks(grid: WarrenSpatialGrid,
 				WarrenSpatialGrid.Use.PUBLIC_AIR, &"public.maze_deck"):
 		last_failure = "could not stage maze deck carve"
 		return -1
+	# The court's planting island is reserved before composition, alongside its
+	# surrounding walk. It is supported open space, never a late obstruction
+	# dropped into an already-proved route.
+	var planting_air: Array[Vector3i] = []
+	for cell: Vector3i in planting:
+		for band in WarrenVolumePlan.HEADROOM_BANDS:
+			planting_air.append(cell+Vector3i.UP*band)
+	if not planting_air.is_empty():
+		if not carve.require_use(planting_air,[WarrenSpatialGrid.Use.OUTSIDE,
+				WarrenSpatialGrid.Use.ALLOCATABLE] as Array[int]) \
+				or not carve.reserve(planting_air,WarrenSpatialGrid.Reservation.DAYLIGHT,
+					&"public.maze_deck") \
+				or not carve.assign_use(planting_air,WarrenSpatialGrid.Use.DAYLIGHT_AIR,
+					&"public.maze_deck"):
+			last_failure = "could not reserve courtyard planting island"
+			return -1
+	for cell: Vector3i in planting:
+		if not carve.claim_face(cell,Vector3i.DOWN,
+				WarrenSpatialGrid.FaceKind.GARDEN_FLOOR,&"public.maze_deck"):
+			last_failure = "could not stage courtyard planting support"
+			return -1
 	for floor_value: Variant in floors.keys():
 		if not carve.claim_face(floor_value as Vector3i, Vector3i.DOWN,
 				WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR, &"public.maze_deck"):
@@ -1192,10 +1302,39 @@ static func _maze_flat_slab_cells(volume: WarrenVolumePlan) -> Dictionary:
 		var macro := Vector3i(walk.x, roof, walk.z)
 		if source.solid_at(macro):
 			for fine: Vector3i in _fine_square(macro): out[fine] = true
+	# A phase-aligned host may stand one band above the first crown course.
+	# That intervening course is bearing, not spare mass for another roof or
+	# residual room. Reserve the whole run; normal unborne release removes it
+	# if the planned cover never becomes an actual room.
+	for plot: Dictionary in source.plots:
+		if plot.kind != WarrenMazeSourcePlan.PLOT_OVER: continue
+		for column: Vector2i in plot.cells:
+			for band in range(int(plot.crown)+1,int(plot.floor)):
+				var macro := Vector3i(column.x,band,column.y)
+				if source.solid_at(macro):
+					for fine: Vector3i in _fine_square(macro): out[fine]=true
 	var parents: Dictionary = {}
 	for parent_value: Variant in (WarrenMazeBlockPartitioner.stack_parents(
 			source)["parents"] as Dictionary).values():
 		parents[StringName(parent_value)] = true
+	# A low inhabited jamb may meet the bore at its own flat roof course.
+	# Retain that existing roof as bearing, just like a stacked parent, while
+	# room composition preserves inhabited jamb storeys below/alongside it.
+	for cover: Dictionary in source.plots:
+		if cover.kind != WarrenMazeSourcePlan.PLOT_OVER:
+			continue
+		for jamb: Vector2i in cover.get("jambs", []):
+			for index: int in source.plots_at(jamb):
+				var plot: Dictionary = source.plots[index]
+				if plot.kind != WarrenMazeSourcePlan.PLOT_HOUSE:
+					continue
+				var span := WarrenMazeBlockPartitioner.plot_roof_band_span(source,plot,volume)
+				if span.x <= int(cover.crown) and int(cover.crown) < span.y:
+					parents[StringName(plot.id)] = true
+	# Wall rooms bear the artificial district itself. Reserve their complete
+	# ceiling before room and roof composition, just like a stacked parent.
+	for plot: Dictionary in source.plots:
+		if bool(plot.get("wall_room",false)): parents[StringName(plot.id)] = true
 	if parents.is_empty():
 		return out
 	for plot: Dictionary in source.plots:
@@ -1253,7 +1392,7 @@ static func unborne_crown_cells(grid: WarrenSpatialGrid, stone: Dictionary,
 
 
 ## True when `cell` (directly on top of a stone run) is construction the stone
-## carries: a building room's private volume, or a walked public floor.
+## carries: a building room, a walked floor, or a reserved garden floor.
 ## Anything else -- open air, an unwalked headroom slot, a facade feature's
 ## reservation the building kit redraws itself -- leaves the stone bearing
 ## nothing.
@@ -1264,6 +1403,9 @@ static func bears_construction(grid: WarrenSpatialGrid, cell: Vector3i,
 	match grid.use_at(cell):
 		WarrenSpatialGrid.Use.PRIVATE_VOLUME:
 			return building_cells.has(cell)
+		WarrenSpatialGrid.Use.DAYLIGHT_AIR:
+			var garden_floor := grid.face_claim(cell,Vector3i.DOWN)
+			return int(garden_floor.get("kind",-1)) == WarrenSpatialGrid.FaceKind.GARDEN_FLOOR
 		WarrenSpatialGrid.Use.PUBLIC_AIR:
 			var claim := grid.face_claim(cell, Vector3i.DOWN)
 			return not claim.is_empty() and int(claim.get("kind", -1)) \
@@ -2083,6 +2225,10 @@ static func _maze_released_parapet_cells(grid: WarrenSpatialGrid,
 	for cell: Vector3i in route_floors:
 		floors[cell] = true
 	for plot: Dictionary in source.plots:
+		# An inhabited retaining wall needs its structural cap even where no
+		# upper house was selected. Releasing it creates a roof-sized cavity
+		# in the artificial district instead of an embedded room.
+		if bool(plot.get("wall_room",false)): continue
 		if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_HOUSE \
 				or not WarrenMazeBlockPartitioner.plot_is_flat_roofed(source,
 					plot):
@@ -2241,6 +2387,8 @@ static func _maze_crown_band_bears(grid: WarrenSpatialGrid,
 	if not grid.contains(above):
 		return false
 	var use := grid.use_at(above)
+	if use == WarrenSpatialGrid.Use.DAYLIGHT_AIR:
+		return int(grid.face_claim(above,Vector3i.DOWN).get("kind",-1)) == WarrenSpatialGrid.FaceKind.GARDEN_FLOOR
 	return use == WarrenSpatialGrid.Use.PRIVATE_VOLUME \
 		or use == WarrenSpatialGrid.Use.STRUCTURAL_VOLUME
 
@@ -2460,6 +2608,378 @@ static func _maze_deck_floor_cells(volume: WarrenVolumePlan) -> Dictionary:
 	return out
 
 
+static func _maze_court_planting_cells(volume: WarrenVolumePlan) -> Dictionary:
+	var source := volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
+	var out := {}
+	if source == null: return out
+	var landings := {}
+	for plot: Dictionary in source.plots:
+		if not plot.has("door_walk"): continue
+		for cell: Vector3i in _fine_square(plot.door_walk): landings[cell] = true
+	for plot: Dictionary in source.plots:
+		if not WarrenPlotReservations.is_green_court(plot): continue
+		var floor_cells := {}
+		for column: Vector2i in WarrenMazeSourcePlan.deck_flat_columns(plot):
+			for cell: Vector3i in _fine_square(Vector3i(column.x,plot.floor,column.y)):
+				floor_cells[cell] = true
+		if not bool(plot.get("ring", true)):
+			var walk := _ringless_court_walk(source, plot, floor_cells, landings)
+			if not walk.is_empty():
+				for cell: Vector3i in floor_cells:
+					if not walk.has(cell): out[cell] = true
+				continue
+		# Erode one fine cell from the complete court. The outer walk keeps
+		# every original entrance and a continuous player-width circuit: the
+		# eight-neighbour test keeps the ring 4-connected round a concave
+		# corner of an irregular clearing (on a rectangle it equals the
+		# four-neighbour erosion).
+		for cell: Vector3i in floor_cells:
+			var interior := true
+			for dx in [-1, 0, 1]:
+				for dz in [-1, 0, 1]:
+					interior = interior and floor_cells.has(cell+Vector3i(dx,0,dz))
+			if interior: out[cell] = true
+	# Doorways require a two-fine-cell-deep approach. Their source landing
+	# square takes precedence over an optional bed, including in compact courts.
+	for plot: Dictionary in source.plots:
+		if not plot.has("door_walk"): continue
+		for cell: Vector3i in _fine_square(plot.door_walk): out.erase(cell)
+	return out
+
+
+## Town taste knobs task 3: how fully a courtyard clearing is furnished.
+const CLEARING_DECO_KNOB := &"clearing_deco_density"
+## Fine deco cells per prop group a clearing can hold, and the group bounds.
+const CLEARING_DECO_CELLS_PER_GROUP := 6
+const CLEARING_DECO_MIN_GROUPS := 2
+const CLEARING_DECO_MAX_GROUPS := 6
+
+
+static func maze_clearing_decor(volume: WarrenVolumePlan) -> Array[Dictionary]:
+	## The furnishing brief of every courtyard clearing (`clearing.NN`), as
+	## `{id, purpose, cells, walk, budget, rolls}`, or empty when the town's
+	## `clearing_deco_density` is 0 (the default: no roll is consumed and
+	## nothing is placed).
+	##
+	## `cells` are the clearing's DECO cells in the fabric's solid convention
+	## (the cell under the walk plane), in the plot's own seeded order: a green
+	## offers its lawn island (`_maze_court_planting_cells`), a paved, market or
+	## workyard court everything but the walk it must keep -- every landing,
+	## every edge facing a street mouth, stair or drop, and the one-cell strips
+	## joining them (`_ringless_court_walk`, the ringless green's own rule). A
+	## court whose walk cannot be derived is left bare. `budget` is
+	## round(density x capacity) prop groups, `walk` the kept walk every piece
+	## stands a capsule radius off (the court's non-deco cells and the landings
+	## beside it), and `rolls` one vocabulary roll
+	## per group; the assembler places them (`SettlementFabricAssembler.
+	## maze_clearing_decor`) against the finished town.
+	var out: Array[Dictionary] = []
+	var source := volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
+	if source == null or source.scale_profile == null: return out
+	var character := TownCharacter.of(source.scale_profile, source.world_seed)
+	var density := character.value(CLEARING_DECO_KNOB)
+	if density <= 0.0: return out
+	var planting := _maze_court_planting_cells(volume)
+	var landings := {}
+	for plot: Dictionary in source.plots:
+		if not plot.has("door_walk"): continue
+		for cell: Vector3i in _fine_square(plot.door_walk): landings[cell] = true
+	for plot: Dictionary in source.plots:
+		if not WarrenPlotReservations.is_clearing_plot(plot): continue
+		var floor_cells := {}
+		for column: Vector2i in WarrenMazeSourcePlan.deck_flat_columns(plot):
+			for cell: Vector3i in _fine_square(Vector3i(column.x, plot.floor, column.y)):
+				floor_cells[cell] = true
+		var deco := {}
+		if WarrenPlotReservations.is_green_court(plot):
+			for cell: Vector3i in floor_cells:
+				if planting.has(cell): deco[cell] = true
+		else:
+			var walk := _ringless_court_walk(source, plot, floor_cells, landings)
+			if walk.is_empty(): continue
+			for cell: Vector3i in floor_cells:
+				if not walk.has(cell) and not landings.has(cell): deco[cell] = true
+		if deco.is_empty(): continue
+		# The kept walk a piece must stand off: every court cell that is not
+		# deco (ring, strips, street mouths) and every landing beside the court.
+		var kept: Array[Vector3i] = []
+		for cell: Vector3i in floor_cells:
+			if not deco.has(cell): kept.append(cell + Vector3i.DOWN)
+		for cell: Vector3i in landings:
+			if floor_cells.has(cell): continue
+			for step: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT, Vector3i.FORWARD, Vector3i.BACK]:
+				if floor_cells.has(cell + step):
+					kept.append(cell + Vector3i.DOWN)
+					break
+		kept.sort_custom(_cell_less)
+		var id := String(plot.id)
+		var budget := roundi(density * float(clampi(deco.size() / CLEARING_DECO_CELLS_PER_GROUP,
+			CLEARING_DECO_MIN_GROUPS, CLEARING_DECO_MAX_GROUPS)))
+		if budget <= 0: continue
+		var ranked: Array = []
+		for cell: Vector3i in deco:
+			ranked.append([character.roll(CLEARING_DECO_KNOB, "%s/%d/%d/%d" % [id, cell.x, cell.y, cell.z]),
+				cell + Vector3i.DOWN])
+		ranked.sort_custom(func(a: Array, b: Array) -> bool:
+			return a[0] < b[0] if a[0] != b[0] else _cell_less(a[1], b[1]))
+		var cells: Array[Vector3i] = []
+		for entry: Array in ranked: cells.append(entry[1])
+		var rolls: Array[float] = []
+		for index in budget:
+			rolls.append(character.roll(CLEARING_DECO_KNOB, "%s/group/%d" % [id, index]))
+		out.append({"id": plot.id, "purpose": StringName(plot.get("purpose", &"")),
+			"cells": cells, "walk": kept, "budget": budget, "rolls": rolls})
+	return out
+
+
+const WELL_SCALE_KNOB := &"well_scale"
+
+
+static func maze_footway_columns(volume: WarrenVolumePlan) -> Dictionary:
+	## Town taste knobs (task 6): the fine XZ columns of every cottage footway
+	## (`house_site_footway` lanes, see WarrenMazeCarver._carve_house_site_access).
+	var out := {}
+	var source := volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
+	if source == null: return out
+	for lane: Dictionary in source.excavation.lanes:
+		if StringName(lane.get("feature_kind", &"")) != &"house_site_footway": continue
+		for cell: Vector3i in lane.cells:
+			for fine: Vector3i in _fine_square(cell):
+				out[Vector2i(fine.x, fine.z)] = true
+	return out
+
+
+static func maze_well_scale(volume: WarrenVolumePlan) -> float:
+	## The town's `well_scale` knob (1.0 = today's authored fit).
+	var source := volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
+	if source == null or source.scale_profile == null: return 1.0
+	return TownCharacter.of(source.scale_profile, source.world_seed).value(WELL_SCALE_KNOB)
+
+
+## A green is raised when its floor stands more than this many bands above the
+## terrain on most of its columns (a plinth/deck; ordinary cut/fill is not).
+const RAISED_GREEN_BANDS := 1
+
+
+static func green_is_raised(floor_band: int, bearings: Array[int]) -> bool:
+	var high := 0
+	for bearing: int in bearings:
+		if floor_band - bearing > RAISED_GREEN_BANDS: high += 1
+	return high * 2 > bearings.size()
+
+
+static func maze_raised_green_cells(volume: WarrenVolumePlan) -> Dictionary:
+	## Town taste knobs task 4: the supporting cells (the cell under the walk
+	## plane, `_planned_plaza_support_cells`' convention) of every typed green
+	## -- the plaza and any clearing drawn as a green -- whose floor stands more
+	## than RAISED_GREEN_BANDS above the terrain bearing (`WarrenMassif.bearing_at`)
+	## on more than half of its columns (cut/fill slopes stay ground). A raised green is a deck, a terrace or a platform; a well only
+	## makes sense on the ground, so it never gets one.
+	var out := {}
+	var source := volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
+	if source == null or source.massif == null: return out
+	for plot: Dictionary in source.plots:
+		if StringName(plot.get("id", &"")) != WarrenPlotReservations.PLAZA_PLOT_ID \
+				and not WarrenPlotReservations.is_green_court(plot):
+			continue
+		var floor_band := int(plot["floor"])
+		var columns := WarrenMazeSourcePlan.deck_flat_columns(plot)
+		var bearings: Array[int] = []
+		for column: Vector2i in columns: bearings.append(source.massif.bearing_at(column))
+		if not green_is_raised(floor_band, bearings): continue
+		for column: Vector2i in columns:
+			for offset: Vector3i in [Vector3i.ZERO, Vector3i.RIGHT, Vector3i.BACK, Vector3i(1, 0, 1)]:
+				out[Vector3i(column.x * 2, floor_band - 1, column.y * 2) + offset] = true
+	return out
+
+
+static func maze_ringless_court_cells(volume: WarrenVolumePlan) -> Dictionary:
+	## The fine floor cells of every green court that rolled no walking ring
+	## (`plot.ring`, Town taste knobs task 2). Their lawn may reach the court
+	## edge, so the planned-plaza declaration exempts exactly these cells from
+	## its interior-island rule.
+	var source := volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
+	var out := {}
+	if source == null: return out
+	for plot: Dictionary in source.plots:
+		if not WarrenPlotReservations.is_green_court(plot) or bool(plot.get("ring", true)):
+			continue
+		for column: Vector2i in WarrenMazeSourcePlan.deck_flat_columns(plot):
+			for cell: Vector3i in _fine_square(Vector3i(column.x,plot.floor,column.y)):
+				out[cell] = true
+	return out
+
+
+static func _ringless_court_walk(source: WarrenMazeSourcePlan, plot: Dictionary,
+		floor_cells: Dictionary, landings: Dictionary) -> Dictionary:
+	## The walk a court keeps without its ring (Town taste knobs task 2).
+	##
+	## SEEDS. (1) Every landing square inside the court -- the door_walk of any
+	## plot (house doors facing the court, the court's own entrance when it lies
+	## inside). (2) Every edge cell with a face onto something that cannot hold
+	## the lawn's edge: a STREET MOUTH (`_court_street_mouth`: a same-band
+	## passage cell that enters the court -- the court's own entrance, a street
+	## arriving head-on, a dead end, a flight's landing), or, through
+	## `_court_edge_holds_lawn`, a stair, a roof, another deck, a drop, a lower
+	## street or a column outside the massif. Those cells keep their walk, so a
+	## raised court's fall edges still carry the ordinary guards and a lawn never
+	## ends at an unguarded drop. The lawn reaches edges backed by a house wall,
+	## rock, level ground, or a same-band street running ALONG the court (the
+	## street stays the walk there; lawn is only ever on court cells, and the
+	## green-threshold openings leave no rail between that street and the lawn).
+	##
+	## STRIPS. The seeds are joined into one component by 1-cell shortest paths
+	## through the court: starting from the component holding the first seed in
+	## lattice order, a breadth-first search over the court (fixed neighbour
+	## order) reaches the nearest seed not yet joined and its path is kept; this
+	## repeats until every seed is joined. Deterministic, and every landing is
+	## connected to the court's street mouths through walk.
+	##
+	## Empty when there is no seed at all or a seed cannot be joined (warned);
+	## the caller then keeps the ring, so no landing is ever cut off.
+	var walk := {}
+	var landing_ends := _court_flight_landings(source)
+	for cell: Vector3i in floor_cells:
+		if landings.has(cell):
+			walk[cell] = true
+			continue
+		for step: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT, Vector3i.FORWARD, Vector3i.BACK]:
+			var outside := cell + step
+			if floor_cells.has(outside): continue
+			var column := Vector2i(floori(outside.x / 2.0), floori(outside.z / 2.0))
+			var passage := Vector3i(column.x, cell.y, column.y)
+			var holds := not _court_street_mouth(source, plot, passage,
+				Vector2i(step.x, step.z), landing_ends) \
+				if source.passage_kinds.has(passage) \
+				else _court_edge_holds_lawn(source, column, cell.y)
+			if not holds:
+				walk[cell] = true
+				break
+	if walk.is_empty(): return walk
+	var seeds: Array[Vector3i] = []
+	seeds.assign(walk.keys())
+	seeds.sort_custom(WarrenExcavation._cell_less)
+	var joined := _court_component(seeds[0], walk)
+	for anchor: Vector3i in seeds:
+		if joined.has(anchor): continue
+		# Multi-source BFS from the joined walk to the nearest unjoined seed.
+		var parent := {}
+		var frontier: Array[Vector3i] = []
+		var starts: Array[Vector3i] = []
+		starts.assign(joined.keys())
+		starts.sort_custom(WarrenExcavation._cell_less)
+		for start: Vector3i in starts:
+			parent[start] = start
+			frontier.append(start)
+		var reached := Vector3i.ZERO
+		var found := false
+		var head := 0
+		while head < frontier.size() and not found:
+			var cell := frontier[head]
+			head += 1
+			for step: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT, Vector3i.FORWARD, Vector3i.BACK]:
+				var next := cell + step
+				if not floor_cells.has(next) or parent.has(next): continue
+				parent[next] = cell
+				if walk.has(next):
+					reached = next
+					found = true
+					break
+				frontier.append(next)
+		if not found:
+			push_warning("ringless court %s: landing %s cannot be joined; keeping the ring" \
+				% [plot.get("id", &""), anchor])
+			return {}
+		var trace := parent[reached] as Vector3i
+		while not joined.has(trace):
+			walk[trace] = true
+			trace = parent[trace] as Vector3i
+		joined.merge(_court_component(reached, walk))
+	return walk
+
+
+static func _court_flight_landings(source: WarrenMazeSourcePlan) -> Dictionary:
+	## Every endpoint of a vertical transition (stair or ramp), main network and
+	## lanes: a flight arriving beside a court enters it there.
+	var out := {}
+	if source.excavation == null: return out
+	var specs: Array = source.excavation.transitions.duplicate()
+	for lane: Dictionary in source.excavation.lanes:
+		specs.append_array(lane.get("transitions", []) as Array)
+	for spec: Dictionary in specs:
+		var a := spec.from as Vector3i
+		var b := spec.to as Vector3i
+		if a.y != b.y:
+			out[a] = true
+			out[b] = true
+	return out
+
+
+static func _court_street_mouth(source: WarrenMazeSourcePlan, plot: Dictionary,
+		passage: Vector3i, outward: Vector2i, landing_ends: Dictionary) -> bool:
+	## Whether the same-band passage cell `passage`, beside a court across
+	## `outward` (court -> passage), ENTERS the court rather than running along
+	## it: the court's own entrance, a flight's landing, a street that carries on
+	## straight away from the court (it arrives head-on, or a branch leaves at a
+	## junction), or a dead end (no street continues along the court either way).
+	if plot.has("door_walk") and passage == (plot["door_walk"] as Vector3i):
+		return true
+	if landing_ends.has(passage):
+		return true
+	var away := passage + Vector3i(outward.x, 0, outward.y)
+	if source.passage_kinds.has(away):
+		return true
+	var side := Vector3i(outward.y, 0, outward.x)
+	return not source.passage_kinds.has(passage + side) \
+		and not source.passage_kinds.has(passage - side)
+
+
+static func _court_component(start: Vector3i, cells: Dictionary) -> Dictionary:
+	var out := {start: true}
+	var frontier: Array[Vector3i] = [start]
+	while not frontier.is_empty():
+		var cell: Vector3i = frontier.pop_back()
+		for step: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT, Vector3i.FORWARD, Vector3i.BACK]:
+			if cells.has(cell + step) and not out.has(cell + step):
+				out[cell + step] = true
+				frontier.append(cell + step)
+	return out
+
+
+static func _court_edge_holds_lawn(source: WarrenMazeSourcePlan, column: Vector2i,
+		band: int) -> bool:
+	## Whether a ringless court's lawn may run up to the edge facing `column`
+	## (a column that is not a same-band street; see `_court_street_mouth`).
+	## True only when nothing on that column is BUILT below the court's walk
+	## plane -- every plot there stands at or above `band` -- and rock or
+	## terrain reaches the plane (`solid_at(band - 1)`). Whatever the later
+	## room composition keeps of a house standing there, the lawn edge then
+	## meets a wall or level rock, never a drop. A house rising from lower down
+	## does NOT qualify: composition may leave its column empty, which would put
+	## an unguarded drop beside the lawn (measured on 53 grand). Streets and
+	## stairs, carved air (a lower street's headroom), anything built below the
+	## plane, a drop, and any column outside the massif answer false, so the
+	## edge keeps its walk and, on a raised court, the ordinary fall guards.
+	## Reads the SEALED source's derived mass (`solid_at`), the same reading
+	## the volume adapter carves from, so every call agrees.
+	var cell := Vector3i(column.x, band, column.y)
+	if source.passage_kinds.has(cell) or (source.excavation != null \
+			and source.excavation.carved.has(cell)):
+		return false
+	if source.massif == null or not source.massif.has_column(column):
+		return false
+	for index: int in source.plots_at(column):
+		if int((source.plots[index] as Dictionary).floor) < band:
+			return false
+	return source.solid_at(cell + Vector3i.DOWN)
+
+
+static func _maze_deck_walk_cells(volume: WarrenVolumePlan) -> Dictionary:
+	var out := _maze_deck_floor_cells(volume)
+	for cell: Vector3i in _maze_court_planting_cells(volume): out.erase(cell)
+	return out
+
+
 static func _maze_open_bridge_flanks(source: WarrenMazeSourcePlan,
 		span: Array[Vector2i], floor_band: int) -> Dictionary:
 	## The columns beside a bridge span that present a FLAT WALKABLE SURFACE at
@@ -2610,7 +3130,6 @@ static func _pave_open_bridge_decks(grid: WarrenSpatialGrid,
 static func _partition_rooms(grid: WarrenSpatialGrid,
 		volume: WarrenVolumePlan, parcels: WarrenParcelPlan,
 		construction_program: SettlementFabricProgram,
-		enable_paired_registration_relief: bool = true,
 		collect_diagnostics: bool = true) -> Dictionary:
 	# Breadcrumb: several stages below call helpers that reset last_failure on
 	# entry, so a real rejection reason could be cleared before it reached the
@@ -2641,7 +3160,7 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	# Coupling (a) of `_pave_maze_decks`: a paved deck is a legal address
 	# landing, so a maze parcel can enter composition on a plaza that no bore
 	# reaches. Empty in every searched mode, and counted rather than assumed.
-	var deck_floors := _maze_deck_floor_cells(volume)
+	var deck_floors := _maze_deck_walk_cells(volume)
 	var deck_addressed_parcels := 0
 	# TASK C5c RULING 4. Parcel id -> the gate that dropped it, written at
 	# every point a parcel can leave the composition, so a plot that composes
@@ -2720,6 +3239,7 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 			+ (addressed + 1) * WarrenSpatialGrid.STOREY_CELLS
 	var kept_compounds: Array[Dictionary] = []
 	var yielded_spans: Dictionary = bridge_compounds.get("yielded_spans", {})
+	var yielded_conflicts: Dictionary = {}
 	for compound_value: Variant in bridge_compounds.get("plans", []) as Array:
 		var compound := compound_value as Dictionary
 		var span_index := int(compound.get("span_index", 0))
@@ -2743,19 +3263,38 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		# stamping, leaving its street open.
 		var own_prefix := "parcel.maze.bridge.%02d." % span_index
 		var taken := false
+		var measured: Dictionary = {}
+		var measured_ready := false
+		var empty_reserved: Dictionary = {}
 		for cell_value: Variant in reserved.keys():
 			for owner: Variant in (protected_owners.get(cell_value, {}) \
 					as Dictionary).keys():
 				if not String(owner).begins_with(own_prefix) \
 						and (cell_value as Vector3i).y \
 							< int(required_top.get(owner, 2147483647)):
+					if not measured_ready:
+						measured = (compound.get("private_cells", {}) as Dictionary).duplicate()
+						measured.merge(_maze_bridge_endpoint_roof_clearance_cells(
+							grid, volume, compound, construction_program, true))
+						measured_ready = true
+					if not measured.has(cell_value):
+						# This mandatory neighbor occupies only empty aggregate-box
+						# space. Keep its claim, while the remaining conservative
+						# envelope still excludes later optional roof construction.
+						empty_reserved[cell_value] = true
+						continue
 					taken = true
+					yielded_conflicts[span_index] = {"cell": cell_value,
+						"owner": owner, "required_top": required_top.get(owner, -1),
+						"private_body": (compound.get("private_cells", {}) as Dictionary).has(cell_value)}
 					break
 			if taken:
 				break
 		if taken:
 			yielded_spans[span_index] = true
 			continue
+		for cell_value: Variant in empty_reserved:
+			reserved.erase(cell_value)
 		kept_compounds.append(compound)
 		for cell_value: Variant in reserved.keys():
 			var cell := cell_value as Vector3i
@@ -2765,6 +3304,7 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	if bridge_compounds.has("plans"):
 		bridge_compounds["plans"] = kept_compounds
 		bridge_compounds["yielded_spans"] = yielded_spans
+		bridge_compounds["yielded_conflicts"] = yielded_conflicts
 	# September 29 tunnel-roof rule: a PLOT_OVER is its host's storeys carried
 	# over a bored passage (`WarrenPlotPlanner.cover_tunnels`), stamped whole by
 	# `_stamp_maze_back_rooms`. Its mass is reserved so no lineage composes half
@@ -2775,7 +3315,7 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		for plot: Dictionary in over_source.plots:
 			if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_OVER:
 				continue
-			var over_owner := StringName("maze.over.%s" % String(plot["id"]))
+			var over_owner := StringName("spatial.skywalk.reserve.maze_over.%s" % String(plot["id"]))
 			for column: Vector2i in plot["cells"] as Array[Vector2i]:
 				for band in range(int(plot["floor"]), int(plot["top"])):
 					for cell: Vector3i in _fine_square(Vector3i(column.x, band,
@@ -2835,8 +3375,7 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	# beam used to commit, and control rejoins the shared code below it.
 	var maze_features := _maze_feature_pass(grid, volume, parcels,
 		proposals, construction_program, protected_owners,
-		court_fixed_blocks_by_parcel, public_air, market_candidates,
-		enable_paired_registration_relief)
+		court_fixed_blocks_by_parcel, public_air, market_candidates)
 	market_reservation = maze_features.market_reservation as Dictionary
 	courtyard_bridge_candidate = \
 		maze_features.courtyard_bridge_candidate as Dictionary
@@ -3149,11 +3688,20 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 			protected_owners[support_cell] = {}
 		(protected_owners[support_cell] as Dictionary)[
 			WarrenRoomCompositionPlanner.ROOM_SUPPORT_CLEARANCE_OWNER_ID] = true
+	# A room whose setback shoulder no roof could close is withdrawn by
+	# `_solve_maze` (October 8 roof withdrawal): the same token ends that
+	# optional storey, and every storey standing on it, in this composition.
+	for cell_value: Variant in (volume.mass_context.get(&"roof_withdrawn_cells",
+			{}) as Dictionary).keys():
+		var withdrawn_cell := cell_value as Vector3i
+		if not protected_owners.has(withdrawn_cell):
+			protected_owners[withdrawn_cell] = {}
+		(protected_owners[withdrawn_cell] as Dictionary)[
+			WarrenRoomCompositionPlanner.ROOM_SUPPORT_CLEARANCE_OWNER_ID] = true
 	var composition := WarrenRoomCompositionPlanner.solve(grid, volume,
 		proposals, solved_offsets_by_parcel, exact_forced_offsets_by_parcel,
 		market_reservation, protected_owners, forced_offsets_by_parcel,
-		skywalk_reservations, volume.world_seed,
-		enable_paired_registration_relief, collect_diagnostics)
+		skywalk_reservations, volume.world_seed, collect_diagnostics)
 	if diagnostic_trace_skywalk_timing:
 		print("SKYWALK_TIMING final_composition_lineages displaced_present=",
 			_any_key_overlap(composition.get("lineages", {}) as Dictionary,
@@ -3775,8 +4323,7 @@ static func _maze_feature_pass(grid: WarrenSpatialGrid,
 		proposals: Array[Dictionary], program: SettlementFabricProgram,
 		protected_owners: Dictionary,
 		court_fixed_blocks_by_parcel: Dictionary, public_air: Dictionary,
-		market_candidates: Array[Dictionary],
-		enable_paired_registration_relief: bool) -> Dictionary:
+		market_candidates: Array[Dictionary]) -> Dictionary:
 	## The one-pass replacement for the joint hero-feature beam.
 	##
 	## A maze town's features are not something composition discovers: the plot
@@ -3799,7 +4346,26 @@ static func _maze_feature_pass(grid: WarrenSpatialGrid,
 	# empty market plan before this branch is reached, so there is exactly one
 	# place a sentinel is born and the corpus here is never empty.
 	assert(not market_candidates.is_empty())
-	var market_reservation: Dictionary = market_candidates[0]
+	# Source asset plots already own their complete building volume. A later
+	# canopy may use another socket, but must not evict that promised house.
+	var asset_cells := {}
+	for record: Dictionary in parcels.audit.get("maze_assets", []):
+		for column: Vector2i in record.cells:
+			for band in range(int(record.floor), int(record.top)):
+				for x in 2:
+					for z in 2:
+						asset_cells[Vector3i(column.x * 2 + x, band, column.y * 2 + z)] = true
+	var market_reservation: Dictionary = {"optional_absent": true}
+	for candidate: Dictionary in market_candidates:
+		var claims := _protected_owners_with_market({}, candidate)
+		var overlaps := false
+		for cell: Vector3i in claims:
+			if asset_cells.has(cell):
+				overlaps = true
+				break
+		if not overlaps:
+			market_reservation = candidate
+			break
 	if bool(market_reservation.get("optional_absent", false)):
 		# Recorded whether or not the profile REQUIRES a market: a village
 		# whose street could hold no measured canopy shipped without one, and
@@ -4000,12 +4566,24 @@ static func _maze_landmark_refusal(grid: WarrenSpatialGrid,
 			recipe.walk_cells]:
 		for local_cell: Vector3i in cells:
 			body[FabricRecipe.transform_cell(local_cell, origin, yaw)] = true
+	if recipe.has_tag(&"native_grammar"):
+		for cell: Vector3i in body:
+			if body.has(cell + Vector3i.UP): continue
+			var above := grid.face_claim(cell, Vector3i.UP)
+			if not above.is_empty() and int(above.get("kind", -1)) == WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR:
+				return {"reason": "native pitched roof cannot bear an upper public floor"}
 	if body.is_empty() or not _skywalk_body_fits_grid(grid, body):
 		return {"reason": "body at %s/r%d does not fit the residual mass%s" \
 			% [origin, yaw, _maze_body_conflict_text(grid, body)]}
 	var bearing: Dictionary = {}
 	for local_cell: Vector3i in recipe.terrain_bearing_cells:
 		bearing[FabricRecipe.transform_cell(local_cell, origin, yaw)] = true
+	if recipe.has_tag(&"native_grammar"):
+		var native_massif := volume.mass_context.get("massif") as WarrenMassif
+		for cell: Vector3i in bearing:
+			var column := Vector2i(floori(float(cell.x) / 2.0), floori(float(cell.z) / 2.0))
+			if native_massif == null or native_massif.base_at(column) != cell.y:
+				return {"reason": "native footing and private approach require ground support"}
 	if bearing.is_empty() or not _landmark_bearing_follows_terrain(bearing,
 			volume):
 		return {"reason": "bearing at band %d does not follow terrain: %s" \
@@ -5096,100 +5674,6 @@ static func _absent_courtyard_bridge_candidate() -> Dictionary:
 	}
 
 
-static func _exact_composition_room_probes(composition: Dictionary,
-		proposals: Array[Dictionary], program: SettlementFabricProgram,
-		world_seed: int, court_candidate: Dictionary,
-		skywalk_reservations: Array[Dictionary],
-		skip_parcels: Dictionary = {}) -> Dictionary:
-	## Rebuild the exact compile-time room stamps and their measured recipe
-	## choices for a sealed composition. The exact court preflight and the sealed
-	## hero-feature occluder ranking share this so both always see the same rooms
-	## and recipes the final compiler will construct.
-	var room_probes: Array[Dictionary] = []
-	for proposal: Dictionary in proposals:
-		var parcel := proposal.parcel as WarrenBuildingParcel
-		if skip_parcels.has(parcel.stable_id):
-			continue
-		var lineage := (composition.lineages as Dictionary).get(
-			parcel.stable_id, {}) as Dictionary
-		if lineage.is_empty():
-			continue
-		var proposal_origin := proposal.origin as Vector3i
-		var threshold := WarrenParcelConstruction.threshold_cell(parcel)
-		var lineage_blocks := lineage.blocks as Array[Dictionary]
-		var required_through_block := int(lineage.get(
-			"required_through_block", -1))
-		for block_index in lineage_blocks.size():
-			var block := lineage_blocks[block_index]
-			var source_block_index := int(block.get(
-				"source_block_index", block_index))
-			for storey in range(int(block.start_storey),
-					int(block.end_storey)):
-				var room_origin := Vector3i((block.origin as Vector3i).x,
-					proposal_origin.y + storey \
-						* WarrenSpatialGrid.STOREY_CELLS,
-					(block.origin as Vector3i).z)
-				var addressed := threshold.y >= proposal_origin.y \
-					+ storey * WarrenSpatialGrid.STOREY_CELLS \
-					and threshold.y < proposal_origin.y \
-						+ (storey + 1) * WarrenSpatialGrid.STOREY_CELLS
-				var room_door_phase := WarrenParcelConstruction \
-					.address_door_phase_for_room(StringName(block.kind), room_origin,
-						int(block.yaw_quarters), threshold,
-						Vector3i(parcel.frontage_direction.x, 0,
-							parcel.frontage_direction.y)) if addressed else 0
-				if addressed and room_door_phase < 0:
-					return {"valid": false, "portal_failure": false,
-						"failure": "recomposed room lost its exact threshold"}
-				var building_id := StringName("spatial.%s.part%02d" % [
-					parcel.stable_id, block_index])
-				var room := WarrenRoomStamp.new(StringName(
-					"%s.room%02d" % [building_id,
-						storey - int(block.start_storey)]),
-					parcel.stable_id, StringName(block.kind), room_origin,
-					int(block.yaw_quarters), storey,
-					storey == 0 and not block.has(
-						"support_parent_lineage_id"), addressed,
-					threshold if addressed else Vector3i(2147483647,
-						2147483647, 2147483647),
-					Vector3i(parcel.frontage_direction.x, 0,
-						parcel.frontage_direction.y), int(proposal.roof_feature),
-					&"", -1, room_door_phase)
-				if not room.add_private_cells(
-						WarrenRoomStamp.expected_private_cells(
-							StringName(block.kind), room_origin,
-							int(block.yaw_quarters))):
-					return {"valid": false, "portal_failure": false,
-						"failure": "room stamp cells could not be recorded"}
-				room_probes.append({"room": room, "building_id": building_id,
-					"lineage_id": parcel.stable_id,
-					"source_block_index": source_block_index,
-					"optional_crown": source_block_index \
-						> required_through_block})
-	var portal_result := _exact_preflight_feature_portal_masks(room_probes,
-		court_candidate, skywalk_reservations)
-	if not bool(portal_result.get("valid", false)):
-		return {"valid": false, "portal_failure": true,
-			"failure": String(portal_result.get("failure",
-				"feature portal binding failed"))}
-	var portal_masks := portal_result.get("masks", {}) as Dictionary
-	for record: Dictionary in room_probes:
-		var room := record.room as WarrenRoomStamp
-		var feature_portal_mask := int(portal_masks.get(room.stable_id, 0))
-		var desired := program.recipe(
-			WarrenSpatialFabricCompiler._room_recipe_id(room,
-				world_seed, true, feature_portal_mask))
-		var fallback := program.recipe(
-			WarrenSpatialFabricCompiler._room_recipe_id(room,
-				world_seed, false, feature_portal_mask))
-		if desired == null or fallback == null:
-			return {"valid": false, "portal_failure": false,
-				"failure": "composed room has no measured recipe"}
-		record["desired"] = desired
-		record["fallback"] = fallback
-	return {"valid": true, "portal_failure": false, "probes": room_probes}
-
-
 static func _exact_preflight_feature_portal_masks(
 		room_probes: Array[Dictionary], court_candidate: Dictionary,
 		skywalk_reservations: Array[Dictionary]) -> Dictionary:
@@ -5862,176 +6346,6 @@ static func _market_street_connection(volume: WarrenVolumePlan,
 	return {"edge_count": edge_count, "max_episode_width": max_width}
 
 
-static func _maze_connectivity_skywalk_plan(grid: WarrenSpatialGrid,
-		volume: WarrenVolumePlan, parcel_plan: WarrenParcelPlan,
-		proposals: Array[Dictionary], program: SettlementFabricProgram,
-		protected_owners: Dictionary, public_air: Dictionary,
-		profile: WarrenVillageScaleProfile) -> Dictionary:
-	## Topology-first occupied-link stage. Parcel dimensions, storeys and authored
-	## construction recipes already exist, but generic room reservations have not
-	## consumed the air between them. Every candidate is produced by the common
-	## WarrenAssetCompiler from two semantic room sockets and is later committed
-	## by WarrenSpatialFeatureSolver as PRIVATE_VOLUME with two independently
-	## terrain-reaching building owners.
-	var empty := {
-		"reservations": [] as Array[Dictionary],
-		"selected_candidates": [] as Array[Dictionary],
-		"forced_offsets": {}, "priority_cells": {},
-		"candidate_count": 0, "target_count": 2,
-		"unique_route_cover_count": 0,
-		"marginal_route_cover_count": 0,
-		"landmark_coverage_count": 0,
-		"endpoint_count": 0, "aligned_pair_count": 0,
-		"component_count": 0, "body_fit_count": 0,
-		"clearance_grid_fit_count": 0,
-		"clearance_feature_fit_count": 0,
-		"reservation_fit_count": 0, "route_fit_count": 0,
-		"fit_rejection_samples": [] as Array[Dictionary],
-	}
-	if grid == null or volume == null or parcel_plan == null or program == null:
-		return empty
-	var target := 2 if profile == null else mini(3,
-		maxi(2, profile.skywalk_range.x))
-	empty["target_count"] = target
-	var proposal_by_id: Dictionary = {}
-	for proposal: Dictionary in proposals:
-		var proposal_parcel := proposal.get("parcel") as WarrenBuildingParcel
-		if proposal_parcel != null:
-			proposal_by_id[proposal_parcel.stable_id] = proposal
-	var cache: Dictionary = {}
-	var candidates: Array[Dictionary] = []
-	for left_index in parcel_plan.parcels.size():
-		var left := parcel_plan.parcels[left_index]
-		for right_index in range(left_index + 1, parcel_plan.parcels.size()):
-			var right := parcel_plan.parcels[right_index]
-			if not WarrenAssetCompiler.parcels_may_form_skywalk(left, right,
-					program, cache):
-				continue
-			var reservation := WarrenAssetCompiler.skywalk_reservation(left,
-				right, program, public_air, cache)
-			if reservation.is_empty():
-				continue
-			reservation["owner_parcel_ids"] = [left.stable_id,
-				right.stable_id] as Array[StringName]
-			reservation["feature_id"] = StringName(
-				"spatial.skywalk.plan.%s.%s" % [left.stable_id,
-					right.stable_id])
-			var body := reservation.reserved_cells as Dictionary
-			var components: Array[Dictionary] = []
-			components.assign(reservation.components as Array)
-			var clearance := _skywalk_visual_clearance_cells(components,
-				program)
-			if body.is_empty() or clearance.is_empty() \
-					or not _skywalk_body_fits_grid(grid, body) \
-					or not _skywalk_clearance_fits_grid(grid, clearance) \
-					or not _skywalk_clearance_fits_protected(clearance,
-						protected_owners):
-				continue
-			var lower_cover := _lower_public_cover(body, public_air)
-			if lower_cover < 2:
-				continue
-			var forced_offsets: Dictionary = {}
-			var priority_cells: Dictionary = {}
-			var endpoints := reservation.owner_endpoints as Array
-			var owners := reservation.owner_parcel_ids as Array
-			var endpoint_blocks_valid := endpoints.size() == 2 \
-				and owners.size() == 2
-			for endpoint_index in mini(endpoints.size(), owners.size()):
-				var owner_id := StringName(owners[endpoint_index])
-				var endpoint := endpoints[endpoint_index] as Dictionary
-				endpoint["owner_id"] = owner_id
-				var proposal := proposal_by_id.get(owner_id, {}) as Dictionary
-				if proposal.is_empty():
-					endpoint_blocks_valid = false
-					break
-				var block := _proposal_block_for_cell(proposal,
-					endpoint.cell as Vector3i)
-				if block < 0 or not _forced_block_fits(grid, proposal, block,
-						Vector2i.ZERO):
-					endpoint_blocks_valid = false
-					break
-				forced_offsets[owner_id] = {block: Vector2i.ZERO}
-				for cell_value: Variant in _forced_block_cells(proposal, block,
-						Vector2i.ZERO).keys():
-					priority_cells[cell_value] = owner_id
-			if not endpoint_blocks_valid:
-				continue
-			reservation["owner_endpoints"] = endpoints
-			reservation["visual_clearance_cells"] = clearance
-			var endpoint_owners := {left.stable_id: true,
-				right.stable_id: true}
-			var pair_key := "%s|%s" % [left.stable_id, right.stable_id]
-			candidates.append({
-				"reservation": reservation,
-				"body": body,
-				"clearance": clearance,
-				"forced_offsets": forced_offsets,
-				"priority_cells": priority_cells,
-				"pair_key": pair_key,
-				"endpoint_pair_key": _skywalk_endpoint_pair_key(reservation),
-				"blocker_count": _skywalk_blocker_count(clearance,
-					protected_owners, endpoint_owners),
-				"lower_cover": lower_cover,
-				"courtyard_bridge": false,
-				"tie": posmod(Helper._mix64(volume.world_seed \
-					^ pair_key.hash()), 1000003),
-			})
-	candidates.sort_custom(_skywalk_candidate_less)
-	var selected: Array[Dictionary] = []
-	var selected_owner_ids: Dictionary = {}
-	# First spread links across distinct endpoint buildings. If the actual town
-	# offers only a hub, a second pass may reuse one endpoint while every exact
-	# occupancy and envelope compatibility rule remains unchanged.
-	for require_fresh_owners: bool in [true, false]:
-		for candidate: Dictionary in candidates:
-			if selected.size() >= target or selected.has(candidate):
-				continue
-			var candidate_owners := _skywalk_endpoint_owner_set(
-				candidate.reservation as Dictionary)
-			var owner_conflict := _any_key_overlap(candidate_owners,
-				selected_owner_ids)
-			if require_fresh_owners and owner_conflict:
-				continue
-			var compatible := true
-			for prior: Dictionary in selected:
-				if not _skywalk_candidates_compatible(prior, candidate):
-					compatible = false
-					break
-			if not compatible:
-				continue
-			selected.append(candidate)
-			for owner_value: Variant in candidate_owners.keys():
-				selected_owner_ids[owner_value] = true
-		if selected.size() >= target:
-			break
-	var reservations: Array[Dictionary] = []
-	var forced_offsets: Dictionary = {}
-	var priority_cells: Dictionary = {}
-	var unique_route_cover := 0
-	for candidate: Dictionary in selected:
-		reservations.append((candidate.reservation as Dictionary).duplicate(true))
-		unique_route_cover += int(candidate.lower_cover)
-		for owner_value: Variant in (candidate.forced_offsets as Dictionary).keys():
-			var owner_id := StringName(owner_value)
-			if not forced_offsets.has(owner_id):
-				forced_offsets[owner_id] = {}
-			(forced_offsets[owner_id] as Dictionary).merge(
-				(candidate.forced_offsets as Dictionary)[owner_value] as Dictionary,
-				true)
-		priority_cells.merge(candidate.priority_cells as Dictionary, true)
-	return {
-		"reservations": reservations,
-		"selected_candidates": selected,
-		"forced_offsets": forced_offsets,
-		"priority_cells": priority_cells,
-		"candidate_count": candidates.size(),
-		"target_count": target,
-		"unique_route_cover_count": unique_route_cover,
-		"marginal_route_cover_count": 0,
-		"landmark_coverage_count": 0,
-	}
-
-
 static func _protected_owners_with_skywalk_plan(
 		protected_owners: Dictionary, skywalk_plan: Dictionary) -> Dictionary:
 	var trial := protected_owners.duplicate(true)
@@ -6058,258 +6372,6 @@ static func _protected_owners_with_skywalk_plan(
 		trial[cell_value] = {StringName((skywalk_plan.priority_cells \
 			as Dictionary)[cell_value]): true}
 	return trial
-
-
-static func _maze_connectivity_plan_from_composition(
-		grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
-		composition: Dictionary, proposals: Array[Dictionary],
-		program: SettlementFabricProgram, protected_owners: Dictionary,
-		public_air: Dictionary, profile: WarrenVillageScaleProfile) -> Dictionary:
-	## The first room composition is the town's geometric proposal. Derive the
-	## occupied-link network from those actual shifted floorplates, then feed the
-	## selected reservations back through the same composer. This is the explicit
-	## post-geometry/pre-reservation pass: it can release an unrelated optional
-	## micro-room from a bridge void, while the endpoint blocks are pinned to the
-	## exact offsets that created their compatible sockets.
-	var target := 2 if profile == null else mini(3,
-		maxi(2, profile.skywalk_range.x))
-	var empty := {
-		"reservations": [] as Array[Dictionary],
-		"selected_candidates": [] as Array[Dictionary],
-		"forced_offsets": {}, "priority_cells": {},
-		"candidate_count": 0, "target_count": target,
-		"unique_route_cover_count": 0,
-		"marginal_route_cover_count": 0,
-		"landmark_coverage_count": 0,
-	}
-	var lineages := composition.get("lineages", {}) as Dictionary
-	if lineages.is_empty():
-		return empty
-	var proposal_by_id: Dictionary = {}
-	for proposal: Dictionary in proposals:
-		var proposal_parcel := proposal.get("parcel") as WarrenBuildingParcel
-		if proposal_parcel != null:
-			proposal_by_id[proposal_parcel.stable_id] = proposal
-	var endpoints: Array[Dictionary] = []
-	var occupied_by_owner: Dictionary = {}
-	var lineage_ids: Array[StringName] = []
-	lineage_ids.assign(lineages.keys())
-	lineage_ids.sort_custom(func(a: StringName, b: StringName) -> bool:
-		return String(a) < String(b))
-	for lineage_id: StringName in lineage_ids:
-		var lineage := lineages[lineage_id] as Dictionary
-		var proposal := proposal_by_id.get(lineage_id, {}) as Dictionary
-		if proposal.is_empty():
-			continue
-		var proposal_origin := proposal.origin as Vector3i
-		for block_value: Variant in lineage.blocks as Array:
-			var block := block_value as Dictionary
-			var source_block_index := int(block.source_block_index)
-			var block_origin := block.origin as Vector3i
-			var original_origin := block.get("original_origin", block_origin) \
-				as Vector3i
-			var wanted_offset := Vector2i(block_origin.x - original_origin.x,
-				block_origin.z - original_origin.z)
-			for occupied_cell: Vector3i in block.cells as Array[Vector3i]:
-				occupied_by_owner[occupied_cell] = lineage_id
-			for storey in range(int(block.start_storey),
-					int(block.end_storey)):
-				var room_origin := Vector3i(block_origin.x,
-					proposal_origin.y + storey \
-						* WarrenSpatialGrid.STOREY_CELLS,
-					block_origin.z)
-				var stamp := WarrenRoomStamp.new(
-					StringName("connectivity.%s.%d" % [lineage_id, storey]),
-					lineage_id, StringName(block.kind), room_origin,
-					int(block.yaw_quarters), storey, false, false)
-				var recipe_id := WarrenSpatialFabricCompiler._room_recipe_id(
-					stamp, volume.world_seed, false)
-				var recipe := program.recipe(recipe_id)
-				if recipe == null:
-					continue
-				for socket: Dictionary in recipe.sockets:
-					if int(socket.kind) != FabricRecipe.SocketKind.ROOM:
-						continue
-					var socket_id := StringName(socket.id)
-					if not String(socket_id).begins_with("room.") \
-							or String(socket_id).contains(".corner."):
-						continue
-					var bearing_id := StringName(String(socket_id).replace(
-						"room.", "bearing."))
-					if recipe.socket(bearing_id).is_empty():
-						continue
-					endpoints.append({
-						"owner_id": lineage_id,
-						"cell": FabricRecipe.transform_cell(
-							socket.cell as Vector3i, room_origin,
-							int(block.yaw_quarters)),
-						"facing": FabricRecipe.transform_direction(
-							socket.facing as Vector3i,
-							int(block.yaw_quarters)),
-						"source_block_index": source_block_index,
-						"wanted_offset": wanted_offset,
-						"priority_cells": block.cells,
-					})
-	var candidates: Array[Dictionary] = []
-	var seen: Dictionary = {}
-	var aligned_pair_count := 0
-	var component_count := 0
-	var body_fit_count := 0
-	var clearance_grid_fit_count := 0
-	var clearance_feature_fit_count := 0
-	var reservation_fit_count := 0
-	var route_fit_count := 0
-	var fit_rejection_samples: Array[Dictionary] = []
-	for left_index in endpoints.size():
-		var left := endpoints[left_index]
-		for right_index in range(left_index + 1, endpoints.size()):
-			var right := endpoints[right_index]
-			if left.owner_id == right.owner_id \
-					or (left.cell as Vector3i).y != (right.cell as Vector3i).y \
-					or (left.facing as Vector3i) != -(right.facing as Vector3i):
-				continue
-			var forward := left.facing as Vector3i
-			var delta := (right.cell as Vector3i) - (left.cell as Vector3i)
-			var distance := delta.x * forward.x + delta.z * forward.z
-			if distance not in [3, 5, 7] or delta != forward * distance:
-				continue
-			aligned_pair_count += 1
-			var segments := (distance - 1) / 2
-			var recipe_id := &"skywalk.3.blue" if segments == 1 \
-				else &"skywalk.6.orange" if segments == 2 \
-				else &"skywalk.9.blue"
-			var recipe := program.recipe(recipe_id)
-			var yaw := WarrenAssetCompiler._yaw_for_facing(Vector3i.LEFT,
-				-forward)
-			if recipe == null or yaw < 0:
-				continue
-			var own_socket := recipe.socket(&"room.west")
-			if own_socket.is_empty():
-				continue
-			var origin := (left.cell as Vector3i) + forward \
-				- FabricRecipe.transform_cell(own_socket.cell as Vector3i,
-					Vector3i.ZERO, yaw)
-			var components: Array[Dictionary] = [{"recipe_id": recipe_id,
-				"origin": origin, "yaw_quarters": yaw}]
-			var reservation := WarrenAssetCompiler._component_reservation(
-				components, program, public_air)
-			if reservation.is_empty():
-				continue
-			component_count += 1
-			var owner_ids := [StringName(left.owner_id),
-				StringName(right.owner_id)] as Array[StringName]
-			reservation["kind"] = &"straight"
-			reservation["recipe_id"] = recipe_id
-			reservation["origin"] = origin
-			reservation["yaw_quarters"] = yaw
-			reservation["owner_parcel_ids"] = owner_ids
-			reservation["owner_endpoints"] = [{"cell": left.cell,
-				"facing": left.facing, "owner_id": left.owner_id},
-				{"cell": right.cell, "facing": right.facing,
-					"owner_id": right.owner_id}]
-			var body := reservation.reserved_cells as Dictionary
-			var clearance := _skywalk_visual_clearance_cells(components,
-				program)
-			var body_fits := _skywalk_body_fits_grid(grid, body)
-			var clearance_grid_fits := _skywalk_clearance_fits_grid(grid,
-				clearance)
-			var clearance_feature_fits := _skywalk_clearance_fits_protected(
-				clearance, protected_owners)
-			body_fit_count += int(body_fits)
-			clearance_grid_fit_count += int(body_fits and clearance_grid_fits)
-			clearance_feature_fit_count += int(body_fits \
-				and clearance_grid_fits and clearance_feature_fits)
-			if not body_fits or not clearance_grid_fits \
-					or not clearance_feature_fits:
-				if fit_rejection_samples.size() < 3:
-					fit_rejection_samples.append({"origin": origin,
-						"recipe_id": recipe_id, "left": left.cell,
-						"right": right.cell, "body_fits": body_fits,
-						"clearance_grid_fits": clearance_grid_fits,
-						"clearance_feature_fits": clearance_feature_fits,
-						"body_conflicts": _skywalk_grid_conflicts(grid, body,
-							true),
-						"clearance_conflicts": _skywalk_grid_conflicts(grid,
-							clearance, false)})
-				continue
-			reservation_fit_count += 1
-			var lower_cover := _lower_public_cover(body, public_air)
-			if lower_cover < 2:
-				continue
-			route_fit_count += 1
-			var pair_key := _skywalk_endpoint_pair_key(reservation)
-			if seen.has(pair_key):
-				continue
-			seen[pair_key] = true
-			reservation["visual_clearance_cells"] = clearance
-			var forced_offsets: Dictionary = {
-				StringName(left.owner_id): {int(left.source_block_index):
-					left.wanted_offset as Vector2i},
-				StringName(right.owner_id): {int(right.source_block_index):
-					right.wanted_offset as Vector2i},
-			}
-			var priority_cells: Dictionary = {}
-			for endpoint: Dictionary in [left, right]:
-				for cell_value: Variant in endpoint.priority_cells as Array:
-					priority_cells[cell_value] = StringName(endpoint.owner_id)
-			var endpoint_owners := {StringName(left.owner_id): true,
-				StringName(right.owner_id): true}
-			var blockers: Dictionary = {}
-			for cell_value: Variant in clearance.keys():
-				var owner := StringName(occupied_by_owner.get(cell_value, &""))
-				if not owner.is_empty() and not endpoint_owners.has(owner):
-					blockers[owner] = true
-			candidates.append({
-				"reservation": reservation, "body": body,
-				"clearance": clearance, "forced_offsets": forced_offsets,
-				"priority_cells": priority_cells, "pair_key": pair_key,
-				"endpoint_pair_key": pair_key,
-				"blocker_count": blockers.size(),
-				"lower_cover": lower_cover, "courtyard_bridge": false,
-				"tie": posmod(Helper._mix64(volume.world_seed \
-					^ pair_key.hash()), 1000003),
-			})
-	candidates.sort_custom(_skywalk_candidate_less)
-	var selected: Array[Dictionary] = []
-	for candidate: Dictionary in candidates:
-		if selected.size() >= target:
-			break
-		var compatible := true
-		for prior: Dictionary in selected:
-			compatible = compatible and _skywalk_candidates_compatible(prior,
-				candidate)
-		if compatible:
-			selected.append(candidate)
-	var reservations: Array[Dictionary] = []
-	var forced_offsets: Dictionary = {}
-	var priority_cells: Dictionary = {}
-	var route_cover := 0
-	for candidate: Dictionary in selected:
-		reservations.append((candidate.reservation as Dictionary).duplicate(true))
-		route_cover += int(candidate.lower_cover)
-		for owner_value: Variant in (candidate.forced_offsets as Dictionary).keys():
-			if not forced_offsets.has(owner_value):
-				forced_offsets[owner_value] = {}
-			(forced_offsets[owner_value] as Dictionary).merge(
-				(candidate.forced_offsets as Dictionary)[owner_value] as Dictionary,
-				true)
-		priority_cells.merge(candidate.priority_cells as Dictionary, true)
-	return {
-		"reservations": reservations, "selected_candidates": selected,
-		"forced_offsets": forced_offsets, "priority_cells": priority_cells,
-		"candidate_count": candidates.size(), "target_count": target,
-		"endpoint_count": endpoints.size(),
-		"aligned_pair_count": aligned_pair_count,
-		"component_count": component_count,
-		"body_fit_count": body_fit_count,
-		"clearance_grid_fit_count": clearance_grid_fit_count,
-		"clearance_feature_fit_count": clearance_feature_fit_count,
-		"reservation_fit_count": reservation_fit_count,
-		"route_fit_count": route_fit_count,
-		"fit_rejection_samples": fit_rejection_samples,
-		"unique_route_cover_count": route_cover,
-		"marginal_route_cover_count": 0, "landmark_coverage_count": 0,
-	}
 
 
 static func _skywalk_candidate_less(a: Dictionary, b: Dictionary) -> bool:
@@ -6555,6 +6617,8 @@ static func _skywalk_visual_clearance_cells(components: Array[Dictionary],
 	## reservation. The exact AABB test uses the same tolerance as final fabric
 	## assembly, so topology yields only where an unrelated mesh would really be
 	## rejected later; the connector's own occupancy remains a separate fact.
+	## Compounds may request measured_parts: raster each module's transformed
+	## contract instead of filling the empty gaps in the recipe's aggregate box.
 	var all_bounds: Array[AABB] = []
 	for component: Dictionary in components:
 		var recipe := program.recipe(StringName(component.recipe_id))
@@ -6564,7 +6628,7 @@ static func _skywalk_visual_clearance_cells(components: Array[Dictionary],
 			component.origin as Vector3i, int(component.yaw_quarters))
 		var bounds_to_raster: Array[AABB] = []
 		var placement_prefix := String(component.get("placement_prefix", ""))
-		if placement_prefix.is_empty():
+		if placement_prefix.is_empty() and not bool(component.get("measured_parts", false)):
 			bounds_to_raster.append(lattice_transform \
 				* recipe.local_clearance_bounds)
 		else:
@@ -7327,137 +7391,144 @@ static func _stamp_maze_back_rooms(grid: WarrenSpatialGrid,
 	var added := 0
 	var addressed_count := 0
 	var private_count := 0
-	for item: Dictionary in work:
-		var cells := item["cells"] as Array[Vector3i]
-		var blocked := false
-		for cell: Vector3i in cells:
-			if grid.use_at(cell) != WarrenSpatialGrid.Use.ALLOCATABLE \
-					or _residual_feature_protected(grid, cell,
-						protected_owners):
-				blocked = true
-				break
-		if blocked:
-			_note_maze_back_room_refusal(refusals,
-				"mass already spent or feature-reserved")
-			continue
-		var band := int(item["band"])
-		var columns := item["columns"] as Array[Vector2i]
-		var kind := StringName(item["kind"])
-		var over_record := records[int(item["record"])] as Dictionary
-		if bool(over_record.get("over_passage", false)) \
-				and not _over_passage_is_borne(grid, over_record, columns, band,
-					building_by_id, building_by_cell):
-			_note_maze_back_room_refusal(refusals,
-				"passage cover lacks its crown, jambs or host storey")
-			continue
-		var yaw := int(item["yaw"])
-		var origin := _maze_back_room_origin(kind, cells, yaw)
-		# TASK C5c RULING 3 -- THE SECOND DOOR. A back room whose own shell can
-		# open an authored doorway onto a street is an ADDRESSED room of this
-		# building, not a windowless cell reached through the house in front of
-		# it: the plot is a corner and this is its second frontage.
-		var address := _maze_back_room_address(grid, kind, cells, yaw)
-		if not address.is_empty():
-			yaw = int(address.yaw)
-			origin = address.origin as Vector3i
-		if origin.x == 2147483647:
-			_note_maze_back_room_refusal(refusals,
-				"rectangle is not an authored shell")
-			continue
-		var terrain_bearing := _maze_back_room_bears_terrain(grid, volume,
-			columns, band)
-		var support_parent_id := &""
-		var support_parent_cell := Vector3i(2147483647, 2147483647, 2147483647)
-		if not terrain_bearing:
-			var support_counts: Dictionary = {}
-			var support_cell_by_owner: Dictionary = {}
+	while not work.is_empty():
+		var added_before := added
+		var deferred: Array[Dictionary] = []
+		for item: Dictionary in work:
+			var cells := item["cells"] as Array[Vector3i]
+			var blocked := false
 			for cell: Vector3i in cells:
-				if cell.y != band:
-					continue
-				var below := cell + Vector3i.DOWN
-				var owner := StringName(building_by_cell.get(below, &""))
-				if owner.is_empty():
-					continue
-				support_counts[owner] = int(
-					support_counts.get(owner, 0)) + 1
-				support_cell_by_owner[owner] = below
-			support_parent_id = _largest_contact_owner(support_counts)
-			var required := maxi(1, columns.size() * 2)
-			if support_parent_id.is_empty() \
-					or int(support_counts[support_parent_id]) < required:
-				# Neither the ground nor half a floorplate of inhabited mass
-				# stands under this rectangle. What is usually there instead is
-				# structural ROCK, which is derived stone rather than
-				# construction and which no room may name as its bearing.
+				if grid.use_at(cell) != WarrenSpatialGrid.Use.ALLOCATABLE \
+						or _residual_feature_protected(grid, cell,
+							protected_owners, &"spatial.skywalk.reserve.maze_over."
+							if bool(records[int(item["record"])].get("over_passage", false)) else &""):
+					blocked = true
+					break
+			if blocked:
 				_note_maze_back_room_refusal(refusals,
-					"no terrain or building bearing")
+					"mass already spent or feature-reserved")
 				continue
-			support_parent_cell = support_cell_by_owner[
-				support_parent_id] as Vector3i
-		var parent_building := building_by_id.get(support_parent_id) \
-			as WarrenBuildingVolume
-		var parent_room := _maze_back_room_parent_room(parent_building,
-			support_parent_cell)
-		if not terrain_bearing and parent_room == null:
-			_note_maze_back_room_refusal(refusals,
-				"bearing parent has no room to name")
-			continue
-		var building_id := StringName("spatial.maze_back.%02d" % added)
-		var source_id := StringName("maze.back.%02d" % added)
-		var support_source := &"" if terrain_bearing \
-			else parent_room.source_parcel_id
-		var support_storey := -1 if terrain_bearing \
-			else parent_room.source_storey_index
-		var roof_feature := _residual_roof_feature(kind, origin,
-			volume.world_seed)
-		var addressed := not address.is_empty()
-		var threshold_cell := address.get("threshold",
-			Vector3i(2147483647, 2147483647, 2147483647)) as Vector3i
-		var frontage_direction := address.get("direction",
-			Vector3i.ZERO) as Vector3i
-		var probe := WarrenRoomStamp.new(&"maze.back.envelope.probe",
-			&"maze.back.envelope.probe", kind, origin, yaw, 0, terrain_bearing,
-			addressed, threshold_cell, frontage_direction, roof_feature,
-			support_source, support_storey, 0,
-			bool(item.get("flat_roof", false)))
-		probe.private_cells.assign(cells)
-		# A passage cover is its host's own storey continued over the lane:
-		# the host's rooms beneath and beside it are the same building, whose
-		# shells may meet it (jetty, eave) as any storey meets the one below.
-		if bool(records[int(item["record"])].get("over_passage", false)):
+			var band := int(item["band"])
+			var columns := item["columns"] as Array[Vector2i]
+			var kind := StringName(item["kind"])
+			var over_record := records[int(item["record"])] as Dictionary
+			if bool(over_record.get("over_passage", false)) \
+					and not _over_passage_is_borne(grid, over_record, columns, band,
+						building_by_id, building_by_cell):
+				_note_maze_back_room_refusal(refusals,
+					"passage cover lacks its crown, jambs or host storey")
+				continue
+			var yaw := int(item["yaw"])
+			var origin := _maze_back_room_origin(kind, cells, yaw)
+			# TASK C5c RULING 3 -- THE SECOND DOOR. A back room whose own shell can
+			# open an authored doorway onto a street is an ADDRESSED room of this
+			# building, not a windowless cell reached through the house in front of
+			# it: the plot is a corner and this is its second frontage.
+			var address := _maze_back_room_address(grid, kind, cells, yaw)
+			if not address.is_empty():
+				yaw = int(address.yaw)
+				origin = address.origin as Vector3i
+			if origin.x == 2147483647:
+				_note_maze_back_room_refusal(refusals,
+					"rectangle is not an authored shell")
+				continue
+			var terrain_bearing := _maze_back_room_bears_terrain(grid, volume,
+				columns, band)
+			var support_parent_id := &""
+			var support_parent_cell := Vector3i(2147483647, 2147483647, 2147483647)
+			if not terrain_bearing:
+				var support_counts: Dictionary = {}
+				var support_cell_by_owner: Dictionary = {}
+				for cell: Vector3i in cells:
+					if cell.y != band:
+						continue
+					var below := cell + Vector3i.DOWN
+					var owner := StringName(building_by_cell.get(below, &""))
+					if owner.is_empty():
+						continue
+					support_counts[owner] = int(
+						support_counts.get(owner, 0)) + 1
+					support_cell_by_owner[owner] = below
+				support_parent_id = _largest_contact_owner(support_counts)
+				var required := maxi(1, columns.size() * 2)
+				if support_parent_id.is_empty() \
+						or int(support_counts[support_parent_id]) < required:
+					# Neither the ground nor half a floorplate of inhabited mass
+					# stands under this rectangle. What is usually there instead is
+					# structural ROCK, which is derived stone rather than
+					# construction and which no room may name as its bearing.
+					_note_maze_back_room_refusal(refusals,
+						"no terrain or building bearing")
+					continue
+				support_parent_cell = support_cell_by_owner[
+					support_parent_id] as Vector3i
+			var parent_building := building_by_id.get(support_parent_id) \
+				as WarrenBuildingVolume
+			var parent_room := _maze_back_room_parent_room(parent_building,
+				support_parent_cell)
+			if not terrain_bearing and parent_room == null:
+				_note_maze_back_room_refusal(refusals,
+					"bearing parent has no room to name")
+				continue
+			var building_id := StringName("spatial.maze_back.%02d" % added)
+			var source_id := StringName("maze.back.%02d" % added)
+			var support_source := &"" if terrain_bearing \
+				else parent_room.source_parcel_id
+			var support_storey := -1 if terrain_bearing \
+				else parent_room.source_storey_index
+			var roof_feature := _residual_roof_feature(kind, origin,
+				volume.world_seed)
+			var addressed := not address.is_empty()
+			var threshold_cell := address.get("threshold",
+				Vector3i(2147483647, 2147483647, 2147483647)) as Vector3i
+			var frontage_direction := address.get("direction",
+				Vector3i.ZERO) as Vector3i
+			var probe := WarrenRoomStamp.new(&"maze.back.envelope.probe",
+				&"maze.back.envelope.probe", kind, origin, yaw, 0, terrain_bearing,
+				addressed, threshold_cell, frontage_direction, roof_feature,
+				support_source, support_storey, 0,
+				bool(item.get("flat_roof", false)))
+			probe.private_cells.assign(cells)
+			# A passage cover is its host's own storey continued over the lane:
+			# the host's rooms beneath and beside it are the same building, whose
+			# shells may meet it (jetty, eave) as any storey meets the one below.
 			probe.audit["lineage_parcel_id"] = StringName(
 				records[int(item["record"])]["parcel_id"])
-		if not _residual_room_envelope_fits(probe, building_by_id,
-				construction_program, volume.world_seed, grid):
-			_note_maze_back_room_refusal(refusals,
-				"authored envelope does not fit")
-			continue
-		if _stamp_maze_private_room(grid, supports, {
-				"building_id": building_id, "source_id": source_id,
-				"kind": kind, "origin": origin, "yaw": yaw, "cells": cells,
-				"floor_band": band, "terrain_bearing": terrain_bearing,
-				"addressed": addressed, "threshold_cell": threshold_cell,
-				"frontage_direction": frontage_direction,
-				"access_id": StringName(item["access_id"]),
-				"support_parcel_id": support_source,
-				"support_storey_index": support_storey,
-				"roof_feature": roof_feature,
-				"flat_roof": bool(item.get("flat_roof", false)),
-				"parent_building_id": &"" if terrain_bearing \
-					else parent_building.stable_id,
-				# The plot planner's building: a back room is its parcel's
-				# own room, whatever volume carries it (kit houses read it).
-				"room_audit": {"back_room_parcel_id": StringName(
-					records[int(item["record"])]["parcel_id"])}},
-				buildings, building_by_id, building_by_cell,
-				required_supports, terrain_support_ids,
-				support_edges) == null:
-			return {"failed": true}
-		for cell: Vector3i in cells:
-			stamped_cells[cell] = true
-		addressed_count += int(addressed)
-		private_count += int(not addressed)
-		added += 1
+			if not _residual_room_envelope_fits(probe, building_by_id,
+					construction_program, volume.world_seed, grid):
+				_note_maze_back_room_refusal(refusals,
+					"authored envelope does not fit")
+				deferred.append(item)
+				continue
+			if _stamp_maze_private_room(grid, supports, {
+					"building_id": building_id, "source_id": source_id,
+					"kind": kind, "origin": origin, "yaw": yaw, "cells": cells,
+					"floor_band": band, "terrain_bearing": terrain_bearing,
+					"addressed": addressed, "threshold_cell": threshold_cell,
+					"frontage_direction": frontage_direction,
+					"access_id": StringName(item["access_id"]),
+					"support_parcel_id": support_source,
+					"support_storey_index": support_storey,
+					"roof_feature": roof_feature,
+					"flat_roof": bool(item.get("flat_roof", false)),
+					"parent_building_id": &"" if terrain_bearing \
+						else parent_building.stable_id,
+					# The plot planner's building: a back room is its parcel's
+					# own room, whatever volume carries it (kit houses read it).
+					"room_audit": {"back_room_parcel_id": StringName(
+						records[int(item["record"])]["parcel_id"])}},
+					buildings, building_by_id, building_by_cell,
+					required_supports, terrain_support_ids,
+					support_edges) == null:
+				return {"failed": true}
+			for cell: Vector3i in cells:
+				stamped_cells[cell] = true
+			addressed_count += int(addressed)
+			private_count += int(not addressed)
+			added += 1
+		if added == added_before:
+			break
+		work = deferred
 	var unstamped: Array[Vector3i] = []
 	for cell_value: Variant in candidate_cells.keys():
 		var cell := cell_value as Vector3i
@@ -7602,12 +7673,16 @@ static func _stamp_maze_bridges(grid: WarrenSpatialGrid,
 		var source_floor_band := int(record["floor"])
 		var compound := _maze_bridge_compound_for(volume, columns)
 		if compound.is_empty():
-			var yielded := ((volume.mass_context.get(&"maze_bridge_compounds", {}) \
-				as Dictionary).get("yielded_spans", {}) as Dictionary).has(
-					source_span_index)
-			outcomes.append(_maze_bridge_release(id,
+			var compound_audit: Dictionary = volume.mass_context.get(
+				&"maze_bridge_compounds", {})
+			var yielded := (compound_audit.get("yielded_spans", {}) as Dictionary).has(
+				source_span_index)
+			var release := _maze_bridge_release(id,
 				BRIDGE_YIELDS_TO_DOORWAY if yielded \
-				else "source bridge has no sealed two-endpoint compound"))
+					else "source bridge has no sealed two-endpoint compound")
+			release["reservation_conflict"] = (compound_audit.get(
+				"yielded_conflicts", {}) as Dictionary).get(source_span_index, {})
+			outcomes.append(release)
 			continue
 		var floor_band := int(compound.floor)
 		var top_band := int(compound.top)
@@ -7851,13 +7926,15 @@ static func _maze_bridge_compound_for(volume: WarrenVolumePlan,
 
 static func _maze_bridge_endpoint_roof_clearance_cells(
 		grid: WarrenSpatialGrid, volume: WarrenVolumePlan, compound: Dictionary,
-		program: SettlementFabricProgram) -> Dictionary:
+		program: SettlementFabricProgram, measured_parts := false) -> Dictionary:
 	## Raster the exact endpoint seam gables AND occupied bridge-house envelope
 	## promised by the source compound. This is consumed before ordinary room
 	## composition, so every mandatory crown is protected fact rather than a late
 	## collision repair. Reserving only the endpoint gables allowed a neighboring
 	## terminal roof to take the future bridge roof's eave space; the endpoint
 	## boxes then survived while the actual connector was discarded.
+	## A mandatory-neighbor conflict can be narrowed to the union of measured
+	## module bounds. Other future construction still sees the full envelope.
 	if grid == null or volume == null or program == null:
 		return {}
 	var span_columns: Array[Vector2i] = []
@@ -7918,7 +7995,7 @@ static func _maze_bridge_endpoint_roof_clearance_cells(
 	# reservation owner, so the complete reservation excludes only unrelated
 	# construction and does not push the two required bearings away.
 	components.append({"recipe_id": bridge_recipe_id,
-		"origin": bridge_origin, "yaw_quarters": bridge_yaw})
+		"origin": bridge_origin, "yaw_quarters": bridge_yaw, "measured_parts": measured_parts})
 	for group_value: Variant in compound.get("endpoint_groups", []) as Array:
 		var columns: Array[Vector2i] = []
 		columns.assign(group_value as Array)
@@ -7961,7 +8038,7 @@ static func _maze_bridge_endpoint_roof_clearance_cells(
 		# with its seam roof so composition cannot create a lower crown that the
 		# endpoint would later cut through.
 		components.append({"recipe_id": endpoint_recipe_id,
-			"origin": origin, "yaw_quarters": yaw})
+			"origin": origin, "yaw_quarters": yaw, "measured_parts": measured_parts})
 		var candidates := WarrenSpatialFabricCompiler._full_roof_candidates(room,
 			volume.world_seed)
 		if candidates.is_empty():
@@ -7974,7 +8051,7 @@ static func _maze_bridge_endpoint_roof_clearance_cells(
 		components.append({"recipe_id": roof_id,
 			"origin": WarrenSpatialFabricCompiler._phase_aligned_full_roof_origin(
 				room, program.recipe(roof_id), roof_yaw),
-			"yaw_quarters": roof_yaw})
+			"yaw_quarters": roof_yaw, "measured_parts": measured_parts})
 	return _skywalk_visual_clearance_cells(components, program)
 
 
@@ -8551,9 +8628,10 @@ static func _over_passage_is_borne(grid: WarrenSpatialGrid, record: Dictionary,
 	## erosion may still lower it.
 	var crown := int(record.get("crown", band - 1))
 	for column: Vector2i in columns:
-		for fine: Vector3i in _fine_square(Vector3i(column.x, crown, column.y)):
-			if grid.use_at(fine) != WarrenSpatialGrid.Use.STRUCTURAL_VOLUME:
-				return false
+		for bearing_band in range(crown,int(record.get("floor",band))):
+			for fine: Vector3i in _fine_square(Vector3i(column.x,bearing_band,column.y)):
+				if grid.use_at(fine) != WarrenSpatialGrid.Use.STRUCTURAL_VOLUME:
+					return false
 	for jamb_value: Variant in record.get("jambs", []) as Array:
 		var jamb := jamb_value as Vector2i
 		for jamb_band in [crown - 1, crown]:
@@ -8577,7 +8655,11 @@ static func _over_passage_is_borne(grid: WarrenSpatialGrid, record: Dictionary,
 				if owner == null:
 					continue
 				for room: WarrenRoomStamp in owner.room_records:
-					if room.source_parcel_id == StringName(record["parcel_id"]):
+					# Directed back rooms have their own stamp source id, but
+					# remain rooms of the parcel recorded by the plot planner.
+					var host_id := StringName(room.audit.get(
+						"back_room_parcel_id", room.source_parcel_id))
+					if host_id == StringName(record["parcel_id"]):
 						return true
 	return false
 
@@ -8709,9 +8791,23 @@ static func _maze_back_room_address(grid: WarrenSpatialGrid,
 		if floor_claim.is_empty() or int(floor_claim.get("kind", -1)) \
 				!= WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR:
 			continue
+		if not _door_avoids_planting(grid,landing,direction): continue
 		return {"yaw": yaw, "origin": origin, "threshold": threshold,
 			"direction": direction}
 	return {}
+
+
+static func _door_avoids_planting(grid: WarrenSpatialGrid, landing: Vector3i,
+		facing: Vector3i) -> bool:
+	# A secondary doorway must keep its full authored two-cell approach. A
+	# planting reservation is already construction, not an available forecourt.
+	var left := Vector3i(-facing.z,0,facing.x)
+	for opening: Vector3i in [landing,landing+left,landing-left]:
+		if grid.use_at(opening) != WarrenSpatialGrid.Use.PUBLIC_AIR: continue
+		var approach := grid.face_claim(opening+facing,Vector3i.DOWN)
+		if int(approach.get("kind",-1)) == WarrenSpatialGrid.FaceKind.GARDEN_FLOOR:
+			return false
+	return true
 
 
 static func _maze_back_room_origin(kind: StringName, cells: Array[Vector3i],
@@ -9238,7 +9334,8 @@ static func _residual_room_candidate(grid: WarrenSpatialGrid,
 	var authored_frontage := FabricRecipe.transform_direction(
 		Vector3i.BACK, yaw)
 	var authored_landing := authored_threshold + authored_frontage
-	if grid.use_at(authored_landing) == WarrenSpatialGrid.Use.PUBLIC_AIR:
+	if grid.use_at(authored_landing) == WarrenSpatialGrid.Use.PUBLIC_AIR \
+			and _door_avoids_planting(grid,authored_landing,authored_frontage):
 		var floor_claim := grid.face_claim(authored_landing, Vector3i.DOWN)
 		if not floor_claim.is_empty() and int(floor_claim.get("kind", -1)) \
 				== WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR:
@@ -10000,6 +10097,17 @@ static func _residual_roof_envelope_fits(candidate: WarrenRoomStamp,
 							existing_semantic_solids[FabricRecipe.transform_cell(
 								local_solid, existing.lattice_origin,
 								existing.yaw_quarters)] = true
+	# A fully inhabited storey above is the ceiling; there is no exposed
+	# crown to roof. Partial crowns still use the exact closure proof below.
+	var ceiling_cells := 0
+	var covered_cells := 0
+	var top_band := candidate.lattice_origin.y + WarrenSpatialGrid.STOREY_CELLS - 1
+	for cell: Vector3i in candidate.private_cells:
+		if cell.y == top_band:
+			ceiling_cells += 1
+			covered_cells += int(occupied.has(cell + Vector3i.UP))
+	if ceiling_cells > 0 and covered_cells == ceiling_cells:
+		return true
 	# `flat_roof` is a source-plot height relationship, not permission to crown
 	# a free inhabited box with boards. The final compiler pitches every complete
 	# terminal plate, so proposal admission must prove that same real gable even

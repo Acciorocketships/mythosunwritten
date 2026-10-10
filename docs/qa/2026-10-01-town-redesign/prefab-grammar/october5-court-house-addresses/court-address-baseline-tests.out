@@ -1,0 +1,649 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_warren_maze_plots.gd
+[0m* test_add_plot_enforces_support_and_headroom
+* test_solid_at_derives_rock_under_plots_and_air_above
+* test_add_plot_on_a_sealed_plan_changes_nothing
+* test_stack_invariant_rejects_a_floating_plot_at_seal
+* test_add_plot_rejects_a_plot_overlapping_one_already_standing
+* test_seal_rejects_a_plot_appended_straight_onto_the_array
+* test_add_plot_demands_a_real_door_for_a_house_or_an_asset
+* test_passage_headroom_is_a_per_cell_fact_not_a_constant
+    passage cells with a slot taller than HEADROOM_BANDS: 85 (85 probed)
+* test_signature_covers_plots
+* test_asset_templates_match_the_catalog
+[31m    [Failed]:  [0m[STRING_NAME(anchor.z_native.cross.01x01.00)] expected to equal [STRING_NAME(anchor.z_native.arcade.01.window_1_2)]:  template 17 names its catalog recipe
+      at line 1026
+[31m    [Failed]:  [0m[5] expected to equal [4]:  template 17 width
+      at line 1030
+[31m    [Failed]:  [0m[4] expected to equal [3]:  template 17 depth
+      at line 1030
+[31m    [Failed]:  [0m[8] expected to equal [11]:  template 17 height_bands
+      at line 1030
+[31m    [Failed]:  [0m[6] expected to equal [5]:  template 17 reach_forward
+      at line 1030
+[31m    [Failed]:  [0m[4] expected to equal [1]:  template 17 reach_left
+      at line 1030
+[31m    [Failed]:  [0m[6] expected to equal [5]:  template 17 bearing_forward
+      at line 1030
+[31m    [Failed]:  [0m[4] expected to equal [1]:  template 17 bearing_left
+      at line 1030
+[31m    [Failed]:  [0m[STRING_NAME(anchor.z_native.cross.01x02.01)] expected to equal [STRING_NAME(anchor.z_native.arcade.02.source)]:  template 18 names its catalog recipe
+      at line 1026
+[31m    [Failed]:  [0m[5] expected to equal [4]:  template 18 width
+      at line 1030
+[31m    [Failed]:  [0m[5] expected to equal [3]:  template 18 depth
+      at line 1030
+[31m    [Failed]:  [0m[8] expected to equal [13]:  template 18 height_bands
+      at line 1030
+[31m    [Failed]:  [0m[9] expected to equal [5]:  template 18 reach_forward
+      at line 1030
+[31m    [Failed]:  [0m[4] expected to equal [1]:  template 18 reach_left
+      at line 1030
+[31m    [Failed]:  [0m[9] expected to equal [5]:  template 18 bearing_forward
+      at line 1030
+[31m    [Failed]:  [0m[4] expected to equal [1]:  template 18 bearing_left
+      at line 1030
+[31m    [Failed]:  [0m[STRING_NAME(anchor.z_native.cross.02x01.00)] expected to equal [STRING_NAME(anchor.z_native.cross.01x01.00)]:  template 19 names its catalog recipe
+      at line 1026
+[31m    [Failed]:  [0m[7] expected to equal [5]:  template 19 width
+      at line 1030
+[31m    [Failed]:  [0m[3] expected to equal [4]:  template 19 depth
+      at line 1030
+[31m    [Failed]:  [0m[5] expected to equal [6]:  template 19 reach_forward
+      at line 1030
+[31m    [Failed]:  [0m[3] expected to equal [4]:  template 19 reach_left
+      at line 1030
+[31m    [Failed]:  [0m[7] expected to equal [3]:  template 19 reach_right
+      at line 1030
+[31m    [Failed]:  [0m[5] expected to equal [6]:  template 19 bearing_forward
+      at line 1030
+[31m    [Failed]:  [0m[3] expected to equal [4]:  template 19 bearing_left
+      at line 1030
+[31m    [Failed]:  [0m[7] expected to equal [3]:  template 19 bearing_right
+      at line 1030
+[31m    [Failed]:  [0m[6] expected to be >= than [7]:  template 19 is deep enough for its own prefab
+      at line 1037
+[31m    [Failed]:  [0m[STRING_NAME(anchor.z_native.cross.02x01.01)] expected to equal [STRING_NAME(anchor.z_native.cross.01x02.01)]:  template 20 names its catalog recipe
+      at line 1026
+[31m    [Failed]:  [0m[7] expected to equal [5]:  template 20 width
+      at line 1030
+[31m    [Failed]:  [0m[3] expected to equal [5]:  template 20 depth
+      at line 1030
+[31m    [Failed]:  [0m[5] expected to equal [9]:  template 20 reach_forward
+      at line 1030
+[31m    [Failed]:  [0m[7] expected to equal [4]:  template 20 reach_left
+      at line 1030
+[31m    [Failed]:  [0m[5] expected to equal [9]:  template 20 bearing_forward
+      at line 1030
+[31m    [Failed]:  [0m[7] expected to equal [4]:  template 20 bearing_left
+      at line 1030
+[31m    [Failed]:  [0m[6] expected to be >= than [10]:  template 20 is deep enough for its own prefab
+      at line 1037
+[31m    [Failed]:  [0m[STRING_NAME(anchor.z_native.cross.02x01.02)] expected to equal [STRING_NAME(anchor.z_native.cross.02x01.00)]:  template 21 names its catalog recipe
+      at line 1026
+[31m    [Failed]:  [0m[4] expected to equal [3]:  template 21 depth
+      at line 1030
+[31m    [Failed]:  [0m[6] expected to equal [5]:  template 21 reach_forward
+      at line 1030
+[31m    [Failed]:  [0m[6] expected to equal [3]:  template 21 reach_left
+      at line 1030
+[31m    [Failed]:  [0m[4] expected to equal [7]:  template 21 reach_right
+      at line 1030
+[31m    [Failed]:  [0m[6] expected to equal [5]:  template 21 bearing_forward
+      at line 1030
+[31m    [Failed]:  [0m[6] expected to equal [3]:  template 21 bearing_left
+      at line 1030
+[31m    [Failed]:  [0m[4] expected to equal [7]:  template 21 bearing_right
+      at line 1030
+[31m    [Failed]:  [0m[STRING_NAME(anchor.z_native.street.02.00)] expected to equal [STRING_NAME(anchor.z_native.cross.02x01.01)]:  template 22 names its catalog recipe
+      at line 1026
+[31m    [Failed]:  [0m[3] expected to equal [7]:  template 22 width
+      at line 1030
+[31m    [Failed]:  [0m[4] expected to equal [5]:  template 22 reach_forward
+      at line 1030
+[31m    [Failed]:  [0m[1] expected to equal [7]:  template 22 reach_left
+      at line 1030
+[31m    [Failed]:  [0m[1] expected to equal [3]:  template 22 reach_right
+      at line 1030
+[31m    [Failed]:  [0m[4] expected to equal [5]:  template 22 bearing_forward
+      at line 1030
+[31m    [Failed]:  [0m[1] expected to equal [7]:  template 22 bearing_left
+      at line 1030
+[31m    [Failed]:  [0m[1] expected to equal [3]:  template 22 bearing_right
+      at line 1030
+[31m    [Failed]:  [0m[6] expected to be >= than [11]:  template 22 is wide enough for its own prefab
+      at line 1034
+[31m    [Failed]:  [0m[STRING_NAME(anchor.z_native.street.03.00)] expected to equal [STRING_NAME(anchor.z_native.cross.02x01.02)]:  template 23 names its catalog recipe
+      at line 1026
+[31m    [Failed]:  [0m[3] expected to equal [7]:  template 23 width
+      at line 1030
+[31m    [Failed]:  [0m[1] expected to equal [6]:  template 23 reach_left
+      at line 1030
+[31m    [Failed]:  [0m[1] expected to equal [4]:  template 23 reach_right
+      at line 1030
+[31m    [Failed]:  [0m[1] expected to equal [6]:  template 23 bearing_left
+      at line 1030
+[31m    [Failed]:  [0m[1] expected to equal [4]:  template 23 bearing_right
+      at line 1030
+[31m    [Failed]:  [0m[6] expected to be >= than [11]:  template 23 is wide enough for its own prefab
+      at line 1034
+[31m    [Failed]:  [0m[STRING_NAME(anchor.z_native.turret.00)] expected to equal [STRING_NAME(anchor.z_native.street.02.00)]:  template 24 names its catalog recipe
+      at line 1026
+[31m    [Failed]:  [0m[6] expected to equal [3]:  template 24 width
+      at line 1030
+[31m    [Failed]:  [0m[4] expected to equal [3]:  template 24 depth
+      at line 1030
+[31m    [Failed]:  [0m[14] expected to equal [8]:  template 24 height_bands
+      at line 1030
+[31m    [Failed]:  [0m[6] expected to equal [4]:  template 24 reach_forward
+      at line 1030
+[31m    [Failed]:  [0m[3] expected to equal [1]:  template 24 reach_left
+      at line 1030
+[31m    [Failed]:  [0m[5] expected to equal [1]:  template 24 reach_right
+      at line 1030
+[31m    [Failed]:  [0m[6] expected to equal [4]:  template 24 bearing_forward
+      at line 1030
+[31m    [Failed]:  [0m[3] expected to equal [1]:  template 24 bearing_left
+      at line 1030
+[31m    [Failed]:  [0m[5] expected to equal [1]:  template 24 bearing_right
+      at line 1030
+[31m    [Failed]:  [0m[STRING_NAME(anchor.z_native.turret.01)] expected to equal [STRING_NAME(anchor.z_native.street.03.00)]:  template 25 names its catalog recipe
+      at line 1026
+[31m    [Failed]:  [0m[6] expected to equal [3]:  template 25 width
+      at line 1030
+[31m    [Failed]:  [0m[16] expected to equal [8]:  template 25 height_bands
+      at line 1030
+[31m    [Failed]:  [0m[3] expected to equal [1]:  template 25 reach_left
+      at line 1030
+[31m    [Failed]:  [0m[5] expected to equal [1]:  template 25 reach_right
+      at line 1030
+[31m    [Failed]:  [0m[3] expected to equal [1]:  template 25 bearing_left
+      at line 1030
+[31m    [Failed]:  [0m[5] expected to equal [1]:  template 25 bearing_right
+      at line 1030
+[31m    [Failed]:  [0m[STRING_NAME(anchor.z_native.arcade.01.window_1_2)] expected to equal [STRING_NAME(anchor.z_native.turret.00)]:  template 26 names its catalog recipe
+      at line 1026
+[31m    [Failed]:  [0m[4] expected to equal [6]:  template 26 width
+      at line 1030
+[31m    [Failed]:  [0m[3] expected to equal [4]:  template 26 depth
+      at line 1030
+[31m    [Failed]:  [0m[11] expected to equal [14]:  template 26 height_bands
+      at line 1030
+[31m    [Failed]:  [0m[5] expected to equal [6]:  template 26 reach_forward
+      at line 1030
+[31m    [Failed]:  [0m[1] expected to equal [3]:  template 26 reach_left
+      at line 1030
+[31m    [Failed]:  [0m[3] expected to equal [5]:  template 26 reach_right
+      at line 1030
+[31m    [Failed]:  [0m[5] expected to equal [6]:  template 26 bearing_forward
+      at line 1030
+[31m    [Failed]:  [0m[1] expected to equal [3]:  template 26 bearing_left
+      at line 1030
+[31m    [Failed]:  [0m[3] expected to equal [5]:  template 26 bearing_right
+      at line 1030
+[31m    [Failed]:  [0m[8] expected to be >= than [9]:  template 26 is wide enough for its own prefab
+      at line 1034
+[31m    [Failed]:  [0m[6] expected to be >= than [7]:  template 26 is deep enough for its own prefab
+      at line 1037
+[31m    [Failed]:  [0m[STRING_NAME(anchor.z_native.arcade.02.source)] expected to equal [STRING_NAME(anchor.z_native.turret.01)]:  template 27 names its catalog recipe
+      at line 1026
+[31m    [Failed]:  [0m[4] expected to equal [6]:  template 27 width
+      at line 1030
+[31m    [Failed]:  [0m[3] expected to equal [4]:  template 27 depth
+      at line 1030
+[31m    [Failed]:  [0m[13] expected to equal [16]:  template 27 height_bands
+      at line 1030
+[31m    [Failed]:  [0m[5] expected to equal [6]:  template 27 reach_forward
+      at line 1030
+[31m    [Failed]:  [0m[1] expected to equal [3]:  template 27 reach_left
+      at line 1030
+[31m    [Failed]:  [0m[3] expected to equal [5]:  template 27 reach_right
+      at line 1030
+[31m    [Failed]:  [0m[5] expected to equal [6]:  template 27 bearing_forward
+      at line 1030
+[31m    [Failed]:  [0m[1] expected to equal [3]:  template 27 bearing_left
+      at line 1030
+[31m    [Failed]:  [0m[3] expected to equal [5]:  template 27 bearing_right
+      at line 1030
+[31m    [Failed]:  [0m[8] expected to be >= than [9]:  template 27 is wide enough for its own prefab
+      at line 1034
+[31m    [Failed]:  [0m[6] expected to be >= than [7]:  template 27 is deep enough for its own prefab
+      at line 1037
+    ASSET_TEMPLATES: 28 unique envelopes from the catalog
+* test_assets_sit_at_the_minimum_modification_site
+    asset site cost 46; cheapest 14, cheapest realisable 14 (realisable)
+[31m    [Failed]:  [0m[46] expected to equal [14]:  the asset stands at the minimum cost among REALISABLE sites
+      at line 1111
+    seed 12 compact: 2/6 assets placed, min cost 14
+* test_asset_clearance_reservation_survives_into_house_partitioning
+* test_outer_terrace_height_grows_one_storey_per_massif_ring
+* test_decks_are_flat_street_level_regions
+    decks across the four towns: 1 standing, 0 refused
+* test_the_plaza_deck_is_a_room_not_a_lane
+    seed 2/compact plaza: (2, 2) columns at datum 3, 4 cells
+    seed 3/compact plaza: (2, 2) columns at datum 3, 4 cells
+    seed 5/compact plaza: (2, 2) columns at datum 4, 4 cells
+    seed 8/compact plaza: (2, 2) columns at datum 2, 4 cells
+    seed 10/compact plaza: (2, 2) columns at datum 0, 4 cells
+    seed 11/compact plaza: (2, 2) columns at datum 4, 4 cells
+    seed 2/standard plaza: (2, 2) columns at datum 3, 4 cells
+    seed 3/standard plaza: (2, 2) columns at datum 3, 4 cells
+    seed 5/standard plaza: (3, 2) columns at datum 4, 6 cells
+    seed 6/standard plaza: (2, 2) columns at datum 2, 4 cells
+    seed 10/standard plaza: (2, 2) columns at datum 0, 4 cells
+    seed 11/standard plaza: (2, 2) columns at datum 3, 4 cells
+    seed 1/large plaza: (2, 2) columns at datum 6, 4 cells
+    seed 2/large plaza: (2, 2) columns at datum 4, 4 cells
+    seed 3/large plaza: (2, 2) columns at datum 3, 4 cells
+    seed 5/large plaza: (2, 2) columns at datum 4, 4 cells
+    seed 6/large plaza: (2, 2) columns at datum 4, 4 cells
+    seed 8/large plaza: (2, 2) columns at datum 6, 4 cells
+    seed 10/large plaza: (2, 2) columns at datum 3, 4 cells
+    seed 11/large plaza: (2, 2) columns at datum 4, 4 cells
+    seed 12/large plaza: (2, 2) columns at datum 0, 4 cells
+    seed 1/grand plaza: (2, 2) columns at datum 0, 4 cells
+    seed 2/grand plaza: (4, 2) columns at datum 8, 8 cells
+    seed 3/grand plaza: (2, 2) columns at datum 2, 4 cells
+    seed 4/grand plaza: (2, 2) columns at datum 6, 4 cells
+    seed 5/grand plaza: (2, 2) columns at datum 3, 4 cells
+    seed 6/grand plaza: (2, 2) columns at datum 0, 4 cells
+    seed 7/grand plaza: (2, 2) columns at datum 6, 4 cells
+    seed 8/grand plaza: (2, 2) columns at datum 6, 4 cells
+    seed 9/grand plaza: (2, 2) columns at datum 0, 4 cells
+    seed 10/grand plaza: (2, 2) columns at datum 0, 4 cells
+    seed 11/grand plaza: (2, 2) columns at datum 2, 4 cells
+* test_partition_fills_every_street_fronting_column
+    seed 12 compact: 13 houses, mean footprint 1.69 columns
+      6 single-column houses, 3 of them beside a same-floor peer
+      0 houses past BUILDING_CAP 4, 1 columns swept in
+    seed 4 compact: 30 houses, mean footprint 2.07 columns
+      11 single-column houses, 2 of them beside a same-floor peer
+      1 houses past BUILDING_CAP 4, 4 columns swept in
+[31m    [Failed]:  [0m[1] expected to be <= than [0]:  seed 4 compact leaves 1 street-fronting column(s) out of every plot
+      at line 1624
+    seed 3 standard: 25 houses, mean footprint 2.16 columns
+      11 single-column houses, 6 of them beside a same-floor peer
+      0 houses past BUILDING_CAP 5, 3 columns swept in
+    seed 9 standard: 18 houses, mean footprint 2.17 columns
+      4 single-column houses, 1 of them beside a same-floor peer
+      0 houses past BUILDING_CAP 5, 13 columns swept in
+[31m    [Failed]:  [0m[1] expected to equal [0]:  1 of 145 street-fronting supportable columns are outside every plot; 0 is the pinned count
+      at line 1648
+    buildable columns in a plot: 161/185 = 0.870 (floor 0.89)
+[31m    [Failed]:  [0m[0.87027027027027] expected to be >= than [0.89]:  the share of buildable columns inside a plot holds its pinned floor
+      at line 1655
+    street-fronting (column, band) slots: 147/159 = 0.925 (floor 0.79)
+* test_houses_rise_to_meet_upper_streets
+    tiered houses across the four towns: 5 of 78 (1 skipped)
+* test_bridge_plots_sit_on_retained_spans
+    bridges across the four towns: 2 of 2 retained spans
+* test_planner_is_deterministic
+* test_local_skyline_peaks_are_complete_grounded_plots
+* test_streets_keep_their_floor
+    seed 1 compact: street_floor_gaps 1, the bore left 1, 0 house(s) refused to strand a street
+    seed 2 compact: street_floor_gaps 2, the bore left 2, 0 house(s) refused to strand a street
+    seed 3 compact: street_floor_gaps 0, the bore left 0, 0 house(s) refused to strand a street
+    seed 4 compact: street_floor_gaps 0, the bore left 0, 0 house(s) refused to strand a street
+    seed 5 compact: street_floor_gaps 1, the bore left 1, 0 house(s) refused to strand a street
+    seed 6 compact: street_floor_gaps 0, the bore left 0, 0 house(s) refused to strand a street
+    seed 7 compact: street_floor_gaps 2, the bore left 4, 0 house(s) refused to strand a street
+    seed 8 compact: street_floor_gaps 4, the bore left 4, 0 house(s) refused to strand a street
+    seed 9 compact: street_floor_gaps 1, the bore left 2, 0 house(s) refused to strand a street
+    seed 10 compact: street_floor_gaps 1, the bore left 2, 0 house(s) refused to strand a street
+    seed 11 compact: street_floor_gaps 1, the bore left 1, 0 house(s) refused to strand a street
+    seed 12 compact: street_floor_gaps 0, the bore left 0, 0 house(s) refused to strand a street
+    seed 1 standard: street_floor_gaps 1, the bore left 4, 0 house(s) refused to strand a street
+    seed 2 standard: street_floor_gaps 0, the bore left 0, 0 house(s) refused to strand a street
+    seed 3 standard: street_floor_gaps 0, the bore left 0, 0 house(s) refused to strand a street
+    seed 4 standard: street_floor_gaps 0, the bore left 2, 0 house(s) refused to strand a street
+    seed 5 standard: street_floor_gaps 1, the bore left 1, 0 house(s) refused to strand a street
+    seed 6 standard: street_floor_gaps 1, the bore left 1, 0 house(s) refused to strand a street
+    seed 7 standard: street_floor_gaps 4, the bore left 4, 0 house(s) refused to strand a street
+    seed 8 standard: street_floor_gaps 1, the bore left 4, 0 house(s) refused to strand a street
+    seed 9 standard: street_floor_gaps 5, the bore left 5, 0 house(s) refused to strand a street
+    seed 10 standard: street_floor_gaps 6, the bore left 6, 0 house(s) refused to strand a street
+    seed 11 standard: street_floor_gaps 1, the bore left 1, 0 house(s) refused to strand a street
+    seed 12 standard: street_floor_gaps 0, the bore left 4, 0 house(s) refused to strand a street
+    street floors: 24/24 towns checked, 0 skipped (); 0 houses refused corpus-wide to keep a street up
+MAZE_SLOPED_FLOORS_KEPT ramp 12/compact street_floor_gaps=0 bore=0 refused=0
+MAZE_SLOPED_FLOORS_KEPT ramp 3/standard street_floor_gaps=0 bore=0 refused=0
+MAZE_SLOPED_FLOORS_KEPT step 12/compact street_floor_gaps=0 bore=0 refused=0
+MAZE_SLOPED_FLOORS_KEPT step 3/standard street_floor_gaps=0 bore=0 refused=0
+* test_volume_matches_solid_at
+    seed 12 compact: 724 cells checked, 0 mismatched
+    seed 3 standard: 954 cells checked, 0 mismatched
+* test_translator_emits_one_parcel_group_per_building
+    seed 12 compact: 13 house plots, 13 parcels, 3 back rooms, 1 shrunk, 2 asset plots, 2 asset records
+      shrunk house.006: 2 columns at (-5, -3): no authored door module serves the address
+    seed 3 standard: 25 house plots, 25 parcels, 7 back rooms, 3 shrunk, 0 asset plots, 0 asset records
+      shrunk house.001: 4 columns at (0, -4): no authored door module serves the address
+      shrunk house.012: 2 columns at (4, 1): no authored door module serves the address
+      shrunk house.016: 2 columns at (2, 3): no authored door module serves the address
+* test_decks_and_bridges_translate_to_typed_records
+    typed records: 2 decks, 2 bridges
+* test_flat_roof_parcels_relax_parity_for_every_maze_house
+* test_stacked_houses_declare_their_parent
+MAZE_STACKS seed 12/compact stacked=0 declared=0 slab_gap=0 partial=0 {  }
+MAZE_STACKS seed 4/compact stacked=0 declared=0 slab_gap=0 partial=0 {  }
+MAZE_STACKS seed 3/standard stacked=0 declared=0 slab_gap=0 partial=1 {  }
+MAZE_STACKS seed 9/standard stacked=0 declared=0 slab_gap=0 partial=1 {  }
+MAZE_STACKS seed 10/standard stacked=0 declared=0 slab_gap=0 partial=1 {  }
+MAZE_STACKS seed 8/standard stacked=2 declared=1 slab_gap=0 partial=3 { "house.009": "stacked on parcel.maze.house.002: none of 1 rectangles sealed on either door phase (floor 5, top 13, flat_roof true); largest: 1 columns at (-2, -3): no rectangle bears on the parent\'s own footprint" }
+* test_corpus_translates
+    seed 1 compact: 19 parcels (5 shrunk), 152 back-room cells, 0 decks, 2 bridges, ownership 0.862 (249 owned of 289 solid, 40 rock)
+    seed 2 compact: 15 parcels (3 shrunk), 32 back-room cells, 1 decks, 0 bridges, ownership 0.725 (166 owned of 229 solid, 63 rock)
+    seed 3 compact: 19 parcels (6 shrunk), 60 back-room cells, 1 decks, 0 bridges, ownership 0.838 (244 owned of 291 solid, 47 rock)
+    seed 4 compact: 30 parcels (9 shrunk), 88 back-room cells, 0 decks, 0 bridges, ownership 0.927 (316 owned of 341 solid, 25 rock)
+    seed 5 compact: 34 parcels (8 shrunk), 146 back-room cells, 1 decks, 2 bridges, ownership 0.834 (347 owned of 416 solid, 69 rock)
+    seed 6 compact: 7 parcels (4 shrunk), 36 back-room cells, 0 decks, 0 bridges, ownership 0.917 (200 owned of 218 solid, 18 rock)
+    seed 7 compact: 8 parcels (2 shrunk), 8 back-room cells, 0 decks, 0 bridges, ownership 0.902 (294 owned of 326 solid, 32 rock)
+    seed 8 compact: 17 parcels (3 shrunk), 68 back-room cells, 1 decks, 2 bridges, ownership 0.805 (346 owned of 430 solid, 84 rock)
+    seed 9 compact: 16 parcels (2 shrunk), 20 back-room cells, 0 decks, 1 bridges, ownership 0.873 (178 owned of 204 solid, 26 rock)
+    seed 10 compact: 20 parcels (3 shrunk), 20 back-room cells, 1 decks, 1 bridges, ownership 0.902 (361 owned of 400 solid, 39 rock)
+    seed 11 compact: 24 parcels (4 shrunk), 40 back-room cells, 1 decks, 1 bridges, ownership 0.831 (192 owned of 231 solid, 39 rock)
+    seed 12 compact: 13 parcels (1 shrunk), 20 back-room cells, 0 decks, 1 bridges, ownership 0.935 (275 owned of 294 solid, 19 rock)
+    seed 1 standard: 19 parcels (4 shrunk), 46 back-room cells, 0 decks, 1 bridges, ownership 0.864 (266 owned of 308 solid, 42 rock)
+    seed 2 standard: 36 parcels (3 shrunk), 54 back-room cells, 1 decks, 2 bridges, ownership 0.765 (299 owned of 391 solid, 92 rock)
+    seed 3 standard: 25 parcels (3 shrunk), 58 back-room cells, 1 decks, 1 bridges, ownership 0.773 (238 owned of 308 solid, 70 rock)
+    seed 4 standard: 21 parcels (4 shrunk), 64 back-room cells, 0 decks, 0 bridges, ownership 0.897 (235 owned of 262 solid, 27 rock)
+    seed 5 standard: 28 parcels (2 shrunk), 16 back-room cells, 2 decks, 0 bridges, ownership 0.867 (346 owned of 399 solid, 53 rock)
+    seed 6 standard: 19 parcels (2 shrunk), 24 back-room cells, 1 decks, 1 bridges, ownership 0.664 (182 owned of 274 solid, 92 rock)
+    seed 7 standard: 17 parcels (1 shrunk), 14 back-room cells, 0 decks, 1 bridges, ownership 0.914 (372 owned of 407 solid, 35 rock)
+    seed 8 standard: 29 parcels (6 shrunk), 62 back-room cells, 0 decks, 2 bridges, ownership 0.891 (434 owned of 487 solid, 53 rock)
+    seed 9 standard: 18 parcels (5 shrunk), 40 back-room cells, 0 decks, 2 bridges, ownership 0.783 (335 owned of 428 solid, 93 rock)
+    seed 10 standard: 23 parcels (2 shrunk), 82 back-room cells, 1 decks, 1 bridges, ownership 0.918 (638 owned of 695 solid, 57 rock)
+    seed 11 standard: 22 parcels (4 shrunk), 58 back-room cells, 2 decks, 0 bridges, ownership 0.799 (226 owned of 283 solid, 57 rock)
+    seed 12 standard: 15 parcels (2 shrunk), 16 back-room cells, 0 decks, 0 bridges, ownership 0.851 (268 owned of 315 solid, 47 rock)
+    corpus: 24/24 towns translate
+* test_carve_returns_an_unsealed_plan_for_the_phase_pipeline
+* test_stop_after_exposes_each_phase_uncontaminated
+* test_plan_rejects_an_unknown_stop_after_stage
+* test_site_planner_seals_the_corpus_one_pass
+    corpus: 24/24 towns seal one-pass
+* test_seal_merges_audit_instead_of_replacing_it
+* test_exterior_rock_ratio_is_pinned
+    seed 12 compact: exterior rock 19/272 = 0.0699 (plot 253, ceiling 0.38)
+    seed 4 compact: exterior rock 20/324 = 0.0617 (plot 304, ceiling 0.38)
+    seed 3 standard: exterior rock 45/282 = 0.1596 (plot 237, ceiling 0.38)
+    seed 9 standard: exterior rock 71/379 = 0.1873 (plot 308, ceiling 0.38)
+* test_stone_face_offsets_match_the_assembler_that_skins_them
+* test_nearest_datum_band_breaks_its_ties_deterministically
+* test_local_public_datum_is_the_nearest_street_in_range
+* test_exterior_stone_band_profile_is_pinned
+    seed 12 compact: stone faces 48, above 2 storeys 0 = 0.0000 (ceiling 0.05), of those 0 on raised shoulders; 0 faces read against bare ground, deepest -1, highest 3
+    seed 12 compact: per-band histogram { -1: 4, 0: 7, 2: 35, 3: 2 }
+    seed 12 compact: per-storey histogram { 0: 11, 1: 35, 2: 2 }
+    seed 4 compact: stone faces 54, above 2 storeys 0 = 0.0000 (ceiling 0.05), of those 0 on raised shoulders; 0 faces read against bare ground, deepest -1, highest 2
+    seed 4 compact: per-band histogram { -1: 7, 0: 6, 1: 4, 2: 37 }
+    seed 4 compact: per-storey histogram { 0: 13, 1: 41 }
+    seed 3 standard: stone faces 84, above 2 storeys 0 = 0.0000 (ceiling 0.05), of those 0 on raised shoulders; 0 faces read against bare ground, deepest -2, highest 2
+    seed 3 standard: per-band histogram { -2: 5, -1: 18, 0: 21, 1: 5, 2: 35 }
+    seed 3 standard: per-storey histogram { 0: 44, 1: 40 }
+    seed 9 standard: stone faces 120, above 2 storeys 0 = 0.0000 (ceiling 0.05), of those 0 on raised shoulders; 0 faces read against bare ground, deepest -3, highest 3
+    seed 9 standard: per-band histogram { -3: 7, -2: 12, -1: 33, 0: 24, 1: 7, 2: 31, 3: 6 }
+    seed 9 standard: per-storey histogram { 0: 76, 1: 38, 2: 6 }
+    worst planner town: 0.0000 (ceiling 0.05)
+* test_ownership_is_pinned_on_the_planner_seeds
+    seed 12 compact: ownership 0.9354 (floor 0.59) -- 275 owned of 294 solid, 19 rock
+    seed 4 compact: ownership 0.9267 (floor 0.60) -- 316 owned of 341 solid, 25 rock
+    seed 3 standard: ownership 0.7727 (floor 0.63) -- 238 owned of 308 solid, 70 rock
+    seed 9 standard: ownership 0.7827 (floor 0.54) -- 335 owned of 428 solid, 93 rock
+* test_sloped_ground_seals_and_translates
+MAZE_SLOPED ramp 12/compact relief=5 frontage=0.722 plots=21 parcels=18
+MAZE_SLOPED ramp 3/standard relief=5 frontage=0.708 plots=11 parcels=10
+MAZE_SLOPED step 12/compact relief=3 frontage=0.741 plots=16 parcels=13
+MAZE_SLOPED step 3/standard relief=3 frontage=0.880 plots=20 parcels=18
+* test_no_plot_stands_inside_the_hillside
+MAZE_SLOPED_BURIED ramp 12/compact plots=21 buried_columns=0 deepest=0
+MAZE_SLOPED_BURIED ramp 3/standard plots=11 buried_columns=0 deepest=0
+MAZE_SLOPED_BURIED step 12/compact plots=16 buried_columns=0 deepest=0
+MAZE_SLOPED_BURIED step 3/standard plots=20 buried_columns=0 deepest=0
+* test_house_floors_follow_their_door_street_band
+MAZE_SLOPED_FLOORS ramp 12/compact houses=18 distinct_floor_bands=[2, 3, 4, 5]
+MAZE_SLOPED_FLOORS ramp 3/standard houses=10 distinct_floor_bands=[1, 2, 3, 4]
+MAZE_SLOPED_FLOORS step 12/compact houses=13 distinct_floor_bands=[0, 1, 2, 3]
+MAZE_SLOPED_FLOORS step 3/standard houses=18 distinct_floor_bands=[3, 4]
+* test_deck_datums_equal_their_fronting_street_band
+MAZE_SLOPED_DECKS ramp 12/compact decks=1 off_datum=0
+MAZE_SLOPED_DECKS ramp 3/standard decks=1 off_datum=0
+MAZE_SLOPED_DECKS step 12/compact decks=1 off_datum=0
+MAZE_SLOPED_DECKS step 3/standard decks=1 off_datum=0
+[1m39/42 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_warren_maze_plots.gd
+[0m- test_asset_templates_match_the_catalog
+[31m    [Failed]:  [0m[STRING_NAME(anchor.z_native.cross.01x01.00)] expected to equal [STRING_NAME(anchor.z_native.arcade.01.window_1_2)]:  template 17 names its catalog recipe
+          at line 1026
+[31m    [Failed]:  [0m[5] expected to equal [4]:  template 17 width
+          at line 1030
+[31m    [Failed]:  [0m[4] expected to equal [3]:  template 17 depth
+          at line 1030
+[31m    [Failed]:  [0m[8] expected to equal [11]:  template 17 height_bands
+          at line 1030
+[31m    [Failed]:  [0m[6] expected to equal [5]:  template 17 reach_forward
+          at line 1030
+[31m    [Failed]:  [0m[4] expected to equal [1]:  template 17 reach_left
+          at line 1030
+[31m    [Failed]:  [0m[6] expected to equal [5]:  template 17 bearing_forward
+          at line 1030
+[31m    [Failed]:  [0m[4] expected to equal [1]:  template 17 bearing_left
+          at line 1030
+[31m    [Failed]:  [0m[STRING_NAME(anchor.z_native.cross.01x02.01)] expected to equal [STRING_NAME(anchor.z_native.arcade.02.source)]:  template 18 names its catalog recipe
+          at line 1026
+[31m    [Failed]:  [0m[5] expected to equal [4]:  template 18 width
+          at line 1030
+[31m    [Failed]:  [0m[5] expected to equal [3]:  template 18 depth
+          at line 1030
+[31m    [Failed]:  [0m[8] expected to equal [13]:  template 18 height_bands
+          at line 1030
+[31m    [Failed]:  [0m[9] expected to equal [5]:  template 18 reach_forward
+          at line 1030
+[31m    [Failed]:  [0m[4] expected to equal [1]:  template 18 reach_left
+          at line 1030
+[31m    [Failed]:  [0m[9] expected to equal [5]:  template 18 bearing_forward
+          at line 1030
+[31m    [Failed]:  [0m[4] expected to equal [1]:  template 18 bearing_left
+          at line 1030
+[31m    [Failed]:  [0m[STRING_NAME(anchor.z_native.cross.02x01.00)] expected to equal [STRING_NAME(anchor.z_native.cross.01x01.00)]:  template 19 names its catalog recipe
+          at line 1026
+[31m    [Failed]:  [0m[7] expected to equal [5]:  template 19 width
+          at line 1030
+[31m    [Failed]:  [0m[3] expected to equal [4]:  template 19 depth
+          at line 1030
+[31m    [Failed]:  [0m[5] expected to equal [6]:  template 19 reach_forward
+          at line 1030
+[31m    [Failed]:  [0m[3] expected to equal [4]:  template 19 reach_left
+          at line 1030
+[31m    [Failed]:  [0m[7] expected to equal [3]:  template 19 reach_right
+          at line 1030
+[31m    [Failed]:  [0m[5] expected to equal [6]:  template 19 bearing_forward
+          at line 1030
+[31m    [Failed]:  [0m[3] expected to equal [4]:  template 19 bearing_left
+          at line 1030
+[31m    [Failed]:  [0m[7] expected to equal [3]:  template 19 bearing_right
+          at line 1030
+[31m    [Failed]:  [0m[6] expected to be >= than [7]:  template 19 is deep enough for its own prefab
+          at line 1037
+[31m    [Failed]:  [0m[STRING_NAME(anchor.z_native.cross.02x01.01)] expected to equal [STRING_NAME(anchor.z_native.cross.01x02.01)]:  template 20 names its catalog recipe
+          at line 1026
+[31m    [Failed]:  [0m[7] expected to equal [5]:  template 20 width
+          at line 1030
+[31m    [Failed]:  [0m[3] expected to equal [5]:  template 20 depth
+          at line 1030
+[31m    [Failed]:  [0m[5] expected to equal [9]:  template 20 reach_forward
+          at line 1030
+[31m    [Failed]:  [0m[7] expected to equal [4]:  template 20 reach_left
+          at line 1030
+[31m    [Failed]:  [0m[5] expected to equal [9]:  template 20 bearing_forward
+          at line 1030
+[31m    [Failed]:  [0m[7] expected to equal [4]:  template 20 bearing_left
+          at line 1030
+[31m    [Failed]:  [0m[6] expected to be >= than [10]:  template 20 is deep enough for its own prefab
+          at line 1037
+[31m    [Failed]:  [0m[STRING_NAME(anchor.z_native.cross.02x01.02)] expected to equal [STRING_NAME(anchor.z_native.cross.02x01.00)]:  template 21 names its catalog recipe
+          at line 1026
+[31m    [Failed]:  [0m[4] expected to equal [3]:  template 21 depth
+          at line 1030
+[31m    [Failed]:  [0m[6] expected to equal [5]:  template 21 reach_forward
+          at line 1030
+[31m    [Failed]:  [0m[6] expected to equal [3]:  template 21 reach_left
+          at line 1030
+[31m    [Failed]:  [0m[4] expected to equal [7]:  template 21 reach_right
+          at line 1030
+[31m    [Failed]:  [0m[6] expected to equal [5]:  template 21 bearing_forward
+          at line 1030
+[31m    [Failed]:  [0m[6] expected to equal [3]:  template 21 bearing_left
+          at line 1030
+[31m    [Failed]:  [0m[4] expected to equal [7]:  template 21 bearing_right
+          at line 1030
+[31m    [Failed]:  [0m[STRING_NAME(anchor.z_native.street.02.00)] expected to equal [STRING_NAME(anchor.z_native.cross.02x01.01)]:  template 22 names its catalog recipe
+          at line 1026
+[31m    [Failed]:  [0m[3] expected to equal [7]:  template 22 width
+          at line 1030
+[31m    [Failed]:  [0m[4] expected to equal [5]:  template 22 reach_forward
+          at line 1030
+[31m    [Failed]:  [0m[1] expected to equal [7]:  template 22 reach_left
+          at line 1030
+[31m    [Failed]:  [0m[1] expected to equal [3]:  template 22 reach_right
+          at line 1030
+[31m    [Failed]:  [0m[4] expected to equal [5]:  template 22 bearing_forward
+          at line 1030
+[31m    [Failed]:  [0m[1] expected to equal [7]:  template 22 bearing_left
+          at line 1030
+[31m    [Failed]:  [0m[1] expected to equal [3]:  template 22 bearing_right
+          at line 1030
+[31m    [Failed]:  [0m[6] expected to be >= than [11]:  template 22 is wide enough for its own prefab
+          at line 1034
+[31m    [Failed]:  [0m[STRING_NAME(anchor.z_native.street.03.00)] expected to equal [STRING_NAME(anchor.z_native.cross.02x01.02)]:  template 23 names its catalog recipe
+          at line 1026
+[31m    [Failed]:  [0m[3] expected to equal [7]:  template 23 width
+          at line 1030
+[31m    [Failed]:  [0m[1] expected to equal [6]:  template 23 reach_left
+          at line 1030
+[31m    [Failed]:  [0m[1] expected to equal [4]:  template 23 reach_right
+          at line 1030
+[31m    [Failed]:  [0m[1] expected to equal [6]:  template 23 bearing_left
+          at line 1030
+[31m    [Failed]:  [0m[1] expected to equal [4]:  template 23 bearing_right
+          at line 1030
+[31m    [Failed]:  [0m[6] expected to be >= than [11]:  template 23 is wide enough for its own prefab
+          at line 1034
+[31m    [Failed]:  [0m[STRING_NAME(anchor.z_native.turret.00)] expected to equal [STRING_NAME(anchor.z_native.street.02.00)]:  template 24 names its catalog recipe
+          at line 1026
+[31m    [Failed]:  [0m[6] expected to equal [3]:  template 24 width
+          at line 1030
+[31m    [Failed]:  [0m[4] expected to equal [3]:  template 24 depth
+          at line 1030
+[31m    [Failed]:  [0m[14] expected to equal [8]:  template 24 height_bands
+          at line 1030
+[31m    [Failed]:  [0m[6] expected to equal [4]:  template 24 reach_forward
+          at line 1030
+[31m    [Failed]:  [0m[3] expected to equal [1]:  template 24 reach_left
+          at line 1030
+[31m    [Failed]:  [0m[5] expected to equal [1]:  template 24 reach_right
+          at line 1030
+[31m    [Failed]:  [0m[6] expected to equal [4]:  template 24 bearing_forward
+          at line 1030
+[31m    [Failed]:  [0m[3] expected to equal [1]:  template 24 bearing_left
+          at line 1030
+[31m    [Failed]:  [0m[5] expected to equal [1]:  template 24 bearing_right
+          at line 1030
+[31m    [Failed]:  [0m[STRING_NAME(anchor.z_native.turret.01)] expected to equal [STRING_NAME(anchor.z_native.street.03.00)]:  template 25 names its catalog recipe
+          at line 1026
+[31m    [Failed]:  [0m[6] expected to equal [3]:  template 25 width
+          at line 1030
+[31m    [Failed]:  [0m[16] expected to equal [8]:  template 25 height_bands
+          at line 1030
+[31m    [Failed]:  [0m[3] expected to equal [1]:  template 25 reach_left
+          at line 1030
+[31m    [Failed]:  [0m[5] expected to equal [1]:  template 25 reach_right
+          at line 1030
+[31m    [Failed]:  [0m[3] expected to equal [1]:  template 25 bearing_left
+          at line 1030
+[31m    [Failed]:  [0m[5] expected to equal [1]:  template 25 bearing_right
+          at line 1030
+[31m    [Failed]:  [0m[STRING_NAME(anchor.z_native.arcade.01.window_1_2)] expected to equal [STRING_NAME(anchor.z_native.turret.00)]:  template 26 names its catalog recipe
+          at line 1026
+[31m    [Failed]:  [0m[4] expected to equal [6]:  template 26 width
+          at line 1030
+[31m    [Failed]:  [0m[3] expected to equal [4]:  template 26 depth
+          at line 1030
+[31m    [Failed]:  [0m[11] expected to equal [14]:  template 26 height_bands
+          at line 1030
+[31m    [Failed]:  [0m[5] expected to equal [6]:  template 26 reach_forward
+          at line 1030
+[31m    [Failed]:  [0m[1] expected to equal [3]:  template 26 reach_left
+          at line 1030
+[31m    [Failed]:  [0m[3] expected to equal [5]:  template 26 reach_right
+          at line 1030
+[31m    [Failed]:  [0m[5] expected to equal [6]:  template 26 bearing_forward
+          at line 1030
+[31m    [Failed]:  [0m[1] expected to equal [3]:  template 26 bearing_left
+          at line 1030
+[31m    [Failed]:  [0m[3] expected to equal [5]:  template 26 bearing_right
+          at line 1030
+[31m    [Failed]:  [0m[8] expected to be >= than [9]:  template 26 is wide enough for its own prefab
+          at line 1034
+[31m    [Failed]:  [0m[6] expected to be >= than [7]:  template 26 is deep enough for its own prefab
+          at line 1037
+[31m    [Failed]:  [0m[STRING_NAME(anchor.z_native.arcade.02.source)] expected to equal [STRING_NAME(anchor.z_native.turret.01)]:  template 27 names its catalog recipe
+          at line 1026
+[31m    [Failed]:  [0m[4] expected to equal [6]:  template 27 width
+          at line 1030
+[31m    [Failed]:  [0m[3] expected to equal [4]:  template 27 depth
+          at line 1030
+[31m    [Failed]:  [0m[13] expected to equal [16]:  template 27 height_bands
+          at line 1030
+[31m    [Failed]:  [0m[5] expected to equal [6]:  template 27 reach_forward
+          at line 1030
+[31m    [Failed]:  [0m[1] expected to equal [3]:  template 27 reach_left
+          at line 1030
+[31m    [Failed]:  [0m[3] expected to equal [5]:  template 27 reach_right
+          at line 1030
+[31m    [Failed]:  [0m[5] expected to equal [6]:  template 27 bearing_forward
+          at line 1030
+[31m    [Failed]:  [0m[1] expected to equal [3]:  template 27 bearing_left
+          at line 1030
+[31m    [Failed]:  [0m[3] expected to equal [5]:  template 27 bearing_right
+          at line 1030
+[31m    [Failed]:  [0m[8] expected to be >= than [9]:  template 27 is wide enough for its own prefab
+          at line 1034
+[31m    [Failed]:  [0m[6] expected to be >= than [7]:  template 27 is deep enough for its own prefab
+          at line 1037
+- test_assets_sit_at_the_minimum_modification_site
+[31m    [Failed]:  [0m[46] expected to equal [14]:  the asset stands at the minimum cost among REALISABLE sites
+          at line 1111
+- test_partition_fills_every_street_fronting_column
+[31m    [Failed]:  [0m[1] expected to be <= than [0]:  seed 4 compact leaves 1 street-fronting column(s) out of every plot
+          at line 1624
+[31m    [Failed]:  [0m[1] expected to equal [0]:  1 of 145 street-fronting supportable columns are outside every plot; 0 is the pinned count
+          at line 1648
+[31m    [Failed]:  [0m[0.87027027027027] expected to be >= than [0.89]:  the share of buildable columns inside a plot holds its pinned floor
+          at line 1655
+
+Totals
+------
+Scripts               1
+Tests                42
+Passing Tests        39
+Failing Tests         3
+Asserts           3821/3924
+Time              132.204s
+
+
+[31m---- 3 failing tests ----
+[0m

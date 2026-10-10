@@ -1,0 +1,81 @@
+--- scripts/terrain/features/villages/fabric/WarrenMazeCarver.gd
++++ scripts/terrain/features/villages/fabric/WarrenMazeCarver.gd
+@@ -129,7 +129,20 @@
+ 		"route_floor": profile.route_cell_range.x \
+ 			if not massif.is_platform(massif.crown_column) else market_cells + 1,
+ 	}
+-	if not _search_spine(context, portal, -1, 0, 0):
++	var proposed_court: Dictionary = preload("res://scripts/terrain/features/villages/fabric/WarrenInteriorCourt.gd").propose(context)
++	if not proposed_court.is_empty(): context["court_target"] = proposed_court.entrance
++	var found_spine := _search_spine(context, portal, -1, 0, 0)
++	var court_visits := int(context.visits) if not proposed_court.is_empty() else 0
++	if not found_spine and not proposed_court.is_empty():
++		# A refused proposal leaves exactly the original portal and no reservations.
++		assert(excavation.route.size()==1 and excavation.transitions.is_empty())
++		excavation.construction_reservations.clear()
++		context.erase("court_target")
++		context.visits = 0
++		proposed_court = {}
++		found_spine = _search_spine(context, portal, -1, 0, 0)
++
++	if not found_spine:
+ 		last_failure = "single spine DFS exhausted %d visits" \
+ 			% int(context.visits)
+ 		last_diagnostic = {"stage": &"spine", "visits": context.visits,
+@@ -167,7 +180,7 @@
+ 	for cell: Vector3i in excavation.public_cells(): occupied[cell] = true
+ 	_carve_house_site_access(massif, excavation, occupied)
+ 	var held := _preview_reserved_columns(world_seed, massif, excavation,
+-		profile, market_cells, market_square, summit, thickness)
++		profile, market_cells, market_square, summit, thickness, proposed_court)
+ 	# Co-plan load paths with the spine; later optional streets keep these
+ 	# supports instead of making the final bridge selector rediscover them.
+ 	var early_market: Dictionary = {}
+@@ -272,6 +285,8 @@
+ 	plan.block_thickness = thickness
+ 	plan.audit["preselected_landmarks"] = held.landmarks
+ 	plan.audit["preselected_plaza"] = held.plaza
++	plan.audit["interior_court"] = proposed_court
++	plan.audit["interior_court_visits"] = court_visits
+ 	if seal_plan:
+ 		plan.finish_construction(collect_diagnostics)
+ 	if seal_plan and collect_diagnostics:
+@@ -680,6 +695,7 @@
+ 	if excavation.route.size() >= int(context.route_floor) \
+ 			and excavation.route.size() >= int(context.market_cells) \
+ 			and current.y - portal.y >= int(context.span_goal) \
++			and (not context.has("court_target") or (current==context.court_target and previous_rise==0)) \
+ 			and _summit_reaches_crown(context.massif, current, radius,
+ 				float(context.inner_radius)):
+ 		# The chosen spine must leave room for its required square. Seal that
+@@ -798,6 +814,13 @@
+ 			# straight run 55 a cell and pay 45 for a turn.
+ 			score += _momentum_bonus(direction_index,
+ 				previous_direction_index, int(action.rise), previous_rise)
++			if context.has("court_target") and not market_incomplete:
++				var target: Vector3i = context.court_target
++				if endpoint.y > target.y: continue
++				var remaining := profile.route_cell_range.y-excavation.route.size()-run
++				var distance := absi(endpoint.x-target.x)+absi(endpoint.z-target.z)
++				if maxi(distance,2*(target.y-endpoint.y))>remaining: continue
++				score += float(distance)*1000.0 + float(target.y-endpoint.y)*1400.0
+ 			var tie := WarrenPassageLatticeRules.hash_key(
+ 				int(context.world_seed), 0x51A7, endpoint,
+ 				int(context.visits) * 17 + action_index)
+@@ -2683,7 +2706,7 @@
+ static func _preview_reserved_columns(world_seed: int, massif: WarrenMassif,
+ 		excavation: WarrenExcavation, profile: WarrenVillageScaleProfile,
+ 		market_cells: int, market_square: Array[Vector3i], summit: Vector3i,
+-		thickness: Dictionary) -> Dictionary:
++		thickness: Dictionary, proposed_court: Dictionary = {}) -> Dictionary:
+ 	## The town square and the landmark prefabs compete with the perimeter lane
+ 	## for the same flat, at-grade edge band. Ask the plot reservation itself
+ 	## (`WarrenPlotPlanner.reserve`) where it would put the landmarks and the
+@@ -2725,6 +2748,7 @@
+ 	preview.block_thickness = thickness
+ 	# This is a proposal used to route the perimeter; house frontage claims
+ 	# belong to the committed court after that route exists.
++	if not proposed_court.is_empty(): preview.audit["preselected_plaza"] = proposed_court
+ 	WarrenPlotPlanner.reserve(preview, profile, false)
+ 	var reach: Dictionary = {}
+ 	for record: Dictionary in WarrenPlotPlanner.outcomes(preview).get(

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_bnh7q"]
+
+[resource]
+script = ExtResource("1_bnh7q")
+id = &"pure_village.stone.retaining_corbel"
+visual_path = "res://terrain/environment/visuals/pure_village_retaining/pure_village_stone_retaining_corbel.tres"
+tags = Array[StringName]([&"building", &"pure_village_retaining", &"village"])
+measured_aabb = AABB(-1.8084985, -0.0049445424, -0.52341795, 3.6134257, 1.668465, 1.6579394)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"pure_village_retaining:pure_village.stone.retaining_corbel"

@@ -1,0 +1,20 @@
+--- before
++++ candidate
+@@ -2467,12 +2467,15 @@
+ 		columns: Array, foundation_floor: int, top_band: int) -> bool:
+ 	# Solid plinth below bearing_at is foundation, not a lower house room.
+ 	# A broad footprint straddling it must try the narrower endpoint instead.
++	# At the bearing datum, terrain/plinth supplies the foundation directly;
++	# the finite above-ground massif cannot contain a cell below natural ground.
+ 	for column_value: Variant in columns:
+ 		var column := column_value as Vector2i
+ 		if not massif.has_column(column) \
+ 				or foundation_floor < massif.bearing_at(column) \
+-				or not _column_is_solid_at(massif, excavation, column,
+-					foundation_floor - 1):
++				or (foundation_floor != massif.bearing_at(column) \
++					and not _column_is_solid_at(massif, excavation, column,
++						foundation_floor - 1)):
+ 			return false
+ 		for band in range(foundation_floor, top_band):
+ 			var cell := Vector3i(column.x, band, column.y)

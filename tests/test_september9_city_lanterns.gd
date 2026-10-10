@@ -6,7 +6,7 @@ func test_long_shared_walk_has_supported_lamps_before_random_planting() -> void:
 	for x in 12:
 		for z in 2: garden[Vector3i(x,0,z)]=true
 		walked[Vector3i(x,1,-1)]=true
-	var sites := SettlementFabricAssembler.maze_garden_planting_sites(garden,{}, {},{}, {},{},[] as Array[AABB],walked)
+	var sites := SettlementFabricAssembler.maze_garden_planting_sites(garden,{}, {},{}, {},{},[] as Array[AABB],walked,1)
 	var lamps: Array[Dictionary] = []
 	for site in sites:
 		if site.asset==SettlementFabricProgram.TERRACE_LANTERN_POST:lamps.append(site)
@@ -25,12 +25,12 @@ func test_lights_cannot_consume_a_public_square_or_occupied_air() -> void:
 		for z in 4:
 			garden[Vector3i(x,0,z)]=true
 			walked[Vector3i(x,1,z)]=true
-	var sites := SettlementFabricAssembler.maze_garden_planting_sites(garden,garden,{}, {},{}, {},[] as Array[AABB],walked)
+	var sites := SettlementFabricAssembler.maze_garden_planting_sites(garden,garden,{}, {},{}, {},[] as Array[AABB],walked,1)
 	assert_true(sites.is_empty())
 	walked.clear()
 	for x in 4:walked[Vector3i(x,1,-1)]=true
 	var blocked: Array[AABB] = [AABB(Vector3(-2,1,-2),Vector3(10,8,10))]
-	sites=SettlementFabricAssembler.maze_garden_planting_sites(garden,{}, {},{}, {},{},blocked,walked)
+	sites=SettlementFabricAssembler.maze_garden_planting_sites(garden,{}, {},{}, {},{},blocked,walked,1)
 	for site in sites: assert_ne(site.asset,SettlementFabricProgram.TERRACE_LANTERN_POST)
 
 func test_every_realized_closed_door_has_one_contained_native_wall_lamp() -> void:

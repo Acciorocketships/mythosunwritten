@@ -1,0 +1,43 @@
+--- before/KitCornerTowers.gd
++++ candidate/KitCornerTowers.gd
+@@ -18,13 +18,39 @@
+ 	audit: Dictionary = {},
+ 	corbelled := false
+ ) -> Dictionary:
++	var candidate := _propose_at_datum(host, kit, catalog, public_air, envelopes,
++		previous, blocked, bearing, audit, corbelled, host.ground_band)
++	if not candidate.is_empty() or corbelled: return candidate
++	# A compound may stand on several terraces. Its minimum datum is not
++	# the footing of every wing. Try actual storey bases, with the same full
++	# native-foot bearing proof; a room floor alone never supplies support.
++	var datums: Array[int] = []
++	for storey: Dictionary in host.storeys:
++		var band := int(storey.floor_band)
++		if band > host.ground_band and not datums.has(band): datums.append(band)
++	datums.sort()
++	for datum: int in datums:
++		candidate = _propose_at_datum(host, kit, catalog, public_air, envelopes,
++			previous, blocked, bearing, audit, false, datum)
++		if not candidate.is_empty():
++			audit["terrace_corner_accepted"] = int(audit.get("terrace_corner_accepted", 0)) + 1
++			return candidate
++	return {}
++
++
++static func _propose_at_datum(host: BuildingMass, kit: BuildingKit,
++		catalog: EnvironmentCatalog, public_air: Array[Dictionary],
++		envelopes: Array[Dictionary], previous: Array[Dictionary],
++		blocked: Callable, bearing: Callable, audit: Dictionary,
++		corbelled: bool, datum: int) -> Dictionary:
+ 	var rng := RandomNumberGenerator.new()
+ 	rng.seed = hash([host.seed, "corner.tower"])
+ 	var tried := {}
+ 	for roof: Dictionary in host.roofs:
+-		var base := int(roof.eave_band)-4 if corbelled else host.ground_band
++		var base := int(roof.eave_band)-4 if corbelled else datum
+ 		if corbelled and base<host.ground_band+2: continue
+ 		var height := int(roof.eave_band) - base
++		if datum > host.ground_band and not corbelled and height < 4: continue
+ 		if height % 2 != 0 or height < 2 or height > 8:
+ 			continue
+ 		var rect: Rect2i = roof.rect

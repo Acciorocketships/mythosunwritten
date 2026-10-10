@@ -1,0 +1,1793 @@
+{
+  "assets": [
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_gable_left.tres",
+      "id": "pure_village.gable.left",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 654.0,
+        "measured_aabb": {
+          "position": [
+            -1.0,
+            -0.0596513636410236,
+            -0.236172094941139
+          ],
+          "size": [
+            2.0,
+            3.13444137573242,
+            0.472118556499481
+          ]
+        },
+        "mesh_bytes": 22624.0,
+        "surface_count": 3.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 654.0
+      },
+      "pack": "pure_village_kit",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -1.0,
+            1.0
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.gable.left",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.33333333333333,
+          1.0,
+          1.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/Wall_Cut_Start_15x30_1.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_kit",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/Wall_Cut_Start_15x30_1.glb",
+      "source_sha256": "0180e4e8ef625e1532662ac7ff0ad83a60f0205b829874b328667bff21f80b0d",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39.0,
+      "visual": "res://terrain/environment/visuals/pure_village_kit/pure_village_gable_left.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_gable_right.tres",
+      "id": "pure_village.gable.right",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 642.0,
+        "measured_aabb": {
+          "position": [
+            -1.0,
+            -0.0536603331565857,
+            -0.239286705851555
+          ],
+          "size": [
+            2.0,
+            3.11973142623901,
+            0.473771154880524
+          ]
+        },
+        "mesh_bytes": 22699.0,
+        "surface_count": 3.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 642.0
+      },
+      "pack": "pure_village_kit",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -1.0,
+            1.0
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.gable.right",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.33333333333333,
+          1.0,
+          1.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/Wall_Cut_End_15x30_1.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_kit",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/Wall_Cut_End_15x30_1.glb",
+      "source_sha256": "3bcc028cbac0f4465bc3afc985f97c1a5f2f51d4c6b72be33b85c65c7115892e",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39.0,
+      "visual": "res://terrain/environment/visuals/pure_village_kit/pure_village_gable_right.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_gable_small.tres",
+      "id": "pure_village.gable.small",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1296.0,
+        "measured_aabb": {
+          "position": [
+            -1.0,
+            -0.0298256818205118,
+            -0.239286705851555
+          ],
+          "size": [
+            2.0,
+            1.56722068786621,
+            0.475233167409897
+          ]
+        },
+        "mesh_bytes": 42836.0,
+        "surface_count": 6.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1296.0
+      },
+      "pack": "pure_village_kit",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -1.0,
+            1.0
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.gable.small",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "source": "res://tools/environment_bake/assembly_sources/pure_village/gable_small.tscn",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_kit",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://tools/environment_bake/assembly_sources/pure_village/gable_small.tscn",
+      "source_sha256": "739725f27cb9b3af0008b4886378342f8b596e35e1dd0d332ca1a02aa80d9bdd",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39.0,
+      "visual": "res://terrain/environment/visuals/pure_village_kit/pure_village_gable_small.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_roof_dormer.tres",
+      "id": "pure_village.roof.dormer",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 7143,
+        "measured_aabb": {
+          "position": [
+            -1.0,
+            -0.875233888626099,
+            -2.27619791030884
+          ],
+          "size": [
+            2.0,
+            3.98703718185425,
+            3.34780931472778
+          ]
+        },
+        "mesh_bytes": 228665,
+        "surface_count": 13,
+        "visual_piece_count": 1,
+        "visual_triangles": 7143
+      },
+      "pack": "pure_village_kit",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -1.0,
+            1.0
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "exclude_materials": [
+          "RoofTransition"
+        ],
+        "id": "pure_village.roof.dormer",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 13.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "source": "res://tools/environment_bake/assembly_sources/pure_village/roof_dormer.tscn",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_kit",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://tools/environment_bake/assembly_sources/pure_village/roof_dormer.tscn",
+      "source_sha256": "6113979dd7830c68f2d30d88b16f79d600fa3dcd72a5e6bf66c7284f1700ba48",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 40,
+      "visual": "res://terrain/environment/visuals/pure_village_kit/pure_village_roof_dormer.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_roof_dormer_tight.tres",
+      "id": "pure_village.roof.dormer_tight",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 5884,
+        "measured_aabb": {
+          "position": [
+            -1.0,
+            -0.0408917218446732,
+            -2.27619791030884
+          ],
+          "size": [
+            2.0,
+            3.15269494056702,
+            2.83914613723755
+          ]
+        },
+        "mesh_bytes": 185356,
+        "surface_count": 10,
+        "visual_piece_count": 1,
+        "visual_triangles": 5884
+      },
+      "pack": "pure_village_kit",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -1.0,
+            1.0
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "exclude_materials": [
+          "RoofTransition"
+        ],
+        "id": "pure_village.roof.dormer_tight",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 13.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "source": "res://tools/environment_bake/assembly_sources/pure_village/roof_dormer_tight.tscn",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_kit",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://tools/environment_bake/assembly_sources/pure_village/roof_dormer_tight.tscn",
+      "source_sha256": "4bababd7882aef3fc830af3e54228ed630518729bd368588ecaea21a94da4867",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 40,
+      "visual": "res://terrain/environment/visuals/pure_village_kit/pure_village_roof_dormer_tight.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_roof_eave.tres",
+      "id": "pure_village.roof.eave",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1763.0,
+        "measured_aabb": {
+          "position": [
+            -1.0,
+            -0.875233888626099,
+            -2.27619791030884
+          ],
+          "size": [
+            2.0,
+            3.98703718185425,
+            3.34780931472778
+          ]
+        },
+        "mesh_bytes": 64188.0,
+        "surface_count": 6.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1763.0
+      },
+      "pack": "pure_village_kit",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -1.0,
+            1.0
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.roof.eave",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "source": "res://tools/environment_bake/assembly_sources/pure_village/roof_eave.tscn",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_kit",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://tools/environment_bake/assembly_sources/pure_village/roof_eave.tscn",
+      "source_sha256": "0c65a048ceaf582c85b68e9f263cae8584259a11ca8de1f87f860acfd9c36918",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39.0,
+      "visual": "res://terrain/environment/visuals/pure_village_kit/pure_village_roof_eave.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_roof_eave_end.tres",
+      "id": "pure_village.roof.eave.end",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 2622.0,
+        "measured_aabb": {
+          "position": [
+            -0.687290012836456,
+            -0.784558951854706,
+            -2.0
+          ],
+          "size": [
+            1.43350374698639,
+            3.89636254310608,
+            3.07456994056702
+          ]
+        },
+        "mesh_bytes": 85048.0,
+        "surface_count": 6.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 2622.0
+      },
+      "pack": "pure_village_kit",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -1.0,
+            1.0
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.roof.eave.end",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "source": "res://tools/environment_bake/assembly_sources/pure_village/roof_eave_end.tscn",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_kit",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://tools/environment_bake/assembly_sources/pure_village/roof_eave_end.tscn",
+      "source_sha256": "8e8497e3795fd36b7eb2f609e1cd68e2305f0a5b0872688beeb7c2bc00f09568",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39.0,
+      "visual": "res://terrain/environment/visuals/pure_village_kit/pure_village_roof_eave_end.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_roof_eave_start.tres",
+      "id": "pure_village.roof.eave.start",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 2457.0,
+        "measured_aabb": {
+          "position": [
+            -0.655471205711365,
+            -0.78454577922821,
+            -2.0
+          ],
+          "size": [
+            1.3347601890564,
+            3.89634895324707,
+            3.08088731765747
+          ]
+        },
+        "mesh_bytes": 81048.0,
+        "surface_count": 6.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 2457.0
+      },
+      "pack": "pure_village_kit",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -1.0,
+            1.0
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.roof.eave.start",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "source": "res://tools/environment_bake/assembly_sources/pure_village/roof_eave_start.tscn",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_kit",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://tools/environment_bake/assembly_sources/pure_village/roof_eave_start.tscn",
+      "source_sha256": "1189d1734e3afefd0d277dc2aecf09db5e80e0097c89bac81362f92e5d35c465",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39.0,
+      "visual": "res://terrain/environment/visuals/pure_village_kit/pure_village_roof_eave_start.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_roof_ridge.tres",
+      "id": "pure_village.roof.ridge",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 902.0,
+        "measured_aabb": {
+          "position": [
+            -1.0,
+            -0.300000011920929,
+            -0.335412591695786
+          ],
+          "size": [
+            2.0,
+            0.769059538841248,
+            0.70037841796875
+          ]
+        },
+        "mesh_bytes": 36828.0,
+        "surface_count": 3.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 902.0
+      },
+      "pack": "pure_village_kit",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -1.0,
+            1.0
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.roof.ridge",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.3,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.5
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/Roof_Top30_Start_x30_1.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_kit",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Top30_Start_x30_1.glb",
+      "source_sha256": "307b4917ea18475e31425f67668e40560e9d561be796972a99bdbb47731c7108",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39.0,
+      "visual": "res://terrain/environment/visuals/pure_village_kit/pure_village_roof_ridge.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_roof_ridge_end.tres",
+      "id": "pure_village.roof.ridge.end",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 474.0,
+        "measured_aabb": {
+          "position": [
+            0.0,
+            -0.300000011920929,
+            -0.335412591695786
+          ],
+          "size": [
+            0.794990241527557,
+            0.759082853794098,
+            0.670825183391571
+          ]
+        },
+        "mesh_bytes": 20804.0,
+        "surface_count": 3.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 474.0
+      },
+      "pack": "pure_village_kit",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -1.0,
+            1.0
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.roof.ridge.end",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.3,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.5
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/Roof_Top30_End_x5_1.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_kit",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Top30_End_x5_1.glb",
+      "source_sha256": "090258aeacd672d8a99b2bee936bd18f396655081b0f9b9f988acd09ea673b36",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39.0,
+      "visual": "res://terrain/environment/visuals/pure_village_kit/pure_village_roof_ridge_end.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_roof_ridge_start.tres",
+      "id": "pure_village.roof.ridge.start",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 471.0,
+        "measured_aabb": {
+          "position": [
+            -0.799999952316284,
+            -0.300000011920929,
+            -0.335412591695786
+          ],
+          "size": [
+            0.85359126329422,
+            0.735075294971466,
+            0.670825183391571
+          ]
+        },
+        "mesh_bytes": 21018.0,
+        "surface_count": 3.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 471.0
+      },
+      "pack": "pure_village_kit",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -1.0,
+            1.0
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.roof.ridge.start",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.3,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.5
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/Roof_Top30_Start_x5_1.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_kit",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Top30_Start_x5_1.glb",
+      "source_sha256": "eb63b1013dba4d7a6075eacbb95a3bed8fba70a988f6c9871c772fe6c6fd499f",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39.0,
+      "visual": "res://terrain/environment/visuals/pure_village_kit/pure_village_roof_ridge_start.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_roof_slope.tres",
+      "id": "pure_village.roof.slope",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 504.0,
+        "measured_aabb": {
+          "position": [
+            -1.0,
+            -0.0408917218446732,
+            -2.27619791030884
+          ],
+          "size": [
+            2.0,
+            3.15269494056702,
+            2.57433605194092
+          ]
+        },
+        "mesh_bytes": 20772.0,
+        "surface_count": 3.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 504.0
+      },
+      "pack": "pure_village_kit",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -1.0,
+            1.0
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.roof.slope",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.33333333333333
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/Roof_Base_30x30_1.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_kit",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Base_30x30_1.glb",
+      "source_sha256": "1347a290d78915b61ffe40b5fd470c21a4be1afa54ffc444c01aac9753031404",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39.0,
+      "visual": "res://terrain/environment/visuals/pure_village_kit/pure_village_roof_slope.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_roof_slope_end.tres",
+      "id": "pure_village.roof.slope.end",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1805.0,
+        "measured_aabb": {
+          "position": [
+            -0.674853503704071,
+            0.0,
+            -2.0
+          ],
+          "size": [
+            1.39782094955444,
+            3.11180329322815,
+            2.2981379032135
+          ]
+        },
+        "mesh_bytes": 58160.0,
+        "surface_count": 3.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1805.0
+      },
+      "pack": "pure_village_kit",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -1.0,
+            1.0
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.roof.slope.end",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.33333333333333
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/Roof_Base_End_5x30_1.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_kit",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Base_End_5x30_1.glb",
+      "source_sha256": "7d09356b5593503f83b5243c4a3217a01a7357cdb3adbfa546f7a4943ad16fbd",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39.0,
+      "visual": "res://terrain/environment/visuals/pure_village_kit/pure_village_roof_slope_end.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_roof_slope_start.tres",
+      "id": "pure_village.roof.slope.start",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1726.0,
+        "measured_aabb": {
+          "position": [
+            -0.655471205711365,
+            0.0,
+            -2.0
+          ],
+          "size": [
+            1.3347601890564,
+            3.11180329322815,
+            2.2981379032135
+          ]
+        },
+        "mesh_bytes": 55734.0,
+        "surface_count": 3.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1726.0
+      },
+      "pack": "pure_village_kit",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -1.0,
+            1.0
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.roof.slope.start",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.33333333333333
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/Roof_Base_Start_5x30_1.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_kit",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Base_Start_5x30_1.glb",
+      "source_sha256": "4b1dc9d41a587b3a1096e2429857ddf73059de943ef7468f1c5692d21818af5e",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39.0,
+      "visual": "res://terrain/environment/visuals/pure_village_kit/pure_village_roof_slope_start.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_roof_top.tres",
+      "id": "pure_village.roof.top",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 954.0,
+        "measured_aabb": {
+          "position": [
+            -1.0,
+            -0.05490717664361,
+            -1.29813802242279
+          ],
+          "size": [
+            2.0,
+            1.66697609424591,
+            2.59627604484558
+          ]
+        },
+        "mesh_bytes": 34778.0,
+        "surface_count": 3.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 954.0
+      },
+      "pack": "pure_village_kit",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -1.0,
+            1.0
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.roof.top",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "source": "res://tools/environment_bake/assembly_sources/pure_village/roof_top.tscn",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_kit",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://tools/environment_bake/assembly_sources/pure_village/roof_top.tscn",
+      "source_sha256": "ab0a4c4a3087beb438cdd53f6ec5954546f7b877d6689287718180bbee84aa11",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39.0,
+      "visual": "res://terrain/environment/visuals/pure_village_kit/pure_village_roof_top.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_roof_top_end.tres",
+      "id": "pure_village.roof.top.end",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1375.0,
+        "measured_aabb": {
+          "position": [
+            -0.687290012836456,
+            0.0,
+            -1.29813802242279
+          ],
+          "size": [
+            1.40651118755341,
+            1.59410309791565,
+            2.59627604484558
+          ]
+        },
+        "mesh_bytes": 48774.0,
+        "surface_count": 6.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1375.0
+      },
+      "pack": "pure_village_kit",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -1.0,
+            1.0
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.roof.top.end",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "source": "res://tools/environment_bake/assembly_sources/pure_village/roof_top_end.tscn",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_kit",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://tools/environment_bake/assembly_sources/pure_village/roof_top_end.tscn",
+      "source_sha256": "106b218d93f07a5d65163c321f16fca1d46255c68bc36120a696726f76c0e219",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39.0,
+      "visual": "res://terrain/environment/visuals/pure_village_kit/pure_village_roof_top_end.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_roof_top_start.tres",
+      "id": "pure_village.roof.top.start",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1375.0,
+        "measured_aabb": {
+          "position": [
+            -0.719221174716949,
+            0.0,
+            -1.29813802242279
+          ],
+          "size": [
+            1.40651118755341,
+            1.59410309791565,
+            2.596275806427
+          ]
+        },
+        "mesh_bytes": 48786.0,
+        "surface_count": 6.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1375.0
+      },
+      "pack": "pure_village_kit",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -1.0,
+            1.0
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.roof.top.start",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "source": "res://tools/environment_bake/assembly_sources/pure_village/roof_top_start.tscn",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_kit",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://tools/environment_bake/assembly_sources/pure_village/roof_top_start.tscn",
+      "source_sha256": "33fe2aa797e2268bcff9052f3c7084dc7450c12d1f24fdb376d16f7af565494a",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39.0,
+      "visual": "res://terrain/environment/visuals/pure_village_kit/pure_village_roof_top_start.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_wall_plaster_door.tres",
+      "id": "pure_village.wall.plaster.door",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 2565.0,
+        "measured_aabb": {
+          "position": [
+            -1.0,
+            0.0,
+            -0.247856438159943
+          ],
+          "size": [
+            2.0,
+            3.0,
+            0.546069324016571
+          ]
+        },
+        "mesh_bytes": 78683.0,
+        "surface_count": 5.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 2565.0
+      },
+      "pack": "pure_village_kit",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -1.0,
+            1.0
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.wall.plaster.door",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/Door_2_2.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_kit",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/Door_2_2.glb",
+      "source_sha256": "36ca82adafaefbabfb5addb801eb159877293b7550d3593edc72614fb8b39e17",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39.0,
+      "visual": "res://terrain/environment/visuals/pure_village_kit/pure_village_wall_plaster_door.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_wall_plaster_passage.tres",
+      "id": "pure_village.wall.plaster.passage",
+      "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village and BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 2029.0,
+        "measured_aabb": {
+          "position": [
+            -1.0,
+            0.0,
+            -0.247856438159943
+          ],
+          "size": [
+            2.0,
+            3.0,
+            0.546069324016571
+          ]
+        },
+        "mesh_bytes": 57534.0,
+        "surface_count": 2.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 2029.0
+      },
+      "pack": "pure_village_kit",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -1.0,
+            1.0
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "exclude_mesh_paths": [
+          "Door_2_2/Door_2_2_Door/Door_2_2_Door_LOD0"
+        ],
+        "id": "pure_village.wall.plaster.passage",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/Door_2_2.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_kit",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/Door_2_2.glb",
+      "source_sha256": "36ca82adafaefbabfb5addb801eb159877293b7550d3593edc72614fb8b39e17",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39.0,
+      "visual": "res://terrain/environment/visuals/pure_village_kit/pure_village_wall_plaster_passage.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_wall_plaster_plain.tres",
+      "id": "pure_village.wall.plaster.plain",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 44.0,
+        "measured_aabb": {
+          "position": [
+            -1.0,
+            0.0,
+            -0.125
+          ],
+          "size": [
+            2.0,
+            3.0,
+            0.25
+          ]
+        },
+        "mesh_bytes": 2528.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 44.0
+      },
+      "pack": "pure_village_kit",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.wall.plaster.plain",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/Wall_Start_20x30_0.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_kit",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/Wall_Start_20x30_0.glb",
+      "source_sha256": "0b1ad6d7309e1cac184d5870de41b29a18a6399fd4ba7da5ac593cf51080998e",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39.0,
+      "visual": "res://terrain/environment/visuals/pure_village_kit/pure_village_wall_plaster_plain.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_wall_plaster_window.tres",
+      "id": "pure_village.wall.plaster.window",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 4098.0,
+        "measured_aabb": {
+          "position": [
+            -1.0,
+            0.0,
+            -0.219794914126396
+          ],
+          "size": [
+            2.0,
+            3.0,
+            0.550429701805115
+          ]
+        },
+        "mesh_bytes": 127310.0,
+        "surface_count": 8.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 4098.0
+      },
+      "pack": "pure_village_kit",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -1.0,
+            1.0
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.wall.plaster.window",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/Window_1_3.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_kit",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/Window_1_3.glb",
+      "source_sha256": "b4e732d2453228c43d31e3ded1bee3c560eb86d360d74551722c736413f17fce",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39.0,
+      "visual": "res://terrain/environment/visuals/pure_village_kit/pure_village_wall_plaster_window.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_wall_plaster_window_arch.tres",
+      "id": "pure_village.wall.plaster.window_arch",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 3053.0,
+        "measured_aabb": {
+          "position": [
+            -1.0,
+            -0.0838218182325363,
+            -0.198978245258331
+          ],
+          "size": [
+            2.0,
+            3.08382177352905,
+            0.527378678321838
+          ]
+        },
+        "mesh_bytes": 98982.0,
+        "surface_count": 6.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 3053.0
+      },
+      "pack": "pure_village_kit",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -1.0,
+            1.0
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.wall.plaster.window_arch",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/Window_10_3.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_kit",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/Window_10_3.glb",
+      "source_sha256": "5d4b5b1683d8ca1a39f5c6016b749d5299bdae27ff5a2a571c6f87c935e3fd64",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39.0,
+      "visual": "res://terrain/environment/visuals/pure_village_kit/pure_village_wall_plaster_window_arch.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_wall_plaster_window_open.tres",
+      "id": "pure_village.wall.plaster.window_open",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 2273.0,
+        "measured_aabb": {
+          "position": [
+            -1.0,
+            0.0,
+            -0.299097269773483
+          ],
+          "size": [
+            2.0,
+            3.0,
+            0.637176275253296
+          ]
+        },
+        "mesh_bytes": 66214.0,
+        "surface_count": 5.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 2273.0
+      },
+      "pack": "pure_village_kit",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -1.0,
+            1.0
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.wall.plaster.window_open",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.4,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/Window_12_3.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_kit",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/Window_12_3.glb",
+      "source_sha256": "ebcbd73e6ebfb90297462a8ed2e01afef0f138cfa936db05149ed5897286e4b4",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39.0,
+      "visual": "res://terrain/environment/visuals/pure_village_kit/pure_village_wall_plaster_window_open.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_wall_stone_door.tres",
+      "id": "pure_village.wall.stone.door",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 3920.0,
+        "measured_aabb": {
+          "position": [
+            -1.0,
+            0.0,
+            -0.278374016284943
+          ],
+          "size": [
+            2.0,
+            3.0,
+            0.548261702060699
+          ]
+        },
+        "mesh_bytes": 138764.0,
+        "surface_count": 6.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 3920.0
+      },
+      "pack": "pure_village_kit",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -1.0,
+            1.0
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.wall.stone.door",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.125,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/Door_9_1.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_kit",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/Door_9_1.glb",
+      "source_sha256": "f634d95e07de768c84548f5e4ae06514f7470f5e4e082e3013d186fe3ca39984",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39.0,
+      "visual": "res://terrain/environment/visuals/pure_village_kit/pure_village_wall_stone_door.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_wall_stone_passage.tres",
+      "id": "pure_village.wall.stone.passage",
+      "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village and BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 2544.0,
+        "measured_aabb": {
+          "position": [
+            -1.0,
+            0.0,
+            -0.278374016284943
+          ],
+          "size": [
+            2.0,
+            3.0,
+            0.548261702060699
+          ]
+        },
+        "mesh_bytes": 87494.0,
+        "surface_count": 4.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 2544.0
+      },
+      "pack": "pure_village_kit",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -1.0,
+            1.0
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "exclude_mesh_paths": [
+          "Door_9_1/Door_9_1_Door/Door_9_1_Door_LOD0"
+        ],
+        "id": "pure_village.wall.stone.passage",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.125,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/Door_9_1.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_kit",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/Door_9_1.glb",
+      "source_sha256": "f634d95e07de768c84548f5e4ae06514f7470f5e4e082e3013d186fe3ca39984",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39.0,
+      "visual": "res://terrain/environment/visuals/pure_village_kit/pure_village_wall_stone_passage.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_wall_stone_plain.tres",
+      "id": "pure_village.wall.stone.plain",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 530.0,
+        "measured_aabb": {
+          "position": [
+            -1.0,
+            -0.00393969612196088,
+            -0.169675901532173
+          ],
+          "size": [
+            2.0,
+            3.00393962860107,
+            0.351817011833191
+          ]
+        },
+        "mesh_bytes": 21398.0,
+        "surface_count": 2.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 530.0
+      },
+      "pack": "pure_village_kit",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.wall.stone.plain",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/WallStone_Start_20x30_1.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_kit",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/WallStone_Start_20x30_1.glb",
+      "source_sha256": "822703c0c59d9232cc17ed14730aea68c735d9e759f0c71a6cac6a624a08723a",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39.0,
+      "visual": "res://terrain/environment/visuals/pure_village_kit/pure_village_wall_stone_plain.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_wall_stone_window.tres",
+      "id": "pure_village.wall.stone.window",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 3133.0,
+        "measured_aabb": {
+          "position": [
+            -1.0,
+            0.0,
+            -0.24250516295433
+          ],
+          "size": [
+            2.0,
+            3.0,
+            0.482693433761597
+          ]
+        },
+        "mesh_bytes": 98440.0,
+        "surface_count": 6.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 3133.0
+      },
+      "pack": "pure_village_kit",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -1.0,
+            1.0
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.wall.stone.window",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/Window_14_1.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_kit",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/Window_14_1.glb",
+      "source_sha256": "d3887fe157d057b291ebea6a1505c7fcfd76cc20e683913cde655a8604ecea27",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39.0,
+      "visual": "res://terrain/environment/visuals/pure_village_kit/pure_village_wall_stone_window.tres"
+    }
+  ],
+  "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+  "pack": "pure_village_kit",
+  "tool_version": 40
+}

@@ -1,0 +1,14 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+EARLY_TURRET_SITE 7 anchor.z_native.turret.00
+TURRET_SPACE { "seed": 7, "field": { "rectangles": 75, "ground_bearing": 75, "clear_body": 75, "fronted": 0, "fits": 0, "failures": {  } }, "carved": { "rectangles": 23, "ground_bearing": 23, "clear_body": 0, "fronted": 0, "fits": 0, "failures": {  } } }
+EARLY_TURRET_SITE 13 anchor.z_native.street.02.00
+TURRET_SPACE { "seed": 13, "field": { "rectangles": 161, "ground_bearing": 0, "clear_body": 0, "fronted": 0, "fits": 0, "failures": {  } }, "carved": { "rectangles": 161, "ground_bearing": 0, "clear_body": 0, "fronted": 0, "fits": 0, "failures": {  } } }
+EARLY_TURRET_SITE 43 anchor.z_native.turret.00
+TURRET_SPACE { "seed": 43, "field": { "rectangles": 155, "ground_bearing": 155, "clear_body": 155, "fronted": 0, "fits": 0, "failures": {  } }, "carved": { "rectangles": 73, "ground_bearing": 73, "clear_body": 0, "fronted": 0, "fits": 0, "failures": {  } } }
+EARLY_TURRET_SITE 83 anchor.prefab.11
+TURRET_SPACE { "seed": 83, "field": { "rectangles": 86, "ground_bearing": 12, "clear_body": 12, "fronted": 0, "fits": 0, "failures": {  } }, "carved": { "rectangles": 54, "ground_bearing": 12, "clear_body": 0, "fronted": 0, "fits": 0, "failures": {  } } }
+EARLY_TURRET_SITE 211 anchor.prefab.11
+TURRET_SPACE { "seed": 211, "field": { "rectangles": 95, "ground_bearing": 95, "clear_body": 95, "fronted": 0, "fits": 0, "failures": {  } }, "carved": { "rectangles": 14, "ground_bearing": 14, "clear_body": 0, "fronted": 0, "fits": 0, "failures": {  } } }
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)

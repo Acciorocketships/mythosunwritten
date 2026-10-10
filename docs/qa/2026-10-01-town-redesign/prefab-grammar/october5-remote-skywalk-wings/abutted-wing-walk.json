@@ -1,0 +1,520 @@
+[
+  {
+    "gate": "skywalk.0",
+    "passed": true,
+    "reverse": false,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(12.125, 6.255654, -28.0)",
+        "target": "(32.0, 6.25544, -28.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(15.87499, 6.255654, -28.0)",
+        "target": "(32.0, 6.25544, -28.0)",
+        "tick": 30,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(19.62499, 6.255654, -28.0)",
+        "target": "(32.0, 6.25544, -28.0)",
+        "tick": 60,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(23.37499, 6.255654, -28.0)",
+        "target": "(32.0, 6.25544, -28.0)",
+        "tick": 90,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(27.12498, 6.255654, -28.0)",
+        "target": "(32.0, 6.25544, -28.0)",
+        "tick": 120,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(30.87498, 6.255654, -28.0)",
+        "target": "(32.0, 6.25544, -28.0)",
+        "tick": 150,
+        "waypoint": 1
+      }
+    ]
+  },
+  {
+    "gate": "skywalk.0",
+    "passed": true,
+    "reverse": true,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(31.875, 6.25583, -28.0)",
+        "target": "(12.0, 6.25544, -28.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(28.12499, 6.25583, -28.0)",
+        "target": "(12.0, 6.25544, -28.0)",
+        "tick": 30,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(24.37499, 6.25583, -28.0)",
+        "target": "(12.0, 6.25544, -28.0)",
+        "tick": 60,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(20.62498, 6.25583, -28.0)",
+        "target": "(12.0, 6.25544, -28.0)",
+        "tick": 90,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(16.87498, 6.25583, -28.0)",
+        "target": "(12.0, 6.25544, -28.0)",
+        "tick": 120,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(13.12499, 6.25583, -28.0)",
+        "target": "(12.0, 6.25544, -28.0)",
+        "tick": 150,
+        "waypoint": 1
+      }
+    ]
+  },
+  {
+    "gate": "skywalk.1",
+    "passed": true,
+    "reverse": false,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(-19.875, 6.25583, 48.0)",
+        "target": "(-8.0, 6.25544, 48.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-16.12502, 6.25556, 48.0)",
+        "target": "(-8.0, 6.25544, 48.0)",
+        "tick": 30,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-12.37502, 6.25556, 48.0)",
+        "target": "(-8.0, 6.25544, 48.0)",
+        "tick": 60,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-8.625017, 6.25556, 48.0)",
+        "target": "(-8.0, 6.25544, 48.0)",
+        "tick": 90,
+        "waypoint": 1
+      }
+    ]
+  },
+  {
+    "gate": "skywalk.1",
+    "passed": true,
+    "reverse": true,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(-8.125, 6.25583, 48.0)",
+        "target": "(-20.0, 6.25544, 48.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-11.87501, 6.25583, 48.0)",
+        "target": "(-20.0, 6.25544, 48.0)",
+        "tick": 30,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-15.62501, 6.25583, 48.0)",
+        "target": "(-20.0, 6.25544, 48.0)",
+        "tick": 60,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-19.37485, 6.25556, 48.0)",
+        "target": "(-20.0, 6.25544, 48.0)",
+        "tick": 90,
+        "waypoint": 1
+      }
+    ]
+  },
+  {
+    "gate": "skywalk.2",
+    "passed": true,
+    "reverse": false,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(-12.0, 27.25583, 20.125)",
+        "target": "(-12.0, 27.25544, 32.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-12.0, 27.25556, 23.87427)",
+        "target": "(-12.0, 27.25544, 32.0)",
+        "tick": 30,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-12.0, 27.25556, 27.62492)",
+        "target": "(-12.0, 27.25544, 32.0)",
+        "tick": 60,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-12.0, 27.25628, 31.37492)",
+        "target": "(-12.0, 27.25544, 32.0)",
+        "tick": 90,
+        "waypoint": 1
+      }
+    ]
+  },
+  {
+    "gate": "skywalk.2",
+    "passed": true,
+    "reverse": true,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(-12.0, 27.25583, 31.875)",
+        "target": "(-12.0, 27.25544, 20.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-12.0, 27.25583, 28.12499)",
+        "target": "(-12.0, 27.25544, 20.0)",
+        "tick": 30,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-12.0, 27.25583, 24.37498)",
+        "target": "(-12.0, 27.25544, 20.0)",
+        "tick": 60,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-12.0, 27.25556, 20.625)",
+        "target": "(-12.0, 27.25544, 20.0)",
+        "tick": 90,
+        "waypoint": 1
+      }
+    ]
+  },
+  {
+    "gate": "source_bridge.00",
+    "passed": true,
+    "reverse": false,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(-14.125, 27.2564, 17.99998)",
+        "target": "(-30.0, 27.25544, 18.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-17.875, 27.2564, 17.99998)",
+        "target": "(-30.0, 27.25544, 18.0)",
+        "tick": 30,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-21.625, 27.2564, 17.99998)",
+        "target": "(-30.0, 27.25544, 18.0)",
+        "tick": 60,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-25.375, 27.2564, 17.99998)",
+        "target": "(-30.0, 27.25544, 18.0)",
+        "tick": 90,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-29.125, 27.2564, 17.99999)",
+        "target": "(-30.0, 27.25544, 18.0)",
+        "tick": 120,
+        "waypoint": 1
+      }
+    ]
+  },
+  {
+    "gate": "source_bridge.00",
+    "passed": true,
+    "reverse": true,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(-29.87501, 27.25583, 18.0)",
+        "target": "(-14.0, 27.25544, 18.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-26.12501, 27.25583, 18.0)",
+        "target": "(-14.0, 27.25544, 18.0)",
+        "tick": 30,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-22.37502, 27.25583, 18.0)",
+        "target": "(-14.0, 27.25544, 18.0)",
+        "tick": 60,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-18.62502, 27.25583, 18.0)",
+        "target": "(-14.0, 27.25544, 18.0)",
+        "tick": 90,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-14.87502, 27.25583, 18.0)",
+        "target": "(-14.0, 27.25544, 18.0)",
+        "tick": 120,
+        "waypoint": 1
+      }
+    ]
+  },
+  {
+    "gate": "underpass.(-3, 6, 2)",
+    "passed": true,
+    "reverse": false,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(-22.0, 15.78153, 10.125)",
+        "target": "(-22.0, 17.25, 18.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-22.0, 16.48314, 13.8712)",
+        "target": "(-22.0, 17.25, 18.0)",
+        "tick": 30,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-22.0, 17.18509, 17.6212)",
+        "target": "(-22.0, 17.25, 18.0)",
+        "tick": 60,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-22.0, 17.23392, 17.8712)",
+        "target": "(-22.0, 18.05, 26.0)",
+        "tick": 0,
+        "waypoint": 2
+      },
+      {
+        "floor": true,
+        "position": "(-22.0, 17.93587, 21.6212)",
+        "target": "(-22.0, 18.05, 26.0)",
+        "tick": 30,
+        "waypoint": 2
+      },
+      {
+        "floor": true,
+        "position": "(-22.0, 18.051, 25.3712)",
+        "target": "(-22.0, 18.05, 26.0)",
+        "tick": 60,
+        "waypoint": 2
+      }
+    ]
+  },
+  {
+    "gate": "underpass.(-3, 6, 2)",
+    "passed": true,
+    "reverse": true,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(-22.0, 18.05039, 25.875)",
+        "target": "(-22.0, 17.25, 18.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-22.0, 18.05039, 22.125)",
+        "target": "(-22.0, 17.25, 18.0)",
+        "tick": 30,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-22.0, 17.32771, 18.37322)",
+        "target": "(-22.0, 17.25, 18.0)",
+        "tick": 60,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-22.0, 17.28039, 18.12319)",
+        "target": "(-22.0, 15.75, 10.0)",
+        "tick": 0,
+        "waypoint": 2
+      },
+      {
+        "floor": true,
+        "position": "(-22.0, 16.57663, 14.37135)",
+        "target": "(-22.0, 15.75, 10.0)",
+        "tick": 30,
+        "waypoint": 2
+      },
+      {
+        "floor": true,
+        "position": "(-22.0, 15.87437, 10.61982)",
+        "target": "(-22.0, 15.75, 10.0)",
+        "tick": 60,
+        "waypoint": 2
+      }
+    ]
+  },
+  {
+    "gate": "underpass.(-3, 5, 1)",
+    "passed": true,
+    "reverse": false,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(-22.0, 15.05039, 2.125)",
+        "target": "(-22.0, 15.75, 10.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-22.0, 15.05039, 5.875)",
+        "target": "(-22.0, 15.75, 10.0)",
+        "tick": 30,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-22.0, 15.6874, 9.625)",
+        "target": "(-22.0, 15.75, 10.0)",
+        "tick": 60,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-22.0, 15.73623, 9.875)",
+        "target": "(-22.0, 17.25, 18.0)",
+        "tick": 0,
+        "waypoint": 2
+      },
+      {
+        "floor": true,
+        "position": "(-22.0, 16.43818, 13.625)",
+        "target": "(-22.0, 17.25, 18.0)",
+        "tick": 30,
+        "waypoint": 2
+      },
+      {
+        "floor": true,
+        "position": "(-22.0, 17.14013, 17.375)",
+        "target": "(-22.0, 17.25, 18.0)",
+        "tick": 60,
+        "waypoint": 2
+      }
+    ]
+  },
+  {
+    "gate": "underpass.(-3, 5, 1)",
+    "passed": true,
+    "reverse": true,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(-22.0, 17.2342, 17.87488)",
+        "target": "(-22.0, 15.75, 10.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-22.0, 16.52895, 14.1223)",
+        "target": "(-22.0, 15.75, 10.0)",
+        "tick": 30,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-22.0, 15.82773, 10.36947)",
+        "target": "(-22.0, 15.75, 10.0)",
+        "tick": 60,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-22.0, 15.78042, 10.11941)",
+        "target": "(-22.0, 15.05, 2.0)",
+        "tick": 0,
+        "waypoint": 2
+      },
+      {
+        "floor": true,
+        "position": "(-22.0, 15.07668, 6.368058)",
+        "target": "(-22.0, 15.05, 2.0)",
+        "tick": 30,
+        "waypoint": 2
+      },
+      {
+        "floor": true,
+        "position": "(-22.0, 15.05022, 2.618022)",
+        "target": "(-22.0, 15.05, 2.0)",
+        "tick": 60,
+        "waypoint": 2
+      }
+    ]
+  }
+]

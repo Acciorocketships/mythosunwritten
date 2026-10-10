@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_ftb27"]
+
+[resource]
+script = ExtResource("1_ftb27")
+id = &"pure_village.roof.ridge.start.wood_blue"
+visual_path = "res://terrain/environment/visuals/pure_village_tower_wood_blue/pure_village_roof_ridge_start_wood_blue.tres"
+tags = Array[StringName]([&"building", &"pure_village_kit", &"village"])
+measured_aabb = AABB(-0.79999995, -0.3, -0.3354126, 0.85359126, 0.7350753, 0.6708252)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"pure_village_tower_wood_blue:pure_village.roof.ridge.start.wood_blue"

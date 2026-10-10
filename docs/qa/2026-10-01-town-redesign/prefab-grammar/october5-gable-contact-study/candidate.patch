@@ -1,0 +1,41 @@
+--- scripts/terrain/features/villages/kit/KitRoofMeshUnion.gd
++++ scripts/terrain/features/villages/kit/KitRoofMeshUnion.gd
+@@ -190,7 +190,9 @@
+ 	var gable := String(placement.get("role", "")).begins_with("gable.")
+ 	var volumes: Array = ctx.enclosed if gable else ctx.volumes
+ 	for i in volumes.size():
+-		if i != roof_index and bounds.intersects(volumes[i].bounds): cutters.append(volumes[i])
++		if i != roof_index and bounds.intersects(volumes[i].bounds):
++			cutters.append(_gable_section_cutter(volumes[i], transform.origin,
++				int(ctx.roofs[roof_index].axis)) if gable else volumes[i])
+ 	cutters.append_array(ctx.gable_clips[roof_index] if gable else ctx.clips[roof_index])
+ 	cutters.append_array(placement.get("clip_volumes",[]))
+ 	var eave := float(ctx.roofs[roof_index].eave_band) * kit.band_height()
+@@ -212,6 +214,27 @@
+ 	if not changed:
+ 		return {}
+ 	return {"surfaces": surfaces, "meshes": results}
++
++
++## A gable closes its wall plane. A neighbouring eave must meet that closure
++## across the panel's thickness: clipping against its rising slope otherwise
++## removes the outer plaster above the contact line, exposing the panel back.
++## Keep footprint limits, but carry the attic's slope height at this wall
++## plane through the thickness of the gable. Roof skins still use full 3D cuts.
++static func _gable_section_cutter(volume: Dictionary, at: Vector3, axis: int) -> Dictionary:
++	var result := volume.duplicate()
++	var planes: Array[Plane] = []
++	var component := 0 if axis == 0 else 2
++	for plane: Plane in volume.planes:
++		var normal := plane.normal
++		if normal.y > EPS and absf(normal[component]) > EPS:
++			var distance := plane.d - normal[component] * at[component]
++			normal[component] = 0.0
++			planes.append(Plane(normal.normalized(), distance / normal.length()))
++		else:
++			planes.append(plane)
++	result.planes = planes
++	return result
+ 
+ 
+ static func append(placements: Array[Dictionary], roofs: Array[Dictionary],

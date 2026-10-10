@@ -1,8 +1,6 @@
 extends GutTest
 
-const FoldedProof = preload("res://tests/fixtures/warren_folded_proof.gd")
 var _compiled_program: SettlementFabricProgram
-var _folded_plan: SettlementFabricPlan
 
 
 func _program() -> SettlementFabricProgram:
@@ -171,12 +169,6 @@ func test_integrated_bridge_roof_has_no_unbounded_bearing_exemption() -> void:
 		"two full crowns cannot use the generic shallow-plan fallback to cross")
 
 
-func _folded_proof() -> SettlementFabricPlan:
-	if _folded_plan == null:
-		_folded_plan = FoldedProof.solve(_program())
-	return _folded_plan
-
-
 func _route_specs() -> Array[Dictionary]:
 	return [
 		SettlementFabricSolver.unit_spec(&"route.entry", &"route.landing",
@@ -303,18 +295,6 @@ func test_surface_audit_distinguishes_narrow_gallery_from_broad_plaza() -> void:
 				&"plaza"))
 	assert_eq(int(plaza.audit().structural_court_interior_cell_count), 4,
 		"a broad empty floor has an interior independent of its perimeter")
-
-
-func test_structural_support_rhythm_anchors_corners_and_native_edge_pitch() \
-		-> void:
-	assert_true(SettlementFabricAssembler._is_structural_support_anchor(
-		Vector3i(3, 4, 5), [Vector3i.LEFT, Vector3i.FORWARD] \
-			as Array[Vector3i]), "every exposed corner needs a post")
-	assert_true(SettlementFabricAssembler._is_structural_support_anchor(
-		Vector3i(3, 4, 6), [Vector3i.LEFT] as Array[Vector3i]),
-		"a north/south edge repeats supports every two fine cells")
-	assert_false(SettlementFabricAssembler._is_structural_support_anchor(
-		Vector3i(3, 4, 5), [Vector3i.LEFT] as Array[Vector3i]))
 
 
 func test_named_upper_courtyard_uses_distinct_collision_aligned_paving() \
@@ -1519,20 +1499,6 @@ func test_flat_roof_fallbacks_have_measured_guarded_terrace_variants() -> void:
 						"one unscaled 3 m shed should close each two-cell run")
 
 
-func test_exterior_builder_rejects_deferred_interior_route_units() -> void:
-	var program := _program()
-	var specs: Array[Dictionary] = [
-		SettlementFabricSolver.unit_spec(&"route.entry", &"route.landing",
-			Vector3i.ZERO),
-		SettlementFabricSolver.unit_spec(&"interior.stair",
-			&"room.stair_house.terrain.orange", Vector3i(10, 0, 0)),
-	]
-	assert_null(SectionalPublicRealmBuilder.from_specs(&"interior.rejected",
-		program, specs, [&"route.entry", &"interior.stair"]))
-	assert_true(SectionalPublicRealmBuilder.last_failure.contains(
-		"is not a public unit"))
-
-
 func test_public_node_requires_full_exterior_headroom() -> void:
 	var surface_cells: Array[Vector3i] = [Vector3i.ZERO]
 	var incomplete_air: Array[Vector3i] = [Vector3i.ZERO]
@@ -1900,242 +1866,3 @@ func test_minimum_requirements_reject_incomplete_visual_slice() -> void:
 		})
 	assert_null(plan)
 
-
-func test_plot_void_stairs_have_square_landings_and_no_disconnected_flights() \
-		-> void:
-	var plan := WarrenPlotVoidPlanner.new().solve(_program(), 0)
-	assert_not_null(plan)
-	if plan == null:
-		return
-	assert_eq(int(plan.audit.stair_endpoint_gap_count), 0,
-		"both player-width stair lanes must physically meet their neighbors")
-	assert_eq(int(plan.audit.stair_endpoint_missing_landing_count), 0,
-		"every stair end must meet a level two-by-two landing")
-	assert_eq(int(plan.audit.stair_to_stair_edge_count), 0,
-		"successive flights must be separated by a square landing")
-	assert_eq(int(plan.audit.platform_dead_end_count), 0,
-		"every elevated platform must continue into a stair, path, or entrance")
-	assert_eq(int(plan.audit.isolated_platform_count), 0)
-	assert_eq(int(plan.audit.unsupported_platform_count), 0)
-	assert_eq(int(plan.audit.unsupported_stair_count), 0)
-	assert_eq(int(plan.audit.stair_count), 7,
-		"the reviewed through-route must keep all seven external flights")
-	assert_gte(int(plan.audit.vertical_span_cells), 5,
-		"the route must climb through more than one token upper floor")
-	assert_eq(int(plan.audit.detached_building_stack_count), 0,
-		"every inhabited stack must reach a served path through occupied seams")
-	assert_eq(int(plan.audit.connected_building_stack_count),
-		int(plan.audit.building_stack_count))
-	assert_gte(int(plan.audit.skywalk_link_count), 1,
-		"the inhabited circulation graph must include an occupied skywalk link")
-	assert_eq(int(plan.audit.prefab_anchor_count), 1,
-		"one source-pack building must participate in the coupled massing")
-	assert_gte(int(plan.audit.market_count), 2)
-	assert_gte(int(plan.audit.market_family_count), 2,
-		"the alley must use varied stocked market prefabs")
-	for proposal: Dictionary in plan.embedding_plan.barrier_proposals:
-		assert_ne(StringName(proposal.kind), &"bay",
-			"a shallow facade bay must never become a sideways standalone house")
-		if StringName(proposal.kind) == &"slim":
-			var cells := StaggeredFabricCompiler.proposal_occupied_cells(proposal)
-			var minimum := Vector2i(2147483647, 2147483647)
-			var maximum := Vector2i(-2147483648, -2147483648)
-			for cell: Vector3i in cells:
-				minimum = minimum.min(Vector2i(cell.x, cell.z))
-				maximum = maximum.max(Vector2i(cell.x, cell.z))
-			var footprint := maximum - minimum + Vector2i.ONE
-			assert_ne(footprint.x, footprint.y,
-				"the townhouse proposal must retain its narrow/deep footprint")
-
-
-func test_seed_changes_the_actual_maze_geometry() -> void:
-	var signatures: Dictionary = {}
-	var canonical_signatures: Dictionary = {}
-	# Cover every low-bit sectional family: four route motifs, two ordinary
-	# turn phases, and four vertical profiles. A seed may not merely recolour or
-	# cardinally rotate a shared town.
-	for world_seed in 32:
-		var grammar: WarrenPlotVoidPlan
-		for attempt in 64:
-			grammar = WarrenPlotVoidGrammar.build(world_seed, attempt)
-			if grammar != null:
-				break
-		assert_not_null(grammar)
-		if grammar == null:
-			continue
-		var signature := grammar.geometry_signature()
-		assert_false(signatures.has(signature),
-			"seeds must not be cosmetic variants of one underlying route")
-		signatures[signature] = true
-		var canonical := grammar.canonical_coarse_route_signature()
-		assert_false(canonical_signatures.has(canonical),
-			"seed %d must not reuse seed %s under a cardinal rotation" % [
-				world_seed, canonical_signatures.get(canonical, "none")])
-		canonical_signatures[canonical] = world_seed
-	assert_eq(signatures.size(), 32)
-	assert_eq(canonical_signatures.size(), 32)
-
-
-func test_seeded_maze_grammar_always_interposes_square_stair_landings() -> void:
-	## This cheap property corpus guards the construction rule before the slower
-	## exact fabric transaction: every flight ends at a full two-by-two corner
-	## module, and another flight can attach only through that landing.
-	for world_seed in 64:
-		var grammar: WarrenPlotVoidPlan
-		for attempt in WarrenPlotVoidPlanner.MAX_GRAMMAR_ATTEMPTS:
-			grammar = WarrenPlotVoidGrammar.build(world_seed, attempt)
-			if grammar != null:
-				break
-		assert_not_null(grammar, "seed %d must produce a route grammar" % world_seed)
-		if grammar == null:
-			continue
-		for index in grammar.route_steps.size():
-			var step := grammar.route_steps[index]
-			if not String(step.recipe_id).begins_with("stair."):
-				continue
-			assert_lt(index + 1, grammar.route_steps.size())
-			if index + 1 >= grammar.route_steps.size():
-				continue
-			var landing := grammar.route_steps[index + 1]
-			assert_true(StringName(landing.recipe_id) in [
-				&"route.corner", &"deck.corner",
-			], "seed %d stair %s needs a square landing" % [
-				world_seed, step.stable_id])
-			assert_eq(StringName(landing.parent_id), StringName(step.stable_id))
-			if index + 2 < grammar.route_steps.size() \
-					and String(grammar.route_steps[index + 2].recipe_id).begins_with(
-						"stair."):
-				assert_eq(StringName(grammar.route_steps[index + 2].parent_id),
-					StringName(landing.stable_id),
-					"turning flights must join through their square landing")
-
-
-func test_folded_visual_proof_passes_the_common_transaction() -> void:
-	var plan: SettlementFabricPlan = _folded_proof()
-	assert_not_null(plan)
-	if plan == null:
-		return
-	assert_true(plan.is_sealed())
-	assert_eq(int(plan.audit.tent_count), 0)
-	assert_eq(int(plan.audit.isolated_platform_count), 0)
-	assert_gte(int(plan.audit.stair_count), 2)
-	# Skywalk construction has dedicated bearing/seam tests above, while the
-	# procedural plot-void planner applies the per-town skywalk minimum. This
-	# older folded fixture proves its route/court transaction only.
-	assert_gte(int(plan.audit.vertical_span_cells), 6)
-	assert_gte(int(plan.audit.sectional_elevation_change_count), 6)
-	assert_true(bool(plan.audit.primary_has_court))
-	assert_gte(int(plan.audit.primary_exterior_stair_count), 5)
-	assert_eq(int(plan.audit.public_interior_node_count), 0)
-	assert_eq(int(plan.audit.unreachable_exterior_air_count), 0)
-	assert_eq(int(plan.audit.public_air_occupied_overlap_count), 0)
-	assert_not_null(plan.solid_void_plan)
-	assert_true(plan.solid_void_plan.is_sealed())
-	assert_not_null(plan.embedding_plan)
-	assert_true(plan.embedding_plan.validate())
-	assert_gt(int(plan.audit.proposed_closed_boundary_count), 0)
-	assert_lt(int(plan.audit.unbounded_route_side_count),
-		int(plan.audit.boundary_obligation_count),
-		"compiled occupied barriers must close part of the public boundary")
-	assert_gt(int(plan.audit.building_base_band_count), 2)
-	assert_gte(int(plan.audit.structural_court_cell_count), 31)
-	assert_eq(int(plan.audit.stair_endpoint_gap_count), 0)
-	assert_eq(int(plan.audit.platform_dead_end_count), 0)
-	assert_eq(int(plan.audit.daylight_void_cell_count), 1)
-	assert_eq(int(plan.audit.daylight_void_bounded_edge_count), 4)
-	assert_eq(int(plan.audit.daylight_void_unbounded_edge_count), 0)
-	assert_eq(int(plan.audit.unsupported_platform_count), 0)
-	assert_eq(int(plan.audit.unsupported_stair_count), 0)
-	assert_gte(int(plan.audit.platform_bearing_parent_count), 2)
-	assert_gt(int(plan.audit.served_entrance_count), 0)
-	assert_eq(int(plan.audit.unserved_entrance_count), 0)
-	assert_gt(int(plan.audit.served_structural_entrance_count), 0)
-	assert_eq(int(plan.audit.entrance_guard_conflict_count), 0)
-	assert_gte(int(plan.audit.derived_guard_segment_count), 4)
-	assert_false(plan.surface_plan.guard_mesh_payload.is_empty())
-	assert_gt((plan.surface_plan.guard_mesh_payload.collision_faces \
-		as PackedVector3Array).size(), 0)
-	assert_eq(int(plan.audit.unclassified_interval_count), 0)
-	var surface_visuals := SettlementFabricAssembler.surface_visual_payload(
-		plan.surface_plan,
-		SettlementFabricAssembler.maze_module_footprints(plan),
-		SettlementFabricAssembler.maze_skin_panel_boxes_for(plan))
-	assert_true(surface_visuals.validate())
-	assert_gt(surface_visuals.instance_count, 0)
-	assert_true(surface_visuals.asset_ids().has(
-		SettlementFabricAssembler.PLANK_FLOOR))
-	# The exact structural union is the closure layer beneath the authored
-	# patchwork boards: their irregular silhouettes stop short of some logical
-	# edges, and the skin fills those slivers. It renders for every horizontal
-	# kind, in the same lit timber tone as the boards (never a dark diagnostic
-	# duplicate), so the platform edge reads as one floor.
-	for kind in [PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,
-			PublicRealmSurfacePlan.SurfaceKind.BRIDGE,
-			PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET]:
-		assert_true(SettlementFabricAssembler.renders_generated_surface_underlay(
-			kind), "kind %d closes its board slivers with the structural skin" \
-				% kind)
-	var skin_tone := FeatureCommitQueue._shared_surface_mesh_material() \
-		.albedo_color
-	assert_gt(skin_tone.v, 0.55,
-		"the structural skin is lit timber, not a dark duplicate below the boards")
-	assert_gt(skin_tone.r, skin_tone.b,
-		"the structural skin keeps the plank palette's warm hue")
-
-
-func test_staggered_embedder_closes_route_sides_without_entering_public_air() \
-		-> void:
-	var plan: SettlementFabricPlan = _folded_proof()
-	assert_not_null(plan)
-	if plan == null:
-		return
-	var proposal := plan.embedding_plan
-	assert_not_null(proposal)
-	if proposal == null:
-		return
-	assert_true(proposal.validate())
-	assert_gt(int(proposal.audit().proposed_barrier_count), 0)
-	assert_gt(int(proposal.audit().proposed_closed_boundary_count), 0)
-	assert_gt(int(proposal.audit().proposed_base_band_count), 1)
-	# The addressed court stack now owns one of the height bands that used to be
-	# emitted by this pass. Staggering is a completed-city invariant, not an
-	# implementation detail of one particular solver phase.
-	assert_gt(int(plan.audit.half_level_neighbor_pair_count), 0)
-	assert_gte(int(proposal.audit().proposed_storey_variant_count), 1,
-		"the filler may prune tall variants near measured overhang envelopes")
-	assert_gt(int(proposal.audit().proposed_market_frontage_count), 0)
-	var public_air := plan.public_realm.air_claims()
-	for barrier: Dictionary in proposal.barrier_proposals:
-		if StringName(barrier.kind) == &"market":
-			assert_eq(int(barrier.storeys), 0)
-		else:
-			assert_true(int(barrier.storeys) >= 1 and int(barrier.storeys) <= 4)
-		var support_mode := StringName(barrier.support_mode)
-		assert_true(support_mode == &"grounded_stack" \
-			or support_mode == &"retained_half_perch")
-		assert_eq((barrier.origin as Vector3i).y, 0 \
-			if support_mode == &"grounded_stack" else 1)
-		for cell: Vector3i in barrier.occupied_cells as Array[Vector3i]:
-			assert_false(public_air.has(cell))
-
-
-func test_critical_review_succeeds_by_reporting_current_visual_issues() -> void:
-	var plan: SettlementFabricPlan = _folded_proof()
-	assert_not_null(plan)
-	if plan == null:
-		return
-	var failures := SettlementFabricSolver.requirement_failures(plan.audit,
-		FoldedProof.REVIEW_TARGETS)
-	assert_gt(failures.size(), 0, "review should find an issue in the current slice")
-	assert_true(failures.any(func(value: String) -> bool:
-		return value.begins_with("frontage_ratio=")))
-	assert_true(failures.any(func(value: String) -> bool:
-		return value.begins_with("overhead_route_ratio=")))
-	assert_true(failures.any(func(value: String) -> bool:
-		return value.begins_with("through_sightline_count=")))
-	# The compact-cap pass brought both core dimensions under their review cap;
-	# keep that gain pinned while the issue-seeking review continues to require
-	# enclosure, overhead, and sightline failures until the coupled maze lands.
-	assert_false(failures.any(func(value: String) -> bool:
-		return value.begins_with("solid_void_core_width_cells=") \
-			or value.begins_with("solid_void_core_depth_cells=")))

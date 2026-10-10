@@ -1,0 +1,6 @@
+{
+  "scripts/terrain/features/villages/fabric/WarrenSpatialFabricCompiler.gd": "c07fb673574130d5459745c36900194d9a42fa918779c80ba87b7458dde0c16a",
+  "scripts/terrain/features/villages/fabric/SettlementFabricPlan.gd": "7a847405638baf8965233e847d924189282fa9f621b281a11fc4610c9f7d755e",
+  "scripts/terrain/features/villages/kit/KitVillageBuildings.gd": "341de503cb45aaff0025552eb50636f9a565b074e5e9c1cca406d7cbdf9f1490",
+  "tests/test_october3_market_supports.gd": "9a8ada85c4f6546faf4de27110c963b642aa9632b33785ff880f8020bbdcf7df"
+}

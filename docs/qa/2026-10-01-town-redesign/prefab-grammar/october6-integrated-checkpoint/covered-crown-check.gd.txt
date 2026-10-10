@@ -1,0 +1,22 @@
+extends SceneTree
+const Candidate = preload("/tmp/oct6-back-retry-solver.gd")
+func _init(): call_deferred("_run")
+func room(id: StringName, origin: Vector3i) -> WarrenRoomStamp:
+ var r := WarrenRoomStamp.new(id,id,&"tower",origin,0,0,true,false,Vector3i(2147483647,2147483647,2147483647),Vector3i.ZERO,0,&"",-1,0,true)
+ r.private_cells.assign(WarrenRoomStamp.expected_private_cells(&"tower",origin,0))
+ return r
+func _run():
+ var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
+ var lower := room(&"lower",Vector3i.ZERO)
+ var upper := room(&"upper",Vector3i(0,2,0))
+ var building := WarrenBuildingVolume.new(&"upper",2)
+ building.room_records.append(upper)
+ building.private_cells.assign(upper.private_cells)
+ var hosts := {&"upper":building}
+ var original := WarrenVolumetricSolver._residual_roof_envelope_fits(lower,hosts,program,53)
+ var complete := Candidate._residual_roof_envelope_fits(lower,hosts,program,53)
+ print("ORIGINAL_FULL_COVER ",original," CANDIDATE_FULL_COVER ",complete)
+ upper.private_cells.remove_at(0)
+ var partial := Candidate._residual_roof_envelope_fits(lower,hosts,program,53)
+ print("PARTIAL_COVER ",partial)
+ quit(0 if not original and complete and not partial else 1)

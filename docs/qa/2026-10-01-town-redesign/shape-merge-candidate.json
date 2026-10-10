@@ -1,0 +1,102 @@
+[
+  {
+    "after": {
+      "houses": 22,
+      "large_plain": 2,
+      "max_plain_area": 60,
+      "max_plain_span": 10,
+      "nonrect": 2,
+      "stepped": 2
+    },
+    "before": {
+      "houses": 21,
+      "large_plain": 3,
+      "max_plain_area": 60,
+      "max_plain_span": 10,
+      "nonrect": 2,
+      "stepped": 2
+    },
+    "profile": "large",
+    "seed": 7
+  },
+  {
+    "after": {
+      "houses": 38,
+      "large_plain": 0,
+      "max_plain_area": 12,
+      "max_plain_span": 6,
+      "nonrect": 7,
+      "stepped": 7
+    },
+    "before": {
+      "houses": 38,
+      "large_plain": 0,
+      "max_plain_area": 12,
+      "max_plain_span": 6,
+      "nonrect": 7,
+      "stepped": 7
+    },
+    "profile": "grand",
+    "seed": 9
+  },
+  {
+    "after": {
+      "houses": 24,
+      "large_plain": 2,
+      "max_plain_area": 36,
+      "max_plain_span": 6,
+      "nonrect": 5,
+      "stepped": 4
+    },
+    "before": {
+      "houses": 24,
+      "large_plain": 3,
+      "max_plain_area": 36,
+      "max_plain_span": 6,
+      "nonrect": 5,
+      "stepped": 4
+    },
+    "profile": "large",
+    "seed": 13
+  },
+  {
+    "after": {
+      "houses": 21,
+      "large_plain": 4,
+      "max_plain_area": 36,
+      "max_plain_span": 8,
+      "nonrect": 3,
+      "stepped": 5
+    },
+    "before": {
+      "houses": 19,
+      "large_plain": 6,
+      "max_plain_area": 36,
+      "max_plain_span": 8,
+      "nonrect": 2,
+      "stepped": 5
+    },
+    "profile": "large",
+    "seed": 34
+  },
+  {
+    "after": {
+      "houses": 18,
+      "large_plain": 4,
+      "max_plain_area": 24,
+      "max_plain_span": 6,
+      "nonrect": 4,
+      "stepped": 2
+    },
+    "before": {
+      "houses": 16,
+      "large_plain": 6,
+      "max_plain_area": 24,
+      "max_plain_span": 6,
+      "nonrect": 3,
+      "stepped": 2
+    },
+    "profile": "standard",
+    "seed": 60
+  }
+]

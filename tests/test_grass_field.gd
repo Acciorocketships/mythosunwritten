@@ -490,3 +490,20 @@ static func _contains_resource(value: Variant) -> bool:
 			if _contains_resource(item):
 				return true
 	return false
+
+
+func test_town_envelope_allows_grass_but_physical_construction_does_not() -> void:
+	var program := _program()
+	var inputs := _flat_inputs(program)
+	var envelope := FeatureGroundShape.axis_rect(CORE)
+	envelope.envelope = true
+	var ground := FeatureGroundField.new([], [envelope], GrassProgram.FEATURE_CLEARANCE)
+	var features := FeatureContext.new(CORE, ground, EnvironmentInstancePayload.new())
+	var anchor := Vector2(12,12)
+	assert_false(GrassField._qualified_surface(program, anchor, inputs.region,
+		inputs.water, features, 1.0).is_empty(), "natural town ground accepts grass")
+	var wall := FeatureGroundShape.axis_rect(Rect2(Vector2(12.7,10),Vector2(2,4)))
+	ground = FeatureGroundField.new([], [envelope,wall], GrassProgram.FEATURE_CLEARANCE)
+	features = FeatureContext.new(CORE, ground, EnvironmentInstancePayload.new())
+	assert_true(GrassField._qualified_surface(program, anchor, inputs.region,
+		inputs.water, features, 1.0).is_empty(), "the whole grass patch must clear the wall")

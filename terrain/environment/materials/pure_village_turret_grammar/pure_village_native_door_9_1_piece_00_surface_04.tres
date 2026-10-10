@@ -1,0 +1,18 @@
+[gd_resource type="StandardMaterial3D" load_steps=4 format=3]
+
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/pure_village_kit/58324d0249111dd01b43.res" id="1_3qb4v"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/pure_village_kit/2233cd04604008dea2ea.res" id="2_s134b"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/pure_village_kit/94d4fa5547f977fca268.res" id="3_hpiyi"]
+
+[resource]
+resource_name = "Stone_2"
+vertex_color_use_as_albedo = true
+albedo_texture = ExtResource("1_3qb4v")
+metallic_texture = ExtResource("2_s134b")
+metallic_texture_channel = 2
+roughness_texture = ExtResource("2_s134b")
+roughness_texture_channel = 1
+normal_enabled = true
+normal_texture = ExtResource("3_hpiyi")
+ao_enabled = true
+ao_texture = ExtResource("2_s134b")

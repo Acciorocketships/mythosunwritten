@@ -1,0 +1,27 @@
+--- scripts/terrain/features/villages/kit/KitRoofMeshUnion.gd
++++ scripts/terrain/features/villages/kit/KitRoofMeshUnion.gd
+@@ -194,12 +194,23 @@
+ 	cutters.append_array(ctx.gable_clips[roof_index] if gable else ctx.clips[roof_index])
+ 	cutters.append_array(placement.get("clip_volumes",[]))
+ 	var eave := float(ctx.roofs[roof_index].eave_band) * kit.band_height()
++	var footprint: Rect2i = ctx.roofs[roof_index].rect
++	var roof_plan := Rect2(Vector2(footprint.position) * kit.module_width,
++		Vector2(footprint.size) * kit.module_width)
+ 	for wall: Dictionary in ctx.walls:
+ 		var open := bool(wall.get("open", false))
+ 		if gable and open: continue
+ 		# Walls cut only roofs they rise above; open walking clearance cuts
+ 		# whatever reaches into it.
+-		if (open or wall.bounds.end.y > eave + 0.2) and bounds.intersects(wall.bounds):
++		# An adjoining room ending at this eave still owns its interior below
++		# the ceiling. Native curved feet dip beneath their pivot and can
++		# otherwise hang through its doorway. Keep the roof's own bearing
++		# walls exempt; only a disjoint neighbouring footprint gets this rule.
++		var box: AABB = wall.bounds
++		var wall_plan := Rect2(Vector2(box.position.x, box.position.z), Vector2(box.size.x, box.size.z))
++		var neighbour_at_eave := not gable and not open and box.end.y >= eave - EPS \
++			and not roof_plan.intersects(wall_plan)
++		if (open or wall.bounds.end.y > eave + 0.2 or neighbour_at_eave) and bounds.intersects(wall.bounds):
+ 			cutters.append(wall)
+ 	if cutters.is_empty():
+ 		return {}

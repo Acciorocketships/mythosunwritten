@@ -1,0 +1,35 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+SCRIPT ERROR: Invalid access to property or key 'top' on a base object of type 'Dictionary'.
+          at: apply (/tmp/oct6-block-access-wide.gd:16)
+          GDScript backtrace (most recent call first):
+              [0] apply (/tmp/oct6-block-access-wide.gd:16)
+              [1] plan (/tmp/oct6-block-site-wide.gd:46)
+              [2] _run (/tmp/oct6-block-wide-probe.gd:4)
+SCRIPT ERROR: Invalid access to property or key 'audit' on a base object of type 'Nil'.
+          at: outcomes (res://scripts/terrain/features/villages/fabric/WarrenPlotPlanner.gd:1352)
+          GDScript backtrace (most recent call first):
+              [0] outcomes (res://scripts/terrain/features/villages/fabric/WarrenPlotPlanner.gd:1352)
+              [1] fill_released_bridge_sites (res://scripts/terrain/features/villages/fabric/WarrenPlotPlanner.gd:169)
+              [2] plan (/tmp/oct6-block-site-wide.gd:49)
+              [3] _run (/tmp/oct6-block-wide-probe.gd:4)
+SCRIPT ERROR: Invalid access to property or key 'audit' on a base object of type 'Nil'.
+          at: fill_released_bridge_sites (res://scripts/terrain/features/villages/fabric/WarrenPlotPlanner.gd:171)
+          GDScript backtrace (most recent call first):
+              [0] fill_released_bridge_sites (res://scripts/terrain/features/villages/fabric/WarrenPlotPlanner.gd:171)
+              [1] plan (/tmp/oct6-block-site-wide.gd:49)
+              [2] _run (/tmp/oct6-block-wide-probe.gd:4)
+SCRIPT ERROR: Invalid access to property or key 'excavation' on a base object of type 'Nil'.
+          at: place (res://scripts/terrain/features/villages/fabric/WarrenWallRooms.gd:6)
+          GDScript backtrace (most recent call first):
+              [0] place (res://scripts/terrain/features/villages/fabric/WarrenWallRooms.gd:6)
+              [1] plan (/tmp/oct6-block-site-wide.gd:55)
+              [2] _run (/tmp/oct6-block-wide-probe.gd:4)
+SCRIPT ERROR: Invalid access to property or key 'plots' on a base object of type 'Nil'.
+          at: plan (/tmp/oct6-block-site-wide.gd:62)
+          GDScript backtrace (most recent call first):
+              [0] plan (/tmp/oct6-block-site-wide.gd:62)
+              [1] _run (/tmp/oct6-block-wide-probe.gd:4)
+ERROR 

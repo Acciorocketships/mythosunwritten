@@ -1,0 +1,50 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_fortified_facades.gd
+* test_native_window_replaces_full_facade_in_each_orientation
+* test_small_piers_and_neighboring_assets_cannot_admit_a_window
+* test_finished_fortifications_preserve_native_frames_and_public_air
+3/3 passed.
+
+
+res://tests/test_retaining_recesses.gd
+* test_recess_preserves_outer_envelope_and_rejects_inward_passage
+* test_existing_roof_cannot_cover_recessed_glazing
+* test_real_town_uses_recesses_on_blocked_projecting_window_sites
+* test_recess_rejects_contact_with_native_header_above_clear_glass
+4/4 passed.
+
+
+res://tests/test_interior_citadel_gate.gd
+* test_interior_gate_enters_below_grade_then_climbs_to_upper_street
+* test_admitted_interior_gate_has_finished_roof_and_clear_headroom
+* test_nested_climb_does_not_bore_through_the_next_higher_district
+* test_parapet_clearance_never_leaves_merlons_without_their_base
+4/4 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               3
+Tests                11
+Passing Tests        11
+Asserts            1077
+Time              160.861s
+
+
+---- All tests passed! ----
+

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_h785v"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/pure_village_kit/pure_village_roof_slope_end_piece_00.res" id="2_wlauk"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_n7sty"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/pure_village_kit/pure_village_roof_slope_end_piece_00.res" id="4_xbmop"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_yyh8s"]
+
+[sub_resource type="Resource" id="Resource_cxtmv"]
+script = ExtResource("1_h785v")
+shape = ExtResource("2_wlauk")
+
+[sub_resource type="Resource" id="Resource_0fhr4"]
+script = ExtResource("3_n7sty")
+mesh = ExtResource("4_xbmop")
+
+[resource]
+script = ExtResource("5_yyh8s")
+pieces = Array[ExtResource("3_n7sty")]([SubResource("Resource_0fhr4")])
+collisions = Array[ExtResource("1_h785v")]([SubResource("Resource_cxtmv")])

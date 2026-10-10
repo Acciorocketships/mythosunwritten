@@ -13,3 +13,6 @@ collision_piece_count = 1
 tint_group = &"identity"
 supports_instance_color = true
 provenance_id = &"fantasy_village:sfv.light_pole.001"
+material_tints = {
+"SFV_MAIN_MATERIAL": Color(0.48, 0.37, 0.29, 1)
+}

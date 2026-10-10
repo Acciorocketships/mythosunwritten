@@ -1,0 +1,41 @@
+{
+  "seed": 58,
+  "profile": "large",
+  "candidate": "two-band excavation",
+  "room": "spatial.maze_back.13.room00",
+  "private_roof_faces": [
+    [
+      -12,
+      1,
+      -8
+    ],
+    [
+      -11,
+      1,
+      -8
+    ],
+    [
+      -12,
+      1,
+      -7
+    ],
+    [
+      -12,
+      1,
+      -6
+    ],
+    [
+      -12,
+      1,
+      -5
+    ]
+  ],
+  "public_faces": false,
+  "native_tile_areas": [
+    2,
+    4,
+    6
+  ],
+  "exact_cover_states": 11,
+  "failure": "Odd five-cell private crown cannot be tiled with the available even-area native gable modules."
+}

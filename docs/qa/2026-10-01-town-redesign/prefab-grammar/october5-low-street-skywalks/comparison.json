@@ -1,0 +1,95 @@
+{
+  "103:grand": {
+    "before": 40,
+    "after": 40,
+    "lost": [],
+    "improved": [],
+    "floating": 0,
+    "air_intrusions": 0
+  },
+  "13:grand": {
+    "before": 16,
+    "after": 16,
+    "lost": [],
+    "improved": [],
+    "floating": 0,
+    "air_intrusions": 0
+  },
+  "301:grand": {
+    "before": 44,
+    "after": 44,
+    "lost": [],
+    "improved": [],
+    "floating": 0,
+    "air_intrusions": 0
+  },
+  "31:large": {
+    "before": 34,
+    "after": 34,
+    "lost": [],
+    "improved": [],
+    "floating": 0,
+    "air_intrusions": 0
+  },
+  "43:grand": {
+    "before": 48,
+    "after": 48,
+    "lost": [],
+    "improved": [],
+    "floating": 0,
+    "air_intrusions": 0
+  },
+  "53:grand": {
+    "before": 86,
+    "after": 86,
+    "lost": [],
+    "improved": [],
+    "floating": 0,
+    "air_intrusions": 0
+  },
+  "63:grand": {
+    "before": 48,
+    "after": 48,
+    "lost": [],
+    "improved": [
+      [
+        "(1, 2, -4)",
+        2,
+        6,
+        4
+      ],
+      [
+        "(1, 2, -4)",
+        3,
+        6,
+        4
+      ]
+    ],
+    "floating": 0,
+    "air_intrusions": 0
+  },
+  "83:grand": {
+    "before": 16,
+    "after": 16,
+    "lost": [],
+    "improved": [],
+    "floating": 0,
+    "air_intrusions": 0
+  },
+  "8:grand": {
+    "before": 70,
+    "after": 70,
+    "lost": [],
+    "improved": [],
+    "floating": 0,
+    "air_intrusions": 0
+  },
+  "9:grand": {
+    "before": 80,
+    "after": 80,
+    "lost": [],
+    "improved": [],
+    "floating": 0,
+    "air_intrusions": 0
+  }
+}

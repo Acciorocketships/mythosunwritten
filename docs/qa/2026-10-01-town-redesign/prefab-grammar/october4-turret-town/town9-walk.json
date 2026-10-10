@@ -1,0 +1,93 @@
+[
+  {
+    "gate": "spatial.fabric.spatial.feature.landmark.00.component.00",
+    "passed": true,
+    "reverse": false,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(4.125, 0.050215, 48.0)",
+        "target": "(8.0, -0.0, 48.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(7.875158, 0.000161, 48.0)",
+        "target": "(13.86876, -0.0, 48.0)",
+        "tick": 0,
+        "waypoint": 2
+      },
+      {
+        "floor": true,
+        "position": "(11.62516, 0.000161, 48.0)",
+        "target": "(13.86876, -0.0, 48.0)",
+        "tick": 30,
+        "waypoint": 2
+      },
+      {
+        "floor": true,
+        "position": "(13.75016, 0.000161, 48.0)",
+        "target": "(17.43564, 3.206652, 48.0)",
+        "tick": 0,
+        "waypoint": 3
+      },
+      {
+        "floor": true,
+        "position": "(17.37178, 3.206996, 47.98653)",
+        "target": "(19.58564, 3.216192, 46.75)",
+        "tick": 0,
+        "waypoint": 4
+      }
+    ]
+  },
+  {
+    "gate": "spatial.fabric.spatial.feature.landmark.00.component.00",
+    "passed": true,
+    "reverse": true,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(19.47756, 3.214963, 46.81283)",
+        "target": "(17.43564, 3.206652, 48.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(17.5286, 3.21255, 47.93037)",
+        "target": "(13.86876, -0.0, 48.0)",
+        "tick": 0,
+        "waypoint": 2
+      },
+      {
+        "floor": true,
+        "position": "(13.919, 0.000738, 47.99992)",
+        "target": "(8.0, -0.0, 48.0)",
+        "tick": 0,
+        "waypoint": 3
+      },
+      {
+        "floor": true,
+        "position": "(10.169, 0.000738, 47.99997)",
+        "target": "(8.0, -0.0, 48.0)",
+        "tick": 30,
+        "waypoint": 3
+      },
+      {
+        "floor": true,
+        "position": "(8.168999, 0.000738, 48.0)",
+        "target": "(4.0, 0.05, 48.0)",
+        "tick": 0,
+        "waypoint": 4
+      },
+      {
+        "floor": true,
+        "position": "(4.419043, 0.050497, 48.0)",
+        "target": "(4.0, 0.05, 48.0)",
+        "tick": 30,
+        "waypoint": 4
+      }
+    ]
+  }
+]

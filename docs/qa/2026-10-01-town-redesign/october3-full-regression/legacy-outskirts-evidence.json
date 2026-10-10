@@ -1,0 +1,6 @@
+{
+  "scripts/terrain/features/villages/VillagePlan.gd": "9ff66dc4cf238bcfb850074919dcc5a87b4412ae012eb58e1f1dae4dec1236c8",
+  "scripts/terrain/features/villages/VillageOutskirtsConstruction.gd": "9892db58aee6395b756e7525cec14767f0c5580f42c00e58c83f0f02a0b9463c",
+  "scripts/terrain/features/villages/VillageWarrenFabricSolver.gd": "0003b48b9cb3b4285aaae4cb96d74e2959800d55c3b03b09cd1c42a832c32801",
+  "tests/test_october1_town_lobes.gd": "e36aefd7df8d14d550af9894eb1deb74ea86bab511f76b63579a645880e7f015"
+}

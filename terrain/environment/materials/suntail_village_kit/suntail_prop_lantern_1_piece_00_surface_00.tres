@@ -1,9 +1,9 @@
 [gd_resource type="StandardMaterial3D" load_steps=5 format=3]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/ecd0ecd91affd8ecac21.res" id="1_p8aqf"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/dc4a8b3e9f86699f1be4.res" id="2_6eofv"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/02f803e03fe93aaf277f.res" id="3_80d44"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/a2220738190d13f0bb9d.res" id="4_mos61"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/4d1719d007326c67c32a.res" id="1_p8aqf"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/41cc89240849757f44f8.res" id="2_6eofv"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/ebc33149fd29735fb3c1.res" id="3_80d44"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/9ffcd69c2424b52b4d28.res" id="4_mos61"]
 
 [resource]
 resource_name = "Lantern"

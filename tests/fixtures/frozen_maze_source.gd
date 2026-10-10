@@ -9,13 +9,18 @@ static func read(path: String, finish: bool = true) -> WarrenMazeSourcePlan:
 		data.massif_columns, data.massif_core)
 	massif.form_id = StringName(data.get("massif_form", &"hill"))
 	massif.open_court = data.get("massif_open_court", {})
+	for key: String in data.get("massif_state", {}):
+		massif.set(key, data.massif_state[key])
 	assert(massif.seal(), massif.last_rejection)
 	var excavation := WarrenExcavation.new(data.world_seed)
 	for key: String in data.excavation:
 		excavation.set(key, data.excavation[key])
 	assert(excavation.seal(), excavation.last_rejection)
+	var profile := WarrenVillageScaleProfile.for_id(data.profile)
+	for key: String in data.get("profile_state", {}):
+		profile.set(key, data.profile_state[key])
 	var source := WarrenMazeSourcePlan.new(data.world_seed,
-		WarrenVillageScaleProfile.for_id(data.profile), massif, excavation)
+		profile, massif, excavation)
 	for key: String in data.source:
 		source.set(key, data.source[key])
 	if finish:
@@ -25,10 +30,11 @@ static func read(path: String, finish: bool = true) -> WarrenMazeSourcePlan:
 
 static func spatial(source: WarrenMazeSourcePlan,
 		program: SettlementFabricProgram) -> WarrenSpatialPlan:
-	var volume := WarrenMazeVolumeAdapter.to_volume_plan(source)
-	var result := WarrenVolumetricSolver.from_volume(volume, -1, program, false, true)
-	assert(result != null, WarrenVolumetricSolver.last_failure)
-	var fabric := WarrenSpatialFabricCompiler.generate(result, program, true)
-	assert(fabric != null, WarrenSpatialFabricCompiler.last_failure)
-	result.cache_compiled_fabric(fabric)
+	# The production composition, roof withdrawals included (October 8).
+	var composed := WarrenVolumetricSolver.compose_maze_source(source, program, true)
+	assert(not composed.is_empty(), WarrenVolumetricSolver.last_failure)
+	if composed.is_empty():
+		return null
+	var result := composed.plan as WarrenSpatialPlan
+	result.cache_compiled_fabric(composed.fabric)
 	return result

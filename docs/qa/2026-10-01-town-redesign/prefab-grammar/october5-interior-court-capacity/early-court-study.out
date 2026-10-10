@@ -1,0 +1,14 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+COURT_SUPPLY 31:large 2
+COURT_SUPPLY 8:grand 5
+COURT_SUPPLY 9:grand 1
+COURT_SUPPLY 13:grand 0
+COURT_SUPPLY 43:grand 0
+COURT_SUPPLY 53:grand 1
+COURT_SUPPLY 63:grand 6
+COURT_SUPPLY 83:grand 3
+COURT_SUPPLY 103:grand 0
+COURT_SUPPLY 301:grand 0

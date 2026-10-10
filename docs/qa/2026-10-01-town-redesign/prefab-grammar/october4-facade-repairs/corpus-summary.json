@@ -1,0 +1,50 @@
+{
+  "101:large": {
+    "covered_quarters": 24,
+    "fully_covered": 5,
+    "floating": 0,
+    "air_intrusions": 0
+  },
+  "103:grand": {
+    "covered_quarters": 40,
+    "fully_covered": 8,
+    "floating": 0,
+    "air_intrusions": 0
+  },
+  "13:large": {
+    "covered_quarters": 42,
+    "fully_covered": 10,
+    "floating": 0,
+    "air_intrusions": 0
+  },
+  "211:grand": {
+    "covered_quarters": 92,
+    "fully_covered": 22,
+    "floating": 0,
+    "air_intrusions": 0
+  },
+  "31:large": {
+    "covered_quarters": 18,
+    "fully_covered": 3,
+    "floating": 0,
+    "air_intrusions": 0
+  },
+  "43:grand": {
+    "covered_quarters": 68,
+    "fully_covered": 16,
+    "floating": 0,
+    "air_intrusions": 0
+  },
+  "58:large": {
+    "covered_quarters": 14,
+    "fully_covered": 3,
+    "floating": 0,
+    "air_intrusions": 0
+  },
+  "7:standard": {
+    "covered_quarters": 36,
+    "fully_covered": 9,
+    "floating": 0,
+    "air_intrusions": 0
+  }
+}

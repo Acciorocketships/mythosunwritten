@@ -1,0 +1,26 @@
+extends SceneTree
+const Candidate = preload("/tmp/oct6-court-solver.gd")
+func _init() -> void: call_deferred("_run")
+func _run() -> void:
+ var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
+ for seed_value in [53]:
+  var spatial := Candidate.generate(seed_value,{},program,WarrenVillageScaleProfile.for_id(&"grand"))
+  print('AUTHORED_COURTS ',spatial.source_volume.courtyard_cells)
+  var neighbors := WarrenRoomCompositionPlanner._courtyard_neighbor_cells(spatial.source_volume)
+  print('PROTECTED_NEIGHBORS ',neighbors)
+  var source:WarrenMazeSourcePlan=spatial.source_volume.mass_context[&"maze_source_plan"]
+  for plot:Dictionary in source.plots:
+   if String(plot.id)=='plaza.00' or String(plot.id)=='house.000':print('SOURCE_PLOT ',plot)
+  print('COMPOSITION_AUDIT ',spatial.audit.get('composition',{}))
+  var built := KitVillageBuildings.build(spatial,spatial.compiled_fabric_cache(),SuntailBuildingKit.create())
+  for building:WarrenBuildingVolume in spatial.buildings:
+   if not String(building.stable_id).contains('house.000'):continue
+   var cells:=[]
+   for c:Vector3i in building.private_cells:
+    if c.y==9:cells.append(c)
+   print('SOURCE_BUILDING ',building.stable_id,' cells9=',cells,' audit=',building.audit)
+  for mass:BuildingMass in built.masses:
+   if not String(mass.stable_id).contains('house.000'):continue
+   print('KIT_HOST ',mass.stable_id)
+   for storey:Dictionary in mass.storeys:print('STOREY ',storey)
+ quit()

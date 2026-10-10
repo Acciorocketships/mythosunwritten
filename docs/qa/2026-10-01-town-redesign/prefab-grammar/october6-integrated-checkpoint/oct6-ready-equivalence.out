@@ -1,0 +1,6 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+EQUIVALENCE 31:large {"candidate_ms":26463,"previous_ms":26369,"same_layout":true}
+EQUIVALENCE 83:grand {"candidate_ms":22711,"previous_ms":22988,"same_layout":true}

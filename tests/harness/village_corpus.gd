@@ -144,42 +144,17 @@ static func _run_seed(seed_value: int, radius: int,
 				var fabric := record.urban_fabric
 				report.urban_accepted += 1
 				report.urban_buildings += fabric.buildings.size()
-				if fabric.generation_kind in [
-						VillageUrbanFabricPlan.GenerationKind.SECTIONAL_WARREN,
-						VillageUrbanFabricPlan.GenerationKind.VOLUMETRIC_WARREN]:
-					var audit := fabric.fabric_audit
-					report.urban_ground_streets += int(
-						audit.terrain_street_cell_count)
-					report.urban_aerial_links += int(audit.skywalk_link_count)
-					report.urban_platforms += int(audit.audited_platform_count)
-					report.urban_public_stairs += int(audit.stair_count)
-					report.urban_timber_cells += int(
-						audit.structural_court_cell_count)
-					report.maximum_urban_bands = maxi(
-						int(report.maximum_urban_bands),
-						int(audit.vertical_span_cells))
-				else:
-					report.urban_natural_buildings += fabric.natural_building_count
-					report.urban_retained_buildings += fabric.retained_building_count
-					report.urban_ground_streets \
-						+= fabric.circulation.ground_street_count
-					report.urban_aerial_links \
-						+= fabric.circulation.aerial_link_count
-					report.urban_platforms += fabric.circulation.platforms.size()
-					report.urban_public_stairs += fabric.public_stair_count
-					report.urban_supports += fabric.timber.support_count
-					report.urban_support_pieces += fabric.timber.support_piece_count
-					report.urban_railings += fabric.timber.railing_count
-					report.urban_timber_cells += fabric.timber.cells.size()
-					report.urban_rock_pieces += fabric.rock_piece_count
-					for cell: VillageTimberCell in fabric.timber.cells:
-						if cell.kind == VillageTimberCell.Kind.SKIRT:
-							report.urban_skirt_cells += 1
-						elif cell.kind == VillageTimberCell.Kind.WALKWAY:
-							report.urban_walkway_cells += 1
-					report.maximum_urban_bands = maxi(
-						int(report.maximum_urban_bands),
-						fabric.massing.elevation_band_count)
+				var audit := fabric.fabric_audit
+				report.urban_ground_streets += int(
+					audit.terrain_street_cell_count)
+				report.urban_aerial_links += int(audit.skywalk_link_count)
+				report.urban_platforms += int(audit.audited_platform_count)
+				report.urban_public_stairs += int(audit.stair_count)
+				report.urban_timber_cells += int(
+					audit.structural_court_cell_count)
+				report.maximum_urban_bands = maxi(
+					int(report.maximum_urban_bands),
+					int(audit.vertical_span_cells))
 			var radius_used := _rect_radius(record.centre, record.bounds)
 			report.maximum_record_radius = maxf(
 				float(report.maximum_record_radius), radius_used)

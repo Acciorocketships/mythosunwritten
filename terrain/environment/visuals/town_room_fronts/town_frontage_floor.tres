@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_mvkei"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/town_room_fronts/town_frontage_floor_piece_00.res" id="2_nc01k"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_pc6oc"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/town_room_fronts/town_frontage_floor_piece_00.res" id="4_n8tbb"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_8g4jm"]
+
+[sub_resource type="Resource" id="Resource_s4xra"]
+script = ExtResource("1_mvkei")
+shape = ExtResource("2_nc01k")
+
+[sub_resource type="Resource" id="Resource_xfbj1"]
+script = ExtResource("3_pc6oc")
+mesh = ExtResource("4_n8tbb")
+
+[resource]
+script = ExtResource("5_8g4jm")
+pieces = Array[ExtResource("3_pc6oc")]([SubResource("Resource_xfbj1")])
+collisions = Array[ExtResource("1_mvkei")]([SubResource("Resource_s4xra")])

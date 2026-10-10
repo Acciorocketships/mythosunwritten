@@ -27,8 +27,16 @@ func test_connected_roof_retains_its_declared_eave_flashing() -> void:
 		WarrenVillageScaleProfile.select(seed_value))
 	assert_not_null(spatial, WarrenVolumetricSolver.last_failure)
 	if spatial != null:
-		assert_eq(WarrenSpatialFabricCompiler.validation_errors(
-			spatial.compiled_fabric_cache()), PackedStringArray())
+		var fabric := spatial.compiled_fabric_cache()
+		assert_eq(WarrenSpatialFabricCompiler.validation_errors(fabric), PackedStringArray())
+		assert_gte(fabric.continuous_roof_plan.turned_square_count, 1,
+			"clear complete roof rotations remain possible")
+		var retained_chimney := false
+		for placement: Dictionary in fabric.expanded_placements():
+			retained_chimney = retained_chimney or (StringName(placement.stable_id)
+				== &"spatial.roof.spatial.maze_back.03.room00/chimney")
+		assert_true(retained_chimney,
+			"the blocked rotation retains its complete original chimney")
 
 func test_compound_roof_plate_with_a_square_return_gets_complete_roofing() -> void:
 	var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())

@@ -49,6 +49,8 @@ static func detached(source_region: HeightfieldRegion, source_water: WaterFieldC
 		source_features: FeatureContext = null, source_supports: Array = []) -> GrassSamplingContext:
 	var result := GrassSamplingContext.new()
 	result.supports.assign(source_supports.duplicate(true))
+	if source_features != null:
+		result.supports.append_array(source_features.garden_grass_supports().duplicate(true))
 	var grades: Dictionary = {}
 	result.region = _copy_region(source_region,grades)
 	result.water = WaterSamples.new()

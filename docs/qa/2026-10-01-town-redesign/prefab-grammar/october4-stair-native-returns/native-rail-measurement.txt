@@ -1,0 +1,5 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+[0.471, 0.475, 0.48, 0.484, 0.52, 0.524, 0.529, 0.533, 0.799, 0.804, 0.808, 0.813, 0.848, 0.853, 0.857, 0.862]
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)

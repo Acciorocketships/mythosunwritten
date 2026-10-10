@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3 uid="uid://cuyl03emxltfk"]
+
+[ext_resource type="Script" uid="uid://djmjr4fhawgyt" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_74ryk"]
+
+[resource]
+script = ExtResource("1_74ryk")
+id = &"town.frontage.corner.d150"
+visual_path = "res://terrain/environment/visuals/town_room_fronts/town_frontage_corner_d150.tres"
+tags = Array[StringName]([&"building", &"town_room_fronts", &"village"])
+measured_aabb = AABB(-0.75, -0.05168787, -0.75, 1.5, 0.17940773, 1.5)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"town_room_fronts:town.frontage.corner.d150"

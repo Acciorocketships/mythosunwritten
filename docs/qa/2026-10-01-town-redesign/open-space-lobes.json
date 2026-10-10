@@ -1,0 +1,234 @@
+[
+	{
+		"clearings": 1,
+		"core_cells": 4,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 95,
+		"plots": {
+			"house": 21,
+			"over": 1
+		},
+		"profile": "compact",
+		"reserved_cells": 4,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 1,
+		"reserved_walk_cells": 2,
+		"seed": 7,
+		"tunnel_cells": 2
+	},
+	{
+		"clearings": 2,
+		"core_cells": 5,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 76,
+		"plots": {
+			"asset": 2,
+			"house": 8
+		},
+		"profile": "compact",
+		"reserved_cells": 0,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 0,
+		"reserved_walk_cells": 0,
+		"seed": 10,
+		"tunnel_cells": 1
+	},
+	{
+		"clearings": 0,
+		"core_cells": 0,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 72,
+		"plots": {
+			"asset": 1,
+			"deck": 1,
+			"house": 13
+		},
+		"profile": "compact",
+		"reserved_cells": 0,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 0,
+		"reserved_walk_cells": 0,
+		"seed": 38,
+		"tunnel_cells": 1
+	},
+	{
+		"clearings": 0,
+		"core_cells": 0,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 80,
+		"plots": {
+			"bridge": 2,
+			"deck": 1,
+			"house": 17,
+			"over": 1
+		},
+		"profile": "compact",
+		"reserved_cells": 4,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 1,
+		"reserved_walk_cells": 1,
+		"seed": 1260018864828801968,
+		"tunnel_cells": 1
+	},
+	{
+		"clearings": 1,
+		"core_cells": 7,
+		"core_massif_cells": 1,
+		"core_plot_cells": 0,
+		"massif_columns": 109,
+		"plots": {
+			"asset": 1,
+			"deck": 1,
+			"house": 23
+		},
+		"profile": "standard",
+		"reserved_cells": 4,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 1,
+		"reserved_walk_cells": 2,
+		"seed": 7,
+		"tunnel_cells": 4
+	},
+	{
+		"clearings": 2,
+		"core_cells": 9,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 118,
+		"plots": {
+			"asset": 1,
+			"bridge": 1,
+			"deck": 1,
+			"house": 20
+		},
+		"profile": "standard",
+		"reserved_cells": 15,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 2,
+		"reserved_walk_cells": 9,
+		"seed": 10,
+		"tunnel_cells": 4
+	},
+	{
+		"clearings": 0,
+		"core_cells": 0,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 109,
+		"plots": {
+			"asset": 1,
+			"bridge": 1,
+			"house": 23
+		},
+		"profile": "standard",
+		"reserved_cells": 11,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 2,
+		"reserved_walk_cells": 4,
+		"seed": 38,
+		"tunnel_cells": 3
+	},
+	{
+		"clearings": 0,
+		"core_cells": 0,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 122,
+		"plots": {
+			"bridge": 1,
+			"deck": 1,
+			"house": 30,
+			"over": 1
+		},
+		"profile": "standard",
+		"reserved_cells": 4,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 1,
+		"reserved_walk_cells": 0,
+		"seed": 1260018864828801968,
+		"tunnel_cells": 2
+	},
+	{
+		"clearings": 1,
+		"core_cells": 8,
+		"core_massif_cells": 1,
+		"core_plot_cells": 0,
+		"massif_columns": 137,
+		"plots": {
+			"asset": 3,
+			"bridge": 2,
+			"house": 26,
+			"over": 1
+		},
+		"profile": "large",
+		"reserved_cells": 4,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 1,
+		"reserved_walk_cells": 0,
+		"seed": 7,
+		"tunnel_cells": 4
+	},
+	{
+		"clearings": 2,
+		"core_cells": 12,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 170,
+		"plots": {
+			"asset": 3,
+			"deck": 2,
+			"house": 22
+		},
+		"profile": "large",
+		"reserved_cells": 17,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 2,
+		"reserved_walk_cells": 4,
+		"seed": 10,
+		"tunnel_cells": 1
+	},
+	{
+		"clearings": 0,
+		"core_cells": 0,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 163,
+		"plots": {
+			"asset": 2,
+			"deck": 3,
+			"house": 17,
+			"over": 1
+		},
+		"profile": "large",
+		"reserved_cells": 9,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 2,
+		"reserved_walk_cells": 5,
+		"seed": 38,
+		"tunnel_cells": 2
+	},
+	{
+		"clearings": 0,
+		"core_cells": 0,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 167,
+		"plots": {
+			"asset": 1,
+			"bridge": 5,
+			"deck": 2,
+			"house": 45
+		},
+		"profile": "large",
+		"reserved_cells": 4,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 1,
+		"reserved_walk_cells": 2,
+		"seed": 1260018864828801968,
+		"tunnel_cells": 4
+	}
+]

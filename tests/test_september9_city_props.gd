@@ -2,7 +2,7 @@ extends GutTest
 
 func test_private_garden_edge_has_a_supported_storage_pair() -> void:
  var cell:=Vector3i(0,0,0)
- var sites:=SettlementFabricAssembler.maze_garden_planting_sites({cell:true},{},{},{},{})
+ var sites:=SettlementFabricAssembler.maze_garden_planting_sites({cell:true},{},{},{},{},{},[] as Array[AABB],{},1)
  var furniture:Array=[]
  for site in sites:
   if site.has("station_part"):furniture.append(site)
@@ -20,10 +20,10 @@ func test_public_ground_entries_and_occupied_air_cannot_gain_furniture() -> void
   for z in 4:
    garden[Vector3i(x,0,z)]=true
    walked[Vector3i(x,1,z)]=true
- assert_true(SettlementFabricAssembler.maze_garden_planting_sites(garden,garden,{},{},{},{},[] as Array[AABB],walked).is_empty())
- assert_true(SettlementFabricAssembler.maze_garden_planting_sites(garden,{},garden,{},{}).is_empty())
+ assert_true(SettlementFabricAssembler.maze_garden_planting_sites(garden,garden,{},{},{},{},[] as Array[AABB],walked,1).is_empty())
+ assert_true(SettlementFabricAssembler.maze_garden_planting_sites(garden,{},garden,{},{},{},[] as Array[AABB],{},1).is_empty())
  var blocked:Array[AABB]=[AABB(Vector3(-2,1,-2),Vector3(15,8,15))]
- var sites:=SettlementFabricAssembler.maze_garden_planting_sites(garden,{},{},{},{},{},blocked)
+ var sites:=SettlementFabricAssembler.maze_garden_planting_sites(garden,{},{},{},{},{},blocked,{},1)
  for site in sites:assert_false(site.has("station_part"))
 
 func test_frozen_towns_add_furniture_without_reusing_public_or_lamp_cells() -> void:
@@ -51,7 +51,7 @@ func test_frozen_towns_add_furniture_without_reusing_public_or_lamp_cells() -> v
   else:assert_gte(count,2,label+" adds a real furniture group")
 
 func test_sack_resting_height_uses_the_native_lid_not_the_crate_bounds() -> void:
- var sites:=SettlementFabricAssembler.maze_garden_planting_sites({Vector3i.ZERO:true},{},{},{},{})
+ var sites:=SettlementFabricAssembler.maze_garden_planting_sites({Vector3i.ZERO:true},{},{},{},{},{},[] as Array[AABB],{},1)
  var furniture:Array=[]
  for site in sites:
   if site.has("station_part"):furniture.append(site)

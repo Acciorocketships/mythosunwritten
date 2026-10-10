@@ -1,0 +1,74 @@
+{
+  "103:grand": {
+    "air": 0,
+    "floating": 0,
+    "roof": {
+      "air_roofs": 0,
+      "air_unsupported": 0,
+      "eaves_cut": 0,
+      "examples": [],
+      "gable_ends": 65,
+      "gable_holes": 0,
+      "open_ends": 17,
+      "open_exposed": 0,
+      "roofs": 41,
+      "tiny": 0,
+      "tiny_beside": 0,
+      "uncapped_towers": 0
+    }
+  },
+  "31:large": {
+    "air": 0,
+    "floating": 0,
+    "roof": {
+      "air_roofs": 0,
+      "air_unsupported": 0,
+      "eaves_cut": 0,
+      "examples": [],
+      "gable_ends": 76,
+      "gable_holes": 0,
+      "open_ends": 28,
+      "open_exposed": 0,
+      "roofs": 52,
+      "tiny": 0,
+      "tiny_beside": 0,
+      "uncapped_towers": 0
+    }
+  },
+  "43:grand": {
+    "air": 0,
+    "floating": 0,
+    "roof": {
+      "air_roofs": 0,
+      "air_unsupported": 0,
+      "eaves_cut": 0,
+      "examples": [],
+      "gable_ends": 106,
+      "gable_holes": 0,
+      "open_ends": 22,
+      "open_exposed": 0,
+      "roofs": 64,
+      "tiny": 0,
+      "tiny_beside": 0,
+      "uncapped_towers": 0
+    }
+  },
+  "53:grand": {
+    "air": 0,
+    "floating": 0,
+    "roof": {
+      "air_roofs": 0,
+      "air_unsupported": 0,
+      "eaves_cut": 0,
+      "examples": [],
+      "gable_ends": 105,
+      "gable_holes": 0,
+      "open_ends": 19,
+      "open_exposed": 0,
+      "roofs": 62,
+      "tiny": 0,
+      "tiny_beside": 0,
+      "uncapped_towers": 0
+    }
+  }
+}

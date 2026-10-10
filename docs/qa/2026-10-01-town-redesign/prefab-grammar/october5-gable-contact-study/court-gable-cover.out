@@ -1,0 +1,10 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+ACTUAL_ROOF_COVER (-20.0, 6.113, 18.367) distances=[3.93435859680176, inf, 3.40715050697327]
+ACTUAL_ROOF_COVER (-20.0, 6.113, 18.767) distances=[3.93436241149902, inf, 3.4071524143219]
+ACTUAL_ROOF_COVER (-20.0, 6.113, 19.167) distances=[3.93434906005859, inf, 3.40714263916016]
+ACTUAL_ROOF_COVER (-20.0, 6.113, 19.567) distances=[3.93435287475586, inf, 3.40714645385742]
+ACTUAL_ROOF_COVER (-20.0, 6.113, 19.967) distances=[3.75268363952637, inf, 3.25151610374451]
+AUDIT { "roofs": 52, "tiny": 1, "tiny_beside": 1, "open_ends": 17, "open_exposed": 0, "gable_ends": 87, "gable_holes": 0, "air_roofs": 0, "air_unsupported": 0, "eaves_cut": 0, "examples": ["tiny_beside kit.spatial.parcel.maze.house.000 [P: (-2, 7), S: (2, 1)] axis=0 eave=10"], "uncapped_towers": 0, &"seed": -1, &"towers": 0, &"decks": 24 }

@@ -1,0 +1,125 @@
+{
+  "103:grand": {
+    "old_covered": 40,
+    "new_covered": 40,
+    "changed_old_ceilings": [],
+    "new_steps": [],
+    "floating": 0,
+    "public_air": 0,
+    "towers_before": 1,
+    "towers_after": 1
+  },
+  "13:grand": {
+    "old_covered": 16,
+    "new_covered": 16,
+    "changed_old_ceilings": [],
+    "new_steps": [],
+    "floating": 0,
+    "public_air": 0,
+    "towers_before": 0,
+    "towers_after": 0
+  },
+  "301:grand": {
+    "old_covered": 44,
+    "new_covered": 44,
+    "changed_old_ceilings": [],
+    "new_steps": [
+      {
+        "band": 2,
+        "bounds": "[P: (10, -14), S: (4, 4)]",
+        "cells": 12,
+        "host": "kit.spatial.parcel.maze.house.022",
+        "nonrectangular": true
+      },
+      {
+        "band": 2,
+        "bounds": "[P: (12, -2), S: (2, 4)]",
+        "cells": 8,
+        "host": "kit.spatial.parcel.maze.house.024",
+        "nonrectangular": false
+      }
+    ],
+    "floating": 0,
+    "public_air": 0,
+    "towers_before": 3,
+    "towers_after": 3
+  },
+  "31:large": {
+    "old_covered": 38,
+    "new_covered": 38,
+    "changed_old_ceilings": [],
+    "new_steps": [],
+    "floating": 0,
+    "public_air": 0,
+    "towers_before": 0,
+    "towers_after": 0
+  },
+  "43:grand": {
+    "old_covered": 56,
+    "new_covered": 56,
+    "changed_old_ceilings": [],
+    "new_steps": [],
+    "floating": 0,
+    "public_air": 0,
+    "towers_before": 2,
+    "towers_after": 2
+  },
+  "53:grand": {
+    "old_covered": 86,
+    "new_covered": 86,
+    "changed_old_ceilings": [],
+    "new_steps": [],
+    "floating": 0,
+    "public_air": 0,
+    "towers_before": 3,
+    "towers_after": 3
+  },
+  "63:grand": {
+    "old_covered": 34,
+    "new_covered": 34,
+    "changed_old_ceilings": [],
+    "new_steps": [],
+    "floating": 0,
+    "public_air": 0,
+    "towers_before": 2,
+    "towers_after": 2
+  },
+  "83:grand": {
+    "old_covered": 16,
+    "new_covered": 16,
+    "changed_old_ceilings": [],
+    "new_steps": [],
+    "floating": 0,
+    "public_air": 0,
+    "towers_before": 0,
+    "towers_after": 0
+  },
+  "8:grand": {
+    "old_covered": 70,
+    "new_covered": 70,
+    "changed_old_ceilings": [],
+    "new_steps": [
+      {
+        "band": 2,
+        "bounds": "[P: (8, -8), S: (4, 4)]",
+        "cells": 12,
+        "host": "kit.spatial.parcel.maze.house.014",
+        "nonrectangular": true
+      }
+    ],
+    "floating": 0,
+    "public_air": 0,
+    "towers_before": 1,
+    "towers_after": 1
+  },
+  "9:grand": {
+    "old_covered": 80,
+    "new_covered": 80,
+    "changed_old_ceilings": [],
+    "new_steps": [],
+    "floating": 0,
+    "public_air": 0,
+    "towers_before": 5,
+    "towers_after": 5
+  }
+}

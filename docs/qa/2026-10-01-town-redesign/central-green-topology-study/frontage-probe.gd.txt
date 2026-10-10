@@ -1,0 +1,21 @@
+extends SceneTree
+const FIELD=preload("res://scripts/terrain/features/villages/fabric/WarrenTownField.gd")
+func _initialize():
+ for seed_value in [17,24]:
+  var p=WarrenVillageScaleProfile.for_id(&"large")
+  var field=FIELD.sample(seed_value,p)
+  var source=WarrenMazeSitePlanner.plan(seed_value,{},p,&"",false)
+  var counts=[]
+  for lobe in field.lobes: counts.append({"centre":str(lobe.centre),"kind":str(lobe.kind),"columns":0,"passages":0,"plot_cells":0})
+  for column:Vector2i in source.massif.columns:
+   var nearest=0;var distance=INF
+   for index in field.lobes.size():
+    var d=Vector2(column).distance_squared_to(field.lobes[index].centre)
+    if d<distance:distance=d;nearest=index
+   counts[nearest].columns+=1
+   for passage:Vector3i in source.passage_kinds:
+    if Vector2i(passage.x,passage.z)==column:counts[nearest].passages+=1
+   for plot:Dictionary in source.plots:
+    if plot.cells.has(column):counts[nearest].plot_cells+=1
+  print("FRONTAGE ",{"seed":seed_value,"central_green":field.central_green,"lobes":counts})
+ quit()

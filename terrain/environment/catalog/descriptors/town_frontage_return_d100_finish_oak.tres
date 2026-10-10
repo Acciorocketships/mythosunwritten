@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_bkhyj"]
+
+[resource]
+script = ExtResource("1_bkhyj")
+id = &"town.frontage.return.d100.finish_oak"
+visual_path = "res://terrain/environment/visuals/town_room_fronts/town_frontage_return_d100.tres"
+tags = Array[StringName]([&"building", &"town_room_fronts", &"village"])
+measured_aabb = AABB(-0.5, 0, -0.125, 1, 3, 0.25)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"town_room_fronts:town.frontage.return.d100/frame/oak"
+material_tints = {
+"DoorShutter": Color(0.9, 0.74, 0.53, 1),
+"DoorShutters": Color(0.9, 0.74, 0.53, 1),
+"Planks": Color(0.9, 0.74, 0.53, 1),
+"Planks_Full": Color(0.9, 0.74, 0.53, 1),
+"Wood": Color(0.9, 0.74, 0.53, 1),
+"Wood_1": Color(0.9, 0.74, 0.53, 1),
+"Wood_2": Color(0.9, 0.74, 0.53, 1),
+"Wood_3": Color(0.9, 0.74, 0.53, 1),
+"Wooden_Planks": Color(0.9, 0.74, 0.53, 1)
+}

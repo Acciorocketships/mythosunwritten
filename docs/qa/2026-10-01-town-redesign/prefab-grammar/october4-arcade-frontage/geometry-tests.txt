@@ -1,0 +1,38 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_native_arcade_house.gd
+[0m* test_authored_house_is_an_exact_derivation
+* test_short_and_tall_variants_close_the_native_roof_and_upper_walls
+* test_seeded_choices_preserve_low_projections_but_clear_short_eaves
+* test_baked_assemblies_preserve_native_bounds_and_closed_roofs
+* test_arcade_site_preserves_recessed_ground_entry_in_all_orientations
+* test_arcade_recipe_keeps_all_parts_and_reserves_its_real_envelope
+* test_varied_arcades_use_complete_middle_front_window_bays
+[1m7/7 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               1
+Tests                 7
+Passing Tests         7
+Asserts            3089
+Time              99.961s
+
+
+[32m---- All tests passed! ----
+[0m

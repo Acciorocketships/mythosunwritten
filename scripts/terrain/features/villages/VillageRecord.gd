@@ -19,8 +19,9 @@ var street_axis := Vector2.ZERO
 ## whose entries and occupancy were materialized into the record, so tools do
 ## not maintain a parallel legacy description of the village.
 var urban_fabric: VillageUrbanFabricPlan
-var outskirts: VillageOutskirtsPlan
 var prop_results: Dictionary = {}
+## Conservative seeded source/adapter bound, independent of the final payload.
+var discovery_bound := Rect2()
 
 func _init(p_stable_id: StringName, p_centre: Vector2, p_bounds: Rect2,
 		p_payload: EnvironmentInstancePayload,
@@ -44,7 +45,7 @@ func _init(p_stable_id: StringName, p_centre: Vector2, p_bounds: Rect2,
 func validate(program: VillageProgram) -> bool:
 	if program == null or not payload.validate() or not bounds.has_area():
 		return false
-	var permitted := program.record_bound(centre).grow(TerrainGradePatch.NATIVE_CONTROL_MARGIN + 0.001)
+	var permitted := (discovery_bound if discovery_bound.has_area() else program.record_bound(centre)).grow(TerrainGradePatch.NATIVE_CONTROL_MARGIN + 0.001)
 	if not permitted.encloses(bounds):
 		return false
 	for shape: FeatureGroundShape in surface_shapes + clearance_shapes:
@@ -53,15 +54,6 @@ func validate(program: VillageProgram) -> bool:
 	if not street_axis.is_normalized():
 		return false
 	if urban_fabric == null or not urban_fabric.validate(program, tier):
-		return false
-	if urban_fabric.accepted and urban_fabric.requires_outskirts():
-		if outskirts == null \
-				or not outskirts.validate(program.outskirts_program, tier):
-			return false
-	elif outskirts != null:
-		# A sectional diagnostic owns its complete bounded composition. Production
-		# volumetric towns opt in above and receive only the sealed ground-house
-		# grammar; detached tents and incidental props remain suppressed.
 		return false
 	if not urban_fabric.accepted and not is_empty():
 		# A rejected structural solve cannot leave a tent or prop masquerading as

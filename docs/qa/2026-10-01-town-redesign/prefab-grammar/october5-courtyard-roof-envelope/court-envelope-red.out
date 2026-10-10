@@ -1,0 +1,52 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_courtyard_roof_envelope.gd
+[0m* test_roof_cap_cannot_enter_reserved_square_above_slopes
+[31m    [Failed]:  [0msuntail ridge cap rises above the nominal two-band slope
+      at line 12
+[31m    [Failed]:  [0mpure_village ridge cap rises above the nominal two-band slope
+      at line 12
+* test_frozen_upper_court_has_no_roof_ridge_in_its_lawn
+[31m    [Failed]:  [0mARRAY([&"kit.spatial.parcel.maze.house.028/k0114"]) != ARRAY([]).
+    [&"kit.spatial.parcel.maze.house.028/k01...28/k0114"] != []  1 of 1 indexes do not match.  The planted square must not contain roof caps: [&"kit.spatial.parcel.maze.house.028/k0114"]
+      at line 31
+[1m0/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_courtyard_roof_envelope.gd
+[0m- test_roof_cap_cannot_enter_reserved_square_above_slopes
+[31m    [Failed]:  [0msuntail ridge cap rises above the nominal two-band slope
+          at line 12
+[31m    [Failed]:  [0mpure_village ridge cap rises above the nominal two-band slope
+          at line 12
+- test_frozen_upper_court_has_no_roof_ridge_in_its_lawn
+[31m    [Failed]:  [0mARRAY([&"kit.spatial.parcel.maze.house.028/k0114"]) != ARRAY([]).
+    [&"kit.spatial.parcel.maze.house.028/k01...28/k0114"] != []  1 of 1 indexes do not match.  The planted square must not contain roof caps: [&"kit.spatial.parcel.maze.house.028/k0114"]
+          at line 31
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests      none
+Failing Tests         2
+Asserts             3/6
+Time              21.467s
+
+
+[31m---- 2 failing tests ----
+[0m

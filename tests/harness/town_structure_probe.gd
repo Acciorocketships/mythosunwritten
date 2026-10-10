@@ -7,7 +7,7 @@ func _init() -> void:
 	var profile := WarrenVillageScaleProfile.select(seed_value)
 	var maze := WarrenMazeSitePlanner.plan(seed_value,{},profile)
 	var volume := WarrenMazeVolumeAdapter.to_volume_plan(maze)
-	var spatial := WarrenVolumetricSolver.from_volume(volume,-1,program,false)
+	var spatial := WarrenVolumetricSolver.from_volume(volume,-1,program)
 	print("STRUCTURE spatial=", spatial != null," failure=",WarrenVolumetricSolver.last_failure)
 	if spatial == null:
 		quit(1)

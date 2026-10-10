@@ -1,0 +1,41 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_tunnel_back_room_hosts.gd
+[0m* test_built_back_room_keeps_its_host_identity_for_a_supported_cover
+* test_recovered_covers_do_not_displace_an_independent_street_skywalk
+[31m    [Failed]:  [0mA newly possible upper bridge must not spend the old street crossing's quota
+      at line 34
+[1m1/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_tunnel_back_room_hosts.gd
+[0m- test_recovered_covers_do_not_displace_an_independent_street_skywalk
+[31m    [Failed]:  [0mA newly possible upper bridge must not spend the old street crossing's quota
+          at line 34
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests         1
+Failing Tests         1
+Asserts             5/6
+Time              10.281s
+
+
+[31m---- 1 failing tests ----
+[0m

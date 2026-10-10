@@ -1,0 +1,36 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_gable_contact_audit.gd
+[0m* test_taller_cross_roof_does_not_strip_the_exposed_gable
+* test_both_packs_close_the_junction_in_all_directions
+* test_missing_native_gable_is_still_reported
+* test_trimmed_face_without_its_enclosing_attic_is_a_real_hole
+* test_frozen_court43_has_no_exposed_gable_hole
+[1m5/5 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               1
+Tests                 5
+Passing Tests         5
+Asserts              22
+Time              70.815s
+
+
+[32m---- All tests passed! ----
+[0m

@@ -28,6 +28,10 @@ var seed := 0
 ## Floor band of the storey standing on terrain. Storeys above it whose cells
 ## have nothing beneath receive an underside (soffit) closure.
 var ground_band := 0
+## Set by the town adapter (KitGrowingFronts.house_grows): on chosen faces this
+## house's lower storeys step in under its top storey and roof, each upper storey
+## overhanging the one below. False everywhere else.
+var grows := false
 ## Each storey: {
 ##   floor_band: int            -- lower band; the storey spans two bands
 ##   cells: Dictionary          -- Vector2i -> true, the storey footprint
@@ -36,6 +40,8 @@ var ground_band := 0
 ##                                 footprint (the storey above then reads as
 ##                                 a jetty carried on brackets)
 ##   plinth: bool               -- stone course below the floor
+##   ceiling: bool              -- close an inhabited passage's attic with
+##                                 native boards at the room's upper band
 ##   openings: Dictionary       -- Vector3i(x, z, dir) -> OPENING_* override
 ##   default_opening: StringName
 ##   plain_every: int           -- 0 = never; n = every n-th wall plain
@@ -52,6 +58,8 @@ var storeys: Array[Dictionary] = []
 ##   ridge_peaks: bool
 ## }
 var roofs: Array[Dictionary] = []
+## Measured roof articulation attempts, retained for generation diagnostics.
+var roof_design_trace: Array[Dictionary] = []
 ## Flat decks on exposed crowns: {cells: Dictionary, band: int, rails: bool}
 var decks: Array[Dictionary] = []
 ## Dressing: {kind: StringName, storey: int, edge: Vector3i, ...}

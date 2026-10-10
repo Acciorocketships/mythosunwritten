@@ -1,0 +1,46 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_broad_court_frontages.gd
+[0m* test_broad_supported_court_uses_available_room_frontages
+* test_court_walk_is_deck_while_its_inner_bed_stays_turf
+* test_broad_court_keeps_three_same_level_inhabited_sides
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_court_house_addresses.gd
+[0m* test_raised_court_boundary_is_available_to_house_seeding
+* test_disconnected_courts_do_not_supply_house_addresses
+* test_raised_court_houses_translate_with_real_paved_thresholds
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_court_frontage_recovery.gd
+[0m* test_committed_court_frontage_survives_height_trimming
+[1m1/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               3
+Tests                 7
+Passing Tests         7
+Asserts              86
+Time              46.272s
+
+
+[32m---- All tests passed! ----
+[0m

@@ -1,0 +1,10 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+BROADPHASE { "ms": 5490, "bytes": 31452952 }
+TRIM_MISMATCH 0 cutters 2 vertices 90 -> 90
+TRIM_MISMATCH 1 cutters 1 vertices 138 -> 114
+TRIM_MISMATCH 2 cutters 2 vertices 126 -> 114
+BROADPHASE { "ms": 7776, "bytes": 31435864 }
+COMPARISON { "rows": [{ "ms": 5490, "bytes": 31452952 }, { "ms": 7776, "bytes": 31435864 }], "identical": false }

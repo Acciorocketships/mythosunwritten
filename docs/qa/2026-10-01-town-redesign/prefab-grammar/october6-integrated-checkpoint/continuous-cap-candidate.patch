@@ -1,0 +1,24 @@
+--- scripts/terrain/features/villages/kit/BuildingDesigner.gd
++++ scripts/terrain/features/villages/kit/BuildingDesigner.gd
+@@ -375,7 +375,7 @@
+ 			# A strip that could not join the larger wing beside it becomes a
+ 			# flat boarded roof rather than a tiny pitched roof perched at its
+ 			# edge. No storey reaches it, so it is not a (railed) terrace.
+-			if mini(rect.size.x, rect.size.y) < 2 and _beside_wing(rect, rects):
++			if mini(rect.size.x, rect.size.y) < 2 and (_beside_wing(rect, rects) or _beside_flat_strip(mass,rect,rects,top_band)):
+ 				mass.decks.append({"cells": BuildingMass.rect_cells(rect),
+ 					"band": top_band, "rails": false})
+ 				continue
+@@ -1354,3 +1354,12 @@
+ 			for z in range(best.position.y, best.end.y):
+ 				remaining.erase(Vector2i(x, z))
+ 	return out
++
++func _beside_flat_strip(mass: BuildingMass, strip: Rect2i, rectangles: Array[Rect2i], band: int) -> bool:
++	for other: Rect2i in rectangles:
++		if other == strip or mini(other.size.x,other.size.y)>=2: continue
++		if not other.grow(1).intersects(strip) or _diagonal(other,strip): continue
++		if _roof_fits(mass,other,0,band) or _roof_fits(mass,other,1,band): continue
++		if not _backed_shed(mass,other,band).is_empty(): continue
++		return true
++	return false

@@ -1,0 +1,60 @@
+[
+  {
+    "accepted": [
+      {
+        "entrance": "(2, 0, 9)",
+        "id": "spatial.feature.landmark.00",
+        "recipe": "anchor.z_native.street.03.06"
+      },
+      {
+        "entrance": "(-3, 0, 2)",
+        "id": "spatial.feature.landmark.02",
+        "recipe": "anchor.z_native.street.02.02"
+      }
+    ],
+    "city": "7:standard",
+    "generic_native_masses": 0,
+    "native_instances": 115,
+    "projecting_window_bays": 1,
+    "selected": [
+      "anchor.z_native.street.03.06",
+      "anchor.z_native.street.02.02"
+    ]
+  },
+  {
+    "accepted": [],
+    "city": "31:large",
+    "native_instances": 0,
+    "projecting_window_bays": 0,
+    "selected": []
+  },
+  {
+    "accepted": [],
+    "city": "61:large",
+    "native_instances": 0,
+    "projecting_window_bays": 0,
+    "selected": []
+  },
+  {
+    "accepted": [
+      {
+        "entrance": "(-2, 0, 8)",
+        "id": "spatial.feature.landmark.01",
+        "recipe": "anchor.z_native.cross.01x01.04"
+      },
+      {
+        "entrance": "(8, 0, 1)",
+        "id": "spatial.feature.landmark.02",
+        "recipe": "anchor.z_native.street.02.02"
+      }
+    ],
+    "city": "211:grand",
+    "generic_native_masses": 0,
+    "native_instances": 162,
+    "projecting_window_bays": 1,
+    "selected": [
+      "anchor.z_native.cross.01x01.04",
+      "anchor.z_native.street.02.02"
+    ]
+  }
+]

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_v58kr"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/pure_village_masonry/pure_village_stone_block_5_piece_00.res" id="2_nhgko"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_3m26e"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/pure_village_masonry/pure_village_stone_block_5_piece_00.res" id="4_lfkhd"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_aoqoc"]
+
+[sub_resource type="Resource" id="Resource_efsg7"]
+script = ExtResource("1_v58kr")
+shape = ExtResource("2_nhgko")
+
+[sub_resource type="Resource" id="Resource_ixlp0"]
+script = ExtResource("3_3m26e")
+mesh = ExtResource("4_lfkhd")
+
+[resource]
+script = ExtResource("5_aoqoc")
+pieces = Array[ExtResource("3_3m26e")]([SubResource("Resource_ixlp0")])
+collisions = Array[ExtResource("1_v58kr")]([SubResource("Resource_efsg7")])

@@ -1,0 +1,40 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_tower_house_fallback.gd
+[0m* test_fallback_keeps_supported_tower_in_finished_fabric
+[1m1/1 passed.
+[0m[4m
+
+res://tests/test_district_tower_frontage.gd
+[0m* test_district_access_preserves_a_real_tower_house_address
+* test_infeasible_district_does_not_mutate_existing_routes
+* test_tower_house_keeps_an_inhabited_district_edge
+* test_reserved_tower_house_survives_finished_fabric
+[1m4/4 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               2
+Tests                 5
+Passing Tests         5
+Asserts              41
+Time              134.858s
+
+
+[32m---- All tests passed! ----
+[0m

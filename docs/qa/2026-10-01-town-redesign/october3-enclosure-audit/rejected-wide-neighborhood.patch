@@ -1,0 +1,20 @@
+--- before
++++ candidate
+@@ -2441,7 +2441,16 @@
+ 		var column := Vector2i(cell.x, cell.z)
+ 		open_from[column] = mini(int(open_from.get(column, cell.y)), cell.y)
+ 	var floor_band := int(proof.floor)
+-	for group: Array in proof.endpoint_foundation_groups:
++	for group_index in proof.endpoint_foundation_groups.size():
++		var group: Array = proof.endpoint_foundation_groups[group_index]
++		# A directly grounded two-deep house already has an inhabited lower
++		# wing behind its bridge-facing room. Requiring another parcel beyond
++		# that whole house incorrectly treats a broad body as a pencil tower.
++		# Narrow endpoints still need the separate neighboring storey below.
++		var modes: Array = proof.get("endpoint_support_modes", [])
++		if group_index < modes.size() and modes[group_index] == &"direct_house_wide" \
++				and group.size() >= 2:
++			continue
+ 		var joined := false
+ 		for column: Vector2i in group:
+ 			for direction: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT,

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_dn4e0"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/pure_village_kit/pure_village_roof_slope_piece_00.res" id="2_52xup"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_2y5oq"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/pure_village_kit/pure_village_roof_slope_piece_00.res" id="4_gs206"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_tclqc"]
+
+[sub_resource type="Resource" id="Resource_2gdji"]
+script = ExtResource("1_dn4e0")
+shape = ExtResource("2_52xup")
+
+[sub_resource type="Resource" id="Resource_ve8y8"]
+script = ExtResource("3_2y5oq")
+mesh = ExtResource("4_gs206")
+
+[resource]
+script = ExtResource("5_tclqc")
+pieces = Array[ExtResource("3_2y5oq")]([SubResource("Resource_ve8y8")])
+collisions = Array[ExtResource("1_dn4e0")]([SubResource("Resource_2gdji")])

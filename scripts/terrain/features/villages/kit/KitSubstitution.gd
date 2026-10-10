@@ -22,9 +22,10 @@ const ROLE_FOR_LEGACY := {
 	&"sfv.deck.floor.s.001": &"deck.board",
 	&"sfv.fabric.floor.l.001": &"deck.board",
 	&"sfv.fabric.gallery.floor.m.001": &"deck.board",
-	# Low retaining walls are plinth courses, not storey walls squashed flat.
-	&"sfv.fabric.wall.rock.plain.001": &"plinth.stone",
-	&"sfv.fabric.wall.rock.retaining.001": &"plinth.stone",
+	# Public retaining courses share the native masonry of massif and citadel
+	# walls. House plinths have their own family and do not own public stone.
+	&"sfv.fabric.wall.rock.plain.001": &"wall.stone.retaining_half",
+	&"sfv.fabric.wall.rock.retaining.001": &"wall.stone.retaining_half",
 	&"sfv.fabric.wall.wood.s.001": &"wall.timber.plain",
 	&"sfv.fabric.wall.wood.s.002": &"wall.timber.plain",
 	&"sfv.fabric.wall.wood.window.s.002": &"wall.timber.window",
@@ -94,6 +95,23 @@ static func prepare(catalog: EnvironmentCatalog, kit: BuildingKit) -> void:
 		var target_box := catalog.descriptor(target).measured_aabb
 		if not source_box.has_volume() or not target_box.has_volume():
 			continue
+		if ROLE_FOR_LEGACY[legacy] == &"post.timber":
+			# Keep the house kit's square post section instead of stretching
+			# it across the legacy pillar's broad rectangular base. One member
+			# spans the complete support height, inside the proved envelope.
+			var width_scale := minf(
+				VillageWorldScale.KIT_WORLD_SCALE / VillageWorldScale.HORIZONTAL_SCALE,
+				minf(source_box.size.x / target_box.size.x,
+					source_box.size.z / target_box.size.z))
+			var post_scale := Vector3(width_scale,
+				source_box.size.y / target_box.size.y, width_scale)
+			var source_foot := Vector3(source_box.get_center().x,
+				source_box.position.y, source_box.get_center().z)
+			var target_foot := Vector3(target_box.get_center().x,
+				target_box.position.y, target_box.get_center().z)
+			fits[legacy] = {"asset_id": target, "tiles": [Transform3D(
+				Basis.from_scale(post_scale), source_foot - target_foot * post_scale)]}
+			continue
 		# Tile along length and height at near-native size; only the depth
 		# stretches, so masonry courses and rail spans keep their proportions.
 		var nx := maxi(1, roundi(source_box.size.x / target_box.size.x))
@@ -149,6 +167,17 @@ static func prepare(catalog: EnvironmentCatalog, kit: BuildingKit) -> void:
 			"rail_box": catalog.descriptor(rail).measured_aabb,
 			"post_box": catalog.descriptor(post).measured_aabb,
 			"landing": catalog.descriptor(LANDING_RAILING).measured_aabb}
+	var beam := kit.asset(&"beam.floor")
+	if not _public_timber.is_empty() and catalog.has(beam):
+		_public_timber["beam"] = beam
+		_public_timber["beam_box"] = catalog.descriptor(beam).measured_aabb
+		# Authored Wooden_Railings_1 cross members occupy y=.471..533 and
+		# .799..862; the taller .938 post head is not the upper rail line.
+		# Preserve those source joints when composing a short return.
+		if rail == &"suntail.stair.wooden_railings_1":
+			_public_timber["member_y"] = Vector2(.502,.8305)
+			_public_timber["member_height"] = .064
+
 	_prepared = true
 
 
@@ -291,6 +320,8 @@ static func redraw_public_surface(mesh: Dictionary) -> Dictionary:
 ## posts stay plumb, rails follow the flight, and the top meets the guard's
 ## collision height. One post closes the far end.
 static func _flight_railing(span: Dictionary) -> Array[Dictionary]:
+	if bool(span.get("landing_return",false)) and _public_timber.has("beam"):
+		return _landing_return(span)
 	var out: Array[Dictionary] = []
 	var foot_a := span.foot_a as Vector3
 	var foot_b := span.foot_b as Vector3
@@ -322,6 +353,41 @@ static func _flight_railing(span: Dictionary) -> Array[Dictionary]:
 	# The closing post, on the last tile's own frame at its far end.
 	out.append({"asset_id": _public_timber.post, "transform": last * Transform3D(
 		Basis.IDENTITY, Vector3(rail_box.end.x - post_box.end.x, 0.0, 0.0))})
+	return out
+
+
+## A short landing shoulder joins an existing flight post. Compressing a whole
+## railing here also compresses its posts and duplicates the attachment post.
+## Two stock timber members and one ordinary-width end post close the return.
+static func _landing_return(span: Dictionary) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var a: Vector3 = span.foot_a
+	var b: Vector3 = span.foot_b
+	var run := b-a
+	if run.length() < 0.001: return out
+	var along := run.normalized()
+	var across := along.cross(Vector3.UP).normalized()
+	var box: AABB = _public_timber.beam_box
+	var rail: AABB = _public_timber.rail_box
+	var height := (span.top_b as Vector3).y-b.y
+	var member_y: Vector2 = _public_timber.get("member_y",
+		Vector2(rail.position.y+rail.size.y*.52,rail.end.y))
+	var beam_height := float(_public_timber.get("member_height",
+		PublicRealmSurfacePlan.GUARD_BEAM))*height/rail.size.y
+	var basis := Basis(run/box.size.x,Vector3.UP*beam_height/box.size.y,
+		across*PublicRealmSurfacePlan.GUARD_BEAM/box.size.z)
+	for native_y: float in [member_y.x,member_y.y]:
+		var level := (native_y-rail.position.y)*height/rail.size.y
+		var centre := (a+b)*.5+Vector3.UP*level
+		var pose := Transform3D(basis,centre-basis*box.get_center())
+		out.append({"asset_id":_public_timber.beam,"transform":pose})
+	var post: AABB = _public_timber.post_box
+	var landing: AABB = _public_timber.landing
+	var post_basis := Basis(along*landing.size.x/rail.size.x,
+		Vector3.UP*height/rail.size.y,across*landing.size.z/rail.size.z)
+	var foot := Vector3(post.get_center().x,post.position.y,post.get_center().z)
+	out.append({"asset_id":_public_timber.post,
+		"transform":Transform3D(post_basis,b-post_basis*foot)})
 	return out
 
 

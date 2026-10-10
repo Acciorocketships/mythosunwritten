@@ -31,6 +31,9 @@ var flight: Callable = Callable()
 ## ({rect: Rect2, y: float}), shared by reference across designers so two
 ## houses at an inner corner never raise canopies into each other.
 var canopy_claims: Array = []
+## Town context gently favors the less-used ridge axis on free square
+## crowns. Equal weights preserve standalone gable/eave-front variation.
+var square_axis_weights := Vector2.ONE
 
 
 func _init(p_kit: BuildingKit) -> void:
@@ -83,7 +86,7 @@ func articulate(mass: BuildingMass, context: Dictionary) -> void:
 	# timber village, never a stone fortress); plinths stay on every house.
 	var stone_ground := rng.randf() < float(context.get("stone_chance", 0.4))
 	_assign_materials(mass, terrain_storey, stone_ground)
-	_assign_jetties(mass, terrain_storey, rng)
+	_assign_jetties(mass, terrain_storey, rng, bool(context.get("grows", false)))
 	_assign_finish(mass, rng, colour)
 	_assign_roofs(mass, rng, colour, bool(context.get("terraced", false)),
 		int(context.get("roof_axis", -1)))
@@ -108,7 +111,7 @@ func _assign_materials(mass: BuildingMass, terrain_storey: int,
 ## footprint stands directly on it and every part stays at least one module
 ## wide after the half-module erosion.
 func _assign_jetties(mass: BuildingMass, terrain_storey: int,
-		rng: RandomNumberGenerator) -> void:
+		rng: RandomNumberGenerator, grows := false) -> void:
 	if not kit.has_role(&"bracket.jetty"):
 		return
 	for index in mass.storeys.size():
@@ -144,7 +147,10 @@ func _assign_jetties(mass: BuildingMass, terrain_storey: int,
 		var below := _storey_at(mass, int(storey.floor_band) - 2)
 		if not below.is_empty() and bool(below.get("inset", false)):
 			chance = 0.0
-		storey.inset = rng.randf() < chance
+		# Growth replaces the single jetty on a growing house (inset is storey-wide);
+		# the roll is still drawn so every later choice of the house is unchanged.
+		var jetty := rng.randf() < chance
+		storey.inset = jetty and not grows
 
 
 func _assign_facades(mass: BuildingMass, rng: RandomNumberGenerator,
@@ -153,6 +159,8 @@ func _assign_facades(mass: BuildingMass, rng: RandomNumberGenerator,
 	# will build, so dressing (window boxes, ivy) always matches the wall.
 	for index in mass.storeys.size():
 		var storey: Dictionary = mass.storeys[index]
+		storey["bay_roles"] = {}
+		storey["bay_offsets"] = {}
 		storey.default_opening = BuildingMass.OPENING_WINDOW
 		storey.plain_every = 0
 		storey.bay_colour = colour
@@ -161,13 +169,18 @@ func _assign_facades(mass: BuildingMass, rng: RandomNumberGenerator,
 		for slot: Dictionary in slots:
 			if not storey.openings.has(slot.edge) and rng.randf() < plain_rate:
 				storey.openings[slot.edge] = BuildingMass.OPENING_PLAIN
-			# A face whose lower band is backed by retained ground or another
-			# building is a retaining wall to the lawn or roof in front of it:
-			# a window there would look into earth.
+			# Retained ground can cover only the lower half of an exposed wall.
+			# Keep its opening candidate for the measured native-panel fitter;
+			# a high sill may clear the backing without moving the storey.
 			if _lower_band_backed(slot, int(storey.floor_band)) \
 					and StringName(storey.openings.get(slot.edge, &"")) \
 						!= BuildingMass.OPENING_DOOR:
-				storey.openings[slot.edge] = BuildingMass.OPENING_PLAIN
+				if int(storey.get("bands",2)) == 2 \
+						and not _lower_band_backed(slot, int(storey.floor_band)+1):
+					if not storey.has("opening_min_y"): storey.opening_min_y = {}
+					storey.opening_min_y[slot.edge] = (int(storey.floor_band)+1)*kit.band_height()+0.05
+				else:
+					storey.openings[slot.edge] = BuildingMass.OPENING_PLAIN
 		if storey.material != BuildingMass.MATERIAL_TIMBER or index == 0:
 			continue
 		# Break up every long face with separated projecting oriels. The phase
@@ -175,6 +188,7 @@ func _assign_facades(mass: BuildingMass, rng: RandomNumberGenerator,
 		var phases := {}
 		var selected_runs := {}
 		for slot: Dictionary in slots:
+			if storey.get("roof_backing",{}).has(slot.edge): continue
 			var dir := int(slot.dir)
 			if not phases.has(dir): phases[dir] = rng.randi_range(0, 2)
 			var position := int(slot.index)
@@ -192,6 +206,10 @@ func _assign_facades(mass: BuildingMass, rng: RandomNumberGenerator,
 			if not selected_runs.has(run) or rng.randf() < 0.75:
 				storey.openings[slot.edge] = BuildingMass.OPENING_BAY
 				selected_runs[run] = true
+		# Small independent spire bays were rejected as tacked-on decoration.
+		# Full towers are proposed by KitTownTowers with host/bearing/roof
+		# contracts; ordinary projecting window bays remain available here.
+
 
 
 ## True when any cell beside the storey's footprint is filled by another
@@ -250,6 +268,44 @@ func _bay_clear(mass: BuildingMass, slot: Dictionary, band: int) -> bool:
 	return true
 
 
+func _oriel_gable_centre(mass: BuildingMass, slot: Dictionary, band: int) -> Vector2:
+	var dir := int(slot.dir)
+	var centre: Vector2 = slot.centre
+	for roof: Dictionary in mass.roofs:
+		if int(roof.eave_band)!=band+2 or int(roof.axis)!=dir%2: continue
+		var rect: Rect2i = roof.rect
+		var line := float(rect.end.x if dir==0 else rect.end.y if dir==1 else rect.position.x if dir==2 else rect.position.y)
+		if absf((centre.x if dir%2==0 else centre.y)-line)>0.01: continue
+		var target := Vector2(rect.position)+Vector2(rect.size)*0.5
+		if dir%2==0: target.x = centre.x
+		else: target.y = centre.y
+		var backed := true
+		var inward := -Vector2(BuildingMass.DIRS[dir])*0.05
+		var right := Vector2(BuildingKitAssembler.right_of(dir))
+		for along: float in [-0.49,0.49]:
+			var point := target+inward+right*along
+			if not mass.cells_at_band(band).has(Vector2i(floori(point.x),floori(point.y))): backed = false
+		if backed and target.distance_to(centre)<=1.01: return target
+	return Vector2(INF,INF)
+
+func _oriel_clear(mass: BuildingMass, slot: Dictionary, band: int) -> bool:
+	if not kit.has_role(&"bay.spire") or not kit.oriel_bounds.has_volume(): return false
+	var centre: Vector2 = slot.centre
+	var pose := Transform3D(Basis(Vector3.UP,BuildingKitAssembler.yaw_for_dir(int(slot.dir))),
+		Vector3(centre.x*kit.module_width,float(band)*kit.band_height()+kit.band_height()*2.0/3.0,
+			centre.y*kit.module_width))
+	var box := (pose*kit.oriel_bounds).grow(-0.002)
+	var own := mass.cells_at_band(band)
+	for x in range(floori(box.position.x/kit.module_width),ceili(box.end.x/kit.module_width)):
+		for z in range(floori(box.position.z/kit.module_width),ceili(box.end.z/kit.module_width)):
+			var cell := Vector2i(x,z)
+			if own.has(cell): continue # the shallow backing is the host facade
+			for b in range(floori(box.position.y/kit.band_height()),ceili(box.end.y/kit.band_height())):
+				if mass.cells_at_band(b).has(cell): return false
+				if forbidden.is_valid() and bool(forbidden.call(cell,b)): return false
+	return true
+
+
 ## Roof wings over the exposed crown of every storey: a main wing on the
 ## largest rectangle, ridge along its long axis, then cross wings abutting it.
 ## A wing whose roof volume would enter kept-clear space turns its ridge; if
@@ -257,12 +313,14 @@ func _bay_clear(mass: BuildingMass, slot: Dictionary, band: int) -> bool:
 func _assign_roofs(mass: BuildingMass, rng: RandomNumberGenerator,
 		colour: StringName, terraced := false, ridge_axis := -1) -> void:
 	mass.roofs.clear()
+	mass.roof_design_trace.clear()
 	mass.decks.clear()
 	var square_axis := _square_axis(mass)
 	var front := front_dir(mass)
 	var eave_axis := 1 - front % 2 if front >= 0 else square_axis
 	for storey: Dictionary in mass.storeys:
 		var top_band := int(storey.floor_band) + 2
+		storey["covered_crown"] = {}
 		var exposed: Dictionary = {}
 		var covering := mass.cells_at_band(top_band)
 		for cell: Vector2i in storey.cells:
@@ -271,6 +329,10 @@ func _assign_roofs(mass: BuildingMass, rng: RandomNumberGenerator,
 			if walked.is_valid() and bool(walked.call(cell, top_band)):
 				continue
 			if covered.is_valid() and bool(covered.call(cell, top_band)):
+				# Structural occupancy can be a hollow retaining skin. Remember
+				# the suppressed roof so the finished town can supply a ceiling
+				# unless another room's actual floor already closes this crown.
+				storey.covered_crown[cell] = true
 				continue
 			exposed[cell] = true
 		if exposed.is_empty():
@@ -309,10 +371,14 @@ func _assign_roofs(mass: BuildingMass, rng: RandomNumberGenerator,
 					or _slivers(parted) < _slivers(rects):
 				rects = parted
 		for rect: Rect2i in rects:
+			var shed := _backed_shed(mass, rect, top_band)
+			if not shed.is_empty():
+				wings.append(shed)
+				continue
 			# A strip that could not join the larger wing beside it becomes a
 			# flat boarded roof rather than a tiny pitched roof perched at its
 			# edge. No storey reaches it, so it is not a (railed) terrace.
-			if mini(rect.size.x, rect.size.y) < 2 and _beside_wing(rect, rects):
+			if mini(rect.size.x, rect.size.y) < 2 and (_beside_wing(rect, rects) or _beside_flat_strip(mass,rect,rects,top_band)):
 				mass.decks.append({"cells": BuildingMass.rect_cells(rect),
 					"band": top_band, "rails": false})
 				continue
@@ -321,6 +387,22 @@ func _assign_roofs(mass: BuildingMass, rng: RandomNumberGenerator,
 				wings.append({"rect": rect, "axis": ridge_axis})
 			else:
 				wings.append_array(split_deep(rect, rng))
+		# A long hall can carry a transverse pavilion. Both roofs stay on
+		# the existing rooms; native junctions close their meeting slopes.
+		# Try a taller bay, then a lower cross wing where the setting is tight.
+		if ridge_axis < 0:
+			var articulated: Array = []
+			for spec: Dictionary in wings:
+				if spec.get("backed_shed",false):
+					articulated.append(spec)
+					continue
+				var range_rect: Rect2i = spec.rect
+				var range_axis := int(spec.get("axis", _natural_axis(range_rect, square_axis)))
+				var range_rng := _rng(hash([mass.seed, range_rect, top_band, "range.end_bay"]))
+				var end_bay := _range_end_bay(mass, range_rect, range_axis, top_band, range_rng, 0, articulated)
+				if end_bay.is_empty(): articulated.append(spec)
+				else: articulated.append_array(end_bay)
+			wings = articulated
 		var main_rect := Rect2i()
 		var have_main := false
 		var main_axis := 0
@@ -329,20 +411,25 @@ func _assign_roofs(mass: BuildingMass, rng: RandomNumberGenerator,
 			var rect := spec.rect as Rect2i
 			var axis := int(spec.get("axis", _natural_axis(rect, square_axis)))
 			var cross := bool(spec.get("cross", false))
-			if have_main and not cross:
+			var shed := bool(spec.get("backed_shed",false))
+			if have_main and not cross and not shed:
 				axis = _wing_axis(rect, axis, main_rect, main_axis)
 			# A square crown's ridge is a free choice: never point a gable
 			# into another building standing above the eave (its taller wall
 			# half-buries the gable triangle and the union leaves holes).
-			if not cross and rect.size.x == rect.size.y \
+			if not cross and not shed and rect.size.x == rect.size.y \
 					and _gable_abuts(mass, rect, axis, top_band) \
 					and not _gable_abuts(mass, rect, 1 - axis, top_band):
 				axis = 1 - axis
-			var fits := _roof_fits(mass, rect, axis, top_band)
-			if not fits and not cross:
+			# A roof out of proportion (see roof_proportion_ok) does not fit:
+			# it turns its ridge, becomes a double pile, or a terrace.
+			var fits := _roof_fits(mass, rect, axis, top_band) \
+				and (shed or roof_proportion_ok(kit, rect, axis))
+			if not fits and not cross and not shed:
 				axis = 1 - axis
-				fits = _roof_fits(mass, rect, axis, top_band)
-			if not fits and not cross:
+				fits = _roof_fits(mass, rect, axis, top_band) \
+					and roof_proportion_ok(kit, rect, axis)
+			if not fits and not cross and not shed:
 				# A deep crown (a merged range) whose tall roof would enter
 				# kept-clear space above: a double pile of shallower parallel
 				# roofs, eaves to the street, before a flat terrace.
@@ -356,6 +443,17 @@ func _assign_roofs(mass: BuildingMass, rng: RandomNumberGenerator,
 					"band": top_band, "rails": true})
 				continue
 			var wing := mass.add_roof(rect, axis, top_band, colour)
+			if shed:
+				wing["backed_shed"] = true
+				wing["verge_min"] = 0.25
+				wing["verge_max"] = 0.25
+				wing[spec.cut_key] = spec.cut_at
+				for backing: Dictionary in spec.backing:
+					var wall: Dictionary = mass.storeys[backing.storey]
+					if not wall.has("roof_backing"): wall.roof_backing = {}
+					wall.roof_backing[backing.edge] = true
+					wall.openings[backing.edge] = BuildingMass.OPENING_PLAIN
+				continue
 			if not have_main:
 				main_rect = rect
 				main_axis = axis
@@ -365,6 +463,12 @@ func _assign_roofs(mass: BuildingMass, rng: RandomNumberGenerator,
 				wing.chimney_end = rng.randi_range(0, 1)
 			if not cross:
 				_place_dormers(wing, rng)
+			else:
+				# A connected hall is still an inhabited roof. Its interior bays
+				# can carry native dormers; the town-wide measured fitter rejects
+				# openings hidden by the host roof. Keep this draw independent so
+				# adding it cannot reshuffle the house's other design choices.
+				_place_dormers(wing, _rng(hash([mass.seed, rect, top_band, "cross.dormers"])))
 	# Wings meeting a larger wing become branches running into it; the same
 	# rule reconciles roofs across houses (KitRoofJunctions).
 	var masses: Array[BuildingMass] = [mass]
@@ -388,23 +492,52 @@ func _assign_roofs(mass: BuildingMass, rng: RandomNumberGenerator,
 ## piles or a pile's roof does not fit either.
 func _double_pile(mass: BuildingMass, rect: Rect2i, axis: int, band: int) -> Dictionary:
 	for ridge: int in [axis, 1 - axis]:
-		var side := 1 - ridge
-		if rect.size[side] < 4:
+		var piles := pile_rects(rect, ridge)
+		if piles.is_empty():
 			continue
-		var piles: Array[Rect2i] = []
-		var at := rect.position[side]
-		while at < rect.end[side]:
-			var pile := rect
-			pile.position[side] = at
-			pile.size[side] = 3 if rect.end[side] - at == 3 else 2
-			piles.append(pile)
-			at += pile.size[side]
 		var fits := true
 		for pile: Rect2i in piles:
-			fits = fits and _roof_fits(mass, pile, ridge, band)
+			fits = fits and _roof_fits(mass, pile, ridge, band) \
+				and roof_proportion_ok(kit, pile, ridge)
 		if fits:
 			return {"axis": ridge, "rects": piles}
 	return {}
+
+
+## `rect` split across its ridge `axis` into parallel piles two modules deep
+## (the last one three when the depth is odd); [] when it is shallower than
+## two piles.
+static func pile_rects(rect: Rect2i, ridge: int) -> Array[Rect2i]:
+	var side := 1 - ridge
+	var piles: Array[Rect2i] = []
+	if rect.size[side] < 4:
+		return piles
+	var at := rect.position[side]
+	while at < rect.end[side]:
+		var pile := rect
+		pile.position[side] = at
+		pile.size[side] = 3 if rect.end[side] - at == 3 else 2
+		piles.append(pile)
+		at += pile.size[side]
+	return piles
+
+
+## Roof proportion guardrail (October 8 owner review: a bridge-house roof
+## "way too tall and too short lengthwise" whose gable "looks like an
+## apartment building"). A pitched roof over `rect` with its ridge along
+## `axis` may expose at most MAX_GABLE_STOREYS storeys of gable, and stand at
+## most MAX_ROOF_SLENDERNESS times as tall as its ridge is long. Pure
+## geometry; a roof that fails turns, splits into piles or becomes a terrace,
+## never rejects the town.
+const MAX_GABLE_STOREYS := 2
+const MAX_ROOF_SLENDERNESS := 3.0
+
+
+static func roof_proportion_ok(roof_kit: BuildingKit, rect: Rect2i, axis: int) -> bool:
+	var height := float(roof_kit.roof_profile(rect.size[1 - axis]).height)
+	var ridge := float(rect.size[axis]) * roof_kit.module_width
+	return height <= MAX_GABLE_STOREYS * roof_kit.storey_height + 0.001 \
+		and height <= MAX_ROOF_SLENDERNESS * ridge + 0.001
 
 
 ## Crown rectangles whose gable, taller than one storey, would face another
@@ -441,6 +574,35 @@ func _gable_abuts(mass: BuildingMass, rect: Rect2i, axis: int, band: int) -> boo
 	return false
 
 
+## A cross wing may terminate against a taller house only when its entire
+## gable envelope is backed. Partial contacts still leave exposed cut edges.
+## Keep at least one free end so the new gable contributes to the street.
+func _cross_gable_obstructed(rect: Rect2i, axis: int, band: int, protect_walk_rim := false) -> bool:
+	var side := 1-axis
+	var bands := int(ceil(float(kit.roof_profile(rect.size[side]).height) / kit.band_height()-0.15))
+	# A walk deck at ridge height can carry a railing outside its own floor
+	# cells. Keep the new gable's ridge/verge away from that one-cell rim.
+	if protect_walk_rim and walked.is_valid():
+		for x in range(rect.position.x-1,rect.end.x+1):
+			for z in range(rect.position.y-1,rect.end.y+1):
+				for b in range(band,band+bands+1):
+					if bool(walked.call(Vector2i(x,z),b)): return true
+	if not covered.is_valid(): return false
+	var free_ends := 0
+	for end: int in [rect.position[axis]-1,rect.end[axis]]:
+		var occupied := 0
+		var total := rect.size[side]*bands
+		for across in range(rect.position[side],rect.end[side]):
+			var cell := Vector2i.ZERO
+			cell[axis] = end
+			cell[side] = across
+			for b in range(band,band+bands):
+				occupied += int(bool(covered.call(cell,b)))
+		if occupied==0: free_ends += 1
+		elif occupied!=total: return true
+	return free_ends==0
+
+
 ## Ridge of a crown rectangle: along its long side; a square crown turns
 ## its ridge by the house's own choice (`square_axis`). The former fixed
 ## tie-break ran every square house's ridge along X, so a town of one-lot
@@ -456,13 +618,10 @@ static func _natural_axis(rect: Rect2i, square_axis: int) -> int:
 ## houses); a house without a door picks an axis.
 func _square_axis(mass: BuildingMass) -> int:
 	var front := front_dir(mass)
-	var gable_front := _rng(hash([mass.seed, &"ridge"])).randf() < GABLE_FRONT_SHARE
-	if front < 0:
-		return 0 if gable_front else 1
-	return front % 2 if gable_front else 1 - front % 2
-
-
-const GABLE_FRONT_SHARE := 0.5
+	var preferred := front % 2 if front >= 0 else 0
+	var share := square_axis_weights[preferred] / (square_axis_weights.x + square_axis_weights.y)
+	var gable_front := _rng(hash([mass.seed, &"ridge"])).randf() < share
+	return preferred if gable_front else 1 - preferred
 
 
 ## Face (BuildingMass.DIRS index) of the house's lowest door, or -1.
@@ -514,8 +673,8 @@ func _roof_fits(mass: BuildingMass, rect: Rect2i, axis: int, eave_band: int) -> 
 	if not forbidden.is_valid():
 		return true
 	var depth := rect.size.y if axis == 0 else rect.size.x
-	var height := float(kit.roof_profile(depth).height)
-	var bands := int(ceil(height / kit.band_height() - 0.15))
+	var height := kit.roof_clearance_height(depth)
+	var bands := int(ceil(height / kit.band_height()))
 	var own_above: Dictionary = {}
 	for b in range(eave_band, eave_band + bands):
 		own_above[b] = mass.cells_at_band(b)
@@ -531,6 +690,101 @@ func _roof_fits(mass: BuildingMass, rect: Rect2i, axis: int, eave_band: int) -> 
 
 
 const MAX_ROOF_DEPTH := 4
+
+
+func _range_end_bay(mass: BuildingMass, rect: Rect2i, axis: int,
+		band: int, rng: RandomNumberGenerator, joined_ends: int = 0, neighbours: Array = []) -> Array:
+	var depth := rect.size[1 - axis]
+	var length := rect.size[axis]
+	if depth < 2 or depth > 4 or length < maxi(4, maxi(depth + 2, ceili(depth * 1.5))): return []
+	var trace := {"rect": rect, "axis": axis, "band": band, "outcome": "blocked", "roof_rejections": 0, "gable_rejections": 0}
+	mass.roof_design_trace.append(trace)
+	# Broad halls may remain simple. Two-to-one ranges always seek a
+	# connected cross-gable; the same roll varies end versus central pavilions.
+	var roll := rng.randf()
+	var elongated := length >= depth * 2
+	if roll >= 0.8 and not elongated:
+		trace.outcome = "simple_roll"
+		return []
+	var preferred_start := rng.randf() < 0.5
+	# A lower cross wing can tuck beneath an existing upper facade when the
+	# taller pavilion cannot. Both use complete native roof profiles.
+	var widths: Array[int] = [mini(MAX_ROOF_DEPTH, mini(depth+1,length-2))]
+	if widths[0] != depth: widths.append(depth)
+	for width: int in widths:
+		var ends: Array[int] = [0,length-width]
+		if not preferred_start: ends.reverse()
+		var inner: Array[int] = []
+		for start in range(2,length-width-1): inner.append(start)
+		inner.sort_custom(func(a: int,b: int) -> bool:
+			var da := absi(2*a-(length-width))
+			var db := absi(2*b-(length-width))
+			return da < db if da != db else (a < b if preferred_start else a > b))
+		var starts: Array[int] = []
+		starts.append_array(inner if roll >= 0.8 else ends)
+		starts.append_array(ends if roll >= 0.8 else inner)
+		for start: int in starts:
+			# Keep a real hall between successive pavilions, rather than
+			# introducing another pair of touching parallel gables.
+			if joined_ends & 1 and start < 2: continue
+			if joined_ends & 2 and length-start-width < 2: continue
+			var bay := rect
+			bay.position[axis] += start
+			bay.size[axis] = width
+			if _recreates_long_roof(bay, 1-axis, neighbours): continue
+			if not _roof_fits(mass,bay,1-axis,band):
+				trace.roof_rejections += 1
+				continue
+			if _cross_gable_obstructed(bay,1-axis,band,width==depth):
+				trace.gable_rejections += 1
+				continue
+			var pieces: Array = [{"rect":bay,"axis":1-axis,"cross":true}]
+			var fits := true
+			for interval: Vector2i in [Vector2i(0,start),Vector2i(start+width,length)]:
+				if interval.y == interval.x: continue
+				var hall := rect
+				hall.position[axis] += interval.x
+				hall.size[axis] = interval.y-interval.x
+				fits = fits and _roof_fits(mass,hall,axis,band)
+				var joins := (joined_ends & 1) | 2 if interval.x == 0 else (joined_ends & 2) | 1
+				pieces.append({"rect":hall,"axis":axis,"cross":true,"joined_ends":joins})
+			if fits:
+				trace.outcome = "cross_gable"
+				trace.bay = bay
+				# An end pavilion must not leave an arbitrarily long plain
+				# remainder. Recur on strictly smaller supported hall pieces;
+				# their native envelopes and gables undergo the same checks.
+				var articulated: Array = [pieces[0]]
+				for hall: Dictionary in pieces.slice(1):
+					var next := _range_end_bay(mass, hall.rect, axis, band, rng, int(hall.joined_ends), neighbours + articulated)
+					if next.is_empty(): articulated.append(hall)
+					else: articulated.append_array(next)
+				return articulated
+			trace.roof_rejections += 1
+	return []
+
+
+static func _recreates_long_roof(rect: Rect2i, axis: int, neighbours: Array) -> bool:
+	# Predict the ordinary collinear union. Adjacent crown strips should not
+	# align their pavilions into a new uninterrupted range longer than the one
+	# being articulated. Keep the normal joining/closure rules unchanged.
+	var joined := rect
+	var changed := true
+	while changed:
+		changed = false
+		for neighbour: Dictionary in neighbours:
+			var other: Rect2i = neighbour.rect
+			if int(neighbour.get("axis", _natural_axis(other, axis))) != axis: continue
+			var side := 1-axis
+			if other.position[side] != joined.position[side] or other.size[side] != joined.size[side]: continue
+			var gap := maxi(other.position[axis], joined.position[axis])-mini(other.end[axis], joined.end[axis])
+			if gap > 1: continue
+			var united := joined.merge(other)
+			if united == joined: continue
+			joined = united
+			changed = true
+	var depth := joined.size[1-axis]
+	return joined != rect and joined.size[axis] >= maxi(4, maxi(depth+2, ceili(depth*1.5)))
 
 
 ## Splits a crown rectangle deeper than MAX_ROOF_DEPTH into a main wing of
@@ -595,7 +849,8 @@ static func split_deep(rect: Rect2i, rng: RandomNumberGenerator) -> Array:
 ## Ridge axis of a secondary wing beside the main wing: toward the main when
 ## it stands on the main's long side (a cross gable), along the main's ridge
 ## when it continues from the main's gable end inside its depth (a lower
-## stepped wing). Either way it meets the main as a buried branch.
+## stepped wing). Equal-width continuations share its ridge and merge into
+## one roof; narrower continuations meet it as a buried branch.
 static func _wing_axis(rect: Rect2i, axis: int, main: Rect2i, main_axis: int) -> int:
 	var across := 1 - main_axis
 	var beside := rect.end[across] == main.position[across] or rect.position[across] == main.end[across]
@@ -604,9 +859,42 @@ static func _wing_axis(rect: Rect2i, axis: int, main: Rect2i, main_axis: int) ->
 		return across
 	var beyond := rect.end[main_axis] == main.position[main_axis] or rect.position[main_axis] == main.end[main_axis]
 	if beyond and rect.position[across] >= main.position[across] and rect.end[across] <= main.end[across] \
-			and rect.size[across] < main.size[across]:
+			and rect.size[across] <= main.size[across]:
 		return main_axis
 	return axis
+
+
+## A one-module lower wing can use half a complete native roof, with its
+## uphill half enclosed by an existing upper room. The ordinary wall/roof
+## union closes that join. Never borrow public air or close an addressed door.
+func _backed_shed(mass: BuildingMass, strip: Rect2i, band: int) -> Dictionary:
+	if mini(strip.size.x,strip.size.y)!=1 or maxi(strip.size.x,strip.size.y)<2: return {}
+	var across := 0 if strip.size.x==1 else 1
+	for sign_value in [-1,1]:
+		var grown := strip
+		grown.size[across]+=1
+		if sign_value<0: grown.position[across]-=1
+		var backing: Array[Dictionary] = []
+		var complete := true
+		for cell: Vector2i in BuildingMass.rect_cells(grown):
+			if strip.has_point(cell): continue
+			var step := Vector2i.ZERO
+			step[across]=-sign_value
+			var edge := BuildingMass.edge_key(cell,BuildingMass.DIRS.find(step))
+			var found := false
+			for i in mass.storeys.size():
+				var storey: Dictionary = mass.storeys[i]
+				if int(storey.floor_band)!=band or not storey.cells.has(cell): continue
+				if storey.openings.get(edge,&"")==BuildingMass.OPENING_DOOR: continue
+				if storey.get("inset",false): continue
+				found=true
+				backing.append({"storey":i,"edge":edge})
+			if not found: complete=false
+		if complete and _roof_fits(mass,grown,1-across,band):
+			return {"rect":grown,"axis":1-across,"backed_shed":true,"backing":backing,
+				"cut_key":"shed_min" if sign_value<0 else "shed_max",
+				"cut_at":strip.position[across] if sign_value<0 else strip.end[across]}
+	return {}
 
 
 ## No wing is one module deep: a lone ridge-top row perches like a tiny roof
@@ -652,6 +940,62 @@ func _absorb_slivers(mass: BuildingMass, rects: Array[Rect2i], exposed: Dictiona
 			out = kept
 			progress = true
 			break
+	return _repack_slivers(mass, out, exposed, band)
+
+
+## Greedy crown packing can assign an offset wing's second row to a long
+## range. Repartition only existing crown cells; never grow the footprint.
+func _repack_slivers(mass: BuildingMass, rectangles: Array[Rect2i],
+		exposed: Dictionary, band: int) -> Array[Rect2i]:
+	var out := rectangles.duplicate()
+	# A blocked portion already falls back to a deck. Preserve that option
+	# while recovering a proper roof from the clear portion of the same crown.
+	var flat_cells := {}
+	for original: Rect2i in rectangles:
+		if not _roof_fits(mass, original, 0, band) and not _roof_fits(mass, original, 1, band):
+			flat_cells.merge(BuildingMass.rect_cells(original))
+	var improved := true
+	while improved:
+		improved = false
+		for strip: Rect2i in out:
+			if mini(strip.size.x, strip.size.y) != 1: continue
+			var across := 0 if strip.size.x == 1 else 1
+			var options: Array[Rect2i] = []
+			for depth in range(2, MAX_ROOF_DEPTH + 1):
+				for direction in [-1, 1]:
+					var candidate := strip
+					candidate.size[across] = depth
+					if direction < 0: candidate.position[across] -= depth - 1
+					options.append(candidate)
+			for wing: Rect2i in options:
+				var valid := true
+				for cell: Vector2i in BuildingMass.rect_cells(wing):
+					if not exposed.has(cell): valid = false
+				if not valid: continue
+				var kept: Array[Rect2i] = []
+				var remainder := {}
+				for original: Rect2i in out:
+					if not original.intersects(wing):
+						kept.append(original)
+						continue
+					for cell: Vector2i in BuildingMass.rect_cells(original):
+						if not wing.has_point(cell): remainder[cell] = true
+				var repacked := decompose(remainder)
+				repacked.append(wing)
+				for part: Rect2i in repacked:
+					if _roof_fits(mass, part, 0, band) or _roof_fits(mass, part, 1, band): continue
+					# The new wing must fit. A remainder may stay flat only on
+					# cells that belonged to an already unroofable rectangle.
+					if part == wing: valid = false
+					for cell: Vector2i in BuildingMass.rect_cells(part):
+						if not flat_cells.has(cell): valid = false
+				if not valid: continue
+				kept.append_array(repacked)
+				if _slivers(kept) >= _slivers(out): continue
+				out = kept
+				improved = true
+				break
+			if improved: break
 	return out
 
 
@@ -809,6 +1153,8 @@ func _assign_dressing(mass: BuildingMass, rng: RandomNumberGenerator,
 		var proud := kit.face_of(storey.material, bool(storey.get("retaining", false))) - kit.wall_face
 		for slot: Dictionary in slots_of(mass, storey):
 			var kind := StringName(storey.openings.get(slot.edge, storey.default_opening))
+			if (storey.get("passage_edges", {}) as Dictionary).has(slot.edge):
+				continue # An internal crossing keeps its full entrance clear.
 			var centre := slot.centre as Vector2
 			var dir := int(slot.dir)
 			var on_ground := grounded or (storey.get("grounded", {}) as Dictionary).has(
@@ -828,8 +1174,12 @@ func _assign_dressing(mass: BuildingMass, rng: RandomNumberGenerator,
 					and (above.cells as Dictionary).has(Vector2i(slot.edge.x, slot.edge.y)) \
 					and StringName((above.openings as Dictionary).get(slot.edge, &"")) \
 						!= BuildingMass.OPENING_BAY
+				# A growing house's door is sheltered by the storey overhanging its
+				# stepped-in front instead (the 0.9 roll is still drawn, so later
+				# rolls are unchanged).
 				if not sheltered and flush_above and rng.randf() < 0.9 \
-						and _awning_room(slot, int(storey.floor_band)):
+						and _awning_room(slot, int(storey.floor_band)) \
+						and not bool(context.get("grows", false)):
 					_add_awning(mass, {"kind": &"awning", "centre": centre,
 						"dir": dir, "y": y, "proud": proud}, int(storey.floor_band))
 				if rng.randf() < 0.45 and _front_open(slot, int(storey.floor_band)) \
@@ -1044,3 +1394,12 @@ static func decompose(cells: Dictionary, ridge_axis := -1) -> Array[Rect2i]:
 			for z in range(best.position.y, best.end.y):
 				remaining.erase(Vector2i(x, z))
 	return out
+
+func _beside_flat_strip(mass: BuildingMass, strip: Rect2i, rectangles: Array[Rect2i], band: int) -> bool:
+	for other: Rect2i in rectangles:
+		if other == strip or mini(other.size.x,other.size.y)>=2: continue
+		if not other.grow(1).intersects(strip) or _diagonal(other,strip): continue
+		if _roof_fits(mass,other,0,band) or _roof_fits(mass,other,1,band): continue
+		if not _backed_shed(mass,other,band).is_empty(): continue
+		return true
+	return false

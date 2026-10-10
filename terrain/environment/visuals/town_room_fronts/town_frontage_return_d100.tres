@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3 uid="uid://35uspl46j6eh"]
+
+[ext_resource type="Script" uid="uid://camt41jgcwvtj" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_h7r51"]
+[ext_resource type="Shape3D" uid="uid://c10l3cmgcd2ra" path="res://terrain/environment/collisions/town_room_fronts/town_frontage_return_d100_piece_00.res" id="2_5fya6"]
+[ext_resource type="Script" uid="uid://cnclg6ri5afbe" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_rdw00"]
+[ext_resource type="ArrayMesh" uid="uid://bl8owfui388tm" path="res://terrain/environment/meshes/town_room_fronts/town_frontage_return_d100_piece_00.res" id="4_0jt58"]
+[ext_resource type="Script" uid="uid://dm72bncnoday5" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_wiud0"]
+
+[sub_resource type="Resource" id="Resource_xewnr"]
+script = ExtResource("1_h7r51")
+shape = ExtResource("2_5fya6")
+
+[sub_resource type="Resource" id="Resource_d5vmk"]
+script = ExtResource("3_rdw00")
+mesh = ExtResource("4_0jt58")
+
+[resource]
+script = ExtResource("5_wiud0")
+pieces = Array[ExtResource("3_rdw00")]([SubResource("Resource_d5vmk")])
+collisions = Array[ExtResource("1_h7r51")]([SubResource("Resource_xewnr")])

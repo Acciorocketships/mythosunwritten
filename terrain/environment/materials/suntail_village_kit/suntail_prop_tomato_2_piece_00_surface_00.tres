@@ -1,8 +1,8 @@
 [gd_resource type="StandardMaterial3D" load_steps=4 format=3]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/98df796ffdd2f19de340.res" id="1_8oa3d"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/82f538011f18bef49e25.res" id="2_gv5ap"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/8b3ed7282191b15fe16d.res" id="3_egw8e"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/6747e6c1663772753bd9.res" id="1_8oa3d"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/f5efd4eeddddf31a36f0.res" id="2_gv5ap"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/5e553c7e03abceaf7934.res" id="3_egw8e"]
 
 [resource]
 resource_name = "Food"

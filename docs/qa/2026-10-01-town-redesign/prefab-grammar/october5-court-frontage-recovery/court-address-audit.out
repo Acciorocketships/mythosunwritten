@@ -1,0 +1,8 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+SEED { "id": &"house.043", "seed": (0, 8), "cells": [(0, 8)], "floor": 1, "door": (-1, 1, 8), "tier": -1, "retired": false }
+GROW { "id": &"house.041", "seed": (0, 7), "cells": [(0, 7), (0, 8)], "floor": 1, "door": (-1, 1, 7), "tier": -1, "retired": false, "cap": 7, "stalled": true }
+SWEEP { "id": &"house.041", "seed": (0, 7), "cells": [(0, 7), (0, 8)], "floor": 1, "door": (-1, 1, 7), "tier": -1, "retired": false, "cap": 7, "stalled": true }
+RESULT { "id": &"house.041", "cells": 1, "floor": 1, "top": 6, "tiered": false, "skyline_peak": false, "reason": "" }
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)

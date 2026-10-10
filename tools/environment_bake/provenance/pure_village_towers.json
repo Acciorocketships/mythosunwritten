@@ -1,0 +1,413 @@
+{
+  "assets": [
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_tower_base.tres",
+      "id": "pure_village.tower.base",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1464,
+        "measured_aabb": {
+          "position": [
+            -1.70729458332062,
+            0.0,
+            -1.7213671207428
+          ],
+          "size": [
+            3.41458916664124,
+            3.41541934013367,
+            3.44272446632385
+          ]
+        },
+        "mesh_bytes": 52476,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 1464
+      },
+      "pack": "pure_village_towers",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.tower.base",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 20000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 20000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/StoneTower_Middle1_30x30.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_towers",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/StoneTower_Middle1_30x30.glb",
+      "source_sha256": "ec1d1a0e33d52bc6c062f75da7c93517c67aaa8be568af2e3fd6da5e92e6ebd9",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true,
+        "namespace": "pure_village_kit"
+      },
+      "tool_version": 40,
+      "visual": "res://terrain/environment/visuals/pure_village_towers/pure_village_tower_base.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_tower_half_base.tres",
+      "id": "pure_village.tower.half_base",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 742,
+        "measured_aabb": {
+          "position": [
+            -1.68593680858612,
+            -0.125,
+            -0.00355224590748549
+          ],
+          "size": [
+            3.39323091506958,
+            3.41541934013367,
+            1.72490954399109
+          ]
+        },
+        "mesh_bytes": 27462,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 742
+      },
+      "pack": "pure_village_towers",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.tower.half_base",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 20000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 20000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/StoneHalfTower_Middle1_30x30.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_towers",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/StoneHalfTower_Middle1_30x30.glb",
+      "source_sha256": "b7b8abeff0b450fbd427df51c96398d60a6dc819e63600d0ac52477455eeabe8",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true,
+        "namespace": "pure_village_kit"
+      },
+      "tool_version": 40,
+      "visual": "res://terrain/environment/visuals/pure_village_towers/pure_village_tower_half_base.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_tower_half_middle.tres",
+      "id": "pure_village.tower.half_middle",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 276,
+        "measured_aabb": {
+          "position": [
+            -1.62203979492188,
+            -0.125,
+            -0.00000488281239086064
+          ],
+          "size": [
+            3.24407958984375,
+            3.125,
+            1.625
+          ]
+        },
+        "mesh_bytes": 11034,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 276
+      },
+      "pack": "pure_village_towers",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.tower.half_middle",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 20000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 20000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/StoneHalfTower_Middle2_30x30.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_towers",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/StoneHalfTower_Middle2_30x30.glb",
+      "source_sha256": "d6f92c35d57b12a5325cb813d34a416f2bd58d8e888696a8c73ced45643a7b8b",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true,
+        "namespace": "pure_village_kit"
+      },
+      "tool_version": 40,
+      "visual": "res://terrain/environment/visuals/pure_village_towers/pure_village_tower_half_middle.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_tower_half_support.tres",
+      "id": "pure_village.tower.half_support",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 918,
+        "measured_aabb": {
+          "position": [
+            -1.66423213481903,
+            -1.37156462669373,
+            -0.0139550780877471
+          ],
+          "size": [
+            3.33342456817627,
+            1.49656403064728,
+            1.68896722793579
+          ]
+        },
+        "mesh_bytes": 39584,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 918
+      },
+      "pack": "pure_village_towers",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.tower.half_support",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 20000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 20000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/StoneHalfTower_Support_30x30.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_towers",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/StoneHalfTower_Support_30x30.glb",
+      "source_sha256": "f4a8f68728b62ddec785b22b9c4a86c2095c6d1773eb45fa4d962d0320e5fd86",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true,
+        "namespace": "pure_village_kit"
+      },
+      "tool_version": 40,
+      "visual": "res://terrain/environment/visuals/pure_village_towers/pure_village_tower_half_support.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_tower_half_window.tres",
+      "id": "pure_village.tower.half_window",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1772,
+        "measured_aabb": {
+          "position": [
+            -1.62203979492188,
+            -0.125,
+            -0.00000488281239086064
+          ],
+          "size": [
+            3.24407958984375,
+            3.125,
+            1.72730362415314
+          ]
+        },
+        "mesh_bytes": 65906,
+        "surface_count": 5,
+        "visual_piece_count": 1,
+        "visual_triangles": 1772
+      },
+      "pack": "pure_village_towers",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.tower.half_window",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 20000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 20000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/StoneHalfTower_Window_30x30.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_towers",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/StoneHalfTower_Window_30x30.glb",
+      "source_sha256": "50e8ad95e984e1e18ea27c26535d7a5f7cd32bcb9d434853082369b78f20d3ba",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true,
+        "namespace": "pure_village_kit"
+      },
+      "tool_version": 40,
+      "visual": "res://terrain/environment/visuals/pure_village_towers/pure_village_tower_half_window.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_tower_roof.tres",
+      "id": "pure_village.tower.roof",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 18104,
+        "measured_aabb": {
+          "position": [
+            -2.08283925056458,
+            0.00000137277015710424,
+            -2.09183716773987
+          ],
+          "size": [
+            4.17834186553955,
+            5.70563220977783,
+            4.1821174621582
+          ]
+        },
+        "mesh_bytes": 613725,
+        "surface_count": 3,
+        "visual_piece_count": 1,
+        "visual_triangles": 18104
+      },
+      "pack": "pure_village_towers",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.tower.roof",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 20000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 20000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/Roof_Tower_1.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_towers",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Tower_1.glb",
+      "source_sha256": "bcf49d5f666004667e4b2c4a84a7eb1d3619f237d3e82a17b2d830f8322e1ad9",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true,
+        "namespace": "pure_village_kit"
+      },
+      "tool_version": 40,
+      "visual": "res://terrain/environment/visuals/pure_village_towers/pure_village_tower_roof.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_tower_window.tres",
+      "id": "pure_village.tower.window",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 2428,
+        "measured_aabb": {
+          "position": [
+            -1.62204003334045,
+            0.0,
+            -1.62500488758087
+          ],
+          "size": [
+            3.24407982826233,
+            3.06421875953674,
+            3.33039593696594
+          ]
+        },
+        "mesh_bytes": 92469,
+        "surface_count": 5,
+        "visual_piece_count": 1,
+        "visual_triangles": 2428
+      },
+      "pack": "pure_village_towers",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.tower.window",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 20000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 20000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/StoneTower_Window_30x30.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_towers",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/StoneTower_Window_30x30.glb",
+      "source_sha256": "dfd5c429365331020f60361a31c5d78ec62c7d308ee42dd8dbc9d87dbefaf443",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true,
+        "namespace": "pure_village_kit"
+      },
+      "tool_version": 40,
+      "visual": "res://terrain/environment/visuals/pure_village_towers/pure_village_tower_window.tres"
+    }
+  ],
+  "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+  "pack": "pure_village_towers",
+  "tool_version": 40
+}

@@ -1,0 +1,10 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+EXISTING { "id": &"house.wall-room.000", "kind": &"house", "cells": [(2, 0)], "floor": 0, "top": 4, "door_walk": (1, 0, 0), "building_id": &"house.wall-room.000", "wall_room": true }
+EXISTING { "id": &"house.wall-room.001", "kind": &"house", "cells": [(2, 1)], "floor": 0, "top": 4, "door_walk": (1, 0, 1), "building_id": &"house.wall-room.001", "wall_room": true }
+EXISTING { "id": &"house.wall-room.002", "kind": &"house", "cells": [(2, 2)], "floor": 0, "top": 4, "door_walk": (1, 0, 2), "building_id": &"house.wall-room.002", "wall_room": true }
+EXISTING { "id": &"house.wall-room.003", "kind": &"house", "cells": [(2, 3)], "floor": 0, "top": 4, "door_walk": (1, 0, 3), "building_id": &"house.wall-room.003", "wall_room": true }
+EXISTING { "id": &"house.wall-room.004", "kind": &"house", "cells": [(2, 4)], "floor": 0, "top": 4, "door_walk": (1, 0, 4), "building_id": &"house.wall-room.004", "wall_room": true }
+EXISTING { "id": &"house.wall-room.005", "kind": &"house", "cells": [(4, 1)], "floor": 2, "top": 8, "door_walk": (3, 2, 1), "building_id": &"house.wall-room.005", "wall_room": true }

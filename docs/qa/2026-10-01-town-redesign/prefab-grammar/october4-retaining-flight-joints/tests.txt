@@ -1,0 +1,41 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_retaining_flight_joints.gd
+[0m* test_native_panels_stay_behind_the_upper_landing_in_each_direction
+* test_reported_landing_has_no_stone_above_its_ramp
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_retaining_recesses.gd
+[0m* test_recess_preserves_outer_envelope_and_rejects_inward_passage
+* test_existing_roof_cannot_cover_recessed_glazing
+* test_real_town_uses_recesses_on_blocked_projecting_window_sites
+* test_recess_rejects_contact_with_native_header_above_clear_glass
+[1m4/4 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               2
+Tests                 6
+Passing Tests         6
+Asserts             129
+Time              52.95s
+
+
+[32m---- All tests passed! ----
+[0m

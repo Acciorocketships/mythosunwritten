@@ -92,8 +92,7 @@ func _ready() -> void:
 		print("[warren_spatial_review] selected maze source=",
 			"maze.%d" % maze.world_seed, " signature=",
 			maze.deterministic_signature().sha256_text())
-		_spatial = WarrenVolumetricSolver.from_volume(source, -1, program,
-			profile != null and profile.requires_elevated_courtyard)
+		_spatial = WarrenVolumetricSolver.from_volume(source, -1, program)
 	if _spatial == null:
 		_fail_and_quit("volumetric solve rejected: %s" \
 			% WarrenVolumetricSolver.last_failure)

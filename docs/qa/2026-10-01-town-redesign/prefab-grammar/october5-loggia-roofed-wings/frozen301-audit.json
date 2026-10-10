@@ -1,0 +1,19 @@
+[
+	{
+		"air_roofs": 0,
+		"air_unsupported": 0,
+		"decks": 30,
+		"eaves_cut": 0,
+		"examples": [],
+		"gable_ends": 103,
+		"gable_holes": 0,
+		"open_ends": 17,
+		"open_exposed": 0,
+		"roofs": 60,
+		"seed": -1,
+		"tiny": 0,
+		"tiny_beside": 0,
+		"towers": 4,
+		"uncapped_towers": 0
+	}
+]

@@ -1,0 +1,54 @@
+--- /tmp/cantilever-assembler-before.gd	2026-10-04 01:42:07
++++ scripts/terrain/features/villages/kit/BuildingKitAssembler.gd	2026-10-04 01:54:56
+@@ -697,8 +697,51 @@
+ 		if not _slot_exposed(mass, slot, floor_band, 2): continue
+ 		var role := &"trim.floor_beam_corner" if slot.left_convex else &"trim.floor_beam"
+ 		_emit(ctx, role, slot.centre, y, yaw_for_dir(slot.dir))
++
++	_assemble_cantilever_brackets(ctx, storey, y, below, boarded)
+ 
+ 
++## A one-module upper room projects over a lower wall. Native curved
++## brackets bear on that wall's joints and meet its boarded floor above.
++## Longer spans need a different structural assembly, not stretched brackets.
++func _assemble_cantilever_brackets(ctx:Dictionary,storey:Dictionary,y:float,below:Dictionary,overhang:Dictionary)->void:
++	if not kit.has_role(&"bracket.cantilever") or bool(storey.get("retaining",false)):return
++	if bool(storey.get("inset",false)) or below.is_empty():return
++	var mass:BuildingMass=ctx.mass
++	var lower:=_bearing_storey_at(mass,int(storey.floor_band))
++	if lower.is_empty() or bool(lower.get("inset",false)):return
++	var seen:Dictionary={}
++	for slot:Dictionary in wall_slots(below,false):
++		var dir:=int(slot.dir)
++		var step:Vector2i=BuildingMass.DIRS[dir]
++		var cell:=Vector2i(slot.edge.x,slot.edge.y)
++		# Both the wall-bearing room and its outward bay must belong to
++		# this floor; a bridge ending at another building is a different case.
++		if not storey.cells.has(cell) or not overhang.has(cell+step):continue
++		if storey.cells.has(cell+step*2):continue
++		if not mass.cells_at_band(int(storey.floor_band)-2).has(cell):continue
++		var lower_offsets:Dictionary=lower.get("wall_offsets",{})
++		if lower_offsets.has(slot.edge):continue
++		for side:int in [-1,1]:
++			var joint:Vector2=slot.centre+Vector2(right_of(dir))*float(side)*.5
++			var key:=Vector3i(roundi(joint.x),roundi(joint.y),dir)
++			if seen.has(key):continue
++			seen[key]=true
++			var pending:Array[Dictionary]=[]
++			var candidate:Dictionary={"mass":mass,"out":pending,"serial":ctx.serial}
++			_emit(candidate,&"bracket.cantilever",joint+Vector2(step)*kit.wall_face/kit.module_width,y+.04,yaw_for_dir(dir))
++			var part:Dictionary=pending[0]
++			if ornament_clear.is_valid() and not bool(ornament_clear.call(part.asset_id,part.transform)):continue
++			(ctx.out as Array).append(part)
++			ctx.serial=candidate.serial
++
++
++static func _bearing_storey_at(mass:BuildingMass,band:int)->Dictionary:
++	for floor:Dictionary in mass.storeys:
++		if int(floor.floor_band)<=band-1 and int(floor.floor_band)+int(floor.get("bands",2))>=band:return floor
++	return {}
++
++
+ ## Roof over free air (a loggia recessed into the top storey, a porch) would
+ ## open the hollow attic to the street: roof boards, gable walls from behind,
+ ## a chimney base. Boards close it at the eave, as the floor of a storey above

@@ -1,0 +1,213 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_broad_court_frontages.gd
+[0m* test_court_walk_is_deck_while_its_inner_bed_stays_turf
+[31m    [Failed]:  [0mA walked court cell is not lawn
+      at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+      at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+      at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+      at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+      at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+      at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+      at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+      at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+      at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+      at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+      at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+      at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+      at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+      at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+      at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+      at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+      at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+      at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+      at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+      at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+      at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+      at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+      at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+      at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+      at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+      at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+      at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+      at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+      at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+      at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+      at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+      at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+      at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+      at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+      at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+      at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+      at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+      at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+      at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+      at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+      at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+      at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+      at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+      at line 35
+[1m0/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_broad_court_frontages.gd
+[0m- test_court_walk_is_deck_while_its_inner_bed_stays_turf
+[31m    [Failed]:  [0mA walked court cell is not lawn
+          at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+          at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+          at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+          at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+          at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+          at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+          at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+          at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+          at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+          at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+          at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+          at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+          at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+          at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+          at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+          at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+          at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+          at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+          at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+          at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+          at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+          at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+          at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+          at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+          at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+          at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+          at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+          at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+          at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+          at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+          at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+          at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+          at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+          at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+          at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+          at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+          at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+          at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+          at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+          at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+          at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+          at line 35
+[31m    [Failed]:  [0mA walked court cell is not lawn
+          at line 34
+[31m    [Failed]:  [0mEvery walked court cell has continuous deck skin
+          at line 35
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts           16/60
+Time              10.567s
+
+
+Ran Tests matching "test_court_walk_is_deck_while_its_inner_bed_stays_turf"
+[31m---- 1 failing tests ----
+[0m

@@ -1,0 +1,7 @@
+PUBLIC_WALK_AUDIT { "nodes": 74, "dead_end_nodes": 0, "dead_end_cells": 0 }
+TOWN_ROUTE_WALK court.clearing.00 reverse=false passed=true end=(-68.28474, 0.050938, 4.000163)
+TOWN_ROUTE_WALK court.clearing.00 reverse=true passed=true end=(33.74063, 0.050391, 1.999984)
+TOWN_ROUTE_WALK court.plaza.00 reverse=false passed=true end=(-36.28455, 0.050391, 20.00016)
+TOWN_ROUTE_WALK court.plaza.00 reverse=true passed=true end=(33.73982, 0.050391, 1.999983)
+TOWN_ROUTE_WALK court.deck.00 reverse=false passed=true end=(20.00016, 12.05064, 0.289495)
+TOWN_ROUTE_WALK court.deck.00 reverse=true passed=true end=(33.70444, 0.050344, 1.99999)

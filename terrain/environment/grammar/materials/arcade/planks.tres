@@ -1,0 +1,18 @@
+[gd_resource type="StandardMaterial3D" load_steps=4 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/PureVillage/Textures/Planks/Planks_a.png" id="1_45w78"]
+[ext_resource type="Texture2D" path="res://assets/PureVillage/Textures/Planks/Planks_mask_MOS_100_50.png" id="2_iv4g3"]
+[ext_resource type="Texture2D" path="res://assets/PureVillage/Textures/Planks/Planks_n.png" id="3_wgsq0"]
+
+[resource]
+resource_name = "Planks"
+albedo_texture = ExtResource("1_45w78")
+metallic = 1.0
+metallic_texture = ExtResource("2_iv4g3")
+metallic_texture_channel = 2
+roughness_texture = ExtResource("2_iv4g3")
+roughness_texture_channel = 1
+normal_enabled = true
+normal_texture = ExtResource("3_wgsq0")
+ao_enabled = true
+ao_texture = ExtResource("2_iv4g3")

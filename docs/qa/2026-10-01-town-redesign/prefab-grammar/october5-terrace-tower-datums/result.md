@@ -1,0 +1,13 @@
+# Higher-terrace tower admission — candidate rejected
+
+Previous goal turn was progress: finalized native shed fitting and its safety/player evidence. This turn investigated the explicit request for more naturally attached spires.
+
+A compound's grounded corner proposer only tries its minimum ground band. The study tries each actual higher storey datum too, retaining whole-foot real bearing, native envelope, corner continuity, door, neighbouring asset and public clearance tests. A constrained terraced fixture goes red→green; two focused suites pass 5 tests /50 assertions. Loading the saved old proposer again restores the original failing assertion. The higher datum never substitutes a room floor for bearing.
+
+However, actual generated tower counts are unchanged in all seven tested grand towns: 8=0,13=2,43=1,103=1,53=4,83=0,301=4. No town accepts a higher-terrace candidate. The four-town full safety check remains floating0/public-air0 with unchanged enclosure. Thus the candidate does not deliver the requested skyline improvement on the corpus. Production `KitCornerTowers.gd` was restored byte-for-byte; candidate and focused fixture remain here for study, outside the production regression suite. All associated processes are terminal.
+
+Native isolated Pure Village views show the supported shaft and roof joint, but a small detached blue fragment is visible below the cap in both close and above views. The lower diagnostic wing is unroofed and the gray terrace is a primitive fixture, not proposed town art. These views do not establish visual acceptance. No new tower geometry is promoted.
+
+The existing `built.towers`/`roof_audit.towers` measure only procedurally attached towers. They do NOT count towers inside native recipes. Current source evidence: 8/grand selects `anchor.z_native.turret.00`, despite its reported attached-tower count of zero. Therefore earlier '0 turrets' wording for this town is not a complete skyline census. The native turret recipe reserves a 6x4-column,14-band body (16 bands for its taller variant), plus measured bearing/reach. Planned tower-house capacity and surviving instantiated native parts need to be included in the next supply analysis; increasing late attachment opportunities alone produced no improvement.
+
+Next: inspect native recipe tower components in the finished payload and compare complete tower counts, then investigate earlier structural reservations/compact valid native tower-house variants. Preserve short-house exclusion, real bearings, doors, public routes and matching roof palettes. The full October1 redesign remains active.

@@ -1,7 +1,7 @@
 [gd_resource type="StandardMaterial3D" load_steps=3 format=3]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/36b11b481ec634447e57.res" id="1_g6wtc"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/fc73dea9f68d4bffa418.res" id="2_selfb"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/1bd07dfa9d6b6d78434b.res" id="1_g6wtc"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/fa7e05a0dc805bb85bc6.res" id="2_selfb"]
 
 [resource]
 resource_name = "Stone_Wall"

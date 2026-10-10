@@ -1,0 +1,46 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_roof_eave_contact_precision.gd
+* test_retriangulation_does_not_retract_an_intact_eave
+* test_real_trim_loss_is_not_hidden_by_roundoff_or_another_material
+* test_native_photo_contact_distinguishes_intact_courses_from_the_obstructed_corner
+    [Failed]:  [1] expected to equal [0]:  A tangent public surface must not select a different eave assembly
+      at line 94
+    [Failed]:  Preserve the complete native overhang
+      at line 99
+2/3 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_roof_eave_contact_precision.gd
+- test_native_photo_contact_distinguishes_intact_courses_from_the_obstructed_corner
+    [Failed]:  [1] expected to equal [0]:  A tangent public surface must not select a different eave assembly
+          at line 94
+    [Failed]:  Preserve the complete native overhang
+          at line 99
+
+Totals
+------
+Scripts               1
+Tests                 3
+Passing Tests         2
+Failing Tests         1
+Asserts             6/8
+Time              13.036s
+
+
+---- 1 failing tests ----
+

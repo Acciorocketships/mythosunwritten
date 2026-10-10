@@ -1,0 +1,9 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+DECK_INTERSECTION pure_village.roof_turret.support surface_area=1.38206411462852
+DECK_INTERSECTION pure_village.roof_turret.middle surface_area=1.10723810186755
+DECK_INTERSECTION pure_village.roof_turret.window surface_area=0.0
+DECK_INTERSECTION pure_village.roof_turret.roof surface_area=0.0
+TOTAL_INTERSECTION 2.48930221649607

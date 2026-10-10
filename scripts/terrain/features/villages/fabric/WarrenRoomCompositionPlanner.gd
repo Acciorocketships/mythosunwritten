@@ -27,9 +27,6 @@ const THREE_STOREY_TOWER_ANNEXES := 1
 const TALL_TOWER_ANNEXES := 2
 const MAX_IDENTICAL_TOWER_FLOORPLATE_RUN_STOREYS := 2
 const MIN_BEARING_OVERLAP_COLUMNS := 2
-const MAX_PAIRED_RELIEF_FRONTIER := 12
-const MAX_PAIRED_RELIEF_COLUMN_DISTANCE := 1
-const MAX_PAIRED_RELIEF_PAIR_CHECKS := 24
 const MAX_STRUCTURAL_VARIANT_FRONTIER := 72
 
 # A changed area is not enough to break a vertical tower silhouette.  A room
@@ -71,7 +68,6 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 		forced_offsets_by_parcel: Dictionary, market_reservation: Dictionary,
 		protected_owners: Dictionary, skywalk_forced_offsets: Dictionary,
 		skywalk_reservations: Array[Dictionary], world_seed: int,
-		enable_paired_registration_relief: bool = true,
 		collect_diagnostics: bool = true) -> Dictionary:
 	last_failure = ""
 	last_audit = {}
@@ -86,6 +82,7 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 		last_failure = "missing grid or volume"
 		return {}
 	var court_neighbors := _courtyard_neighbor_cells(volume)
+	var tunnel_bearing_cells := _tunnel_bearing_cells(volume)
 	var market_backing := market_reservation.get("backing_cell",
 		Vector3i(2147483647, 2147483647, 2147483647)) as Vector3i
 	var skywalk_constraints := _skywalk_constraints_by_parcel(
@@ -120,6 +117,14 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 			bearing_interface_storeys.get(parcel.stable_id, {}) as Dictionary)
 		if blocks.is_empty():
 			continue
+		for block: Dictionary in blocks:
+			var contacts := {}
+			for cell: Vector3i in block.cells:
+				if tunnel_bearing_cells.has(cell):
+					contacts[Vector2i(cell.x, cell.z)] = true
+			block["tunnel_bearing_columns"] = contacts
+			if not contacts.is_empty():
+				block["forced"] = true
 		var required_through := -1
 		for block_index in blocks.size():
 			if bool((blocks[block_index] as Dictionary).forced):
@@ -415,7 +420,7 @@ static func _merge_base_tower_pairs(lineages: Dictionary,
 		replacement["merged_lineage_count"] = 2
 		for metadata_key: String in ["address_expandable",
 				"address_threshold", "address_frontage",
-				"feature_endpoint_constraints", "court_contact_columns",
+				"feature_endpoint_constraints", "court_contact_columns", "tunnel_bearing_columns",
 				"structural_forced", "interface_forced", "bearing_forced",
 				"market_forced"]:
 			if original_primary.has(metadata_key):
@@ -468,7 +473,8 @@ static func _merge_base_tower_pairs(lineages: Dictionary,
 static func _base_block_has_hero_identity(block: Dictionary) -> bool:
 	return bool(block.get("market_forced", false)) \
 		or not (block.get("feature_endpoint_constraints", []) as Array).is_empty() \
-		or not (block.get("court_contact_columns", {}) as Dictionary).is_empty()
+		or not (block.get("court_contact_columns", {}) as Dictionary).is_empty() \
+		or not (block.get("tunnel_bearing_columns", {}) as Dictionary).is_empty()
 
 
 static func _exact_non_tower_stamps_for_columns(columns: Dictionary,
@@ -860,7 +866,8 @@ static func _address_landing(block: Dictionary) -> Vector3i:
 static func _block_has_non_address_identity(block: Dictionary) -> bool:
 	return bool(block.get("market_forced", false)) \
 		or not (block.get("feature_endpoint_constraints", []) as Array).is_empty() \
-		or not (block.get("court_contact_columns", {}) as Dictionary).is_empty()
+		or not (block.get("court_contact_columns", {}) as Dictionary).is_empty() \
+		or not (block.get("tunnel_bearing_columns", {}) as Dictionary).is_empty()
 
 
 static func _optional_suffix_can_terminate(lineage_id: StringName,
@@ -1596,7 +1603,7 @@ static func _merge_upper_lineages(lineages: Dictionary,
 		first["merged_lineage_count"] = participants.size()
 		for metadata_key: String in ["address_expandable",
 				"address_threshold", "address_frontage",
-				"feature_endpoint_constraints", "court_contact_columns",
+				"feature_endpoint_constraints", "court_contact_columns", "tunnel_bearing_columns",
 				"structural_forced", "interface_forced", "bearing_forced",
 				"support_parent_lineage_id",
 				"support_parent_source_storey",
@@ -2902,6 +2909,8 @@ static func _vary_unmerged_lineages(lineages: Dictionary,
 				"feature_endpoint_constraints", [])
 			replacement["court_contact_columns"] = current.get(
 				"court_contact_columns", {}).duplicate()
+			replacement["tunnel_bearing_columns"] = current.get(
+				"tunnel_bearing_columns", {}).duplicate()
 			replacement["merged"] = false
 			replacement["expanded"] = bool(variant.expanded)
 			blocks[block] = replacement
@@ -3134,14 +3143,14 @@ static func _volumetric_variant_stamp(grid: WarrenSpatialGrid,
 	# A constrained block keeps the full enumeration and the full diagnostic.
 	#
 	# `constraints_are_free` is `_candidate_matches_constraints` answered once:
-	# with no expandable address, no endpoint constraint and no court contact,
+	# with no address, endpoint, court or tunnel-bearing constraint,
 	# it returns true for every candidate, and it was being called ~3400 times
 	# per search to say so.
 	var records_diagnostic := _block_has_interface_constraint(current)
 	var own_lineage_only: Dictionary = {StringName(lineage_id): true}
 	# FIX ROUND 1, MINOR 3. These are the same predicate, by De Morgan:
-	# `_block_has_interface_constraint` is `expandable OR endpoints OR court`,
-	# so its negation is `not expandable AND no endpoints AND no court`, which
+	# `_block_has_interface_constraint` includes address, endpoint and occupied
+	# court/tunnel contacts; its negation excludes all those obligations, which
 	# is precisely what `_candidate_matches_constraints` needs to be free of to
 	# return true for every candidate. Stating it once also makes the coupling
 	# visible: the blocks that keep the full enumeration below are exactly the
@@ -3403,13 +3412,15 @@ static func _block_allows_recomposition(block: Dictionary) -> bool:
 	return bool(block.get("address_expandable", false)) \
 		or bool(block.get("bearing_forced", false)) \
 		or not (block.get("feature_endpoint_constraints", []) as Array).is_empty() \
-		or not (block.get("court_contact_columns", {}) as Dictionary).is_empty()
+		or not (block.get("court_contact_columns", {}) as Dictionary).is_empty() \
+		or not (block.get("tunnel_bearing_columns", {}) as Dictionary).is_empty()
 
 
 static func _block_has_interface_constraint(block: Dictionary) -> bool:
 	return bool(block.get("address_expandable", false)) \
 		or not (block.get("feature_endpoint_constraints", []) as Array).is_empty() \
-		or not (block.get("court_contact_columns", {}) as Dictionary).is_empty()
+		or not (block.get("court_contact_columns", {}) as Dictionary).is_empty() \
+		or not (block.get("tunnel_bearing_columns", {}) as Dictionary).is_empty()
 
 
 static func _candidate_matches_constraints(kind: StringName,
@@ -3424,18 +3435,20 @@ static func _candidate_matches_constraints(kind: StringName,
 				constraint.cell as Vector3i,
 				constraint.facing as Vector3i):
 			return false
-	# TASK F2. `_stamp_columns` is only needed to answer the court-contact
-	# question, and almost no block has court contact columns. Deriving the
+	# TASK F2. `_stamp_columns` is needed only for court/tunnel contacts.
+	# Most blocks have neither. Deriving the
 	# stamp for every one of the ~3400 candidates a variant search enumerates,
 	# to then iterate an empty dictionary, was the single most repeated wasted
 	# call in the composition.
 	var court_columns := current.get("court_contact_columns", {}) as Dictionary
-	if court_columns.is_empty():
+	var tunnel_columns := current.get("tunnel_bearing_columns", {}) as Dictionary
+	if court_columns.is_empty() and tunnel_columns.is_empty():
 		return true
 	var candidate_columns := _stamp_columns(kind, origin, yaw)
-	for column_value: Variant in court_columns.keys():
-		if not candidate_columns.has(column_value):
-			return false
+	for contacts: Dictionary in [court_columns, tunnel_columns]:
+		for column_value: Variant in contacts:
+			if not candidate_columns.has(column_value):
+				return false
 	return true
 
 
@@ -3585,59 +3598,6 @@ static func _crown_cut_preserves_bearing(lineages: Dictionary,
 					(block.origin as Vector3i).y, after_claims, grid):
 				return false
 	return true
-
-
-static func _variant_stamp(allowed: Dictionary, previous: Dictionary,
-		y: int, block: int, world_seed: int, lineage_hash: int) -> Dictionary:
-	if allowed.is_empty():
-		return {}
-	var candidates: Array[Dictionary] = []
-	var minimum := Vector2i(2147483647, 2147483647)
-	var maximum := Vector2i(-2147483648, -2147483648)
-	for value: Variant in allowed.keys():
-		var column := value as Vector2i
-		minimum = minimum.min(column)
-		maximum = maximum.max(column)
-	var previous_columns := previous.columns as Dictionary
-	for kind: StringName in ROOM_KINDS:
-		for yaw in 4:
-			for x in range(minimum.x - 3, maximum.x + 4):
-				for z in range(minimum.y - 3, maximum.y + 4):
-					var origin := Vector3i(x, y, z)
-					var columns := _stamp_columns(kind, origin, yaw)
-					if columns.is_empty() or not _is_subset(columns, allowed):
-						continue
-					var overlap := _intersection_size(columns, previous_columns)
-					if overlap < maxi(MIN_BEARING_OVERLAP_COLUMNS,
-							ceili(float(mini(columns.size(),
-							previous_columns.size())) * 0.5)):
-						continue
-					if _same_set(columns, previous_columns):
-						continue
-					var difference := _symmetric_difference_size(columns,
-						previous_columns)
-					var kind_change := int(kind != StringName(previous.kind))
-					var target_ratio := 0.67 if posmod(block, 3) == 1 \
-						else 0.42 if posmod(block, 3) == 2 else 0.75
-					var area_ratio := float(columns.size()) \
-						/ float(maxi(allowed.size(), 1))
-					var score := kind_change * 1000 + difference * 80 \
-						- int(absf(area_ratio - target_ratio) * 300.0) \
-						+ columns.size() * 4
-					var tie := posmod(Helper._mix64(world_seed ^ lineage_hash \
-						^ block * 0x45d9f3b ^ kind.hash() * 31 \
-						^ x * 73856093 ^ z * 19349663 ^ yaw * 83492791),
-						1000003)
-					candidates.append({"kind": kind, "origin": origin,
-						"yaw_quarters": yaw, "columns": columns,
-						"score": score, "tie": tie})
-	if candidates.is_empty():
-		return {}
-	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		if int(a.score) != int(b.score):
-			return int(a.score) > int(b.score)
-		return int(a.tie) < int(b.tie))
-	return candidates[0]
 
 
 static func _exact_stamp_for_columns(columns: Dictionary, y: int) -> Dictionary:
@@ -4231,3 +4191,21 @@ static func _same_set(left: Dictionary, right: Dictionary) -> bool:
 	if left.size() != right.size():
 		return false
 	return _is_subset(left, right)
+
+
+static func _tunnel_bearing_cells(volume: WarrenVolumePlan) -> Dictionary:
+	# Keep inhabited jamb faces beneath source-approved overhead rooms.
+	# This reserves no new stone and constrains only already-proposed rooms.
+	var result := {}
+	var source := volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
+	if source == null:
+		return result
+	for plot: Dictionary in source.plots:
+		if plot.kind != WarrenMazeSourcePlan.PLOT_OVER:
+			continue
+		for jamb: Vector2i in plot.get("jambs", []):
+			for band in [int(plot.crown)-1, int(plot.crown)]:
+				for dx in 2:
+					for dz in 2:
+						result[Vector3i(jamb.x*2+dx, band, jamb.y*2+dz)] = true
+	return result

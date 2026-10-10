@@ -1,0 +1,8 @@
+House_1.glb 191 [] []
+House_2.glb 352 [] [[{'rule': 'suntail.cupboard.drawer_slide', 'node': 'Cupboard_1_Box', 'displacement': 0.16078278422355652}]]
+House_3.glb 400 [] []
+House_4.glb 258 [] []
+House_5.glb 317 [] [[{'rule': 'suntail.cupboard.drawer_slide', 'node': 'Cupboard_1_Box', 'displacement': 0.16278278827667236}]]
+House_6.glb 202 [] []
+House_7.glb 297 [] []
+House_8.glb 372 [] [[{'rule': 'suntail.cupboard.drawer_slide', 'node': 'Cupboard_1_Box', 'displacement': 0.17478281259536743}]]

@@ -210,7 +210,7 @@ static func construction_cells(grade: TerrainGradePatch, source: HeightfieldRegi
 ## pad. The lower datum wins so that no pad is ever buried: inside any pad the
 ## native ground never rises above that pad's datum, and the lowest pad of a
 ## cluster is flat. TerrainGradePatch.height_bounds reports the patch target,
-## which stays flat there (see VillageOutskirtsSolver's pad gate).
+## which stays flat there (the outskirts pad gate that relied on this was deleted October 7; see docs/qa/2026-10-07-town-odds/dead-code-removal.md).
 static func pad_owners(grade: TerrainGradePatch) -> Dictionary:
 	var owners: Dictionary = {}
 	var fixed := fixed_claims(grade)

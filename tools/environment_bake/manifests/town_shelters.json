@@ -1,0 +1,66 @@
+{
+  "pack": "town_shelters",
+  "license": "Fantasy Village source-pack license",
+  "default_scale": [
+    1,
+    1,
+    1
+  ],
+  "texture_policy": {
+    "compression": "basis_universal",
+    "mipmaps": true
+  },
+  "assets": [
+    {
+      "id": "sfv.shelter.white",
+      "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Tents/SFV_Tent_White_001.fbx",
+      "merge_pieces": true,
+      "collision_profile": "building_trimesh",
+      "tags": [
+        "tent",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 8000,
+      "max_collision_triangles": 8000,
+      "max_surfaces": 4,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "sfv.shelter.blue",
+      "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Tents/SFV_Tent_Blue_001.fbx",
+      "merge_pieces": true,
+      "collision_profile": "building_trimesh",
+      "tags": [
+        "tent",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 8000,
+      "max_collision_triangles": 8000,
+      "max_surfaces": 4,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "sfv.shelter.red",
+      "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Tents/SFV_Tent_Red_001.fbx",
+      "merge_pieces": true,
+      "collision_profile": "building_trimesh",
+      "tags": [
+        "tent",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 8388608,
+      "max_visual_triangles": 8000,
+      "max_collision_triangles": 8000,
+      "max_surfaces": 4,
+      "max_collision_pieces": 1
+    }
+  ]
+}

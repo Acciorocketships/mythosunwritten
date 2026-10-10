@@ -1,0 +1,2564 @@
+{
+	"103:grand": [
+		{
+			"cells": [
+				"(-8, -1)",
+				"(-7, -1)",
+				"(-8, 0)",
+				"(-7, 0)"
+			],
+			"floor": 0,
+			"id": "plaza.00",
+			"sides": [
+				{
+					"direction": "(1, 0)",
+					"samples": [
+						{
+							"cell": "(-13, -2)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(-13, -1)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(-13, 0)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+								"distance": 3,
+								"host": "kit.spatial.parcel.maze.house.wall-room.002"
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(-13, 1)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+								"distance": 3,
+								"host": "kit.spatial.parcel.maze.house.wall-room.002"
+							},
+							"walk_bands": [
+								0
+							]
+						}
+					]
+				},
+				{
+					"direction": "(0, 1)",
+					"samples": [
+						{
+							"cell": "(-16, 1)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "deck.00",
+									"kind": "deck",
+									"top": 0
+								}
+							],
+							"raw_top": 2,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-15, 1)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "deck.00",
+									"kind": "deck",
+									"top": 0
+								}
+							],
+							"raw_top": 2,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-14, 1)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "deck.00",
+									"kind": "deck",
+									"top": 0
+								}
+							],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-13, 1)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "deck.00",
+									"kind": "deck",
+									"top": 0
+								}
+							],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": []
+						}
+					]
+				},
+				{
+					"direction": "(-1, 0)",
+					"samples": [
+						{
+							"cell": "(-16, -2)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-16, -1)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-16, 0)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-16, 1)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						}
+					]
+				},
+				{
+					"direction": "(0, -1)",
+					"samples": [
+						{
+							"cell": "(-16, -2)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-15, -2)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-14, -2)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "house.024",
+									"kind": "house",
+									"top": 4
+								}
+							],
+							"raw_top": 2,
+							"room": {
+								"distance": 1,
+								"host": "kit.spatial.parcel.maze.house.024"
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-13, -2)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "house.024",
+									"kind": "house",
+									"top": 4
+								}
+							],
+							"raw_top": 2,
+							"room": {
+								"distance": 1,
+								"host": "kit.spatial.parcel.maze.house.024"
+							},
+							"walk_bands": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"cells": [
+				"(-8, 1)",
+				"(-7, 1)",
+				"(-8, 2)",
+				"(-7, 2)"
+			],
+			"floor": 0,
+			"id": "deck.00",
+			"sides": [
+				{
+					"direction": "(1, 0)",
+					"samples": [
+						{
+							"cell": "(-13, 2)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+								"distance": 3,
+								"host": "kit.spatial.parcel.maze.house.wall-room.002"
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(-13, 3)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+								"distance": 3,
+								"host": "kit.spatial.parcel.maze.house.wall-room.002"
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(-13, 4)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(-13, 5)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						}
+					]
+				},
+				{
+					"direction": "(0, 1)",
+					"samples": [
+						{
+							"cell": "(-16, 5)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 2,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-15, 5)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 2,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-14, 5)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 2,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-13, 5)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 2,
+							"room": {
+
+							},
+							"walk_bands": []
+						}
+					]
+				},
+				{
+					"direction": "(-1, 0)",
+					"samples": [
+						{
+							"cell": "(-16, 2)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-16, 3)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-16, 4)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-16, 5)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						}
+					]
+				},
+				{
+					"direction": "(0, -1)",
+					"samples": [
+						{
+							"cell": "(-16, 2)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "plaza.00",
+									"kind": "deck",
+									"top": 0
+								}
+							],
+							"raw_top": 2,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-15, 2)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "plaza.00",
+									"kind": "deck",
+									"top": 0
+								}
+							],
+							"raw_top": 2,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-14, 2)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "plaza.00",
+									"kind": "deck",
+									"top": 0
+								}
+							],
+							"raw_top": 4,
+							"room": {
+								"distance": 5,
+								"host": "kit.spatial.parcel.maze.house.024"
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-13, 2)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "plaza.00",
+									"kind": "deck",
+									"top": 0
+								}
+							],
+							"raw_top": 4,
+							"room": {
+								"distance": 5,
+								"host": "kit.spatial.parcel.maze.house.024"
+							},
+							"walk_bands": []
+						}
+					]
+				}
+			]
+		}
+	],
+	"301:grand": [
+		{
+			"cells": [
+				"(-3, -3)",
+				"(-2, -3)",
+				"(-3, -2)",
+				"(-2, -2)"
+			],
+			"floor": 6,
+			"id": "plaza.00",
+			"sides": [
+				{
+					"direction": "(1, 0)",
+					"samples": [
+						{
+							"cell": "(-3, -6)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 4,
+									"id": "house.007",
+									"kind": "house",
+									"top": 8
+								}
+							],
+							"raw_top": 10,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(-3, -5)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 4,
+									"id": "house.007",
+									"kind": "house",
+									"top": 8
+								}
+							],
+							"raw_top": 10,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(-3, -4)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "house.001",
+									"kind": "house",
+									"top": 6
+								}
+							],
+							"raw_top": 14,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-3, -3)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "house.001",
+									"kind": "house",
+									"top": 6
+								}
+							],
+							"raw_top": 14,
+							"room": {
+
+							},
+							"walk_bands": []
+						}
+					]
+				},
+				{
+					"direction": "(0, 1)",
+					"samples": [
+						{
+							"cell": "(-6, -3)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 12,
+							"room": {
+
+							},
+							"walk_bands": [
+								6
+							]
+						},
+						{
+							"cell": "(-5, -3)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 12,
+							"room": {
+
+							},
+							"walk_bands": [
+								6
+							]
+						},
+						{
+							"cell": "(-4, -3)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "house.001",
+									"kind": "house",
+									"top": 6
+								}
+							],
+							"raw_top": 12,
+							"room": {
+								"distance": 3,
+								"host": "kit.spatial.parcel.maze.house.013"
+							},
+							"walk_bands": [
+								6
+							]
+						},
+						{
+							"cell": "(-3, -3)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "house.001",
+									"kind": "house",
+									"top": 6
+								}
+							],
+							"raw_top": 12,
+							"room": {
+								"distance": 3,
+								"host": "kit.spatial.parcel.maze.house.013"
+							},
+							"walk_bands": [
+								6
+							]
+						}
+					]
+				},
+				{
+					"direction": "(-1, 0)",
+					"samples": [
+						{
+							"cell": "(-6, -6)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 2,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(-6, -5)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 2,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(-6, -4)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(-6, -3)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						}
+					]
+				},
+				{
+					"direction": "(0, -1)",
+					"samples": [
+						{
+							"cell": "(-6, -6)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "house.000",
+									"kind": "house",
+									"top": 4
+								}
+							],
+							"raw_top": 2,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-5, -6)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "house.000",
+									"kind": "house",
+									"top": 4
+								}
+							],
+							"raw_top": 2,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-4, -6)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 6,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(-3, -6)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 6,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"31:large": [
+		{
+			"cells": [
+				"(2, -5)",
+				"(3, -5)",
+				"(2, -4)",
+				"(3, -4)"
+			],
+			"floor": 2,
+			"id": "plaza.00",
+			"sides": [
+				{
+					"direction": "(1, 0)",
+					"samples": [
+						{
+							"cell": "(7, -10)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(7, -9)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(7, -8)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(7, -7)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": []
+						}
+					]
+				},
+				{
+					"direction": "(0, 1)",
+					"samples": [
+						{
+							"cell": "(4, -7)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": [
+								2
+							]
+						},
+						{
+							"cell": "(5, -7)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": [
+								2
+							]
+						},
+						{
+							"cell": "(6, -7)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": [
+								2
+							]
+						},
+						{
+							"cell": "(7, -7)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": [
+								2
+							]
+						}
+					]
+				},
+				{
+					"direction": "(-1, 0)",
+					"samples": [
+						{
+							"cell": "(4, -10)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "asset.02",
+									"kind": "asset",
+									"top": 4
+								}
+							],
+							"raw_top": 6,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(4, -9)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "asset.02",
+									"kind": "asset",
+									"top": 4
+								}
+							],
+							"raw_top": 6,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(4, -8)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "asset.02",
+									"kind": "asset",
+									"top": 4
+								}
+							],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(4, -7)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "asset.02",
+									"kind": "asset",
+									"top": 4
+								}
+							],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": []
+						}
+					]
+				},
+				{
+					"direction": "(0, -1)",
+					"samples": [
+						{
+							"cell": "(4, -10)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 6,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(5, -10)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 6,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(6, -10)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 6,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(7, -10)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 6,
+							"room": {
+
+							},
+							"walk_bands": []
+						}
+					]
+				}
+			]
+		}
+	],
+	"53:grand": [
+		{
+			"cells": [
+				"(0, 5)",
+				"(1, 5)",
+				"(0, 6)",
+				"(1, 6)"
+			],
+			"floor": 6,
+			"id": "plaza.00",
+			"sides": [
+				{
+					"direction": "(1, 0)",
+					"samples": [
+						{
+							"cell": "(3, 10)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 2,
+									"id": "house.028",
+									"kind": "house",
+									"top": 7
+								}
+							],
+							"raw_top": 10,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(3, 11)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 2,
+									"id": "house.028",
+									"kind": "house",
+									"top": 7
+								}
+							],
+							"raw_top": 10,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(3, 12)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 6,
+							"room": {
+
+							},
+							"walk_bands": [
+								2
+							]
+						},
+						{
+							"cell": "(3, 13)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 6,
+							"room": {
+
+							},
+							"walk_bands": [
+								2
+							]
+						}
+					]
+				},
+				{
+					"direction": "(0, 1)",
+					"samples": [
+						{
+							"cell": "(0, 13)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 1,
+									"id": "house.029",
+									"kind": "house",
+									"top": 5
+								}
+							],
+							"raw_top": 6,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(1, 13)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 1,
+									"id": "house.029",
+									"kind": "house",
+									"top": 5
+								}
+							],
+							"raw_top": 6,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(2, 13)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 1,
+									"id": "house.029",
+									"kind": "house",
+									"top": 5
+								}
+							],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(3, 13)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 1,
+									"id": "house.029",
+									"kind": "house",
+									"top": 5
+								}
+							],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": []
+						}
+					]
+				},
+				{
+					"direction": "(-1, 0)",
+					"samples": [
+						{
+							"cell": "(0, 10)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 8,
+							"room": {
+
+							},
+							"walk_bands": [
+								1
+							]
+						},
+						{
+							"cell": "(0, 11)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 8,
+							"room": {
+
+							},
+							"walk_bands": [
+								1
+							]
+						},
+						{
+							"cell": "(0, 12)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 10,
+							"room": {
+
+							},
+							"walk_bands": [
+								1
+							]
+						},
+						{
+							"cell": "(0, 13)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 10,
+							"room": {
+
+							},
+							"walk_bands": [
+								1
+							]
+						}
+					]
+				},
+				{
+					"direction": "(0, -1)",
+					"samples": [
+						{
+							"cell": "(0, 10)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 12,
+							"room": {
+
+							},
+							"walk_bands": [
+								2,
+								6
+							]
+						},
+						{
+							"cell": "(1, 10)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 12,
+							"room": {
+
+							},
+							"walk_bands": [
+								2,
+								6
+							]
+						},
+						{
+							"cell": "(2, 10)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 12,
+							"room": {
+								"distance": 3,
+								"host": "kit.spatial.parcel.maze.bridge.00.end.0.lower"
+							},
+							"walk_bands": [
+								2,
+								6
+							]
+						},
+						{
+							"cell": "(3, 10)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 12,
+							"room": {
+								"distance": 3,
+								"host": "kit.spatial.parcel.maze.bridge.00.end.0.lower"
+							},
+							"walk_bands": [
+								2,
+								6
+							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"cells": [
+				"(4, 6)",
+				"(5, 6)",
+				"(4, 7)",
+				"(5, 7)"
+			],
+			"floor": 2,
+			"id": "deck.00",
+			"sides": [
+				{
+					"direction": "(1, 0)",
+					"samples": [
+						{
+							"cell": "(11, 12)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 2,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(11, 13)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 2,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(11, 14)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(11, 15)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						}
+					]
+				},
+				{
+					"direction": "(0, 1)",
+					"samples": [
+						{
+							"cell": "(8, 15)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(9, 15)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(10, 15)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(11, 15)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						}
+					]
+				},
+				{
+					"direction": "(-1, 0)",
+					"samples": [
+						{
+							"cell": "(8, 12)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 6,
+							"room": {
+
+							},
+							"walk_bands": [
+								2
+							]
+						},
+						{
+							"cell": "(8, 13)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 6,
+							"room": {
+
+							},
+							"walk_bands": [
+								2
+							]
+						},
+						{
+							"cell": "(8, 14)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 2,
+									"id": "deck.01",
+									"kind": "deck",
+									"top": 2
+								}
+							],
+							"raw_top": 4,
+							"room": {
+								"distance": 5,
+								"host": "kit.spatial.parcel.maze.house.029"
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(8, 15)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 2,
+									"id": "deck.01",
+									"kind": "deck",
+									"top": 2
+								}
+							],
+							"raw_top": 4,
+							"room": {
+								"distance": 5,
+								"host": "kit.spatial.parcel.maze.house.029"
+							},
+							"walk_bands": []
+						}
+					]
+				},
+				{
+					"direction": "(0, -1)",
+					"samples": [
+						{
+							"cell": "(8, 12)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "asset.00",
+									"kind": "asset",
+									"top": 16
+								}
+							],
+							"raw_top": 6,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(9, 12)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "asset.00",
+									"kind": "asset",
+									"top": 16
+								}
+							],
+							"raw_top": 6,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(10, 12)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "asset.00",
+									"kind": "asset",
+									"top": 16
+								}
+							],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(11, 12)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "asset.00",
+									"kind": "asset",
+									"top": 16
+								}
+							],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"cells": [
+				"(2, 7)",
+				"(3, 7)",
+				"(2, 8)",
+				"(3, 8)"
+			],
+			"floor": 2,
+			"id": "deck.01",
+			"sides": [
+				{
+					"direction": "(1, 0)",
+					"samples": [
+						{
+							"cell": "(7, 14)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 2,
+									"id": "deck.00",
+									"kind": "deck",
+									"top": 2
+								}
+							],
+							"raw_top": 2,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(7, 15)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 2,
+									"id": "deck.00",
+									"kind": "deck",
+									"top": 2
+								}
+							],
+							"raw_top": 2,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(7, 16)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(7, 17)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						}
+					]
+				},
+				{
+					"direction": "(0, 1)",
+					"samples": [
+						{
+							"cell": "(4, 17)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(5, 17)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(6, 17)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(7, 17)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						}
+					]
+				},
+				{
+					"direction": "(-1, 0)",
+					"samples": [
+						{
+							"cell": "(4, 14)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 1,
+									"id": "house.029",
+									"kind": "house",
+									"top": 5
+								}
+							],
+							"raw_top": 4,
+							"room": {
+								"distance": 1,
+								"host": "kit.spatial.parcel.maze.house.029"
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(4, 15)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 1,
+									"id": "house.029",
+									"kind": "house",
+									"top": 5
+								}
+							],
+							"raw_top": 4,
+							"room": {
+								"distance": 1,
+								"host": "kit.spatial.parcel.maze.house.029"
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(4, 16)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 1,
+									"id": "house.029",
+									"kind": "house",
+									"top": 5
+								}
+							],
+							"raw_top": 2,
+							"room": {
+								"distance": 1,
+								"host": "kit.spatial.parcel.maze.house.029"
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(4, 17)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 1,
+									"id": "house.029",
+									"kind": "house",
+									"top": 5
+								}
+							],
+							"raw_top": 2,
+							"room": {
+								"distance": 1,
+								"host": "kit.spatial.parcel.maze.house.029"
+							},
+							"walk_bands": []
+						}
+					]
+				},
+				{
+					"direction": "(0, -1)",
+					"samples": [
+						{
+							"cell": "(4, 14)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 6,
+							"room": {
+								"distance": 3,
+								"host": "kit.spatial.parcel.maze.house.028"
+							},
+							"walk_bands": [
+								2
+							]
+						},
+						{
+							"cell": "(5, 14)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 6,
+							"room": {
+								"distance": 3,
+								"host": "kit.spatial.parcel.maze.house.028"
+							},
+							"walk_bands": [
+								2
+							]
+						},
+						{
+							"cell": "(6, 14)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 6,
+							"room": {
+
+							},
+							"walk_bands": [
+								2
+							]
+						},
+						{
+							"cell": "(7, 14)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 6,
+							"room": {
+
+							},
+							"walk_bands": [
+								2
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"63:grand": [
+		{
+			"cells": [
+				"(-2, -1)",
+				"(-1, -1)",
+				"(0, -1)",
+				"(-2, 0)",
+				"(-1, 0)",
+				"(0, 0)"
+			],
+			"floor": 4,
+			"id": "plaza.00",
+			"sides": [
+				{
+					"direction": "(1, 0)",
+					"samples": [
+						{
+							"cell": "(1, -2)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(1, -1)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(1, 0)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(1, 1)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": []
+						}
+					]
+				},
+				{
+					"direction": "(0, 1)",
+					"samples": [
+						{
+							"cell": "(-4, 1)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 8,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(-3, 1)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 8,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(-2, 1)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 8,
+							"room": {
+								"distance": 4,
+								"host": "kit.spatial.parcel.maze.house.001"
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(-1, 1)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 8,
+							"room": {
+								"distance": 4,
+								"host": "kit.spatial.parcel.maze.house.001"
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(0, 1)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 8,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(1, 1)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 8,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						}
+					]
+				},
+				{
+					"direction": "(-1, 0)",
+					"samples": [
+						{
+							"cell": "(-4, -2)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "asset.01",
+									"kind": "asset",
+									"top": 4
+								}
+							],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-4, -1)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "asset.01",
+									"kind": "asset",
+									"top": 4
+								}
+							],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-4, 0)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "asset.01",
+									"kind": "asset",
+									"top": 4
+								}
+							],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-4, 1)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "asset.01",
+									"kind": "asset",
+									"top": 4
+								}
+							],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": []
+						}
+					]
+				},
+				{
+					"direction": "(0, -1)",
+					"samples": [
+						{
+							"cell": "(-4, -2)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 16,
+							"room": {
+
+							},
+							"walk_bands": [
+								0,
+								4
+							]
+						},
+						{
+							"cell": "(-3, -2)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 16,
+							"room": {
+
+							},
+							"walk_bands": [
+								0,
+								4
+							]
+						},
+						{
+							"cell": "(-2, -2)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "house.wall-room.006",
+									"kind": "house",
+									"top": 4
+								}
+							],
+							"raw_top": 16,
+							"room": {
+								"distance": 3,
+								"host": "kit.spatial.parcel.maze.house.010"
+							},
+							"walk_bands": [
+								4
+							]
+						},
+						{
+							"cell": "(-1, -2)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "house.wall-room.006",
+									"kind": "house",
+									"top": 4
+								}
+							],
+							"raw_top": 16,
+							"room": {
+								"distance": 3,
+								"host": "kit.spatial.parcel.maze.house.010"
+							},
+							"walk_bands": [
+								4
+							]
+						},
+						{
+							"cell": "(0, -2)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "house.wall-room.008",
+									"kind": "house",
+									"top": 4
+								}
+							],
+							"raw_top": 16,
+							"room": {
+								"distance": 3,
+								"host": "kit.spatial.parcel.maze.house.010"
+							},
+							"walk_bands": [
+								4
+							]
+						},
+						{
+							"cell": "(1, -2)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "house.wall-room.008",
+									"kind": "house",
+									"top": 4
+								}
+							],
+							"raw_top": 16,
+							"room": {
+								"distance": 3,
+								"host": "kit.spatial.parcel.maze.house.010"
+							},
+							"walk_bands": [
+								4
+							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"cells": [
+				"(-3, -8)",
+				"(-2, -8)",
+				"(-3, -7)",
+				"(-2, -7)"
+			],
+			"floor": 0,
+			"id": "deck.00",
+			"sides": [
+				{
+					"direction": "(1, 0)",
+					"samples": [
+						{
+							"cell": "(-3, -16)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-3, -15)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-3, -14)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "house.016",
+									"kind": "house",
+									"top": 4
+								}
+							],
+							"raw_top": 2,
+							"room": {
+								"distance": 1,
+								"host": "kit.spatial.parcel.maze.house.016"
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-3, -13)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "house.016",
+									"kind": "house",
+									"top": 4
+								}
+							],
+							"raw_top": 2,
+							"room": {
+								"distance": 1,
+								"host": "kit.spatial.parcel.maze.house.016"
+							},
+							"walk_bands": []
+						}
+					]
+				},
+				{
+					"direction": "(0, 1)",
+					"samples": [
+						{
+							"cell": "(-6, -13)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+								"distance": 3,
+								"host": "kit.spatial.parcel.maze.house.wall-room.000"
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(-5, -13)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+								"distance": 3,
+								"host": "kit.spatial.parcel.maze.house.wall-room.000"
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(-4, -13)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+								"distance": 3,
+								"host": "kit.spatial.parcel.maze.house.wall-room.000"
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(-3, -13)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 4,
+							"room": {
+								"distance": 3,
+								"host": "kit.spatial.parcel.maze.house.wall-room.000"
+							},
+							"walk_bands": [
+								0
+							]
+						}
+					]
+				},
+				{
+					"direction": "(-1, 0)",
+					"samples": [
+						{
+							"cell": "(-6, -16)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-6, -15)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-6, -14)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "house.019",
+									"kind": "house",
+									"top": 4
+								}
+							],
+							"raw_top": 2,
+							"room": {
+								"distance": 1,
+								"host": "kit.spatial.parcel.maze.house.019"
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-6, -13)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "house.019",
+									"kind": "house",
+									"top": 4
+								}
+							],
+							"raw_top": 2,
+							"room": {
+								"distance": 1,
+								"host": "kit.spatial.parcel.maze.house.019"
+							},
+							"walk_bands": []
+						}
+					]
+				},
+				{
+					"direction": "(0, -1)",
+					"samples": [
+						{
+							"cell": "(-6, -16)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-5, -16)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-4, -16)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(-3, -16)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						}
+					]
+				}
+			]
+		}
+	],
+	"83:grand": [
+		{
+			"cells": [
+				"(7, 1)",
+				"(8, 1)",
+				"(7, 2)",
+				"(8, 2)"
+			],
+			"floor": 0,
+			"id": "plaza.00",
+			"sides": [
+				{
+					"direction": "(1, 0)",
+					"samples": [
+						{
+							"cell": "(17, 2)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "house.004",
+									"kind": "house",
+									"top": 4
+								}
+							],
+							"raw_top": 2,
+							"room": {
+								"distance": 1,
+								"host": "kit.spatial.parcel.maze.house.004"
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(17, 3)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "house.004",
+									"kind": "house",
+									"top": 4
+								}
+							],
+							"raw_top": 2,
+							"room": {
+								"distance": 1,
+								"host": "kit.spatial.parcel.maze.house.004"
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(17, 4)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "house.004",
+									"kind": "house",
+									"top": 4
+								}
+							],
+							"raw_top": 4,
+							"room": {
+								"distance": 1,
+								"host": "kit.spatial.parcel.maze.house.004"
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(17, 5)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "house.004",
+									"kind": "house",
+									"top": 4
+								}
+							],
+							"raw_top": 4,
+							"room": {
+								"distance": 1,
+								"host": "kit.spatial.parcel.maze.house.004"
+							},
+							"walk_bands": []
+						}
+					]
+				},
+				{
+					"direction": "(0, 1)",
+					"samples": [
+						{
+							"cell": "(14, 5)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 2,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(15, 5)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 2,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(16, 5)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 2,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						},
+						{
+							"cell": "(17, 5)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 2,
+							"room": {
+
+							},
+							"walk_bands": [
+								0
+							]
+						}
+					]
+				},
+				{
+					"direction": "(-1, 0)",
+					"samples": [
+						{
+							"cell": "(14, 2)",
+							"native_distance": 6,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "asset.01",
+									"kind": "asset",
+									"top": 8
+								}
+							],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(14, 3)",
+							"native_distance": 6,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "asset.01",
+									"kind": "asset",
+									"top": 8
+								}
+							],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(14, 4)",
+							"native_distance": 6,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "asset.01",
+									"kind": "asset",
+									"top": 8
+								}
+							],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(14, 5)",
+							"native_distance": 0,
+							"plots": [
+								{
+									"floor": 0,
+									"id": "asset.01",
+									"kind": "asset",
+									"top": 8
+								}
+							],
+							"raw_top": 4,
+							"room": {
+
+							},
+							"walk_bands": []
+						}
+					]
+				},
+				{
+					"direction": "(0, -1)",
+					"samples": [
+						{
+							"cell": "(14, 2)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(15, 2)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(16, 2)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						},
+						{
+							"cell": "(17, 2)",
+							"native_distance": 0,
+							"plots": [],
+							"raw_top": 0,
+							"room": {
+
+							},
+							"walk_bands": []
+						}
+					]
+				}
+			]
+		}
+	]
+}

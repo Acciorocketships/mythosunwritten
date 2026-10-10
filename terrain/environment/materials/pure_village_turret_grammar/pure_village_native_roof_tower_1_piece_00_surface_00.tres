@@ -1,0 +1,19 @@
+[gd_resource type="StandardMaterial3D" load_steps=4 format=3]
+
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/pure_village_kit/ede033c81475f580e777.res" id="1_s85uq"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/pure_village_kit/c2984923c7c08d50ca35.res" id="2_rqopt"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/pure_village_kit/51802515c92aeb594f84.res" id="3_pjdgd"]
+
+[resource]
+resource_name = "Metal_1"
+vertex_color_use_as_albedo = true
+albedo_texture = ExtResource("1_s85uq")
+metallic = 1.0
+metallic_texture = ExtResource("2_rqopt")
+metallic_texture_channel = 2
+roughness_texture = ExtResource("2_rqopt")
+roughness_texture_channel = 1
+normal_enabled = true
+normal_texture = ExtResource("3_pjdgd")
+ao_enabled = true
+ao_texture = ExtResource("2_rqopt")

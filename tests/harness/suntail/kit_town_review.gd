@@ -5,12 +5,24 @@ extends SceneTree
 ##     --output DIR --cities 1:compact,2:standard [--legacy] [--uniform] \
 ##     [--views overview,orbit,street,top] [--streets N]
 ## --legacy renders the old recipe buildings instead of the kit (A/B).
+## Native mixed roofs are the default; --legacy-roofs keeps Suntail roofs on all families.
+## --pure-roofs uses Pure Village for every building (grammar review).
 ## --uniform uses a uniform horizontal-scale frame instead of the kit-derived frame.
+## --production-size uses the exact seeded size rather than the named corpus anchor.
+## --frozen-source res://tests/fixtures/name.txt reproduces a captured source plan.
+## --photo id:player_xyz:crosshair_xyz[:fov] reconstructs a close-camera F3 view.
 const FROZEN := preload("res://tests/fixtures/frozen_maze_source.gd")
 
+static var _projection_views: Array[Dictionary] = []
+static var _stepped_houses: Array[Dictionary] = []
+static var _growth_views: Array[Dictionary] = []
+static var _wrap_views: Array[Dictionary] = []
+static var _door_views: Array[Dictionary] = []
 var _out := "user://kit_town_review"
 var _jobs: Array = []
 var _legacy := false
+var _production_size := false
+var _frozen_source := ""
 var _uniform := false
 var _views := PackedStringArray(["overview", "orbit", "street", "top"])
 var _streets := 6
@@ -22,6 +34,13 @@ var _hide_prefix := ""
 ## so a flat-ground town sits exactly where it stands in-world.
 var _world_frame := Transform3D()
 var _has_world_frame := false
+var _dressing := false
+
+class DressingGround extends VillageTerrainView:
+	var level := 0.0
+	func surface_y(_point: Vector2) -> float: return level
+	func is_wet(_point: Vector2) -> bool: return false
+
 var _ground_y := -0.05
 ## Extra world-space shots: id:eye:target[:fov].
 var _custom_views: Array[Dictionary] = []
@@ -33,6 +52,9 @@ func _init() -> void:
 		match args[i]:
 			"--output": _out = args[i + 1]
 			"--legacy": _legacy = true
+			"--production-size": _production_size = true
+			"--frozen-source": _frozen_source = args[i + 1]
+			"--dressing": _dressing = true
 			"--tint-retained": _tint_retained = true
 			"--tint": _tint_prefix = args[i + 1]
 			"--hide": _hide_prefix = args[i + 1]
@@ -55,6 +77,22 @@ func _init() -> void:
 					"eye": Vector3(float(e[0]), float(e[1]), float(e[2])),
 					"target": Vector3(float(t[0]), float(t[1]), float(t[2])),
 					"fov": float(parts[3]) if parts.size() > 3 else 70.0})
+			"--photo":
+				# id:player xyz:crosshair xyz[:fov], from the F3 overlay.
+				var parts := args[i + 1].split(":")
+				var p := parts[1].split(",")
+				var h := parts[2].split(",")
+				var player := Vector3(float(p[0]), float(p[1]), float(p[2]))
+				var hit := Vector3(float(h[0]), float(h[1]), float(h[2]))
+				var target := player + Vector3.UP * CameraMouseView.PIVOT_HEIGHT
+				var delta := target - hit
+				var pitch := atan2(delta.y, Vector2(delta.x, delta.z).length())
+				var eye := ReviewCam.solve_cam(player, hit,
+					CameraMouseView.BOOM_LENGTH * cos(pitch),
+					CameraMouseView.PIVOT_HEIGHT + CameraMouseView.BOOM_LENGTH * sin(pitch),
+					CameraMouseView.PIVOT_HEIGHT)
+				_custom_views.append({"id": parts[0], "eye": eye, "target": target,
+					"fov": float(parts[3]) if parts.size() > 3 else 75.0})
 			"--cities":
 				for job in args[i + 1].split(","):
 					var parts := job.split(":")
@@ -89,7 +127,7 @@ func _stage() -> Node3D:
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-50, -35, 0)
 	sun.light_energy = 1.2
-	sun.shadow_enabled = true
+	sun.shadow_enabled = not OS.get_cmdline_user_args().has("--no-shadows")
 	sun.shadow_opacity = 0.7
 	sun.directional_shadow_max_distance = 250.0
 	stage.add_child(sun)
@@ -109,10 +147,73 @@ func _stage() -> Node3D:
 static func town_payload(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 		legacy: bool) -> EnvironmentInstancePayload:
 	var payload: EnvironmentInstancePayload
+	_projection_views.clear()
+	_growth_views.clear()
+	_wrap_views.clear()
+	_door_views.clear()
 	if legacy:
 		payload = SettlementFabricAssembler.payload(fabric)
 	else:
-		var built := KitVillageBuildings.build(spatial, fabric, SuntailBuildingKit.create())
+		var kit := SuntailBuildingKit.create()
+		if OS.get_cmdline_user_args().has("--pure-roofs"):
+			kit = preload("res://scripts/terrain/features/villages/kit/PureVillageBuildingKit.gd").roof_study()
+		var built := KitVillageBuildings.build(spatial, fabric, kit,true,not OS.get_cmdline_user_args().has("--legacy-roofs"))
+		var arguments := OS.get_cmdline_user_args()
+		var wall_study := arguments.find("--wall-study")
+		if wall_study>=0 and wall_study+1<arguments.size():
+			preload("res://tests/harness/suntail/wall_material_study.gd").apply(built,kit,arguments[wall_study+1])
+		for projection: Dictionary in built.room_projections:
+			var direction: Vector2i = BuildingMass.DIRS[int(projection.dir)]
+			_projection_views.append({"at": KitVillageBuildings.native_to_lattice(kit) * (projection.bounds as AABB).get_center(),
+				"direction": Vector3(direction.x, 0, direction.y)})
+		var houses := {}
+		for mass: BuildingMass in built.get("houses", []):
+			houses[mass.stable_id] = mass
+		for lean: Dictionary in built.get("growth", []):
+			var direction: Vector2i = BuildingMass.DIRS[int(lean.dir)]
+			var right: Vector2i = BuildingKitAssembler.right_of(int(lean.dir))
+			var box: AABB = lean.bounds
+			var mass: BuildingMass = houses.get(lean.host)
+			var ground := mass != null and int(lean.band) == mass.ground_band
+			if not ground:
+				continue
+			# The recess's outer face (the lot line), where a passer-by stands in front of it.
+			var front := box.get_center() + Vector3(direction.x, 0, direction.y) * box.size.dot(
+				Vector3(absf(direction.x), 0, absf(direction.y))) * 0.5
+			# The ground storey's floor under that point: eye heights are measured from it,
+			# not from the flat review ground (most towns stand on a raised massif).
+			var floor_at: Vector3 = KitVillageBuildings.native_to_lattice(kit) * Vector3(front.x,
+				mass.ground_band * kit.band_height(), front.z)
+			if ground:
+				_growth_views.append({"at": KitVillageBuildings.native_to_lattice(kit) * front,
+					"floor": floor_at, "direction": Vector3(direction.x, 0, direction.y), "lean": float(lean.lean)})
+				var storey: Dictionary = mass.storeys[preload("res://scripts/terrain/features/villages/kit/KitGrowingFronts.gd").ground_index(mass)]
+				for edge: Vector3i in lean.edges:
+					if StringName(storey.openings.get(edge, storey.default_opening)) == BuildingMass.OPENING_DOOR:
+						var door := (Vector3(edge.x + 0.5, 0, edge.y + 0.5) + Vector3(direction.x, 0, direction.y) * 0.5) \
+							* kit.module_width
+						_door_views.append({"at": KitVillageBuildings.native_to_lattice(kit) * door,
+							"floor": floor_at, "direction": Vector3(direction.x, 0, direction.y), "lean": float(lean.lean)})
+			for side in 2:
+				var kind := StringName((lean.closures as Array)[side])
+				if kind in [&"wrap", &"joint", &"bury"]:
+					# The end of the recess where the wrap/joint/bury is (side 0 = the -right end).
+					var reach := (box.size.x if right.x != 0 else box.size.z) * 0.5 * (-1.0 if side == 0 else 1.0)
+					_wrap_views.append({"at": KitVillageBuildings.native_to_lattice(kit) * (front + Vector3(right.x, 0, right.y) * reach),
+						"floor": floor_at, "direction": Vector3(direction.x, 0, direction.y), "right": Vector3(right.x, 0, right.y),
+						"kind": kind, "lean": float(lean.lean)})
+		_growth_views.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return float(a.lean) < float(b.lean))
+		_door_views.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return float(a.lean) < float(b.lean))
+		_stepped_houses.clear()
+		for mass: BuildingMass in built.masses:
+			if not mass.storeys.any(func(f:Dictionary)->bool:return f.get("stepped_wing",false)): continue
+			var rect := BuildingDesigner._bounds(mass.storeys[0].cells)
+			var native := Vector3((rect.position.x+rect.size.x*.5)*kit.module_width,
+				(mass.ground_band+mass.top_band())*.5*kit.band_height(),
+				(rect.position.y+rect.size.y*.5)*kit.module_width)
+			_stepped_houses.append({"id":mass.stable_id,"at":KitVillageBuildings.native_to_lattice(kit)*native,
+				"reach":maxi(rect.size.x,rect.size.y)*kit.module_width*2.0})
+		print("STEPPED_HOUSES ",_stepped_houses)
 		print("ROOF_AUDIT ", built.roof_audit)
 		payload = KitVillageBuildings.legacy_payload_without(fabric, built.replaced_units)
 		payload.append_from(built.payload)
@@ -121,7 +222,9 @@ static func town_payload(spatial: WarrenSpatialPlan, fabric: SettlementFabricPla
 		SettlementFabricAssembler.maze_skin_panel_boxes_for(fabric),
 		fabric.planned_plaza_cells))
 	payload.append_from(SettlementFabricAssembler.low_retaining_payload(fabric))
-	var terrace := SettlementFabricAssembler.terrace_retaining_payload(fabric, false)
+	var terrace := SettlementFabricAssembler.terrace_retaining_payload(fabric, false,
+		preload("res://scripts/terrain/features/villages/TownCourtTrees.gd").native_obstacles(
+			payload, EnvironmentCatalog.load_default()) if not legacy and not fabric.planned_plaza_planting_cells.is_empty() else {})
 	if not legacy:
 		terrace = KitVillageBuildings.without_prefixes(terrace,
 			KitVillageBuildings.REPLACED_TERRACE_PREFIXES)
@@ -131,8 +234,20 @@ static func town_payload(spatial: WarrenSpatialPlan, fabric: SettlementFabricPla
 	return payload
 
 
+## The camera position on the way from `from` (known clear) to `to`, stopped short of
+## the first collision, so a review camera never ends up inside a wall or the massif.
+func _clear_eye(stage: Node3D, from: Vector3, to: Vector3) -> Vector3:
+	var hit := stage.get_world_3d().direct_space_state.intersect_ray(
+		PhysicsRayQueryParameters3D.create(from, to))
+	if hit.is_empty():
+		return to
+	return (hit.position as Vector3) + (from - to).normalized() * 0.4
+
+
 func _shoot(stage: Node3D, eye: Vector3, target: Vector3, name: String,
 		fov := 55.0) -> void:
+	print("REVIEW_CAMERA ", JSON.stringify({"view": name, "eye": str(eye),
+		"target": str(target), "fov": fov}))
 	var camera := Camera3D.new()
 	camera.fov = fov
 	camera.far = 2000.0
@@ -141,6 +256,33 @@ func _shoot(stage: Node3D, eye: Vector3, target: Vector3, name: String,
 	camera.current = true
 	for i in 8:
 		await process_frame
+	if OS.get_cmdline_user_args().has("--profile-frames"):
+		Engine.max_fps = 0
+		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
+		RenderingServer.viewport_set_measure_render_time(get_root().get_viewport_rid(),true)
+		var samples: Array[float] = []
+		var gpu: Array[float] = []
+		var cpu: Array[float] = []
+		var previous := Time.get_ticks_usec()
+		for frame in 180:
+			await process_frame
+			var now := Time.get_ticks_usec()
+			if frame >= 60:
+				samples.append((now-previous)/1000.0)
+				gpu.append(RenderingServer.viewport_get_measured_render_time_gpu(get_root().get_viewport_rid()))
+				cpu.append(RenderingServer.viewport_get_measured_render_time_cpu(get_root().get_viewport_rid()))
+			previous = now
+		samples.sort()
+		gpu.sort()
+		cpu.sort()
+		var report := {"view":name,"samples":samples.size(),"median_ms":samples[60],
+			"p95_ms":samples[114],"gpu_median_ms":gpu[60],"gpu_p95_ms":gpu[114],
+			"gpu_timing_available":gpu[60] > 0.0,
+			"render_cpu_median_ms":cpu[60],
+			"draw_calls":Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),
+			"primitives":Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)}
+		FileAccess.open("%s/%s-performance.json" % [_out,name],FileAccess.WRITE).store_string(JSON.stringify(report,"  "))
+		print("TOWN_RENDER_PROFILE ",JSON.stringify(report))
 	RenderingServer.force_draw(false)
 	get_root().get_texture().get_image().save_png("%s/%s.png" % [_out, name])
 	camera.queue_free()
@@ -151,15 +293,28 @@ func _run() -> void:
 	var stage := _stage()
 	var catalog := EnvironmentCatalog.load_default()
 	var program := SettlementFabricProgram.compile(catalog)
+	var overrides := TownOddsProgram.parse_overrides(OS.get_cmdline_user_args(), program.town_odds)
+	if overrides.has("error"):
+		push_error(String(overrides.error))
+		quit(2)
+		return
+	if not overrides.is_empty():
+		program.town_odds = program.town_odds.with_overrides(overrides)
 	var cache := EnvironmentRenderCache.new(catalog)
+	# Match the streamer: native lawn lips share the terrain sheet material.
+	CliffDressing.prepare(cache)
 	var frame := Basis.from_scale(Vector3.ONE * VillageWorldScale.HORIZONTAL_SCALE) if _uniform \
 		else Basis.from_scale(VillageWorldScale.frame_scale())
 	for job: Array in _jobs:
 		var seed_value: int = job[0]
 		var scale: StringName = job[1]
-		var profile := WarrenVillageScaleProfile.for_id(scale)
+		var profile := WarrenVillageScaleProfile.select(seed_value) if _production_size \
+			else WarrenVillageScaleProfile.for_id(scale)
+		TownCharacter.attach(profile, program.town_odds, seed_value)
+		print("TOWN_CHARACTER ", seed_value, ":", scale, " ", JSON.stringify(profile.character.values))
 		var started := Time.get_ticks_msec()
-		var source := WarrenMazeSitePlanner.plan(seed_value, {}, profile, &"", false)
+		var source := FROZEN.read(_frozen_source) if not _frozen_source.is_empty() \
+			else WarrenMazeSitePlanner.plan(seed_value, {}, profile, &"", false)
 		if source == null:
 			print("PLAN_FAIL ", seed_value, " ", scale)
 			continue
@@ -167,6 +322,31 @@ func _run() -> void:
 		var spatial := FROZEN.spatial(source, program)
 		var fabric := spatial.compiled_fabric_cache()
 		var payload := town_payload(spatial, fabric, _legacy)
+		var dressing_entries: Array[Dictionary] = []
+		if _dressing:
+			var dressed := VillageUrbanFabricPlan.new()
+			dressed.world_transform = _world_frame if _has_world_frame else Transform3D(frame,Vector3.ZERO)
+			VillageWarrenFabricSolver._append_typed_occupancy(dressed,fabric,dressed.world_transform,&"review",0)
+			VillageWarrenFabricSolver._append_physical_ground_clearance(dressed,&"review")
+			var metadata := {}
+			var dresser := preload("res://scripts/terrain/features/villages/TownGroundDressing.gd")
+			for id in dresser.asset_ids(): metadata[id] = catalog.descriptor(id).measured_aabb
+			# Production dresses around the finished kit entries as well as the
+			# planning grid. Include those same measured low facade obstacles.
+			for id: StringName in payload.asset_ids():
+				metadata[id] = catalog.descriptor(id).measured_aabb
+				var batch: Dictionary = payload.batches[id]
+				for pose: Transform3D in batch.transforms:
+					dressed.entries.append({"asset_id":id,"transform":dressed.world_transform*pose})
+			var existing_entries := dressed.entries.size()
+			var ground_view := DressingGround.new()
+			ground_view.level = _ground_y
+			print("DRESSING ",dresser.dress(dressed,source,metadata,ground_view,seed_value))
+			dressing_entries.assign(dressed.entries.slice(existing_entries))
+			for entry: Dictionary in dressing_entries:
+				payload.add(entry.asset_id,dressed.world_transform.affine_inverse()*entry.transform,
+					entry.color,entry.stable_id,true)
+
 		if not _hide_prefix.is_empty():
 			payload = KitVillageBuildings.without_prefixes(payload, [_hide_prefix] as Array[String])
 		if not _tint_prefix.is_empty():
@@ -188,12 +368,169 @@ func _run() -> void:
 		if _has_world_frame:
 			frame = _world_frame.basis
 		stage.add_child(town)
+		# Native reviews must show the same regional lawn colour as production.
+		# Keep local geometry under the town transform; copy world-sampled colours.
+		for mesh: Dictionary in payload.surface_meshes:
+			if bool(mesh.get("terrain_ground", false)):
+				var world_mesh := VillageWarrenFabricSolver._world_surface_mesh(mesh,town.transform,&"review",seed_value)
+				mesh["colors"] = world_mesh.colors
 		cache.prepare(payload.asset_ids())
 		var queue := FeatureCommitQueue.new(cache)
 		queue.enqueue(Vector2i.ZERO, 1, town, payload)
 		while queue.pending_count() > 0:
 			queue.drain(100000, 100000, 100000)
 			await process_frame
+		var garden_grass_node: Node3D = null
+		if OS.get_cmdline_user_args().has("--garden-grass"):
+			var grass_report := preload("res://tests/harness/suntail/garden_grass_review.gd").draw(payload,town.transform,catalog,cache,seed_value)
+			garden_grass_node = grass_report.node
+			stage.add_child(garden_grass_node)
+			print("GARDEN_GRASS ",seed_value," ",scale," instances=",grass_report.instances," tiles=",grass_report.tiles)
+		if _views.has("retaining") or _views.has("retaining-windows"):
+			# Review from real public floors, facing an actually visible native
+			# support. Arbitrary close cameras can start inside adjacent houses.
+			await physics_frame
+			await physics_frame
+			var candidates: Array[Dictionary] = []
+			var space := stage.get_world_3d().direct_space_state
+			var relief_asset := &"pure_village.stone.retaining_window" if _views.has("retaining-windows") else &"pure_village.stone.retaining_corbel"
+			var relief: Dictionary = payload.batches.get(relief_asset,{})
+			for index in (relief.get("transforms",[]) as Array).size():
+				var pose: Transform3D = town.transform * relief.transforms[index]
+				var target: Vector3 = pose * catalog.descriptor(relief_asset).measured_aabb.get_center()
+				var facing := pose.basis.z.normalized()
+				for cell: Vector3i in spatial.route_floor_cells:
+					var eye := town.transform * (Vector3(cell) * FabricRecipe.CELL_SIZE) + Vector3.UP * 1.7
+					var offset := eye - target
+					if offset.dot(facing) < 3.0 or offset.length() > 24.0: continue
+					var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(eye,target))
+					if not hit.is_empty() and hit.position.distance_to(target) > 2.0: continue
+					candidates.append({"eye":eye,"target":target,"score":absf(offset.length()-10.0),"id":relief.ids[index]})
+			candidates.sort_custom(func(a: Dictionary,b: Dictionary)->bool:return a.score<b.score)
+			var seen := {}
+			for candidate: Dictionary in candidates:
+				if seen.has(candidate.id): continue
+				seen[candidate.id] = true
+				print("RETAINING_VIEW ",candidate)
+				await _shoot(stage,candidate.eye,candidate.target,"%d_%s_retaining%d" % [seed_value,scale,seen.size()],60)
+				if seen.size() >= 3: break
+		if _views.has("arcades"):
+			var entries: Dictionary = payload.batches.get(&"pure_village.arcade.door_2_1", {})
+			var poses: Array = entries.get("transforms", [])
+			for index in poses.size():
+				var pose: Transform3D = town.transform * poses[index]
+				var outward := pose.basis.z.normalized()
+				var side := pose.basis.x.normalized()
+				var target := pose.origin + Vector3.UP * 9
+				await _shoot(stage, pose.origin + outward * 19 + side * 5 + Vector3.UP * 3,
+					target, "%d_%s_arcade%d" % [seed_value, scale, index], 65)
+
+		if _views.has("native-houses"):
+			var native_index := 0
+			for unit: FabricUnit in fabric.units:
+				var recipe := fabric.recipe(unit.recipe_id)
+				if not recipe.has_tag(&"native_grammar"): continue
+				var pose := town.transform * unit.transform()
+				var box: AABB = pose * recipe.local_clearance_bounds
+				var target := box.get_center()
+				for side in [-1, 1]:
+					var direction := (pose.basis * Vector3(1, .4, side)).normalized()
+					await _shoot(stage, target + direction * box.size.length(), target,
+						"%d_%s_native_house%d_%d" % [seed_value, scale, native_index, side], 50)
+				print("NATIVE_HOUSE_VIEW ",native_index," ",unit.recipe_id)
+				native_index += 1
+		if _views.has("native-windows"):
+			var window_batch: Dictionary = payload.batches.get(&"pure_village.native.window_5_2",{})
+			var window_poses: Array = window_batch.get("transforms",[])
+			for index in mini(4,window_poses.size()):
+				var pose: Transform3D = town.transform * window_poses[index]
+				var target := pose * Vector3(0,1.5,.3)
+				var outward := pose.basis.z.normalized()
+				var side := pose.basis.x.normalized()
+				await _shoot(stage,target+outward*10+side*3+Vector3.UP*2,target,
+					"%d_%s_native_window%d" % [seed_value,scale,index],55)
+		if _views.has("projections"):
+			for index in mini(6, _projection_views.size()):
+				var projection: Dictionary = _projection_views[index]
+				var target: Vector3 = town.transform * (projection.at as Vector3)
+				var outward: Vector3 = (town.transform.basis * (projection.direction as Vector3)).normalized()
+				var side := outward.cross(Vector3.UP)
+				for sign_value: int in [-1, 1]:
+					var eye := target + outward * 6.0 + side * float(sign_value) * 2.0 - Vector3.UP * 2.0
+					print("PROJECTION_VIEW ", seed_value, " ", index, " ", sign_value, " eye=", eye, " target=", target)
+					await _shoot(stage, eye, target, "%d_%s_projection%d_%d" % [seed_value, scale, index, sign_value], 75)
+
+		if _views.has("growth") or _views.has("wrap") or _views.has("door"):
+			await physics_frame # the review cameras below ray-test the committed collision
+			await physics_frame
+		if _views.has("growth"):
+			# Shambles framing: stand in the lane in front of the deepest stepped-in ground
+			# storeys and look along the lane at eye height; then look up at the jetties.
+			for index in mini(6, _growth_views.size()):
+				var view: Dictionary = _growth_views[index]
+				var target: Vector3 = town.transform * (view.at as Vector3)
+				var outward: Vector3 = (town.transform.basis * (view.direction as Vector3)).normalized()
+				var along := outward.cross(Vector3.UP).normalized()
+				var foot := _clear_eye(stage, target + outward * 0.6, target + outward * 3.0)
+				foot.y = (town.transform * (view.floor as Vector3)).y + 1.8
+				# Look along the lane from whichever side has more room behind the camera.
+				var back := _clear_eye(stage, foot, foot - along * 10.0)
+				var other := _clear_eye(stage, foot, foot + along * 10.0)
+				if other.distance_to(foot) > back.distance_to(foot):
+					along = -along
+					back = other
+				await _shoot(stage, back, foot + along * 20.0 - outward * 2.0 + Vector3.UP * 3.0,
+					"%d_%s_growth%d_lane" % [seed_value, scale, index], 70)
+				target.y = foot.y - 1.8
+				await _shoot(stage, _clear_eye(stage, foot, target + outward * 5.0 + Vector3.UP * 1.6),
+					target + Vector3.UP * 3.5,
+					"%d_%s_growth%d_up" % [seed_value, scale, index], 75)
+		if _views.has("wrap"):
+			# Wrapped corners, row joints and buried ends: an oblique from the street at eye
+			# height and a square-on view from the side.
+			_wrap_views.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+				return String(a.kind) + str(a.lean) < String(b.kind) + str(b.lean))
+			# At most three of each closure kind, so every kind present gets its views.
+			var per_kind := {}
+			for index in _wrap_views.size():
+				var view: Dictionary = _wrap_views[index]
+				per_kind[view.kind] = int(per_kind.get(view.kind, 0)) + 1
+				if int(per_kind[view.kind]) > 3:
+					continue
+				var target: Vector3 = town.transform * (view.at as Vector3)
+				var floor_y: float = (town.transform * (view.floor as Vector3)).y
+				target.y = floor_y + 1.5
+				var outward: Vector3 = (town.transform.basis * (view.direction as Vector3)).normalized()
+				var side: Vector3 = (town.transform.basis * (view.right as Vector3)).normalized()
+				var eye := target + outward * 7.0 + side * 5.0
+				eye.y = floor_y + 1.8
+				await _shoot(stage, _clear_eye(stage, target + outward * 1.0, eye), target + Vector3.UP * 2.0,
+					"%d_%s_%s%d_street" % [seed_value, scale, view.kind, index], 70)
+				await _shoot(stage, _clear_eye(stage, target + outward * 1.0, target + side * 9.0 + outward * 1.0 + Vector3.UP * 1.0), target,
+					"%d_%s_%s%d_side" % [seed_value, scale, view.kind, index], 60)
+		if _views.has("door"):
+			# Recessed shopfront doors: from the lot line at eye height, looking in under the
+			# overhang at the door and its doorstep.
+			for index in mini(6, _door_views.size()):
+				var view: Dictionary = _door_views[index]
+				var target: Vector3 = town.transform * (view.at as Vector3)
+				var outward: Vector3 = (town.transform.basis * (view.direction as Vector3)).normalized()
+				target.y = (town.transform * (view.floor as Vector3)).y
+				var eye := _clear_eye(stage, target + outward * 0.5 + Vector3.UP * 1.7, target + outward * 4.0 + Vector3.UP * 1.7)
+				await _shoot(stage, eye, target + Vector3.UP * 1.2,
+					"%d_%s_door%d" % [seed_value, scale, index], 70)
+		if _views.has("turrets"):
+			var supports := {"transforms":[]}
+			for base: StringName in [&"pure_village.tower.base",&"pure_village.tower.half_support",&"pure_village.tower.half_base",&"pure_village.roof_turret.window"]:
+				for asset: StringName in payload.asset_ids():
+					if String(asset).get_slice(".finish_", 0) == String(base):
+						supports.transforms.append_array(payload.batches[asset].transforms)
+			for index in (supports.get("transforms",[]) as Array).size():
+				var pose: Transform3D = town.transform * supports.transforms[index]
+				var target := pose.origin + Vector3.UP * 5.0
+				for side in [-1,1]:
+					var eye := target + pose.basis.z.normalized()*18.0 + pose.basis.x.normalized()*float(side)*9.0 + Vector3.UP*3.0
+					await _shoot(stage,eye,target,"%d_%s_turret%d_%d" % [seed_value,scale,index,side],65)
 		for view: Dictionary in _custom_views:
 			await _shoot(stage, view.eye, view.target, "%d_%s_%s" % [seed_value, scale, view.id], view.fov)
 		var bounds := _bounds(spatial, frame)
@@ -255,9 +592,9 @@ func _run() -> void:
 				if walk.size() < 3:
 					continue
 				var centre_of := func(c: Vector3i) -> Vector3:
-					return town.transform * Vector3((c.x * 2 + 1) * FabricRecipe.CELL_SIZE,
+					return town.transform * Vector3((c.x * 2 + 0.5) * FabricRecipe.CELL_SIZE,
 						c.y * WarrenVolumePlan.VERTICAL_BAND_SIZE_M,
-						(c.z * 2 + 1) * FabricRecipe.CELL_SIZE)
+						(c.z * 2 + 0.5) * FabricRecipe.CELL_SIZE)
 				# From the lane's first cell along its longest straight run.
 				var step: Vector3i = walk[1] - walk[0]
 				var end := 1
@@ -279,19 +616,29 @@ func _run() -> void:
 			rng.seed = seed_value
 			for k in mini(_streets, cells.size()):
 				var cell: Vector3i = cells[rng.randi_range(0, cells.size() - 1)]
-				var eye_local := Vector3(cell) * FabricRecipe.CELL_SIZE + Vector3(0, 1.1, 0)
-				var eye := town.transform * eye_local + Vector3(0, 1.0, 0)
-				# Look down the route: at a walk cell 4-10 cells away on the same level.
-				var target := eye + Vector3(12.0, 0.0, 0.0)
+				var eye := town.transform * (Vector3(cell) * FabricRecipe.CELL_SIZE) + Vector3.UP*1.7
+				# A nearby route cell can be on the other side of a building.
+				# Judge from player height and only look along unobstructed air.
+				var space := stage.get_world_3d().direct_space_state
+				var target := eye+Vector3.RIGHT
 				var best := -1.0
+				for direction: Vector3 in [Vector3.RIGHT,Vector3.LEFT,Vector3.FORWARD,Vector3.BACK]:
+					var probe := eye+direction*24.0
+					var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(eye,probe))
+					var reach := eye.distance_to(hit.position) if not hit.is_empty() else 24.0
+					if reach>best:
+						best = reach
+						target = eye+direction*maxf(reach,1.0)
+				best = -1.0
 				for other: Vector3i in cells:
 					var d := Vector2(other.x - cell.x, other.z - cell.z).length()
 					if other.y == cell.y and d >= 4.0 and d <= 10.0:
+						var probe := town.transform*(Vector3(other)*FabricRecipe.CELL_SIZE)+Vector3.UP*1.7
+						if not space.intersect_ray(PhysicsRayQueryParameters3D.create(eye,probe)).is_empty(): continue
 						var score := rng.randf()
 						if score > best:
 							best = score
-							target = town.transform * (Vector3(other) * FabricRecipe.CELL_SIZE) \
-								+ Vector3(0, 2.2, 0)
+							target = probe
 				await _shoot(stage, eye, target, "%s_street%d" % [tag, k], 70)
 		if _views.has("skywalk"):
 			var k := 0
@@ -316,6 +663,87 @@ func _run() -> void:
 						at + Vector3(0, 2.5, 0), "%s_skywalk%d_along%d" % [tag, k, int(sign)], 70)
 				k += 1
 			print("SKYWALKS ", tag, " ", k)
+		if _views.has("greens"):
+			for space: Dictionary in source.massif.open_spaces:
+				var green_centre := Vector3.ZERO
+				for cell: Vector2i in space.cells:
+					green_centre += Vector3(cell.x*3.0+0.75,0,cell.y*3.0+0.75)
+				green_centre /= maxf(1.0,space.cells.size())
+				var target := town.transform*green_centre
+				target.y = _ground_y+1.5
+				print("GREEN_SITE ",tag," ",space.id," cells=",space.cells.size()," at=",target)
+				await _shoot(stage,target+Vector3(0.01,26,0),target,
+					"%s_green_%s_top" % [tag,space.id],65)
+				for side: float in [-1.0,1.0]:
+					await _shoot(stage,target+Vector3(8*side,3,12),target,
+						"%s_green_%s_side%d" % [tag,space.id,int(side)],70)
+		if _views.has("lamps"):
+			# Person-scale close-ups of the first lamp posts (kit lamps and path poles).
+			var lamp_shot := 0
+			for asset_id: StringName in payload.asset_ids():
+				if not (String(asset_id).contains("prop.lamp") or String(asset_id).contains("light_pole")):
+					continue
+				for pose: Transform3D in payload.batches[asset_id].transforms:
+					if lamp_shot >= 3:
+						break
+					var base := town.transform * pose.origin
+					print("LAMP_SITE ", tag, " ", asset_id, " at=", base)
+					await _shoot(stage, base + Vector3(3.2, 2.6, 3.2), base + Vector3(0, 2.2, 0),
+						"%s_lamp%d" % [tag, lamp_shot], 50)
+					lamp_shot += 1
+		if _views.has("dressing"):
+			var shot := 0
+			for entry: Dictionary in dressing_entries:
+				if not String(entry.stable_id).contains(".group.") or not String(entry.stable_id).ends_with(".0"):
+					continue
+				var t: Transform3D = entry.transform
+				var box: AABB = t*catalog.descriptor(entry.asset_id).measured_aabb
+				var target := box.get_center()
+				var front := t.basis.z.normalized()
+				var side := t.basis.x.normalized()
+				var distance := maxf(5.0,box.size.length()*1.2)
+				await _shoot(stage,target+front*distance+side*distance*0.35+Vector3.UP*1.5,
+					target,"%s_dressing%d" % [tag,shot],60)
+				await _shoot(stage,target+front*2.5+Vector3.UP*7.0,
+					target,"%s_dressing%d_above" % [tag,shot],65)
+				for sign_value: float in [-1.0,1.0]:
+					await _shoot(stage,target+side*distance*sign_value+front*2.0+Vector3.UP*2.0,
+						target,"%s_dressing%d_side%d" % [tag,shot,int(sign_value)],60)
+				shot += 1
+		if _views.has("upper-wall-rooms") or _views.has("wall-rooms"):
+			var index := 0
+			for plot: Dictionary in source.plots:
+				if not bool(plot.get("wall_room",false)): continue
+				var column: Vector2i = plot.cells[0]
+				if _views.has("upper-wall-rooms") and int(plot.floor)<=source.massif.base_at(column): continue
+				print("UPPER_WALL_ROOM ",tag," ",plot.id," ",column," floor=",plot.floor)
+				var door: Vector3i = plot.door_walk
+				var at := town.transform*Vector3(door.x*3.0+0.75,door.y*1.5,door.z*3.0+0.75)
+				var target := town.transform*Vector3(column.x*3.0+0.75,door.y*1.5+1.2,column.y*3.0+0.75)
+				# Face the realized threshold, not the macro-column centre:
+				# an off-axis view can put a legitimate porch post over the door.
+				if _views.has("upper-wall-rooms"):
+					for building: WarrenBuildingVolume in spatial.buildings:
+						if not String(KitVillageBuildings.house_id_for(building.stable_id)).ends_with(String(plot.id)): continue
+						if building.thresholds.is_empty(): continue
+						var threshold: Dictionary = building.thresholds[0]
+						var public_point := Vector3(threshold.public_cell)*FabricRecipe.CELL_SIZE
+						var toward := Vector3((threshold.private_cell as Vector3i)-(threshold.public_cell as Vector3i)).normalized()
+						at = town.transform*public_point
+						target = town.transform*(public_point+toward*FabricRecipe.CELL_SIZE)+Vector3.UP*2.0
+						break
+				await _shoot(stage,at+Vector3.UP*1.7,target,"%s_upper_wall_room%d" % [tag,index],75)
+				index += 1
+		if _views.has("oriels"):
+			var oriel_batch: Dictionary = payload.batches.get(&"pure_village.bay.spire",{})
+			print("ORIEL_COUNT ",tag," ",oriel_batch.get("transforms",[]).size())
+			for index in mini(6,oriel_batch.get("transforms",[]).size()):
+				var pose: Transform3D = town.transform*oriel_batch.transforms[index]
+				var target := pose*Vector3(0,1.5,0)
+				var front := pose.basis.z.normalized()
+				var side := pose.basis.x.normalized()
+				await _shoot(stage,target+front*15+side*7+Vector3.UP*3,target,
+					"%s_oriel%d" % [tag,index],60)
 		if _views.has("props"):
 			# Human-scale props beside a player-sized capsule (2.244 m).
 			var shots := 0
@@ -355,10 +783,30 @@ func _run() -> void:
 				await _shoot(stage, at + out * 4.5 + side * 1.5 + Vector3.UP * 4.0, at,
 					"%s_canopy%d" % [tag, k], 75)
 			print("CANOPIES ", tag, " ", batch.get("transforms", []).size())
+		if _views.has("wall-tunnel"):
+			var index := 0
+			for lane: Dictionary in source.excavation.lanes:
+				if lane.get("feature_kind",&"")!=&"wall_tunnel": continue
+				var walk: Array = [lane.anchor]
+				walk.append_array(lane.cells)
+				for edge: Dictionary in source.excavation.loop_edges:
+					if edge.from==lane.cells.back(): walk.append(edge.to)
+				var point := func(c: Vector3i) -> Vector3:
+					return town.transform*Vector3((c.x*2+0.5)*FabricRecipe.CELL_SIZE,
+						c.y*WarrenVolumePlan.VERTICAL_BAND_SIZE_M,(c.z*2+0.5)*FabricRecipe.CELL_SIZE)
+				for end in 2:
+					var eye: Vector3 = point.call(walk[0])+Vector3.UP*1.7
+					var target: Vector3 = point.call(walk[1])+Vector3.UP*1.7
+					await _shoot(stage,eye,target,"%s_wall_tunnel%d_end%d" % [tag,index,end],75)
+					walk.reverse()
+				var middle := walk.size()/2
+				await _shoot(stage,point.call(walk[middle])+Vector3.UP*1.7,
+					point.call(walk[middle+1])+Vector3.UP*1.7,"%s_wall_tunnel%d_inside" % [tag,index],75)
+				index += 1
 		if _views.has("passage"):
 			# Street-level views walking into each bored tunnel or under each
-			# bridge-house: camera on the open street two cells before the
-			# covered run, looking along the walk.
+			# bridge-house: camera on a real open street cell before the
+			# covered run. Extrapolating backwards from a turn enters a house.
 			var covered: Dictionary = source.excavation.tunnel_cells.duplicate()
 			for span: Array in source.excavation.bridge_spans:
 				for cell: Vector3i in span:
@@ -376,15 +824,71 @@ func _run() -> void:
 					var from: Vector3i = walk[i - 1]
 					var to: Vector3i = walk[i]
 					var cell_centre := func(c: Vector3i) -> Vector3:
-						return town.transform * Vector3((c.x * 2 + 1) * FabricRecipe.CELL_SIZE,
+						return town.transform * Vector3((c.x * 2 + 0.5) * FabricRecipe.CELL_SIZE,
 							c.y * WarrenVolumePlan.VERTICAL_BAND_SIZE_M,
-							(c.z * 2 + 1) * FabricRecipe.CELL_SIZE)
+							(c.z * 2 + 0.5) * FabricRecipe.CELL_SIZE)
 					var along: Vector3 = (cell_centre.call(to) - cell_centre.call(from)) * Vector3(1, 0, 1)
-					var eye: Vector3 = cell_centre.call(from) - along * 0.9 + Vector3.UP * 1.7
+					var eye: Vector3 = cell_centre.call(from) + Vector3.UP * 1.7
 					var target: Vector3 = cell_centre.call(to) + along * 0.5 + Vector3.UP * 2.0
 					await _shoot(stage, eye, target, "%s_passage%d" % [tag, shots], 75)
 					shots += 1
 			print("PASSAGES ", tag, " ", shots, " covered=", covered.size())
+		if _views.has("plaza"):
+			# Town taste knobs task 4: person-scale views of the plaza centre piece.
+			var greens := SettlementFabricAssembler.maze_green_components(fabric.planned_plaza_cells)
+			if not greens.is_empty():
+				var sum := Vector3.ZERO
+				for cell: Vector3i in greens[0]: sum += Vector3(cell)
+				var mid := sum / float(greens[0].size())
+				var at: Vector3 = town.transform * (Vector3(mid.x, float(mid.y + 1), mid.z) * FabricRecipe.CELL_SIZE)
+				for k in 3:
+					var side := Vector3(cos(k * PI * 2.0 / 3.0 + 0.6), 0, sin(k * PI * 2.0 / 3.0 + 0.6))
+					await _shoot(stage, at + side * 9.0 + Vector3.UP * 1.7, at + Vector3.UP * 1.0,
+						"%s_plaza_%d" % [tag, k], 70)
+		if _views.has("courtyard"):
+			for plot: Dictionary in source.plots:
+				if plot.kind != WarrenMazeSourcePlan.PLOT_DECK: continue
+				var at := Vector3.ZERO
+				for column: Vector2i in plot.cells:
+					at += Vector3(column.x*3.0+0.75,float(plot.floor)*1.5,column.y*3.0+0.75)
+				at = town.transform*(at/float(plot.cells.size()))
+				var walking: Array[Vector3] = []
+				for column: Vector2i in WarrenMazeSourcePlan.deck_flat_columns(plot):
+					for dx in 2:
+						for dz in 2:
+							var cell := Vector3i(column.x*2+dx,plot.floor,column.y*2+dz)
+							if fabric.surface_plan.has_cell(cell):
+								walking.append(town.transform*(Vector3(cell)*FabricRecipe.CELL_SIZE))
+				for k in 4:
+					var side := Vector3(cos(k*PI*0.5),0,sin(k*PI*0.5))
+					var desired := at+side*6.0
+					walking.sort_custom(func(a: Vector3,b: Vector3) -> bool:
+						return a.distance_squared_to(desired)<b.distance_squared_to(desired))
+					if walking.is_empty(): continue
+					await _shoot(stage,walking[0]+Vector3.UP*1.7,
+						at-side*5.0+Vector3.UP*2.5,"%s_court_%s_%d" % [tag,plot.id,k],80)
+		if _views.has("landmarks"):
+			var landmark_houses := KitVillageBuildings._houses(spatial)
+			for id: StringName in KitVillageBuildings.sorted_ids(landmark_houses.keys()):
+				var house: Dictionary = landmark_houses[id]
+				if not bool(house.get("landmark",false)): continue
+				var rect := BuildingDesigner._bounds(house.storeys[house.terrain_band])
+				var local := Vector3((float(rect.position.x+rect.end.x)-1.0)*0.75,
+					float(house.terrain_band)*1.5,(float(rect.position.y+rect.end.y)-1.0)*0.75)
+				var body_height := (house.storeys as Dictionary).size()*3.0*frame.y.length()
+				var focus := town.transform*local+Vector3.UP*body_height*0.6
+				var reach := maxf(maxf(rect.size.x*frame.x.length(),rect.size.y*frame.z.length())*1.5,body_height)*1.6
+				for side in 4:
+					var angle := PI*0.25+PI*0.5*side
+					await _shoot(stage,focus+Vector3(cos(angle)*reach,reach*0.6,sin(angle)*reach),
+						focus,"%s_landmark_%s_%d" % [tag,id,side],55)
+		if _views.has("stepped"):
+			for index in _stepped_houses.size():
+				var entry: Dictionary = _stepped_houses[index]
+				var target: Vector3 = town.transform*entry.at
+				for side in [-1,1]:
+					await _shoot(stage,target+Vector3(side*.8,.55,1)*entry.reach,target,
+						"%s_stepped%d_%d" % [tag,index,side],60)
 		if _views.has("platform"):
 			await _shoot_platform(stage, source, town, tag)
 		if _views.has("tunnel"):
@@ -398,6 +902,7 @@ func _run() -> void:
 						at + direction * 4 + Vector3.UP * 2.7, "%s_tunnel%d" % [tag, index], 70)
 					index += 1
 
+		if garden_grass_node != null: garden_grass_node.queue_free()
 		town.queue_free()
 		await process_frame
 	print("REVIEW_DONE ", _out)
@@ -415,9 +920,11 @@ func _shoot_platform(stage: Node3D, source: WarrenMazeSourcePlan, town: Node3D,
 		print("PLATFORM ", tag, " none")
 		return
 	var at := func(column: Vector2, band: float) -> Vector3:
-		return town.transform * Vector3((column.x * 2.0 + 1.0) * FabricRecipe.CELL_SIZE,
+		# Fine cells are centred on integer coordinates; a macro column
+		# owns fine cells 2c and 2c+1, whose midpoint is 2c+0.5.
+		return town.transform * Vector3((column.x * 2.0 + 0.5) * FabricRecipe.CELL_SIZE,
 			band * WarrenVolumePlan.VERTICAL_BAND_SIZE_M,
-			(column.y * 2.0 + 1.0) * FabricRecipe.CELL_SIZE)
+			(column.y * 2.0 + 0.5) * FabricRecipe.CELL_SIZE)
 	var sum := Vector2.ZERO
 	for column: Vector2i in columns:
 		sum += Vector2(column)
@@ -457,10 +964,12 @@ func _shoot_platform(stage: Node3D, source: WarrenMazeSourcePlan, town: Node3D,
 				- tangent * 1.5, base + plinth + 1.5),
 				at.call(Vector2(column) + Vector2(direction) + tangent * 1.5, base + plinth * 0.6),
 				"%s_platform_face%d" % [tag, shot_faces.size() - 1], 60)
-	# The gate: up the flight along the wall, then straight at the gate.
+	# Each tier gate: up the flight, then through the opening.
+	var gate_index := 0
 	for lane: Dictionary in source.excavation.lanes:
 		if StringName(lane.get("feature_kind", &"")) != &"citadel_gate":
 			continue
+		var gate_tag := tag if gate_index==0 else "%s_tier%d" % [tag,gate_index]
 		var walk: Array = [lane.anchor]
 		walk.append_array(lane.cells)
 		var gate: Vector3i = walk.back()
@@ -469,17 +978,17 @@ func _shoot_platform(stage: Node3D, source: WarrenMazeSourcePlan, town: Node3D,
 		var step := Vector2(landing.x - gate.x, landing.z - gate.z)
 		await _shoot(stage, at.call(Vector2(foot.x, foot.z), float(foot.y)) + Vector3.UP * 1.7,
 			at.call(Vector2(gate.x, gate.z), float(gate.y)) + Vector3.UP * 3.0,
-			"%s_platform_gate_flight" % tag, 70)
+			"%s_platform_gate_flight" % gate_tag, 70)
 		await _shoot(stage, at.call(Vector2(landing.x, landing.z) + step * 1.2,
 			float(landing.y)) + Vector3.UP * 1.7,
 			at.call(Vector2(gate.x, gate.z) - step, float(gate.y)) + Vector3.UP * 2.5,
-			"%s_platform_gate" % tag, 70)
+			"%s_platform_gate" % gate_tag, 70)
 		# The gate from over the lower town's roofs, straight on.
 		await _shoot(stage, at.call(Vector2(gate.x, gate.z) + step * 4.0,
 			float(gate.y) + 1.5),
 			at.call(Vector2(gate.x, gate.z), float(gate.y)) + Vector3.UP * 1.5,
-			"%s_platform_gate_out" % tag, 55)
-		break
+			"%s_platform_gate_out" % gate_tag, 55)
+		gate_index += 1
 	print("PLATFORM ", tag, " columns=", columns.size(), " plinth=", massif.platform_bands)
 
 

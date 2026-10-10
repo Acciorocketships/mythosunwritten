@@ -1,0 +1,20 @@
+extends SceneTree
+const Trial=preload("/tmp/oct6-slim-post-substitution.gd")
+func _init():
+ var catalog:=EnvironmentCatalog.load_default()
+ var kit:=SuntailBuildingKit.create()
+ Trial.prepare(catalog,kit)
+ var source:=catalog.descriptor(&"sfv.deck.pillar.001").measured_aabb
+ var target:=catalog.descriptor(kit.asset(&"post.timber")).measured_aabb
+ var fit:Dictionary=Trial._fits[&"sfv.deck.pillar.001"]
+ assert(fit.tiles.size()==1)
+ var bound:AABB=fit.tiles[0]*target
+ assert(source.grow(.00001).encloses(bound))
+ assert(is_equal_approx(bound.position.y,source.position.y))
+ assert(is_equal_approx(bound.end.y,source.end.y))
+ assert(is_equal_approx(bound.get_center().x,source.get_center().x))
+ assert(is_equal_approx(bound.get_center().z,source.get_center().z))
+ assert(is_equal_approx(bound.size.x*VillageWorldScale.HORIZONTAL_SCALE,target.size.x*VillageWorldScale.KIT_WORLD_SCALE))
+ assert(is_equal_approx(bound.size.z*VillageWorldScale.HORIZONTAL_SCALE,target.size.z*VillageWorldScale.KIT_WORLD_SCALE))
+ print("POST_FIT_PASS old=",source," new=",bound," world_width=",bound.size.x*VillageWorldScale.HORIZONTAL_SCALE)
+ quit()

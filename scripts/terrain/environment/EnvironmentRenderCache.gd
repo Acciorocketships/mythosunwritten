@@ -49,6 +49,13 @@ func visual(asset_id: StringName) -> EnvironmentVisual:
 		return null
 	preload("res://scripts/terrain/environment/EnvironmentTextureSharing.gd").prepare(loaded,
 		_texture_sources if retain_texture_sources else {})
+	var finish := descriptor_value.material_tints.duplicate()
+	# Warm lime plaster across every Suntail wall, gable, dormer and bay.
+	# Keep the authored plaster grain/normal maps and all wood/stone finishes.
+	if String(asset_id).begins_with("suntail."):
+		finish["Wall"] = Color(.92, .86, .76) * (finish.get("Wall", Color.WHITE) as Color)
+	if not finish.is_empty():
+		loaded = _tinted_visual(loaded, finish)
 	# Ambient stone shares the cliff stone palette; source geometry, UV detail
 	# and collision remain authored. Duplicate only the prepared visual wrapper.
 	if String(asset_id).begins_with("kaykit.rock.") or String(asset_id).begins_with("lpfv.rock.") or String(asset_id).begins_with("lpfv.big_rock."):
@@ -155,3 +162,20 @@ func _validate_visual(asset_id: StringName, visual_value: EnvironmentVisual) -> 
 func _assert_main_thread() -> void:
 	assert(OS.get_thread_caller_id() == OS.get_main_thread_id(),
 		"EnvironmentRenderCache may only load or mutate resources on the main thread")
+
+
+static func _tinted_visual(source: EnvironmentVisual, tints: Dictionary) -> EnvironmentVisual:
+	var result := EnvironmentVisual.new()
+	result.collisions.assign(source.collisions)
+	result.imposter = source.imposter
+	for original: EnvironmentVisualPiece in source.pieces:
+		var piece := original.duplicate() as EnvironmentVisualPiece
+		piece.mesh = original.mesh.duplicate()
+		for surface in piece.mesh.get_surface_count():
+			var material := original.mesh.surface_get_material(surface) as StandardMaterial3D
+			if material == null or not tints.has(material.resource_name): continue
+			var variant := material.duplicate() as StandardMaterial3D
+			variant.albedo_color *= tints[material.resource_name] as Color
+			piece.mesh.surface_set_material(surface, variant)
+		result.pieces.append(piece)
+	return result

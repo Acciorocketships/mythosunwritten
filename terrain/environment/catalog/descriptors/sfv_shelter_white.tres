@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_5a3b5"]
+
+[resource]
+script = ExtResource("1_5a3b5")
+id = &"sfv.shelter.white"
+visual_path = "res://terrain/environment/visuals/town_shelters/sfv_shelter_white.tres"
+tags = Array[StringName]([&"tent", &"village"])
+measured_aabb = AABB(-2.1203735, -1.465955e-07, -1.5149852, 4.2407465, 3.4909892, 3.0299704)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"town_shelters:sfv.shelter.white"

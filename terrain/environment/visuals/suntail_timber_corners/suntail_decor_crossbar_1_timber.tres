@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_43hoc"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_h1d2b"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/suntail_timber_corners/suntail_decor_crossbar_1_timber_piece_00.res" id="3_hp0xa"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_y76o3"]
+
+[sub_resource type="Resource" id="Resource_ysil3"]
+script = ExtResource("2_h1d2b")
+mesh = ExtResource("3_hp0xa")
+
+[resource]
+script = ExtResource("4_y76o3")
+pieces = Array[ExtResource("2_h1d2b")]([SubResource("Resource_ysil3")])

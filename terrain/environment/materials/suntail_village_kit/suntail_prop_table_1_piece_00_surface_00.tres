@@ -1,8 +1,8 @@
 [gd_resource type="StandardMaterial3D" load_steps=4 format=3]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/61d66edc55898f5b8db7.res" id="1_q26ap"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/885343c82204213f9d32.res" id="2_bs72f"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/6bf450646f303982682d.res" id="3_vi6dg"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/3587bc30dacbd7e5e2f7.res" id="1_q26ap"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/41e4613734d439c67af3.res" id="2_bs72f"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/cf75d70f7ec458371b81.res" id="3_vi6dg"]
 
 [resource]
 resource_name = "Table_1"

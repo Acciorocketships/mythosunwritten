@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_ypvn2"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/town_props/market_vegetable_stall_001_piece_00.res" id="2_r21bi"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_6mn6e"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/town_props/market_vegetable_stall_001_piece_00.res" id="4_tpf71"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_bwq4m"]
+
+[sub_resource type="Resource" id="Resource_cgld0"]
+script = ExtResource("1_ypvn2")
+shape = ExtResource("2_r21bi")
+
+[sub_resource type="Resource" id="Resource_juoip"]
+script = ExtResource("3_6mn6e")
+mesh = ExtResource("4_tpf71")
+
+[resource]
+script = ExtResource("5_bwq4m")
+pieces = Array[ExtResource("3_6mn6e")]([SubResource("Resource_juoip")])
+collisions = Array[ExtResource("1_ypvn2")]([SubResource("Resource_cgld0")])

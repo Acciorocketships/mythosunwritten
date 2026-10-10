@@ -1,0 +1,93 @@
+[
+  {
+    "gate": "spatial.fabric.spatial.feature.landmark.00.component.00",
+    "passed": true,
+    "reverse": false,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(-16.0, 0.050215, -16.125)",
+        "target": "(-16.0, -0.0, -20.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-16.0, 0.000306, -19.87518)",
+        "target": "(-16.0, -0.0, -25.86876)",
+        "tick": 0,
+        "waypoint": 2
+      },
+      {
+        "floor": true,
+        "position": "(-16.0, 0.000306, -23.62518)",
+        "target": "(-16.0, -0.0, -25.86876)",
+        "tick": 30,
+        "waypoint": 2
+      },
+      {
+        "floor": true,
+        "position": "(-16.0, 0.000306, -25.75018)",
+        "target": "(-16.0, 3.206651, -29.43564)",
+        "tick": 0,
+        "waypoint": 3
+      },
+      {
+        "floor": true,
+        "position": "(-16.01347, 3.204602, -29.3718)",
+        "target": "(-17.25, 3.216192, -31.58564)",
+        "tick": 0,
+        "waypoint": 4
+      }
+    ]
+  },
+  {
+    "gate": "spatial.fabric.spatial.feature.landmark.00.component.00",
+    "passed": true,
+    "reverse": true,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(-17.18717, 3.214963, -31.47757)",
+        "target": "(-16.0, 3.206651, -29.43564)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-16.06964, 3.212435, -29.52862)",
+        "target": "(-16.0, -0.0, -25.86876)",
+        "tick": 0,
+        "waypoint": 2
+      },
+      {
+        "floor": true,
+        "position": "(-16.00008, -0.149138, -25.9195)",
+        "target": "(-16.0, -0.0, -20.0)",
+        "tick": 0,
+        "waypoint": 3
+      },
+      {
+        "floor": true,
+        "position": "(-16.00002, 0.000623, -22.1695)",
+        "target": "(-16.0, -0.0, -20.0)",
+        "tick": 30,
+        "waypoint": 3
+      },
+      {
+        "floor": true,
+        "position": "(-16.0, 0.000623, -20.1695)",
+        "target": "(-16.0, 0.05, -16.0)",
+        "tick": 0,
+        "waypoint": 4
+      },
+      {
+        "floor": true,
+        "position": "(-16.0, 0.0504, -16.41955)",
+        "target": "(-16.0, 0.05, -16.0)",
+        "tick": 30,
+        "waypoint": 4
+      }
+    ]
+  }
+]

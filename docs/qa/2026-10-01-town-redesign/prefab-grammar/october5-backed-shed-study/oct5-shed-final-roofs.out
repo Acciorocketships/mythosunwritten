@@ -1,0 +1,8 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+TOWN 8:grand roofs=52 tiny=0 beside=0 open=0/18 gables=0/86 air=0/0 eaves_cut=0
+TOWN 103:grand roofs=41 tiny=1 beside=0 open=0/17 gables=0/65 air=0/0 eaves_cut=0
+  tiny kit.spatial.parcel.maze.bridge.00.end.1.lower [P: (-2, 1), S: (2, 1)] axis=0 eave=6
+TOTAL { "towns": 2, "roofs": 93, "tiny": 1, "tiny_beside": 0, "open_ends": 35, "open_exposed": 0, "gable_ends": 151, "gable_holes": 0, "air_roofs": 0, "air_unsupported": 0, "eaves_cut": 0 }

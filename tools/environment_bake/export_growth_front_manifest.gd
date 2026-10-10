@@ -1,0 +1,125 @@
+extends SceneTree
+## Adds the growing-floor depth family to town_room_fronts.json: the floor strips,
+## corner squares, returns and return beams at KitGrowingFronts.FRONT_DEPTHS.
+## Each source is measured; a depth is cut from the narrowest source at least that
+## wide (never scaled). Other entries are kept; the depth family is replaced whole.
+## godot --headless --editor --path . -s res://tools/environment_bake/export_growth_front_manifest.gd
+const MANIFEST := "res://tools/environment_bake/manifests/town_room_fronts.json"
+const GROWTH := preload("res://scripts/terrain/features/villages/kit/KitGrowingFronts.gd")
+const FLOOR := "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Floor_2.glb"
+const BEAM := "res://assets/Raygeas/Models/Building_Modules/Decor/Crossbar_2.glb"
+## Pure Village wall starts, finished at x = 0 and extending toward -x.
+const RETURNS: Array[String] = ["res://assets/PureVillage/Models/Architecture/Wall_Start_10x30_0.glb",
+	"res://assets/PureVillage/Models/Architecture/Wall_Start_20x30_0.glb"]
+
+
+func _init() -> void:
+	var manifest: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(MANIFEST))
+	var template := {}
+	var kept: Array = []
+	var family := RegEx.create_from_string("\\.d\\d{3}$")
+	for entry: Dictionary in manifest.assets:
+		template[String(entry.id)] = entry
+		if family.search(String(entry.id)) == null:
+			kept.append(entry)
+	# Depth by depth (each part only where it is baked), so a re-export keeps the
+	# manifest's existing order.
+	var depths: Array[float] = []
+	for role: StringName in GROWTH.FRONT_DEPTHS:
+		for depth: float in GROWTH.FRONT_DEPTHS[role]:
+			if not depths.has(depth):
+				depths.append(depth)
+	depths.sort()
+	var made := 0
+	for depth: float in depths:
+		var half := depth * 0.5
+		if _baked("floor", depth):
+			kept.append(_entry(template["town.frontage.floor"], _id("floor", depth), FLOOR, "z", half, false))
+		if _baked("corner", depth):
+			# The square closing a wrapped corner (floor and ceiling): d x d of Floor_2.
+			var corner := _entry(template["town.frontage.floor"], _id("corner", depth), FLOOR, "z", half, false)
+			corner.erase("clip_ranges")
+			if half * 2.0 < 2.0 - 0.0001: # Floor_2 is 2.0 x 2.0: clip both axes to d x d
+				corner.clip_ranges = {"x": [-half, half], "z": [-half, half]}
+			kept.append(corner)
+		if _baked("return_beam", depth):
+			kept.append(_entry(template["town.frontage.return_beam"], _id("return_beam", depth), BEAM, "x",
+				half, false))
+		if _baked("return", depth):
+			var source := ""
+			for candidate: String in RETURNS:
+				if source.is_empty() and _extent(candidate).size.x >= depth - 0.0001:
+					source = candidate
+			assert(not source.is_empty(), "no Pure Village wall start is %.2f m wide" % depth)
+			kept.append(_entry(template["town.frontage.return"], _id("return", depth), source, "x", half, true))
+	for role: StringName in GROWTH.FRONT_DEPTHS:
+		made += (GROWTH.FRONT_DEPTHS[role] as Array).size()
+	manifest.assets = _ints(kept)
+	var file := FileAccess.open(MANIFEST, FileAccess.WRITE)
+	file.store_string(JSON.stringify(manifest, "  ", false) + "\n")
+	file.close()
+	print("GROWTH_FRONTS ", made)
+	quit()
+
+
+static func _baked(part: String, depth: float) -> bool:
+	return (GROWTH.FRONT_DEPTHS[StringName("frontage." + part)] as Array).has(depth)
+
+
+static func _id(part: String, depth: float) -> String:
+	return "town.frontage.%s.%s" % [part, BuildingKitAssembler.lean_suffix(depth)]
+
+
+## Copy budgets, tags and collision from the 0.65 m entry; clip only when the
+## depth is narrower than the source (a full-width clip would remove nothing).
+func _entry(template: Dictionary, id: String, source: String, axis: String, half: float,
+		pivoted: bool) -> Dictionary:
+	var entry := template.duplicate(true)
+	entry.id = id
+	entry.source = source
+	var extent := _extent(source)
+	var index := 0 if axis == "x" else 2
+	var width := extent.size[index]
+	entry.erase("clip_ranges")
+	entry.erase("pivot")
+	if pivoted:
+		entry.pivot = [-half, 0.0, 0.0]
+	if half * 2.0 < width - 0.0001:
+		entry.clip_ranges = {axis: [-half, half]}
+	return entry
+
+
+func _extent(path: String) -> AABB:
+	var root: Node3D = (load(path) as PackedScene).instantiate()
+	var boxes: Array[AABB] = []
+	var stack: Array = [[root, Transform3D.IDENTITY]]
+	while not stack.is_empty():
+		var item: Array = stack.pop_back()
+		var node: Node = item[0]
+		var xf: Transform3D = item[1]
+		if node is Node3D:
+			xf = xf * (node as Node3D).transform
+		if node is MeshInstance3D:
+			boxes.append(xf * (node as MeshInstance3D).get_aabb())
+		for child in node.get_children():
+			stack.append([child, xf])
+	var box: AABB = boxes[0]
+	for other: AABB in boxes:
+		box = box.merge(other)
+	root.free()
+	return box
+
+
+## JSON parsing yields floats; keep whole numbers as integers so existing
+## entries stay textually unchanged.
+func _ints(value: Variant) -> Variant:
+	if value is float and is_equal_approx(value, roundf(value)) and absf(value) >= 1.0 or value is float and value == 0.0:
+		return int(value)
+	if value is Array:
+		return (value as Array).map(_ints)
+	if value is Dictionary:
+		var out := {}
+		for key: Variant in value:
+			out[key] = _ints(value[key])
+		return out
+	return value

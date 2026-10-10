@@ -1,0 +1,187 @@
+{
+  "103:grand": {
+    "before": 40,
+    "after": 40,
+    "lost": [],
+    "improved": [],
+    "floating": 0,
+    "air_intrusions": 0,
+    "towers_before": 1,
+    "towers_after": 1
+  },
+  "31:large": {
+    "before": 34,
+    "after": 34,
+    "lost": [],
+    "improved": [],
+    "floating": 0,
+    "air_intrusions": 0,
+    "towers_before": 0,
+    "towers_after": 0
+  },
+  "53:grand": {
+    "before": 86,
+    "after": 86,
+    "lost": [],
+    "improved": [],
+    "floating": 0,
+    "air_intrusions": 0,
+    "towers_before": 3,
+    "towers_after": 3
+  },
+  "63:grand": {
+    "before": 48,
+    "after": 34,
+    "lost": [
+      [
+        "(-2, 1, -3)",
+        0,
+        11,
+        -1
+      ],
+      [
+        "(-2, 1, -3)",
+        1,
+        11,
+        -1
+      ],
+      [
+        "(-2, 1, -3)",
+        2,
+        11,
+        -1
+      ],
+      [
+        "(-2, 1, -3)",
+        3,
+        11,
+        -1
+      ],
+      [
+        "(-2, 4, -3)",
+        0,
+        8,
+        -1
+      ],
+      [
+        "(-2, 4, -3)",
+        1,
+        8,
+        -1
+      ],
+      [
+        "(-2, 4, -3)",
+        2,
+        8,
+        -1
+      ],
+      [
+        "(-2, 4, -3)",
+        3,
+        8,
+        -1
+      ],
+      [
+        "(0, 2, -4)",
+        0,
+        10,
+        -1
+      ],
+      [
+        "(1, 2, -4)",
+        0,
+        10,
+        -1
+      ],
+      [
+        "(1, 4, -2)",
+        0,
+        8,
+        -1
+      ],
+      [
+        "(1, 4, -2)",
+        1,
+        8,
+        -1
+      ],
+      [
+        "(1, 4, -2)",
+        2,
+        8,
+        -1
+      ],
+      [
+        "(1, 4, -2)",
+        3,
+        8,
+        -1
+      ]
+    ],
+    "improved": [],
+    "floating": 0,
+    "air_intrusions": 0,
+    "towers_before": 1,
+    "towers_after": 2
+  },
+  "13:grand": {
+    "before": 16,
+    "after": 16,
+    "lost": [],
+    "improved": [],
+    "floating": 0,
+    "air_intrusions": 0,
+    "towers_before": 0,
+    "towers_after": 0
+  },
+  "301:grand": {
+    "before": 44,
+    "after": 44,
+    "lost": [],
+    "improved": [],
+    "floating": 0,
+    "air_intrusions": 0,
+    "towers_before": 3,
+    "towers_after": 3
+  },
+  "43:grand": {
+    "before": 48,
+    "after": 48,
+    "lost": [],
+    "improved": [],
+    "floating": 0,
+    "air_intrusions": 0,
+    "towers_before": 1,
+    "towers_after": 1
+  },
+  "83:grand": {
+    "before": 16,
+    "after": 16,
+    "lost": [],
+    "improved": [],
+    "floating": 0,
+    "air_intrusions": 0,
+    "towers_before": 0,
+    "towers_after": 0
+  },
+  "8:grand": {
+    "before": 70,
+    "after": 70,
+    "lost": [],
+    "improved": [],
+    "floating": 0,
+    "air_intrusions": 0,
+    "towers_before": 1,
+    "towers_after": 1
+  },
+  "9:grand": {
+    "before": 80,
+    "after": 80,
+    "lost": [],
+    "improved": [],
+    "floating": 0,
+    "air_intrusions": 0,
+    "towers_before": 5,
+    "towers_after": 5
+  }
+}

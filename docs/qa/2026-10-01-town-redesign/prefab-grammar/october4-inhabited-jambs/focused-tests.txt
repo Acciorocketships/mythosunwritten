@@ -1,0 +1,40 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_inhabited_tunnel_bearings.gd
+[0m* test_room_variation_keeps_required_tunnel_support_columns
+* test_only_admitted_covers_publish_bearing_contacts
+* test_joint_inhabited_jamb_and_flat_roof_support_reaches_finished_cover
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_october3_tunnel_floor_alignment.gd
+[0m* test_host_accepts_either_storey_phase_without_growing_the_house
+* test_recovered_covers_have_whole_rooms_crowns_and_public_headroom
+[1m2/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               2
+Tests                 5
+Passing Tests         5
+Asserts              72
+Time              32.55s
+
+
+[32m---- All tests passed! ----
+[0m

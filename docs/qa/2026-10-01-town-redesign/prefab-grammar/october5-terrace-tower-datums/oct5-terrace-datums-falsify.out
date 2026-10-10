@@ -1,0 +1,41 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+/tmp/oct5-terrace-datums-falsify.gd
+[0m* test_corner_tower_stands_at_its_wings_real_terrace_datum
+[31m    [Failed]:  [0mCompound minimum ground must not hide the higher wing's real bearing
+      at line 23
+* test_a_higher_floor_is_not_itself_evidence_of_bearing
+[1m1/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+/tmp/oct5-terrace-datums-falsify.gd
+[0m- test_corner_tower_stands_at_its_wings_real_terrace_datum
+[31m    [Failed]:  [0mCompound minimum ground must not hide the higher wing's real bearing
+          at line 23
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests         1
+Failing Tests         1
+Asserts             2/3
+Time              4.075s
+
+
+[31m---- 1 failing tests ----
+[0m

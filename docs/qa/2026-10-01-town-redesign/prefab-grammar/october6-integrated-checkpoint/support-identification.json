@@ -1,0 +1,842 @@
+[
+  {
+    "asset": "pure_village.stone.retaining_half",
+    "bounds": "AABB(13.634668, 23.977942, 14, 0.73058033, 3.0220585, 4)",
+    "id": "kit.tunnel-ceilings/k0272",
+    "pose": "Transform3D(-8.742278e-08, 0, 2, 0, 1.9926966, 0, -2, 0, -8.742278e-08, 14, 23.999918, 16)"
+  },
+  {
+    "asset": "pure_village.stone.retaining_half",
+    "bounds": "AABB(10, 23.977942, 13.634751, 4, 3.0220585, 0.73058033)",
+    "id": "kit.tunnel-ceilings/k0288",
+    "pose": "Transform3D(-2, 0, -1.7484555e-07, 0, 1.9926966, 0, 1.7484555e-07, 0, -2, 12, 23.999918, 14)"
+  },
+  {
+    "asset": "pure_village.stone.retaining_half",
+    "bounds": "AABB(21.634668, 23.977942, -2, 0.7305813, 3.0220585, 4)",
+    "id": "kit.retained/k0374",
+    "pose": "Transform3D(-8.742278e-08, 0, 2, 0, 1.9926966, 0, -2, 0, -8.742278e-08, 22, 23.999918, 0)"
+  },
+  {
+    "asset": "pure_village.stone.retaining_half",
+    "bounds": "AABB(21.634668, 23.977942, 2, 0.7305813, 3.0220585, 4)",
+    "id": "kit.retained/k0375",
+    "pose": "Transform3D(-8.742278e-08, 0, 2, 0, 1.9926966, 0, -2, 0, -8.742278e-08, 22, 23.999918, 4)"
+  },
+  {
+    "asset": "pure_village.stone.retaining_half",
+    "bounds": "AABB(10, 23.977942, 5.634668, 4, 3.0220585, 0.7305813)",
+    "id": "kit.retained/k0377",
+    "pose": "Transform3D(2, 0, 0, 0, 1.9926966, 0, 0, 0, 2, 12, 23.999918, 6)"
+  },
+  {
+    "asset": "pure_village.stone.retaining_half",
+    "bounds": "AABB(14, 23.977942, 5.634668, 4, 3.0220585, 0.7305813)",
+    "id": "kit.retained/k0378",
+    "pose": "Transform3D(2, 0, 0, 0, 1.9926966, 0, 0, 0, 2, 16, 23.999918, 6)"
+  },
+  {
+    "asset": "pure_village.stone.retaining_half",
+    "bounds": "AABB(18, 23.977942, 5.634668, 4, 3.0220585, 0.7305813)",
+    "id": "kit.retained/k0379",
+    "pose": "Transform3D(2, 0, 0, 0, 1.9926966, 0, 0, 0, 2, 20, 23.999918, 6)"
+  },
+  {
+    "asset": "pure_village.wall.plaster.door",
+    "bounds": "AABB(13.568286, 27, -2, 1.0921392, 6, 4)",
+    "id": "kit.spatial.parcel.maze.house.019/k0004",
+    "pose": "Transform3D(-8.742278e-08, 0, 2, 0, 2, 0, -2, 0, -8.742278e-08, 14.063999, 27, 0)"
+  },
+  {
+    "asset": "pure_village.wall.plaster.plain",
+    "bounds": "AABB(10, 27, 5.8140006, 4, 6, 0.5)",
+    "id": "kit.spatial.parcel.maze.house.019/k0013",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 12, 27, 6.0640006)"
+  },
+  {
+    "asset": "pure_village.wall.plaster.plain",
+    "bounds": "AABB(10, 33, 5.8140006, 4, 6, 0.5)",
+    "id": "kit.spatial.parcel.maze.house.019/k0043",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 12, 33, 6.0640006)"
+  },
+  {
+    "asset": "pure_village.wall.plaster.plain",
+    "bounds": "AABB(14, 33, 5.8140006, 4, 6, 0.5)",
+    "id": "kit.spatial.parcel.maze.house.019/k0046",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 16, 33, 6.0640006)"
+  },
+  {
+    "asset": "pure_village.wall.plaster.plain",
+    "bounds": "AABB(18, 33, 5.8140006, 4, 6, 0.5)",
+    "id": "kit.spatial.parcel.maze.house.019/k0049",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 20, 33, 6.0640006)"
+  },
+  {
+    "asset": "pure_village.wall.plaster.window",
+    "bounds": "AABB(13.62441, 27, 2, 1.1008587, 6, 4)",
+    "id": "kit.spatial.parcel.maze.house.019/k0007",
+    "pose": "Transform3D(-8.742278e-08, 0, 2, 0, 2, 0, -2, 0, -8.742278e-08, 14.063999, 27, 4)"
+  },
+  {
+    "asset": "pure_village.wall.stone.plain",
+    "bounds": "AABB(21.635717, 20.99212, 14, 0.70363426, 6.0078793, 4)",
+    "id": "kit.tunnel-ceilings/k0209",
+    "pose": "Transform3D(2.3849761e-08, 0, -2, 0, 2, 0, 2, 0, 2.3849761e-08, 22, 21, 16)"
+  },
+  {
+    "asset": "pure_village.wall.stone.plain",
+    "bounds": "AABB(22, 20.99212, 13.635717, 4, 6.0078793, 0.70363426)",
+    "id": "kit.tunnel-ceilings/k0212",
+    "pose": "Transform3D(-2, 0, -1.7484555e-07, 0, 2, 0, 1.7484555e-07, 0, -2, 24, 21, 14)"
+  },
+  {
+    "asset": "suntail.decor.crossbar_1_timber",
+    "bounds": "AABB(18, 32.720966, 13.620779, 4, 0.55506134, 0.5492573)",
+    "id": "kit.spatial.parcel.maze.house.000/k0084",
+    "pose": "Transform3D(-2, 0, -1.7484555e-07, 0, 2, 0, 1.7484555e-07, 0, -2, 20, 33, 14)"
+  },
+  {
+    "asset": "suntail.decor.crossbar_1_timber",
+    "bounds": "AABB(13.829964, 32.720966, 10, 0.5492573, 0.55506134, 4)",
+    "id": "kit.skywalk.2.11.1.0.1/k0005",
+    "pose": "Transform3D(-8.742278e-08, 0, 2, 0, 2, 0, -2, 0, -8.742278e-08, 14, 33, 12)"
+  },
+  {
+    "asset": "suntail.decor.crossbar_1_timber",
+    "bounds": "AABB(10, 23.720968, 13.620779, 4, 0.55506134, 0.5492573)",
+    "id": "kit.tunnel-ceilings/k0265",
+    "pose": "Transform3D(-2, 0, -1.7484555e-07, 0, 2, 0, 1.7484555e-07, 0, -2, 12, 24, 14)"
+  },
+  {
+    "asset": "suntail.decor.crossbar_2",
+    "bounds": "AABB(14, 32.71513, 13.605473, 4, 0.5734596, 0.562273)",
+    "id": "kit.spatial.parcel.maze.house.000/k0083",
+    "pose": "Transform3D(-2, 0, -1.7484555e-07, 0, 2, 0, 1.7484555e-07, 0, -2, 16, 33, 14)"
+  },
+  {
+    "asset": "suntail.decor.crossbar_2",
+    "bounds": "AABB(13.832254, 32.56513, -2, 0.562273, 0.5734596, 4)",
+    "id": "kit.spatial.parcel.maze.house.019/k0006",
+    "pose": "Transform3D(-8.742278e-08, 0, 2, 0, 2, 0, -2, 0, -8.742278e-08, 14, 32.85, 0)"
+  },
+  {
+    "asset": "suntail.decor.crossbar_2",
+    "bounds": "AABB(13.832254, 32.56513, 2, 0.562273, 0.5734596, 4)",
+    "id": "kit.spatial.parcel.maze.house.019/k0008",
+    "pose": "Transform3D(-8.742278e-08, 0, 2, 0, 2, 0, -2, 0, -8.742278e-08, 14, 32.85, 4)"
+  },
+  {
+    "asset": "suntail.decor.crossbar_2",
+    "bounds": "AABB(10, 32.56513, 5.832255, 4, 0.5734596, 0.56227255)",
+    "id": "kit.spatial.parcel.maze.house.019/k0015",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 12, 32.85, 6)"
+  },
+  {
+    "asset": "suntail.decor.crossbar_2",
+    "bounds": "AABB(14, 32.71513, 5.832255, 4, 0.5734596, 0.56227255)",
+    "id": "kit.spatial.parcel.maze.house.019/k0036",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 16, 33, 6)"
+  },
+  {
+    "asset": "suntail.decor.crossbar_2",
+    "bounds": "AABB(18, 32.71513, 5.832255, 4, 0.5734596, 0.56227255)",
+    "id": "kit.spatial.parcel.maze.house.019/k0037",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 20, 33, 6)"
+  },
+  {
+    "asset": "suntail.decor.crossbar_2",
+    "bounds": "AABB(13.832254, 32.71513, 6, 0.562273, 0.5734596, 4)",
+    "id": "kit.skywalk.2.11.1.0.1/k0004",
+    "pose": "Transform3D(-8.742278e-08, 0, 2, 0, 2, 0, -2, 0, -8.742278e-08, 14, 33, 8)"
+  },
+  {
+    "asset": "suntail.decor.crossbar_2",
+    "bounds": "AABB(13.832254, 23.715132, 14, 0.562273, 0.5734577, 4)",
+    "id": "kit.tunnel-ceilings/k0243",
+    "pose": "Transform3D(-8.742278e-08, 0, 2, 0, 2, 0, -2, 0, -8.742278e-08, 14, 24, 16)"
+  },
+  {
+    "asset": "suntail.decor.flovers_1",
+    "bounds": "AABB(14.527353, 33.38481, 12.516885, 3.0356312, 1.9943275, 1.6419477)",
+    "id": "kit.spatial.parcel.maze.house.000/k0325",
+    "pose": "Transform3D(-2, 0, -1.7484555e-07, 0, 2, 0, 1.7484555e-07, 0, -2, 16, 34.5, 13.66)"
+  },
+  {
+    "asset": "suntail.decor.flovers_2",
+    "bounds": "AABB(10.527353, 33.38481, 12.516885, 3.0356302, 1.9943275, 1.6419477)",
+    "id": "kit.spatial.parcel.maze.house.000/k0324",
+    "pose": "Transform3D(-2, 0, -1.7484555e-07, 0, 2, 0, 1.7484555e-07, 0, -2, 12, 34.5, 13.66)"
+  },
+  {
+    "asset": "suntail.decor.ivy_1",
+    "bounds": "AABB(14.00329, 26.921251, 13.952833, 0.5105686, 5.687475, 3.9289684)",
+    "id": "kit.spatial.parcel.maze.house.000/k0302",
+    "pose": "Transform3D(-8.742278e-08, 0, 2, 0, 2, 0, -2, 0, -8.742278e-08, 14.280002, 29.4, 16)"
+  },
+  {
+    "asset": "suntail.decor.ivy_1",
+    "bounds": "AABB(21.486143, 26.921251, 2.1181993, 0.5105686, 5.687475, 3.928967)",
+    "id": "kit.spatial.parcel.maze.house.003/k0297",
+    "pose": "Transform3D(2.3849761e-08, 0, -2, 0, 2, 0, 2, 0, 2.3849761e-08, 21.72, 29.4, 4)"
+  },
+  {
+    "asset": "suntail.decor.ivy_1",
+    "bounds": "AABB(21.486143, 26.921251, 10.118199, 0.5105686, 5.687475, 3.9289675)",
+    "id": "kit.spatial.parcel.maze.house.003/k0298",
+    "pose": "Transform3D(2.3849761e-08, 0, -2, 0, 2, 0, 2, 0, 2.3849761e-08, 21.72, 29.4, 12)"
+  },
+  {
+    "asset": "suntail.decor.support_3",
+    "bounds": "AABB(14.101094, 27, 14.101094, 1.5756111, 2, 0.750309)",
+    "id": "spatial.fabric.spatial.feature.arcade_overhang.01.component.00/north_east",
+    "pose": "Transform3D(-1.2684512e-07, 0, 6.0938034, 0, 2, 0, -2.901878, 0, -2.663686e-07, 14.8889, 27, 14.476249)"
+  },
+  {
+    "asset": "suntail.decor.support_3",
+    "bounds": "AABB(14.101094, 29, 14.101094, 1.5756111, 2, 0.750309)",
+    "id": "spatial.fabric.spatial.feature.arcade_overhang.01.component.00/north_east/tile1",
+    "pose": "Transform3D(-1.2684512e-07, 0, 6.0938034, 0, 2, 0, -2.901878, 0, -2.663686e-07, 14.8889, 29, 14.476249)"
+  },
+  {
+    "asset": "suntail.decor.support_3",
+    "bounds": "AABB(14.101094, 31, 14.101094, 1.5756111, 2, 0.750309)",
+    "id": "spatial.fabric.spatial.feature.arcade_overhang.01.component.00/north_east/tile2",
+    "pose": "Transform3D(-1.2684512e-07, 0, 6.0938034, 0, 2, 0, -2.901878, 0, -2.663686e-07, 14.8889, 31, 14.476249)"
+  },
+  {
+    "asset": "suntail.decor.support_3",
+    "bounds": "AABB(20.323296, 27, 14.101093, 1.5756111, 2, 0.750309)",
+    "id": "spatial.fabric.spatial.feature.arcade_overhang.01.component.00/south_east",
+    "pose": "Transform3D(-1.2684512e-07, 0, 6.0938034, 0, 2, 0, -2.901878, 0, -2.663686e-07, 21.111101, 27, 14.476248)"
+  },
+  {
+    "asset": "suntail.decor.support_3",
+    "bounds": "AABB(20.323296, 29, 14.101093, 1.5756111, 2, 0.750309)",
+    "id": "spatial.fabric.spatial.feature.arcade_overhang.01.component.00/south_east/tile1",
+    "pose": "Transform3D(-1.2684512e-07, 0, 6.0938034, 0, 2, 0, -2.901878, 0, -2.663686e-07, 21.111101, 29, 14.476248)"
+  },
+  {
+    "asset": "suntail.decor.support_3",
+    "bounds": "AABB(20.323296, 31, 14.101093, 1.5756111, 2, 0.750309)",
+    "id": "spatial.fabric.spatial.feature.arcade_overhang.01.component.00/south_east/tile2",
+    "pose": "Transform3D(-1.2684512e-07, 0, 6.0938034, 0, 2, 0, -2.901878, 0, -2.663686e-07, 21.111101, 31, 14.476248)"
+  },
+  {
+    "asset": "suntail.decor.support_3",
+    "bounds": "AABB(14.101094, 27, 5.1485977, 1.5756111, 2, 0.75030804)",
+    "id": "spatial.fabric.spatial.feature.arcade_overhang.03.component.00/north_west",
+    "pose": "Transform3D(-1.2684512e-07, 0, 6.0938034, 0, 2, 0, -2.901878, 0, -2.663686e-07, 14.8889, 27, 5.5237517)"
+  },
+  {
+    "asset": "suntail.decor.support_3",
+    "bounds": "AABB(14.101094, 29, 5.1485977, 1.5756111, 2, 0.75030804)",
+    "id": "spatial.fabric.spatial.feature.arcade_overhang.03.component.00/north_west/tile1",
+    "pose": "Transform3D(-1.2684512e-07, 0, 6.0938034, 0, 2, 0, -2.901878, 0, -2.663686e-07, 14.8889, 29, 5.5237517)"
+  },
+  {
+    "asset": "suntail.decor.support_3",
+    "bounds": "AABB(14.101094, 31, 5.1485977, 1.5756111, 2, 0.75030804)",
+    "id": "spatial.fabric.spatial.feature.arcade_overhang.03.component.00/north_west/tile2",
+    "pose": "Transform3D(-1.2684512e-07, 0, 6.0938034, 0, 2, 0, -2.901878, 0, -2.663686e-07, 14.8889, 31, 5.5237517)"
+  },
+  {
+    "asset": "suntail.decor.support_3",
+    "bounds": "AABB(20.323296, 27, 5.1485977, 1.5756111, 2, 0.75030804)",
+    "id": "spatial.fabric.spatial.feature.arcade_overhang.03.component.00/south_west",
+    "pose": "Transform3D(-1.2684512e-07, 0, 6.0938034, 0, 2, 0, -2.901878, 0, -2.663686e-07, 21.111101, 27, 5.5237517)"
+  },
+  {
+    "asset": "suntail.decor.support_3",
+    "bounds": "AABB(20.323296, 29, 5.1485977, 1.5756111, 2, 0.75030804)",
+    "id": "spatial.fabric.spatial.feature.arcade_overhang.03.component.00/south_west/tile1",
+    "pose": "Transform3D(-1.2684512e-07, 0, 6.0938034, 0, 2, 0, -2.901878, 0, -2.663686e-07, 21.111101, 29, 5.5237517)"
+  },
+  {
+    "asset": "suntail.decor.support_3",
+    "bounds": "AABB(20.323296, 31, 5.1485977, 1.5756111, 2, 0.75030804)",
+    "id": "spatial.fabric.spatial.feature.arcade_overhang.03.component.00/south_west/tile2",
+    "pose": "Transform3D(-1.2684512e-07, 0, 6.0938034, 0, 2, 0, -2.901878, 0, -2.663686e-07, 21.111101, 31, 5.5237517)"
+  },
+  {
+    "asset": "suntail.decor.support_3",
+    "bounds": "AABB(13.796842, 27, 13.686042, 0.51711845, 6.147999, 0.51711845)",
+    "id": "kit.spatial.parcel.maze.house.000/k0024",
+    "pose": "Transform3D(-8.742278e-08, 0, 2, 0, 6.148, 0, -2, 0, -8.742278e-08, 14.055401, 27, 13.944601)"
+  },
+  {
+    "asset": "suntail.decor.support_3",
+    "bounds": "AABB(21.68604, 18, 13.796842, 0.51712036, 6.147999, 0.51711845)",
+    "id": "kit.spatial.parcel.maze.house.014/k0040",
+    "pose": "Transform3D(2.3849761e-08, 0, -2, 0, 6.148, 0, 2, 0, 2.3849761e-08, 21.944601, 18, 14.055401)"
+  },
+  {
+    "asset": "suntail.decor.support_3",
+    "bounds": "AABB(14.158863, 27, 1.8448642, 0.31027222, 6, 0.31027138)",
+    "id": "kit.spatial.parcel.maze.house.019/k0009",
+    "pose": "Transform3D(-5.2453668e-08, 0, 1.2, 0, 6, 0, -1.2, 0, -5.2453668e-08, 14.313999, 27, 2)"
+  },
+  {
+    "asset": "suntail.decor.support_3",
+    "bounds": "AABB(13.796842, 27, 5.79684, 0.51711845, 6.147999, 0.5171194)",
+    "id": "kit.spatial.parcel.maze.house.019/k0014",
+    "pose": "Transform3D(2, 0, 0, 0, 6.148, 0, 0, 0, 2, 14.055401, 27, 6.0554)"
+  },
+  {
+    "asset": "suntail.decor.support_3",
+    "bounds": "AABB(13.844864, 33, 6.158865, 0.31027222, 6, 0.31027126)",
+    "id": "kit.spatial.parcel.maze.house.019/k0045",
+    "pose": "Transform3D(1.2, 0, 0, 0, 6, 0, 0, 0, 1.2, 14, 33, 6.3140006)"
+  },
+  {
+    "asset": "suntail.decor.support_3",
+    "bounds": "AABB(17.844864, 33, 6.158865, 0.31027222, 6, 0.31027126)",
+    "id": "kit.spatial.parcel.maze.house.019/k0048",
+    "pose": "Transform3D(1.2, 0, 0, 0, 6, 0, 0, 0, 1.2, 18, 33, 6.3140006)"
+  },
+  {
+    "asset": "suntail.decor.support_3",
+    "bounds": "AABB(21.79684, 33, 5.79684, 0.51712036, 6.147999, 0.5171194)",
+    "id": "kit.spatial.parcel.maze.house.019/k0050",
+    "pose": "Transform3D(2, 0, 0, 0, 6.148, 0, 0, 0, 2, 22.0554, 33, 6.0554)"
+  },
+  {
+    "asset": "suntail.decor.support_3",
+    "bounds": "AABB(13.686042, 18, 13.686042, 0.51711845, 6.147999, 0.51711845)",
+    "id": "kit.spatial.parcel.maze.house.031/k0062",
+    "pose": "Transform3D(-2, 0, -1.7484555e-07, 0, 6.148, 0, 1.7484555e-07, 0, -2, 13.944601, 18, 13.944601)"
+  },
+  {
+    "asset": "suntail.decor.support_3",
+    "bounds": "AABB(13.796842, 33, 5.686041, 0.51711845, 6.147999, 0.5171194)",
+    "id": "kit.skywalk.2.11.1.0.1/k0009",
+    "pose": "Transform3D(-8.742278e-08, 0, 2, 0, 6.148, 0, -2, 0, -8.742278e-08, 14.055401, 33, 5.9446006)"
+  },
+  {
+    "asset": "suntail.decor.support_3",
+    "bounds": "AABB(21.68604, 20.999998, 13.686042, 0.51712036, 6.000002, 0.51711845)",
+    "id": "kit.tunnel-ceilings/k0213",
+    "pose": "Transform3D(-2, 0, -1.7484555e-07, 0, 6.000001, 0, 1.7484555e-07, 0, -2, 21.944601, 20.999998, 13.944601)"
+  },
+  {
+    "asset": "suntail.decor.support_3",
+    "bounds": "AABB(13.796842, 24, 13.686042, 0.51711845, 3, 0.51711845)",
+    "id": "kit.tunnel-ceilings/k0273",
+    "pose": "Transform3D(-8.742278e-08, 0, 2, 0, 3, 0, -2, 0, -8.742278e-08, 14.055401, 24, 13.944601)"
+  },
+  {
+    "asset": "suntail.decor.support_3",
+    "bounds": "AABB(21.79684, 24, 5.79684, 0.51712036, 3, 0.5171194)",
+    "id": "kit.retained/k0380",
+    "pose": "Transform3D(2, 0, 0, 0, 3, 0, 0, 0, 2, 22.0554, 24, 6.0554)"
+  },
+  {
+    "asset": "suntail.decor.wooden_canopy_1",
+    "bounds": "AABB(14.313999, 26.99971, 14.080002, 3.565012, 5.600342, 3.8400002)",
+    "id": "kit.spatial.parcel.maze.house.000/k0333",
+    "pose": "Transform3D(-4.4234035e-08, 0, 1.5546918, 0, 1.5546918, 0, -1.0119567, 0, -6.795774e-08, 15.57518, 27, 16.022266)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(13.9913435, 26.759998, 14, 4.000001, 0.3221054, 4)",
+    "id": "public-surface/1/8/18/8/sfv.deck.floor.s.001",
+    "pose": "Transform3D(1.9999999, 0, 0, 0, 1.7953767, 0, 0, 0, 1.9999999, 15.9913435, 26.852798, 16)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(18, 26.759998, 14.008657, 4, 0.3221054, 4)",
+    "id": "public-surface/1/10/18/8/sfv.deck.floor.s.001",
+    "pose": "Transform3D(-8.742278e-08, 0, 1.9999999, 0, 1.7953767, 0, -1.9999999, 0, -8.742278e-08, 20, 26.852798, 16.008657)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(13.99728, 26.759998, -2, 8, 0.3221054, 8)",
+    "id": "public-surface/1/9/18/1/sfv.fabric.floor.l.001",
+    "pose": "Transform3D(4, 0, 0, 0, 1.7953779, 0, 0, 0, 3.9999998, 17.99728, 26.852798, 2)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(13.99728, 26.759998, 6, 8, 0.3221054, 8)",
+    "id": "public-surface/1/9/18/5/sfv.fabric.floor.l.001",
+    "pose": "Transform3D(4, 0, 0, 0, 1.7953779, 0, 0, 0, 3.9999998, 17.99728, 26.852798, 10)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(10, 26.896624, 14, 4, 0.35881615, 4)",
+    "id": "kit.spatial.parcel.maze.house.000/k0013",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 12, 27, 16)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(10, 32.896626, 14, 4, 0.35881424, 4)",
+    "id": "kit.spatial.parcel.maze.house.000/k0067",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 12, 33, 16)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(14, 32.896626, 14, 4, 0.35881424, 4)",
+    "id": "kit.spatial.parcel.maze.house.000/k0068",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 16, 33, 16)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(18, 32.896626, 14, 4, 0.35881424, 4)",
+    "id": "kit.spatial.parcel.maze.house.000/k0069",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 20, 33, 16)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(22, 26.896624, 6, 4, 0.35881615, 4)",
+    "id": "kit.spatial.parcel.maze.house.003/k0000",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 24, 27, 8)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(26, 26.896624, 6, 4, 0.35881615, 4)",
+    "id": "kit.spatial.parcel.maze.house.003/k0001",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 28, 27, 8)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(22, 26.896624, 10, 4, 0.35881615, 4)",
+    "id": "kit.spatial.parcel.maze.house.003/k0002",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 24, 27, 12)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(26, 26.896624, 10, 4, 0.35881615, 4)",
+    "id": "kit.spatial.parcel.maze.house.003/k0003",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 28, 27, 12)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(22, 26.896624, 14, 4, 0.35881615, 4)",
+    "id": "kit.spatial.parcel.maze.house.003/k0004",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 24, 27, 16)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(26, 26.896624, 14, 4, 0.35881615, 4)",
+    "id": "kit.spatial.parcel.maze.house.003/k0005",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 28, 27, 16)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(22, 26.896624, -2.0000002, 4, 0.35881615, 4.0000005)",
+    "id": "kit.spatial.parcel.maze.house.003/k0012",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 24, 27, 0)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(26, 26.896624, -2.0000002, 4, 0.35881615, 4.0000005)",
+    "id": "kit.spatial.parcel.maze.house.003/k0013",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 28, 27, 0)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(22, 26.896624, 1.9999998, 4, 0.35881615, 4)",
+    "id": "kit.spatial.parcel.maze.house.003/k0014",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 24, 27, 4)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(26, 26.896624, 1.9999998, 4, 0.35881615, 4)",
+    "id": "kit.spatial.parcel.maze.house.003/k0015",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 28, 27, 4)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(22, 32.896626, 6, 4, 0.35881424, 4)",
+    "id": "kit.spatial.parcel.maze.house.003/k0050",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 24, 33, 8)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(26, 32.896626, 6, 4, 0.35881424, 4)",
+    "id": "kit.spatial.parcel.maze.house.003/k0051",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 28, 33, 8)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(22, 32.896626, 10, 4, 0.35881424, 4)",
+    "id": "kit.spatial.parcel.maze.house.003/k0052",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 24, 33, 12)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(26, 32.896626, 10, 4, 0.35881424, 4)",
+    "id": "kit.spatial.parcel.maze.house.003/k0053",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 28, 33, 12)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(22, 32.896626, 14, 4, 0.35881424, 4)",
+    "id": "kit.spatial.parcel.maze.house.003/k0054",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 24, 33, 16)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(26, 32.896626, 14, 4, 0.35881424, 4)",
+    "id": "kit.spatial.parcel.maze.house.003/k0055",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 28, 33, 16)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(22, 32.896626, -2.0000002, 4, 0.35881424, 4.0000005)",
+    "id": "kit.spatial.parcel.maze.house.003/k0062",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 24, 33, 0)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(26, 32.896626, -2.0000002, 4, 0.35881424, 4.0000005)",
+    "id": "kit.spatial.parcel.maze.house.003/k0063",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 28, 33, 0)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(22, 32.896626, 1.9999998, 4, 0.35881424, 4)",
+    "id": "kit.spatial.parcel.maze.house.003/k0064",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 24, 33, 4)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(26, 32.896626, 1.9999998, 4, 0.35881424, 4)",
+    "id": "kit.spatial.parcel.maze.house.003/k0065",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 28, 33, 4)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(22, 23.896624, -2.0000002, 4, 0.35881615, 4.0000005)",
+    "id": "kit.spatial.parcel.maze.house.014/k0085",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 24, 24, 0)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(22, 23.896624, 1.9999998, 4, 0.35881615, 4)",
+    "id": "kit.spatial.parcel.maze.house.014/k0086",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 24, 24, 4)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(22, 23.896624, 6, 4, 0.35881615, 4)",
+    "id": "kit.spatial.parcel.maze.house.014/k0087",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 24, 24, 8)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(22, 23.896624, 10, 4, 0.35881615, 4)",
+    "id": "kit.spatial.parcel.maze.house.014/k0088",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 24, 24, 12)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(26, 23.896624, -2.0000002, 4, 0.35881615, 4.0000005)",
+    "id": "kit.spatial.parcel.maze.house.014/k0097",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 28, 24, 0)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(26, 23.896624, 1.9999998, 4, 0.35881615, 4)",
+    "id": "kit.spatial.parcel.maze.house.014/k0098",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 28, 24, 4)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(26, 23.896624, 6, 4, 0.35881615, 4)",
+    "id": "kit.spatial.parcel.maze.house.014/k0099",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 28, 24, 8)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(26, 23.896624, 10, 4, 0.35881615, 4)",
+    "id": "kit.spatial.parcel.maze.house.014/k0100",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 28, 24, 12)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(10, 26.896624, -2.0000002, 4, 0.35881615, 4.0000005)",
+    "id": "kit.spatial.parcel.maze.house.019/k0001",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 12, 27, 0)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(10, 26.896624, 1.9999998, 4, 0.35881615, 4)",
+    "id": "kit.spatial.parcel.maze.house.019/k0003",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 12, 27, 4)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(10, 32.896626, -2.0000002, 4, 0.35881424, 4.0000005)",
+    "id": "kit.spatial.parcel.maze.house.019/k0029",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 12, 33, 0)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(14, 32.896626, -2.0000002, 4, 0.35881424, 4.0000005)",
+    "id": "kit.spatial.parcel.maze.house.019/k0030",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 16, 33, 0)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(18, 32.896626, -2.0000002, 4, 0.35881424, 4.0000005)",
+    "id": "kit.spatial.parcel.maze.house.019/k0031",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 20, 33, 0)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(10, 32.896626, 1.9999998, 4, 0.35881424, 4)",
+    "id": "kit.spatial.parcel.maze.house.019/k0033",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 12, 33, 4)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(14, 32.896626, 1.9999998, 4, 0.35881424, 4)",
+    "id": "kit.spatial.parcel.maze.house.019/k0034",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 16, 33, 4)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(18, 32.896626, 1.9999998, 4, 0.35881424, 4)",
+    "id": "kit.spatial.parcel.maze.house.019/k0035",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 20, 33, 4)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(14, 23.896624, 14, 4, 0.35881615, 4)",
+    "id": "kit.spatial.parcel.maze.house.031/k0064",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 16, 24, 16)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(18, 23.896624, 14, 4, 0.35881615, 4)",
+    "id": "kit.spatial.parcel.maze.house.031/k0065",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 20, 24, 16)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(10, 32.896626, 6, 4, 0.35881424, 4)",
+    "id": "kit.skywalk.2.11.1.0.1/k0001",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 12, 33, 8)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(10, 32.896626, 10, 4, 0.35881424, 4)",
+    "id": "kit.skywalk.2.11.1.0.1/k0003",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 12, 33, 12)"
+  },
+  {
+    "asset": "suntail.floor.floor_2",
+    "bounds": "AABB(10, 23.896624, 14, 4, 0.35881615, 4)",
+    "id": "kit.tunnel-ceilings/k0220",
+    "pose": "Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 12, 24, 16)"
+  },
+  {
+    "asset": "suntail.frame.frame_wall_1",
+    "bounds": "AABB(13.677178, 26.9977, 13.997668, 0.6273384, 6.1512794, 4.3189955)",
+    "id": "kit.spatial.parcel.maze.house.000/k0023",
+    "pose": "Transform3D(-8.742278e-08, 0, 2, 0, 2, 0, -2, 0, -8.742278e-08, 14, 27, 16)"
+  },
+  {
+    "asset": "suntail.frame.frame_wall_1",
+    "bounds": "AABB(21.695484, 26.9977, 1.6833355, 0.6273365, 6.1512794, 4.3189964)",
+    "id": "kit.spatial.parcel.maze.house.003/k0035",
+    "pose": "Transform3D(2.3849761e-08, 0, -2, 0, 2, 0, 2, 0, 2.3849761e-08, 22, 27, 4)"
+  },
+  {
+    "asset": "suntail.frame.frame_wall_1",
+    "bounds": "AABB(21.695484, 26.9977, 5.6833353, 0.6273365, 6.1512794, 4.3189964)",
+    "id": "kit.spatial.parcel.maze.house.003/k0037",
+    "pose": "Transform3D(2.3849761e-08, 0, -2, 0, 2, 0, 2, 0, 2.3849761e-08, 22, 27, 8)"
+  },
+  {
+    "asset": "suntail.frame.frame_wall_1",
+    "bounds": "AABB(21.695484, 32.9977, 5.6833353, 0.6273365, 6.1512794, 4.3189964)",
+    "id": "kit.spatial.parcel.maze.house.003/k0079",
+    "pose": "Transform3D(2.3849761e-08, 0, -2, 0, 2, 0, 2, 0, 2.3849761e-08, 22, 33, 8)"
+  },
+  {
+    "asset": "suntail.frame.frame_wall_1",
+    "bounds": "AABB(21.695484, 17.9977, 9.683335, 0.6273365, 6.1512794, 4.3189964)",
+    "id": "kit.spatial.parcel.maze.house.014/k0039",
+    "pose": "Transform3D(2.3849761e-08, 0, -2, 0, 2, 0, 2, 0, 2.3849761e-08, 22, 18, 12)"
+  },
+  {
+    "asset": "suntail.frame.frame_wall_1_w",
+    "bounds": "AABB(17.997417, 32.9977, 13.695483, 4.312813, 6.1376305, 0.6247635)",
+    "id": "kit.spatial.parcel.maze.house.000/k0112",
+    "pose": "Transform3D(-2, 0, -1.7484555e-07, 0, 2, 0, 1.7484555e-07, 0, -2, 20, 33, 14)"
+  },
+  {
+    "asset": "suntail.frame.frame_wall_1_w",
+    "bounds": "AABB(21.695484, 26.9977, -2.3102293, 0.6247616, 6.1376305, 4.312813)",
+    "id": "kit.spatial.parcel.maze.house.003/k0033",
+    "pose": "Transform3D(2.3849761e-08, 0, -2, 0, 2, 0, 2, 0, 2.3849761e-08, 22, 27, 0)"
+  },
+  {
+    "asset": "suntail.frame.frame_wall_1_w",
+    "bounds": "AABB(21.695484, 26.9977, 13.689771, 0.6247616, 6.1376305, 4.312812)",
+    "id": "kit.spatial.parcel.maze.house.003/k0041",
+    "pose": "Transform3D(2.3849761e-08, 0, -2, 0, 2, 0, 2, 0, 2.3849761e-08, 22, 27, 16)"
+  },
+  {
+    "asset": "suntail.frame.frame_wall_1_w",
+    "bounds": "AABB(21.695484, 32.9977, 9.689771, 0.6247616, 6.1376305, 4.312813)",
+    "id": "kit.spatial.parcel.maze.house.003/k0080",
+    "pose": "Transform3D(2.3849761e-08, 0, -2, 0, 2, 0, 2, 0, 2.3849761e-08, 22, 33, 12)"
+  },
+  {
+    "asset": "suntail.frame.frame_wall_1_w",
+    "bounds": "AABB(17.997417, 17.9977, 13.695483, 4.312813, 6.1376305, 0.6247635)",
+    "id": "kit.spatial.parcel.maze.house.031/k0063",
+    "pose": "Transform3D(-2, 0, -1.7484555e-07, 0, 2, 0, 1.7484555e-07, 0, -2, 20, 18, 14)"
+  },
+  {
+    "asset": "suntail.frame.frame_wall_2",
+    "bounds": "AABB(21.689552, 27, 9.684954, 0.6294651, 6.1398964, 4.3170395)",
+    "id": "kit.spatial.parcel.maze.house.003/k0039",
+    "pose": "Transform3D(2.3849761e-08, 0, -2, 0, 2, 0, 2, 0, 2.3849761e-08, 22, 27, 12)"
+  },
+  {
+    "asset": "suntail.frame.frame_wall_2",
+    "bounds": "AABB(13.680982, 33, 5.9980063, 0.62946606, 6.1398964, 4.31704)",
+    "id": "kit.skywalk.2.11.1.0.1/k0008",
+    "pose": "Transform3D(-8.742278e-08, 0, 2, 0, 2, 0, -2, 0, -8.742278e-08, 14, 33, 8)"
+  },
+  {
+    "asset": "suntail.frame.frame_wall_2_w",
+    "bounds": "AABB(9.999897, 27, 13.689589, 4.326915, 6.136345, 0.62821865)",
+    "id": "kit.spatial.parcel.maze.house.000/k0046",
+    "pose": "Transform3D(-2, 0, -1.7484555e-07, 0, 2, 0, 1.7484555e-07, 0, -2, 12, 27, 14)"
+  },
+  {
+    "asset": "suntail.frame.frame_wall_2_w",
+    "bounds": "AABB(9.999897, 33, 13.689589, 4.326915, 6.136345, 0.62821865)",
+    "id": "kit.spatial.parcel.maze.house.000/k0110",
+    "pose": "Transform3D(-2, 0, -1.7484555e-07, 0, 2, 0, 1.7484555e-07, 0, -2, 12, 33, 14)"
+  },
+  {
+    "asset": "suntail.frame.frame_wall_2_w",
+    "bounds": "AABB(13.999897, 33, 13.689589, 4.326914, 6.136345, 0.62821865)",
+    "id": "kit.spatial.parcel.maze.house.000/k0111",
+    "pose": "Transform3D(-2, 0, -1.7484555e-07, 0, 2, 0, 1.7484555e-07, 0, -2, 16, 33, 14)"
+  },
+  {
+    "asset": "suntail.frame.frame_wall_2_w",
+    "bounds": "AABB(21.689589, 18, 5.673188, 0.6282196, 6.136347, 4.326915)",
+    "id": "kit.spatial.parcel.maze.house.014/k0038",
+    "pose": "Transform3D(2.3849761e-08, 0, -2, 0, 2, 0, 2, 0, 2.3849761e-08, 22, 18, 8)"
+  },
+  {
+    "asset": "suntail.frame.frame_wall_2_w",
+    "bounds": "AABB(13.689589, 18, 13.673188, 0.62821865, 6.136347, 4.326915)",
+    "id": "kit.spatial.parcel.maze.house.031/k0058",
+    "pose": "Transform3D(2.3849761e-08, 0, -2, 0, 2, 0, 2, 0, 2.3849761e-08, 14, 18, 16)"
+  },
+  {
+    "asset": "suntail.frame.frame_wall_2_w",
+    "bounds": "AABB(13.999897, 18, 13.689589, 4.326914, 6.136347, 0.62821865)",
+    "id": "kit.spatial.parcel.maze.house.031/k0061",
+    "pose": "Transform3D(-2, 0, -1.7484555e-07, 0, 2, 0, 1.7484555e-07, 0, -2, 16, 18, 14)"
+  },
+  {
+    "asset": "suntail.frame.frame_wall_2_w",
+    "bounds": "AABB(13.682193, 33, 9.999897, 0.62821865, 6.136345, 4.326915)",
+    "id": "kit.skywalk.2.11.1.0.1/k0010",
+    "pose": "Transform3D(-8.742278e-08, 0, 2, 0, 2, 0, -2, 0, -8.742278e-08, 14, 33, 12)"
+  },
+  {
+    "asset": "suntail.stair.wooden_railings_1",
+    "bounds": "AABB(13.820375, 27.05, 6, 0.35925007, 1.8599014, 4)",
+    "id": "public-guard/4:9:2:-1:0",
+    "pose": "Transform3D(-1.7202768e-07, 0, 4.28565, 0, 1.9721593, 0, -3.935535, 0, -1.873317e-07, 14.000254, 27.060814, 9.835281)"
+  },
+  {
+    "asset": "suntail.stair.wooden_railings_1",
+    "bounds": "AABB(13.820375, 27.05, 10, 0.35925007, 1.8599014, 4)",
+    "id": "public-guard/4:9:3:-1:0",
+    "pose": "Transform3D(-1.7202768e-07, 0, 4.28565, 0, 1.9721593, 0, -3.935535, 0, -1.873317e-07, 14.000254, 27.060814, 13.835281)"
+  },
+  {
+    "asset": "suntail.stair.wooden_railings_1",
+    "bounds": "AABB(21.916292, 23.989033, 5.9162917, 0.16765213, 1.886158, 2.0327601)",
+    "id": "kit.spatial.parcel.maze.house.014/k0089",
+    "pose": "Transform3D(2.3849761e-08, 0, -2, 0, 2, 0, 2, 0, 2.3849761e-08, 22, 24, 6)"
+  },
+  {
+    "asset": "suntail.stair.wooden_railings_1",
+    "bounds": "AABB(21.916292, 23.989033, 7.9162917, 0.16765213, 1.886158, 2.0327601)",
+    "id": "kit.spatial.parcel.maze.house.014/k0090",
+    "pose": "Transform3D(2.3849761e-08, 0, -2, 0, 2, 0, 2, 0, 2.3849761e-08, 22, 24, 8)"
+  },
+  {
+    "asset": "suntail.stair.wooden_railings_1",
+    "bounds": "AABB(21.916292, 23.989033, 9.916292, 0.16765213, 1.886158, 2.0327597)",
+    "id": "kit.spatial.parcel.maze.house.014/k0091",
+    "pose": "Transform3D(2.3849761e-08, 0, -2, 0, 2, 0, 2, 0, 2.3849761e-08, 22, 24, 10)"
+  },
+  {
+    "asset": "suntail.stair.wooden_railings_1",
+    "bounds": "AABB(21.916292, 23.989033, 11.916292, 0.16765213, 1.886158, 2.0327597)",
+    "id": "kit.spatial.parcel.maze.house.014/k0092",
+    "pose": "Transform3D(2.3849761e-08, 0, -2, 0, 2, 0, 2, 0, 2.3849761e-08, 22, 24, 12)"
+  },
+  {
+    "asset": "suntail.stair.wooden_railings_1",
+    "bounds": "AABB(16.050947, 23.989033, 13.916292, 2.0327606, 1.886158, 0.16765213)",
+    "id": "kit.spatial.parcel.maze.house.031/k0066",
+    "pose": "Transform3D(-2, 0, -1.7484555e-07, 0, 2, 0, 1.7484555e-07, 0, -2, 18, 24, 14)"
+  },
+  {
+    "asset": "suntail.stair.wooden_railings_1",
+    "bounds": "AABB(14.050948, 23.989033, 13.916292, 2.0327597, 1.886158, 0.16765213)",
+    "id": "kit.spatial.parcel.maze.house.031/k0067",
+    "pose": "Transform3D(-2, 0, -1.7484555e-07, 0, 2, 0, 1.7484555e-07, 0, -2, 16, 24, 14)"
+  },
+  {
+    "asset": "suntail.stair.wooden_railings_1",
+    "bounds": "AABB(20.050947, 23.989033, 13.916292, 2.0327606, 1.886158, 0.16765213)",
+    "id": "kit.spatial.parcel.maze.house.031/k0069",
+    "pose": "Transform3D(-2, 0, -1.7484555e-07, 0, 2, 0, 1.7484555e-07, 0, -2, 22, 24, 14)"
+  },
+  {
+    "asset": "suntail.stair.wooden_railings_1",
+    "bounds": "AABB(18.050947, 23.989033, 13.916292, 2.0327606, 1.886158, 0.16765213)",
+    "id": "kit.spatial.parcel.maze.house.031/k0070",
+    "pose": "Transform3D(-2, 0, -1.7484555e-07, 0, 2, 0, 1.7484555e-07, 0, -2, 20, 24, 14)"
+  },
+  {
+    "asset": "suntail.stair.wooden_railings_3",
+    "bounds": "AABB(21.916292, 23.989033, 13.916292, 0.16765213, 1.886158, 0.16741562)",
+    "id": "kit.spatial.parcel.maze.house.014/k0093",
+    "pose": "Transform3D(2.3849761e-08, 0, -2, 0, 2, 0, 2, 0, 2.3849761e-08, 22, 24, 14)"
+  },
+  {
+    "asset": "suntail.stair.wooden_railings_3",
+    "bounds": "AABB(13.916292, 23.989033, 13.916292, 0.16741562, 1.886158, 0.16765213)",
+    "id": "kit.spatial.parcel.maze.house.031/k0068",
+    "pose": "Transform3D(-2, 0, -1.7484555e-07, 0, 2, 0, 1.7484555e-07, 0, -2, 14, 24, 14)"
+  },
+  {
+    "asset": "suntail.stone.stone_base",
+    "bounds": "AABB(21.309338, 25, -2.6457872, 1.3584595, 2.2368526, 4.6457872)",
+    "id": "kit.spatial.parcel.maze.house.003/k0034",
+    "pose": "Transform3D(2.3849761e-08, 0, -2, 0, 2, 0, 2, 0, 2.3849761e-08, 22, 25, 0)"
+  },
+  {
+    "asset": "suntail.stone.stone_base",
+    "bounds": "AABB(21.309338, 25, 1.3542128, 1.3584595, 2.2368526, 4.6457872)",
+    "id": "kit.spatial.parcel.maze.house.003/k0036",
+    "pose": "Transform3D(2.3849761e-08, 0, -2, 0, 2, 0, 2, 0, 2.3849761e-08, 22, 25, 4)"
+  },
+  {
+    "asset": "suntail.stone.stone_base",
+    "bounds": "AABB(21.309338, 25, 5.3542128, 1.3584595, 2.2368526, 4.6457872)",
+    "id": "kit.spatial.parcel.maze.house.003/k0038",
+    "pose": "Transform3D(2.3849761e-08, 0, -2, 0, 2, 0, 2, 0, 2.3849761e-08, 22, 25, 8)"
+  },
+  {
+    "asset": "suntail.stone.stone_base",
+    "bounds": "AABB(21.309338, 25, 9.354213, 1.3584595, 2.2368526, 4.6457872)",
+    "id": "kit.spatial.parcel.maze.house.003/k0040",
+    "pose": "Transform3D(2.3849761e-08, 0, -2, 0, 2, 0, 2, 0, 2.3849761e-08, 22, 25, 12)"
+  }
+]

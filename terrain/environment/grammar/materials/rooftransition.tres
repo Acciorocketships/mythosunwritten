@@ -1,0 +1,19 @@
+[gd_resource type="StandardMaterial3D" load_steps=4 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/PureVillage/Textures/RoofTransition_dst/RoofTransition_a.png" id="1_ltevj"]
+[ext_resource type="Texture2D" path="res://assets/PureVillage/Textures/RoofTransition_dst/RoofTransition_mask_MOS_100_100.png" id="2_78qx7"]
+[ext_resource type="Texture2D" path="res://assets/PureVillage/Textures/RoofTransition_dst/RoofTransition_n.png" id="3_6afnp"]
+
+[resource]
+resource_name = "RoofTransition"
+albedo_color = Color(0.55322176, 0.59433967, 0.5574851, 1)
+albedo_texture = ExtResource("1_ltevj")
+metallic = 1.0
+metallic_texture = ExtResource("2_78qx7")
+metallic_texture_channel = 2
+roughness_texture = ExtResource("2_78qx7")
+roughness_texture_channel = 1
+normal_enabled = true
+normal_texture = ExtResource("3_6afnp")
+ao_enabled = true
+ao_texture = ExtResource("2_78qx7")

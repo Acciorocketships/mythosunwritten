@@ -1,0 +1,35 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_native_grammar_compiler.gd
+[0m* test_baked_vocabulary_has_collision_and_no_source_visual_paths
+* test_compiles_complete_native_assembly_in_rotated_world_reservation
+* test_failure_never_emits_a_partial_house_or_clips_a_native_part
+* test_baked_resource_dependency_graph_does_not_load_source_packs
+[1m4/4 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               1
+Tests                 4
+Passing Tests         4
+Asserts            1030
+Time              4.252s
+
+
+[32m---- All tests passed! ----
+[0m

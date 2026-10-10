@@ -1,12 +1,5 @@
 extends GutTest
 
-func test_a_source_generated_city_does_not_request_a_second_ground_house_pass() -> void:
-	var city := VillageUrbanFabricPlan.new()
-	city.generation_kind = VillageUrbanFabricPlan.GenerationKind.VOLUMETRIC_WARREN
-	assert_false(city.requires_outskirts(),
-		"Ground houses and upper rooms must be allocated before this one source city is sealed")
-
-
 func test_photographed_city_allocates_low_native_neighborhood_before_modular_rooms() -> void:
 	var source := WarrenMazeSitePlanner.plan(8922681140531148375, {},
 		WarrenVillageScaleProfile.for_id(&"compact"))

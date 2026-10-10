@@ -1,0 +1,53 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+COLUMN (14, 0, 4) use=5 owner=spatial.feature.maze_stone.00 retained=true crown=false solid=false garden=false
+COLUMN (14, 1, 4) use=4 owner=spatial.parcel.maze.house.062.part00 retained=false crown=false solid=true garden=false
+COLUMN (14, 2, 4) use=4 owner=spatial.parcel.maze.house.062.part00 retained=false crown=false solid=true garden=false
+COLUMN (14, 3, 4) use=5 owner=spatial.feature.maze_stone.00 retained=false crown=false solid=true garden=false
+COLUMN (14, 4, 4) use=5 owner=spatial.feature.maze_stone.00 retained=true crown=false solid=false garden=true
+COLUMN (14, 5, 4) use=0 owner= retained=false crown=false solid=false garden=false
+COLUMN (14, 0, 5) use=5 owner=spatial.feature.maze_stone.00 retained=true crown=false solid=false garden=false
+COLUMN (14, 1, 5) use=4 owner=spatial.parcel.maze.house.062.part00 retained=false crown=false solid=false garden=false
+COLUMN (14, 2, 5) use=4 owner=spatial.parcel.maze.house.062.part00 retained=false crown=false solid=false garden=false
+COLUMN (14, 3, 5) use=5 owner=spatial.feature.maze_stone.00 retained=false crown=false solid=true garden=false
+COLUMN (14, 4, 5) use=5 owner=spatial.feature.maze_stone.00 retained=true crown=false solid=false garden=true
+COLUMN (14, 5, 5) use=0 owner= retained=false crown=false solid=false garden=false
+COLUMN (14, 0, 6) use=5 owner=spatial.feature.maze_stone.00 retained=true crown=false solid=false garden=false
+COLUMN (14, 1, 6) use=4 owner=spatial.parcel.maze.house.062.part00 retained=false crown=false solid=false garden=false
+COLUMN (14, 2, 6) use=4 owner=spatial.parcel.maze.house.062.part00 retained=false crown=false solid=false garden=false
+COLUMN (14, 3, 6) use=5 owner=spatial.feature.maze_stone.00 retained=false crown=false solid=true garden=false
+COLUMN (14, 4, 6) use=5 owner=spatial.feature.maze_stone.00 retained=true crown=false solid=false garden=true
+COLUMN (14, 5, 6) use=0 owner= retained=false crown=false solid=false garden=false
+COLUMN (14, 0, 7) use=5 owner=spatial.feature.maze_stone.00 retained=true crown=false solid=false garden=false
+COLUMN (14, 1, 7) use=4 owner=spatial.parcel.maze.house.062.part00 retained=false crown=false solid=true garden=false
+COLUMN (14, 2, 7) use=4 owner=spatial.parcel.maze.house.062.part00 retained=false crown=false solid=true garden=false
+COLUMN (14, 3, 7) use=5 owner=spatial.feature.maze_stone.00 retained=false crown=false solid=true garden=false
+COLUMN (14, 4, 7) use=5 owner=spatial.feature.maze_stone.00 retained=true crown=false solid=false garden=true
+COLUMN (14, 5, 7) use=0 owner= retained=false crown=false solid=false garden=false
+COLUMN (15, 0, 4) use=5 owner=spatial.feature.maze_stone.00 retained=true crown=false solid=false garden=false
+COLUMN (15, 1, 4) use=4 owner=spatial.parcel.maze.house.062.part00 retained=false crown=false solid=true garden=false
+COLUMN (15, 2, 4) use=4 owner=spatial.parcel.maze.house.062.part00 retained=false crown=false solid=true garden=false
+COLUMN (15, 3, 4) use=5 owner=spatial.feature.maze_stone.00 retained=false crown=false solid=true garden=false
+COLUMN (15, 4, 4) use=5 owner=spatial.feature.maze_stone.00 retained=true crown=false solid=false garden=true
+COLUMN (15, 5, 4) use=0 owner= retained=false crown=false solid=false garden=false
+COLUMN (15, 0, 5) use=5 owner=spatial.feature.maze_stone.00 retained=true crown=false solid=false garden=false
+COLUMN (15, 1, 5) use=4 owner=spatial.parcel.maze.house.062.part00 retained=false crown=false solid=true garden=false
+COLUMN (15, 2, 5) use=4 owner=spatial.parcel.maze.house.062.part00 retained=false crown=false solid=true garden=false
+COLUMN (15, 3, 5) use=5 owner=spatial.feature.maze_stone.00 retained=false crown=false solid=true garden=false
+COLUMN (15, 4, 5) use=5 owner=spatial.feature.maze_stone.00 retained=true crown=false solid=false garden=true
+COLUMN (15, 5, 5) use=0 owner= retained=false crown=false solid=false garden=false
+COLUMN (15, 0, 6) use=5 owner=spatial.feature.maze_stone.00 retained=true crown=false solid=false garden=false
+COLUMN (15, 1, 6) use=4 owner=spatial.parcel.maze.house.062.part00 retained=false crown=false solid=true garden=false
+COLUMN (15, 2, 6) use=4 owner=spatial.parcel.maze.house.062.part00 retained=false crown=false solid=true garden=false
+COLUMN (15, 3, 6) use=5 owner=spatial.feature.maze_stone.00 retained=false crown=false solid=true garden=false
+COLUMN (15, 4, 6) use=5 owner=spatial.feature.maze_stone.00 retained=true crown=false solid=false garden=true
+COLUMN (15, 5, 6) use=0 owner= retained=false crown=false solid=false garden=false
+COLUMN (15, 0, 7) use=5 owner=spatial.feature.maze_stone.00 retained=true crown=false solid=false garden=false
+COLUMN (15, 1, 7) use=4 owner=spatial.parcel.maze.house.062.part00 retained=false crown=false solid=true garden=false
+COLUMN (15, 2, 7) use=4 owner=spatial.parcel.maze.house.062.part00 retained=false crown=false solid=true garden=false
+COLUMN (15, 3, 7) use=5 owner=spatial.feature.maze_stone.00 retained=false crown=false solid=true garden=false
+COLUMN (15, 4, 7) use=5 owner=spatial.feature.maze_stone.00 retained=true crown=false solid=false garden=true
+COLUMN (15, 5, 7) use=0 owner= retained=false crown=false solid=false garden=false
+DONE

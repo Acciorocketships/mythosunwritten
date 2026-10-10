@@ -1,0 +1,33 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+MASS kit.spatial.parcel.maze.house.012 ROOFS [{ "rect": [P: (4, -2), S: (2, 4)], "axis": 1, "eave_band": 9, "colour": &"blue", "open_min": false, "open_max": false, "extend_min": 0, "extend_max": 0, "dormers": {  }, "ridge_peaks": false, &"chimney": false, &"chimney_end": 0, &"union_index": 22 }] STOREYS [{ "floor_band": 5, "cells": { (4, -2): true, (5, -2): true, (6, -2): true, (7, -2): true, (4, -1): true, (5, -1): true, (6, -1): true, (7, -1): true }, "material": &"timber", "inset": false, "plinth": false, "openings": { (5, -1, 1): &"door", (7, -1, 0): &"plain", (6, -1, 1): &"plain", (4, -2, 2): &"plain", (4, -1, 2): &"plain" }, "default_opening": &"window", "plain_every": 0, &"tint": (1.0, 0.96, 0.88, 1.0), "bay_roles": {  }, "bay_offsets": {  }, &"bay_colour": &"blue", &"opening_min_y": { (4, -2, 2): 9.05, (4, -1, 2): 9.05 } }, { "floor_band": 7, "cells": { (4, -2): true, (5, -2): true, (4, -1): true, (5, -1): true }, "material": &"timber", "inset": false, "plinth": false, "openings": { (4, -1, 1): &"door", (5, -2, 0): &"door", (5, -2, 3): &"window", (4, -1, 2): &"window" }, "default_opening": &"window", "plain_every": 0, "passage_edges": { (4, -1, 1): true }, "abutted": true, &"tint": (1.0, 0.96, 0.88, 1.0), "bay_roles": {  }, "bay_offsets": {  }, &"bay_colour": &"blue", &"opening_assets": { (4, -1, 2): &"suntail.frame.frame_wall_1_w", (5, -2, 3): &"suntail.frame.frame_wall_1_w" } }]
+BOARD (9.0, 7.5, -3.0)
+BOARD (11.0, 7.5, -3.0)
+BOARD (13.0, 7.5, -3.0)
+BOARD (15.0, 7.5, -3.0)
+BOARD (9.0, 7.5, -1.0)
+BOARD (11.0, 7.5, -1.0)
+BOARD (13.0, 7.5, -1.0)
+BOARD (15.0, 7.5, -1.0)
+BOARD (9.0, 10.5, -3.0)
+BOARD (11.0, 10.5, -3.0)
+BOARD (9.0, 10.5, -1.0)
+BOARD (11.0, 10.5, -1.0)
+BOARD (9.0, 13.5, 1.0)
+BOARD (11.0, 13.5, 1.0)
+BOARD (13.0, 10.5, -3.0)
+BOARD (13.0, 10.5, -1.0)
+BOARD (15.0, 10.5, -1.0)
+BOARD (15.0, 10.5, -3.0)
+AIR (4, 0) eave 9
+OTHER kit.skywalk.4.7.-1.0.1
+AIR (4, 1) eave 9
+OTHER kit.skywalk.4.7.-1.0.1
+OTHER kit.tunnel-ceilings
+AIR (5, 0) eave 9
+OTHER kit.skywalk.4.7.-1.0.1
+AIR (5, 1) eave 9
+OTHER kit.skywalk.4.7.-1.0.1
+OTHER kit.tunnel-ceilings

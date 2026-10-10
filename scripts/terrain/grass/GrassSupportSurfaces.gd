@@ -197,4 +197,5 @@ static func at_point(surfaces:Array, point:Vector2)->Dictionary:
 				maxf(maxf(obstacle.position.y-point.y,0),point.y-obstacle.end.y))
 			distance=minf(distance,delta.length())
 		result={"y":height,"normal":normal,"edge_distance":distance,"support_id":surface.id}
+		if surface.get("feature_garden",false): result["feature_garden"] = true
 	return result

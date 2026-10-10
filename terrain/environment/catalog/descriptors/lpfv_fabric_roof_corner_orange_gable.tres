@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_6ohcd"]
+
+[resource]
+script = ExtResource("1_6ohcd")
+id = &"lpfv.fabric.roof.corner.orange.gable"
+visual_path = "res://terrain/environment/visuals/town_corner_roofs/lpfv_fabric_roof_corner_orange_gable.tres"
+tags = Array[StringName]([&"building", &"corner_gable", &"fabric_roof", &"village"])
+measured_aabb = AABB(-1.5, 0.027699154, -1.5, 3, 2.0588872, 3)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+provenance_id = &"town_corner_roofs:lpfv.fabric.roof.corner.orange.gable"

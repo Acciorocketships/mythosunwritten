@@ -18,11 +18,11 @@ func _init() -> void:
 		var record := world.village_plan().record_for(frame)
 		var row := {"super_cell":str(super_cell),"cell":str(frame.cell),"tier":record.tier,
 			"accepted":record.urban_fabric.accepted,"valid":record.validate(program.villages),
-			"reason":record.urban_fabric.reason,"outskirts":record.outskirts != null,
+			"reason":record.urban_fabric.reason,
 			"building_count":record.urban_fabric.buildings.size(),"world_transform":str(record.urban_fabric.world_transform),"instances":record.payload.instance_count,
 			"ms":Time.get_ticks_msec()-started,"audit":record.urban_fabric.fabric_audit}
 		rows.append(row)
 		FileAccess.open("res://docs/qa/2026-09-11-manual/12-landforms/world-records.json",FileAccess.WRITE).store_string(JSON.stringify(rows,"  "))
-		print("WORLD_TOWN ", row.cell, " ",row.tier," accepted=",row.accepted," valid=",row.valid," outskirts=",row.outskirts)
+		print("WORLD_TOWN ", row.cell, " ",row.tier," accepted=",row.accepted," valid=",row.valid)
 	FileAccess.open("res://docs/qa/2026-09-11-manual/12-landforms/world-records.json",FileAccess.WRITE).store_string(JSON.stringify(rows,"  "))
 	quit()

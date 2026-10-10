@@ -1,0 +1,49 @@
+--- solver.before
++++ solver.late-retry
+@@ -3790,6 +3790,17 @@
+ 		last_failure = "residual room backfill failed: %s" % JSON.stringify(
+ 			backfill.get("failure", backfill))
+ 		return {}
++	# A passage's adjacent bearing/host rooms may be built by residual infill.
++	# Retry only those reserved covers once their actual neighbours exist;
++	# never spend a potential house frontage on speculative stone supports.
++	var passage_retry := _stamp_maze_back_rooms(grid, volume, parcels, proposals,
++		buildings, supports, required_supports, terrain_support_ids,
++		support_edges, protected_owners, construction_program, true)
++	if bool(passage_retry.get("failed", false)):
++		last_failure = "late passage cover failed: %s" % last_failure
++		return {}
++	composition_audit["maze_late_passage_rooms"] = int(passage_retry.get("building_count", 0))
++	composition_audit["maze_late_passage_refusals"] = passage_retry.get("refusals", {})
+ 	composition_audit["residual_backfill_building_count"] = int(
+ 		backfill.get("building_count", 0))
+ 	composition_audit["residual_backfill_private_cell_count"] = int(
+@@ -7319,7 +7330,8 @@
+ 		supports: WarrenSupportGraph, required_supports: Array[StringName],
+ 		terrain_support_ids: Array[StringName],
+ 		support_edges: Array[Dictionary], protected_owners: Dictionary,
+-		construction_program: SettlementFabricProgram) -> Dictionary:
++		construction_program: SettlementFabricProgram,
++		passage_retry: bool = false) -> Dictionary:
+ 	## The DIRECTED residual pass. The plot planner already decided which mass
+ 	## belongs to which house, so the cells a house's door rectangle left over
+ 	## are not something composition has to discover: each `maze_back_rooms`
+@@ -7359,6 +7371,7 @@
+ 	var rectangle_count := 0
+ 	for record_index in records.size():
+ 		var record := records[record_index] as Dictionary
++		if passage_retry and not bool(record.get("over_passage", false)): continue
+ 		var parcel := parcel_by_id.get(
+ 			StringName(record["parcel_id"])) as WarrenBuildingParcel
+ 		if parcel == null:
+@@ -7492,8 +7505,8 @@
+ 			_note_maze_back_room_refusal(refusals,
+ 				"bearing parent has no room to name")
+ 			continue
+-		var building_id := StringName("spatial.maze_back.%02d" % added)
+-		var source_id := StringName("maze.back.%02d" % added)
++		var building_id := StringName(("spatial.maze_over.%02d" if passage_retry else "spatial.maze_back.%02d") % added)
++		var source_id := StringName(("maze.over.%02d" if passage_retry else "maze.back.%02d") % added)
+ 		var support_source := &"" if terrain_bearing \
+ 			else parent_room.source_parcel_id
+ 		var support_storey := -1 if terrain_bearing \

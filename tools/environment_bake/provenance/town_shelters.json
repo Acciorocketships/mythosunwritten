@@ -1,0 +1,160 @@
+{
+  "assets": [
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_shelter_blue.tres",
+      "id": "sfv.shelter.blue",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 932,
+        "measured_aabb": {
+          "position": [
+            -2.12037348747253,
+            -0.000000146595496630653,
+            -1.51498520374298
+          ],
+          "size": [
+            4.24074649810791,
+            3.49098920822144,
+            3.02997040748596
+          ]
+        },
+        "mesh_bytes": 84054,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 932
+      },
+      "pack": "town_shelters",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfv.shelter.blue",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 8000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 8000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Tents/SFV_Tent_Blue_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "tent",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Tents/SFV_Tent_Blue_001.fbx",
+      "source_sha256": "7a02560ff8b9719965a4a9579269c4a86c09f78e62477cdc9b7a92998ffcff54",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
+      "visual": "res://terrain/environment/visuals/town_shelters/sfv_shelter_blue.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_shelter_red.tres",
+      "id": "sfv.shelter.red",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 932,
+        "measured_aabb": {
+          "position": [
+            -2.12037348747253,
+            -0.000000146595496630653,
+            -1.51498520374298
+          ],
+          "size": [
+            4.24074649810791,
+            3.49098920822144,
+            3.02997040748596
+          ]
+        },
+        "mesh_bytes": 84053,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 932
+      },
+      "pack": "town_shelters",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfv.shelter.red",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 8000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 8000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Tents/SFV_Tent_Red_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "tent",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Tents/SFV_Tent_Red_001.fbx",
+      "source_sha256": "b9a95a64a1fc3075abc5bcacf67de5aa3279d7cd46281148f4bbc380dde1c81f",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
+      "visual": "res://terrain/environment/visuals/town_shelters/sfv_shelter_red.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_shelter_white.tres",
+      "id": "sfv.shelter.white",
+      "license": "Fantasy Village source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 932,
+        "measured_aabb": {
+          "position": [
+            -2.12037348747253,
+            -0.000000146595496630653,
+            -1.51498520374298
+          ],
+          "size": [
+            4.24074649810791,
+            3.49098920822144,
+            3.02997040748596
+          ]
+        },
+        "mesh_bytes": 84055,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 932
+      },
+      "pack": "town_shelters",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfv.shelter.white",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 8000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 4.0,
+        "max_visual_triangles": 8000.0,
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Tents/SFV_Tent_White_001.fbx",
+        "supports_instance_color": true,
+        "tags": [
+          "tent",
+          "village"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Tents/SFV_Tent_White_001.fbx",
+      "source_sha256": "529775558437cacadde31a14e7261ec240140332796b566673fc587e62b4ffe2",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 39,
+      "visual": "res://terrain/environment/visuals/town_shelters/sfv_shelter_white.tres"
+    }
+  ],
+  "license": "Fantasy Village source-pack license",
+  "pack": "town_shelters",
+  "tool_version": 39
+}

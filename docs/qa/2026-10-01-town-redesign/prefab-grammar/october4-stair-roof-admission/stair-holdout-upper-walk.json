@@ -1,0 +1,86 @@
+[
+  {
+    "gate": "flight.volume.lane01.03",
+    "passed": true,
+    "reverse": false,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(-6.125, 9.050215, -30.0)",
+        "target": "(-22.0, 12.05, -30.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-9.875, 9.357051, -30.0)",
+        "target": "(-22.0, 12.05, -30.0)",
+        "tick": 30,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-13.625, 10.61097, -30.0)",
+        "target": "(-22.0, 12.05, -30.0)",
+        "tick": 60,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-17.375, 12.0001, -30.0)",
+        "target": "(-22.0, 12.05, -30.0)",
+        "tick": 90,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-21.125, 12.05075, -30.0)",
+        "target": "(-22.0, 12.05, -30.0)",
+        "tick": 120,
+        "waypoint": 1
+      }
+    ]
+  },
+  {
+    "gate": "flight.volume.lane01.03",
+    "passed": true,
+    "reverse": true,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(-21.875, 12.05039, -30.0)",
+        "target": "(-6.0, 9.05, -30.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-18.12501, 12.05039, -30.0)",
+        "target": "(-6.0, 9.05, -30.0)",
+        "tick": 30,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-14.37494, 10.87519, -30.0)",
+        "target": "(-6.0, 9.05, -30.0)",
+        "tick": 60,
+        "waypoint": 1
+      },
+      {
+        "floor": false,
+        "position": "(-10.62485, 9.662758, -30.0)",
+        "target": "(-6.0, 9.05, -30.0)",
+        "tick": 90,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-6.874543, 9.049871, -30.0)",
+        "target": "(-6.0, 9.05, -30.0)",
+        "tick": 120,
+        "waypoint": 1
+      }
+    ]
+  }
+]

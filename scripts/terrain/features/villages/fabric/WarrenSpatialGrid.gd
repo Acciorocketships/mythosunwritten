@@ -43,6 +43,7 @@ enum FaceKind {
 	WINDOW,
 	OPEN_SEAM,
 	CONSTRUCTION_JOINT,
+	GARDEN_FLOOR,
 }
 
 const _KNOWN_RESERVATION_BITS := (1 << 9) - 1
@@ -341,7 +342,7 @@ func _validate_faces(records: Array[Dictionary]) -> bool:
 		var owner_id := StringName(record.owner_id)
 		if not contains(cell) or not _cardinal(direction) \
 				or kind < FaceKind.PUBLIC_FLOOR \
-				or kind > FaceKind.CONSTRUCTION_JOINT or owner_id.is_empty():
+				or kind > FaceKind.GARDEN_FLOOR or owner_id.is_empty():
 			return _reject("invalid face claim")
 		var key := _face_key(cell, direction)
 		var existing := _face_claims.get(key, {}) as Dictionary

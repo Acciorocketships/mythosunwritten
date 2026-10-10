@@ -1,0 +1,35 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_room_ceiling_closure.gd
+[0m* test_retaining_occupancy_does_not_leave_a_room_open
+* test_real_upper_room_floor_owns_the_shared_interface
+* test_partial_upper_floor_only_replaces_its_own_ceiling_cells
+* test_reported_301_room_is_closed_without_changing_its_rooms
+[1m4/4 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               1
+Tests                 4
+Passing Tests         4
+Asserts              17
+Time              32.065s
+
+
+[32m---- All tests passed! ----
+[0m

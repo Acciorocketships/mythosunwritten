@@ -1,0 +1,107 @@
+[
+  {
+    "accepted": [],
+    "city": "7:standard",
+    "native_instances": 0,
+    "selected": []
+  },
+  {
+    "accepted": [],
+    "city": "31:large",
+    "native_instances": 0,
+    "selected": []
+  },
+  {
+    "accepted": [],
+    "city": "13:large",
+    "native_instances": 0,
+    "selected": []
+  },
+  {
+    "accepted": [],
+    "city": "43:grand",
+    "native_instances": 0,
+    "selected": []
+  },
+  {
+    "accepted": [],
+    "city": "58:large",
+    "native_instances": 0,
+    "selected": []
+  },
+  {
+    "accepted": [],
+    "city": "101:large",
+    "native_instances": 0,
+    "selected": []
+  },
+  {
+    "accepted": [],
+    "city": "103:grand",
+    "native_instances": 0,
+    "selected": []
+  },
+  {
+    "accepted": [
+      {
+        "entrance": "(-2, 0, 8)",
+        "id": "spatial.feature.landmark.01",
+        "recipe": "anchor.z_native.cross.01x01.04"
+      }
+    ],
+    "city": "211:grand",
+    "generic_native_masses": 0,
+    "native_instances": 106,
+    "selected": [
+      "anchor.z_native.cross.01x01.04"
+    ]
+  },
+  {
+    "accepted": [],
+    "city": "17:grand",
+    "native_instances": 0,
+    "selected": []
+  },
+  {
+    "accepted": [],
+    "city": "23:grand",
+    "native_instances": 0,
+    "selected": []
+  },
+  {
+    "accepted": [],
+    "city": "37:grand",
+    "native_instances": 0,
+    "selected": []
+  },
+  {
+    "accepted": [],
+    "city": "47:grand",
+    "native_instances": 0,
+    "selected": []
+  },
+  {
+    "accepted": [],
+    "city": "61:grand",
+    "native_instances": 0,
+    "selected": []
+  },
+  {
+    "accepted": [],
+    "city": "71:grand",
+    "native_instances": 0,
+    "selected": []
+  },
+  {
+    "accepted": [],
+    "city": "83:grand",
+    "native_instances": 0,
+    "selected": []
+  },
+  {
+    "accepted": [],
+    "city": "97:grand",
+    "native_instances": 0,
+    "selected": []
+  }
+]

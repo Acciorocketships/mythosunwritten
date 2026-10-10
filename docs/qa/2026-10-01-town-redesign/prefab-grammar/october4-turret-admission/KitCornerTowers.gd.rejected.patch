@@ -1,0 +1,45 @@
+--- KitCornerTowers.gd
++++ KitCornerTowers.gd
+@@ -48,16 +48,22 @@
+ 					corner.y * kit.module_width
+ 				)
+ 			)
++			# A raised house's datum need not be the footing of its projecting
++			# round shaft. Continue complete native courses to actual support.
++			var courses := height / 2
++			while courses < 6 and not _foot_supported(pose, kit, catalog, bearing):
++				pose.origin.y -= TOWER.COURSE
++				courses += 1
+ 			var candidate := TOWER.fit(
+ 				host,
+ 				kit,
+ 				catalog,
+ 				pose,
+-				height / 2,
++				courses,
+ 				TOWER.Form.ROUND,
+ 				blocked,
+ 				bearing,
+-				narrow_parts(height / 2),
++				narrow_parts(courses),
+ 				audit
+ 			)
+ 			if candidate.is_empty():
+@@ -109,6 +115,17 @@
+ 	return {}
+ 
+ 
++static func _foot_supported(pose: Transform3D, kit: BuildingKit,
++		catalog: EnvironmentCatalog, bearing: Callable) -> bool:
++	if not bearing.is_valid(): return false
++	var foot: AABB = pose * catalog.descriptor(&"pure_village.roof_turret.middle").measured_aabb
++	foot.size.y = 0.01
++	var band := roundi(pose.origin.y / kit.band_height())
++	for cell: Vector3i in TOWER._cells(foot, kit):
++		if not bool(bearing.call(Vector2i(cell.x,cell.z),band)): return false
++	return true
++
++
+ static func narrow_parts(storeys: int) -> Array[Dictionary]:
+ 	var out: Array[Dictionary] = []
+ 	for index in storeys:

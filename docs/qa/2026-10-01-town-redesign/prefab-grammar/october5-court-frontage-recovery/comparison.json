@@ -1,0 +1,102 @@
+{
+  "103:grand": {
+    "changed_ceiling_quarters": [],
+    "covered_before": 40,
+    "covered_after": 40,
+    "source_plots_unchanged": true,
+    "floating": 0,
+    "air_intrusions": 0,
+    "turrets_before": 1,
+    "turrets_after": 1
+  },
+  "13:grand": {
+    "changed_ceiling_quarters": [],
+    "covered_before": 16,
+    "covered_after": 16,
+    "source_plots_unchanged": true,
+    "floating": 0,
+    "air_intrusions": 0,
+    "turrets_before": 0,
+    "turrets_after": 0
+  },
+  "301:grand": {
+    "changed_ceiling_quarters": [],
+    "covered_before": 44,
+    "covered_after": 44,
+    "source_plots_unchanged": true,
+    "floating": 0,
+    "air_intrusions": 0,
+    "turrets_before": 3,
+    "turrets_after": 3
+  },
+  "31:large": {
+    "changed_ceiling_quarters": [],
+    "covered_before": 38,
+    "covered_after": 38,
+    "source_plots_unchanged": true,
+    "floating": 0,
+    "air_intrusions": 0,
+    "turrets_before": 0,
+    "turrets_after": 0
+  },
+  "43:grand": {
+    "changed_ceiling_quarters": [],
+    "covered_before": 56,
+    "covered_after": 56,
+    "source_plots_unchanged": true,
+    "floating": 0,
+    "air_intrusions": 0,
+    "turrets_before": 2,
+    "turrets_after": 2
+  },
+  "53:grand": {
+    "changed_ceiling_quarters": [],
+    "covered_before": 86,
+    "covered_after": 86,
+    "source_plots_unchanged": false,
+    "floating": 0,
+    "air_intrusions": 0,
+    "turrets_before": 3,
+    "turrets_after": 4
+  },
+  "63:grand": {
+    "changed_ceiling_quarters": [],
+    "covered_before": 34,
+    "covered_after": 34,
+    "source_plots_unchanged": true,
+    "floating": 0,
+    "air_intrusions": 0,
+    "turrets_before": 2,
+    "turrets_after": 2
+  },
+  "83:grand": {
+    "changed_ceiling_quarters": [],
+    "covered_before": 16,
+    "covered_after": 16,
+    "source_plots_unchanged": true,
+    "floating": 0,
+    "air_intrusions": 0,
+    "turrets_before": 0,
+    "turrets_after": 0
+  },
+  "8:grand": {
+    "changed_ceiling_quarters": [],
+    "covered_before": 70,
+    "covered_after": 70,
+    "source_plots_unchanged": true,
+    "floating": 0,
+    "air_intrusions": 0,
+    "turrets_before": 1,
+    "turrets_after": 1
+  },
+  "9:grand": {
+    "changed_ceiling_quarters": [],
+    "covered_before": 80,
+    "covered_after": 80,
+    "source_plots_unchanged": true,
+    "floating": 0,
+    "air_intrusions": 0,
+    "turrets_before": 5,
+    "turrets_after": 5
+  }
+}

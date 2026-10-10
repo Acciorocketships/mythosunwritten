@@ -1,9 +1,9 @@
 [gd_resource type="StandardMaterial3D" load_steps=5 format=3]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/ce6958a0ba18a36a6558.res" id="1_b8ci0"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/872eda365bdbbfd71a7d.res" id="2_wylfi"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/b0bacf9bc08ac6ac34ae.res" id="3_0iegk"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/324da7a92a117c0e7683.res" id="4_puonv"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/d4652bbb98bd7a9ded00.res" id="1_b8ci0"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/f4ac54cd56d14d2bd138.res" id="2_wylfi"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/b620081c22da6fc49c3f.res" id="3_0iegk"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/cb75c8bfad8882e1f253.res" id="4_puonv"]
 
 [resource]
 resource_name = "Smelter"

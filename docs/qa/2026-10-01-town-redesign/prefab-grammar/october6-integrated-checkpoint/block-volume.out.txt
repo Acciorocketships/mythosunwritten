@@ -1,0 +1,13 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+BLOCK_ACCESS house.017 columns=29 connection={ "anchor": (4, 2, -6), "cells": [(4, 2, -7), (4, 2, -8), (4, 2, -9)] }
+VOLUME <null> REASON transition volume.lane08.00 has a non-walk endpoint ((4, 2, -6) -> (4, 2, -7))
+SOURCE_SEALED true REASON 
+WIDE_PLOT { "id": &"plaza.00", "kind": &"deck", "cells": [(2, -6), (3, -6), (4, -6), (2, -5), (3, -5), (4, -5), (2, -4), (3, -4), (4, -4)], "floor": 2, "top": 2, "door_walk": (2, 2, -3), "building_id": &"plaza.00" }
+WIDE_PLOT { "id": &"asset.00", "kind": &"asset", "cells": [(-8, 2), (-7, 2), (-6, 2), (-5, 2), (-4, 2), (-3, 2), (-8, 3), (-7, 3), (-6, 3), (-5, 3), (-4, 3), (-3, 3), (-8, 4), (-7, 4), (-6, 4), (-5, 4), (-4, 4), (-3, 4), (-8, 5), (-7, 5), (-6, 5), (-5, 5), (-4, 5), (-3, 5)], "floor": 0, "top": 14, "door_walk": (-6, 0, 1), "building_id": &"asset.00" }
+WIDE_PLOT { "id": &"asset.01", "kind": &"asset", "cells": [(2, 6), (3, 6), (4, 6), (2, 7), (3, 7), (4, 7), (2, 8), (3, 8), (4, 8)], "floor": 0, "top": 4, "door_walk": (1, 0, 6), "building_id": &"asset.01" }
+WIDE_PLOT { "id": &"house.005", "kind": &"house", "cells": [(-2, -7), (-1, -7), (-1, -6), (-1, -5), (-1, -4), (0, -4), (1, -4)], "floor": 0, "top": 4, "door_walk": (-1, 0, -3), "building_id": &"house.005" }
+WIDE_PLOT { "id": &"house.024", "kind": &"house", "cells": [(-2, -8), (-1, -8), (0, -8), (0, -7), (1, -7), (0, -6), (1, -6)], "floor": 2, "top": 6, "door_walk": (2, 2, -6), "building_id": &"house.024" }
+WIDE_PLOT { "id": &"house.025", "kind": &"house", "cells": [(2, -12), (0, -11), (1, -11), (2, -11), (-1, -10), (0, -10), (1, -10), (2, -10), (-2, -9), (-1, -9), (0, -9), (1, -9), (2, -9), (1, -8), (2, -8), (2, -7)], "floor": 2, "top": 6, "door_walk": (2, 2, -6), "building_id": &"house.025" }
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)

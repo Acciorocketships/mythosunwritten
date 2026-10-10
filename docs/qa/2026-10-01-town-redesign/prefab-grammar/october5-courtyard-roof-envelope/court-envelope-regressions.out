@@ -1,0 +1,74 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_pure_village_native_roof.gd
+[0m* test_two_bay_derivation_reconstructs_authored_roof_and_gable_geometry
+* test_same_rule_reconstructs_longer_authored_house_without_retuning
+* test_native_shell_reconstructs_whole_house_four
+* test_projected_roof_reconstructs_native_street_house_end_caps_and_gables
+* test_complete_projected_street_house_reconstructs_every_authored_mesh
+* test_cross_roof_reconstructs_authored_valley_junctions
+* test_compound_shell_reconstructs_source_walls_and_roof
+* test_length_changes_all_courses_ridges_and_end_closures_together
+[1m8/8 passed.
+[0m[4m
+
+res://tests/test_october1_finished_roof_clearance.gd
+[0m* test_mixed_roof_skins_and_trims_clear_finished_public_air
+ROOF_AIR [7, &"compact"] raw={ "triangles": 482292, "intrusions": 0, "area": 0.0, "gable_contacts": 0, "gable_area": 0.0, "roles": {  }, "examples": [] } finished={ "triangles": 423082, "intrusions": 0, "area": 0.0, "gable_contacts": 0, "gable_area": 0.0, "roles": {  }, "examples": [] }
+ROOF_AIR [13, &"large"] raw={ "triangles": 784253, "intrusions": 407, "area": 4.86036941773965, "gable_contacts": 44, "gable_area": 0.16405056837084, "roles": { &"roof.blue.eave_tight.start": 17, &"roof.blue.eave_tight": 100, &"roof.blue.eave_tight.end": 121, &"trim.ridge.end": 169 }, "examples": [["kit.spatial.parcel.maze.house.001/k0053", "roof.blue.eave_tight.start", 0.0005132292863], ["kit.spatial.parcel.maze.house.001/k0053", "roof.blue.eave_tight.start", 0.0025601030793], ["kit.spatial.parcel.maze.house.001/k0053", "roof.blue.eave_tight.start", 0.00197148532607], ["kit.spatial.parcel.maze.house.001/k0053", "roof.blue.eave_tight.start", 0.00579787709285], ["kit.spatial.parcel.maze.house.001/k0053", "roof.blue.eave_tight.start", 0.00014861930686], ["kit.spatial.parcel.maze.house.001/k0053", "roof.blue.eave_tight.start", 0.00169249286409], ["kit.spatial.parcel.maze.house.001/k0053", "roof.blue.eave_tight.start", 0.00108617602382], ["kit.spatial.parcel.maze.house.001/k0053", "roof.blue.eave_tight.start", 0.00498934392817]] } finished={ "triangles": 742860, "intrusions": 0, "area": 0.0, "gable_contacts": 50, "gable_area": 0.16405065151775, "roles": {  }, "examples": [] }
+ROOF_AIR [17, &"large"] raw={ "triangles": 1164245, "intrusions": 52, "area": 1.62634106095732, "gable_contacts": 0, "gable_area": 0.0, "roles": { &"roof.red.eave_tight": 25, &"trim.ridge": 13, &"trim.barge.slope": 14 }, "examples": [["kit.spatial.parcel.maze.house.005/k0032", "roof.red.eave_tight", 0.00245147082023], ["kit.spatial.parcel.maze.house.005/k0032", "roof.red.eave_tight", 0.00000166939765], ["kit.spatial.parcel.maze.house.005/k0032", "roof.red.eave_tight", 0.00236814079653], ["kit.spatial.parcel.maze.house.005/k0032", "roof.red.eave_tight", 0.0177599915769], ["kit.spatial.parcel.maze.house.005/k0032", "roof.red.eave_tight", 0.1257210932672], ["kit.spatial.parcel.maze.house.005/k0032", "roof.red.eave_tight", 0.0419014133513], ["kit.spatial.parcel.maze.house.005/k0032", "roof.red.eave_tight", 0.00961227808148], ["kit.spatial.parcel.maze.house.005/k0032", "roof.red.eave_tight", 0.17653454095125]] } finished={ "triangles": 1069337, "intrusions": 0, "area": 0.0, "gable_contacts": 0, "gable_area": 0.0, "roles": {  }, "examples": [] }
+ROOF_AIR [24, &"large"] raw={ "triangles": 1086306, "intrusions": 0, "area": 0.0, "gable_contacts": 0, "gable_area": 0.0, "roles": {  }, "examples": [] } finished={ "triangles": 951587, "intrusions": 0, "area": 0.0, "gable_contacts": 0, "gable_area": 0.0, "roles": {  }, "examples": [] }
+ROOF_AIR [58, &"large"] raw={ "triangles": 619105, "intrusions": 0, "area": 0.0, "gable_contacts": 0, "gable_area": 0.0, "roles": {  }, "examples": [] } finished={ "triangles": 563548, "intrusions": 0, "area": 0.0, "gable_contacts": 0, "gable_area": 0.0, "roles": {  }, "examples": [] }
+ROOF_AIR [0, &"photo_fixture"] raw={ "triangles": 265501, "intrusions": 54, "area": 8.1317217053147, "gable_contacts": 622, "gable_area": 13.4396717884039, "roles": { &"roof.red.eave_tight": 36, &"trim.barge.slope": 18 }, "examples": [["kit.spatial.parcel.maze.house.001/k0052", "roof.red.eave_tight", 1.2816276550293], ["kit.spatial.parcel.maze.house.001/k0052", "roof.red.eave_tight", 0.14104954525828], ["kit.spatial.parcel.maze.house.001/k0052", "roof.red.eave_tight", 0.06965020671487], ["kit.spatial.parcel.maze.house.001/k0052", "roof.red.eave_tight", 1.2804983407259], ["kit.spatial.parcel.maze.house.001/k0052", "roof.red.eave_tight", 0.00112939858809], ["kit.spatial.parcel.maze.house.001/k0052", "roof.red.eave_tight", 0.12410344369709], ["kit.spatial.parcel.maze.house.001/k0052", "roof.red.eave_tight", 0.0004978851648], ["kit.spatial.parcel.maze.house.001/k0052", "roof.red.eave_tight", 0.06764368899167]] } finished={ "triangles": 254224, "intrusions": 0, "area": 0.0, "gable_contacts": 622, "gable_area": 13.4396717884039, "roles": {  }, "examples": [] }
+[1m1/1 passed.
+[0m[4m
+
+res://tests/test_october2_elevated_courtyards.gd
+[0m* test_upper_courtyard_reserved_before_streets_survives_the_layout
+[31m    [Failed]:  [0m[4] expected to equal [8]:  the square is on the highest available tier
+      at line 24
+* test_upper_courtyards_build_with_support_and_clear_public_air
+[31m    [Failed]:  [0m[4] expected to equal [8]:  the square is on the highest available tier
+      at line 46
+[1m0/2 passed.
+[0m[4m
+
+res://tests/test_skywalk_hood_clearance.gd
+[0m* test_finished_skywalk_landings_have_no_wall_canopy_obstruction
+[1m1/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_october2_elevated_courtyards.gd
+[0m- test_upper_courtyard_reserved_before_streets_survives_the_layout
+[31m    [Failed]:  [0m[4] expected to equal [8]:  the square is on the highest available tier
+          at line 24
+- test_upper_courtyards_build_with_support_and_clear_public_air
+[31m    [Failed]:  [0m[4] expected to equal [8]:  the square is on the highest available tier
+          at line 46
+
+Totals
+------
+Scripts               4
+Tests                12
+Passing Tests        10
+Failing Tests         2
+Asserts           10581/10583
+Time              334.828s
+
+
+[31m---- 2 failing tests ----
+[0m

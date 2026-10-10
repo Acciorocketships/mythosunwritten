@@ -1,0 +1,62 @@
+[
+  {
+    "floating": 0,
+    "joins": 2,
+    "ms": 107466,
+    "profile": "grand",
+    "roof": {
+      "area": 0.0,
+      "gable_area": 0.0,
+      "gable_contacts": 0,
+      "intrusions": 0,
+      "triangles": 1176364
+    },
+    "seed": 53,
+    "valid_payload": true
+  },
+  {
+    "floating": 0,
+    "joins": 0,
+    "ms": 46349,
+    "profile": "large",
+    "roof": {
+      "area": 0.0,
+      "gable_area": 0.0,
+      "gable_contacts": 0,
+      "intrusions": 0,
+      "triangles": 417744
+    },
+    "seed": 31,
+    "valid_payload": true
+  },
+  {
+    "floating": 0,
+    "joins": 0,
+    "ms": 24169,
+    "profile": "large",
+    "roof": {
+      "area": 0.0,
+      "gable_area": 1.11262538431674,
+      "gable_contacts": 31,
+      "intrusions": 0,
+      "triangles": 328082
+    },
+    "seed": 43,
+    "valid_payload": true
+  },
+  {
+    "floating": 0,
+    "joins": 0,
+    "ms": 46183,
+    "profile": "grand",
+    "roof": {
+      "area": 0.0,
+      "gable_area": 1.99399204464862,
+      "gable_contacts": 9,
+      "intrusions": 0,
+      "triangles": 378691
+    },
+    "seed": 83,
+    "valid_payload": true
+  }
+]

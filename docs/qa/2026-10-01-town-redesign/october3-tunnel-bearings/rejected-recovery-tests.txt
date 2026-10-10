@@ -1,0 +1,111 @@
+extends GutTest
+
+func _source(walk_band: int = 0) -> WarrenMazeSourcePlan:
+	var columns := {}
+	for x in range(-4,5):
+		for z in range(-4,5): columns[Vector2i(x,z)]={"base":0,"top":14}
+	var massif := WarrenMassif.with_columns(1,columns,14)
+	var excavation := WarrenExcavation.new(1)
+	var source := WarrenMazeSourcePlan.new(1,WarrenVillageScaleProfile.for_id(&"large"),massif,excavation)
+	for z in range(-2,3):
+		var walk := Vector3i(0,walk_band,z)
+		excavation.route.append(walk)
+		source.mark_passage(walk,WarrenMazeSourcePlan.PASSAGE_SPINE)
+		for band in range(walk_band,walk_band+3): excavation.carved[Vector3i(0,band,z)]=true
+	excavation.tunnel_cells[Vector3i(0,walk_band,0)]=true
+	excavation.covered[Vector3i(0,walk_band,0)]=true
+	assert_true(source.add_plot({"id":&"host","kind":WarrenMazeSourcePlan.PLOT_HOUSE,
+		"cells":[Vector2i(-1,0)],"floor":0,"top":12,"door_walk":Vector3i(0,walk_band,0),"building_id":&"host"}))
+	return source
+
+func test_inhabited_crown_retains_only_its_original_unexcavated_jamb() -> void:
+	var source := _source()
+	source.derive_rock_shoulders()
+	assert_eq(source.rock_shoulder(Vector2i(1,0)),0,"An unused shoulder initially follows its ground-floor neighbour")
+	var results := WarrenPlotPlanner.cover_tunnels(source)
+	assert_eq(results.size(),1)
+	assert_eq(results[0].reason,"")
+	assert_eq(results[0].recovered_jambs,[Vector2i(1,0)] as Array[Vector2i])
+	source.derive_rock_shoulders()
+	assert_eq(source.rock_shoulder(Vector2i(1,0)),4,"The inhabited crown now has a complete terrain-reaching pier")
+	assert_eq(source.rock_shoulder(Vector2i(2,0)),0,"Unrelated unused rock is not raised into another wall")
+	for band in 3:
+		assert_false(source.solid_at(Vector3i(0,band,0)),"The bore remains open")
+		assert_true(source.solid_at(Vector3i(1,band,0)),"The retained side carries the crown")
+
+func test_a_carved_or_reserved_side_cannot_be_rebuilt_as_a_tunnel_pier() -> void:
+	for reserved in [false,true]:
+		var source := _source()
+		if reserved: source.massif.columns[Vector2i(1,0)]["reserved_ground"]=true
+		else: source.excavation.carved[Vector3i(1,1,0)]=true
+		var results := WarrenPlotPlanner.cover_tunnels(source)
+		assert_ne(results[0].reason,"")
+		assert_eq(source.plots.size(),1,"A failed support proof emits neither room nor pier")
+
+func test_recovered_bores_build_whole_inhabited_rooms_and_release_unused_piers() -> void:
+	var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
+	var total := 0
+	for job: Array in [[32, &"grand"], [24, &"grand"]]:
+		var spatial := WarrenVolumetricSolver.generate(job[0], {}, program,
+			WarrenVillageScaleProfile.for_id(job[1]))
+		assert_not_null(spatial, "%s builds: %s" % [job, WarrenVolumetricSolver.last_failure])
+		if spatial == null: continue
+		var source: WarrenMazeSourcePlan = spatial.source_volume.mass_context[&"maze_source_plan"]
+		var rooms := WarrenVolumetricSolver.building_private_cells(spatial.buildings)
+		var town_covers := 0
+		for plot: Dictionary in source.plots:
+			if (plot.get("restored_jamb_floors", {}) as Dictionary).is_empty(): continue
+			var column: Vector2i = plot.cells[0]
+			var count := 0
+			for cell: Vector3i in WarrenVolumetricSolver._fine_square(Vector3i(column.x, plot.floor, column.y)):
+				if rooms.has(cell): count += 1
+			assert_true(count == 0 or count == 4, "A recovered bore is whole or absent")
+			if count == 4:
+				town_covers += 1
+				for cell: Vector3i in WarrenVolumetricSolver._fine_square(Vector3i(column.x, plot.crown, column.y)):
+					assert_eq(spatial.grid.use_at(cell), WarrenSpatialGrid.Use.STRUCTURAL_VOLUME)
+					assert_eq(spatial.grid.use_at(cell + Vector3i.DOWN), WarrenSpatialGrid.Use.PUBLIC_AIR)
+				for jamb: Vector2i in plot.restored_jamb_floors:
+					for band in range(source.massif.base_at(jamb), int(plot.crown) + 1):
+						for cell: Vector3i in WarrenVolumetricSolver._fine_square(Vector3i(jamb.x, band, jamb.y)):
+							assert_eq(spatial.grid.use_at(cell), WarrenSpatialGrid.Use.STRUCTURAL_VOLUME,
+								"The inhabited crown keeps its complete terrain-reaching pier")
+		assert_gt(town_covers, 0, "%s restores a real inhabited bore" % [job])
+		total += town_covers
+		var discarded: Dictionary = spatial.source_volume.mass_context.get(&"released_tunnel_piers", {})
+		for cell: Vector3i in discarded:
+			assert_ne(spatial.grid.use_at(cell), WarrenSpatialGrid.Use.STRUCTURAL_VOLUME,
+				"Rejected cover's recovered pier cannot return in the later rock pass")
+		var fabric := spatial.compiled_fabric_cache()
+		assert_true(fabric.validate())
+		var built := KitVillageBuildings.build(spatial, fabric, SuntailBuildingKit.create())
+		assert_eq(int(KitFloatingMassAudit.audit(spatial, fabric, built.masses).count), 0)
+	assert_gte(total, 2)
+
+
+func test_recovery_cannot_bridge_another_lower_passage() -> void:
+	var source := _source(4)
+	source.excavation.carved[Vector3i(1,1,0)] = true
+	var results := WarrenPlotPlanner.cover_tunnels(source)
+	assert_ne(results[0].reason, "")
+	assert_eq(source.plots.size(), 1)
+
+
+func test_declined_cover_releases_its_recovered_pier() -> void:
+	var source := _source()
+	var results := WarrenPlotPlanner.cover_tunnels(source)
+	assert_eq(results[0].reason, "")
+	var volume := WarrenVolumePlan.new(&"test", 1, null)
+	volume.mass_context[&"maze_source_plan"] = source
+	var grid := WarrenSpatialGrid.new(Vector3i(-8,0,-8), Vector3i(16,12,16))
+	var cells: Array[Vector3i] = []
+	for band in 4:
+		cells.append_array(WarrenVolumetricSolver._fine_square(Vector3i(1,band,0)))
+	assert_true(WarrenVolumetricSolver._claim_maze_stone(grid, cells))
+	var cleanup := WarrenVolumetricSolver._release_unused_tunnel_piers(grid, volume,
+		[] as Array[WarrenBuildingVolume])
+	assert_false(cleanup.failed)
+	for cell: Vector3i in cells:
+		assert_eq(grid.use_at(cell), WarrenSpatialGrid.Use.OUTSIDE)
+		assert_eq(grid.reservation_bits_at(cell), 0)
+		assert_true(cleanup.cells.has(cell), "The later stone pass must not reclaim this pier")

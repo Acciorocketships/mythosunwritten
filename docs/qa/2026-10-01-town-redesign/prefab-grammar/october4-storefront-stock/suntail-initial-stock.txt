@@ -1,0 +1,8 @@
+House_1.glb 191 0 []
+House_2.glb 351 1 [{'node': 270, 'name': 'Cupboard_1', 'reason': 'module_geometry_or_pose_mismatch'}]
+House_3.glb 400 0 []
+House_4.glb 258 0 []
+House_5.glb 316 1 [{'node': 239, 'name': 'Cupboard_1', 'reason': 'module_geometry_or_pose_mismatch'}]
+House_6.glb 202 0 []
+House_7.glb 297 0 []
+House_8.glb 371 1 [{'node': 282, 'name': 'Cupboard_1', 'reason': 'module_geometry_or_pose_mismatch'}]

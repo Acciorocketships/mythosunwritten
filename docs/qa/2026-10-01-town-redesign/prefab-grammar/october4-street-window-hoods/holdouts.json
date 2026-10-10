@@ -1,0 +1,84 @@
+[
+  {
+    "accepted": [
+      {
+        "entrance": "(11, 0, 0)",
+        "id": "spatial.feature.landmark.00",
+        "recipe": "anchor.z_native.turret.01"
+      },
+      {
+        "entrance": "(1, 0, -18)",
+        "id": "spatial.feature.landmark.01",
+        "recipe": "anchor.z_native.street.03.03"
+      },
+      {
+        "entrance": "(-2, 0, 2)",
+        "id": "spatial.feature.landmark.02",
+        "recipe": "anchor.z_native.street.02.04"
+      }
+    ],
+    "city": "53:grand",
+    "generic_native_masses": 0,
+    "native_instances": 314,
+    "projecting_window_bays": 2,
+    "selected": [
+      "anchor.z_native.turret.01",
+      "anchor.z_native.street.03.03",
+      "anchor.z_native.street.02.04"
+    ]
+  },
+  {
+    "accepted": [
+      {
+        "entrance": "(10, 0, 0)",
+        "id": "spatial.feature.landmark.00",
+        "recipe": "anchor.z_native.turret.01"
+      }
+    ],
+    "city": "63:grand",
+    "generic_native_masses": 0,
+    "native_instances": 199,
+    "projecting_window_bays": 0,
+    "selected": [
+      "anchor.z_native.turret.01"
+    ]
+  },
+  {
+    "accepted": [
+      {
+        "entrance": "(10, 0, -6)",
+        "id": "spatial.feature.landmark.00",
+        "recipe": "anchor.z_native.street.02.07"
+      }
+    ],
+    "city": "103:grand",
+    "generic_native_masses": 0,
+    "native_instances": 52,
+    "projecting_window_bays": 1,
+    "selected": [
+      "anchor.z_native.street.02.07"
+    ]
+  },
+  {
+    "accepted": [
+      {
+        "entrance": "(-11, 0, 2)",
+        "id": "spatial.feature.landmark.00",
+        "recipe": "anchor.z_native.turret.00"
+      },
+      {
+        "entrance": "(7, 0, 7)",
+        "id": "spatial.feature.landmark.02",
+        "recipe": "anchor.z_native.street.03.06"
+      }
+    ],
+    "city": "301:grand",
+    "generic_native_masses": 0,
+    "native_instances": 245,
+    "projecting_window_bays": 0,
+    "selected": [
+      "anchor.z_native.turret.00",
+      "anchor.z_native.street.03.06"
+    ]
+  }
+]

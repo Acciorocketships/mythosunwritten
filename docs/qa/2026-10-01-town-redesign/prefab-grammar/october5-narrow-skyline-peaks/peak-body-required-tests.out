@@ -1,0 +1,35 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_raised_district_house_height.gd
+[0m* test_raised_district_optional_rooms_stay_within_the_planned_crown
+* test_required_upper_street_and_room_keep_their_bearing_height
+* test_ground_and_mixed_datum_houses_keep_their_original_height_roll
+* test_raised_neighboring_street_keeps_a_complete_overhead_room_budget
+[1m4/4 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               1
+Tests                 4
+Passing Tests         4
+Asserts             197
+Time              0.388s
+
+
+[32m---- All tests passed! ----
+[0m

@@ -1,0 +1,71 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_roof_ridge_eave_contacts.gd
+[0m* test_cap_ends_where_eave_covers_its_bearing
+* test_contact_fitting_only_changes_the_foreign_ridge
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_roof_clip_slivers.gd
+[0m* test_sub_tolerance_clipping_strip_cannot_become_an_invisible_collision_fence
+* test_real_thin_roof_trim_survives_clipping
+* test_untouched_authored_detail_is_not_filtered_by_fragment_tolerance
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_roof_eave_contact_precision.gd
+[0m* test_retriangulation_does_not_retract_an_intact_eave
+* test_real_trim_loss_is_not_hidden_by_roundoff_or_another_material
+* test_native_photo_contact_distinguishes_intact_courses_from_the_obstructed_corner
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_kit_roof_junctions.gd
+[0m* test_neighbors_share_one_continuous_roof
+* test_join_respects_street_headroom_and_different_roof_datums
+* test_boring_retains_short_supported_tunnels_without_reducing_headroom
+* test_cross_house_wing_reaches_host_and_withdraws_buried_gable
+* test_triangle_subtraction_preserves_uv_and_removes_only_buried_geometry
+* test_native_cross_roof_triangles_are_trimmed_with_matching_collision
+* test_joined_native_roof_has_no_open_seam
+* test_stepped_parallel_roofs_have_no_open_seam
+* test_contained_triangle_removal_preserves_coplanar_and_tolerance_faces
+[1m9/9 passed.
+[0m[4m
+
+res://tests/test_october1_finished_roof_clearance.gd
+[0m* test_mixed_roof_skins_and_trims_clear_finished_public_air
+ROOF_AIR [7, &"compact"] raw={ "triangles": 482468, "intrusions": 0, "area": 0.0, "gable_contacts": 0, "gable_area": 0.0, "roles": {  }, "examples": [] } finished={ "triangles": 427424, "intrusions": 0, "area": 0.0, "gable_contacts": 0, "gable_area": 0.0, "roles": {  }, "examples": [] }
+ROOF_AIR [13, &"large"] raw={ "triangles": 790337, "intrusions": 621, "area": 1.87019248214419, "gable_contacts": 44, "gable_area": 0.16405056837084, "roles": { &"roof.blue.eave_tight.start": 148, &"roof.blue.eave_tight.end": 138, &"trim.ridge.end": 169, &"trim.ridge.start": 166 }, "examples": [["kit.spatial.parcel.maze.house.001/k0053", "roof.blue.eave_tight.start", 0.00055124814389], ["kit.spatial.parcel.maze.house.001/k0053", "roof.blue.eave_tight.start", 0.00075658020796], ["kit.spatial.parcel.maze.house.001/k0053", "roof.blue.eave_tight.start", 0.00263475766405], ["kit.spatial.parcel.maze.house.001/k0053", "roof.blue.eave_tight.start", 0.0172322364524], ["kit.spatial.parcel.maze.house.001/k0053", "roof.blue.eave_tight.start", 0.00289316033013], ["kit.spatial.parcel.maze.house.001/k0053", "roof.blue.eave_tight.start", 0.00202686153352], ["kit.spatial.parcel.maze.house.001/k0053", "roof.blue.eave_tight.start", 0.00175420439336], ["kit.spatial.parcel.maze.house.001/k0053", "roof.blue.eave_tight.start", 0.00119581096806]] } finished={ "triangles": 750234, "intrusions": 0, "area": 0.0, "gable_contacts": 50, "gable_area": 0.16405065151775, "roles": {  }, "examples": [] }
+ROOF_AIR [17, &"large"] raw={ "triangles": 1164245, "intrusions": 52, "area": 1.62634106095732, "gable_contacts": 0, "gable_area": 0.0, "roles": { &"roof.red.eave_tight": 25, &"trim.ridge": 13, &"trim.barge.slope": 14 }, "examples": [["kit.spatial.parcel.maze.house.005/k0032", "roof.red.eave_tight", 0.00245147082023], ["kit.spatial.parcel.maze.house.005/k0032", "roof.red.eave_tight", 0.00000166939765], ["kit.spatial.parcel.maze.house.005/k0032", "roof.red.eave_tight", 0.00236814079653], ["kit.spatial.parcel.maze.house.005/k0032", "roof.red.eave_tight", 0.0177599915769], ["kit.spatial.parcel.maze.house.005/k0032", "roof.red.eave_tight", 0.1257210932672], ["kit.spatial.parcel.maze.house.005/k0032", "roof.red.eave_tight", 0.0419014133513], ["kit.spatial.parcel.maze.house.005/k0032", "roof.red.eave_tight", 0.00961227808148], ["kit.spatial.parcel.maze.house.005/k0032", "roof.red.eave_tight", 0.17653454095125]] } finished={ "triangles": 1082354, "intrusions": 0, "area": 0.0, "gable_contacts": 0, "gable_area": 0.0, "roles": {  }, "examples": [] }
+ROOF_AIR [24, &"large"] raw={ "triangles": 1104836, "intrusions": 0, "area": 0.0, "gable_contacts": 0, "gable_area": 0.0, "roles": {  }, "examples": [] } finished={ "triangles": 1027964, "intrusions": 0, "area": 0.0, "gable_contacts": 0, "gable_area": 0.0, "roles": {  }, "examples": [] }
+ROOF_AIR [58, &"large"] raw={ "triangles": 619105, "intrusions": 0, "area": 0.0, "gable_contacts": 0, "gable_area": 0.0, "roles": {  }, "examples": [] } finished={ "triangles": 573076, "intrusions": 0, "area": 0.0, "gable_contacts": 0, "gable_area": 0.0, "roles": {  }, "examples": [] }
+ROOF_AIR [0, &"photo_fixture"] raw={ "triangles": 265677, "intrusions": 196, "area": 9.2581915510309, "gable_contacts": 622, "gable_area": 13.4396717884039, "roles": { &"roof.red.eave_tight": 36, &"trim.barge.slope": 18, &"roof.red.eave_tight.start": 90, &"roof.red.eave_tight.end": 52 }, "examples": [["kit.spatial.parcel.maze.house.001/k0052", "roof.red.eave_tight", 1.2816276550293], ["kit.spatial.parcel.maze.house.001/k0052", "roof.red.eave_tight", 0.14104954525828], ["kit.spatial.parcel.maze.house.001/k0052", "roof.red.eave_tight", 0.06965020671487], ["kit.spatial.parcel.maze.house.001/k0052", "roof.red.eave_tight", 1.2804983407259], ["kit.spatial.parcel.maze.house.001/k0052", "roof.red.eave_tight", 0.00112939858809], ["kit.spatial.parcel.maze.house.001/k0052", "roof.red.eave_tight", 0.12410344369709], ["kit.spatial.parcel.maze.house.001/k0052", "roof.red.eave_tight", 0.0004978851648], ["kit.spatial.parcel.maze.house.001/k0052", "roof.red.eave_tight", 0.06764368899167]] } finished={ "triangles": 256288, "intrusions": 0, "area": 0.0, "gable_contacts": 622, "gable_area": 13.4396717884039, "roles": {  }, "examples": [] }
+[1m1/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               5
+Tests                18
+Passing Tests        18
+Asserts           12662
+Time              253.971s
+
+
+[32m---- All tests passed! ----
+[0m

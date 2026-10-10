@@ -28,8 +28,10 @@ static func to_volume_plan(source: WarrenMazeSourcePlan,
 			var cell := Vector3i(column.x, band, column.y)
 			if not source.solid_at(cell):
 				derived_voids.append(cell)
+	var court_frontages: Array[Vector3i] = []
+	court_frontages.assign(source.court_addresses().keys())
 	var volume := WarrenExcavationVolumeAdapter.to_volume_plan(
-		massif, source.excavation, source.market_square_cells, false, access, derived_voids)
+		massif, source.excavation, source.market_square_cells, false, access, derived_voids, court_frontages)
 	if volume == null:
 		last_failure = WarrenExcavationVolumeAdapter.last_failure
 		return null
@@ -98,7 +100,18 @@ static func _derived_massif(source: WarrenMazeSourcePlan,
 		# own `column_ceiling`.
 		entry["top"] = _derived_top(source, column,
 			source.massif.base_at(column), source.column_ceiling(column))
+		if source.massif.is_reserved_ground(column):
+			entry["top"] = source.massif.top_at(column)
 		columns[column] = entry
+	# A gate flight can land on the original crown. Its published walk owns
+	# headroom above that crown even when no room raises column_ceiling there.
+	# Extend the envelope for live walks only; derived_voids below subtracts
+	# this air, so the extension creates neither rock nor a floating crown.
+	for cell: Vector3i in source.excavation.public_cells():
+		var column := Vector2i(cell.x,cell.z)
+		if columns.has(column):
+			columns[column]["top"] = maxi(int(columns[column]["top"]),
+				cell.y + WarrenVolumePlan.HEADROOM_BANDS)
 	# The court's planned flight rises above its flat plot datum. These cells
 	# extend only the envelope and are all explicitly subtracted as public air.
 	for cell: Vector3i in access_air:
@@ -109,6 +122,8 @@ static func _derived_massif(source: WarrenMazeSourcePlan,
 		source.massif.core_top_bands)
 	derived.form_id = source.massif.form_id
 	derived.open_court = source.massif.open_court.duplicate()
+	derived.open_spaces = source.massif.open_spaces.duplicate(true)
+	derived.outer_ring_domain = source.massif.outer_ring_domain.duplicate()
 	# The raised district travels in the column records ("plinth"); its
 	# height with them.
 	derived.platform_bands = source.massif.platform_bands

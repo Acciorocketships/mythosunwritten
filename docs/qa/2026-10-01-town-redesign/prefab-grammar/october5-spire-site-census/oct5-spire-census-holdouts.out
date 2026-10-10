@@ -1,0 +1,7 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+SPIRE_CENSUS 13:grand attached=2 realized_caps=2 opaque_prefabs=0
+SPIRE_CENSUS 43:grand attached=1 realized_caps=1 opaque_prefabs=1
+SPIRE_CENSUS 103:grand attached=1 realized_caps=1 opaque_prefabs=2

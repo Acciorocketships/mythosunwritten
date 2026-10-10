@@ -1,0 +1,92 @@
+[
+  {
+    "audit": {
+      "air_roofs": 0,
+      "air_unsupported": 0,
+      "eaves_cut": 0,
+      "examples": [
+        "gable_hole end=1 samples=26 kit.spatial.parcel.maze.house.005 [P: (4, 6), S: (2, 2)] axis=1 eave=16",
+        "tiny kit.spatial.parcel.maze.house.017 [P: (-3, -17), S: (1, 1)] axis=0 eave=8"
+      ],
+      "gable_ends": 73,
+      "gable_holes": 1,
+      "open_ends": 17,
+      "open_exposed": 0,
+      "roofs": 45,
+      "tiny": 1,
+      "tiny_beside": 0,
+      "uncapped_towers": 0
+    },
+    "fits": [],
+    "seed": 53
+  },
+  {
+    "audit": {
+      "air_roofs": 2,
+      "air_unsupported": 0,
+      "eaves_cut": 2,
+      "examples": [
+        "eave_cut kit.spatial.parcel.maze.house.004/k0073 at (8.0, 3.0, -12.0)",
+        "eave_cut kit.spatial.parcel.maze.house.004/k0074 at (8.0, 3.0, -10.0)",
+        "tiny_beside kit.spatial.parcel.maze.bridge.02.end.0.lower [P: (-4, 1), S: (4, 1)] axis=0 eave=6",
+        "tiny_beside kit.spatial.parcel.maze.bridge.02.end.1.lower [P: (-10, 0), S: (4, 1)] axis=0 eave=6"
+      ],
+      "gable_ends": 79,
+      "gable_holes": 0,
+      "open_ends": 13,
+      "open_exposed": 0,
+      "roofs": 46,
+      "tiny": 2,
+      "tiny_beside": 2,
+      "uncapped_towers": 0
+    },
+    "fits": [],
+    "seed": 103
+  },
+  {
+    "audit": {
+      "air_roofs": 5,
+      "air_unsupported": 0,
+      "eaves_cut": 2,
+      "examples": [
+        "eave_cut kit.spatial.parcel.maze.house.007/k0185 at (-4.0, 9.0, -10.0)",
+        "eave_cut kit.spatial.parcel.maze.house.007/k0186 at (-4.0, 9.0, -8.0)",
+        "gable_hole end=0 samples=26 kit.spatial.parcel.maze.house.008 [P: (-2, 10), S: (2, 4)] axis=1 eave=11",
+        "gable_hole end=0 samples=26 kit.spatial.parcel.maze.house.012 [P: (2, -8), S: (2, 3)] axis=1 eave=15"
+      ],
+      "gable_ends": 71,
+      "gable_holes": 2,
+      "open_ends": 17,
+      "open_exposed": 0,
+      "roofs": 44,
+      "tiny": 0,
+      "tiny_beside": 0,
+      "uncapped_towers": 0
+    },
+    "fits": [],
+    "seed": 301
+  },
+  {
+    "audit": {
+      "air_roofs": 1,
+      "air_unsupported": 0,
+      "eaves_cut": 3,
+      "examples": [
+        "eave_cut kit.spatial.parcel.maze.house.026/k0089 at (-16.0, 3.0, 2.0)",
+        "eave_cut kit.spatial.parcel.maze.house.026/k0090 at (-16.0, 3.0, 4.0)",
+        "eave_cut kit.spatial.parcel.maze.house.026/k0091 at (-16.0, 3.0, 6.0)",
+        "gable_hole end=0 samples=41 kit.spatial.feature.landmark.03 [P: (4, -8), S: (4, 4)] axis=0 eave=4"
+      ],
+      "gable_ends": 85,
+      "gable_holes": 1,
+      "open_ends": 23,
+      "open_exposed": 0,
+      "roofs": 54,
+      "tiny": 0,
+      "tiny_beside": 0,
+      "uncapped_towers": 0
+    },
+    "fits": [],
+    "seed": 83
+  }
+]

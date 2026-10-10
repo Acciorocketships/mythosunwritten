@@ -1,0 +1,65 @@
+{
+  "assets": [
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_roof_turret_support.tres",
+      "id": "pure_village.roof_turret.support",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 548,
+        "measured_aabb": {
+          "position": [
+            -0.929833948612213,
+            -0.905108630657196,
+            -0.88624507188797
+          ],
+          "size": [
+            1.84636104106903,
+            1.03010869026184,
+            1.82083487510681
+          ]
+        },
+        "mesh_bytes": 22988,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 548
+      },
+      "pack": "pure_village_round_support",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.roof_turret.support",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 20000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 20000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/StoneTower_Support_15x30.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_roof_turrets",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/StoneTower_Support_15x30.glb",
+      "source_sha256": "2fc766ea3dd87dad14d50732a69b5b8e49286d95099a8593f9570a9c52ef7cff",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true,
+        "namespace": "pure_village_kit"
+      },
+      "tool_version": 41,
+      "visual": "res://terrain/environment/visuals/pure_village_round_support/pure_village_roof_turret_support.tres"
+    }
+  ],
+  "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+  "pack": "pure_village_round_support",
+  "tool_version": 41
+}

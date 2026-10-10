@@ -1,0 +1,86 @@
+[
+  {
+    "gate": "flight.volume.lane01.00",
+    "passed": true,
+    "reverse": false,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(10.0, 0.050215, 1.875)",
+        "target": "(10.0, 3.05, -14.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(10.0, 0.354512, -1.875)",
+        "target": "(10.0, 3.05, -14.0)",
+        "tick": 30,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(10.0, 1.611665, -5.625)",
+        "target": "(10.0, 3.05, -14.0)",
+        "tick": 60,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(10.0, 3.000793, -9.375)",
+        "target": "(10.0, 3.05, -14.0)",
+        "tick": 90,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(10.0, 3.05069, -13.125)",
+        "target": "(10.0, 3.05, -14.0)",
+        "tick": 120,
+        "waypoint": 1
+      }
+    ]
+  },
+  {
+    "gate": "flight.volume.lane01.00",
+    "passed": true,
+    "reverse": true,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(10.0, 3.05039, -13.875)",
+        "target": "(10.0, 0.05, 2.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(10.0, 3.05039, -10.125)",
+        "target": "(10.0, 0.05, 2.0)",
+        "tick": 30,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(10.0, 1.875314, -6.374865)",
+        "target": "(10.0, 0.05, 2.0)",
+        "tick": 60,
+        "waypoint": 1
+      },
+      {
+        "floor": false,
+        "position": "(10.0, 0.662885, -2.624829)",
+        "target": "(10.0, 0.05, 2.0)",
+        "tick": 90,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(10.0, 0.050373, 1.125194)",
+        "target": "(10.0, 0.05, 2.0)",
+        "tick": 120,
+        "waypoint": 1
+      }
+    ]
+  }
+]

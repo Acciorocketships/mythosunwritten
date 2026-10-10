@@ -1,0 +1,49 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_suntail_tight_eave_seating.gd
+[0m* test_complete_tight_panel_stays_on_roof_plane_and_out_of_public_air
+[1m1/1 passed.
+[0m[4m
+
+res://tests/test_september27_roofs.gd
+[0m* test_equal_depth_branch_is_buried_at_the_host_ridge
+* test_stepped_parallel_wing_runs_into_its_deeper_neighbour
+* test_crown_sliver_merges_into_a_neighbouring_roof
+* test_photo_towns_have_closed_roofs_without_tiny_wings
+* test_roof_over_free_air_stands_on_posts
+[1m5/5 passed.
+[0m[4m
+
+res://tests/test_october1_roof_dormer_fits.gd
+[0m* test_obstructed_dormer_moves_whole_and_preserves_clear_bays
+* test_no_clear_bay_uses_a_complete_plain_roof
+* test_every_dormer_family_has_a_measured_opening
+* test_clear_glass_cannot_keep_a_dormer_with_a_cut_roof_skin
+[1m4/4 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               3
+Tests                10
+Passing Tests        10
+Asserts             283
+Time              165.004s
+
+
+[32m---- All tests passed! ----
+[0m

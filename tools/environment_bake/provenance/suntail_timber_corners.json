@@ -1,0 +1,61 @@
+{
+  "assets": [
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/suntail_decor_crossbar_1_timber.tres",
+      "id": "suntail.decor.crossbar_1_timber",
+      "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.0,
+            -0.139516279101372,
+            -0.0850181728601456
+          ],
+          "size": [
+            2.0,
+            0.277530610561371,
+            0.274628698825836
+          ]
+        },
+        "mesh_bytes": 2566,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 40
+      },
+      "pack": "suntail_timber_corners",
+      "parameters": {
+        "exclude_materials": [
+          "Stone"
+        ],
+        "id": "suntail.decor.crossbar_1_timber",
+        "max_collision_pieces": 0.0,
+        "max_collision_triangles": 0.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 6.0,
+        "max_visual_triangles": 20000.0,
+        "merge_pieces": true,
+        "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Crossbar_1.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "suntail_kit",
+          "decor"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Crossbar_1.glb",
+      "source_sha256": "6ecfcfdc832abb1b8cff84c31f4e104c934e70a5a068806935f02c0c7c2b0657",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true
+      },
+      "tool_version": 40,
+      "visual": "res://terrain/environment/visuals/suntail_timber_corners/suntail_decor_crossbar_1_timber.tres"
+    }
+  ],
+  "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
+  "pack": "suntail_timber_corners",
+  "tool_version": 40
+}

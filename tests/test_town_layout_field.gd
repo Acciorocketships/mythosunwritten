@@ -58,5 +58,5 @@ func test_source_voids_keep_existing_public_route_ownership() -> void:
 	var source := WarrenMazeSitePlanner.plan(4, {}, WarrenVillageScaleProfile.for_id(&"large"), &"", false)
 	var volume := WarrenMazeVolumeAdapter.to_volume_plan(source)
 	var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
-	var spatial := WarrenVolumetricSolver.from_volume(volume, -1, program, false, true)
+	var spatial := WarrenVolumetricSolver.from_volume(volume, -1, program, true)
 	assert_not_null(spatial, WarrenVolumetricSolver.last_failure)

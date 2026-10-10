@@ -1,0 +1,335 @@
+{
+  "runner_pid": 73461,
+  "status": "complete",
+  "completed": [
+    {
+      "test": "test_october1_bridge_envelopes",
+      "passed": true,
+      "exit": 0,
+      "seconds": 20.5,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              53\nTime              16.323s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_campfires",
+      "passed": true,
+      "exit": 0,
+      "seconds": 3.81,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              32\nTime              3.013s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_facade_prop_clearance",
+      "passed": true,
+      "exit": 0,
+      "seconds": 19.65,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts             147\nTime              15.411s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_facade_roof_contacts",
+      "passed": true,
+      "exit": 0,
+      "seconds": 28.83,
+      "summary": "Totals\n------\nScripts               1\nTests                14\nPassing Tests        14\nAsserts             264\nTime              24.651s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_finished_roof_clearance",
+      "passed": true,
+      "exit": 0,
+      "seconds": 103.58,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts              19\nTime              99.377s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_fortified_rings",
+      "passed": true,
+      "exit": 0,
+      "seconds": 44.17,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts              91\nTime              39.906s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_gatehouse_fit",
+      "passed": true,
+      "exit": 0,
+      "seconds": 5.3,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              75\nTime              1.129s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_landmark_reservations",
+      "passed": true,
+      "exit": 0,
+      "seconds": 7.3,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         6\nAsserts              42\nTime              3.114s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_native_town_roofs",
+      "passed": true,
+      "exit": 0,
+      "seconds": 110.83,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts            8527\nTime              106.611s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_public_clearance",
+      "passed": true,
+      "exit": 0,
+      "seconds": 19.54,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts               8\nTime              15.263s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_pure_roofs",
+      "passed": true,
+      "exit": 0,
+      "seconds": 48.16,
+      "summary": "Totals\n------\nScripts               1\nTests                12\nPassing Tests        12\nAsserts             292\nTime              43.929s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_pure_texture_budget",
+      "passed": true,
+      "exit": 0,
+      "seconds": 7.89,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts             380\nTime              3.731s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_pure_village",
+      "passed": false,
+      "exit": 1,
+      "seconds": 13.73,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         3\nFailing Tests         1\nAsserts           680/684\nTime              9.497s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_october1_released_bridge_sites",
+      "passed": true,
+      "exit": 0,
+      "seconds": 12.6,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              63\nTime              8.494s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_roof_details",
+      "passed": false,
+      "exit": 1,
+      "seconds": 33.09,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         2\nFailing Tests         1\nAsserts           78/79\nTime              28.888s\n\n\n---- 1 failing tests ----"
+    },
+    {
+      "test": "test_october1_roof_dormer_fits",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.6,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts             103\nTime              0.377s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_roof_eave_fits",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.65,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              82\nTime              0.47s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_suntail_texture_budget",
+      "passed": true,
+      "exit": 0,
+      "seconds": 8.64,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts             402\nTime              4.463s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_town_dressing",
+      "passed": true,
+      "exit": 0,
+      "seconds": 37.0,
+      "summary": "Totals\n------\nScripts               1\nTests                15\nPassing Tests        15\nAsserts           25912\nTime              32.747s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_town_ground",
+      "passed": true,
+      "exit": 0,
+      "seconds": 29.99,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts              31\nTime              25.759s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_town_lobes",
+      "passed": true,
+      "exit": 0,
+      "seconds": 14.61,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts             452\nTime              10.389s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_town_open_spaces",
+      "passed": true,
+      "exit": 0,
+      "seconds": 23.15,
+      "summary": "Totals\n------\nScripts               1\nTests                 6\nPassing Tests         6\nAsserts           14097\nTime              18.991s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_town_roof_verges",
+      "passed": true,
+      "exit": 0,
+      "seconds": 13.63,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts             381\nTime              9.374s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october1_tunnel_hosts",
+      "passed": true,
+      "exit": 0,
+      "seconds": 200.87,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts              87\nTime              196.641s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_central_green_access",
+      "passed": true,
+      "exit": 0,
+      "seconds": 75.52,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts            5853\nTime              71.136s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_courtyard_planting",
+      "passed": true,
+      "exit": 0,
+      "seconds": 20.94,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts             156\nTime              16.488s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_courtyard_seating",
+      "passed": true,
+      "exit": 0,
+      "seconds": 15.99,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts             367\nTime              11.82s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_courtyard_underplanting",
+      "passed": true,
+      "exit": 0,
+      "seconds": 15.94,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts            2550\nTime              11.786s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_elevated_courtyards",
+      "passed": true,
+      "exit": 0,
+      "seconds": 69.41,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts             111\nTime              65.206s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_garden_grass",
+      "passed": true,
+      "exit": 0,
+      "seconds": 20.79,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts              95\nTime              16.472s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_inhabited_walls",
+      "passed": false,
+      "exit": 1,
+      "seconds": 74.9,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         2\nFailing Tests         2\nAsserts           309/312\nTime              70.805s\n\n\n---- 2 failing tests ----"
+    },
+    {
+      "test": "test_october2_joined_town_ranges",
+      "passed": true,
+      "exit": 0,
+      "seconds": 22.82,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              83\nTime              18.681s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_landmark_shapes",
+      "passed": true,
+      "exit": 0,
+      "seconds": 48.76,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts            1120\nTime              44.615s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_native_gate_arch",
+      "passed": true,
+      "exit": 0,
+      "seconds": 5.35,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts               6\nTime              1.146s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_native_ramparts",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.57,
+      "summary": "Totals\n------\nScripts               1\nTests                 1\nPassing Tests         1\nAsserts              98\nTime              0.38s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_oriel_spires",
+      "passed": true,
+      "exit": 0,
+      "seconds": 36.56,
+      "summary": "Totals\n------\nScripts               1\nTests                 3\nPassing Tests         3\nAsserts            4429\nTime              32.309s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_platform_wall_relief",
+      "passed": true,
+      "exit": 0,
+      "seconds": 42.09,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts             426\nTime              37.846s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_range_roofs",
+      "passed": true,
+      "exit": 0,
+      "seconds": 25.85,
+      "summary": "Totals\n------\nScripts               1\nTests                10\nPassing Tests        10\nAsserts            4539\nTime              21.634s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_retained_wall_rooms",
+      "passed": true,
+      "exit": 0,
+      "seconds": 42.55,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts              68\nTime              38.343s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_retaining_relief",
+      "passed": true,
+      "exit": 0,
+      "seconds": 25.19,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts              58\nTime              21.039s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_tower_assemblies",
+      "passed": true,
+      "exit": 0,
+      "seconds": 11.48,
+      "summary": "Totals\n------\nScripts               1\nTests                10\nPassing Tests        10\nAsserts            1104\nTime              7.352s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_tower_host_fit",
+      "passed": true,
+      "exit": 0,
+      "seconds": 8.37,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts              61\nTime              4.174s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_town_direct_access",
+      "passed": true,
+      "exit": 0,
+      "seconds": 12.98,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts              92\nTime              8.919s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_town_facade_bays",
+      "passed": true,
+      "exit": 0,
+      "seconds": 6.09,
+      "summary": "Totals\n------\nScripts               1\nTests                 2\nPassing Tests         2\nAsserts              17\nTime              1.93s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_town_street_paint",
+      "passed": true,
+      "exit": 0,
+      "seconds": 4.49,
+      "summary": "Totals\n------\nScripts               1\nTests                 7\nPassing Tests         7\nAsserts            1421\nTime              0.41s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_town_towers",
+      "passed": true,
+      "exit": 0,
+      "seconds": 37.63,
+      "summary": "Totals\n------\nScripts               1\nTests                 5\nPassing Tests         5\nAsserts            1989\nTime              33.412s\n\n\n---- All tests passed! ----"
+    },
+    {
+      "test": "test_october2_wall_tunnels",
+      "passed": true,
+      "exit": 0,
+      "seconds": 65.26,
+      "summary": "Totals\n------\nScripts               1\nTests                 4\nPassing Tests         4\nAsserts              56\nTime              61.014s\n\n\n---- All tests passed! ----"
+    }
+  ]
+}

@@ -34,12 +34,30 @@ var embedding_plan: StaggeredFabricEmbeddingPlan
 ## Empty for a legacy town: the retired asset compiler declared the wider hill
 ## only where the massif provenance is present.
 var retained_terrace_cells: Dictionary = {}
+## Native stone ceilings omitted by the legacy roof skin. Shared occupancy
+## for skywalk selection and kit rendering.
+var passage_crown_cells: Dictionary = {}
 ## Support cells directly beneath the plot model's one typed village-green
 ## rectangle. The source planner reserves the complete street-fronted rectangle
 ## before any house is packed; carrying that identity through compilation keeps
 ## the visible green, its traversal surface, guards, and furniture tied to the
 ## same topology fact instead of rediscovering a nearby patch of leftover turf.
 var planned_plaza_cells: Dictionary = {}
+## Supporting cells of intentionally unwalked planting islands within the square.
+var planned_plaza_planting_cells: Dictionary = {}
+## Town taste knobs task 3: the furnishing brief of each courtyard clearing
+## (`WarrenVolumetricSolver.maze_clearing_decor`), placed by
+## `SettlementFabricAssembler.maze_clearing_decor`. Empty at the default
+## `clearing_deco_density` 0. Rides outside `construction_signature()`: it is
+## optional dressing, never topology.
+var clearing_decor: Array[Dictionary] = []
+## Town taste knobs task 4: the supporting cells (planned-plaza convention) of
+## every typed green whose floor is not the terrain bearing -- a raised court.
+## A well never stands on one (`SettlementFabricAssembler.maze_plaza_centre_features`).
+## Placement-only, outside `construction_signature()`.
+var raised_green_cells: Dictionary = {}
+## The `well_scale` knob: the well's size factor (1.0 = the authored fit).
+var well_scale: float = 1.0
 ## TASK I2. The town's own world seed, carried here because the retained-mass
 ## skin now has to answer a question only the seed can answer: WHICH TIMBER
 ## FAMILY a clad mass face belongs to. A fake storey and the real house beside
@@ -143,9 +161,11 @@ func set_surface_plan(plan_value: PublicRealmSurfacePlan) -> bool:
 		return false
 	# The plaza is topology, so it may be declared before the public surface is
 	# solved (the guard solver needs its mouths). Accept the surface only when
-	# every declared support cell really owns the promised public floor.
+	# every cell has exactly its declared use: public floor or planting island.
 	for cell_value: Variant in planned_plaza_cells.keys():
-		if not plan_value.has_cell((cell_value as Vector3i) + Vector3i.UP):
+		if plan_value.has_cell((cell_value as Vector3i) + Vector3i.UP) \
+				== planned_plaza_planting_cells.has(cell_value):
+			last_rejection = "plaza use mismatch at %s: public=%s planting=%s" % [cell_value,plan_value.has_cell((cell_value as Vector3i)+Vector3i.UP),planned_plaza_planting_cells.has(cell_value)]
 			return false
 	surface_plan = plan_value
 	_module_footprints_built = false
@@ -202,44 +222,46 @@ func set_retained_terrace(cells: Dictionary) -> bool:
 	return true
 
 
-func set_planned_plaza(cells: Dictionary) -> bool:
+func set_planned_plaza(cells: Dictionary, planting: Dictionary = {},
+		ringless: Dictionary = {}) -> bool:
 	## Declared once before the public surface is solved. The square is a topology
 	## fact, not late dressing: its exact cells are required while guards are
 	## derived so every street mouth is open by construction. Cells name the solid
 	## band under the walk plane, matching every retained-cap API in the fabric.
-	## `set_surface_plan` subsequently proves that `cell + UP` is an actual public
-	## claim; callers that already hold a surface receive the same check here.
+	## `set_surface_plan` proves a public claim for each walking cell and no
+	## claim on a declared planting island. Islands remain inside the outer walk.
 	## Empty is a valid declaration for a source town whose bounded plot search
 	## found no square, but no inferred garden may masquerade as this typed feature.
 	if _sealed or _plaza_declared:
 		return false
-	var first_band := 0
-	var first := true
+	# Several typed greens may be declared (the plaza and any clearing drawn as
+	# a green). Cells are keyed by their full Vector3i (column AND band), so
+	# two greens touching sideways at different bands, or stacked in one
+	# column, are simply separate components -- the same lateral one-band
+	# components `SettlementFabricAssembler.maze_green_components` derives --
+	# and never a rejection. (Until October 7 this keyed cells by column:
+	# a sideways touch across bands rejected the whole town, and a second cell
+	# in the same column overwrote the first.) What is still refused is a
+	# genuinely malformed declaration: a second declaration or one after
+	# sealing, a walking cell without a proved public surface claim, and the
+	# planting-island faults below.
 	for cell_value: Variant in cells.keys():
 		var cell := cell_value as Vector3i
-		if surface_plan != null and not surface_plan.has_cell(
+		if surface_plan != null and not planting.has(cell) and not surface_plan.has_cell(
 				cell + Vector3i.UP):
 			return false
-		if first:
-			first_band = cell.y
-			first = false
-		elif cell.y != first_band:
-			return false
-	if not cells.is_empty():
-		var unseen := cells.duplicate()
-		var starts: Array[Vector3i] = []
-		starts.assign(unseen.keys())
-		var frontier: Array[Vector3i] = [starts[0]]
-		unseen.erase(starts[0])
-		while not frontier.is_empty():
-			var cell: Vector3i = frontier.pop_back()
-			for step: Vector3i in [Vector3i.RIGHT, Vector3i.LEFT,
-					Vector3i.FORWARD, Vector3i.BACK]:
-				if unseen.has(cell + step):
-					unseen.erase(cell + step)
-					frontier.append(cell + step)
-		if not unseen.is_empty():
-			return false
+	for cell: Vector3i in planting:
+		if not cells.has(cell): return false
+		# Islands may not consume an entrance or exterior edge of the court --
+		# unless the court rolled no walking ring (`ringless`, Town taste knobs
+		# task 2): its lawn reaches the edges backed by built mass. Its walk
+		# (landings, open edges, joining strips) and their connectivity are
+		# proved upstream in WarrenVolumetricSolver._ringless_court_walk, not here.
+		if not ringless.has(cell):
+			for step: Vector3i in [Vector3i.LEFT,Vector3i.RIGHT,Vector3i.FORWARD,Vector3i.BACK]:
+				if not cells.has(cell+step): return false
+		if surface_plan != null and surface_plan.has_cell(cell+Vector3i.UP): return false
+	planned_plaza_planting_cells = planting.duplicate()
 	planned_plaza_cells = cells.duplicate()
 	_plaza_declared = true
 	return true
@@ -1197,6 +1219,7 @@ func expanded_placements() -> Array[Dictionary]:
 			out.append({
 				"stable_id": StringName("%s/%s" % [unit_value.stable_id,
 					StringName(placement.id)]),
+				"unit_id": unit_value.stable_id,
 				"placement_id": StringName(placement.id),
 				"visibility_owner": visibility_owner_bounds(unit_value),
 				"asset_id": unit_recipe.realized_facade_asset(placement,

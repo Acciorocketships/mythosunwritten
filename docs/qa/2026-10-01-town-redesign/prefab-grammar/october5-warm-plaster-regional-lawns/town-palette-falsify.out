@@ -1,0 +1,81 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_october5_town_surface_palette.gd
+[0m* test_suntail_plaster_warms_without_recolouring_timber_or_mutating_source
+[31m    [Failed]:  [0m[0.93000000715256] expected to be < than [0.8370000064373]:  plaster becomes warmer cream
+      at line 15
+[31m    [Failed]:  [0m[1.04301077543015] expected to be > than [1.04301077543015]:  
+      at line 16
+* test_raised_courtyard_uses_same_colour_as_terrain_below
+[31m    [Failed]:  [0mraised lawn uses the terrain's 24m colour lattice, independent of height
+      at line 32
+* test_grass_and_raised_lawns_share_regional_lattice_across_biomes
+[31m    [Failed]:  [0mgrass/lawn parity at (1.3, 48.0, 2.7)
+      at line 44
+[31m    [Failed]:  [0mgrass/lawn parity at (313.3, 48.0, 1082.7)
+      at line 44
+[1m0/3 passed.
+[0m[4m
+
+res://tests/test_september10_grass_sampling.gd
+[0m* test_detached_sampling_does_not_retain_plans_or_share_mutable_grade_caches
+SCRIPT ERROR: Out of bounds get index '0' (on base: 'Array[TerrainGradePatch]')
+          at: test_detached_sampling_does_not_retain_plans_or_share_mutable_grade_caches (res://tests/test_september10_grass_sampling.gd:22)
+          GDScript backtrace (most recent call first):
+              [0] test_detached_sampling_does_not_retain_plans_or_share_mutable_grade_caches (res://tests/test_september10_grass_sampling.gd:22)
+              [1] _run_test (res://addons/gut/gut.gd:612)
+              [2] _test_the_scripts (res://addons/gut/gut.gd:815)
+[31m    [Failed]:  [0mUnexpected Errors:
+    [1] <engine-2>Out of bounds get index '0' (on base: 'Array[TerrainGradePatch]')
+      at line -1
+* test_detached_water_keeps_completed_fine_shores_without_source_or_memo_ownership
+[1m1/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_october5_town_surface_palette.gd
+[0m- test_suntail_plaster_warms_without_recolouring_timber_or_mutating_source
+[31m    [Failed]:  [0m[0.93000000715256] expected to be < than [0.8370000064373]:  plaster becomes warmer cream
+          at line 15
+[31m    [Failed]:  [0m[1.04301077543015] expected to be > than [1.04301077543015]:  
+          at line 16
+- test_raised_courtyard_uses_same_colour_as_terrain_below
+[31m    [Failed]:  [0mraised lawn uses the terrain's 24m colour lattice, independent of height
+          at line 32
+- test_grass_and_raised_lawns_share_regional_lattice_across_biomes
+[31m    [Failed]:  [0mgrass/lawn parity at (1.3, 48.0, 2.7)
+          at line 44
+[31m    [Failed]:  [0mgrass/lawn parity at (313.3, 48.0, 1082.7)
+          at line 44
+[4m
+res://tests/test_september10_grass_sampling.gd
+[0m- test_detached_sampling_does_not_retain_plans_or_share_mutable_grade_caches
+[31m    [Failed]:  [0mUnexpected Errors:
+    [1] <engine-2>Out of bounds get index '0' (on base: 'Array[TerrainGradePatch]')
+          at line -1
+
+Totals
+------
+Scripts               2
+Tests                 5
+Passing Tests         1
+Failing Tests         4
+Asserts           22/28
+Time              3.303s
+
+
+[31m---- 4 failing tests ----
+[0m

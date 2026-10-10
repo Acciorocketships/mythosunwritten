@@ -1,0 +1,2 @@
+RANGE_AUDIT {"floating":0,"joins":2,"ms":189655,"profile":"grand","roof":{"area":0.0,"gable_area":8.84833129333003,"gable_contacts":586,"intrusions":0,"triangles":1261614},"seed":1,"valid_payload":true}
+RANGE_AUDIT {"floating":0,"joins":1,"ms":50344,"profile":"prod","roof":{"area":0.0,"gable_area":1.29351670736924,"gable_contacts":44,"intrusions":0,"triangles":926245},"seed":141,"valid_payload":true}

@@ -1,0 +1,451 @@
+[
+	{
+		"details": [
+			{
+				"centre": "(2.0, 6.0)",
+				"dir": 0,
+				"from_band": 2,
+				"kind": "post",
+				"to_band": 4
+			},
+			{
+				"centre": "(2.0, 7.0)",
+				"dir": 0,
+				"from_band": 2,
+				"kind": "post",
+				"to_band": 4
+			},
+			{
+				"centre": "(2.0, 4.5)",
+				"dir": 0,
+				"kind": "ivy_corner",
+				"proud": 0.2,
+				"y": 0.0
+			},
+			{
+				"centre": "(2.0, 7.5)",
+				"dir": 0,
+				"kind": "ivy",
+				"proud": 0.2,
+				"y": 0.0
+			},
+			{
+				"centre": "(1.5, 10.0)",
+				"dir": 1,
+				"kind": "ivy_corner",
+				"proud": 0.2,
+				"y": 0.0
+			},
+			{
+				"centre": "(-2.0, 5.5)",
+				"dir": 2,
+				"kind": "ivy_corner",
+				"proud": 0.2,
+				"y": 0.0
+			},
+			{
+				"centre": "(0.0, 7.5)",
+				"count": 2,
+				"dir": 2,
+				"kind": "doorstep",
+				"proud": 0.2,
+				"side": -1.0,
+				"y": 0.0
+			},
+			{
+				"centre": "(0.0, 9.5)",
+				"dir": 2,
+				"kind": "ivy_corner",
+				"proud": 0.2,
+				"y": 0.0
+			},
+			{
+				"centre": "(-1.5, 4.0)",
+				"dir": 3,
+				"kind": "ivy_corner",
+				"proud": 0.2,
+				"y": 0.0
+			},
+			{
+				"centre": "(1.5, 4.0)",
+				"dir": 3,
+				"kind": "ivy",
+				"proud": 0.2,
+				"y": 0.0
+			},
+			{
+				"centre": "(2.0, 4.5)",
+				"dir": 0,
+				"kind": "window_box",
+				"y": 3.0
+			},
+			{
+				"centre": "(2.0, 9.5)",
+				"dir": 0,
+				"kind": "window_box",
+				"y": 3.0
+			},
+			{
+				"centre": "(1.5, 5.0)",
+				"dir": 1,
+				"kind": "window_box",
+				"y": 3.0
+			},
+			{
+				"centre": "(-0.5, 6.0)",
+				"dir": 1,
+				"kind": "window_box",
+				"y": 3.0
+			},
+			{
+				"centre": "(1.5, 10.0)",
+				"dir": 1,
+				"kind": "window_box",
+				"y": 3.0
+			},
+			{
+				"centre": "(0.0, 6.5)",
+				"dir": 2,
+				"kind": "window_box",
+				"y": 3.0
+			},
+			{
+				"centre": "(0.0, 7.5)",
+				"dir": 2,
+				"kind": "window_box",
+				"y": 3.0
+			},
+			{
+				"centre": "(-1.5, 4.0)",
+				"dir": 3,
+				"kind": "window_box",
+				"y": 3.0
+			},
+			{
+				"centre": "(-0.5, 4.0)",
+				"dir": 3,
+				"kind": "window_box",
+				"y": 3.0
+			},
+			{
+				"centre": "(1.5, 8.0)",
+				"dir": 3,
+				"kind": "window_box",
+				"y": 3.0
+			},
+			{
+				"centre": "(-1.5, 7.0)",
+				"dir": 1,
+				"kind": "window_box",
+				"y": 6.0
+			},
+			{
+				"centre": "(0.0, 7.5)",
+				"dir": 2,
+				"footprint": "[P: (-1.069727, 7.02), S: (0.891227, 0.96)]",
+				"kind": "awning",
+				"proud": 0.2,
+				"y": 0.0
+			}
+		],
+		"mass": "kit.spatial.parcel.maze.house.001",
+		"roofs": [
+			{
+				"axis": 1,
+				"chimney": true,
+				"chimney_end": 1,
+				"colour": "red",
+				"dormers": {
+
+				},
+				"eave_band": 4,
+				"extend_max": 0,
+				"extend_min": 0,
+				"open_max": false,
+				"open_min": false,
+				"rect": "[P: (0, 5), S: (2, 2)]",
+				"ridge_peaks": false,
+				"tight_eave": true,
+				"tight_eave_sides": 3,
+				"union_index": 8,
+				"verge_min": 0.0
+			},
+			{
+				"axis": 1,
+				"chimney": true,
+				"chimney_end": 1,
+				"colour": "red",
+				"dormers": {
+
+				},
+				"eave_band": 6,
+				"extend_max": 0,
+				"extend_min": 0,
+				"open_max": false,
+				"open_min": false,
+				"rect": "[P: (-2, 5), S: (2, 2)]",
+				"ridge_peaks": false,
+				"union_index": 9
+			}
+		],
+		"storeys": [
+			{
+				"bay_colour": "red",
+				"bay_offsets": {
+
+				},
+				"bay_roles": {
+
+				},
+				"cells": {
+					"(-2, 4)": true,
+					"(-2, 5)": true,
+					"(-1, 4)": true,
+					"(-1, 5)": true,
+					"(0, 4)": true,
+					"(0, 5)": true,
+					"(0, 6)": true,
+					"(0, 7)": true,
+					"(0, 8)": true,
+					"(0, 9)": true,
+					"(1, 4)": true,
+					"(1, 5)": true,
+					"(1, 6)": true,
+					"(1, 7)": true,
+					"(1, 8)": true,
+					"(1, 9)": true
+				},
+				"default_opening": "window",
+				"floor_band": 0,
+				"inset": false,
+				"material": "stone",
+				"openings": {
+					"(-2, 5, 2)": "door",
+					"(0, 4, 3)": "plain",
+					"(0, 7, 2)": "door",
+					"(1, 4, 3)": "plain",
+					"(1, 6, 0)": "plain",
+					"(1, 7, 0)": "plain"
+				},
+				"plain_every": 0,
+				"plinth": true,
+				"tint": "(0.97, 0.98, 1.0, 1.0)"
+			},
+			{
+				"bay_colour": "red",
+				"bay_offsets": {
+
+				},
+				"bay_roles": {
+
+				},
+				"cells": {
+					"(-2, 4)": true,
+					"(-2, 5)": true,
+					"(-1, 4)": true,
+					"(-1, 5)": true,
+					"(0, 4)": true,
+					"(0, 5)": true,
+					"(0, 6)": true,
+					"(0, 7)": true,
+					"(0, 8)": true,
+					"(0, 9)": true,
+					"(1, 4)": true,
+					"(1, 8)": true,
+					"(1, 9)": true
+				},
+				"crown_parts": [
+					{
+						"(0, 5)": true,
+						"(0, 6)": true,
+						"(1, 5)": true,
+						"(1, 6)": true
+					}
+				],
+				"default_opening": "window",
+				"floor_band": 2,
+				"inset": false,
+				"loggia": true,
+				"material": "timber",
+				"openings": {
+					"(-2, 4, 2)": "plain",
+					"(-2, 5, 1)": "bay",
+					"(-2, 5, 2)": "bay",
+					"(0, 4, 3)": "plain",
+					"(0, 5, 0)": "door",
+					"(0, 6, 0)": "plain",
+					"(0, 7, 0)": "plain",
+					"(0, 8, 2)": "bay",
+					"(0, 9, 1)": "bay",
+					"(0, 9, 2)": "plain",
+					"(1, 4, 3)": "plain",
+					"(1, 8, 0)": "bay"
+				},
+				"plain_every": 0,
+				"plinth": false,
+				"roofed": {
+					"(0, 5)": true,
+					"(0, 6)": true,
+					"(1, 5)": true,
+					"(1, 6)": true
+				},
+				"tint": "(1.0, 0.96, 0.88, 1.0)"
+			},
+			{
+				"bay_colour": "red",
+				"bay_offsets": {
+
+				},
+				"bay_roles": {
+
+				},
+				"cells": {
+					"(-2, 5)": true,
+					"(-2, 6)": true,
+					"(-1, 5)": true,
+					"(-1, 6)": true
+				},
+				"default_opening": "window",
+				"floor_band": 4,
+				"inset": false,
+				"material": "timber",
+				"opening_assets": {
+					"(-2, 5, 3)": "pure_village.wall.plaster.window_open.finish_oak",
+					"(-1, 6, 1)": "pure_village.wall.plaster.window_open.finish_oak"
+				},
+				"openings": {
+					"(-2, 5, 2)": "plain",
+					"(-2, 5, 3)": "window",
+					"(-2, 6, 2)": "plain",
+					"(-1, 5, 0)": "plain",
+					"(-1, 5, 3)": "plain",
+					"(-1, 6, 0)": "plain",
+					"(-1, 6, 1)": "window"
+				},
+				"plain_every": 0,
+				"plinth": false,
+				"stepped_wing": true,
+				"tint": "(1.0, 0.96, 0.88, 1.0)"
+			}
+		]
+	},
+	{
+		"asset_id": "suntail.decor.support_3.finish_oak",
+		"color": "(1.0, 1.0, 1.0, 1.0)",
+		"role": "post.timber",
+		"stable_id": "kit.spatial.parcel.maze.house.001/k0017",
+		"transform": "[X: (-0.0, 0.0, -1.53519), Y: (0.0, 3.074, 0.0), Z: (1.53519, 0.0, -0.0), O: (4.1585, 0.0, 7.8415)]"
+	},
+	{
+		"asset_id": "suntail.decor.support_3.finish_oak",
+		"color": "(1.0, 1.0, 1.0, 1.0)",
+		"role": "post.timber",
+		"stable_id": "kit.spatial.parcel.maze.house.001/k0032",
+		"transform": "[X: (1.53519, 0.0, 0.0), Y: (0.0, 3.074, 0.0), Z: (0.0, 0.0, 1.53519), O: (0.1585, 0.0, 12.1585)]"
+	},
+	{
+		"asset_id": "suntail.decor.support_3.finish_oak",
+		"color": "(1.0, 1.0, 1.0, 1.0)",
+		"role": "post.timber",
+		"stable_id": "kit.spatial.parcel.maze.house.001/k0037",
+		"transform": "[X: (1.53519, 0.0, 0.0), Y: (0.0, 3.074, 0.0), Z: (0.0, 0.0, 1.53519), O: (4.1585, 0.0, 20.1585)]"
+	},
+	{
+		"asset_id": "suntail.decor.support_3.finish_oak",
+		"color": "(1.0, 1.0, 1.0, 1.0)",
+		"role": "post.timber",
+		"stable_id": "kit.spatial.parcel.maze.house.001/k0042",
+		"transform": "[X: (0.0, 0.0, 1.53519), Y: (0.0, 3.074, 0.0), Z: (-1.53519, 0.0, 0.0), O: (-4.1585, 0.0, 12.1585)]"
+	},
+	{
+		"asset_id": "suntail.decor.support_3.finish_oak",
+		"color": "(1.0, 1.0, 1.0, 1.0)",
+		"role": "post.timber",
+		"stable_id": "kit.spatial.parcel.maze.house.001/k0051",
+		"transform": "[X: (0.0, 0.0, 1.53519), Y: (0.0, 3.074, 0.0), Z: (-1.53519, 0.0, 0.0), O: (-0.1585, 0.0, 20.1585)]"
+	},
+	{
+		"asset_id": "suntail.decor.support_3.finish_oak",
+		"color": "(1.0, 1.0, 1.0, 1.0)",
+		"role": "post.timber",
+		"stable_id": "kit.spatial.parcel.maze.house.001/k0054",
+		"transform": "[X: (-1.53519, 0.0, 0.0), Y: (0.0, 3.074, 0.0), Z: (-0.0, 0.0, -1.53519), O: (-4.1585, 0.0, 7.8415)]"
+	},
+	{
+		"asset_id": "suntail.decor.support_3.finish_oak",
+		"color": "(1.0, 1.0, 1.0, 1.0)",
+		"role": "post.timber",
+		"stable_id": "kit.spatial.parcel.maze.house.001/k0084",
+		"transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 3.074, 0.0), Z: (1.0, 0.0, -0.0), O: (4.0277, 3.0, 7.9723)]"
+	},
+	{
+		"asset_id": "suntail.decor.support_3.finish_oak",
+		"color": "(1.0, 1.0, 1.0, 1.0)",
+		"role": "post.timber",
+		"stable_id": "kit.spatial.parcel.maze.house.001/k0091",
+		"transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 3.074, 0.0), Z: (0.0, 0.0, 1.0), O: (4.0277, 3.0, 10.0277)]"
+	},
+	{
+		"asset_id": "suntail.decor.support_3.finish_oak",
+		"color": "(1.0, 1.0, 1.0, 1.0)",
+		"role": "post.timber",
+		"stable_id": "kit.spatial.parcel.maze.house.001/k0098",
+		"transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 3.074, 0.0), Z: (0.0, 0.0, 1.0), O: (4.0277, 3.0, 20.0277)]"
+	},
+	{
+		"asset_id": "suntail.decor.support_3.finish_oak",
+		"color": "(1.0, 1.0, 1.0, 1.0)",
+		"role": "post.timber",
+		"stable_id": "kit.spatial.parcel.maze.house.001/k0112",
+		"transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 3.074, 0.0), Z: (-1.0, 0.0, 0.0), O: (-0.0277, 3.0, 20.0277)]"
+	},
+	{
+		"asset_id": "suntail.decor.support_3.finish_oak",
+		"color": "(1.0, 1.0, 1.0, 1.0)",
+		"role": "post.timber",
+		"stable_id": "kit.spatial.parcel.maze.house.001/k0115",
+		"transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 3.074, 0.0), Z: (-0.0, 0.0, -1.0), O: (-4.0277, 3.0, 7.9723)]"
+	},
+	{
+		"asset_id": "suntail.decor.support_3.finish_oak",
+		"color": "(1.0, 1.0, 1.0, 1.0)",
+		"role": "post.timber",
+		"stable_id": "kit.spatial.parcel.maze.house.001/k0140",
+		"transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 3.074, 0.0), Z: (1.0, 0.0, -0.0), O: (0.0277, 6.0, 9.9723)]"
+	},
+	{
+		"asset_id": "suntail.decor.support_3.finish_oak",
+		"color": "(1.0, 1.0, 1.0, 1.0)",
+		"role": "post.timber",
+		"stable_id": "kit.spatial.parcel.maze.house.001/k0149",
+		"transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 3.074, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0277, 6.0, 14.0277)]"
+	},
+	{
+		"asset_id": "suntail.decor.support_3.finish_oak",
+		"color": "(1.0, 1.0, 1.0, 1.0)",
+		"role": "post.timber",
+		"stable_id": "kit.spatial.parcel.maze.house.001/k0155",
+		"transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 3.074, 0.0), Z: (-1.0, 0.0, 0.0), O: (-4.0277, 6.0, 14.0277)]"
+	},
+	{
+		"asset_id": "suntail.decor.support_3.finish_oak",
+		"color": "(1.0, 1.0, 1.0, 1.0)",
+		"role": "post.timber",
+		"stable_id": "kit.spatial.parcel.maze.house.001/k0158",
+		"transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 3.074, 0.0), Z: (-0.0, 0.0, -1.0), O: (-4.0277, 6.0, 9.9723)]"
+	},
+	{
+		"asset_id": "suntail.decor.support_3.finish_oak",
+		"color": "(1.0, 1.0, 1.0, 1.0)",
+		"role": "post.timber",
+		"stable_id": "kit.spatial.parcel.maze.house.001/k0242",
+		"transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.9, 0.0), Z: (1.0, 0.0, -0.0), O: (4.0, 4.0, 12.0)]"
+	},
+	{
+		"asset_id": "suntail.decor.support_3.finish_oak",
+		"color": "(1.0, 1.0, 1.0, 1.0)",
+		"role": "post.timber",
+		"stable_id": "kit.spatial.parcel.maze.house.001/k0244",
+		"transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.9, 0.0), Z: (1.0, 0.0, -0.0), O: (4.0, 4.0, 14.0)]"
+	}
+]

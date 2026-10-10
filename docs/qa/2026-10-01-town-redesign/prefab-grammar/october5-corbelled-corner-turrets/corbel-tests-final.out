@@ -1,0 +1,51 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_corbelled_corner_towers.gd
+[0m* test_native_corbel_joins_continuous_corner_without_ground_footing
+* test_corbel_cannot_float_bridge_a_missing_floor_or_enter_public_air
+* test_corbel_does_not_cover_lower_doorway_or_appear_on_short_house
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_october3_corner_towers.gd
+[0m* test_full_native_shaft_joins_both_faces_of_an_actual_corner
+* test_corner_tower_cannot_float_or_enter_public_air
+* test_lower_wing_gets_a_complete_window_course_not_a_roof_ornament
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_october2_tower_host_fit.gd
+[0m* test_changes_only_matched_gable_and_preserves_tighter_public_verge
+* test_open_branch_and_door_reject_without_partial_host_changes
+* test_only_intersecting_optional_dressing_is_removed
+* test_host_fitting_rotates_with_all_four_facades
+* test_replaced_opening_loses_its_window_box_even_below_corbel
+* test_eave_attachment_uses_source_cap_datum_and_keeps_native_overhang
+[1m6/6 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               3
+Tests                12
+Passing Tests        12
+Asserts             126
+Time              34.729s
+
+
+[32m---- All tests passed! ----
+[0m

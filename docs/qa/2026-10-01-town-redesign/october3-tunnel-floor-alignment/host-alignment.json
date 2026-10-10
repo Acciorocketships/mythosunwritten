@@ -1,0 +1,934 @@
+{
+	"101:large": [
+		{
+			"candidates": [
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.006",
+					"lift": 2,
+					"top": 4,
+					"whole_storey_fits": false
+				}
+			],
+			"roof": 2,
+			"walk": "(-4, 0, -2)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.023",
+					"lift": 2,
+					"top": 4,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.004",
+					"lift": 2,
+					"top": 4,
+					"whole_storey_fits": false
+				}
+			],
+			"roof": 2,
+			"walk": "(0, 0, -2)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.011",
+					"lift": 2,
+					"top": 4,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 1,
+					"floor_above_crown": 3,
+					"id": "bridge.00.end.0.lower",
+					"lift": 1,
+					"top": 5,
+					"whole_storey_fits": false
+				}
+			],
+			"roof": 2,
+			"walk": "(3, 0, 5)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 4,
+					"floor_above_crown": 8,
+					"id": "bridge.03.end.1.lower",
+					"lift": 2,
+					"top": 7,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 4,
+					"floor_above_crown": 8,
+					"id": "bridge.02.end.1.lower",
+					"lift": 2,
+					"top": 7,
+					"whole_storey_fits": false
+				}
+			],
+			"roof": 6,
+			"walk": "(-2, 4, 2)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 4,
+					"floor_above_crown": 8,
+					"id": "bridge.03.end.1.lower",
+					"lift": 2,
+					"top": 7,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 4,
+					"floor_above_crown": 8,
+					"id": "house.014",
+					"lift": 2,
+					"top": 14,
+					"whole_storey_fits": true
+				}
+			],
+			"roof": 6,
+			"walk": "(-1, 4, 2)"
+		}
+	],
+	"103:grand": [
+		{
+			"candidates": [
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.024",
+					"lift": 2,
+					"top": 4,
+					"whole_storey_fits": false
+				}
+			],
+			"roof": 2,
+			"walk": "(-2, 0, -6)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.006",
+					"lift": 2,
+					"top": 4,
+					"whole_storey_fits": false
+				}
+			],
+			"roof": 2,
+			"walk": "(2, 0, -6)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.003",
+					"lift": 2,
+					"top": 4,
+					"whole_storey_fits": false
+				}
+			],
+			"roof": 2,
+			"walk": "(2, 0, 0)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 4,
+					"floor_above_crown": 8,
+					"id": "bridge.02.end.0.lower",
+					"lift": 2,
+					"top": 7,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 4,
+					"floor_above_crown": 8,
+					"id": "bridge.01.end.0.lower",
+					"lift": 2,
+					"top": 7,
+					"whole_storey_fits": false
+				}
+			],
+			"roof": 6,
+			"walk": "(-2, 4, -1)"
+		}
+	],
+	"13:large": [
+		{
+			"candidates": [
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.016",
+					"lift": 2,
+					"top": 4,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.010",
+					"lift": 2,
+					"top": 4,
+					"whole_storey_fits": false
+				}
+			],
+			"roof": 2,
+			"walk": "(4, 0, 6)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 4,
+					"floor_above_crown": 8,
+					"id": "house.019",
+					"lift": 2,
+					"top": 10,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 4,
+					"floor_above_crown": 8,
+					"id": "house.018",
+					"lift": 2,
+					"top": 14,
+					"whole_storey_fits": true
+				}
+			],
+			"roof": 6,
+			"walk": "(1, 4, 1)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 4,
+					"floor_above_crown": 8,
+					"id": "house.released.002",
+					"lift": 2,
+					"top": 14,
+					"whole_storey_fits": true
+				},
+				{
+					"base": 4,
+					"floor_above_crown": 8,
+					"id": "house.018",
+					"lift": 2,
+					"top": 14,
+					"whole_storey_fits": true
+				}
+			],
+			"roof": 6,
+			"walk": "(0, 4, 2)"
+		}
+	],
+	"211:grand": [
+		{
+			"candidates": [
+				{
+					"base": 5,
+					"floor_above_crown": 5,
+					"id": "house.028",
+					"lift": 3,
+					"top": 11,
+					"whole_storey_fits": true
+				},
+				{
+					"base": 1,
+					"floor_above_crown": 3,
+					"id": "house.002",
+					"lift": 1,
+					"top": 5,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 6,
+					"floor_above_crown": 6,
+					"id": "house.027",
+					"lift": 4,
+					"top": 14,
+					"whole_storey_fits": true
+				}
+			],
+			"roof": 2,
+			"walk": "(1, 0, -2)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 5,
+					"floor_above_crown": 5,
+					"id": "house.028",
+					"lift": 3,
+					"top": 11,
+					"whole_storey_fits": true
+				}
+			],
+			"roof": 2,
+			"walk": "(2, 0, -1)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 5,
+					"floor_above_crown": 5,
+					"id": "house.028",
+					"lift": 3,
+					"top": 11,
+					"whole_storey_fits": true
+				}
+			],
+			"roof": 2,
+			"walk": "(2, 0, 0)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.013",
+					"lift": 2,
+					"top": 5,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 5,
+					"floor_above_crown": 5,
+					"id": "house.011",
+					"lift": 3,
+					"top": 11,
+					"whole_storey_fits": true
+				},
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.014",
+					"lift": 2,
+					"top": 5,
+					"whole_storey_fits": false
+				}
+			],
+			"roof": 2,
+			"walk": "(2, 0, 1)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.013",
+					"lift": 2,
+					"top": 5,
+					"whole_storey_fits": false
+				}
+			],
+			"roof": 2,
+			"walk": "(4, 0, 1)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.031",
+					"lift": 2,
+					"top": 6,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.000",
+					"lift": 2,
+					"top": 4,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 4,
+					"floor_above_crown": 4,
+					"id": "house.005",
+					"lift": 2,
+					"top": 14,
+					"whole_storey_fits": true
+				}
+			],
+			"roof": 2,
+			"walk": "(-2, 0, 3)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 1,
+					"floor_above_crown": 5,
+					"id": "house.002",
+					"lift": 2,
+					"top": 5,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 1,
+					"floor_above_crown": 5,
+					"id": "house.003",
+					"lift": 2,
+					"top": 5,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 5,
+					"floor_above_crown": 5,
+					"id": "house.006",
+					"lift": 2,
+					"top": 13,
+					"whole_storey_fits": true
+				}
+			],
+			"roof": 3,
+			"walk": "(-1, 1, -2)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 3,
+					"floor_above_crown": 7,
+					"id": "house.004",
+					"lift": 2,
+					"top": 7,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 7,
+					"floor_above_crown": 7,
+					"id": "house.008",
+					"lift": 2,
+					"top": 19,
+					"whole_storey_fits": true
+				},
+				{
+					"base": 7,
+					"floor_above_crown": 7,
+					"id": "house.009",
+					"lift": 2,
+					"top": 13,
+					"whole_storey_fits": true
+				}
+			],
+			"roof": 5,
+			"walk": "(-4, 3, 1)"
+		}
+	],
+	"31:large": [
+		{
+			"candidates": [
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.005",
+					"lift": 2,
+					"top": 4,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.003",
+					"lift": 2,
+					"top": 8,
+					"whole_storey_fits": true
+				}
+			],
+			"roof": 2,
+			"walk": "(-1, 0, 1)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.wall-room.000",
+					"lift": 2,
+					"top": 4,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 4,
+					"floor_above_crown": 4,
+					"id": "bridge.01.end.1.lower",
+					"lift": 2,
+					"top": 7,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.006",
+					"lift": 2,
+					"top": 4,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.005",
+					"lift": 2,
+					"top": 4,
+					"whole_storey_fits": false
+				}
+			],
+			"roof": 2,
+			"walk": "(0, 0, 2)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 4,
+					"floor_above_crown": 8,
+					"id": "bridge.02.end.0.lower",
+					"lift": 2,
+					"top": 7,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 4,
+					"floor_above_crown": 8,
+					"id": "house.008",
+					"lift": 2,
+					"top": 14,
+					"whole_storey_fits": true
+				}
+			],
+			"roof": 6,
+			"walk": "(2, 4, 0)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 4,
+					"floor_above_crown": 8,
+					"id": "bridge.01.end.1.lower",
+					"lift": 2,
+					"top": 7,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 4,
+					"floor_above_crown": 8,
+					"id": "house.008",
+					"lift": 2,
+					"top": 14,
+					"whole_storey_fits": true
+				}
+			],
+			"roof": 6,
+			"walk": "(2, 4, 1)"
+		}
+	],
+	"43:grand": [
+		{
+			"candidates": [
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.017",
+					"lift": 2,
+					"top": 8,
+					"whole_storey_fits": true
+				},
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.027",
+					"lift": 2,
+					"top": 12,
+					"whole_storey_fits": true
+				}
+			],
+			"roof": 2,
+			"walk": "(1, 0, -8)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 4,
+					"floor_above_crown": 4,
+					"id": "house.042",
+					"lift": 2,
+					"top": 12,
+					"whole_storey_fits": true
+				}
+			],
+			"roof": 2,
+			"walk": "(5, 0, -3)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 4,
+					"floor_above_crown": 4,
+					"id": "house.005",
+					"lift": 2,
+					"top": 14,
+					"whole_storey_fits": true
+				},
+				{
+					"base": 7,
+					"floor_above_crown": 7,
+					"id": "bridge.01.end.1.lower",
+					"lift": 5,
+					"top": 10,
+					"whole_storey_fits": false
+				}
+			],
+			"roof": 2,
+			"walk": "(1, 0, -2)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.000",
+					"lift": 2,
+					"top": 5,
+					"whole_storey_fits": false
+				}
+			],
+			"roof": 2,
+			"walk": "(4, 0, -1)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.000",
+					"lift": 2,
+					"top": 5,
+					"whole_storey_fits": false
+				}
+			],
+			"roof": 2,
+			"walk": "(4, 0, 0)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.000",
+					"lift": 2,
+					"top": 5,
+					"whole_storey_fits": false
+				}
+			],
+			"roof": 2,
+			"walk": "(4, 0, 1)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 5,
+					"floor_above_crown": 5,
+					"id": "house.006",
+					"lift": 2,
+					"top": 13,
+					"whole_storey_fits": true
+				}
+			],
+			"roof": 3,
+			"walk": "(-2, 1, -2)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 2,
+					"floor_above_crown": 6,
+					"id": "house.wall-room.006",
+					"lift": 2,
+					"top": 6,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 2,
+					"floor_above_crown": 6,
+					"id": "house.wall-room.007",
+					"lift": 2,
+					"top": 6,
+					"whole_storey_fits": false
+				}
+			],
+			"roof": 4,
+			"walk": "(-2, 2, -5)"
+		}
+	],
+	"58:large": [
+		{
+			"candidates": [],
+			"roof": 2,
+			"walk": "(3, 0, 1)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 4,
+					"floor_above_crown": 4,
+					"id": "house.026",
+					"lift": 2,
+					"top": 8,
+					"whole_storey_fits": true
+				}
+			],
+			"roof": 2,
+			"walk": "(3, 0, 2)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 4,
+					"floor_above_crown": 4,
+					"id": "house.030",
+					"lift": 2,
+					"top": 8,
+					"whole_storey_fits": true
+				},
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.wall-room.005",
+					"lift": 2,
+					"top": 4,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.wall-room.003",
+					"lift": 2,
+					"top": 4,
+					"whole_storey_fits": false
+				}
+			],
+			"roof": 2,
+			"walk": "(-4, 0, 4)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 4,
+					"floor_above_crown": 4,
+					"id": "house.030",
+					"lift": 2,
+					"top": 8,
+					"whole_storey_fits": true
+				},
+				{
+					"base": 4,
+					"floor_above_crown": 4,
+					"id": "house.022",
+					"lift": 2,
+					"top": 8,
+					"whole_storey_fits": true
+				}
+			],
+			"roof": 2,
+			"walk": "(-3, 0, 4)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.004",
+					"lift": 2,
+					"top": 4,
+					"whole_storey_fits": false
+				}
+			],
+			"roof": 2,
+			"walk": "(4, 0, 4)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.004",
+					"lift": 2,
+					"top": 4,
+					"whole_storey_fits": false
+				}
+			],
+			"roof": 2,
+			"walk": "(5, 0, 4)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.012",
+					"lift": 2,
+					"top": 6,
+					"whole_storey_fits": false
+				}
+			],
+			"roof": 2,
+			"walk": "(0, 0, 18)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.015",
+					"lift": 2,
+					"top": 6,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 0,
+					"floor_above_crown": 4,
+					"id": "house.012",
+					"lift": 2,
+					"top": 6,
+					"whole_storey_fits": false
+				}
+			],
+			"roof": 2,
+			"walk": "(-1, 0, 19)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 4,
+					"floor_above_crown": 8,
+					"id": "house.003",
+					"lift": 2,
+					"top": 8,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 0,
+					"floor_above_crown": 8,
+					"id": "house.wall-room.001",
+					"lift": 2,
+					"top": 4,
+					"whole_storey_fits": false
+				}
+			],
+			"roof": 6,
+			"walk": "(-3, 4, 0)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 4,
+					"floor_above_crown": 8,
+					"id": "house.released.001",
+					"lift": 2,
+					"top": 8,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 8,
+					"floor_above_crown": 8,
+					"id": "house.released.000",
+					"lift": 2,
+					"top": 18,
+					"whole_storey_fits": true
+				}
+			],
+			"roof": 6,
+			"walk": "(-1, 4, 0)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 4,
+					"floor_above_crown": 8,
+					"id": "house.wall-room.009",
+					"lift": 2,
+					"top": 8,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 4,
+					"floor_above_crown": 8,
+					"id": "house.003",
+					"lift": 2,
+					"top": 8,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 0,
+					"floor_above_crown": 8,
+					"id": "house.wall-room.002",
+					"lift": 2,
+					"top": 4,
+					"whole_storey_fits": false
+				}
+			],
+			"roof": 6,
+			"walk": "(-3, 4, 1)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 4,
+					"floor_above_crown": 8,
+					"id": "house.wall-room.011",
+					"lift": 2,
+					"top": 8,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 4,
+					"floor_above_crown": 8,
+					"id": "house.022",
+					"lift": 2,
+					"top": 8,
+					"whole_storey_fits": false
+				}
+			],
+			"roof": 6,
+			"walk": "(-3, 4, 2)"
+		},
+		{
+			"candidates": [
+				{
+					"base": 4,
+					"floor_above_crown": 8,
+					"id": "house.026",
+					"lift": 2,
+					"top": 8,
+					"whole_storey_fits": false
+				},
+				{
+					"base": 8,
+					"floor_above_crown": 8,
+					"id": "house.released.000",
+					"lift": 2,
+					"top": 18,
+					"whole_storey_fits": true
+				}
+			],
+			"roof": 6,
+			"walk": "(1, 4, 2)"
+		}
+	],
+	"7:standard": []
+}

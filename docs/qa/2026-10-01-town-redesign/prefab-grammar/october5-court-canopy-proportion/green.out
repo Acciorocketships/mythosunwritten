@@ -1,0 +1,39 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_court_canopy_proportion.gd
+[0m* test_small_islands_keep_open_ground_while_large_islands_allow_markets
+[1m1/1 passed.
+[0m[4m
+
+res://tests/test_irregular_court_planting.gd
+[0m* test_tree_can_use_an_l_shaped_bed_without_occupying_the_door_approach
+* test_notched_bed_never_overrides_an_entrance_or_a_roof
+* test_large_planted_islands_use_living_canopies_instead_of_the_bare_centre_tree
+[1m3/3 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               2
+Tests                 4
+Passing Tests         4
+Asserts              65
+Time              7.011s
+
+
+[32m---- All tests passed! ----
+[0m

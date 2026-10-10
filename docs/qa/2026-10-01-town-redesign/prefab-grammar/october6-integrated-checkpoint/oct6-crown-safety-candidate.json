@@ -1,0 +1,20 @@
+{
+  "31:large": {
+    "air": 0,
+    "floating": 0,
+    "roof": {
+      "air_roofs": 0,
+      "air_unsupported": 0,
+      "eaves_cut": 0,
+      "examples": [],
+      "gable_ends": 86,
+      "gable_holes": 0,
+      "open_ends": 30,
+      "open_exposed": 0,
+      "roofs": 58,
+      "tiny": 0,
+      "tiny_beside": 0,
+      "uncapped_towers": 0
+    }
+  }
+}

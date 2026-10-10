@@ -19,6 +19,7 @@ var terrain_grades: Array[TerrainGradePatch] = []:
 		_graded_lock.lock()
 		_graded.clear()
 		_graded_lock.unlock()
+var garden_support_regions: Array[Dictionary] = []
 
 ## The final terrain: town grades, then road verges (no cliff beside a road;
 ## HeightfieldRegion.with_road_verges) wherever a grade does not already own a
@@ -57,8 +58,8 @@ func surface_at_cell(world_xz: Vector2, cell: Vector2i) -> int:
 func has_modified_surface() -> bool:
 	return _ground.has_modified_surface()
 
-func clearance_at(world_xz: Vector2) -> float:
-	return _ground.clearance_at(world_xz)
+func clearance_at(world_xz: Vector2, include_envelopes: bool = true) -> float:
+	return _ground.clearance_at(world_xz, include_envelopes)
 
 ## Exact projected-footprint query for objects whose visual body is larger
 ## than their anchor. Keeping this on the shared ground field means every
@@ -87,5 +88,15 @@ func extended(surface_shapes: Array[FeatureGroundShape],
 	var result := FeatureContext.new(_coverage,
 		_ground.extended(surface_shapes, clearance_shapes), combined_payload,
 		connection_masks, node_cells, bridge_cells)
+	result.garden_support_regions = garden_support_regions.duplicate()
 	result.terrain_grades.assign(terrain_grades)
 	return result
+
+func garden_grass_supports() -> Array[Dictionary]:
+	var by_id := {}
+	for region: Dictionary in garden_support_regions: by_id[region.id] = region
+	for mesh: Dictionary in _payload.surface_meshes:
+		for region: Dictionary in mesh.get("garden_grass_regions",[]): by_id[region.id] = region
+	var supports: Array[Dictionary] = []
+	supports.assign(by_id.values())
+	return supports

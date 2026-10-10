@@ -1,0 +1,78 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_roof_ridge_eave_contacts.gd
+[0m* test_cap_ends_where_eave_covers_its_bearing
+* test_contact_fitting_only_changes_the_foreign_ridge
+* test_contact_terminates_all_flutes_across_cap_width
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_roof_clip_slivers.gd
+[0m* test_sub_tolerance_clipping_strip_cannot_become_an_invisible_collision_fence
+* test_real_thin_roof_trim_survives_clipping
+* test_untouched_authored_detail_is_not_filtered_by_fragment_tolerance
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_roof_eave_contact_precision.gd
+[0m* test_retriangulation_does_not_retract_an_intact_eave
+* test_real_trim_loss_is_not_hidden_by_roundoff_or_another_material
+* test_native_photo_contact_distinguishes_intact_courses_from_the_obstructed_corner
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_kit_roof_junctions.gd
+[0m* test_neighbors_share_one_continuous_roof
+* test_join_respects_street_headroom_and_different_roof_datums
+* test_boring_retains_short_supported_tunnels_without_reducing_headroom
+* test_cross_house_wing_reaches_host_and_withdraws_buried_gable
+* test_triangle_subtraction_preserves_uv_and_removes_only_buried_geometry
+* test_native_cross_roof_triangles_are_trimmed_with_matching_collision
+* test_joined_native_roof_has_no_open_seam
+* test_stepped_parallel_roofs_have_no_open_seam
+* test_contained_triangle_removal_preserves_coplanar_and_tolerance_faces
+[1m9/9 passed.
+[0m[4m
+
+res://tests/test_backed_shed_roofs.gd
+[0m* test_narrow_lower_crown_meets_tall_wall_as_shed
+* test_shed_cannot_close_an_upper_door
+* test_shed_keeps_public_headroom_and_needs_a_flush_wall
+* test_native_shed_parts_stop_at_the_backing_wall
+* test_wall_backed_shed_has_no_freestanding_ridge_caps
+* test_backing_and_clip_follow_mirrored_and_transposed_wings
+[1m6/6 passed.
+[0m[4m
+
+res://tests/test_roof_crown_repacking.gd
+[0m* test_offset_wing_reclaims_its_own_second_crown_row
+* test_repacking_never_overrides_reserved_roof_air
+* test_repacking_is_valid_on_both_axes_and_mirrored_wings
+[1m3/3 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               6
+Tests                27
+Passing Tests        27
+Asserts           12099
+Time              22.676s
+
+
+[32m---- All tests passed! ----
+[0m

@@ -1,8 +1,8 @@
 [gd_resource type="StandardMaterial3D" load_steps=4 format=3]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/312cd16ce224bbfa9be9.res" id="1_hgnpj"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/2cd65518c269e3ef72ac.res" id="2_vafq0"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/2ea8c10ffcee9b826869.res" id="3_at3ul"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/8062ec3b62a88cffbb2b.res" id="1_hgnpj"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/d8f7b4df1c24292907e2.res" id="2_vafq0"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/15a6d3af55054c730e25.res" id="3_at3ul"]
 
 [resource]
 resource_name = "Case_and_food_3"

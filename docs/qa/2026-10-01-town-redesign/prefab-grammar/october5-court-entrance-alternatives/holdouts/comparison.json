@@ -1,0 +1,110 @@
+[
+  {
+    "seed": "109",
+    "baseline_ms": 7758,
+    "candidate_ms": 5149,
+    "baseline_court": true,
+    "candidate_court": true,
+    "same_site": true,
+    "same_squares": true
+  },
+  {
+    "seed": "139",
+    "baseline_ms": 8260,
+    "candidate_ms": 10123,
+    "baseline_court": true,
+    "candidate_court": true,
+    "same_site": true,
+    "same_squares": true
+  },
+  {
+    "seed": "163",
+    "baseline_ms": 3276,
+    "candidate_ms": 3271,
+    "baseline_court": false,
+    "candidate_court": false,
+    "same_site": true,
+    "same_squares": true
+  },
+  {
+    "seed": "181",
+    "baseline_ms": 30271,
+    "candidate_ms": 28855,
+    "baseline_court": true,
+    "candidate_court": true,
+    "same_site": true,
+    "same_squares": true
+  },
+  {
+    "seed": "19",
+    "baseline_ms": 10960,
+    "candidate_ms": 11465,
+    "baseline_court": true,
+    "candidate_court": true,
+    "same_site": true,
+    "same_squares": true
+  },
+  {
+    "seed": "223",
+    "baseline_ms": 20573,
+    "candidate_ms": 19653,
+    "baseline_court": false,
+    "candidate_court": false,
+    "same_site": true,
+    "same_squares": true
+  },
+  {
+    "seed": "283",
+    "baseline_ms": 3422,
+    "candidate_ms": 3170,
+    "baseline_court": true,
+    "candidate_court": true,
+    "same_site": true,
+    "same_squares": true
+  },
+  {
+    "seed": "29",
+    "baseline_ms": 18579,
+    "candidate_ms": 19340,
+    "baseline_court": false,
+    "candidate_court": true,
+    "same_site": false,
+    "same_squares": false
+  },
+  {
+    "seed": "47",
+    "baseline_ms": 9958,
+    "candidate_ms": 9876,
+    "baseline_court": true,
+    "candidate_court": true,
+    "same_site": true,
+    "same_squares": true
+  },
+  {
+    "seed": "61",
+    "baseline_ms": 11652,
+    "candidate_ms": 10997,
+    "baseline_court": true,
+    "candidate_court": true,
+    "same_site": true,
+    "same_squares": true
+  },
+  {
+    "seed": "73",
+    "baseline_ms": 8826,
+    "candidate_ms": 9293,
+    "baseline_court": false,
+    "candidate_court": false,
+    "same_site": true,
+    "same_squares": true
+  },
+  {
+    "seed": "97",
+    "baseline_ms": 15862,
+    "candidate_ms": 15180,
+    "baseline_court": true,
+    "candidate_court": true,
+    "same_site": true,
+    "same_squares": true
+  }
+]

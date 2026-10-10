@@ -1,0 +1,171 @@
+{
+  "centre": "(312.0, 1056.0)",
+  "dressing": {
+    "groups": 1,
+    "props": 2,
+    "trees": 1,
+    "woodland": 0.794289609225515
+  },
+  "grass": 0,
+  "grass_in_greens": 0,
+  "grass_on_paths": 0,
+  "samples": [
+    {
+      "clearance": 2.0,
+      "column": "(0, -7)",
+      "point": "(362.0, 1088.0)",
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": 2.0,
+      "column": "(1, -7)",
+      "point": "(362.0, 1096.0)",
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": 2.0,
+      "column": "(2, -7)",
+      "point": "(362.0, 1104.0)",
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": 1.51261425018311,
+      "column": "(-1, -6)",
+      "point": "(354.0, 1080.0)",
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": -1.99999928474426,
+      "column": "(0, -6)",
+      "point": "(354.0, 1088.0)",
+      "town_surface": 1,
+      "world_surface": 1
+    },
+    {
+      "clearance": -1.99999976158142,
+      "column": "(1, -6)",
+      "point": "(354.0, 1096.0)",
+      "town_surface": 1,
+      "world_surface": 1
+    },
+    {
+      "clearance": -2.0,
+      "column": "(2, -6)",
+      "point": "(354.0, 1104.0)",
+      "town_surface": 1,
+      "world_surface": 1
+    },
+    {
+      "clearance": -2.0,
+      "column": "(3, -6)",
+      "point": "(354.0, 1112.0)",
+      "town_surface": 1,
+      "world_surface": 1
+    },
+    {
+      "clearance": 2.0,
+      "column": "(-1, -5)",
+      "point": "(346.0, 1080.0)",
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": -2.0,
+      "column": "(0, -5)",
+      "point": "(346.0, 1088.0)",
+      "town_surface": 1,
+      "world_surface": 1
+    },
+    {
+      "clearance": -2.0,
+      "column": "(3, -5)",
+      "point": "(346.0, 1112.0)",
+      "town_surface": 1,
+      "world_surface": 1
+    },
+    {
+      "clearance": 2.0,
+      "column": "(-1, -4)",
+      "point": "(338.0, 1080.0)",
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": -2.0,
+      "column": "(0, -4)",
+      "point": "(338.0, 1088.0)",
+      "town_surface": 1,
+      "world_surface": 1
+    },
+    {
+      "clearance": -2.0,
+      "column": "(3, -4)",
+      "point": "(338.0, 1112.0)",
+      "town_surface": 1,
+      "world_surface": 1
+    },
+    {
+      "clearance": 2.0,
+      "column": "(4, -4)",
+      "point": "(338.0, 1120.0)",
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": -1.99999976158142,
+      "column": "(0, -3)",
+      "point": "(330.0, 1088.0)",
+      "town_surface": 1,
+      "world_surface": 1
+    },
+    {
+      "clearance": 1.99999952316284,
+      "column": "(1, -3)",
+      "point": "(330.0, 1096.0)",
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": 2.0,
+      "column": "(2, -3)",
+      "point": "(330.0, 1104.0)",
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": -2.0,
+      "column": "(3, -3)",
+      "point": "(330.0, 1112.0)",
+      "town_surface": 1,
+      "world_surface": 1
+    },
+    {
+      "clearance": 2.0,
+      "column": "(4, -3)",
+      "point": "(330.0, 1120.0)",
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": 2.0,
+      "column": "(2, -2)",
+      "point": "(322.0, 1104.0)",
+      "town_surface": 0,
+      "world_surface": 0
+    },
+    {
+      "clearance": -2.0,
+      "column": "(3, -2)",
+      "point": "(322.0, 1112.0)",
+      "town_surface": 1,
+      "world_surface": 1
+    }
+  ],
+  "seed": 2697992464,
+  "site": "(0, 1)",
+  "tiles": 6
+}

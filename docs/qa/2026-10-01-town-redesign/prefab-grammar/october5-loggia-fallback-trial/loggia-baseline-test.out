@@ -1,0 +1,39 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_october3_street_loggias.gd
+[0m* test_recesses_face_street_air_without_occupying_it
+[31m    [Failed]:  [0m[1] expected to be >= than [2]:  Street-facing buildings need depth at several levels
+      at line 28
+[1m0/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_october3_street_loggias.gd
+[0m- test_recesses_face_street_air_without_occupying_it
+[31m    [Failed]:  [0m[1] expected to be >= than [2]:  Street-facing buildings need depth at several levels
+          at line 28
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts           107/108
+Time              0.368s
+
+
+Ran Tests matching "test_recesses_face_street_air_without_occupying_it"
+[31m---- 1 failing tests ----
+[0m

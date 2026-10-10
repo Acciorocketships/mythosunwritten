@@ -1,9 +1,9 @@
 [gd_resource type="StandardMaterial3D" load_steps=5 format=3]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/c54951e4723f0ce97907.res" id="1_hrui4"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/d05a09bef1fc862504e1.res" id="2_r15oy"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/f05e6e8a8a7bed06dc0d.res" id="3_pkokg"]
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/219ef17dd2e0db32a4cd.res" id="4_xq3pe"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/74d860dd803cc06353d2.res" id="1_hrui4"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/9860bb0c62e94b47ffe0.res" id="2_r15oy"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/61d7f2bec09de299be36.res" id="3_pkokg"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/d45707d3dab4fae36011.res" id="4_xq3pe"]
 
 [resource]
 resource_name = "Lamp_3"

@@ -1,0 +1,65 @@
+{
+  "assets": [
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_support_cantilever.tres",
+      "id": "pure_village.support.cantilever",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1122,
+        "measured_aabb": {
+          "position": [
+            -0.20785216987133,
+            -1.62603378295898,
+            -0.0621777325868607
+          ],
+          "size": [
+            0.40500670671463,
+            1.58221054077148,
+            1.5586621761322
+          ]
+        },
+        "mesh_bytes": 37060,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1122
+      },
+      "pack": "pure_village_cantilevers",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.support.cantilever",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 20000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 20000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/Support_8.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_cantilevers",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/Support_8.glb",
+      "source_sha256": "a3741df910fb7d61b43b31522904539eec313271d67213351441a105c39f8ab3",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true,
+        "namespace": "pure_village_kit"
+      },
+      "tool_version": 40,
+      "visual": "res://terrain/environment/visuals/pure_village_cantilevers/pure_village_support_cantilever.tres"
+    }
+  ],
+  "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+  "pack": "pure_village_cantilevers",
+  "tool_version": 40
+}

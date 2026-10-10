@@ -1,0 +1,17 @@
+extends SceneTree
+func _init():
+ var program=SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
+ var spatial=WarrenVolumetricSolver.generate(63,{},program,WarrenVillageScaleProfile.for_id(&"grand"))
+ var kit=SuntailBuildingKit.create()
+ var built=KitVillageBuildings.build(spatial,spatial.compiled_fabric_cache(),kit)
+ var rows=[]
+ for mass in built.houses:
+  if not String(mass.stable_id).ends_with("house.001"):continue
+  rows.append({"mass":mass.stable_id,"storeys":mass.storeys,"details":mass.decor,"roofs":mass.roofs})
+ for part in built.placements:
+  if part.role!=&"post.timber":continue
+  var p:Vector3=part.transform.origin
+  if not String(part.stable_id).begins_with("kit.spatial.parcel.maze.house.001/"):continue
+  rows.append(part)
+ FileAccess.open("/tmp/wing-posts.json",FileAccess.WRITE).store_string(JSON.stringify(rows,"\t"))
+ quit()

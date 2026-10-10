@@ -1,0 +1,15 @@
+# District tower-house and access co-planning — active candidate
+
+Not accepted yet. The district access pass now chooses a realizable native corner-tower house together with an addressed street, retains two nearby house columns, and protects the complete body against subsequent loops. Initial first-fit versions isolated the tower and were rejected. The local source tests pass (3 tests / 37 assertions), but full spatial construction then exposed an additional failure: a market canopy claimed cells inside the promised native house, causing native placement to fail despite successful source reservation.
+
+The finished-fabric regression fails on that version (0 native tower houses), then passes with market candidate selection respecting source asset plot volumes (1 test / 2 assertions). The market considers subsequent ranked candidates and uses its existing absent sentinel if none fits. No body, bearing, or public-clearance rule is waived. The diagnostic JSON records the specific market conflict in asset.00.
+
+Current production includes the district helper, carver changes and market selection repair. Current tests include the new finished-fabric regression. Final rendered review, native entrance traversal and eight-town representative/holdout safety survey are running; this is not evidence of final art acceptance. Pre-change carver and pre-market solver copies are retained here for exact scoped comparison; they include unrelated earlier work and must not be treated as repository baselines.
+
+Pending runs: /tmp/oct5-district-market-walk (session29980), /tmp/oct5-district-market-safety (session3666), /tmp/oct5-district-market-view (session14291). Full redesign remains active.
+
+Native front/back and matched overview reviewed: corner cylinder and matching roof cap survive with neighbouring houses. Native entrance actual-player traversal passes both directions (2/2). The authored large stone back face remains a future facade concern. GUI completed successfully. District street walks and broader safety are still pending.
+
+Eight-town safety survey completed: 83/grand,8/grand,13/grand,43/grand,103/grand,211/grand,127/large,31/large all build with zero floating masses and zero public-air intrusions. Covered quarters respectively64,112,36,100,40,116,40,38. Market ownership filtering does not change those counts compared with the preceding district candidate. Compared with the pre-district baseline,83 loses four covered quarters (68 to64); do not claim preservation of every previous crossing. New holdouts have no paired pre-district baseline yet.
+
+Final bounded validation: 7/7 focused tests,62 assertions. District streets 8/8 plus native entrance2/2 actual-player traversals pass. Four-town roof survey83/211/127/31 covers200 kit roofs: no exposed open ends, gable holes, unsupported roofs or clipped eaves;127 has one thin4x1 crown on house.034, baseline attribution not yet established. All processes are terminal. Candidate remains applied; broad art acceptance stays open, including the native building's plain stone back face, the127 roof finding and83's four-quarter enclosure decrease. No full-goal completion claim.

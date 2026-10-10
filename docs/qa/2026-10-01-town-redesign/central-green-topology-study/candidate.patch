@@ -1,0 +1,51 @@
+--- a/scripts/terrain/features/villages/fabric/WarrenTownField.gd
++++ b/scripts/terrain/features/villages/fabric/WarrenTownField.gd
+@@ -44,6 +44,19 @@
+ 			"width": Vector2(size, maxf(2.5, size * rng.randf_range(0.55, 0.9))),
+ 			"height": rng.randf_range(maxf(5.0, core * 0.45), core),
+ 			"angle": angle + rng.randf_range(-0.8, 0.8)})
++	# Occasionally the sampled masses surround a green instead of converging
++	# on it. Keep the original crown and mass budget: only existing satellites
++	# move, and towns with too few masses retain their ordinary layout.
++	var green_rng := RandomNumberGenerator.new()
++	green_rng.seed = hash([seed_value, "town.central_green"])
++	var central_green := green_rng.randf() < 0.3 and lobes.size() >= 4
++	var green_centre := Vector2.ZERO
++	if central_green:
++		var crown_reach := radius * green_rng.randf_range(1.0,1.15)
++		green_centre = crown - Vector2.from_angle(phase)*crown_reach
++		for index in range(1,lobes.size()):
++			var angle := phase + TAU * float(index)/float(lobes.size())
++			lobes[index].centre = green_centre + Vector2.from_angle(angle) * radius * green_rng.randf_range(1.0,1.15)
+ 	_classify_lobes(lobes)
+ 	# Clearings: sometimes a square right beside the crown (the middle of the
+ 	# town opens up), and 0-2 greens in the gaps between satellites. None
+@@ -59,6 +72,8 @@
+ 		if centre.distance_to(crown) >= reach:
+ 			clearings.append({"centre": centre, "radius": radius * rng.randf_range(0.2, 0.4),
+ 				"strength": rng.randf_range(0.7, 1.0)})
++	if central_green:
++		clearings = [{"centre":green_centre,"radius":radius*0.4,"strength":1.0}]
+ 	var openness := 0.0
+ 	for clearing: Dictionary in clearings:
+ 		openness = maxf(openness, float(clearing.strength))
+@@ -66,6 +81,10 @@
+ 	var raw_at: Dictionary = {}
+ 	var house_columns: Dictionary = {}
+ 	var extent := ceili(radius * 2.5)
++	if central_green:
++		for lobe: Dictionary in lobes:
++			var lobe_reach: float = (lobe.centre as Vector2).length() + (lobe.width as Vector2).length()
++			extent = maxi(extent,ceili(lobe_reach))
+ 	for z in range(-extent, extent + 1):
+ 		for x in range(-extent, extent + 1):
+ 			var p := Vector2(x, z)
+@@ -147,7 +166,7 @@
+ 			if not solid.has(Vector2i(x, z)):
+ 				air[Vector2i(x, z)] = true
+ 	# The raised district (a separate roll, so towns without one are unchanged).
+-	return {"solid": solid, "air": air, "lobes": lobes, "clearings": clearings,
++	return {"central_green":central_green,"green_centre":green_centre,"solid": solid, "air": air, "lobes": lobes, "clearings": clearings,
+ 		"height_domain": height_domain, "house_columns": house_columns, "house_sites": house_sites,
+ 		"open_spaces": open_spaces,
+ 		"spread": spread, "density": density, "openness": openness,

@@ -1,0 +1,1522 @@
+[
+  {
+    "carved": {
+      "body_cuts": [
+        {
+          "anchor": "(-3, -6)",
+          "cell": "(0, -6)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": true,
+          "lanes": [],
+          "passage": "spine"
+        },
+        {
+          "anchor": "(-3, -6)",
+          "cell": "(1, -6)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "perimeter"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(-3, -6)",
+          "cell": "(2, -6)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "perimeter"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(-3, -6)",
+          "cell": "(-3, -5)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "secondary_gate"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(-3, -6)",
+          "cell": "(-2, -5)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "secondary_gate"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(-3, -6)",
+          "cell": "(-1, -5)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": true,
+          "in_route": false,
+          "lanes": [
+            "market_square"
+          ],
+          "passage": "market"
+        },
+        {
+          "anchor": "(-3, -6)",
+          "cell": "(0, -5)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": true,
+          "in_route": true,
+          "lanes": [],
+          "passage": "spine"
+        },
+        {
+          "anchor": "(-3, -6)",
+          "cell": "(1, -5)",
+          "datum": 0,
+          "first_carved": 2,
+          "flip": false,
+          "in_market": false,
+          "in_route": true,
+          "lanes": [],
+          "passage": "spine"
+        },
+        {
+          "anchor": "(-3, -6)",
+          "cell": "(2, -5)",
+          "datum": 0,
+          "first_carved": 2,
+          "flip": false,
+          "in_market": false,
+          "in_route": true,
+          "lanes": [],
+          "passage": "spine"
+        },
+        {
+          "anchor": "(-3, -6)",
+          "cell": "(-1, -4)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": true,
+          "in_route": false,
+          "lanes": [
+            "market_square"
+          ],
+          "passage": "market"
+        },
+        {
+          "anchor": "(-3, -6)",
+          "cell": "(0, -4)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": true,
+          "in_route": true,
+          "lanes": [],
+          "passage": "spine"
+        },
+        {
+          "anchor": "(-3, -6)",
+          "cell": "(1, -4)",
+          "datum": 0,
+          "first_carved": 2,
+          "flip": false,
+          "in_market": false,
+          "in_route": true,
+          "lanes": [],
+          "passage": "spine"
+        },
+        {
+          "anchor": "(-3, -6)",
+          "cell": "(2, -4)",
+          "datum": 0,
+          "first_carved": 1,
+          "flip": false,
+          "in_market": false,
+          "in_route": true,
+          "lanes": [],
+          "passage": "spine"
+        },
+        {
+          "anchor": "(-3, -6)",
+          "cell": "(0, -3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": true,
+          "lanes": [],
+          "passage": "spine"
+        },
+        {
+          "anchor": "(-3, -6)",
+          "cell": "(1, -3)",
+          "datum": 0,
+          "first_carved": 3,
+          "flip": false,
+          "in_market": false,
+          "in_route": true,
+          "lanes": [],
+          "passage": "spine"
+        },
+        {
+          "anchor": "(-3, -6)",
+          "cell": "(2, -3)",
+          "datum": 0,
+          "first_carved": 1,
+          "flip": false,
+          "in_market": false,
+          "in_route": true,
+          "lanes": [],
+          "passage": "spine"
+        },
+        {
+          "anchor": "(-2, -6)",
+          "cell": "(0, -6)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": true,
+          "lanes": [],
+          "passage": "spine"
+        },
+        {
+          "anchor": "(-2, -6)",
+          "cell": "(1, -6)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "perimeter"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(-2, -6)",
+          "cell": "(2, -6)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "perimeter"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(-2, -6)",
+          "cell": "(3, -6)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "perimeter"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(-2, -6)",
+          "cell": "(-2, -5)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "secondary_gate"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(-2, -6)",
+          "cell": "(-1, -5)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": true,
+          "in_route": false,
+          "lanes": [
+            "market_square"
+          ],
+          "passage": "market"
+        },
+        {
+          "anchor": "(-2, -6)",
+          "cell": "(0, -5)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": true,
+          "in_route": true,
+          "lanes": [],
+          "passage": "spine"
+        },
+        {
+          "anchor": "(-2, -6)",
+          "cell": "(1, -5)",
+          "datum": 0,
+          "first_carved": 2,
+          "flip": false,
+          "in_market": false,
+          "in_route": true,
+          "lanes": [],
+          "passage": "spine"
+        },
+        {
+          "anchor": "(-2, -6)",
+          "cell": "(2, -5)",
+          "datum": 0,
+          "first_carved": 2,
+          "flip": false,
+          "in_market": false,
+          "in_route": true,
+          "lanes": [],
+          "passage": "spine"
+        },
+        {
+          "anchor": "(-2, -6)",
+          "cell": "(3, -5)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "perimeter"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(-2, -6)",
+          "cell": "(-1, -4)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": true,
+          "in_route": false,
+          "lanes": [
+            "market_square"
+          ],
+          "passage": "market"
+        },
+        {
+          "anchor": "(-2, -6)",
+          "cell": "(0, -4)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": true,
+          "in_route": true,
+          "lanes": [],
+          "passage": "spine"
+        },
+        {
+          "anchor": "(-2, -6)",
+          "cell": "(1, -4)",
+          "datum": 0,
+          "first_carved": 2,
+          "flip": false,
+          "in_market": false,
+          "in_route": true,
+          "lanes": [],
+          "passage": "spine"
+        },
+        {
+          "anchor": "(-2, -6)",
+          "cell": "(2, -4)",
+          "datum": 0,
+          "first_carved": 1,
+          "flip": false,
+          "in_market": false,
+          "in_route": true,
+          "lanes": [],
+          "passage": "spine"
+        },
+        {
+          "anchor": "(-2, -6)",
+          "cell": "(3, -4)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "perimeter"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(-2, -6)",
+          "cell": "(0, -3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": true,
+          "lanes": [],
+          "passage": "spine"
+        },
+        {
+          "anchor": "(-2, -6)",
+          "cell": "(1, -3)",
+          "datum": 0,
+          "first_carved": 3,
+          "flip": false,
+          "in_market": false,
+          "in_route": true,
+          "lanes": [],
+          "passage": "spine"
+        },
+        {
+          "anchor": "(-2, -6)",
+          "cell": "(2, -3)",
+          "datum": 0,
+          "first_carved": 1,
+          "flip": false,
+          "in_market": false,
+          "in_route": true,
+          "lanes": [],
+          "passage": "spine"
+        },
+        {
+          "anchor": "(11, 0)",
+          "cell": "(11, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(11, 0)",
+          "cell": "(12, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(11, 0)",
+          "cell": "(13, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(11, 0)",
+          "cell": "(14, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(11, 0)",
+          "cell": "(15, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(11, 0)",
+          "cell": "(16, 3)",
+          "datum": 0,
+          "first_carved": 1,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(11, 1)",
+          "cell": "(11, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(11, 1)",
+          "cell": "(12, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(11, 1)",
+          "cell": "(13, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(11, 1)",
+          "cell": "(14, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(11, 1)",
+          "cell": "(15, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(11, 1)",
+          "cell": "(16, 3)",
+          "datum": 0,
+          "first_carved": 1,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(11, 1)",
+          "cell": "(11, 4)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(11, 1)",
+          "cell": "(14, 4)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(11, 1)",
+          "cell": "(16, 4)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, 1)",
+          "cell": "(12, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, 1)",
+          "cell": "(13, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, 1)",
+          "cell": "(14, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, 1)",
+          "cell": "(15, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, 1)",
+          "cell": "(16, 3)",
+          "datum": 0,
+          "first_carved": 1,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, 1)",
+          "cell": "(17, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, 1)",
+          "cell": "(14, 4)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, 1)",
+          "cell": "(16, 4)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, 2)",
+          "cell": "(12, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, 2)",
+          "cell": "(13, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, 2)",
+          "cell": "(14, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, 2)",
+          "cell": "(15, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, 2)",
+          "cell": "(16, 3)",
+          "datum": 0,
+          "first_carved": 1,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, 2)",
+          "cell": "(17, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, 2)",
+          "cell": "(14, 4)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, 2)",
+          "cell": "(16, 4)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, 2)",
+          "cell": "(14, 5)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, 2)",
+          "cell": "(15, 5)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, 2)",
+          "cell": "(16, 5)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, 2)",
+          "cell": "(17, 5)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": false,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(11, -1)",
+          "cell": "(11, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(11, -1)",
+          "cell": "(12, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(11, -1)",
+          "cell": "(13, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(11, -1)",
+          "cell": "(14, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(11, -1)",
+          "cell": "(11, 4)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(11, -1)",
+          "cell": "(14, 4)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, -1)",
+          "cell": "(12, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, -1)",
+          "cell": "(13, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, -1)",
+          "cell": "(14, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, -1)",
+          "cell": "(15, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, -1)",
+          "cell": "(14, 4)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, 0)",
+          "cell": "(12, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, 0)",
+          "cell": "(13, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, 0)",
+          "cell": "(14, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, 0)",
+          "cell": "(15, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, 0)",
+          "cell": "(14, 4)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, 0)",
+          "cell": "(14, 5)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(12, 0)",
+          "cell": "(15, 5)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(13, 0)",
+          "cell": "(13, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(13, 0)",
+          "cell": "(14, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(13, 0)",
+          "cell": "(15, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(13, 0)",
+          "cell": "(16, 3)",
+          "datum": 0,
+          "first_carved": 1,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(13, 0)",
+          "cell": "(14, 4)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(13, 0)",
+          "cell": "(16, 4)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(13, 0)",
+          "cell": "(14, 5)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(13, 0)",
+          "cell": "(15, 5)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(13, 0)",
+          "cell": "(16, 5)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(13, 1)",
+          "cell": "(13, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(13, 1)",
+          "cell": "(14, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(13, 1)",
+          "cell": "(15, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(13, 1)",
+          "cell": "(16, 3)",
+          "datum": 0,
+          "first_carved": 1,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(13, 1)",
+          "cell": "(14, 4)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(13, 1)",
+          "cell": "(16, 4)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(13, 1)",
+          "cell": "(14, 5)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(13, 1)",
+          "cell": "(15, 5)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(13, 1)",
+          "cell": "(16, 5)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(13, 1)",
+          "cell": "(13, 6)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(13, 1)",
+          "cell": "(14, 6)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(14, 1)",
+          "cell": "(14, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "district_access"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(14, 1)",
+          "cell": "(15, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(14, 1)",
+          "cell": "(16, 3)",
+          "datum": 0,
+          "first_carved": 1,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(14, 1)",
+          "cell": "(17, 3)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(14, 1)",
+          "cell": "(14, 4)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(14, 1)",
+          "cell": "(16, 4)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(14, 1)",
+          "cell": "(14, 5)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(14, 1)",
+          "cell": "(15, 5)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(14, 1)",
+          "cell": "(16, 5)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(14, 1)",
+          "cell": "(17, 5)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        },
+        {
+          "anchor": "(14, 1)",
+          "cell": "(14, 6)",
+          "datum": 0,
+          "first_carved": 0,
+          "flip": true,
+          "in_market": false,
+          "in_route": false,
+          "lanes": [
+            "loop_join"
+          ],
+          "passage": "alley"
+        }
+      ],
+      "clear_body": 0,
+      "failures": {
+
+      },
+      "fits": 0,
+      "fronted": 0,
+      "ground_bearing": 12,
+      "rectangles": 57
+    },
+    "field": {
+      "body_cuts": [],
+      "clear_body": 12,
+      "failures": {
+
+      },
+      "fits": 0,
+      "fronted": 0,
+      "ground_bearing": 12,
+      "rectangles": 86
+    },
+    "seed": 83
+  }
+]

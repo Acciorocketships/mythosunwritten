@@ -1,0 +1,65 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_pure_tight_eave_seating.gd
+[0m* test_complete_tight_panel_stays_on_roof_plane_and_out_of_public_air
+* test_retracted_course_backing_stops_at_next_row_and_ridge
+* test_retracted_eave_has_native_fascia_closing_the_wall_head
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_suntail_tight_eave_seating.gd
+[0m* test_complete_tight_panel_stays_on_roof_plane_and_out_of_public_air
+* test_retracted_eave_has_native_fascia_closing_the_wall_head
+* test_native_pure_roof_uses_its_own_measured_seat
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_october1_pure_roofs.gd
+[0m* test_native_end_courses_face_outward_on_both_axes
+* test_native_roof_roles_have_measured_mesh_and_collision
+* test_native_caps_supplement_full_bays_without_roof_holes
+* test_mixed_roof_union_cuts_both_families_and_keeps_collision
+* test_native_peak_has_no_narrow_slots
+* test_tight_eaves_keep_full_roof_courses_closed_on_both_axes
+* test_native_dormers_keep_windows_and_close_their_roof_bays
+* test_short_verges_keep_whole_ridge_caps_and_closed_course_seams
+* test_native_and_mixed_junctions_remain_closed
+* test_native_ridge_contact_closes_oblique_sightlines
+* test_public_verge_fit_keeps_the_native_gable_face
+* test_shortened_verges_keep_complete_native_end_caps_on_both_axes
+* test_full_gable_bays_have_native_windows_and_close_when_obstructed
+[1m13/13 passed.
+[0m[4m
+
+res://tests/test_courtyard_roof_envelope.gd
+[0m* test_roof_cap_cannot_enter_reserved_square_above_slopes
+* test_frozen_upper_court_has_no_roof_ridge_in_its_lawn
+* test_clearance_encloses_authored_ridges_for_even_and_odd_roofs
+[1m3/3 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               4
+Tests                22
+Passing Tests        22
+Asserts             447
+Time              76.139s
+
+
+[32m---- All tests passed! ----
+[0m

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_57gyw"]
+
+[resource]
+script = ExtResource("1_57gyw")
+id = &"pure_village.roof.eave.start.sage"
+visual_path = "res://terrain/environment/visuals/pure_village_roof_sage/pure_village_roof_eave_start_sage.tres"
+tags = Array[StringName]([&"building", &"pure_village_kit", &"village"])
+measured_aabb = AABB(-0.6554712, -0.7845458, -2, 1.3347602, 3.896349, 3.0808873)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"pure_village_roof_sage:pure_village.roof.eave.start.sage"

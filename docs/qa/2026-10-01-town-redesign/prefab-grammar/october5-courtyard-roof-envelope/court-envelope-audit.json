@@ -1,0 +1,79 @@
+[
+	{
+		"air_roofs": 0,
+		"air_unsupported": 0,
+		"decks": 24,
+		"eaves_cut": 0,
+		"examples": [],
+		"gable_ends": 80,
+		"gable_holes": 0,
+		"open_ends": 18,
+		"open_exposed": 0,
+		"roofs": 49,
+		"seed": 301,
+		"tiny": 0,
+		"tiny_beside": 0,
+		"towers": 3,
+		"uncapped_towers": 0
+	},
+	{
+		"air_roofs": 1,
+		"air_unsupported": 0,
+		"decks": 37,
+		"eaves_cut": 0,
+		"examples": [
+			"tiny kit.spatial.parcel.maze.bridge.00.end.0.lower [P: (-2, 5), S: (2, 1)] axis=0 eave=8",
+			"tiny_beside kit.spatial.parcel.maze.house.017 [P: (-12, -13), S: (4, 1)] axis=0 eave=4",
+			"tiny kit.spatial.parcel.maze.house.017 [P: (-9, -14), S: (1, 1)] axis=1 eave=4",
+			"gable_hole end=1 samples=4 kit.spatial.parcel.maze.house.041 [P: (5, 0), S: (3, 4)] axis=0 eave=8"
+		],
+		"gable_ends": 84,
+		"gable_holes": 1,
+		"open_ends": 16,
+		"open_exposed": 0,
+		"roofs": 50,
+		"seed": 8,
+		"tiny": 3,
+		"tiny_beside": 1,
+		"towers": 1,
+		"uncapped_towers": 0
+	},
+	{
+		"air_roofs": 1,
+		"air_unsupported": 0,
+		"decks": 37,
+		"eaves_cut": 3,
+		"examples": [
+			"eave_cut kit.spatial.parcel.maze.bridge.00.end.0.lower/k0042 at (-4.0, 10.5, 1.0)",
+			"eave_cut kit.spatial.parcel.maze.bridge.00.end.0.lower/k0043 at (-4.0, 10.5, 3.0)",
+			"eave_cut kit.spatial.parcel.maze.bridge.00.end.0.lower/k0045 at (-4.0, 10.5, 4.0)"
+		],
+		"gable_ends": 70,
+		"gable_holes": 0,
+		"open_ends": 10,
+		"open_exposed": 0,
+		"roofs": 40,
+		"seed": 9,
+		"tiny": 0,
+		"tiny_beside": 0,
+		"towers": 4,
+		"uncapped_towers": 0
+	},
+	{
+		"air_roofs": 2,
+		"air_unsupported": 0,
+		"decks": 24,
+		"eaves_cut": 0,
+		"examples": [],
+		"gable_ends": 63,
+		"gable_holes": 0,
+		"open_ends": 7,
+		"open_exposed": 0,
+		"roofs": 35,
+		"seed": -1,
+		"tiny": 0,
+		"tiny_beside": 0,
+		"towers": 2,
+		"uncapped_towers": 0
+	}
+]

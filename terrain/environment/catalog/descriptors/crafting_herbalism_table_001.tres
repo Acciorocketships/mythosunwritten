@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_enm66"]
+
+[resource]
+script = ExtResource("1_enm66")
+id = &"crafting.herbalism.table.001"
+visual_path = "res://terrain/environment/visuals/town_props/crafting_herbalism_table_001.tres"
+tags = Array[StringName]([&"CraftingFBX", &"decoration", &"village"])
+measured_aabb = AABB(-1.4099365, -2.9507416e-07, -1.0696068, 3.3339498, 3.3330865, 2.0507317)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"town_props:crafting.herbalism.table.001"

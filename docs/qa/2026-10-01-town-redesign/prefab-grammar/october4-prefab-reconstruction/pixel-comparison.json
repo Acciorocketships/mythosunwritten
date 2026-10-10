@@ -1,0 +1,12 @@
+{
+  "front": {
+    "changed_pixels": 100,
+    "mean_channel_difference": 3.7731481481481484e-05,
+    "max_channel_difference": 4
+  },
+  "back": {
+    "changed_pixels": 95,
+    "mean_channel_difference": 3.6574074074074076e-05,
+    "max_channel_difference": 4
+  }
+}

@@ -1,0 +1,30 @@
+--- oct5-before-market-plot-ownership.gd
++++ scripts/terrain/features/villages/fabric/WarrenVolumetricSolver.gd
+@@ -3916,7 +3916,26 @@
+ 	# empty market plan before this branch is reached, so there is exactly one
+ 	# place a sentinel is born and the corpus here is never empty.
+ 	assert(not market_candidates.is_empty())
+-	var market_reservation: Dictionary = market_candidates[0]
++	# Source asset plots already own their complete building volume. A later
++	# canopy may use another socket, but must not evict that promised house.
++	var asset_cells := {}
++	for record: Dictionary in parcels.audit.get("maze_assets", []):
++		for column: Vector2i in record.cells:
++			for band in range(int(record.floor), int(record.top)):
++				for x in 2:
++					for z in 2:
++						asset_cells[Vector3i(column.x * 2 + x, band, column.y * 2 + z)] = true
++	var market_reservation: Dictionary = {"optional_absent": true}
++	for candidate: Dictionary in market_candidates:
++		var claims := _protected_owners_with_market({}, candidate)
++		var overlaps := false
++		for cell: Vector3i in claims:
++			if asset_cells.has(cell):
++				overlaps = true
++				break
++		if not overlaps:
++			market_reservation = candidate
++			break
+ 	if bool(market_reservation.get("optional_absent", false)):
+ 		# Recorded whether or not the profile REQUIRES a market: a village
+ 		# whose street could hold no measured canopy shipped without one, and

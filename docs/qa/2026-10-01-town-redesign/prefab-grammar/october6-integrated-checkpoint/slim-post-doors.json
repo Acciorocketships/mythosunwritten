@@ -1,0 +1,247 @@
+[
+  {
+    "gate": "court-door.spatial.parcel.maze.house.000.part00.(2, 9, 6)",
+    "passed": true,
+    "reverse": false,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(11.875, 27.05021, 24.0)",
+        "target": "(8.0, 27.05, 24.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(8.125, 27.05021, 24.0)",
+        "target": "(6.650001, 27.05, 24.0)",
+        "tick": 0,
+        "waypoint": 2
+      }
+    ]
+  },
+  {
+    "gate": "court-door.spatial.parcel.maze.house.000.part00.(2, 9, 6)",
+    "passed": true,
+    "reverse": true,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(6.775001, 27.05039, 24.0)",
+        "target": "(8.0, 27.05, 24.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(7.900001, 27.05039, 24.0)",
+        "target": "(12.0, 27.05, 24.0)",
+        "tick": 0,
+        "waypoint": 2
+      },
+      {
+        "floor": true,
+        "position": "(11.65, 27.05039, 24.0)",
+        "target": "(12.0, 27.05, 24.0)",
+        "tick": 30,
+        "waypoint": 2
+      }
+    ]
+  },
+  {
+    "gate": "court-door.spatial.parcel.maze.house.001.part00.(3, 9, 6)",
+    "passed": true,
+    "reverse": false,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(12.0, 27.05039, 27.875)",
+        "target": "(12.0, 27.05, 24.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(12.0, 27.05039, 24.125)",
+        "target": "(12.0, 27.05, 22.65)",
+        "tick": 0,
+        "waypoint": 2
+      }
+    ]
+  },
+  {
+    "gate": "court-door.spatial.parcel.maze.house.001.part00.(3, 9, 6)",
+    "passed": true,
+    "reverse": true,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(12.0, 27.05039, 22.775)",
+        "target": "(12.0, 27.05, 24.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(12.0, 27.05039, 23.9)",
+        "target": "(12.0, 27.05, 28.0)",
+        "tick": 0,
+        "waypoint": 2
+      },
+      {
+        "floor": true,
+        "position": "(12.0, 27.05039, 27.65)",
+        "target": "(12.0, 27.05, 28.0)",
+        "tick": 30,
+        "waypoint": 2
+      }
+    ]
+  },
+  {
+    "gate": "court-door.spatial.parcel.maze.house.002.part00.(7, 9, 7)",
+    "passed": true,
+    "reverse": false,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(24.125, 27.05039, 28.0)",
+        "target": "(28.0, 27.05, 28.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(27.875, 27.05039, 28.0)",
+        "target": "(29.35, 27.05, 28.0)",
+        "tick": 0,
+        "waypoint": 2
+      }
+    ]
+  },
+  {
+    "gate": "court-door.spatial.parcel.maze.house.002.part00.(7, 9, 7)",
+    "passed": true,
+    "reverse": true,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(29.225, 27.05039, 28.0)",
+        "target": "(28.0, 27.05, 28.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(28.1, 27.05039, 28.0)",
+        "target": "(24.0, 27.05, 28.0)",
+        "tick": 0,
+        "waypoint": 2
+      },
+      {
+        "floor": true,
+        "position": "(24.35, 27.05039, 28.0)",
+        "target": "(24.0, 27.05, 28.0)",
+        "tick": 30,
+        "waypoint": 2
+      }
+    ]
+  },
+  {
+    "gate": "court-door.spatial.parcel.maze.house.003.part00.(7, 9, 6)",
+    "passed": true,
+    "reverse": false,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(28.0, 27.05039, 27.875)",
+        "target": "(28.0, 27.05, 24.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(28.0, 27.05039, 24.125)",
+        "target": "(28.0, 27.05, 22.65)",
+        "tick": 0,
+        "waypoint": 2
+      }
+    ]
+  },
+  {
+    "gate": "court-door.spatial.parcel.maze.house.003.part00.(7, 9, 6)",
+    "passed": true,
+    "reverse": true,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(28.0, 27.05039, 22.775)",
+        "target": "(28.0, 27.05, 24.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(28.0, 27.05039, 23.9)",
+        "target": "(28.0, 27.05, 28.0)",
+        "tick": 0,
+        "waypoint": 2
+      },
+      {
+        "floor": true,
+        "position": "(28.0, 27.05039, 27.65)",
+        "target": "(28.0, 27.05, 28.0)",
+        "tick": 30,
+        "waypoint": 2
+      }
+    ]
+  },
+  {
+    "gate": "court-door.spatial.parcel.maze.house.040.part00.(11, 2, 11)",
+    "passed": true,
+    "reverse": false,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(40.125, 6.050391, 44.0)",
+        "target": "(44.0, 6.05, 44.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(43.875, 6.050391, 44.0)",
+        "target": "(45.35, 6.05, 44.0)",
+        "tick": 0,
+        "waypoint": 2
+      }
+    ]
+  },
+  {
+    "gate": "court-door.spatial.parcel.maze.house.040.part00.(11, 2, 11)",
+    "passed": true,
+    "reverse": true,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(45.225, 6.050391, 44.0)",
+        "target": "(44.0, 6.05, 44.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(44.1, 6.050391, 44.0)",
+        "target": "(40.0, 6.05, 44.0)",
+        "tick": 0,
+        "waypoint": 2
+      },
+      {
+        "floor": true,
+        "position": "(40.35, 6.050391, 44.0)",
+        "target": "(40.0, 6.05, 44.0)",
+        "tick": 30,
+        "waypoint": 2
+      }
+    ]
+  }
+]

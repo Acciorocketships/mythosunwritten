@@ -1,0 +1,22 @@
+--- scripts/terrain/features/villages/fabric/WarrenMazeSourcePlan.gd
++++ scripts/terrain/features/villages/fabric/WarrenMazeSourcePlan.gd
+@@ -378,6 +378,19 @@
+ 	# wall rooms have the separate grounded-room/structural-cap proof below.
+ 	if massif != null and floor < massif.bearing_at(cell):
+ 		return false
++	# The exact stair/ramp reserves its full flight-height interval. The
++	# macro bore can retain a band above its lower treads which the finished
++	# flight's clearance removes; that band cannot be a house foundation.
++	if excavation != null:
++		for edge: Dictionary in excavation.walk_edges():
++			var a: Vector3i = edge.a
++			var b: Vector3i = edge.b
++			if a.y == b.y or floor - 1 < mini(a.y, b.y) \
++					or floor - 1 >= maxi(a.y, b.y) + WarrenVolumePlan.HEADROOM_BANDS:
++				continue
++			for tread: Vector3i in edge.swept:
++				if Vector2i(tread.x, tread.z) == cell:
++					return false
+ 	if not solid_at(Vector3i(cell.x, floor - 1, cell.y)):
+ 		return false
+ 	return _first_carved_band(cell, floor, floor + MIN_HOUSE_BANDS) < 0

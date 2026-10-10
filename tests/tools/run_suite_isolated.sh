@@ -7,8 +7,11 @@
 # memory, so parallel runs cannot push a 16 GB machine into swap.
 # usage: tests/tools/run_suite_isolated.sh <outfile> [parallelism] [glob] [repo]
 set -u
+unsetopt bgnice
 repo=${4:-${0:A:h:h:h}}
 out=$1
+logdir="${out}.logs"
+mkdir -p "$logdir"
 par=${2:-3}
 glob=${3:-tests/test_*.gd}
 min_free=${MIN_FREE_PCT:-35}
@@ -21,7 +24,10 @@ free_pct() {
 run_one() {
 	local f=$1
 	local r
-	r=$("$godot" --headless --path "$repo" -s addons/gut/gut_cmdln.gd -gtest=res://$f -gexit 2>&1)
+	# An explicit writable log avoids Godot's user-log rotation crash in an
+	# isolated checkout/sandbox. Retain raw evidence for baseline comparison.
+	r=$("$godot" --headless --path "$repo" --log-file "$logdir/${f:t:r}.engine.log" -s addons/gut/gut_cmdln.gd -gtest=res://$f -gexit 2>&1)
+	print -r -- "$r" > "$logdir/${f:t:r}.log"
 	local t=$(print -r -- "$r" | grep -E '^Tests ' | grep -oE '[0-9]+' | head -1)
 	local p=$(print -r -- "$r" | grep -E '^Passing Tests' | grep -oE '[0-9]+' | head -1)
 	local fl=$(print -r -- "$r" | grep -E '^Failing Tests' | grep -oE '[0-9]+' | head -1)

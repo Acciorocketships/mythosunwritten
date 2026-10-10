@@ -1,0 +1,75 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_gable_contact_audit.gd
+[0m* test_taller_cross_roof_does_not_strip_the_exposed_gable
+[31m    [Failed]:  [0m[1] expected to equal [0]:  ["gable_hole end=1 samples=5 gable-junction [P: (-4, 0), S: (4, 4)] axis=0 eave=2"]
+      at line 38
+* test_both_packs_close_the_junction_in_all_directions
+[31m    [Failed]:  [0m[1] expected to equal [0]:  [&"suntail", false, false, ["gable_hole end=1 samples=5 gable-junction [P: (-4, 0), S: (4, 4)] axis=0 eave=2"]]
+      at line 45
+[31m    [Failed]:  [0m[1] expected to equal [0]:  [&"suntail", false, true, ["gable_hole end=1 samples=5 gable-junction [P: (0, -4), S: (4, 4)] axis=1 eave=2"]]
+      at line 45
+[31m    [Failed]:  [0m[1] expected to equal [0]:  [&"suntail", true, false, ["gable_hole end=0 samples=5 gable-junction [P: (0, 0), S: (4, 4)] axis=0 eave=2"]]
+      at line 45
+[31m    [Failed]:  [0m[1] expected to equal [0]:  [&"suntail", true, true, ["gable_hole end=0 samples=5 gable-junction [P: (0, 0), S: (4, 4)] axis=1 eave=2"]]
+      at line 45
+[31m    [Failed]:  [0m[1] expected to equal [0]:  [&"pure_village", false, false, ["gable_hole end=1 samples=5 gable-junction [P: (-4, 0), S: (4, 4)] axis=0 eave=2"]]
+      at line 45
+[31m    [Failed]:  [0m[1] expected to equal [0]:  [&"pure_village", false, true, ["gable_hole end=1 samples=5 gable-junction [P: (0, -4), S: (4, 4)] axis=1 eave=2"]]
+      at line 45
+[31m    [Failed]:  [0m[1] expected to equal [0]:  [&"pure_village", true, false, ["gable_hole end=0 samples=5 gable-junction [P: (0, 0), S: (4, 4)] axis=0 eave=2"]]
+      at line 45
+[31m    [Failed]:  [0m[1] expected to equal [0]:  [&"pure_village", true, true, ["gable_hole end=0 samples=5 gable-junction [P: (0, 0), S: (4, 4)] axis=1 eave=2"]]
+      at line 45
+* test_missing_native_gable_is_still_reported
+[1m1/3 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_gable_contact_audit.gd
+[0m- test_taller_cross_roof_does_not_strip_the_exposed_gable
+[31m    [Failed]:  [0m[1] expected to equal [0]:  ["gable_hole end=1 samples=5 gable-junction [P: (-4, 0), S: (4, 4)] axis=0 eave=2"]
+          at line 38
+- test_both_packs_close_the_junction_in_all_directions
+[31m    [Failed]:  [0m[1] expected to equal [0]:  [&"suntail", false, false, ["gable_hole end=1 samples=5 gable-junction [P: (-4, 0), S: (4, 4)] axis=0 eave=2"]]
+          at line 45
+[31m    [Failed]:  [0m[1] expected to equal [0]:  [&"suntail", false, true, ["gable_hole end=1 samples=5 gable-junction [P: (0, -4), S: (4, 4)] axis=1 eave=2"]]
+          at line 45
+[31m    [Failed]:  [0m[1] expected to equal [0]:  [&"suntail", true, false, ["gable_hole end=0 samples=5 gable-junction [P: (0, 0), S: (4, 4)] axis=0 eave=2"]]
+          at line 45
+[31m    [Failed]:  [0m[1] expected to equal [0]:  [&"suntail", true, true, ["gable_hole end=0 samples=5 gable-junction [P: (0, 0), S: (4, 4)] axis=1 eave=2"]]
+          at line 45
+[31m    [Failed]:  [0m[1] expected to equal [0]:  [&"pure_village", false, false, ["gable_hole end=1 samples=5 gable-junction [P: (-4, 0), S: (4, 4)] axis=0 eave=2"]]
+          at line 45
+[31m    [Failed]:  [0m[1] expected to equal [0]:  [&"pure_village", false, true, ["gable_hole end=1 samples=5 gable-junction [P: (0, -4), S: (4, 4)] axis=1 eave=2"]]
+          at line 45
+[31m    [Failed]:  [0m[1] expected to equal [0]:  [&"pure_village", true, false, ["gable_hole end=0 samples=5 gable-junction [P: (0, 0), S: (4, 4)] axis=0 eave=2"]]
+          at line 45
+[31m    [Failed]:  [0m[1] expected to equal [0]:  [&"pure_village", true, true, ["gable_hole end=0 samples=5 gable-junction [P: (0, 0), S: (4, 4)] axis=1 eave=2"]]
+          at line 45
+
+Totals
+------
+Scripts               1
+Tests                 3
+Passing Tests         1
+Failing Tests         2
+Asserts            9/18
+Time              17.826s
+
+
+[31m---- 2 failing tests ----
+[0m

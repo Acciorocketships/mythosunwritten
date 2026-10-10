@@ -1,0 +1,40 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_native_street_site.gd
+[0m* test_street_derivations_preserve_complete_supported_projection_and_entry
+* test_street_site_rejects_invalid_dimensions_scale_and_frame
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_native_house_town.gd
+[0m* test_procedurally_reserved_native_house_survives_kit_substitution_whole
+* test_native_pitched_roof_does_not_accept_a_street_at_its_box_ceiling
+* test_native_raised_site_is_not_reserved_without_a_private_approach_floor
+[1m3/3 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               2
+Tests                 5
+Passing Tests         5
+Asserts            1426
+Time              38.034s
+
+
+[32m---- All tests passed! ----
+[0m

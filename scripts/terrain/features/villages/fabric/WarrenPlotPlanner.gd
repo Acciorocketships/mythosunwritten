@@ -77,6 +77,9 @@ const STOREY_BUDGET: Dictionary = {
 ## the floor than this cannot join, since the house could neither reach it nor
 ## stop short without leaving that street's floor hanging.
 const MAX_TIER_BANDS := 12
+## Optional narrow peaks stay subordinate to the inhabited massif. Required
+## upper streets and carried rooms may exceed this architectural body budget.
+const OPTIONAL_PEAK_STOREYS := 4
 ## One salt per seeded roll, so two rolls on the same cell cannot agree by
 ## accident. Both go through WarrenPassageLatticeRules.hash_key; nothing here
 ## touches randi().
@@ -100,10 +103,10 @@ const FOOTPRINT_SALT := 0xf007e
 ## P3: catalog assets at their minimum-modification sites, then flat decks
 ## grown off the streets.
 static func reserve(plan: WarrenMazeSourcePlan,
-		profile: WarrenVillageScaleProfile) -> void:
+		profile: WarrenVillageScaleProfile, protect_court_frontages: bool = true) -> void:
 	if plan == null or profile == null or plan.is_sealed():
 		return
-	WarrenPlotReservations.reserve(plan, profile)
+	WarrenPlotReservations.reserve(plan, profile, protect_court_frontages)
 
 
 ## P4: seed a house at every street-fronting column, grow the partition
@@ -127,14 +130,66 @@ static func partition(plan: WarrenMazeSourcePlan,
 	out["orphan_sweep_joined"] = _orphan_sweep(plan, buildings, streets,
 		blocked, claims, slots)
 	out["buildings"] = _raise_buildings(plan, streets, claims, buildings)
+	_fill_court_frontages(plan)
+	preload("res://scripts/terrain/features/villages/fabric/WarrenWallRooms.gd").place(plan)
 	if with_bridges:
 		allocate_bridges(plan)
 
 
-## The last step of P4, callable on its own so the site planner can run it
-## after destination pruning: a bridge over a street the pruning withdrew
-## would otherwise stand over nothing, and the pruning must not keep a street
-## alive only for a bridge-house nobody enters from it.
+static func _fill_court_frontages(plan: WarrenMazeSourcePlan) -> void:
+	# Height trimming can release a seed absorbed during footprint growth.
+	# A committed interior court already depends on these particular house
+	# columns. Give free, still-addressed frontages one ordinary construction
+	# pass after the taller neighbors have established their actual bearings.
+	var reserved: Array = outcomes(plan).get("court_house_columns", [])
+	if reserved.is_empty():
+		return
+	var streets := street_bands(plan)
+	var blocked := blocked_columns(plan)
+	for column: Vector2i in plan.massif.columns:
+		if not reserved.has(column):
+			blocked[column] = true
+	var claims := {}
+	var slots := {}
+	var refusals: Array[Dictionary] = []
+	var buildings := _seed_buildings(plan, streets, blocked, claims, slots, refusals)
+	for index in buildings.size():
+		buildings[index].id = StringName("house.court.%03d" % index)
+	_grow_buildings(plan, buildings, streets, blocked, claims, slots)
+	var records := _raise_buildings(plan, streets, claims, buildings)
+	(outcomes(plan)["buildings"] as Array).append_array(records)
+	outcomes(plan)["court_frontage_recovery"] = records.duplicate(true)
+
+
+static func fill_released_bridge_sites(plan: WarrenMazeSourcePlan) -> void:
+	## Destination pruning can withdraw an unneeded bore after partition kept
+	## its foundations free. Return only that released footprint to ordinary
+	## house grammar, using surviving streets. Existing plots and reserved
+	## greens stay immutable; this is one bounded pass, not a layout retry.
+	if outcomes(plan).has("released_bridge_sites"):
+		return
+	var released: Array = plan.audit.get("withdrawn_bridge_columns", [])
+	if released.is_empty():
+		return
+	var streets := street_bands(plan)
+	var blocked := blocked_columns(plan)
+	for column: Vector2i in plan.massif.columns:
+		if not released.has(column): blocked[column] = true
+	var claims: Dictionary = {}
+	var slots: Dictionary = {}
+	var refusals: Array[Dictionary] = []
+	var buildings := _seed_buildings(plan, streets, blocked, claims, slots, refusals)
+	for index in buildings.size():
+		buildings[index].id = StringName("house.released.%03d" % index)
+	_grow_buildings(plan, buildings, streets, blocked, claims, slots)
+	_orphan_sweep(plan, buildings, streets, blocked, claims, slots)
+	var records := _raise_buildings(plan, streets, claims, buildings)
+	(outcomes(plan)["buildings"] as Array).append_array(records)
+	outcomes(plan)["released_bridge_sites"] = records.duplicate(true)
+
+
+## Allocate after destination pruning: a bridge over a withdrawn street would
+## otherwise stand over nothing. A span alone cannot keep an empty walk alive.
 static func allocate_bridges(plan: WarrenMazeSourcePlan) -> void:
 	if plan == null or plan.is_sealed():
 		return
@@ -160,7 +215,33 @@ static func _seed_buildings(plan: WarrenMazeSourcePlan, streets: Dictionary,
 	# A flight's treads are not a doorstep: construction closes a door there,
 	# so a house seeded from one would stand with no entrance at all.
 	var flights := plan.excavation.flight_cells()
-	for street: Vector3i in walk_order(plan):
+	var doors := walk_order(plan)
+	var court_frontages: Array = outcomes(plan).get("court_house_columns", [])
+	var priority: Dictionary = {}
+	var proposed: Dictionary = plan.audit.get("interior_court", {})
+	if not court_frontages.is_empty() and not proposed.is_empty():
+		var court_doors := plan.court_addresses()
+		var admitted_doors := {}
+		for plot: Dictionary in plan.plots:
+			if plot.id != WarrenPlotReservations.PLAZA_PLOT_ID \
+					or plot.cells != proposed.cells or int(plot.floor) != int(proposed.floor):
+				continue
+			for column: Vector2i in WarrenMazeSourcePlan.deck_flat_columns(plot):
+				admitted_doors[Vector3i(column.x,int(plot.floor),column.y)] = true
+		for street: Vector3i in doors:
+			if not court_doors.has(street) or not admitted_doors.has(street): continue
+			for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+				if court_frontages.has(Vector2i(street.x,street.z)+direction):
+					priority[street] = true
+		# Stable partition: court rooms own their promised datum before a
+		# lower street can claim the same column with a roof at court level.
+		var ordered: Array[Vector3i] = []
+		for street: Vector3i in doors:
+			if priority.has(street): ordered.append(street)
+		for street: Vector3i in doors:
+			if not priority.has(street): ordered.append(street)
+		doors = ordered
+	for street: Vector3i in doors:
 		if flights.has(street):
 			continue
 		for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
@@ -180,7 +261,9 @@ static func _seed_buildings(plan: WarrenMazeSourcePlan, streets: Dictionary,
 			out.append({"id": StringName("house.%03d" % out.size()),
 				"seed": column, "cells": [column] as Array[Vector2i],
 				"floor": street.y, "door": street, "tier": int(join["tier"]),
-				"retired": false})
+				"retired": false,
+				"court_frontage": priority.has(street) and court_frontages.has(column),
+				"court_facing": -direction})
 	return out
 
 
@@ -197,8 +280,8 @@ static func _grow_buildings(plan: WarrenMazeSourcePlan,
 	## each plus one step per column.
 	var limit: int = plan.scale_profile.scaled(BUILDING_CAP)
 	for index in buildings.size():
-		buildings[index]["cap"] = roll(plan, FOOTPRINT_SALT,
-			buildings[index]["door"] as Vector3i, index, Vector2i(2, limit))
+		buildings[index]["cap"] = _building_roll(plan, buildings[index],
+			FOOTPRINT_SALT, Vector2i(2, limit))
 		buildings[index]["stalled"] = false
 	while true:
 		var choice := -1
@@ -254,6 +337,13 @@ static func _best_join(plan: WarrenMazeSourcePlan, building: Dictionary,
 			var absorb := owner >= 0 and owner != self_index \
 				and not bool(buildings[owner]["retired"]) \
 				and (buildings[owner]["cells"] as Array).size() == 1
+			# Preserve each inhabited side of a court. A corner doorway can
+			# address two sides; absorbing across that corner lets rectangle
+			# packing move the house to one side and discard the other front.
+			if absorb and bool(buildings[owner].get("court_frontage", false)):
+				if not bool(building.get("court_frontage", false)) \
+						or building.court_facing != buildings[owner].court_facing:
+					continue
 			if owner >= 0 and not absorb:
 				continue
 			var join := _join(plan, next, floor_band, streets, blocked, claims,
@@ -413,7 +503,7 @@ static func _raise_buildings(plan: WarrenMazeSourcePlan, streets: Dictionary,
 		if bool(building["retired"]):
 			continue
 		var floor_band := int(building["floor"])
-		var roof := _building_top(plan, streets, claims, building, index,
+		var roof := _building_top(plan, streets, claims, building,
 			skyline_peaks.has(index))
 		var id := StringName(building["id"])
 		var cells := building["cells"] as Array[Vector2i]
@@ -450,7 +540,7 @@ static func _raise_buildings(plan: WarrenMazeSourcePlan, streets: Dictionary,
 
 
 static func _building_top(plan: WarrenMazeSourcePlan, streets: Dictionary,
-		claims: Dictionary, building: Dictionary, index: int,
+		claims: Dictionary, building: Dictionary,
 		skyline_peak: bool = false) -> Dictionary:
 	## A roof is, in preference order, the street through this footprint (the
 	## tier the whole model exists for), the lowest street past its one-column
@@ -461,9 +551,16 @@ static func _building_top(plan: WarrenMazeSourcePlan, streets: Dictionary,
 	var minimum := floor_band + WarrenMazeSourcePlan.MIN_HOUSE_BANDS
 	var reach := floor_band + MAX_TIER_BANDS
 	# The parcel contract exactly -- whole storeys plus the roof reservation --
-	# so the translator receives a legal envelope. `index` is in the hash, or
-	# the four houses around one street cell would be clones.
-	var rolled_seed_top := _rolled_seed_top(plan, building, index)
+	# so the translator receives a legal envelope. The seed column distinguishes
+	# houses around the same door without depending on other admitted seeds.
+	var rolled_seed_top := _rolled_seed_top(plan, building)
+	# A narrow optional skyline peak is an architectural accent, not an
+	# unbounded stack of identical house fronts. Actual upper streets and
+	# carried rooms still set their required bearing height below.
+	if skyline_peak:
+		rolled_seed_top = mini(rolled_seed_top, floor_band
+			+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS
+			+ OPTIONAL_PEAK_STOREYS * WarrenBuildingParcel.STOREY_BANDS)
 	var cells := building["cells"] as Array[Vector2i]
 	var street_top := -1
 	var top := floor_band
@@ -626,6 +723,10 @@ static func _edge_envelope_top(plan: WarrenMazeSourcePlan,
 		var column := value as Vector2i
 		if plan.massif == null or not plan.massif.has_column(column):
 			continue
+		var record: Dictionary = plan.massif.columns[column]
+		if record.has("house_storeys"):
+			var house_top := plan.massif.base_at(column) + int(record.house_storeys) * WarrenBuildingParcel.STOREY_BANDS
+			out = mini(out, house_top + WarrenBuildingParcel.ROOF_RESERVATION_BANDS)
 		var depth := _massif_boundary_depth(plan.massif, column)
 		if depth > EDGE_RINGS:
 			continue
@@ -643,15 +744,90 @@ static func _huddle_top(plan: WarrenMazeSourcePlan,
 	return out
 
 
-static func _rolled_seed_top(plan: WarrenMazeSourcePlan,
-		building: Dictionary, index: int) -> int:
+static func _building_roll(plan: WarrenMazeSourcePlan, building: Dictionary,
+		salt: int, bounds: Vector2i) -> int:
+	# A neighboring reservation may remove an earlier seed from the work list.
+	# The surviving house keeps its own draw, addressed by its seed and floor.
+	# The door still differentiates entrances without using a mutable array index.
+	var column := building["seed"] as Vector2i
+	var seed_cell := Vector3i(column.x, int(building["floor"]), column.y)
+	var door_key := WarrenPassageLatticeRules.hash_key(plan.world_seed,
+		0xadd2e55, building["door"] as Vector3i, 0)
+	return roll(plan, salt, seed_cell, door_key, bounds)
+
+
+static func _rolled_seed_top(plan: WarrenMazeSourcePlan, building: Dictionary) -> int:
 	var floor_band := int(building["floor"])
 	var budget: Vector2i = plan.scale_profile.scaled(STOREY_BUDGET)
 	if plan.massif.form_id == &"ridge":
 		budget = Vector2i(1, 2)
-	return floor_band + WarrenBuildingParcel.ROOF_RESERVATION_BANDS \
-		+ WarrenBuildingParcel.STOREY_BANDS * roll(plan, STOREY_SALT,
-			building["door"] as Vector3i, index, budget)
+	var rolled := (
+		floor_band
+		+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS
+		+ WarrenBuildingParcel.STOREY_BANDS * _building_roll(plan, building, STOREY_SALT, budget)
+	)
+	# The raised district already contributes its plinth to the skyline.
+	# Keep its optional rooms within the planned crown, before private
+	# balconies and overhangs turn those rooms into support obligations.
+	# Ground and mixed-datum houses retain their existing height policy.
+	var columns: Array = building.get("cells", [])
+	if columns.is_empty():
+		return rolled
+	for column: Vector2i in columns:
+		if plan.massif.plinth_at(column) <= 0:
+			return rolled
+	var field_top := 2147483647
+	var frontage := {}
+	for column: Vector2i in building.get("cells", []):
+		if plan.massif.has_column(column):
+			field_top = mini(field_top, plan.massif.top_at(column))
+		frontage[column] = true
+		for step: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+			frontage[column + step] = true
+	if field_top == 2147483647:
+		return rolled
+	var capped := (
+		floor_band
+		+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS
+		+ (
+			WarrenBuildingParcel.STOREY_BANDS
+			* maxi(1, floori(float(field_top - floor_band) / WarrenBuildingParcel.STOREY_BANDS))
+		)
+	)
+	if capped >= rolled:
+		return rolled
+	# Street carving owns the silhouette, but a neighboring passage needs a
+	# complete room above its headroom to become an inhabited underpass. Keep
+	# that room budget before composition, rather than cap heights and remove
+	# the very low ceilings the town is meant to produce. Never exceed the
+	# original roll; required upper floors still have _building_top's authority.
+	for walk: Vector3i in plan.passage_kinds:
+		if not frontage.has(Vector2i(walk.x, walk.z)):
+			continue
+		var room_floor := (
+			floor_band
+			+ (
+				WarrenBuildingParcel.STOREY_BANDS
+				* maxi(
+					0,
+					ceili(
+						(
+							float(walk.y + WarrenExcavation.HEADROOM_BANDS - floor_band)
+							/ WarrenBuildingParcel.STOREY_BANDS
+						)
+					)
+				)
+			)
+		)
+		capped = maxi(
+			capped,
+			(
+				room_floor
+				+ WarrenBuildingParcel.STOREY_BANDS
+				+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS
+			)
+		)
+	return mini(rolled, capped)
 
 
 static func _skyline_peak_indices(plan: WarrenMazeSourcePlan,
@@ -659,7 +835,7 @@ static func _skyline_peak_indices(plan: WarrenMazeSourcePlan,
 	## Towers are local maxima of the parcel field, not a globally selected hero.
 	## Every narrow, grounded parcel whose seeded height would be shortened by the
 	## terrace profile competes only with parcels touching its footprint. A strict
-	## local maximum keeps its complete seeded stack; the others follow the same
+	## local maximum keeps its seeded stack up to OPTIONAL_PEAK_STOREYS; others follow the same
 	## descending terrace profile as broad buildings. This admits zero, one, or
 	## several peaks as a consequence of topology and height noise, with no town-
 	## wide quota and no privileged seed or coordinate.
@@ -681,7 +857,7 @@ static func _skyline_peak_indices(plan: WarrenMazeSourcePlan,
 		if _edge_envelope_top(plan, cells) < 2147483647:
 			continue
 		var floor_band := int(building["floor"])
-		var seeded_top := _rolled_seed_top(plan, building, index)
+		var seeded_top := _rolled_seed_top(plan, building)
 		if seeded_top <= _outer_terrace_top(plan, cells, floor_band):
 			continue
 		eligible[index] = seeded_top - floor_band
@@ -954,8 +1130,12 @@ static func _span_bridges(plan: WarrenMazeSourcePlan) -> Array[Dictionary]:
 ## continues a real host storey. Here the walls must stand solid over the whole
 ## headroom on two opposing jambs (either lane of a two-lane bore), or on both
 ## outer walls of a turn, as the finished town's rock shoulders leave them.
-## Stone between crown and floor is at most TUNNEL_OVER_MAX_LIFT - 1 bands.
-const TUNNEL_OVER_MAX_LIFT := 1
+## Keep the first real storey above the solid crown for either floor phase.
+## Houses advance in two-band storeys; limiting the lift to one silently
+## excludes the common same-phase house beside a two-band bore. This does not
+## raise a house: its existing room and full roof reservation must already fit.
+## At most one extra alignment band stands above the crown course.
+const TUNNEL_OVER_MAX_LIFT := WarrenBuildingParcel.STOREY_BANDS
 
 
 static func cover_tunnels(plan: WarrenMazeSourcePlan) -> Array[Dictionary]:
@@ -1024,6 +1204,14 @@ static func _tunnel_jambs(plan: WarrenMazeSourcePlan, walk: Vector3i,
 	var passage := func(c: Vector2i) -> bool:
 		return plan.passage_kinds.has(Vector3i(c.x, walk.y, c.y))
 	var wall := func(c: Vector2i) -> bool:
+		# Asset plots reserve an envelope, not continuous masonry. Their
+		# empty margins cannot bear a cover at the jamb or crown course.
+		# Source-solid courses wholly below a raised asset remain eligible.
+		for index: int in plan.plots_at(c):
+			var plot: Dictionary = plan.plots[index]
+			if plot.kind == WarrenMazeSourcePlan.PLOT_ASSET \
+					and int(plot.floor) <= roof and int(plot.top) > walk.y:
+				return false
 		for band in range(walk.y, roof):
 			if not plan.solid_at(Vector3i(c.x, band, c.y)):
 				return false
@@ -1091,16 +1279,15 @@ static func _bridge_compound_taken(plan: WarrenMazeSourcePlan,
 		for column_value: Variant in group_value as Array:
 			if not columns.has(column_value as Vector2i):
 				columns.append(column_value as Vector2i)
-	# A prefab's measured roof clearance rises one band above its body top,
-	# and the bridge-house's own eaves overhang one column beyond its compound,
-	# so a compound beside or directly on a prefab's clearance still cuts it.
+	# The prefab reservation already includes its measured roof halo and the
+	# future house margin (WarrenPlotReservations._site_realises). Asking again
+	# on every neighboring macro column adds another full building bay of air:
+	# it rejects compounds the carver correctly kept outside that envelope.
+	# Retain the vertical roof allowance; finished roof fitting resolves eaves
+	# against the actual adjacent walls rather than a second horizontal halo.
 	for column: Vector2i in columns:
-		for near: Vector2i in [column, column + Vector2i.RIGHT,
-				column + Vector2i.LEFT, column + Vector2i.UP,
-				column + Vector2i.DOWN]:
-			if _asset_clearance_blocks(plan, near, floor_band - 1):
-				return "bridge compound column %s meets a prefab's clearance" \
-					% column
+		if _asset_clearance_blocks(plan, column, floor_band - 1):
+			return "bridge compound column %s meets a prefab's clearance" % column
 		for plot: Dictionary in plan.plots:
 			# A house's storeys above its doorway can stop short of the bridge;
 			# the doorway storey and everything under it cannot. A prefab is
@@ -1182,6 +1369,10 @@ static func walk_order(plan: WarrenMazeSourcePlan) -> Array[Vector3i]:
 		walk.append_array(lane.cells as Array[Vector3i])
 		walks.append(walk)
 	walks.append(plan.passage_cells())
+	var court_walks: Array = plan.court_addresses().keys()
+	court_walks.sort_custom(func(a: Vector3i, b: Vector3i):
+		return a.y < b.y if a.y != b.y else column_less(Vector2i(a.x,a.z),Vector2i(b.x,b.z)))
+	walks.append(court_walks)
 	for walk: Array in walks:
 		for cell_value: Variant in walk:
 			var cell := cell_value as Vector3i
@@ -1260,6 +1451,8 @@ static func owned_columns(plan: WarrenMazeSourcePlan) -> Dictionary:
 ## balcony fixes to have made it easier.
 static func blocked_columns(plan: WarrenMazeSourcePlan) -> Dictionary:
 	var out := owned_columns(plan)
+	for column: Vector2i in plan.massif.columns:
+		if plan.massif.is_reserved_ground(column): out[column] = true
 	for span_value: Variant in plan.excavation.bridge_spans:
 		for cell_value: Variant in span_value as Array:
 			var cell := cell_value as Vector3i

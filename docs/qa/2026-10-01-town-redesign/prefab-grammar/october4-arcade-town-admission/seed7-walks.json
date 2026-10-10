@@ -1,0 +1,114 @@
+[
+  {
+    "gate": "spatial.fabric.spatial.feature.landmark.00.component.00",
+    "passed": true,
+    "reverse": false,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(-16.125, 0.050215, -20.0)",
+        "target": "(-20.0, 0.0, -20.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-19.87518, 0.000306, -20.0)",
+        "target": "(-27.53998, -0.0, -20.0)",
+        "tick": 0,
+        "waypoint": 2
+      },
+      {
+        "floor": true,
+        "position": "(-23.62518, 0.000306, -20.0)",
+        "target": "(-27.53998, -0.0, -20.0)",
+        "tick": 30,
+        "waypoint": 2
+      }
+    ]
+  },
+  {
+    "gate": "spatial.fabric.spatial.feature.landmark.00.component.00",
+    "passed": true,
+    "reverse": true,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(-27.1912, -0.000543, -19.9979)",
+        "target": "(-20.0, 0.0, -20.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-23.4412, -0.000543, -19.99899)",
+        "target": "(-20.0, 0.0, -20.0)",
+        "tick": 30,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(-20.0662, -0.000543, -19.99994)",
+        "target": "(-16.0, 0.05, -20.0)",
+        "tick": 0,
+        "waypoint": 2
+      },
+      {
+        "floor": true,
+        "position": "(-16.31688, 0.050135, -20.0)",
+        "target": "(-16.0, 0.05, -20.0)",
+        "tick": 30,
+        "waypoint": 2
+      }
+    ]
+  },
+  {
+    "gate": "spatial.fabric.spatial.feature.landmark.01.component.00",
+    "passed": true,
+    "reverse": false,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(4.125, 0.050391, 36.0)",
+        "target": "(8.0, 0.0, 36.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(7.875105, -0.00013, 36.0)",
+        "target": "(11.16688, 2.783519, 36.0)",
+        "tick": 0,
+        "waypoint": 2
+      }
+    ]
+  },
+  {
+    "gate": "spatial.fabric.spatial.feature.landmark.01.component.00",
+    "passed": true,
+    "reverse": true,
+    "trace": [
+      {
+        "floor": true,
+        "position": "(10.81417, 2.677428, 36.00539)",
+        "target": "(8.0, 0.0, 36.0)",
+        "tick": 0,
+        "waypoint": 1
+      },
+      {
+        "floor": true,
+        "position": "(8.06286, 0.000025, 36.00035)",
+        "target": "(4.0, 0.05, 36.0)",
+        "tick": 0,
+        "waypoint": 2
+      },
+      {
+        "floor": true,
+        "position": "(4.31286, 0.050416, 36.00002)",
+        "target": "(4.0, 0.05, 36.0)",
+        "tick": 30,
+        "waypoint": 2
+      }
+    ]
+  }
+]

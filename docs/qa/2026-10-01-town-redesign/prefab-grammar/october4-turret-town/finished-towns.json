@@ -1,0 +1,379 @@
+[
+  {
+    "accepted": [
+      {
+        "entrance": "(-4, 0, -5)",
+        "id": "spatial.feature.landmark.00",
+        "recipe": "anchor.z_native.turret.00"
+      }
+    ],
+    "city": "8:grand",
+    "generic_native_masses": 0,
+    "landmark_diagnostics": {
+      "maze_asset_landmark_count": 3,
+      "maze_asset_outcomes": [
+        {
+          "cells": [
+            "(-6, -6)",
+            "(-5, -6)",
+            "(-4, -6)",
+            "(-3, -6)",
+            "(-2, -6)",
+            "(-1, -6)",
+            "(-6, -5)",
+            "(-5, -5)",
+            "(-4, -5)",
+            "(-3, -5)",
+            "(-2, -5)",
+            "(-1, -5)",
+            "(-6, -4)",
+            "(-5, -4)",
+            "(-4, -4)",
+            "(-3, -4)",
+            "(-2, -4)",
+            "(-1, -4)",
+            "(-6, -3)",
+            "(-5, -3)",
+            "(-4, -3)",
+            "(-3, -3)",
+            "(-2, -3)",
+            "(-1, -3)"
+          ],
+          "door_walk": "(-2, 0, -2)",
+          "floor": 0,
+          "id": "asset.00",
+          "kind_id": "anchor.z_native.turret.00",
+          "placed": true,
+          "reason": ""
+        },
+        {
+          "cells": [
+            "(2, 2)",
+            "(3, 2)",
+            "(4, 2)",
+            "(2, 3)",
+            "(3, 3)",
+            "(4, 3)",
+            "(2, 4)",
+            "(3, 4)",
+            "(4, 4)"
+          ],
+          "door_walk": "(2, 0, 1)",
+          "floor": 0,
+          "id": "asset.01",
+          "kind_id": "anchor.prefab.16",
+          "placed": true,
+          "reason": ""
+        },
+        {
+          "cells": [
+            "(-10, -7)",
+            "(-9, -7)",
+            "(-8, -7)",
+            "(-10, -6)",
+            "(-9, -6)",
+            "(-8, -6)",
+            "(-10, -5)",
+            "(-9, -5)",
+            "(-8, -5)",
+            "(-10, -4)",
+            "(-9, -4)",
+            "(-8, -4)"
+          ],
+          "door_walk": "(-9, 0, -8)",
+          "floor": 0,
+          "id": "asset.02",
+          "kind_id": "anchor.prefab.11",
+          "placed": true,
+          "reason": ""
+        }
+      ],
+      "maze_asset_record_count": 3,
+      "selected": [
+        {
+          "body_cell_count": 882,
+          "clearance_cell_count": 1008,
+          "displaced_parcel_count": 0,
+          "entrance_cell": "(-4, 0, -5)",
+          "feature_id": "spatial.feature.landmark.00",
+          "landing_cell": "(-4, 0, -4)",
+          "origin": "(-4, 0, -5)",
+          "recipe_id": "anchor.z_native.turret.00",
+          "source_family": "pure_village",
+          "yaw_quarters": 0
+        },
+        {
+          "body_cell_count": 64,
+          "clearance_cell_count": 120,
+          "displaced_parcel_count": 0,
+          "entrance_cell": "(4, 0, 4)",
+          "feature_id": "spatial.feature.landmark.01",
+          "landing_cell": "(4, 0, 3)",
+          "origin": "(3, 0, 6)",
+          "recipe_id": "anchor.prefab.16",
+          "source_family": "lpfv",
+          "yaw_quarters": 2
+        },
+        {
+          "body_cell_count": 80,
+          "clearance_cell_count": 180,
+          "displaced_parcel_count": 0,
+          "entrance_cell": "(-17, 0, -14)",
+          "feature_id": "spatial.feature.landmark.02",
+          "landing_cell": "(-17, 0, -15)",
+          "origin": "(-18, 0, -12)",
+          "recipe_id": "anchor.prefab.11",
+          "source_family": "lpfv",
+          "yaw_quarters": 2
+        }
+      ]
+    },
+    "native_instances": 182,
+    "selected": [
+      "anchor.z_native.turret.00"
+    ]
+  },
+  {
+    "accepted": [
+      {
+        "entrance": "(2, 0, 12)",
+        "id": "spatial.feature.landmark.00",
+        "recipe": "anchor.z_native.turret.01"
+      }
+    ],
+    "city": "9:grand",
+    "generic_native_masses": 0,
+    "landmark_diagnostics": {
+      "maze_asset_landmark_count": 2,
+      "maze_asset_outcomes": [
+        {
+          "cells": [
+            "(1, 3)",
+            "(2, 3)",
+            "(3, 3)",
+            "(4, 3)",
+            "(1, 4)",
+            "(2, 4)",
+            "(3, 4)",
+            "(4, 4)",
+            "(1, 5)",
+            "(2, 5)",
+            "(3, 5)",
+            "(4, 5)",
+            "(1, 6)",
+            "(2, 6)",
+            "(3, 6)",
+            "(4, 6)",
+            "(1, 7)",
+            "(2, 7)",
+            "(3, 7)",
+            "(4, 7)",
+            "(1, 8)",
+            "(2, 8)",
+            "(3, 8)",
+            "(4, 8)"
+          ],
+          "door_walk": "(0, 0, 6)",
+          "floor": 0,
+          "id": "asset.00",
+          "kind_id": "anchor.z_native.turret.01",
+          "placed": true,
+          "reason": ""
+        },
+        {
+          "cells": [
+            "(3, -6)",
+            "(4, -6)",
+            "(5, -6)",
+            "(3, -5)",
+            "(4, -5)",
+            "(5, -5)",
+            "(3, -4)",
+            "(4, -4)",
+            "(5, -4)"
+          ],
+          "door_walk": "(4, 1, -3)",
+          "floor": 1,
+          "id": "asset.01",
+          "kind_id": "anchor.prefab.10",
+          "placed": true,
+          "reason": ""
+        }
+      ],
+      "maze_asset_record_count": 2,
+      "selected": [
+        {
+          "body_cell_count": 1008,
+          "clearance_cell_count": 1134,
+          "displaced_parcel_count": 0,
+          "entrance_cell": "(2, 0, 12)",
+          "feature_id": "spatial.feature.landmark.00",
+          "landing_cell": "(1, 0, 12)",
+          "origin": "(2, 0, 12)",
+          "recipe_id": "anchor.z_native.turret.01",
+          "source_family": "pure_village",
+          "yaw_quarters": 3
+        },
+        {
+          "body_cell_count": 64,
+          "clearance_cell_count": 120,
+          "displaced_parcel_count": 0,
+          "entrance_cell": "(8, 1, -7)",
+          "feature_id": "spatial.feature.landmark.01",
+          "landing_cell": "(8, 1, -6)",
+          "origin": "(9, 1, -9)",
+          "recipe_id": "anchor.prefab.10",
+          "source_family": "lpfv",
+          "yaw_quarters": 0
+        }
+      ]
+    },
+    "native_instances": 199,
+    "selected": [
+      "anchor.z_native.turret.01"
+    ]
+  },
+  {
+    "accepted": [
+      {
+        "entrance": "(3, 0, 4)",
+        "id": "spatial.feature.landmark.00",
+        "recipe": "anchor.z_native.turret.00"
+      },
+      {
+        "entrance": "(-8, 0, -2)",
+        "id": "spatial.feature.landmark.02",
+        "recipe": "anchor.z_native.street.02.01"
+      }
+    ],
+    "city": "20:grand",
+    "generic_native_masses": 0,
+    "landmark_diagnostics": {
+      "maze_asset_landmark_count": 3,
+      "maze_asset_outcomes": [
+        {
+          "cells": [
+            "(1, 2)",
+            "(2, 2)",
+            "(3, 2)",
+            "(4, 2)",
+            "(5, 2)",
+            "(6, 2)",
+            "(1, 3)",
+            "(2, 3)",
+            "(3, 3)",
+            "(4, 3)",
+            "(5, 3)",
+            "(6, 3)",
+            "(1, 4)",
+            "(2, 4)",
+            "(3, 4)",
+            "(4, 4)",
+            "(5, 4)",
+            "(6, 4)",
+            "(1, 5)",
+            "(2, 5)",
+            "(3, 5)",
+            "(4, 5)",
+            "(5, 5)",
+            "(6, 5)"
+          ],
+          "door_walk": "(1, 0, 1)",
+          "floor": 0,
+          "id": "asset.00",
+          "kind_id": "anchor.z_native.turret.00",
+          "placed": true,
+          "reason": ""
+        },
+        {
+          "cells": [
+            "(-4, -6)",
+            "(-3, -6)",
+            "(-2, -6)",
+            "(-1, -6)",
+            "(0, -6)",
+            "(-4, -5)",
+            "(-3, -5)",
+            "(-2, -5)",
+            "(-1, -5)",
+            "(0, -5)",
+            "(-4, -4)",
+            "(-3, -4)",
+            "(-2, -4)",
+            "(-1, -4)",
+            "(0, -4)"
+          ],
+          "door_walk": "(1, 0, -5)",
+          "floor": 0,
+          "id": "asset.01",
+          "kind_id": "anchor.prefab.12",
+          "placed": true,
+          "reason": ""
+        },
+        {
+          "cells": [
+            "(-4, -1)",
+            "(-3, -1)",
+            "(-2, -1)",
+            "(-4, 0)",
+            "(-3, 0)",
+            "(-2, 0)",
+            "(-4, 1)",
+            "(-3, 1)",
+            "(-2, 1)"
+          ],
+          "door_walk": "(-5, 0, -1)",
+          "floor": 0,
+          "id": "asset.02",
+          "kind_id": "anchor.z_native.street.02.01",
+          "placed": true,
+          "reason": ""
+        }
+      ],
+      "maze_asset_record_count": 3,
+      "selected": [
+        {
+          "body_cell_count": 882,
+          "clearance_cell_count": 1008,
+          "displaced_parcel_count": 0,
+          "entrance_cell": "(3, 0, 4)",
+          "feature_id": "spatial.feature.landmark.00",
+          "landing_cell": "(3, 0, 3)",
+          "origin": "(3, 0, 4)",
+          "recipe_id": "anchor.z_native.turret.00",
+          "source_family": "pure_village",
+          "yaw_quarters": 2
+        },
+        {
+          "body_cell_count": 96,
+          "clearance_cell_count": 240,
+          "displaced_parcel_count": 0,
+          "entrance_cell": "(1, 0, -10)",
+          "feature_id": "spatial.feature.landmark.01",
+          "landing_cell": "(2, 0, -10)",
+          "origin": "(-1, 0, -11)",
+          "recipe_id": "anchor.prefab.12",
+          "source_family": "lpfv",
+          "yaw_quarters": 1
+        },
+        {
+          "body_cell_count": 120,
+          "clearance_cell_count": 120,
+          "displaced_parcel_count": 0,
+          "entrance_cell": "(-8, 0, -2)",
+          "feature_id": "spatial.feature.landmark.02",
+          "landing_cell": "(-9, 0, -2)",
+          "origin": "(-8, 0, -2)",
+          "recipe_id": "anchor.z_native.street.02.01",
+          "source_family": "pure_village",
+          "yaw_quarters": 3
+        }
+      ]
+    },
+    "native_instances": 234,
+    "selected": [
+      "anchor.z_native.turret.00",
+      "anchor.z_native.street.02.01"
+    ]
+  }
+]

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_4x650"]
+
+[resource]
+script = ExtResource("1_4x650")
+id = &"suntail.decor.crossbar_1_timber"
+visual_path = "res://terrain/environment/visuals/suntail_timber_corners/suntail_decor_crossbar_1_timber.tres"
+tags = Array[StringName]([&"decor", &"suntail_kit", &"village"])
+measured_aabb = AABB(-1, -0.13951628, -0.08501817, 2, 0.2775306, 0.2746287)
+ground_contact_points = PackedVector2Array()
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"suntail_timber_corners:suntail.decor.crossbar_1_timber"

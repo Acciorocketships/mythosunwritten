@@ -1,0 +1,77 @@
+{
+	"checked_quarters": 86,
+	"lost": [
+		{
+			"after_band": -1,
+			"before_band": 4,
+			"city": "31:large",
+			"quarter": 0,
+			"walk": "(-1, 0, 1)"
+		},
+		{
+			"after_band": -1,
+			"before_band": 4,
+			"city": "31:large",
+			"quarter": 2,
+			"walk": "(-1, 0, 1)"
+		},
+		{
+			"after_band": -1,
+			"before_band": 4,
+			"city": "31:large",
+			"quarter": 0,
+			"walk": "(-1, 0, 2)"
+		},
+		{
+			"after_band": -1,
+			"before_band": 4,
+			"city": "31:large",
+			"quarter": 2,
+			"walk": "(-1, 0, 2)"
+		},
+		{
+			"after_band": -1,
+			"before_band": 4,
+			"city": "31:large",
+			"quarter": 0,
+			"walk": "(0, 0, 2)"
+		},
+		{
+			"after_band": -1,
+			"before_band": 4,
+			"city": "31:large",
+			"quarter": 2,
+			"walk": "(0, 0, 2)"
+		},
+		{
+			"after_band": -1,
+			"before_band": 4,
+			"city": "7:standard",
+			"quarter": 0,
+			"walk": "(0, 0, -3)"
+		},
+		{
+			"after_band": -1,
+			"before_band": 4,
+			"city": "7:standard",
+			"quarter": 1,
+			"walk": "(0, 0, -3)"
+		},
+		{
+			"after_band": -1,
+			"before_band": 4,
+			"city": "7:standard",
+			"quarter": 2,
+			"walk": "(0, 0, -3)"
+		},
+		{
+			"after_band": -1,
+			"before_band": 4,
+			"city": "7:standard",
+			"quarter": 3,
+			"walk": "(0, 0, -3)"
+		}
+	],
+	"lost_quarters": 10,
+	"max_band": 4
+}

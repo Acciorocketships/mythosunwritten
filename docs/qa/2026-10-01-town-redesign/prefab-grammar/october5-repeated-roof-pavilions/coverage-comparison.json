@@ -1,0 +1,92 @@
+{
+  "103:grand": {
+    "before": 40,
+    "after": 40,
+    "changed_old_ceilings": [],
+    "floating": 0,
+    "public_air_intrusions": 0,
+    "towers_before": 1,
+    "towers_after": 1
+  },
+  "13:grand": {
+    "before": 16,
+    "after": 16,
+    "changed_old_ceilings": [],
+    "floating": 0,
+    "public_air_intrusions": 0,
+    "towers_before": 0,
+    "towers_after": 0
+  },
+  "301:grand": {
+    "before": 44,
+    "after": 44,
+    "changed_old_ceilings": [],
+    "floating": 0,
+    "public_air_intrusions": 0,
+    "towers_before": 3,
+    "towers_after": 3
+  },
+  "31:large": {
+    "before": 38,
+    "after": 38,
+    "changed_old_ceilings": [],
+    "floating": 0,
+    "public_air_intrusions": 0,
+    "towers_before": 0,
+    "towers_after": 0
+  },
+  "43:grand": {
+    "before": 56,
+    "after": 56,
+    "changed_old_ceilings": [],
+    "floating": 0,
+    "public_air_intrusions": 0,
+    "towers_before": 1,
+    "towers_after": 2
+  },
+  "53:grand": {
+    "before": 86,
+    "after": 86,
+    "changed_old_ceilings": [],
+    "floating": 0,
+    "public_air_intrusions": 0,
+    "towers_before": 3,
+    "towers_after": 3
+  },
+  "63:grand": {
+    "before": 34,
+    "after": 34,
+    "changed_old_ceilings": [],
+    "floating": 0,
+    "public_air_intrusions": 0,
+    "towers_before": 2,
+    "towers_after": 2
+  },
+  "83:grand": {
+    "before": 16,
+    "after": 16,
+    "changed_old_ceilings": [],
+    "floating": 0,
+    "public_air_intrusions": 0,
+    "towers_before": 0,
+    "towers_after": 0
+  },
+  "8:grand": {
+    "before": 70,
+    "after": 70,
+    "changed_old_ceilings": [],
+    "floating": 0,
+    "public_air_intrusions": 0,
+    "towers_before": 1,
+    "towers_after": 1
+  },
+  "9:grand": {
+    "before": 80,
+    "after": 80,
+    "changed_old_ceilings": [],
+    "floating": 0,
+    "public_air_intrusions": 0,
+    "towers_before": 5,
+    "towers_after": 5
+  }
+}

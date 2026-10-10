@@ -1,0 +1,15 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+TUNNELS 13 grand [(2, 1, 0), (-3, 0, 0), (-2, 0, 0), (-2, 0, -1), (4, 0, -3), (2, 0, -3), (1, 0, -2), (0, 0, -2), (-1, 0, -2), (-2, 0, -3), (-3, 0, -3)]
+STEPPED_HOUSES [{ "id": &"kit.spatial.parcel.maze.bridge.03.end.0.lower", "at": (2.25, 15.0, 6.75), "reach": 32.0 }]
+ROOF_AUDIT { "clipped": 235, "removed": 14, "chimneys": { "moved": 0, "omitted": 0, "checked": 4 }, "towers": { "corner_attempts": 16, "corner_bearing_rejected": 16, "corner_bearing_example": "kit.spatial.parcel.maze.bridge.03.end.0.lower / (1, 7, 8) / base 8", "corner_no_bearing_or_space": 16, "attempts": 44, "accepted": 0 }, "facade_bays": 0, "room_projections": 0, "retaining_relief": 7, "retaining_flight_joints": 8, "retaining_windows": 23, "fortified_windows": 49, "retaining_recesses": 54, "decor_clearance": { &"fort.block": 198, &"window_box": 23, &"prop.doorstep": 19 }, "fitted_window_boxes": 14, "joins": 7, "parallel_joins": 0, "fitted_eaves": 0, "dormers": { "moved": 0, "omitted": 0, "checked": 7 }, "seated_balcony_brackets": 0, "roof_blocked_windows": 66, "roof_fitted_windows": 10 }
+TOWN 13 grand buildings=59 instances=4466 ms=17452
+GARDEN_GRASS 13 grand instances=349 tiles=6
+BOUNDS cells=[P: (-56.0, 0.0, -64.0), S: (124.0, 36.0, 148.0)] payload=[P: (-60.0, -2.92, -66.68001), S: (132.0, 48.72, 153.32)]
+REVIEW_CAMERA {"eye":"(-28.0, 1.7, 36.0)","fov":70.0,"target":"(-28.0, 1.7, 16.0)","view":"13_grand_street0"}
+REVIEW_CAMERA {"eye":"(20.0, 25.7, -8.0)","fov":80.0,"target":"(9.0, 26.5, -2.0)","view":"13_grand_court_plaza.00_0"}
+REVIEW_CAMERA {"eye":"(16.0, 25.7, 4.0)","fov":80.0,"target":"(14.0, 26.5, -7.0)","view":"13_grand_court_plaza.00_1"}
+REVIEW_CAMERA {"eye":"(8.0, 25.7, 4.0)","fov":80.0,"target":"(19.0, 26.5, -2.0)","view":"13_grand_court_plaza.00_2"}
+REVIEW_CAMERA {"eye":"(12.0, 25.7, -8.0)","fov":80.0,"target":"(14.0, 26.5, 3.0)","view":"13_grand_court_plaza.00_3"}
+REVIEW_DONE /tmp/town-palette-detail

@@ -1,0 +1,9 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+PRE_RANGE [{ "rect": [P: (2, 14), S: (6, 2)], "axis": 0, "eave_band": 4, "colour": &"red", "open_min": false, "open_max": false, "extend_min": 0, "extend_max": 0, "dormers": {  }, "ridge_peaks": false }, { "rect": [P: (0, 16), S: (8, 2)], "axis": 0, "eave_band": 4, "colour": &"red", "open_min": false, "open_max": false, "extend_min": 0, "extend_max": 0, "dormers": {  }, "ridge_peaks": false }, { "rect": [P: (6, 12), S: (2, 2)], "axis": 1, "eave_band": 4, "colour": &"red", "open_min": false, "open_max": true, "extend_min": 0, "extend_max": 1, "dormers": {  }, "ridge_peaks": false, "clip_max": 15.0 }]
+RANGE_JOIN kit.spatial.parcel.maze.house.054 [P: (2, 14), S: (6, 2)] + [P: (0, 16), S: (8, 2)] -> [P: (2, 14), S: (6, 4)] axis=0 remnants=1
+RANGE_JOIN kit.spatial.residual.00 [P: (-9, -10), S: (2, 6)] + [P: (-7, -10), S: (2, 6)] -> [P: (-9, -10), S: (4, 6)] axis=1 remnants=0
+RANGE_AUDIT {"floating":{"count":0,"floating_storey_cells":[],"incomplete_skywalks":[],"unborne_crown_cells":[]},"joins":3,"profile":"grand","roof":{"area":0.0,"examples":[],"gable_area":8.39626317747229,"gable_contacts":578,"intrusions":0,"roles":{},"triangles":1405142},"seed":53,"valid_payload":true}
+RANGE_AUDIT {"floating":{"count":0,"floating_storey_cells":[],"incomplete_skywalks":[],"unborne_crown_cells":[]},"joins":0,"profile":"large","roof":{"area":0.0,"examples":[],"gable_area":0.0,"gable_contacts":0,"intrusions":0,"roles":{},"triangles":417744},"seed":31,"valid_payload":true}

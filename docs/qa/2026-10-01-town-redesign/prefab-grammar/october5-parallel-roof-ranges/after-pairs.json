@@ -1,0 +1,1561 @@
+{
+  "103:grand": [
+    {
+      "a": {
+        "axis": 1,
+        "chimney": true,
+        "chimney_end": 0,
+        "chimney_u": 11.0,
+        "colour": "blue",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-5, 10), S: (5, 4)]",
+        "ridge_peaks": true,
+        "union_index": 2
+      },
+      "b": {
+        "axis": 1,
+        "colour": "blue",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-6, 8), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 4
+      },
+      "owners": [
+        "kit.spatial.feature.landmark.02",
+        "kit.spatial.feature.landmark.02"
+      ]
+    },
+    {
+      "a": {
+        "axis": 1,
+        "chimney": true,
+        "chimney_end": 0,
+        "chimney_u": 11.0,
+        "colour": "blue",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-5, 10), S: (5, 4)]",
+        "ridge_peaks": true,
+        "union_index": 2
+      },
+      "b": {
+        "axis": 1,
+        "clip_min": 10.0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 0,
+        "extend_min": 2,
+        "open_max": false,
+        "open_min": true,
+        "rect": "[P: (0, 12), S: (4, 2)]",
+        "ridge_peaks": false,
+        "union_index": 41
+      },
+      "owners": [
+        "kit.spatial.feature.landmark.02",
+        "kit.spatial.residual.00"
+      ]
+    },
+    {
+      "a": {
+        "axis": 0,
+        "chimney": false,
+        "chimney_end": 0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (4, 11), S: (2, 3)]",
+        "ridge_peaks": true,
+        "union_index": 17
+      },
+      "b": {
+        "axis": 0,
+        "chimney": false,
+        "chimney_end": 0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (0, 8), S: (4, 4)]",
+        "ridge_peaks": true,
+        "union_index": 40
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.001",
+        "kit.spatial.residual.00"
+      ]
+    },
+    {
+      "a": {
+        "axis": 0,
+        "clip_max": 5.0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 1,
+        "extend_min": 0,
+        "open_max": true,
+        "open_min": false,
+        "rect": "[P: (2, 6), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 19
+      },
+      "b": {
+        "axis": 0,
+        "chimney": false,
+        "chimney_end": 0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (0, 8), S: (4, 4)]",
+        "ridge_peaks": true,
+        "union_index": 40
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.001",
+        "kit.spatial.residual.00"
+      ]
+    },
+    {
+      "a": {
+        "axis": 0,
+        "clip_min": 5.0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 0,
+        "extend_min": 1,
+        "open_max": false,
+        "open_min": true,
+        "rect": "[P: (6, 6), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 20
+      },
+      "b": {
+        "axis": 0,
+        "clip_max": 11.0,
+        "clip_min": 5.0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 1,
+        "extend_min": 1,
+        "open_max": true,
+        "open_min": true,
+        "rect": "[P: (6, 8), S: (4, 2)]",
+        "ridge_peaks": false,
+        "union_index": 42
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.001"
+      ]
+    }
+  ],
+  "301:grand": [
+    {
+      "a": {
+        "axis": 0,
+        "clip_max": 9.0,
+        "colour": "blue",
+        "dormers": {
+
+        },
+        "eave_band": 4,
+        "extend_max": 1,
+        "extend_min": 0,
+        "open_max": true,
+        "open_min": false,
+        "rect": "[P: (6, -6), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 2
+      },
+      "b": {
+        "axis": 0,
+        "colour": "blue",
+        "dormers": {
+
+        },
+        "eave_band": 4,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (4, -8), S: (3, 2)]",
+        "ridge_peaks": false,
+        "union_index": 3
+      },
+      "owners": [
+        "kit.spatial.feature.landmark.01",
+        "kit.spatial.feature.landmark.01"
+      ]
+    },
+    {
+      "a": {
+        "axis": 0,
+        "chimney": true,
+        "chimney_end": 0,
+        "chimney_u": -1.0,
+        "colour": "blue",
+        "dormers": {
+
+        },
+        "eave_band": 10,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-2, 2), S: (6, 2)]",
+        "ridge_peaks": true,
+        "union_index": 4
+      },
+      "b": {
+        "axis": 0,
+        "chimney": true,
+        "chimney_end": 1,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 10,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-4, 0), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 29
+      },
+      "owners": [
+        "kit.spatial.maze_bridge.00",
+        "kit.spatial.parcel.maze.house.013"
+      ]
+    },
+    {
+      "a": {
+        "axis": 0,
+        "colour": "blue",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-2, -10), S: (4, 2)]",
+        "ridge_peaks": false,
+        "union_index": 7
+      },
+      "b": {
+        "axis": 0,
+        "colour": "blue",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-2, -8), S: (4, 2)]",
+        "ridge_peaks": false,
+        "union_index": 8
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.002",
+        "kit.spatial.parcel.maze.house.002"
+      ]
+    },
+    {
+      "a": {
+        "axis": 0,
+        "colour": "red",
+        "dormers": {
+          "(0, 1)": true
+        },
+        "eave_band": 3,
+        "extend_max": 0,
+        "extend_min": 1,
+        "open_max": false,
+        "open_min": true,
+        "rect": "[P: (-3, 14), S: (9, 2)]",
+        "ridge_peaks": false,
+        "union_index": 10
+      },
+      "b": {
+        "axis": 0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 3,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-4, 12), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 13
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.005",
+        "kit.spatial.parcel.maze.house.005"
+      ]
+    },
+    {
+      "a": {
+        "axis": 1,
+        "clip_max": 13.0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 3,
+        "extend_max": 1,
+        "extend_min": 0,
+        "open_max": true,
+        "open_min": false,
+        "rect": "[P: (-4, 6), S: (2, 6)]",
+        "ridge_peaks": false,
+        "union_index": 11
+      },
+      "b": {
+        "axis": 1,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 3,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-2, 4), S: (2, 6)]",
+        "ridge_peaks": false,
+        "union_index": 12
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.005",
+        "kit.spatial.parcel.maze.house.005"
+      ]
+    },
+    {
+      "a": {
+        "axis": 1,
+        "chimney": false,
+        "chimney_end": 0,
+        "colour": "blue",
+        "dormers": {
+
+        },
+        "eave_band": 6,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-2, -10), S: (3, 2)]",
+        "ridge_peaks": false,
+        "union_index": 15
+      },
+      "b": {
+        "axis": 1,
+        "colour": "blue",
+        "dormers": {
+
+        },
+        "eave_band": 6,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (0, -8), S: (2, 6)]",
+        "ridge_peaks": false,
+        "tight_eave": true,
+        "tight_eave_sides": 3,
+        "union_index": 17,
+        "verge_max": 0.157
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.007",
+        "kit.spatial.parcel.maze.house.007"
+      ]
+    },
+    {
+      "a": {
+        "axis": 1,
+        "colour": "blue",
+        "dormers": {
+
+        },
+        "eave_band": 6,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (0, -8), S: (2, 6)]",
+        "ridge_peaks": false,
+        "tight_eave": true,
+        "tight_eave_sides": 3,
+        "union_index": 17,
+        "verge_max": 0.157
+      },
+      "b": {
+        "axis": 1,
+        "colour": "blue",
+        "dormers": {
+
+        },
+        "eave_band": 6,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-2, -6), S: (2, 2)]",
+        "ridge_peaks": false,
+        "tight_eave": true,
+        "tight_eave_sides": 2,
+        "union_index": 18
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.007",
+        "kit.spatial.parcel.maze.house.007"
+      ]
+    },
+    {
+      "a": {
+        "axis": 0,
+        "chimney": false,
+        "chimney_end": 1,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 4,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (12, -2), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 36
+      },
+      "b": {
+        "axis": 0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 4,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (12, -10), S: (1, 8)]",
+        "ridge_peaks": false,
+        "union_index": 42
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.024"
+      ]
+    },
+    {
+      "a": {
+        "axis": 1,
+        "clip_min": -1.0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 4,
+        "extend_max": 0,
+        "extend_min": 1,
+        "open_max": false,
+        "open_min": true,
+        "rect": "[P: (12, 0), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 37
+      },
+      "b": {
+        "axis": 1,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 4,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (10, 2), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 38
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.024",
+        "kit.spatial.parcel.maze.house.024"
+      ]
+    }
+  ],
+  "31:large": [
+    {
+      "a": {
+        "axis": 1,
+        "clip_max": 7.0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 9,
+        "extend_max": 1,
+        "extend_min": 0,
+        "open_max": true,
+        "open_min": false,
+        "rect": "[P: (6, 4), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 6
+      },
+      "b": {
+        "axis": 1,
+        "clip_max": 7.0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 9,
+        "extend_max": 1,
+        "extend_min": 0,
+        "open_max": true,
+        "open_min": false,
+        "rect": "[P: (8, 4), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 7
+      },
+      "owners": [
+        "kit.spatial.maze_bridge.01",
+        "kit.spatial.maze_bridge_end.01.00"
+      ]
+    },
+    {
+      "a": {
+        "axis": 1,
+        "clip_max": 7.0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 9,
+        "extend_max": 1,
+        "extend_min": 0,
+        "open_max": true,
+        "open_min": false,
+        "rect": "[P: (6, 4), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 6
+      },
+      "b": {
+        "axis": 1,
+        "clip_max": 7.0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 9,
+        "extend_max": 1,
+        "extend_min": 0,
+        "open_max": true,
+        "open_min": false,
+        "rect": "[P: (4, 4), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 8
+      },
+      "owners": [
+        "kit.spatial.maze_bridge.01",
+        "kit.spatial.maze_bridge_end.01.01"
+      ]
+    },
+    {
+      "a": {
+        "axis": 1,
+        "chimney": true,
+        "chimney_end": 1,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 12,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (4, -4), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 11
+      },
+      "b": {
+        "axis": 1,
+        "chimney": false,
+        "chimney_end": 1,
+        "colour": "red",
+        "dormers": {
+          "(0, -1)": true,
+          "(1, -1)": true
+        },
+        "eave_band": 12,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (2, -2), S: (2, 3)]",
+        "ridge_peaks": true,
+        "union_index": 22
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.bridge.00.end.1.lower",
+        "kit.spatial.parcel.maze.house.008"
+      ]
+    },
+    {
+      "a": {
+        "axis": 0,
+        "chimney": false,
+        "chimney_end": 1,
+        "colour": "blue",
+        "dormers": {
+
+        },
+        "eave_band": 6,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-8, 2), S: (2, 2)]",
+        "ridge_peaks": true,
+        "union_index": 16
+      },
+      "b": {
+        "axis": 0,
+        "colour": "blue",
+        "dormers": {
+
+        },
+        "eave_band": 6,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-6, 0), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 17
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.003",
+        "kit.spatial.parcel.maze.house.003"
+      ]
+    }
+  ],
+  "53:grand": [
+    {
+      "a": {
+        "axis": 0,
+        "chimney": true,
+        "chimney_end": 0,
+        "colour": "blue",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (8, -10), S: (2, 2)]",
+        "ridge_peaks": true,
+        "union_index": 7
+      },
+      "b": {
+        "axis": 0,
+        "clip_max": 13.0,
+        "colour": "blue",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 1,
+        "extend_min": 0,
+        "open_max": true,
+        "open_min": false,
+        "rect": "[P: (10, -8), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 11
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.000",
+        "kit.spatial.parcel.maze.house.010"
+      ]
+    },
+    {
+      "a": {
+        "axis": 0,
+        "chimney": true,
+        "chimney_end": 1,
+        "chimney_u": 3.0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 3,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-2, 14), S: (6, 4)]",
+        "ridge_peaks": false,
+        "tight_eave": true,
+        "tight_eave_sides": 2,
+        "union_index": 24
+      },
+      "b": {
+        "axis": 0,
+        "clip_min": -7.0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 3,
+        "extend_max": 0,
+        "extend_min": 1,
+        "open_max": true,
+        "open_min": true,
+        "rect": "[P: (-6, 16), S: (4, 2)]",
+        "ridge_peaks": false,
+        "union_index": 27
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.029",
+        "kit.spatial.parcel.maze.house.029"
+      ]
+    },
+    {
+      "a": {
+        "axis": 0,
+        "chimney": true,
+        "chimney_end": 1,
+        "chimney_u": 3.0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 3,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-2, 14), S: (6, 4)]",
+        "ridge_peaks": false,
+        "tight_eave": true,
+        "tight_eave_sides": 2,
+        "union_index": 24
+      },
+      "b": {
+        "axis": 0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 3,
+        "extend_max": 0,
+        "extend_min": 1,
+        "open_max": true,
+        "open_min": true,
+        "rect": "[P: (-4, 14), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 30
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.029",
+        "kit.spatial.parcel.maze.house.030"
+      ]
+    },
+    {
+      "a": {
+        "axis": 0,
+        "chimney": true,
+        "chimney_end": 1,
+        "chimney_u": 3.0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 3,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-2, 14), S: (6, 4)]",
+        "ridge_peaks": false,
+        "tight_eave": true,
+        "tight_eave_sides": 2,
+        "union_index": 24
+      },
+      "b": {
+        "axis": 0,
+        "clip_min": -5.0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 3,
+        "extend_max": 0,
+        "extend_min": 1,
+        "open_max": false,
+        "open_min": true,
+        "rect": "[P: (-4, 12), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 33
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.029",
+        "kit.spatial.parcel.maze.house.030"
+      ]
+    },
+    {
+      "a": {
+        "axis": 0,
+        "colour": "red",
+        "dormers": {
+          "(0, -5)": true
+        },
+        "eave_band": 3,
+        "extend_max": 1,
+        "extend_min": 0,
+        "open_max": true,
+        "open_min": false,
+        "rect": "[P: (-6, 18), S: (3, 2)]",
+        "ridge_peaks": false,
+        "union_index": 26
+      },
+      "b": {
+        "axis": 0,
+        "clip_min": -7.0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 3,
+        "extend_max": 0,
+        "extend_min": 1,
+        "open_max": true,
+        "open_min": true,
+        "rect": "[P: (-6, 16), S: (4, 2)]",
+        "ridge_peaks": false,
+        "union_index": 27
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.029",
+        "kit.spatial.parcel.maze.house.029"
+      ]
+    },
+    {
+      "a": {
+        "axis": 0,
+        "clip_min": -7.0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 3,
+        "extend_max": 0,
+        "extend_min": 1,
+        "open_max": true,
+        "open_min": true,
+        "rect": "[P: (-6, 16), S: (4, 2)]",
+        "ridge_peaks": false,
+        "union_index": 27
+      },
+      "b": {
+        "axis": 0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 3,
+        "extend_max": 0,
+        "extend_min": 1,
+        "open_max": true,
+        "open_min": true,
+        "rect": "[P: (-4, 14), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 30
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.029",
+        "kit.spatial.parcel.maze.house.030"
+      ]
+    },
+    {
+      "a": {
+        "axis": 1,
+        "chimney": true,
+        "chimney_end": 1,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 3,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-7, 14), S: (3, 2)]",
+        "ridge_peaks": false,
+        "union_index": 28
+      },
+      "b": {
+        "axis": 1,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 3,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-8, 16), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 31
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.030",
+        "kit.spatial.parcel.maze.house.030"
+      ]
+    },
+    {
+      "a": {
+        "axis": 1,
+        "chimney": true,
+        "chimney_end": 1,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 3,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-7, 14), S: (3, 2)]",
+        "ridge_peaks": false,
+        "union_index": 28
+      },
+      "b": {
+        "axis": 1,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 3,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": true,
+        "open_min": false,
+        "rect": "[P: (-6, 12), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 32
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.030",
+        "kit.spatial.parcel.maze.house.030"
+      ]
+    },
+    {
+      "a": {
+        "axis": 0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 3,
+        "extend_max": 0,
+        "extend_min": 1,
+        "open_max": true,
+        "open_min": true,
+        "rect": "[P: (-4, 14), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 30
+      },
+      "b": {
+        "axis": 0,
+        "clip_min": -5.0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 3,
+        "extend_max": 0,
+        "extend_min": 1,
+        "open_max": false,
+        "open_min": true,
+        "rect": "[P: (-4, 12), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 33
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.030",
+        "kit.spatial.parcel.maze.house.030"
+      ]
+    },
+    {
+      "a": {
+        "axis": 0,
+        "clip_min": -5.0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 3,
+        "extend_max": 0,
+        "extend_min": 1,
+        "open_max": false,
+        "open_min": true,
+        "rect": "[P: (-4, 12), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 33
+      },
+      "b": {
+        "axis": 0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 3,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-4, 10), S: (2, 2)]",
+        "ridge_peaks": false,
+        "tight_eave": true,
+        "tight_eave_sides": 2,
+        "union_index": 34
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.030",
+        "kit.spatial.parcel.maze.house.030"
+      ]
+    }
+  ],
+  "63:grand": [
+    {
+      "a": {
+        "axis": 1,
+        "chimney": true,
+        "chimney_end": 0,
+        "chimney_u": -3.0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-12, -4), S: (4, 4)]",
+        "ridge_peaks": true,
+        "union_index": 0
+      },
+      "b": {
+        "axis": 1,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": true,
+        "rect": "[P: (-12, 0), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 2
+      },
+      "owners": [
+        "kit.spatial.feature.landmark.01",
+        "kit.spatial.feature.landmark.01"
+      ]
+    },
+    {
+      "a": {
+        "axis": 1,
+        "chimney": true,
+        "chimney_end": 0,
+        "chimney_u": -3.0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-12, -4), S: (4, 4)]",
+        "ridge_peaks": true,
+        "union_index": 0
+      },
+      "b": {
+        "axis": 1,
+        "chimney": true,
+        "chimney_end": 1,
+        "chimney_u": 1.0,
+        "colour": "blue",
+        "dormers": {
+          "(0, -1)": true
+        },
+        "eave_band": 2,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-8, -2), S: (4, 4)]",
+        "ridge_peaks": true,
+        "union_index": 30
+      },
+      "owners": [
+        "kit.spatial.feature.landmark.01",
+        "kit.spatial.residual.00"
+      ]
+    },
+    {
+      "a": {
+        "axis": 1,
+        "chimney": true,
+        "chimney_end": 0,
+        "colour": "blue",
+        "dormers": {
+
+        },
+        "eave_band": 6,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-12, 4), S: (3, 2)]",
+        "ridge_peaks": false,
+        "union_index": 11
+      },
+      "b": {
+        "axis": 1,
+        "colour": "blue",
+        "dormers": {
+
+        },
+        "eave_band": 6,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": true,
+        "rect": "[P: (-12, 6), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 13
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.002",
+        "kit.spatial.parcel.maze.house.002"
+      ]
+    }
+  ],
+  "83:grand": [
+    {
+      "a": {
+        "axis": 0,
+        "chimney": true,
+        "chimney_end": 0,
+        "chimney_u": 29.0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (28, -2), S: (4, 4)]",
+        "ridge_peaks": false,
+        "union_index": 16
+      },
+      "b": {
+        "axis": 0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": true,
+        "rect": "[P: (32, 0), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 19
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.005",
+        "kit.spatial.parcel.maze.house.005"
+      ]
+    },
+    {
+      "a": {
+        "axis": 0,
+        "chimney": true,
+        "chimney_end": 0,
+        "chimney_u": 29.0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (28, -2), S: (4, 4)]",
+        "ridge_peaks": false,
+        "union_index": 16
+      },
+      "b": {
+        "axis": 0,
+        "colour": "red",
+        "dormers": {
+          "(0, 26)": true
+        },
+        "eave_band": 2,
+        "extend_max": 0,
+        "extend_min": 1,
+        "open_max": true,
+        "open_min": true,
+        "rect": "[P: (25, -2), S: (3, 2)]",
+        "ridge_peaks": false,
+        "union_index": 47
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.005",
+        "kit.spatial.residual.00"
+      ]
+    },
+    {
+      "a": {
+        "axis": 1,
+        "clip_min": 0.0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 0,
+        "extend_min": 2,
+        "open_max": false,
+        "open_min": true,
+        "rect": "[P: (28, 2), S: (4, 2)]",
+        "ridge_peaks": false,
+        "union_index": 17
+      },
+      "b": {
+        "axis": 1,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": true,
+        "rect": "[P: (28, 4), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 18
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.005",
+        "kit.spatial.parcel.maze.house.005"
+      ]
+    },
+    {
+      "a": {
+        "axis": 1,
+        "chimney": true,
+        "chimney_end": 0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 4,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-8, 30), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 24
+      },
+      "b": {
+        "axis": 1,
+        "clip_max": 31.0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 4,
+        "extend_max": 1,
+        "extend_min": 0,
+        "open_max": true,
+        "open_min": false,
+        "rect": "[P: (-6, 28), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 26
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.008",
+        "kit.spatial.parcel.maze.house.008"
+      ]
+    },
+    {
+      "a": {
+        "axis": 1,
+        "colour": "blue",
+        "dormers": {
+          "(0, 1)": true,
+          "(0, 3)": true,
+          "(0, 5)": true,
+          "(1, 5)": true
+        },
+        "eave_band": 2,
+        "extend_max": 1,
+        "extend_min": 0,
+        "open_max": true,
+        "open_min": false,
+        "rect": "[P: (-10, 0), S: (2, 7)]",
+        "ridge_peaks": false,
+        "union_index": 30
+      },
+      "b": {
+        "axis": 1,
+        "colour": "blue",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-12, 2), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 31
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.013",
+        "kit.spatial.parcel.maze.house.013"
+      ]
+    },
+    {
+      "a": {
+        "axis": 1,
+        "colour": "blue",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-12, 2), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 31
+      },
+      "b": {
+        "axis": 1,
+        "colour": "blue",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-14, 2), S: (2, 1)]",
+        "ridge_peaks": false,
+        "union_index": 48
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.013"
+      ]
+    },
+    {
+      "a": {
+        "axis": 0,
+        "chimney": true,
+        "chimney_end": 1,
+        "colour": "blue",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-14, 6), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 35
+      },
+      "b": {
+        "axis": 0,
+        "chimney": true,
+        "chimney_end": 1,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-16, 4), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 37
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.021",
+        "kit.spatial.parcel.maze.house.024"
+      ]
+    },
+    {
+      "a": {
+        "axis": 1,
+        "clip_max": 5.0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 1,
+        "extend_min": 0,
+        "open_max": true,
+        "open_min": false,
+        "rect": "[P: (-16, 2), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 38
+      },
+      "b": {
+        "axis": 1,
+        "colour": "blue",
+        "dormers": {
+
+        },
+        "eave_band": 2,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (-14, 2), S: (2, 1)]",
+        "ridge_peaks": false,
+        "union_index": 48
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.024"
+      ]
+    },
+    {
+      "a": {
+        "axis": 0,
+        "chimney": true,
+        "chimney_end": 1,
+        "chimney_u": 35.0,
+        "colour": "red",
+        "dormers": {
+          "(0, 33)": true,
+          "(1, 33)": true
+        },
+        "eave_band": 3,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": false,
+        "open_min": false,
+        "rect": "[P: (32, 2), S: (4, 4)]",
+        "ridge_peaks": false,
+        "union_index": 42
+      },
+      "b": {
+        "axis": 0,
+        "colour": "red",
+        "dormers": {
+
+        },
+        "eave_band": 3,
+        "extend_max": 0,
+        "extend_min": 0,
+        "open_max": true,
+        "open_min": false,
+        "rect": "[P: (30, 4), S: (2, 2)]",
+        "ridge_peaks": false,
+        "union_index": 43
+      },
+      "owners": [
+        "kit.spatial.parcel.maze.house.029",
+        "kit.spatial.parcel.maze.house.029"
+      ]
+    }
+  ]
+}

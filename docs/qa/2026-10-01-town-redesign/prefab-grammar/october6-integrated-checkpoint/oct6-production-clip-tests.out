@@ -1,0 +1,46 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_roof_clipping_separation.gd
+[0m* test_sloped_cutters_preserve_original_mesh_and_collision_input
+[1m1/1 passed.
+[0m[4m
+
+res://tests/test_roof_eave_contact_precision.gd
+[0m* test_retriangulation_does_not_retract_an_intact_eave
+* test_real_trim_loss_is_not_hidden_by_roundoff_or_another_material
+* test_native_photo_contact_distinguishes_intact_courses_from_the_obstructed_corner
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_roof_ridge_eave_contacts.gd
+[0m* test_cap_ends_where_eave_covers_its_bearing
+* test_contact_fitting_only_changes_the_foreign_ridge
+* test_contact_terminates_all_flutes_across_cap_width
+[1m3/3 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               3
+Tests                 7
+Passing Tests         7
+Asserts              35
+Time              18.848s
+
+
+[32m---- All tests passed! ----
+[0m

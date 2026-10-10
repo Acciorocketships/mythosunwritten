@@ -1,0 +1,48 @@
+[
+	{
+		"grain": true,
+		"id": "01-oak-walnut",
+		"plaster": "dbcfb3",
+		"roof": "9d7045",
+		"stone": "a8a093",
+		"title": "Oak shingles / walnut framing",
+		"wood": "533725"
+	},
+	{
+		"grain": true,
+		"id": "02-walnut-oak",
+		"plaster": "d8c9ad",
+		"roof": "594439",
+		"stone": "a6a19a",
+		"title": "Walnut shingles / pale oak framing",
+		"wood": "ad875b"
+	},
+	{
+		"grain": false,
+		"id": "03-blue-birch",
+		"plaster": "e0d6bf",
+		"roof": "6f9baa",
+		"stone": "abaeaa",
+		"title": "Blue slate / pale birch framing",
+		"wood": "c7b68e"
+	},
+	{
+		"grain": false,
+		"id": "04-sage-oak",
+		"plaster": "d9cdb2",
+		"roof": "6f7962",
+		"stone": "a6a395",
+		"title": "Muted sage tiles / oak framing",
+		"wood": "89613d"
+	},
+	{
+		"grain": false,
+		"id": "05-limestone-charcoal",
+		"plaster": "c9b995",
+		"roof": "555e62",
+		"smooth": true,
+		"stone": "c9b995",
+		"title": "Warm limestone / charcoal roof",
+		"wood": "60574a"
+	}
+]

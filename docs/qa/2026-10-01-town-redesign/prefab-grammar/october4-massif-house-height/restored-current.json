@@ -1,0 +1,4325 @@
+{
+	"63:grand": {
+		"air_intrusions": 0,
+		"bridge_refusals": [
+			{
+				"cells": [
+					"(-1, 0, -1)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(-2, 0, -2)"
+				],
+				"reason": "span (-2, 0, -2) enters the raised district foundation"
+			},
+			{
+				"cells": [
+					"(-2, 1, -3)"
+				],
+				"reason": "span (-2, 1, -3) enters the raised district foundation"
+			},
+			{
+				"cells": [
+					"(-2, 1, -4)"
+				],
+				"reason": "span (-2, 1, -4) enters the raised district foundation"
+			},
+			{
+				"cells": [
+					"(-1, 1, -4)"
+				],
+				"reason": "span (-1, 1, -4) enters the raised district foundation"
+			},
+			{
+				"cells": [
+					"(0, 2, -4)"
+				],
+				"reason": "span (0, 2, -4) enters the raised district foundation"
+			},
+			{
+				"cells": [
+					"(1, 2, -4)"
+				],
+				"reason": "span (1, 2, -4) enters the raised district foundation"
+			},
+			{
+				"cells": [
+					"(2, 3, -4)"
+				],
+				"reason": "span (2, 3, -4) enters the raised district foundation"
+			},
+			{
+				"cells": [
+					"(2, 3, -3)"
+				],
+				"reason": "span (2, 3, -3) enters the raised district foundation"
+			},
+			{
+				"cells": [
+					"(0, 0, -1)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(1, 0, -1)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(2, 0, -1)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(3, 0, -1)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(3, 0, -2)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(3, 0, -3)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(3, 0, -4)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(3, 0, -5)"
+				],
+				"reason": "bridge endpoint rises above its connected neighborhood"
+			},
+			{
+				"cells": [
+					"(-1, 0, 5)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 1/1 on one side and 0/1 on the other"
+			},
+			{
+				"cells": [
+					"(0, 0, 5)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(0, 0, 6)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 1/1 on one side and 0/1 on the other"
+			},
+			{
+				"cells": [
+					"(-3, 0, 4)",
+					"(-4, 0, 4)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/2 on one side and 2/2 on the other"
+			},
+			{
+				"cells": [
+					"(-3, 0, 4)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(-4, 0, 4)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(-5, 0, 4)"
+				],
+				"reason": "bridge endpoint rises above its connected neighborhood"
+			},
+			{
+				"cells": [
+					"(-6, 0, 4)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(2, 4, -2)"
+				],
+				"reason": "bridge compound overlaps an earlier compound at (2, -2)"
+			},
+			{
+				"cells": [
+					"(-1, 0, -1)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(-2, 0, -2)"
+				],
+				"reason": "span (-2, 0, -2) enters the raised district foundation"
+			},
+			{
+				"cells": [
+					"(-2, 1, -3)"
+				],
+				"reason": "span (-2, 1, -3) enters the raised district foundation"
+			},
+			{
+				"cells": [
+					"(-2, 1, -4)"
+				],
+				"reason": "span (-2, 1, -4) enters the raised district foundation"
+			},
+			{
+				"cells": [
+					"(0, 2, -4)"
+				],
+				"reason": "span (0, 2, -4) enters the raised district foundation"
+			},
+			{
+				"cells": [
+					"(1, 2, -4)"
+				],
+				"reason": "span (1, 2, -4) enters the raised district foundation"
+			},
+			{
+				"cells": [
+					"(2, 3, -4)"
+				],
+				"reason": "span (2, 3, -4) enters the raised district foundation"
+			},
+			{
+				"cells": [
+					"(2, 3, -3)"
+				],
+				"reason": "span (2, 3, -3) enters the raised district foundation"
+			},
+			{
+				"cells": [
+					"(2, 4, -2)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(0, 0, -1)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(1, 0, -1)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(2, 0, -1)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(3, 0, -1)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(3, 0, -2)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(3, 0, -3)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(3, 0, -4)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(3, 0, -5)"
+				],
+				"reason": "bridge endpoint rises above its connected neighborhood"
+			},
+			{
+				"cells": [
+					"(-1, 0, 5)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 1/1 on one side and 0/1 on the other"
+			},
+			{
+				"cells": [
+					"(0, 0, 5)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(0, 0, 6)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 1/1 on one side and 0/1 on the other"
+			},
+			{
+				"cells": [
+					"(-3, 0, 4)",
+					"(-4, 0, 4)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/2 on one side and 2/2 on the other"
+			},
+			{
+				"cells": [
+					"(-3, 0, 4)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(-4, 0, 4)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(-5, 0, 4)"
+				],
+				"reason": "bridge endpoint rises above its connected neighborhood"
+			},
+			{
+				"cells": [
+					"(-6, 0, 4)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(-2, 4, -2)"
+				],
+				"reason": "bridge endpoint rises above its connected neighborhood"
+			},
+			{
+				"cells": [
+					"(-2, 4, -3)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(-3, 4, -3)"
+				],
+				"reason": "bridge endpoint rises above its connected neighborhood"
+			},
+			{
+				"cells": [
+					"(-2, 4, -4)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(-2, 4, -5)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(-1, 4, -5)"
+				],
+				"reason": "bridge endpoint rises above its connected neighborhood"
+			},
+			{
+				"cells": [
+					"(2, 0, -5)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(2, 0, -6)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 1/1 on one side and 0/1 on the other"
+			},
+			{
+				"cells": [
+					"(1, 0, -6)"
+				],
+				"reason": "bridge endpoint rises above its connected neighborhood"
+			},
+			{
+				"cells": [
+					"(0, 0, -6)"
+				],
+				"reason": "bridge endpoint rises above its connected neighborhood"
+			},
+			{
+				"cells": [
+					"(-1, 0, -6)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(-2, 0, -6)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(-3, 0, -6)"
+				],
+				"reason": "bridge endpoint rises above its connected neighborhood"
+			},
+			{
+				"cells": [
+					"(-4, 0, -6)"
+				],
+				"reason": "bridge endpoint rises above its connected neighborhood"
+			},
+			{
+				"cells": [
+					"(-4, 0, -5)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(-4, 0, -4)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(-4, 0, -3)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(1, 4, -2)",
+					"(0, 4, -2)"
+				],
+				"reason": "bridge compound overlaps an earlier compound at (1, -1)"
+			},
+			{
+				"cells": [
+					"(-1, 4, -2)"
+				],
+				"reason": "bridge compound overlaps an earlier compound at (-1, -2)"
+			},
+			{
+				"cells": [
+					"(0, 4, -2)"
+				],
+				"reason": "bridge compound overlaps an earlier compound at (0, -1)"
+			},
+			{
+				"cells": [
+					"(1, 4, -2)"
+				],
+				"reason": "bridge compound overlaps an earlier compound at (1, -1)"
+			},
+			{
+				"cells": [
+					"(-1, 0, -1)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(-2, 0, -2)"
+				],
+				"reason": "span (-2, 0, -2) enters the raised district foundation"
+			},
+			{
+				"cells": [
+					"(-2, 1, -3)"
+				],
+				"reason": "span (-2, 1, -3) enters the raised district foundation"
+			},
+			{
+				"cells": [
+					"(-2, 1, -4)"
+				],
+				"reason": "span (-2, 1, -4) enters the raised district foundation"
+			},
+			{
+				"cells": [
+					"(0, 2, -4)"
+				],
+				"reason": "span (0, 2, -4) enters the raised district foundation"
+			},
+			{
+				"cells": [
+					"(1, 2, -4)"
+				],
+				"reason": "span (1, 2, -4) enters the raised district foundation"
+			},
+			{
+				"cells": [
+					"(2, 3, -4)"
+				],
+				"reason": "span (2, 3, -4) enters the raised district foundation"
+			},
+			{
+				"cells": [
+					"(2, 3, -3)"
+				],
+				"reason": "span (2, 3, -3) enters the raised district foundation"
+			},
+			{
+				"cells": [
+					"(2, 4, -2)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(0, 0, -1)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(1, 0, -1)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(2, 0, -1)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(3, 0, -1)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(3, 0, -2)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(3, 0, -3)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(3, 0, -4)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(-1, 0, 5)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 1/1 on one side and 0/1 on the other"
+			},
+			{
+				"cells": [
+					"(0, 0, 5)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(-3, 0, 4)",
+					"(-4, 0, 4)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/2 on one side and 2/2 on the other"
+			},
+			{
+				"cells": [
+					"(-3, 0, 4)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(-4, 0, 4)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(-5, 0, 4)"
+				],
+				"reason": "bridge endpoint rises above its connected neighborhood"
+			},
+			{
+				"cells": [
+					"(-6, 0, 4)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(1, 4, -2)",
+					"(0, 4, -2)"
+				],
+				"reason": "bridge endpoint rises above its connected neighborhood"
+			},
+			{
+				"cells": [
+					"(1, 4, -2)"
+				],
+				"reason": "bridge endpoint rises above its connected neighborhood"
+			},
+			{
+				"cells": [
+					"(0, 4, -2)"
+				],
+				"reason": "bridge endpoint rises above its connected neighborhood"
+			},
+			{
+				"cells": [
+					"(-1, 4, -2)"
+				],
+				"reason": "bridge endpoint rises above its connected neighborhood"
+			},
+			{
+				"cells": [
+					"(-2, 4, -2)"
+				],
+				"reason": "bridge endpoint rises above its connected neighborhood"
+			},
+			{
+				"cells": [
+					"(-2, 4, -3)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(-3, 4, -3)"
+				],
+				"reason": "bridge endpoint rises above its connected neighborhood"
+			},
+			{
+				"cells": [
+					"(-2, 4, -4)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(-2, 4, -5)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(-1, 4, -5)"
+				],
+				"reason": "bridge endpoint rises above its connected neighborhood"
+			},
+			{
+				"cells": [
+					"(2, 0, -5)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(2, 0, -6)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 1/1 on one side and 0/1 on the other"
+			},
+			{
+				"cells": [
+					"(1, 0, -6)"
+				],
+				"reason": "bridge endpoint rises above its connected neighborhood"
+			},
+			{
+				"cells": [
+					"(0, 0, -6)"
+				],
+				"reason": "bridge endpoint rises above its connected neighborhood"
+			},
+			{
+				"cells": [
+					"(-1, 0, -6)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(-2, 0, -6)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(-3, 0, -6)"
+				],
+				"reason": "bridge endpoint rises above its connected neighborhood"
+			},
+			{
+				"cells": [
+					"(-4, 0, -6)"
+				],
+				"reason": "bridge endpoint rises above its connected neighborhood"
+			},
+			{
+				"cells": [
+					"(-4, 0, -5)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(-4, 0, -4)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(-4, 0, -3)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 0/1 on one side and 1/1 on the other"
+			},
+			{
+				"cells": [
+					"(-5, 0, -6)"
+				],
+				"reason": "bridge endpoint rises above its connected neighborhood"
+			},
+			{
+				"cells": [
+					"(-6, 0, -6)"
+				],
+				"reason": "bridge storey [3, 5) has endpoint coverage 1/1 on one side and 0/1 on the other"
+			},
+			{
+				"cells": [
+					"(-6, 0, -5)"
+				],
+				"reason": "bridge endpoint rises above its connected neighborhood"
+			},
+			{
+				"cells": [
+					"(-6, 0, -4)"
+				],
+				"reason": "bridge endpoint rises above its connected neighborhood"
+			},
+			{
+				"cells": [
+					"(-6, 0, -3)"
+				],
+				"reason": "bridge endpoint rises above its connected neighborhood"
+			},
+			{
+				"cells": [
+					"(3, 0, 0)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(3, 0, 1)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(2, 0, 1)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(0, 0, 1)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(-1, 0, 1)"
+				],
+				"reason": "bridge lacks two ground-borne endpoint houses"
+			},
+			{
+				"cells": [
+					"(1, 1, 1)"
+				],
+				"reason": "bridge compound overlaps an earlier compound at (1, 2)"
+			}
+		],
+		"broad_stacks": [
+			{
+				"bounds": "[P: (8, -6), S: (6, 4)]",
+				"cells": 18,
+				"floors": 2,
+				"host": "kit.spatial.feature.landmark.02"
+			},
+			{
+				"bounds": "[P: (-12, 4), S: (8, 4)]",
+				"cells": 17,
+				"floors": 3,
+				"host": "kit.spatial.parcel.maze.house.002"
+			},
+			{
+				"bounds": "[P: (-16, 8), S: (4, 4)]",
+				"cells": 12,
+				"floors": 2,
+				"host": "kit.spatial.parcel.maze.house.008"
+			},
+			{
+				"bounds": "[P: (-4, -6), S: (8, 4)]",
+				"cells": 20,
+				"floors": 5,
+				"host": "kit.spatial.parcel.maze.house.010"
+			},
+			{
+				"bounds": "[P: (-6, -10), S: (4, 6)]",
+				"cells": 8,
+				"floors": 2,
+				"host": "kit.spatial.parcel.maze.house.wall-room.000"
+			}
+		],
+		"ceiling_band_histogram": {
+			"4": 2,
+			"8": 12,
+			"10": 4,
+			"11": 4
+		},
+		"covered_quarters": 22,
+		"enclosure": {
+			"(-1, 0, -1)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					1,
+					1,
+					1,
+					1
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-1, 0, -6)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					1,
+					0,
+					1,
+					0
+				],
+				"structural_flanks": [
+					0,
+					1,
+					0,
+					1
+				]
+			},
+			"(-1, 0, 1)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					1,
+					1,
+					1,
+					1
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-1, 0, 3)": {
+				"ceiling_bands": [
+					4,
+					-1,
+					4,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					1,
+					0,
+					2,
+					1
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-1, 0, 4)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					0,
+					1,
+					1
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-1, 1, -4)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					0,
+					0,
+					0
+				],
+				"structural_flanks": [
+					1,
+					1,
+					2,
+					2
+				]
+			},
+			"(-1, 4, -2)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					1,
+					0,
+					1,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-1, 4, -5)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					0,
+					1,
+					1
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-2, 0, -1)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					1,
+					1,
+					0,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-2, 0, -2)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					0,
+					1,
+					1
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-2, 0, -6)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					1,
+					0,
+					1
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-2, 0, 0)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					1,
+					1,
+					1,
+					1
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-2, 0, 1)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					1,
+					1,
+					0,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-2, 0, 2)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					1,
+					1,
+					1,
+					1
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-2, 0, 3)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					1,
+					1,
+					0,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-2, 0, 4)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					0,
+					0,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-2, 1, -3)": {
+				"ceiling_bands": [
+					11,
+					11,
+					11,
+					11
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					1,
+					1,
+					0,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					1,
+					1
+				]
+			},
+			"(-2, 1, -4)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					2,
+					1,
+					1,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-2, 4, -2)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					0,
+					0,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-2, 4, -3)": {
+				"ceiling_bands": [
+					8,
+					8,
+					8,
+					8
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					0,
+					1,
+					1
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-2, 4, -4)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					1,
+					1,
+					0,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-2, 4, -5)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					1,
+					1,
+					0,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-3, 0, -6)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					1,
+					0,
+					1
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-3, 0, 4)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					1,
+					0,
+					1,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-3, 4, -3)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					1,
+					0,
+					1,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-4, 0, -3)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					0,
+					1,
+					1
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-4, 0, -4)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					8,
+					8
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					0,
+					1,
+					1
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-4, 0, -5)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					8,
+					8
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					1,
+					1,
+					1,
+					1
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-4, 0, -6)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					1,
+					0,
+					1,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-4, 0, 4)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					1,
+					0,
+					1,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-5, 0, -6)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					1,
+					1,
+					1,
+					1
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-5, 0, 4)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					1,
+					0,
+					1,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-6, 0, -3)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					1,
+					0,
+					1
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-6, 0, -4)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					0,
+					0,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-6, 0, -5)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					1,
+					1,
+					1,
+					1
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-6, 0, -6)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					0,
+					0,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(-6, 0, 4)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					2,
+					1,
+					1,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(0, 0, -1)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					1,
+					1,
+					1,
+					1
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(0, 0, -6)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					1,
+					1,
+					1,
+					1
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(0, 0, 1)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					1,
+					1,
+					1,
+					1
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(0, 2, -4)": {
+				"ceiling_bands": [
+					10,
+					-1,
+					10,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					0,
+					0,
+					0
+				],
+				"structural_flanks": [
+					1,
+					1,
+					1,
+					1
+				]
+			},
+			"(0, 4, -2)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					1,
+					0,
+					1,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(1, 0, -1)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					1,
+					0,
+					1,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(1, 0, -6)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					1,
+					0,
+					1,
+					0
+				],
+				"structural_flanks": [
+					0,
+					1,
+					0,
+					1
+				]
+			},
+			"(1, 1, 1)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "raised",
+				"inhabited_flanks": [
+					0,
+					0,
+					0,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(1, 2, -4)": {
+				"ceiling_bands": [
+					10,
+					-1,
+					10,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					0,
+					0,
+					0
+				],
+				"structural_flanks": [
+					0,
+					1,
+					2,
+					2
+				]
+			},
+			"(1, 4, -2)": {
+				"ceiling_bands": [
+					8,
+					8,
+					8,
+					8
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					1,
+					0,
+					1,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(2, 0, -1)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					0,
+					0,
+					0
+				],
+				"structural_flanks": [
+					1,
+					0,
+					1,
+					0
+				]
+			},
+			"(2, 0, -5)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					0,
+					0,
+					0
+				],
+				"structural_flanks": [
+					1,
+					2,
+					0,
+					1
+				]
+			},
+			"(2, 0, -6)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					0,
+					0,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(2, 0, 1)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					0,
+					0,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(2, 3, -3)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					0,
+					0,
+					0
+				],
+				"structural_flanks": [
+					1,
+					1,
+					0,
+					0
+				]
+			},
+			"(2, 3, -4)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					0,
+					0,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(2, 4, -2)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					0,
+					0,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(3, 0, -1)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					0,
+					0,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(3, 0, -2)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					0,
+					1,
+					1
+				],
+				"structural_flanks": [
+					1,
+					1,
+					0,
+					0
+				]
+			},
+			"(3, 0, -3)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					0,
+					1,
+					1
+				],
+				"structural_flanks": [
+					1,
+					1,
+					0,
+					0
+				]
+			},
+			"(3, 0, -4)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					0,
+					0,
+					0
+				],
+				"structural_flanks": [
+					1,
+					1,
+					0,
+					0
+				]
+			},
+			"(3, 0, -5)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					0,
+					0,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(3, 0, 0)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					0,
+					0,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			},
+			"(3, 0, 1)": {
+				"ceiling_bands": [
+					-1,
+					-1,
+					-1,
+					-1
+				],
+				"elevation": "ground",
+				"inhabited_flanks": [
+					0,
+					0,
+					0,
+					0
+				],
+				"structural_flanks": [
+					0,
+					0,
+					0,
+					0
+				]
+			}
+		},
+		"floating": 0,
+		"full_cover_max_ceiling_band_histogram": {
+			"8": 2,
+			"11": 1
+		},
+		"fully_covered": 3,
+		"inhabited_ids": [
+			"kit.spatial.feature.landmark.01",
+			"kit.spatial.feature.landmark.02",
+			"kit.spatial.parcel.maze.house.000",
+			"kit.spatial.parcel.maze.house.001",
+			"kit.spatial.parcel.maze.house.002",
+			"kit.spatial.parcel.maze.house.008",
+			"kit.spatial.parcel.maze.house.010",
+			"kit.spatial.parcel.maze.house.013",
+			"kit.spatial.parcel.maze.house.015",
+			"kit.spatial.parcel.maze.house.016",
+			"kit.spatial.parcel.maze.house.019",
+			"kit.spatial.parcel.maze.house.020",
+			"kit.spatial.parcel.maze.house.022",
+			"kit.spatial.parcel.maze.house.wall-room.000",
+			"kit.spatial.parcel.maze.house.wall-room.002",
+			"kit.spatial.parcel.maze.house.wall-room.005",
+			"kit.spatial.parcel.maze.house.wall-room.006",
+			"kit.spatial.residual.00"
+		],
+		"native_facade_flanks": 0,
+		"open_quarters_by_inhabited_flanks": {
+			"ground": [
+				125,
+				91,
+				2,
+				0,
+				0
+			],
+			"raised": [
+				4,
+				0,
+				0,
+				0,
+				0
+			]
+		},
+		"open_quarters_by_structural_flanks": {
+			"ground": [
+				193,
+				21,
+				4,
+				0,
+				0
+			],
+			"raised": [
+				4,
+				0,
+				0,
+				0,
+				0
+			]
+		},
+		"plot_outcomes": {
+			"asset_clearance_reservations": [
+				{
+					"columns": [
+						"(1, 0)",
+						"(2, 0)",
+						"(3, 0)",
+						"(4, 0)",
+						"(5, 0)",
+						"(6, 0)",
+						"(1, 1)",
+						"(2, 1)",
+						"(3, 1)",
+						"(4, 1)",
+						"(5, 1)",
+						"(6, 1)",
+						"(5, 2)",
+						"(6, 2)",
+						"(5, 3)",
+						"(6, 3)",
+						"(5, 4)",
+						"(6, 4)",
+						"(5, 5)",
+						"(6, 5)"
+					],
+					"floor": 0,
+					"id": "asset.00",
+					"support_columns": [
+						"(1, 2)",
+						"(2, 2)",
+						"(3, 2)",
+						"(4, 2)",
+						"(5, 2)",
+						"(1, 3)",
+						"(2, 3)",
+						"(3, 3)",
+						"(4, 3)",
+						"(5, 3)",
+						"(1, 4)",
+						"(2, 4)",
+						"(3, 4)",
+						"(4, 4)",
+						"(5, 4)",
+						"(1, 5)",
+						"(2, 5)",
+						"(3, 5)",
+						"(4, 5)",
+						"(5, 5)"
+					],
+					"top": 16
+				},
+				{
+					"columns": [
+						"(-7, -4)",
+						"(-6, -4)",
+						"(-5, -4)",
+						"(-4, -4)",
+						"(-7, -3)",
+						"(-6, -3)",
+						"(-5, -3)",
+						"(-4, -3)",
+						"(-7, -2)",
+						"(-7, -1)",
+						"(-7, 0)",
+						"(-8, 1)",
+						"(-7, 1)",
+						"(-6, 1)",
+						"(-5, 1)",
+						"(-4, 1)"
+					],
+					"floor": 0,
+					"id": "asset.01",
+					"support_columns": [
+						"(-7, -2)",
+						"(-6, -2)",
+						"(-5, -2)",
+						"(-7, -1)",
+						"(-6, -1)",
+						"(-5, -1)",
+						"(-7, 0)",
+						"(-6, 0)",
+						"(-5, 0)"
+					],
+					"top": 4
+				},
+				{
+					"columns": [
+						"(2, -4)",
+						"(3, -4)",
+						"(4, -4)",
+						"(5, -4)",
+						"(6, -4)",
+						"(7, -4)",
+						"(2, -3)",
+						"(3, -3)",
+						"(7, -3)",
+						"(2, -2)",
+						"(3, -2)",
+						"(7, -2)",
+						"(2, -1)",
+						"(3, -1)",
+						"(7, -1)"
+					],
+					"floor": 0,
+					"id": "asset.02",
+					"support_columns": [
+						"(4, -3)",
+						"(5, -3)",
+						"(6, -3)",
+						"(4, -2)",
+						"(5, -2)",
+						"(6, -2)"
+					],
+					"top": 4
+				}
+			],
+			"assets": [
+				{
+					"kind_id": "anchor.z_native.turret.01",
+					"mirror": {
+						"bearing_off_ground": 0,
+						"body_outside_plot": 0,
+						"candidate_refusals": {
+							"below_bearing": 1660,
+							"carved_minimum_body": 1372,
+							"footprint_unavailable": 11519,
+							"huddle_height": 3545,
+							"missing_footing": 813,
+							"no_fronting_street": 970
+						},
+						"lane_refusals": {
+							"bearing_on_green": 1,
+							"bearing_outside_massif": 2
+						},
+						"lone_raised_level": 0,
+						"no_frontage": 0,
+						"realisable": 5,
+						"street_over_top": 0,
+						"tested": 5
+					},
+					"realisable": true,
+					"reason": "",
+					"site": {
+						"anchor": "(1, 2)",
+						"clearance_column_count": 20,
+						"cost": 166,
+						"datum": 0,
+						"id": "asset.00",
+						"orientation": 1
+					}
+				},
+				{
+					"kind_id": "anchor.prefab.11",
+					"mirror": {
+						"bearing_off_ground": 0,
+						"body_outside_plot": 0,
+						"candidate_refusals": {
+							"below_bearing": 559,
+							"carved_minimum_body": 696,
+							"footprint_unavailable": 13655,
+							"huddle_height": 2114,
+							"missing_footing": 490,
+							"no_fronting_street": 655
+						},
+						"lane_refusals": {
+							"bearing_on_green": 1,
+							"bearing_outside_massif": 2
+						},
+						"lone_raised_level": 0,
+						"no_frontage": 0,
+						"realisable": 4,
+						"street_over_top": 0,
+						"tested": 4
+					},
+					"realisable": true,
+					"reason": "",
+					"site": {
+						"anchor": "(-6, -2)",
+						"clearance_column_count": 16,
+						"cost": 52,
+						"datum": 0,
+						"id": "asset.01",
+						"orientation": 0
+					}
+				},
+				{
+					"kind_id": "anchor.prefab.16",
+					"mirror": {
+						"bearing_off_ground": 0,
+						"body_outside_plot": 0,
+						"candidate_refusals": {
+							"below_bearing": 396,
+							"carved_minimum_body": 215,
+							"footprint_unavailable": 14859,
+							"huddle_height": 478,
+							"missing_footing": 104,
+							"no_fronting_street": 643
+						},
+						"lane_refusals": {
+							"bearing_on_green": 1
+						},
+						"lone_raised_level": 0,
+						"no_frontage": 0,
+						"realisable": 1,
+						"street_over_top": 0,
+						"tested": 1
+					},
+					"realisable": true,
+					"reason": "",
+					"site": {
+						"anchor": "(4, -3)",
+						"clearance_column_count": 15,
+						"cost": 56,
+						"datum": 0,
+						"id": "asset.02",
+						"orientation": 0
+					}
+				},
+				{
+					"kind_id": "",
+					"mirror": {
+						"bearing_off_ground": 0,
+						"body_outside_plot": 0,
+						"candidate_refusals": {
+							"below_bearing": 194,
+							"carved_minimum_body": 183,
+							"footprint_unavailable": 15183,
+							"huddle_height": 380,
+							"missing_footing": 32,
+							"no_fronting_street": 476
+						},
+						"lone_raised_level": 0,
+						"no_frontage": 0,
+						"realisable": 0,
+						"street_over_top": 0,
+						"tested": 0
+					},
+					"realisable": false,
+					"reason": "no street-fronting supportable site remains",
+					"site": null
+				},
+				{
+					"kind_id": "",
+					"mirror": {
+						"bearing_off_ground": 0,
+						"body_outside_plot": 0,
+						"candidate_refusals": {
+							"below_bearing": 194,
+							"carved_minimum_body": 183,
+							"footprint_unavailable": 15183,
+							"huddle_height": 380,
+							"missing_footing": 32,
+							"no_fronting_street": 476
+						},
+						"lone_raised_level": 0,
+						"no_frontage": 0,
+						"realisable": 0,
+						"street_over_top": 0,
+						"tested": 0
+					},
+					"realisable": false,
+					"reason": "no street-fronting supportable site remains",
+					"site": null
+				},
+				{
+					"kind_id": "",
+					"mirror": {
+						"bearing_off_ground": 0,
+						"body_outside_plot": 0,
+						"candidate_refusals": {
+							"below_bearing": 194,
+							"carved_minimum_body": 183,
+							"footprint_unavailable": 15183,
+							"huddle_height": 380,
+							"missing_footing": 32,
+							"no_fronting_street": 476
+						},
+						"lone_raised_level": 0,
+						"no_frontage": 0,
+						"realisable": 0,
+						"street_over_top": 0,
+						"tested": 0
+					},
+					"realisable": false,
+					"reason": "no street-fronting supportable site remains",
+					"site": null
+				},
+				{
+					"kind_id": "",
+					"mirror": {
+						"bearing_off_ground": 0,
+						"body_outside_plot": 0,
+						"candidate_refusals": {
+							"below_bearing": 194,
+							"carved_minimum_body": 183,
+							"footprint_unavailable": 15183,
+							"huddle_height": 380,
+							"missing_footing": 32,
+							"no_fronting_street": 476
+						},
+						"lone_raised_level": 0,
+						"no_frontage": 0,
+						"realisable": 0,
+						"street_over_top": 0,
+						"tested": 0
+					},
+					"realisable": false,
+					"reason": "no street-fronting supportable site remains",
+					"site": null
+				},
+				{
+					"kind_id": "",
+					"mirror": {
+						"bearing_off_ground": 0,
+						"body_outside_plot": 0,
+						"candidate_refusals": {
+							"below_bearing": 194,
+							"carved_minimum_body": 183,
+							"footprint_unavailable": 15183,
+							"huddle_height": 380,
+							"missing_footing": 32,
+							"no_fronting_street": 476
+						},
+						"lone_raised_level": 0,
+						"no_frontage": 0,
+						"realisable": 0,
+						"street_over_top": 0,
+						"tested": 0
+					},
+					"realisable": false,
+					"reason": "no street-fronting supportable site remains",
+					"site": null
+				},
+				{
+					"kind_id": "",
+					"mirror": {
+						"bearing_off_ground": 0,
+						"body_outside_plot": 0,
+						"candidate_refusals": {
+							"below_bearing": 194,
+							"carved_minimum_body": 183,
+							"footprint_unavailable": 15183,
+							"huddle_height": 380,
+							"missing_footing": 32,
+							"no_fronting_street": 476
+						},
+						"lone_raised_level": 0,
+						"no_frontage": 0,
+						"realisable": 0,
+						"street_over_top": 0,
+						"tested": 0
+					},
+					"realisable": false,
+					"reason": "no street-fronting supportable site remains",
+					"site": null
+				}
+			],
+			"bridges": [],
+			"buildings": [
+				{
+					"cells": 3,
+					"floor": 0,
+					"id": "house.000",
+					"reason": "",
+					"skyline_peak": false,
+					"tiered": false,
+					"top": 6
+				},
+				{
+					"cells": 4,
+					"floor": 0,
+					"id": "house.001",
+					"reason": "",
+					"skyline_peak": false,
+					"tiered": false,
+					"top": 8
+				},
+				{
+					"cells": 6,
+					"floor": 0,
+					"id": "house.002",
+					"reason": "",
+					"skyline_peak": false,
+					"tiered": false,
+					"top": 8
+				},
+				{
+					"cells": 4,
+					"floor": 0,
+					"id": "house.008",
+					"reason": "",
+					"skyline_peak": false,
+					"tiered": false,
+					"top": 6
+				},
+				{
+					"cells": 3,
+					"floor": 0,
+					"id": "house.016",
+					"reason": "",
+					"skyline_peak": false,
+					"tiered": false,
+					"top": 4
+				},
+				{
+					"cells": 2,
+					"floor": 0,
+					"id": "house.019",
+					"reason": "",
+					"skyline_peak": false,
+					"tiered": false,
+					"top": 4
+				},
+				{
+					"cells": 1,
+					"floor": 0,
+					"id": "house.020",
+					"reason": "",
+					"skyline_peak": false,
+					"tiered": false,
+					"top": 4
+				},
+				{
+					"cells": 1,
+					"floor": 0,
+					"id": "house.022",
+					"reason": "",
+					"skyline_peak": false,
+					"tiered": false,
+					"top": 4
+				},
+				{
+					"cells": 2,
+					"floor": 4,
+					"id": "house.010",
+					"reason": "",
+					"skyline_peak": false,
+					"tiered": false,
+					"top": 16
+				},
+				{
+					"cells": 1,
+					"floor": 4,
+					"id": "house.012",
+					"reason": "",
+					"skyline_peak": false,
+					"tiered": false,
+					"top": 16
+				},
+				{
+					"cells": 2,
+					"floor": 4,
+					"id": "house.013",
+					"reason": "",
+					"skyline_peak": false,
+					"tiered": false,
+					"top": 12
+				},
+				{
+					"cells": 2,
+					"floor": 4,
+					"id": "house.015",
+					"reason": "",
+					"skyline_peak": true,
+					"tiered": false,
+					"top": 16
+				},
+				{
+					"cells": 1,
+					"floor": 0,
+					"id": "house.wall-room.000",
+					"reason": "",
+					"skyline_peak": false,
+					"tiered": true,
+					"top": 4,
+					"wall_room": true
+				},
+				{
+					"cells": 1,
+					"floor": 0,
+					"id": "house.wall-room.001",
+					"reason": "",
+					"skyline_peak": false,
+					"tiered": true,
+					"top": 4,
+					"wall_room": true
+				},
+				{
+					"cells": 1,
+					"floor": 0,
+					"id": "house.wall-room.002",
+					"reason": "",
+					"skyline_peak": false,
+					"tiered": true,
+					"top": 4,
+					"wall_room": true
+				},
+				{
+					"cells": 1,
+					"floor": 0,
+					"id": "house.wall-room.003",
+					"reason": "",
+					"skyline_peak": false,
+					"tiered": true,
+					"top": 4,
+					"wall_room": true
+				},
+				{
+					"cells": 1,
+					"floor": 0,
+					"id": "house.wall-room.004",
+					"reason": "",
+					"skyline_peak": false,
+					"tiered": true,
+					"top": 4,
+					"wall_room": true
+				},
+				{
+					"cells": 1,
+					"floor": 0,
+					"id": "house.wall-room.005",
+					"reason": "",
+					"skyline_peak": false,
+					"tiered": false,
+					"top": 4,
+					"wall_room": true
+				},
+				{
+					"cells": 1,
+					"floor": 0,
+					"id": "house.wall-room.006",
+					"reason": "",
+					"skyline_peak": false,
+					"tiered": true,
+					"top": 4,
+					"wall_room": true
+				},
+				{
+					"cells": 1,
+					"floor": 0,
+					"id": "house.wall-room.007",
+					"reason": "",
+					"skyline_peak": false,
+					"tiered": false,
+					"top": 4,
+					"wall_room": true
+				},
+				{
+					"cells": 1,
+					"floor": 0,
+					"id": "house.wall-room.008",
+					"reason": "",
+					"skyline_peak": false,
+					"tiered": true,
+					"top": 4,
+					"wall_room": true
+				},
+				{
+					"cells": 1,
+					"floor": 0,
+					"id": "house.wall-room.009",
+					"reason": "",
+					"skyline_peak": false,
+					"tiered": true,
+					"top": 4,
+					"wall_room": true
+				}
+			],
+			"deck_quota_cell": "(-1, 0, -1)",
+			"decks": [
+				{
+					"datum": 0,
+					"depth": 2,
+					"id": "deck.00",
+					"reason": "",
+					"size": 4,
+					"width": 2
+				}
+			],
+			"decks_short": 2,
+			"leftover_columns": 194,
+			"orphan_sweep_joined": 0,
+			"plaza": {
+				"anchor": "(-2, -1)",
+				"cost": 0,
+				"datum": 4,
+				"depth": 2,
+				"id": "plaza.00",
+				"reason": "",
+				"size": 6,
+				"width": 3
+			},
+			"seed_refusals": [
+				{
+					"band": 0,
+					"column": "(-1, 4)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(-2, 5)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(-3, 4)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(-2, 3)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(-1, 3)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(-2, 4)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(-2, 2)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(-2, 1)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(-1, 1)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(-2, 0)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(-1, 0)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(-3, 0)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(-2, -1)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(-1, -1)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(-3, -1)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(-2, -2)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(0, -1)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(-1, -2)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(-1, 5)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 1,
+					"column": "(-1, -4)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 1,
+					"column": "(-2, -3)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 1,
+					"column": "(-3, -4)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 1,
+					"column": "(-2, -5)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 2,
+					"column": "(1, -4)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 2,
+					"column": "(0, -3)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 2,
+					"column": "(-1, -4)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 2,
+					"column": "(0, -5)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 3,
+					"column": "(3, -4)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 3,
+					"column": "(2, -3)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 3,
+					"column": "(1, -4)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 3,
+					"column": "(2, -5)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 4,
+					"column": "(3, -2)",
+					"reason": "would overtop the citadel's plinth"
+				},
+				{
+					"band": 4,
+					"column": "(2, -1)",
+					"reason": "would overtop the citadel's plinth"
+				},
+				{
+					"band": 4,
+					"column": "(1, -2)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 4,
+					"column": "(2, -3)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(1, -1)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(0, 0)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(0, -2)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(2, -1)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(1, 0)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(1, -2)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(3, -1)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(2, 0)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(2, -2)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(4, -1)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(3, 0)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(3, -2)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(4, -2)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(3, -3)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(4, -3)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(2, -3)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(3, -4)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(4, -4)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(2, -4)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(3, -5)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(4, -5)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(2, -5)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(3, -6)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(0, 5)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(-1, 6)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(1, 5)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(0, 6)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(1, 6)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(0, 7)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(-3, 5)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(-4, 4)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(-4, 5)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(-5, 4)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(-5, 5)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(-6, 4)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(-6, 5)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 4,
+					"column": "(2, -2)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 4,
+					"column": "(1, -1)",
+					"reason": "would overtop the citadel's plinth"
+				},
+				{
+					"band": 4,
+					"column": "(0, -2)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 4,
+					"column": "(0, -1)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 4,
+					"column": "(-1, -2)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 4,
+					"column": "(-1, -1)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 4,
+					"column": "(-2, -2)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 4,
+					"column": "(-2, -1)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 4,
+					"column": "(-3, -2)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 4,
+					"column": "(-2, -3)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 4,
+					"column": "(-3, -3)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 4,
+					"column": "(-2, -4)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 4,
+					"column": "(-4, -3)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 4,
+					"column": "(-1, -4)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 4,
+					"column": "(-2, -5)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 4,
+					"column": "(-1, -5)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 4,
+					"column": "(-2, -6)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 4,
+					"column": "(-1, -6)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(1, -5)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(2, -6)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(1, -6)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(2, -7)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(0, -6)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(0, -5)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(-1, -6)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(-1, -5)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(-2, -6)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(-2, -5)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(-3, -6)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(-2, -7)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(-3, -5)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(-4, -6)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(-3, -7)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(-4, -5)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(-5, -6)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(-4, -4)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(-3, -4)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(-4, -3)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(-5, -4)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(-3, -3)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(-4, -2)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(-5, -3)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(-6, -6)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(-6, -5)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 0,
+					"column": "(-7, -6)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(-6, -7)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(-6, -4)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(-6, -3)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(-7, -4)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(-6, -2)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(-7, -3)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(4, 0)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(3, 1)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(4, 1)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(3, 2)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(2, 1)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 1,
+					"column": "(2, 1)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 1,
+					"column": "(1, 2)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 1,
+					"column": "(0, 1)",
+					"reason": "support rule refuses this floor"
+				},
+				{
+					"band": 1,
+					"column": "(1, 0)",
+					"reason": "column already spoken for"
+				},
+				{
+					"band": 0,
+					"column": "(0, 1)",
+					"reason": "support rule refuses this floor"
+				}
+			],
+			"street_floor_gaps": 1,
+			"tunnel_roofs": [
+				{
+					"reason": "no adjacent house storey over the crown",
+					"walk": "(3, 0, -2)"
+				},
+				{
+					"reason": "crown already carries a plot",
+					"walk": "(0, 0, -1)"
+				},
+				{
+					"reason": "passage walls do not bear on two jambs",
+					"walk": "(1, 0, -1)"
+				},
+				{
+					"reason": "passage walls do not bear on two jambs",
+					"walk": "(2, 0, -1)"
+				},
+				{
+					"reason": "passage walls do not bear on two jambs",
+					"walk": "(3, 0, 0)"
+				},
+				{
+					"reason": "passage walls do not bear on two jambs",
+					"walk": "(3, 0, 1)"
+				},
+				{
+					"reason": "plot over.07 breaks support rule 2 at column (-2, -4): carved air stands inside its clearance [4, 8)",
+					"walk": "(-2, 1, -4)"
+				},
+				{
+					"reason": "plot over.08 breaks support rule 2 at column (-2, -3): carved air stands inside its clearance [4, 8)",
+					"walk": "(-2, 1, -3)"
+				},
+				{
+					"reason": "no crown",
+					"walk": "(-2, 4, -4)"
+				}
+			]
+		},
+		"public_cells": 61,
+		"room_projections": [
+			{
+				"band": 8,
+				"bounds": "[P: (8.0, 12.0, -12.0), S: (0.65, 3.0, 4.0)]",
+				"dir": 0,
+				"envelope": "[P: (8.0, 11.0, -12.2), S: (1.05, 4.0, 4.4)]",
+				"host": "kit.spatial.parcel.maze.house.010"
+			},
+			{
+				"band": 6,
+				"bounds": "[P: (2.0, 9.0, -18.0), S: (4.0, 3.0, 0.65)]",
+				"dir": 1,
+				"envelope": "[P: (1.8, 8.0, -18.0), S: (4.4, 4.0, 1.049999)]",
+				"host": "kit.spatial.parcel.maze.house.015"
+			},
+			{
+				"band": 2,
+				"bounds": "[P: (-12.65, 3.0, -12.0), S: (0.65, 3.0, 4.0)]",
+				"dir": 2,
+				"envelope": "[P: (-13.05, 2.0, -12.2), S: (1.05, 4.0, 4.4)]",
+				"host": "kit.spatial.parcel.maze.house.wall-room.000"
+			}
+		],
+		"source_bridge_cells": 0,
+		"source_bridge_proofs": [],
+		"source_plots": [
+			{
+				"building_id": "asset.00",
+				"cells": [
+					"(1, 2)",
+					"(2, 2)",
+					"(3, 2)",
+					"(4, 2)",
+					"(1, 3)",
+					"(2, 3)",
+					"(3, 3)",
+					"(4, 3)",
+					"(1, 4)",
+					"(2, 4)",
+					"(3, 4)",
+					"(4, 4)",
+					"(1, 5)",
+					"(2, 5)",
+					"(3, 5)",
+					"(4, 5)",
+					"(1, 6)",
+					"(2, 6)",
+					"(3, 6)",
+					"(4, 6)",
+					"(1, 7)",
+					"(2, 7)",
+					"(3, 7)",
+					"(4, 7)"
+				],
+				"door_walk": "(3, 0, 1)",
+				"floor": 0,
+				"id": "asset.00",
+				"kind": "asset",
+				"top": 16
+			},
+			{
+				"building_id": "asset.01",
+				"cells": [
+					"(-6, -2)",
+					"(-5, -2)",
+					"(-4, -2)",
+					"(-3, -2)",
+					"(-6, -1)",
+					"(-5, -1)",
+					"(-4, -1)",
+					"(-3, -1)",
+					"(-6, 0)",
+					"(-5, 0)",
+					"(-4, 0)",
+					"(-3, 0)"
+				],
+				"door_walk": "(-6, 0, -3)",
+				"floor": 0,
+				"id": "asset.01",
+				"kind": "asset",
+				"top": 4
+			},
+			{
+				"building_id": "asset.02",
+				"cells": [
+					"(4, -3)",
+					"(5, -3)",
+					"(6, -3)",
+					"(4, -2)",
+					"(5, -2)",
+					"(6, -2)",
+					"(4, -1)",
+					"(5, -1)",
+					"(6, -1)"
+				],
+				"door_walk": "(3, 0, -3)",
+				"floor": 0,
+				"id": "asset.02",
+				"kind": "asset",
+				"top": 4
+			},
+			{
+				"building_id": "plaza.00",
+				"cells": [
+					"(-2, -1)",
+					"(-1, -1)",
+					"(0, -1)",
+					"(-2, 0)",
+					"(-1, 0)",
+					"(0, 0)"
+				],
+				"door_walk": "(-2, 4, -2)",
+				"floor": 4,
+				"id": "plaza.00",
+				"kind": "deck",
+				"top": 4
+			},
+			{
+				"building_id": "deck.00",
+				"cells": [
+					"(-3, -8)",
+					"(-2, -8)",
+					"(-3, -7)",
+					"(-2, -7)"
+				],
+				"door_walk": "(-3, 0, -6)",
+				"floor": 0,
+				"id": "deck.00",
+				"kind": "deck",
+				"top": 0
+			},
+			{
+				"building_id": "house.000",
+				"cells": [
+					"(-5, 3)",
+					"(-4, 3)",
+					"(-3, 3)"
+				],
+				"door_walk": "(-2, 0, 3)",
+				"floor": 0,
+				"id": "house.000",
+				"kind": "house",
+				"top": 6
+			},
+			{
+				"building_id": "house.001",
+				"cells": [
+					"(-1, 2)",
+					"(0, 2)",
+					"(0, 3)",
+					"(0, 4)"
+				],
+				"door_walk": "(-2, 0, 2)",
+				"floor": 0,
+				"id": "house.001",
+				"kind": "house",
+				"top": 8
+			},
+			{
+				"building_id": "house.002",
+				"cells": [
+					"(-3, 1)",
+					"(-6, 2)",
+					"(-5, 2)",
+					"(-4, 2)",
+					"(-3, 2)",
+					"(-6, 3)"
+				],
+				"door_walk": "(-2, 0, 2)",
+				"floor": 0,
+				"id": "house.002",
+				"kind": "house",
+				"top": 8
+			},
+			{
+				"building_id": "house.008",
+				"cells": [
+					"(-8, 4)",
+					"(-7, 4)",
+					"(-8, 5)",
+					"(-7, 5)"
+				],
+				"door_walk": "(-6, 0, 4)",
+				"floor": 0,
+				"id": "house.008",
+				"kind": "house",
+				"top": 6
+			},
+			{
+				"building_id": "house.016",
+				"cells": [
+					"(-1, -7)",
+					"(0, -7)",
+					"(1, -7)"
+				],
+				"door_walk": "(1, 0, -6)",
+				"floor": 0,
+				"id": "house.016",
+				"kind": "house",
+				"top": 4
+			},
+			{
+				"building_id": "house.019",
+				"cells": [
+					"(-5, -7)",
+					"(-4, -7)"
+				],
+				"door_walk": "(-4, 0, -6)",
+				"floor": 0,
+				"id": "house.019",
+				"kind": "house",
+				"top": 4
+			},
+			{
+				"building_id": "house.020",
+				"cells": [
+					"(-5, -5)"
+				],
+				"door_walk": "(-4, 0, -5)",
+				"floor": 0,
+				"id": "house.020",
+				"kind": "house",
+				"top": 4
+			},
+			{
+				"building_id": "house.022",
+				"cells": [
+					"(-7, -5)"
+				],
+				"door_walk": "(-6, 0, -5)",
+				"floor": 0,
+				"id": "house.022",
+				"kind": "house",
+				"top": 4
+			},
+			{
+				"building_id": "house.010",
+				"cells": [
+					"(0, -3)",
+					"(1, -3)"
+				],
+				"door_walk": "(1, 4, -2)",
+				"floor": 4,
+				"id": "house.010",
+				"kind": "house",
+				"top": 16
+			},
+			{
+				"building_id": "house.012",
+				"cells": [
+					"(-1, -3)"
+				],
+				"door_walk": "(-1, 4, -2)",
+				"floor": 4,
+				"id": "house.012",
+				"kind": "house",
+				"top": 16
+			},
+			{
+				"building_id": "house.013",
+				"cells": [
+					"(-3, -5)",
+					"(-3, -4)"
+				],
+				"door_walk": "(-3, 4, -3)",
+				"floor": 4,
+				"id": "house.013",
+				"kind": "house",
+				"top": 12
+			},
+			{
+				"building_id": "house.015",
+				"cells": [
+					"(0, -5)",
+					"(1, -5)"
+				],
+				"door_walk": "(-1, 4, -5)",
+				"floor": 4,
+				"id": "house.015",
+				"kind": "house",
+				"top": 16
+			},
+			{
+				"building_id": "house.wall-room.000",
+				"cells": [
+					"(-3, -5)"
+				],
+				"door_walk": "(-3, 0, -6)",
+				"floor": 0,
+				"id": "house.wall-room.000",
+				"kind": "house",
+				"top": 4,
+				"wall_room": true
+			},
+			{
+				"building_id": "house.wall-room.001",
+				"cells": [
+					"(-2, -5)"
+				],
+				"door_walk": "(-2, 0, -6)",
+				"floor": 0,
+				"id": "house.wall-room.001",
+				"kind": "house",
+				"top": 4,
+				"wall_room": true
+			},
+			{
+				"building_id": "house.wall-room.002",
+				"cells": [
+					"(0, -5)"
+				],
+				"door_walk": "(0, 0, -6)",
+				"floor": 0,
+				"id": "house.wall-room.002",
+				"kind": "house",
+				"top": 4,
+				"wall_room": true
+			},
+			{
+				"building_id": "house.wall-room.003",
+				"cells": [
+					"(-3, -4)"
+				],
+				"door_walk": "(-4, 0, -4)",
+				"floor": 0,
+				"id": "house.wall-room.003",
+				"kind": "house",
+				"top": 4,
+				"wall_room": true
+			},
+			{
+				"building_id": "house.wall-room.004",
+				"cells": [
+					"(-3, -3)"
+				],
+				"door_walk": "(-4, 0, -3)",
+				"floor": 0,
+				"id": "house.wall-room.004",
+				"kind": "house",
+				"top": 4,
+				"wall_room": true
+			},
+			{
+				"building_id": "house.wall-room.005",
+				"cells": [
+					"(-1, 0)"
+				],
+				"door_walk": "(-1, 0, -1)",
+				"floor": 0,
+				"id": "house.wall-room.005",
+				"kind": "house",
+				"top": 4,
+				"wall_room": true
+			},
+			{
+				"building_id": "house.wall-room.006",
+				"cells": [
+					"(-1, -2)"
+				],
+				"door_walk": "(-1, 0, -1)",
+				"floor": 0,
+				"id": "house.wall-room.006",
+				"kind": "house",
+				"top": 4,
+				"wall_room": true
+			},
+			{
+				"building_id": "house.wall-room.007",
+				"cells": [
+					"(0, 0)"
+				],
+				"door_walk": "(0, 0, -1)",
+				"floor": 0,
+				"id": "house.wall-room.007",
+				"kind": "house",
+				"top": 4,
+				"wall_room": true
+			},
+			{
+				"building_id": "house.wall-room.008",
+				"cells": [
+					"(0, -2)"
+				],
+				"door_walk": "(0, 0, -1)",
+				"floor": 0,
+				"id": "house.wall-room.008",
+				"kind": "house",
+				"top": 4,
+				"wall_room": true
+			},
+			{
+				"building_id": "house.wall-room.009",
+				"cells": [
+					"(1, -2)"
+				],
+				"door_walk": "(1, 0, -1)",
+				"floor": 0,
+				"id": "house.wall-room.009",
+				"kind": "house",
+				"top": 4,
+				"wall_room": true
+			}
+		],
+		"source_tunnels": 9,
+		"stepped_wings": [
+			{
+				"band": 2,
+				"bounds": "[P: (8, -6), S: (6, 4)]",
+				"cells": 18,
+				"host": "kit.spatial.feature.landmark.02",
+				"nonrectangular": true
+			},
+			{
+				"band": 2,
+				"bounds": "[P: (-16, 8), S: (4, 4)]",
+				"cells": 12,
+				"host": "kit.spatial.parcel.maze.house.008",
+				"nonrectangular": true
+			}
+		],
+		"tower_audit": {
+			"accepted": 1,
+			"attempts": 164,
+			"corner_accepted": 1,
+			"corner_attempts": 31,
+			"corner_bearing_example": "kit.spatial.parcel.maze.house.013 / (-6, 3, -11) / base 4",
+			"corner_bearing_rejected": 5,
+			"corner_join_quadrants": 13,
+			"corner_no_bearing_or_space": 17,
+			"corner_no_host_join": 13,
+			"corner_reservation_example": "kit.spatial.parcel.maze.house.008 / (-17, 0, 9) / base 0",
+			"corner_reservation_rejected": 12,
+			"corner_supported": 1,
+			"host_fit": 1,
+			"supported": 1
+		},
+		"towers": [
+			{
+				"attachment": "corner",
+				"host": "kit.spatial.feature.landmark.02",
+				"pose": "[X: (0.5547, 0.0, -0.83205), Y: (0.0, 1.0, 0.0), Z: (0.83205, 0.0, 0.5547), O: (28.0, 0.0, -4.0)]"
+			}
+		],
+		"tunnel_limits": [
+			{
+				"crown": 2,
+				"huddle_top": 4,
+				"reason": "no adjacent house storey over the crown",
+				"walk": "(3, 0, -2)"
+			},
+			{
+				"crown": 2,
+				"huddle_top": 4,
+				"reason": "crown already carries a plot",
+				"walk": "(0, 0, -1)"
+			},
+			{
+				"crown": 2,
+				"huddle_top": 4,
+				"reason": "passage walls do not bear on two jambs",
+				"walk": "(1, 0, -1)"
+			},
+			{
+				"crown": 2,
+				"huddle_top": 4,
+				"reason": "passage walls do not bear on two jambs",
+				"walk": "(2, 0, -1)"
+			},
+			{
+				"crown": 2,
+				"huddle_top": 4,
+				"reason": "passage walls do not bear on two jambs",
+				"walk": "(3, 0, 0)"
+			},
+			{
+				"crown": 2,
+				"huddle_top": 2147483647,
+				"reason": "passage walls do not bear on two jambs",
+				"walk": "(3, 0, 1)"
+			},
+			{
+				"crown": 3,
+				"edge_top": 2147483647,
+				"host_floor": 4,
+				"host_top": 12,
+				"huddle_top": 2147483647,
+				"minimum_top": 8,
+				"reason": "plot over.07 breaks support rule 2 at column (-2, -4): carved air stands inside its clearance [4, 8)",
+				"walk": "(-2, 1, -4)"
+			},
+			{
+				"crown": 3,
+				"edge_top": 2147483647,
+				"host_floor": 4,
+				"host_top": 16,
+				"huddle_top": 2147483647,
+				"minimum_top": 8,
+				"reason": "plot over.08 breaks support rule 2 at column (-2, -3): carved air stands inside its clearance [4, 8)",
+				"walk": "(-2, 1, -3)"
+			},
+			{
+				"crown": 10,
+				"huddle_top": 2147483647,
+				"reason": "no crown",
+				"walk": "(-2, 4, -4)"
+			}
+		],
+		"walks": {
+			"(-1, 0, -1)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-1, 0, -6)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-1, 0, 1)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-1, 0, 3)": [
+				4,
+				-1,
+				4,
+				-1
+			],
+			"(-1, 0, 4)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-1, 1, -4)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-1, 4, -2)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-1, 4, -5)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-2, 0, -1)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-2, 0, -2)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-2, 0, -6)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-2, 0, 0)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-2, 0, 1)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-2, 0, 2)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-2, 0, 3)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-2, 0, 4)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-2, 1, -3)": [
+				11,
+				11,
+				11,
+				11
+			],
+			"(-2, 1, -4)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-2, 4, -2)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-2, 4, -3)": [
+				8,
+				8,
+				8,
+				8
+			],
+			"(-2, 4, -4)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-2, 4, -5)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-3, 0, -6)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-3, 0, 4)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-3, 4, -3)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-4, 0, -3)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-4, 0, -4)": [
+				-1,
+				-1,
+				8,
+				8
+			],
+			"(-4, 0, -5)": [
+				-1,
+				-1,
+				8,
+				8
+			],
+			"(-4, 0, -6)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-4, 0, 4)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-5, 0, -6)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-5, 0, 4)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-6, 0, -3)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-6, 0, -4)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-6, 0, -5)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-6, 0, -6)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(-6, 0, 4)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(0, 0, -1)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(0, 0, -6)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(0, 0, 1)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(0, 2, -4)": [
+				10,
+				-1,
+				10,
+				-1
+			],
+			"(0, 4, -2)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(1, 0, -1)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(1, 0, -6)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(1, 1, 1)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(1, 2, -4)": [
+				10,
+				-1,
+				10,
+				-1
+			],
+			"(1, 4, -2)": [
+				8,
+				8,
+				8,
+				8
+			],
+			"(2, 0, -1)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(2, 0, -5)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(2, 0, -6)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(2, 0, 1)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(2, 3, -3)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(2, 3, -4)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(2, 4, -2)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(3, 0, -1)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(3, 0, -2)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(3, 0, -3)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(3, 0, -4)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(3, 0, -5)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(3, 0, 0)": [
+				-1,
+				-1,
+				-1,
+				-1
+			],
+			"(3, 0, 1)": [
+				-1,
+				-1,
+				-1,
+				-1
+			]
+		}
+	}
+}

@@ -1,0 +1,642 @@
+[
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Decor/Cornice_Cover_1.glb",
+    "sha256": "25c525504b08fb2e6d07086a0e96ecfd017c5d489e6e0ddc95cec90e239c0e2b"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Decor/Cornice_Cover_2.glb",
+    "sha256": "e44e121cf2ed58a54843e37256e9abcdf2bff4419444eb2a705091f394c3f2b0"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Decor/Cornice_Cover_3.glb",
+    "sha256": "35881d83c54d2d88ad781c8d47a5b312ed8691ad51531212f46c98f62bb4470b"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Decor/Crossbar_1.glb",
+    "sha256": "6ecfcfdc832abb1b8cff84c31f4e104c934e70a5a068806935f02c0c7c2b0657"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Decor/Crossbar_2.glb",
+    "sha256": "7c0351a0f0b1e085282ad753f1d9388691daf597034a55ea72bb1b4a9612d41a"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Decor/Decor_Peaks_1.glb",
+    "sha256": "17ee80502133a19870a93b38277a0a2dfc49edfa7af6dd9765171d27c93f27a7"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Decor/Decor_Peaks_2.glb",
+    "sha256": "d0b986ef9f14664e0117a11d475ccd203ef7408c89e2519b59f095f76288af03"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Decor/Flovers_1.glb",
+    "sha256": "55fe116734e2ac5576ba4a36aaee0a13bf15c504ec995642025471d2c745c7d4"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Decor/Flovers_2.glb",
+    "sha256": "0ce4f2ca3ad67d8006bb3e305e0236bd4b67eed9630a30e3a0e499f85cf7e0aa"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Decor/Ivy_1.glb",
+    "sha256": "5ef93d28fce97ae1f3928e8d94a67673bf81ceac0c517fc27fc5838c013842c8"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Decor/Ivy_2.glb",
+    "sha256": "1730f8c746f6ce0b1e1dbda11ec619f865f1a217c7fabbec020418bbb8927885"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Decor/Ivy_3.glb",
+    "sha256": "3a7557ed37481a2edd7bc8132998d69225c25bc0d254e7b5bc86ad716f0d51fa"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Decor/Ivy_4_L.glb",
+    "sha256": "b8a7651149d022d992024db8ae6e388d6c29d6f9451c2e767ef33cd09da25923"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Decor/Ivy_4_R.glb",
+    "sha256": "7f5a159f6a73f8908be1cc452bbd923c8d9deb18648cf03f0d952dac8498fac3"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Decor/Ivy_5_L.glb",
+    "sha256": "9323115ca3a6c69a35479ee0a30d195033e8aacb000d59bff1ac747f3ae33db7"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Decor/Ivy_5_R.glb",
+    "sha256": "0189822992e780eadcbc2e681d875e557464d50bdab6b601aeeb601e3955ad7b"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Decor/Ridge.glb",
+    "sha256": "4687589a533ce71f218a8e891110ff527e803f866bdaac23eebb0866c5d8ee92"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Decor/Support_1.glb",
+    "sha256": "de516666e293eb71068e6887547574de1c179c1e27f45239d7d978802c1fca58"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Decor/Support_2.glb",
+    "sha256": "b7c1bb053c17f2cf8e2ecbe7ccdd2794a56cf9bdc8aa66f8867fdaec6587c711"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Decor/Support_3.glb",
+    "sha256": "e21b6fa561e4663665a982ec4e44484c81adec93a3ebf7fa41060e2066431f95"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Decor/Support_3_Base.glb",
+    "sha256": "e287560b147d46c94fa9b267f596d74a47460863531388d2062380dff62c06e5"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Decor/Wooden_Canopy_1.glb",
+    "sha256": "3fb41a052c21103e00c223caac133625447b510fdd79c845f8b1526b3a0cf8c1"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Frame_Modules/Frame_Extension_Blue.glb",
+    "sha256": "f6588a8d2f3b7fe0c078b568ad9f074a46eca6b99bbc661efd3ad1950a0d7bfc"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Frame_Modules/Frame_Extension_Red.glb",
+    "sha256": "8dfd4a086bee1fbfe3774f184209626777f0ec340d80aeb72323390ffe8c2fcb"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Frame_Modules/Frame_Wall_1.glb",
+    "sha256": "96cf750eabd691910e0c2d37979da880b90e842d463ee0a2459770c659c03f46"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Frame_Modules/Frame_Wall_1_D_1.glb",
+    "sha256": "66c502dc86ac4a130c5201ed724e88037dc05932a02c3621c0ba0755f3906fd3"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Frame_Modules/Frame_Wall_1_W.glb",
+    "sha256": "0fbb02660b347c4bb7db30367697efccda8bda5c8914331c571130a1fa73d883"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Frame_Modules/Frame_Wall_2_W.glb",
+    "sha256": "e68c03a091b3e5dd737dd635d282f25d3e622451f0ffc22ed1db3d5b6b051103"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Frame_Modules/Gable_L.glb",
+    "sha256": "6a56303e347fc1dd2c3f62884d8106ceae123ec62788e5c1173754bd5823c3f8"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Frame_Modules/Gable_R.glb",
+    "sha256": "ad3f1ae1fac30f45debad884508f791e527beddf335a2f621ac0f98eb83585d3"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Frame_Modules/Gable_Small.glb",
+    "sha256": "455563225aaadc5505ddef68ce03535419b82ca278245f2acfcc09b688ddb093"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Indoor_Modules/Beam_1.glb",
+    "sha256": "b6972adaa2c2e5d70792843bd3d9f927e5d441c5bf87a57373dbb9a16bd6dd96"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Indoor_Modules/Beam_2.glb",
+    "sha256": "1e2e7b60e2427d5915c723f8f5be5f5ef6fb3beaad31379de07ba0c9787c45fb"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Indoor_Modules/Fireplace_1.glb",
+    "sha256": "600909bbba8803b29c1ed3c115c6234d131c9d0b31b674cfd0d2339d8d619c88"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Indoor_Modules/Fireplace_1_Variant.glb",
+    "sha256": "7b9c7e8e3f6b17b0174f4a13f151a62a4c07162de270493979bddb91b06626fa"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Indoor_Modules/Fireplace_2.glb",
+    "sha256": "0b39009988878d3b3b60c873b9be0f2bd77bcc3d5081c3cb8fd7cf3be18b901f"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Indoor_Modules/Fireplace_3.glb",
+    "sha256": "8bd370b19aca84cfbba2b55ecb66bb1281d6b2f4f12d4ffbbecb9b0c745be3f4"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Indoor_Modules/Floor_1.glb",
+    "sha256": "646f0ecb708c086114c080f8c9728f30ad712b9d06ab8a79819b832781b69ad5"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Indoor_Modules/Floor_2.glb",
+    "sha256": "bf165097da8d211b19b9d334983fbb4272b4cdab0a0ef76d059f6b3a4f2b1e12"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Indoor_Modules/Frame_Wall_1_D_Indoor.glb",
+    "sha256": "9a1bba940cb7acf3f3220a781947b2448571c63b9d67ee4817e6c770f6bbc628"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Indoor_Modules/Frame_Wall_2_Indoor.glb",
+    "sha256": "f84a006f15b9ec2989f306b4587b67d0d2e6213645cae2d15ed77dcc89a6a801"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Indoor_Modules/Stone_Wall_Indoor.glb",
+    "sha256": "b6fe7ddbbc06e981b5a08aefcb85ce9fb2c724b784f6aa0a448d3cb50c041b5d"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Indoor_Modules/Stone_Wall_Indoor_D.glb",
+    "sha256": "9a53b02e8e9bd3c499c54248faa032f91d32fd3f6364c364f1cc4ad75c1cc926"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Roofs/Blue/Roof_1_Blue.glb",
+    "sha256": "3c8f05a885d21a4fe41cef3afa979b4be98f1daded12c1de29724a9ee247cc6d"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Roofs/Blue/Roof_1_Cornice_Blue.glb",
+    "sha256": "f1da3df367e7cf65af1f48a6b8a634c1a9625e172c56f363a0f6e9aecc34921e"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Roofs/Blue/Roof_1_Cornice_W_Blue.glb",
+    "sha256": "4b04cee5385439e016d0de37a2e91c5842fbf4416f4037f9fb04e8bb8068aafe"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Roofs/Blue/Roof_2_Cornice_Blue.glb",
+    "sha256": "d0a0fd20b66b64a522a758dabb489c748c0327da2d569b09590ed4d857018e29"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Roofs/Blue/Roof_Top_1_Blue.glb",
+    "sha256": "e6d85d15e62f1a6445468040845563500edd32715fba965f5dea91b080ba60ce"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Roofs/Red/Roof_1_Cornice_Red.glb",
+    "sha256": "81266619dd2cad9cce1cb3b0076c64a1ea5c73f28c192b4e1fe0b076a9f69d59"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Roofs/Red/Roof_1_Cornice_W_Red.glb",
+    "sha256": "7d33c9e060793005786d0c5c769deb04dff1d062ec33441db923b45cb720bf10"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Roofs/Red/Roof_2_Cornice_Red.glb",
+    "sha256": "94e026794f7916d3a306e08b2e60ca4081101e713dcf4899fcc8a93e1cf600c7"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Roofs/Red/Roof_Top_1_Red.glb",
+    "sha256": "e5a01dc1c0eda30c2f7477225d347c7a4530e42044b7a631b22ef6ba142c5cab"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Roofs/Red/Roof_Top_2_Red.glb",
+    "sha256": "9302e7584add85019ec26be3cb6d569168526e8ce8ae5be60972b5ce0207223a"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Stairs/Stone_Stairs.glb",
+    "sha256": "0f1961b7becfe6a72fbdf118d35d1c96ac7f93020339cca5cbdbdb96542598d8"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Stairs/Wooden_Platform.glb",
+    "sha256": "af1f56ae7c93334ac640b1779989fa76f378b06629c3e25c198cc5b2b3f2a26b"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Stairs/Wooden_Platform_Cover.glb",
+    "sha256": "d614d8fcaf28faa4c691e34c766a60635b56a4c88c1d82b81957ad74a2f31f78"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Stairs/Wooden_Railings_1.glb",
+    "sha256": "c01e3fa6f09109f1d23915c5b0ef1b08f90e67dfe49f73f9c2d3f13b2627f0d9"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Stairs/Wooden_Railings_2.glb",
+    "sha256": "b9fd2bbdeb24e68ae3d98405202a7b074efc833f0e4e8d3857d822159da35c92"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Stairs/Wooden_Railings_3.glb",
+    "sha256": "d645863b10eb2c95d5272bf4e8ae135cd2e72413858ac0ce45c9763d00f87f7d"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Stairs/Wooden_Stairs_1.glb",
+    "sha256": "97e680a61d5f4633dd4b34eb71b7961aa62062a64bb38e1ab6437b403cdc6603"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Stairs/Wooden_Stairs_2.glb",
+    "sha256": "963f595e468ad861db571612a2f8da426f8a979236a738f512ae8fddfea4a244"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Base.glb",
+    "sha256": "d72eab91cec40d07b27a0cf82484bb51d84c23f197258cd8fa068dc62aa7b3b5"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall.glb",
+    "sha256": "2330c3d111a76e2ff4f47c45dcbb5088c822c527348b203a7e0d39b3ae50b2ec"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall_D.glb",
+    "sha256": "d9fe2dcdf5bdec651face96b51adb95583d0a6343e4d78d35f1db9fd7cef5806"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall_D_1.glb",
+    "sha256": "9c5ae44a5cc6f70ca9395dc20fbab6fa4e88b3c3545a50f433c6c349699f8d5e"
+  },
+  {
+    "path": "assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall_W.glb",
+    "sha256": "b65c80f5ac4e8fd011f1ce268bb92bc82e896bad4847463116cdf7b9fc01e3fd"
+  },
+  {
+    "path": "assets/Raygeas/Models/Buildings/House_1.glb",
+    "sha256": "e95e113d9b217f9a87eb41c3dac644510d43b8deecdf2109147f4e8e21115315"
+  },
+  {
+    "path": "assets/Raygeas/Models/Buildings/House_2.glb",
+    "sha256": "00a0e1511ee8ac774b76a93141a17824699636eb020c72f52261da23db6babb1"
+  },
+  {
+    "path": "assets/Raygeas/Models/Buildings/House_3.glb",
+    "sha256": "33bbc71ea5c2ef446ba48e0faabf7bc9d5fba73fa9c51ba20f5dfb27b2c608a8"
+  },
+  {
+    "path": "assets/Raygeas/Models/Buildings/House_4.glb",
+    "sha256": "762b8cb7f193431f30eac829f6d7555313eb2078177307bb1295aefab1aa73af"
+  },
+  {
+    "path": "assets/Raygeas/Models/Buildings/House_5.glb",
+    "sha256": "bd00fb903800ef78963602b5697f17d5e932c14cdf9a10ea606253e63b5f9253"
+  },
+  {
+    "path": "assets/Raygeas/Models/Buildings/House_6.glb",
+    "sha256": "dbb83fe63e886fff36360c3b3459f79da17537e5e8f66e36976629510bcf971c"
+  },
+  {
+    "path": "assets/Raygeas/Models/Buildings/House_7.glb",
+    "sha256": "7fef5b24ad0b002f84a1963683475c8a84529d55696d5c7c6e04c8f81d8ba169"
+  },
+  {
+    "path": "assets/Raygeas/Models/Buildings/House_8.glb",
+    "sha256": "69d250fcd0566fb91a00be1fccbcfccfb184e6b758ad21b56cf917618214dba1"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Bag_1.glb",
+    "sha256": "714b9a18f3ac9c6ca4269546aa4fc042e3155688468ad52fd8be1786c3ab7520"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Bag_2.glb",
+    "sha256": "f4c7fda0e936e87f485925dd39f183bce35867a9e886eb2c5a59aa2cbd94127c"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Bag_3.glb",
+    "sha256": "e84a5fd53f7e98c6b2c38958631371e1253cd00e215d70f3aeb3ad8d54f0a5c2"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Bag_4.glb",
+    "sha256": "37dd7233182f70c1157490d6dd6486e82d9e766a74e65afc291349a3d08702b3"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Barrel.glb",
+    "sha256": "423f647774a0ff289f98adef6106e64d92abc63689a652a0b5612491aabc773f"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Bed_1.glb",
+    "sha256": "1b8c5b4a615c06723b5324d874b9e12118b2dbd60c05333fc30a79fdcdf4ff96"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Bed_2.glb",
+    "sha256": "427714551ee4d90371fdff48c91d95abb8caf122ce05e344574ec2775aecf469"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Books_2.glb",
+    "sha256": "2617da9636a1e20209efaa26bb432e2748caf59ff60aebb554a46cedf8e23e6e"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Books_3.glb",
+    "sha256": "d3d6e879b1e4cf0da9377a1d964a885e99e1c18188fbb1f45b11d11f2ec4e1f7"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Box_1.glb",
+    "sha256": "5df60daf75a4d60dc273866f1b8ca862a94d61ae675b1f3b9f09265b373e0da0"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Box_2.glb",
+    "sha256": "c954e19c2335244c88bc03234953884c1001e89f281256eac63ad8dc2a26978a"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Candles_1.glb",
+    "sha256": "b9515a8d16eb034d3cb801fb2be367526da7671df205c35c13da62bfca0699dd"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Candles_2.glb",
+    "sha256": "0567b3fbc2472e44cd4050f66e88875b01847ddecc2aa699cc5ecd09d9d0dcf9"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Candles_3.glb",
+    "sha256": "be26da1bba0b3ed1584e2a79107a75ee2ecd2b819ab85640f1ef31b09534c71b"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Candles_4.glb",
+    "sha256": "75b30fb1b756786b693826d63487202e23847204ade19e50d319da8de40cc84c"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Carpet_1.glb",
+    "sha256": "25582d79a053e3a99fedfde86e5c1f8f2dcb544f7cc7529ef26a877f1b3d8f3e"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Carpet_2.glb",
+    "sha256": "c478764584fc939af8403b1a5bcf0c92f6324e8404e5362ac715652c7f5eba24"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Carpet_3.glb",
+    "sha256": "59ef74d770cdd36c2eb142a59f2c8bcafaac55c2c47124d90d4c1a411ab5d6da"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Case_and_food_1.glb",
+    "sha256": "860fdf8d0bbb4880249f9d0ff3f933472f4cf6a0dd343bb486edad2aa9bb5435"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Case_and_food_2.glb",
+    "sha256": "b91660b9103d5e0f9d40702c799a892614fef7ba1f1eecc99ca6c94a50108741"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Case_and_food_3.glb",
+    "sha256": "55e2441d68c9da6585bd516a4191ee8c2b9f3e2acf860d96f8bd66c64e440e96"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Chair_1.glb",
+    "sha256": "5f80f03de3257e3b6034aa3840570691df6683399ee6ff0b5f13fa663e536ffb"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Chair_2.glb",
+    "sha256": "6c15f24de2c7c94f9c0854c12019127f7d7ba1cca785b3675d03928b5dc2550a"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Chandelier_1.glb",
+    "sha256": "ee3c398f6a141dfbee7ac3c63955b6c70001e1e5b68435eabbfc38dd60e1e694"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Chandelier_2.glb",
+    "sha256": "5e93d5b7368c60ef78556b1f1a92a81deee1b6b81e70fb4a89d915e172b41402"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Chest_1.glb",
+    "sha256": "be52850232a0c66c0db3cb476a10069d3b2544397c17564395fb4b29cc369bfb"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Chest_2.glb",
+    "sha256": "6e2b8b453bf0e3c880c754d3d00a1e7edde097cf794ea3b9e907185ddb54e097"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Chest_3.glb",
+    "sha256": "ca2cef71fceb0b288ca25d71cd2aecf09fe4b9a114cc8a91404b3bacbd2ef09f"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Commode_1.glb",
+    "sha256": "e11b16bdf077a1758455f9efe54e45d0ff36e7ef9a09a2543cfd3af586fc01ee"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Commode_2.glb",
+    "sha256": "7e32c9bd05b86ef0a045192589dbe93eca8c569e77569c9ea6e0e513b00ee916"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Commode_3.glb",
+    "sha256": "0f8efc1f1350b5289fd0ca83997afb8790a599e98f12ff64a158c682d2e98fc4"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Commode_4.glb",
+    "sha256": "3b38cd4de91ca00f8d06ff6706af424379616207ab95d829596756ae7c98942d"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Cupboard_1.glb",
+    "sha256": "83b016b5aec5765ab90cc4bc9294a8a7283178cbf24bc99f4dba985075fcfa2f"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Cupboard_2.glb",
+    "sha256": "ec9a03f5152f086cb1f5e90f5218239cd24173ed89b816d9ec6c0857a930b64c"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Horns.glb",
+    "sha256": "6a47466b2abdfff8faec1e7a25e02f92754dcc46934df3a5a7213baca212fb44"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Lantern_1.glb",
+    "sha256": "3d9ad0ec72de4a4432d560b6a58968e3957c3f486744909090acd9c8f536eab5"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Lantern_2.glb",
+    "sha256": "68dd4c1ee394b7054298ccea28c4542f1f5257c8189ff4c1e29bae428fc6f2af"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Log_2.glb",
+    "sha256": "88ccb1b1498d41769a50d3caa14fb18b646096fa86a33d404435f59b9184e4db"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Log_3.glb",
+    "sha256": "f3ab4ace3a594a32f6d4beb6f460c277788ff606dc28e6baf5fa877934e04f05"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Picture_1.glb",
+    "sha256": "6aac1edee91214987e8b042d5227557253272985e333f5edcb20ff79c60f690d"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Picture_2.glb",
+    "sha256": "3e357b445974072aaecd5aafa88614397c78d6165e8b03037b2b2938e5ba111b"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Picture_3.glb",
+    "sha256": "a3ec9d63d96b61fdcbcedffb4585e8210c8928b718673dea43a5cda42c6d0a20"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Picture_4.glb",
+    "sha256": "7e8096003ea5776fa218a739b8f51d647a867120867eff520251884ae85def89"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Rack_1.glb",
+    "sha256": "2eea70f162ba2f7383a401f46c020eb2251b380d451059aeff2306d91d57f1f9"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Rack_3.glb",
+    "sha256": "ba7dbc49e290ca327e8e9498e8d7ee49a3442a378b5e8d0834d55c3c597d717b"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Shelf_1.glb",
+    "sha256": "ee99a6411071ac525a9997c36975a5753ad16d7129e8d3ee6503388d49dc3434"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Shelf_2.glb",
+    "sha256": "65ec6cb6640b8117655a51f707c3d2693ef5a0bea2a6f414dafb006e14de4fb7"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Table_1.glb",
+    "sha256": "ac1ee4fbf73af7b29fe1f1bc67326efc2e96b6c5a1e0eb7b844a21030ba4f791"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Table_2.glb",
+    "sha256": "e835ea9499a626db6336d4dca0eae4079431e8ba29d89af3931ac079358908f0"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Tomato_2.glb",
+    "sha256": "f3941b7492dc4e4c77c1c260dcaefb862f0e16a45b7e903043edd32ccc890deb"
+  },
+  {
+    "path": "assets/Raygeas/Models/Environment/Washtub.glb",
+    "sha256": "5ca979c1238ed894b60777c1dbcb7ded01d580c0add06ac2d5185e3c05681ab2"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Apple_1.glb",
+    "sha256": "725b9608566a9d5f78e5d533124252e458d926f51de70b80154a5872f6f3cafb"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Axe.glb",
+    "sha256": "4db9298bb843a07ec007996ec03e46836d7d907bdd53f184262caa26b07b308b"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Baton_1.glb",
+    "sha256": "46b8714b333fa824c35eaaaa7412f7dae6afa7e6d5462b95c06c0ab7c29d0165"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Baton_2.glb",
+    "sha256": "2886a3ea43c394763545ea5d80af71a6c8fcf38b6c8db35c833198de768a3c05"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Books_1.glb",
+    "sha256": "e0507808fd69126e9c2263d7584888f9cca868ab372ea57a48eb1474a4d01c0d"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Bottle_1.glb",
+    "sha256": "84994fe6b35c1e9edb025dd7ad2421952c2aac9051d4d09b9b15e6f85ee8e493"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Bottle_2.glb",
+    "sha256": "cb83153a416d0867c897774f4c2bc16ba3a1888a45a441d4f68eaddd9e0441a5"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Bottle_3.glb",
+    "sha256": "e197919b343cf7cce9da6b6c3f7479d6b5fdbe95038fd1b259e4eebd6a2bf7ae"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Bucket.glb",
+    "sha256": "8b0812e6ad8870560e1c0884c32df06da2a3f9cd08e180dddaebf2ea1e3da499"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Carrot_1.glb",
+    "sha256": "b539c67f7043ee7deeb042100d192739d07bb40d5ed76abc3099e075ed321bfa"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Case_1.glb",
+    "sha256": "597630878764d046c88b3cf4c5eb8e26bc79230fad667d159142136033cd4866"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Case_2.glb",
+    "sha256": "f27842cd7b6ad10a7e7a936816f267c25b4bce758f8961d9b9a880cd2552cda8"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Cheese_2.glb",
+    "sha256": "63410349d38442db457fee31c762128b852cb16886cfb871c8766c3739042219"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Claws.glb",
+    "sha256": "a91b2c8c0cdfe5b37fb6e857ebfa49da725d33074191d60af4513bc7d40540e8"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Cup.glb",
+    "sha256": "f3677197bd8ee12031993f406238ec183818a49c262f1c0b7d3da28c9a19bf3e"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Fish.glb",
+    "sha256": "3f16bd066c436e59d635ef5f3baebbb3650d006d5e1c9d14a69f0fc4ac0b14d6"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Hoe.glb",
+    "sha256": "a7459261effa2ff063d717c9491e8a3a930c0b78cc183a98a39f50161f7dbbdb"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Log_1.glb",
+    "sha256": "4a653ee174394476a185d7ce1468bab1012f24d10ed6475e6b3e8ca4d4d200dd"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Maul.glb",
+    "sha256": "7f0a5c39ac5b0ef1a169d596692790ba66a7b23dda783d22b4c1789384186c0b"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Meat_1.glb",
+    "sha256": "38e8bc56ee181c8484658c4fd8cac349e999ba8f753774ac0e7961e2946e34f2"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Meat_2.glb",
+    "sha256": "7e8af17f2d210d8cd52fa13f0cc7fe8c6235aa13541604ecb28fe502d0184f5c"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Plate_1.glb",
+    "sha256": "c413f38b5abbd58855e5fb5b293c18cd9ef525437edc077dc54175d4305291cc"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Plate_2.glb",
+    "sha256": "f79f4bb7851f2a54c62e2ef14fb150fc39e79a5e7e55fbecca939967fe8dc7fe"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Poleaxe.glb",
+    "sha256": "e6a5b05efbe0dcafedfb98913f332d535b1b214d2b1f04f2aa85c2f19ad4621a"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Pot_1.glb",
+    "sha256": "c91aedd3ba57d5e44e4e32f31d7765bd852d74473875432e82bda66c9886e7ad"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Pot_2.glb",
+    "sha256": "3b62837711cc65ebc6a88076ae7dea3fdfd495fa94b1fdee10720e2ff56bebfe"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Pot_3.glb",
+    "sha256": "e77572abc6b7819bd869299a9d3b216b21d95ad3f4ac2be860c9ef88dd6f6976"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Pot_4.glb",
+    "sha256": "42c3a472fb4c306e33230c22b2d762d6adabd824603a48eb184b36c03630ede8"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Pot_5.glb",
+    "sha256": "94b600b3841038501337b8a7b7b6f07ecd709102355bd663679ff0ca5e3bf0a4"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Pot_6.glb",
+    "sha256": "36a6509a4b21e22cb897abae88b7e2d60bf7d305b2247220e66650bc7760ba22"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Rake.glb",
+    "sha256": "351cc2163803b92624d3cbbd0063faae970ee20d79a6e861cfdf0593b0fd57bf"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Shield_1.glb",
+    "sha256": "e0412f28eed46f12cb0098fe5bbdaf63121b44416319c5e734d8475c53d4cc7e"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Shield_2.glb",
+    "sha256": "5cf7d3ba7596cd5ad1a62cf8caeb052f4846b0cefb99a1be094f6a6d043dc918"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Shovel.glb",
+    "sha256": "2a730b88044d8157dba97f5b20f868589f9e240078e869f81dfc6fe860855739"
+  },
+  {
+    "path": "assets/Raygeas/Models/Props/Sword_1.glb",
+    "sha256": "badd3c58428058e84fdc1410f9e26f696cccaacd749506d49a05edd2c022c16c"
+  }
+]

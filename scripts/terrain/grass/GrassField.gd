@@ -288,6 +288,7 @@ static func _layer_identity(base_identity: int, layer: int) -> int:
 static func _bake_tile_fields(program: GrassProgram, origin: Vector2,
 		world_seed: int) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
+	var tint_cache := {}
 	var canopy_hash := DressingCompiler.stable_id_hash(GrassProgram.CANOPY_CHANNEL)
 	for z in FIELD_SIDE:
 		for x in FIELD_SIDE:
@@ -307,8 +308,8 @@ static func _bake_tile_fields(program: GrassProgram, origin: Vector2,
 				"coverage": clampf(biome_base * lerpf(0.5, 1.0, canopy_opening), 0.0, 1.0),
 				"land_occupancy": DressingEcology.land_occupancy01(
 					point, world_seed),
-				"tint": BiomeRegistry.ground_tint_at(
-					Vector3(point.x, 0.0, point.y), world_seed),
+				"tint": BiomeRegistry.terrain_tint_at(
+					Vector3(point.x, 0.0, point.y), world_seed, tint_cache),
 			})
 	return out
 
@@ -339,8 +340,11 @@ static func _qualified_surface(program: GrassProgram, anchor: Vector2,
 		surface_cache: Dictionary = {}, cliff_edge_cache: Dictionary = {},
 		known_physical_edge_scale: float = -1.0, support: Dictionary = {}) -> Dictionary:
 	assert(water.covers(anchor), "Grass water context must cover every tile anchor")
-	if features != null:
-		if features.clearance_at(anchor) < GrassProgram.FEATURE_CLEARANCE:
+	# Declared elevated gardens have their own support boundary and 3D obstacles.
+	# Projected streets/buildings below them do not describe this upper floor.
+	if features != null and not support.get("feature_garden",false):
+		if features.overlaps_clearance(FeatureGroundShape.circle(anchor, footprint_radius),
+				GrassProgram.FEATURE_CLEARANCE, false):
 			return {}
 		if _footprint_overlaps_feature_surface(features, anchor,
 				footprint_radius + PATH_FOOTPRINT_CLEARANCE):

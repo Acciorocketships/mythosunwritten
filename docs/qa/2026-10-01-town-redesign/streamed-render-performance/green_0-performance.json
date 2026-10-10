@@ -1,0 +1,15 @@
+{
+  "chunk_radius": 1,
+  "draw_calls": 1543.0,
+  "gpu_median_ms": 0.0,
+  "gpu_timing_available": false,
+  "grass": true,
+  "median_ms": 17.847,
+  "p95_ms": 18.433,
+  "primitives": 7204110.0,
+  "render_cpu_median_ms": 1.07599997520447,
+  "resolution": "(1920.0, 1080.0)",
+  "samples": 120,
+  "static_memory_bytes": 2552819216.0,
+  "view": "green_0"
+}

@@ -1053,8 +1053,9 @@ func _turned_space_is_clear(turn: Dictionary, chains: Array[Dictionary],
 				allowed[StringName("%s/%s" % [member.unit_id, placement_id])] = true
 	var own := plan.unit(StringName(run.unit_id))
 	for unit: FabricUnit in plan.units:
-		if unit.stable_id == own.stable_id or own.parent_ids.has(unit.stable_id):
+		if unit.stable_id == own.stable_id:
 			continue
+		var bearing_parent := own.parent_ids.has(unit.stable_id)
 		var recipe := plan.recipe(unit.recipe_id)
 		var pose := unit.transform()
 		for index in mini(recipe.placements.size(), recipe.placement_bounds.size()):
@@ -1063,6 +1064,14 @@ func _turned_space_is_clear(turn: Dictionary, chains: Array[Dictionary],
 					or allowed.has(StringName("%s/%s" % [unit.stable_id, placement_id])):
 				continue
 			var other := pose * recipe.placement_bounds[index]
+			# The roof skin meets its bearing walls, but rotating a chimney or
+			# dormer does not grant it permission to enter those walls. Keep the
+			# original orientation when any complete extra loses that clearance.
+			if bearing_parent:
+				for extra: Dictionary in turn.extras as Array:
+					if SettlementFabricPlan._aabb_overlaps_volume(extra.bounds, other):
+						return false
+				continue
 			for box: AABB in boxes:
 				if SettlementFabricPlan._aabb_overlaps_volume(box, other):
 					return false

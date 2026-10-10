@@ -263,6 +263,23 @@
 > synthetic walk epoch 4.21 -> 0.19 ms, with some additional scroll cost. 15 trample
 > tests / 86 assertions pass; whole-game lag is still under investigation.
 
+> GROWING UPPER FLOORS (Oct 8–9, spec `docs/superpowers/specs/2026-10-08-growing-upper-floors-design.md` incl. its two owner amendments, result
+> `docs/qa/2026-10-08-growing-floors/result.md`): `KitGrowingFronts` (kit layer only; after towers, before projections/bays in `KitVillageBuildings.build`) makes
+> some houses step IN the Suntail/Shambles way: on any exposed face of a house with two stacked storeys the roof and the top storey stay on the footprint and each
+> lower storey stands one kit jetty (1.0 native m; 0.5 for the light step) further in, so the ground storey is the narrowest and every upper storey overhangs the
+> one below (`growing_house_chance` 0.3→0.45 spread 0.1, both face chances 0.85, `growth_step` {0.5:1, 1.0:3}, `growth_max_lean` 2.0 = the ground storey's total
+> step-in; no lane sky-gap knob: an inset never narrows a lane; no gable-front boost). Faces step as FRONTS with one monotone capped profile re-referenced to the top storey (`offsets_of`:
+> storey k at `lean_k - top`, ground at `-top`); a front steps only up to its shortest member's top. Closures: `return` (the perpendicular corner panel shortens
+> to the baked `frontage.return.dNNN` strip or drops for a whole module; post at the new corner), `wrap` (convex corner of one house, both panels shortened, one
+> post, inner `frontage.corner.dNNN` floor square), `joint` (coplanar row stepping together; no pieces), `bury` (own cell beside the end: a strip on the vertex
+> line closes the recess), `abut` (end beside a touching neighbour: our own strip on the party plane). Writes negative `wall_offsets` + growth records `projections{growth, depth, base, closures}` (signed) + `storey.growth[dir]`; the
+> assembler trims stepped-in upper floors (ground floor stays whole: paving to a recessed shopfront door), carries each overhang on its floor beam with
+> `bracket.jetty` (`bracket.small`) on wall-module joints only (never over a window/door head), and return beams at open sides. Guardrails (cap drops one step; a
+> member that cannot take the first step leaves): air/obstacles inside the recess, recess claims, portals (passages, blanks, balconies; upper doors and bays on a
+> stepped-in run), material (stone only whole modules), party (never against a touching building), bearing (≥1 module behind, ≥2 across a two-sided axis), porch
+> posts, end closure. Roofs never move (the October 8 roof-following was removed). A house that rolls growth but keeps no step is rebuilt plain (`build` re-runs `_plan_town(..., growth_withheld)` until every grower keeps a step; `build` returns the final `growth_withheld`), so its jetty and awnings stay. Withdrawals per cause (`growth_rejections`); audit `growth_corpus_audit.gd` +
+> `tests/fixtures/growth_audit.gd`. Zero chance is byte-identical (old-look fixture pins 0); fingerprint baseline re-pinned for the defaults.
+
 > October 8 manual judging, first fixes (`docs/qa/2026-10-08-manual-pass/result.md`).
 > Grass support grids (including rock skirts) are spatially bucketed; never restore a
 > whole-chunk grid scan per blade/footprint. Detached shoreline queries index segment
@@ -302,6 +319,63 @@
 > existing terrain/landform/cache-key tests pass. Full-scene and tactical QA is ongoing.
 > This changes river routes: October 8 water images/counts are prior-geography evidence,
 > not proof of continuity in the new world. Recheck wet sites before accepting the pass.
+
+> ROOF PROPORTION (Oct 8, `docs/qa/2026-10-08-roof-proportion/result.md`): `BuildingDesigner.roof_proportion_ok` is a guardrail on every kit pitched roof: at most
+> `MAX_GABLE_STOREYS` 2 storeys of gable and at most `MAX_ROOF_SLENDERNESS` 3x as tall as its ridge is long. A house wing that fails turns, becomes a double pile
+> (`pile_rects`) or a terrace; a one-module bridge-house whose transverse gatehouse roof fails (gap >= 5: 31/large with clearings had a 12 m roof on a 2 m ridge)
+> takes ONE long gable with its ridge along the span (owner ruling, replaced the row of transverse piles), dressed on the ridge with crest finials and a
+> mid-span chimney (a one-module roof is the ridge-top course alone, no eave row for a dormer; `fit_chimneys` moves/withdraws the stack). Gap <= 4 gatehouses
+> and every default fingerprint town are unchanged (`test_roof_proportion`).
+> ROOF WITHDRAWAL (same date): the fabric roof gate no longer vetoes a town. `WarrenSpatialFabricCompiler.last_failure_room_id` names the room whose roof
+> failed; `WarrenVolumetricSolver.compose_maze_source` (production `_solve_maze` and `frozen_maze_source.gd` both use it) marks its cells with the
+> room-support clearance token (`mass_context.roof_withdrawn_cells`) and composes the same source again: that storey and what stands on it are not built
+> (required door/market/bridge courses still fail; at most `MAX_ROOF_WITHDRAWALS` 4). Audit `roof_withdrawn_room_ids`. 1/grand and 141 build again
+> (`test_town_roof_withdrawal`); a 65-town sample fails 0 (2 before); towns that built before are byte-identical.
+>
+> TASTE KNOBS (Oct 7, plan `.superpowers/sdd/2026-10-07-town-taste-knobs`; defaults in `town_odds.tres`, each knob's notes name its task): `clearing_lobe_bias` 2.0 /
+> `clearing_enclosure_bias` 2.0 (courtyards kept with probability by lobe depth / fronted sides, never a hard reject), `plaza_ring_chance` 1.0 and `clearing_ring_chance` 0.25
+> (ringless greens), `clearing_deco_density` 0.7 (clearing furnishing), `well_scale` 0.7 (wells only on ground greens, hard rule), `satellite_reach_scale` 0.7 spread 0.15,
+> `suburb_house_count` 1 (small) -> 4 (large) spread 1 (detached cottages 1.0-1.4 x radius), `lone_house_path_chance` 0.2 (else a footway). `clearing_count` stays 0
+> (owner decides); lamps are fixed dark wood, declared in the bake manifests (`material_tint_variants` -> descriptor-only `suntail.prop.lamp_1.dark_wood`, `material_tints` on `sfv.light_pole.001`) so a rebake keeps them (`test_lamp_finish`). Old behaviour: well_scale 1, satellite 1, suburb 0, lone 1, ring chances 1, biases/deco 0. Result:
+> `docs/qa/2026-10-07-town-odds/taste/result.md`; fingerprint baseline re-pinned for these defaults. Old-look pin: `town_fingerprint.gd --old-look --compare .../fingerprint/old_look_baseline.json --parts source` reproduces d912cd332's source plans (`test_town_old_look`).
+>
+> October 7 town odds layer (branch `town-redesign`; spec
+> `docs/superpowers/specs/2026-10-07-town-odds-layer-design.md`, decisions
+> `docs/qa/2026-10-07-town-rule-audit/audit.md` section 10). Owner principle: hard rules
+> only guard against broken results; aesthetic targets never reject a town. Aesthetic
+> numbers live in `terrain/villages/town_odds.tres` (`TownKnob`/`TownOddsTable`/
+> `TownOddsProgram`/`TownCharacter`, `scripts/terrain/features/villages/odds/`); each town
+> draws its own character (`WarrenVillageScaleProfile.character`) from per-knob independent
+> streams, so retuning one knob moves no other. `--odds name=value` (numeric overrides
+> only) in `kit_town_review` and `tests/harness/town_fingerprint.gd`; the fingerprint
+> compare against `docs/qa/2026-10-07-town-odds/fingerprint/baseline.json` is the
+> default-town byte-identity gate (must print FINGERPRINT_MATCH). Loop, straight-run,
+> annex and outcrop quotas are advisory `aesthetic_shortfalls`, never refusals. Dressing
+> rolls take the world seed. Tunnel attrition counters + report
+> (`docs/qa/2026-10-07-town-odds/tunnels/attrition.md`: `cover_tunnels` refuses most
+> bored cells). COURTYARD CLEARINGS (`WarrenCourtClearings`): carved after alleys, biased
+> by distance to street, reached by a street at their own band, withdrawn whole if
+> unconnectable or overlapping; realised as `clearing.NN` deck plots; a green is lawn
+> with its own centrepiece. OFF by default (`clearing_count` 0) pending owner checkpoint
+> (`docs/qa/2026-10-07-town-odds/clearings/result.md`). `set_planned_plaza` keys greens
+> by column AND band: greens touching sideways at other bands or stacked are separate
+> components, not a rejection. Deleted (unreached legacy): VillageHamletConstruction,
+> VillageMassingSolver, VillageMarketSolver, VillageCirculationSolver,
+> VillageTimberFabricSolver, VillageSkirtDeckSolver, PureVillageNativeHouse,
+> KitRoofTurrets.propose; then (dead-code pass,
+> `docs/qa/2026-10-07-town-odds/dead-code-removal.md`) WarrenPlotVoidPlanner/Plan/Grammar,
+> WarrenRisingRingPlanner, WarrenPrefabSolver, StaggeredFabricEmbedder,
+> SectionalPublicRealmBuilder, WarrenOverheadSolver, the terrain-massing village
+> (VillageMassing*, VillageCirculationPlan/Link, VillagePlatform/Aerial/GroundRouter,
+> VillageRouteGeometry, VillageDoorGeometry, VillageStair*, VillageRouteStair*,
+> VillageTimberCell*/TimberFabricPlan, VillageSkirtDeckPlan, VillageMarketPlan/Program/Stall,
+> VillageRockCoreSolver, VillageBuildingSupport*, Foundation/SupportSolver,
+> VillageTerrainSurvey/Perch, VillageVerticalProfile, VillageModuleGrid/Cell,
+> VillageFrontageDomain) and the outskirts solver/program/plan
+> (`record.outskirts` is gone; VillageOutskirtsConstruction keeps only the world-road
+> street helpers). WarrenMarketSolver/WarrenElevatedFrontageSolver keep only what
+> production reads; `enable_paired_registration_relief` and the TARGET_* feature
+> defaults are gone (MAX_PAIRED_* live in `tests/fixtures/legacy_room_repair.gd`).
 
 > October 7 frame smoothness (branch `perf/frame-smoothness`; owner: "running and moving the
 > mouse feels laggy; camera must feel instant"). Profile under the .NET binary
@@ -519,7 +593,8 @@
 > `max_texture_size` (1024 here; sources are 2-4K) and alpha-tested surfaces count as foliage
 > when fitting trunk capsules (autumn/winter leaves are not green). Towns: plaza tree
 > `meadow.town_birch` (birch 05 at 0.9, half-extents 1.479/1.327 in the 2x2 block), hamlet focal
-> `meadow.oak.04.summer`, roof flowers `meadow.flower.*`, garden toadstools
+> `meadow.oak.04.summer` (VillageHamletConstruction was deleted as unreached on `town-redesign`;
+> the October 9 merge keeps it deleted), roof flowers `meadow.flower.*`, garden toadstools
 > `farm.toadstool.05/06/08` (`DECOR_PROBE_RISE` 1.076129); towns use Summer foliage everywhere.
 > STARTUP CRASH FIXED: `ResourcePrefetch` requested visuals with sub-threads, so every
 > mesh/material/texture was its own pool task and a waiting worker ran others inside its own
@@ -638,6 +713,331 @@
 > taller than 12 m breaches it as a pass (a quarter of its depth) instead of stranding a stub.
 > Tests: `test_terrain_field` (spawn not a pit, spawn ring relative to spawn, flat share).
 
+> October 4 turret course grammar: PureVillageTurretHouse derives exact source
+> or one extra upper course (11facades+1shaft); crown/cap/brackets move together,
+> low wing fixed. Five native round windows dress new bays; shaft-facing bay
+> stays solid, window seat0.8m clears braces. Actual baked glass rays38->4->0.
+> Tests3/980 pass; final199placements/colliders, both native sides inspected.
+> NOT town-registered: entry/datum, bound-ID compilation, reservation/player
+> checks remain. Full broad grammar and art acceptance remain open.
+> See `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-turret-courses/result.md`.
+
+> October 4 turret stock bake: House_16c now renders via89 baked variants,
+> 182placements/colliders with no source-prefab runtime load. Per-mesh surface
+> bindings are atomic instance overrides; bake version41. Reflections baked,
+> runtime bases positive. Binding2/11, baked+recipe3/7492, Python8 tests pass;
+> native front/back inspected. Still NOT a sampled production family: needs
+> structural variation, entrance/datum contract, town reservation and player QA.
+> Canonical data `terrain/environment/grammar/house16c.json`; do not lose its
+> material-binding asset IDs through module-only compilation.
+> See `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-turret-bake/result.md`.
+
+> October 4 turret-house reconstruction: House_16c is reproduced by182 native
+> modules with full affine placements and explicit material bindings. Twelve
+> instances override stock plaster/wood with Planks. Every mesh/index/world
+> vertex/material checked:1 test2140 assertions; exporter4 Python tests pass.
+> Front/back native views inspected. This is a grammar example, NOT production:
+> oracle borrows reference materials; bake variants and reserve full envelope
+> before integration. Do not discard bindings in module-only compiler IDs.
+> See `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-turret-derivation/result.md`.
+
+> October 4 corner turret admission: 7/standard,13/large,43/grand have zero
+> corner towers; accepted total towers0,1,0. Most proposals fail bearing or
+> reservations; the few supported corner joins hit public air. Extending native
+> shafts down to real ground was tested and REJECTED: same finished counts,
+> newly supported shafts hit reserved space. Both production files restored.
+> Do not repeat post-hoc footing relaxation; reserve a turret's envelope during
+> composition or add it to a complete native-house derivation. Presence tests
+> remain failing, not relaxed. `tower_admission_probe.gd` records stage counters.
+> See `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-turret-admission/result.md`.
+
+> October 4 inhabited tunnel supports: room composition now retains occupied
+> jamb columns for admitted PLOT_OVER rooms through handoff/merge/variation;
+> a low jamb house's existing flat roof is retained as bearing when it meets
+> the crown. Final complete-crown/jamb/host proof unchanged. No recovered
+> uninhabited stone piers. 101/large gains a whole passage cover (loses four
+> partial-covered quarters elsewhere); holdout83/grand gains four quarters.
+> 16/16 towns build, zero floating/air findings; covered quarters798->802,
+> fully covered cells186->188, bridges36 unchanged. Focused5/72, composition
+> and skywalk7/33 pass; actual player101 through and83 approach both2/2.
+> Matched101 and holdout83 native views inspected. Broader goal still open.
+> See `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-inhabited-jambs/result.md`.
+
+> October 4 cover-chain experiment rejected: resolving PLOT_OVER extensions
+> outward from an original house adds a source cover at 101/large (-2,4,2)
+> but no finished coverage. Parent jamb (-1,1), band6 is ALLOCATABLE during
+> construction, not inhabited or retained stone; final bearing rejection is
+> correct. Slab-facing-half jamb check also produced no gain and was reverted.
+> Eight holdouts build with zero floating/air findings, but none gained a
+> chained cover. No production change retained. Do not repeat post-hoc cover
+> retries or plain-pier recovery; co-decide inhabited jambs and rooms.
+> See `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-cover-chains/result.md`.
+
+> October 4 enclosure audit after native house integration: eight towns retain
+> zero floating masses / roof intrusions. Archived pre-native -> current:
+> covered quarters 334 -> 386, supported bridge cells 17 -> 20; only ~15.6%
+> public quarters covered, so enclosure goal remains open. Native facade audit
+> uses baked triangles, not reservation boxes (1 test / 17 assertions).
+> Stair-adjacent landing bore experiment REJECTED: five extra source tunnel
+> cells, zero extra finished covered passages; production rule restored.
+> See `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-enclosure-audit/result.md`.
+
+> October 4 native street-town family: NativeHouseSite.street and
+> NativeHouseRecipe.street preserve authored projecting floors/brackets and
+> add one scale-correct arrival stair. Production vocabulary now 34 native
+> derivations / seven profiles (cross plus two-/three-bay street houses).
+> Four-bay trial rejected in town art review as another long thin roof; keep
+> longer derivations out of production until their rooflines gain features.
+> Same 16 towns: 16/16 build, native presence 1 -> 12 towns, 16 houses / 945
+> parts, zero generic replacements, seven/eight holdouts. Isolated player 8/8;
+> final town7 4/4, holdout61 2/2. Expanded town preservation/air 3 / 583 passes;
+> template oracle 1 / 291, variant coverage 1 / 264, real terrain 1 / 125.
+> Ground-only support restriction remains; broader architecture still open.
+> See `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-street-town/result.md`.
+
+> October 4 native gables/reflections: compound sites gain the pack's round
+> WindowSolo_6 at measured gable seats (House_9 proportion .77019). Actual
+> indexed exterior-glass rays clear all tested timber/roof faces. Baked town
+> review found negative-determinant roof instances showing wooden undersides:
+> NativeGrammarCompiler.placement now uses baked `.mirror_x` variants and
+> positive instance bases, also used by NativeHouseRecipe. Seven reflected
+> modules; total catalog 78. Matched render repairs the blue roof patches;
+> world geometry preserved. 16 tests / 13,959 assertions pass. Earlier native
+> review's wooden roof patches were a reflection bug, not authored art.
+> See `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-gable-detail/result.md`.
+
+> October 4 native town integration: production registers 18 seeded native
+> cross-house derivations through five generated doorway/roof/footing profiles.
+> Native landmarks bypass generic kit replacement; no upper roof sockets or
+> public floors atop pitched roofs. A raised 61/grand actual-player failure
+> exposed a missing private approach floor: new native sites now require their
+> entire footing at `WarrenMassif.base_at` in both planner and realization.
+> Final 16-town survey builds, only 211/grand selects a native compound (106
+> parts); 3 tests / 222 assertions, template 1 / 267, variants 1 / 200 pass;
+> full-town 211 entrance ascent/descent pass. Native rollout is enabled with
+> ground-only support, superseding the earlier no-rollout note. Raised support,
+> selection frequency, fuller family coverage and art acceptance remain open.
+> See `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-native-town/result.md`.
+
+> October 4 native fabric recipe: `NativeHouseRecipe.cross` keeps every native
+> part through the anisotropic town lattice, with uniform world scale and the
+> 0.08 m construction guard. Sealed recipe/actual assembler tests 2 / 5289;
+> player on fabric payload 8/8 entrance walks. Body/terrain reservation is
+> currently a conservative bounding footprint. Existing landmark fit probe:
+> 0/216 candidates across nine sites in four towns, so do not late-substitute.
+> Native planner templates/selection and kit preservation remain open; no
+> production rollout. See
+> `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-native-recipe/result.md`.
+
+> October 4 native site adapter: `NativeHouseSite.cross` anchors a complete
+> sampled compound by world ground arrival and outward facing, using measured
+> stair reach plus 0.75 m standing margin. Publishes assembly envelope, separate
+> conservative foundation contact outlines and exterior entry route. Site tests
+> 2 / 2370; translated/elevated actual-player routes at four orientations 8/8.
+> No town invocation yet: existing prefab landmark path rebuilds generic kit
+> masses and cannot preserve the derivation without an explicit reservation/
+> realization path. See
+> `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-native-site/result.md`.
+
+> October 4 native entrance traversal: doubling Stone_Stair_2 doubled risers
+> beyond the real player's 0.5 m step limit (ascent failed). CrossFoundation
+> now takes intended world scale (1 or 2); doubled hosts use native-size
+> Stone_Stair_11, with 3 m rise. Native/double ascent/descent 4/4 pass with full
+> baked house collision. Foundation 3 tests / 2106 and compiler/dependencies
+> 4 / 1030 pass. Catalog now 70 modules. Native entry/front views inspected.
+> Exterior approach only; production site/route integration remains open. See
+> `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-native-entry/result.md`.
+
+> October 4 native grammar runtime bridge: 69 native-scale modules baked via
+> `export_native_manifest.gd` + ordinary environment bake (`--keep-existing`).
+> `NativeGrammarCompiler` requires collision-backed catalog IDs, enclosing
+> reservation and clear public-air bounds before emitting any payload instances.
+> Compiler 3 tests / 546, transitive no-source dependency 1 / 473 pass. Native
+> compiled sample commits 128 colliders; 10/10 stair physics rays hit. Source/
+> baked renders inspected (mipmapped texture differences). Planner/terrain/
+> entrance reservations and production invocation still open. See
+> `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-native-compiler/result.md`.
+
+> October 4 compound foundation: `PureVillageCrossFoundation` derives native
+> full/half masonry, convex corners and door-owned entry stair from final walls.
+> Enable with `CrossHouse.instantiate(..., foundation=true)`. Two geometry tests /
+> 948 assertions and native base/entry views pass. Ground-to-first-tread ~0.31 m;
+> actual player traversal is not yet checked. Foundation fitting is not exact
+> House_5 foundation reconstruction; terrain/access/collision integration open.
+> See `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-cross-foundation/result.md`.
+
+> October 4 compound end windows: `PureVillageCrossHouse` samples windows
+> on ground-floor gable faces. Long-wing corners retain adjacent wall posts;
+> short-wing end replacements add native Wood_Beam_3x30_2 posts, native height,
+> horizontal scale 1.2. Render caught absent short-wing corner ownership; fixed
+> and pinned by actual timber-triangle probes (1 test / 21). Source 8 / 10400,
+> seeded facade 1 / 3721, glazing 1 / 8 pass. Still study, not town integration.
+> See `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-cross-end-windows/result.md`.
+
+> October 4 compound openings: `PureVillageCrossHouse.sample` chooses one
+> native Door_3_1 and one coordinated window family in complete middle bays.
+> Corner/return panels are never replaced. Reference 8 tests / 10400 assertions
+> unchanged; seeded layouts 1 / 3841, actual glass-to-roof clearance 1 / 8 pass.
+> Native views inspected. Blank end faces, foundation/entry support and town
+> integration remain. See
+> `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-cross-openings/result.md`.
+
+> October 4 compound host shell: `PureVillageCrossHouse` derives House_5
+> ground-floor walls plus the roof/attic (foundation excluded). Eight reference
+> tests / 10400 assertions, four coverage tests / 6732 assertions pass. Native
+> extended review caught missing corner posts: end panels must move outward,
+> with middle bays inserted behind them; fixed in host and attic. Blank source
+> panels are a benchmark, not approved sampling. Openings, foundation and town
+> integration remain. See
+> `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-cross-host/result.md`.
+
+> October 4 cross-roof attic sides: `PureVillageCrossRoof` now includes
+> native 1 m eave walls and short returns, extended in whole bays. House_5
+> roof/gables/attic sides reconstruct within 0.2 mm: 7 tests / 8070 assertions.
+> Three geometry tests / 3996 assertions and native extended views pass.
+> Lower host/foundation and production integration remain. See
+> `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-cross-attic/result.md`.
+
+> October 4 cross-gable follow-up: `PureVillageCrossRoof` now includes all
+> four House_5 gable assemblies, linked to arm length and roof datum. Seven
+> reconstruction tests / 7874 assertions, two triangle-coverage tests / 2412
+> assertions, and native source/extended views pass. Roof probes exclude
+> gables to prevent false coverage. Still missing the short eave-side attic
+> walls and host shell; no production integration. See
+> `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-cross-gables/result.md`.
+
+> October 4 native cross-roof rule: `PureVillageCrossRoof` reconstructs
+> House_5 roof meshes from four native valley corners and whole 3 m X/Z arm
+> bays; source geometry/materials/UVs retained. Seven reconstruction tests /
+> 7490 assertions and 2332 sampled roof-triangle coverage checks pass; native
+> front/back/above and extended-wing views inspected. Roof skin only: no
+> matching gable/room closure or production integration yet. See
+> `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-native-cross-roof/result.md`.
+
+> October 4 street-house facade sampler: named complete middle-bay sockets
+> permit compatible window replacements while preserving end/return trim,
+> roofs and supports. Seeded lower-window family pairs with shuttered uppers.
+> Window_12_2 is rejected upstairs: actual-glass sightline rays intersect the
+> roof eave; Window_1_2 clears it. Reference reconstruction remains unchanged.
+> Native views and sampler/triangle tests pass; no production integration.
+> See `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-street-facades/result.md`.
+
+> October 4 complete native street-house grammar: `PureVillageJettyRoof`
+> coordinates long front verge/ridge caps with the projecting gable;
+> `PureVillageStreetHouse` derives all of StreetHouse_1 from native modules
+> and a longitudinal bay count. Full geometry/UV/material reconstruction
+> passes (6 tests / 6112 assertions in the reference suite); 348 triangle
+> probes cover roof, side walls and projecting underside at 2/3/4 bays.
+> Matched native views differ by 0–8 pixels above 8/255. Not production
+> integrated; blank reference sides are fidelity benchmarks, not final art.
+> See `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-native-street-house/result.md`.
+
+> October 4 native jetty grammar: `PureVillageJetty` reconstructs the
+> StreetHouse_1 3x1 m projecting front, split floor, paired supports and left
+> return; independent opposite return mirrors the short module. Shared host
+> side ownership omits duplicate wall, not brackets. 3 tests / 79 assertions;
+> native source/replacement views have zero pixels differing above 8/255.
+> Component still requires host and roof; obligations are not yet enforced by
+> a full composition validator. No production integration or complete
+> StreetHouse_1 reconstruction claim. See
+> `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-native-jetty-rule/result.md`.
+
+> October 4 native house grammar (`PureVillageNativeHouse` deleted October 7): it reconstructed the
+> entire authored House_4 from ridge-bay count and shared facade/foundation/
+> corner/head rules plus the native roof grammar. Opening choices replace whole
+> wall bays; Door_9_1 coordinates its entrance foundation and 125 mm tangent
+> socket. Stone samples use Window_14_1 (rectangular stone-backed window), not
+> Window_1_3's plaster panel. Six tests / 3843 assertions; matched native house
+> views differ by 3/2 pixels above 8/255. This is a reconstruction foundation,
+> not accepted final architecture or production integration. See
+> `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-native-house-rule/result.md`.
+
+> October 4 native grammar foundation: `PureVillageNativeRoof` derives the
+> complete native straight/curved roof family and gable closures from ridge-bay
+> count and wall datum, with no stretched modules or prefab placement replay.
+> House_1 and House_4 roof/gables reconstruct within source quaternion error;
+> UVs/materials/textures match, 3 tests / 1954 assertions. Matched native images
+> differ by only 4–6 pixels above 8/255; novel lengths visually inspected.
+> Not production-integrated or a complete house grammar. See
+> `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-native-roof-rule/result.md`.
+
+> October 4 large overhang follow-up: `arcade_overhang_support` already
+> reserves a native four-post timber frame clear of the body lanes. Kit
+> replacement erased it, then rejected generic replacement posts at public
+> floors. Retain the reserved recipe and skip the generic support mass.
+> Final kit timber substitution tiles each post while preserving its full
+> measured bounds. 1 test / 77 assertions, actual-player access both directions,
+> and eight towns with zero structural floating/main-roof air violations.
+> This resolves the house.004 floor8 support issue mentioned below; full
+> prefab grammar remains open. See
+> `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-arcade-supports/result.md`.
+
+> October 4 one-module cantilevers: native Pure Village Support_8 brackets
+> now bear on lower wall joints beneath actual exposed upper-room soffits;
+> no stretching, inset/shifted backing or neighbor-carried floors. Whole
+> ornaments pass existing public-air/tower/bay/projection checks. Six tests,
+> 48 assertions pass; native fixture and reported town inspected. Two survive
+> on 7/standard house.004. Its larger floor8 wing extends TWO modules (~8m
+> world), so remains OPEN: needs a room/support grammar compatible with routes,
+> not scaled-up brackets. See
+> `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-cantilever-supports/result.md`.
+
+> October 4 dormer connection: replaced Window_Roof_1_1 framed replacement
+> panel with the House_11c relation: Window_Roof_1_3 overlay + continuous
+> Roof_Base_30x30_1 at the same pivot. The old rear Wood_3 batten protruded
+> above the host roof; the overlay uses no such batten. Adapter excludes the
+> upright RoofTransition sheet; native source files unchanged. Tight/normal
+> eaves and all four palettes rebuilt, plus frame finishes, worker geometry
+> and window envelopes. Four connection/fit tests1416 assertions, nine roof
+> junction tests12002 assertions, production125 assertions (6720ms) pass.
+> Matched town and four palette fixtures inspected. Existing 2m adaptation
+> remains; full prefab reconstruction and broad upper cantilever art OPEN.
+> See `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-dormer-connection/result.md`.
+
+> October 4 connected canopy datum: projecting facades used to lift only
+> their own roof run by 0.35 native m, stranding caps against lower adjoining
+> runs (reported 7/standard, y7.2 vs6.85). Shared-endpoint courses now use the
+> highest required attachment datum; disconnected courses stay independent.
+> Nine frontage tests pass; expanded emitted-corner test 26 assertions; native
+> full-context and close-up inspected. Eight towns build,float/roof-air0.
+> Broader overhang/cap fallback acceptance remains open. Close-up also exposes
+> dormer rear timber bars above the foreground roof: next connection repair.
+> See `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-hood-height/result.md`.
+
+> October 4 inward canopy progress: same-height accepted concave frontages
+> reserve 1.5m per face for the native Pure Village inward valley and use
+> unscaled 0.5m adjoining strips. The source's upright RoofTransition_1 sheet
+> is omitted from the baked variant; tile/timber vertices and indices remain
+> identical. Eight tests/125 assertions pass, native close-up and 7/standard
+> context inspected. Blocked/missing/short adjoining runs and broad overhangs
+> remain open; do not claim complete canopy acceptance. See
+> `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-hood-inner/result.md`.
+
+> October 4 canopy outer corners: `_join_hood_corners` joins only two
+> independently accepted same-height runs at a shared convex vertex, using
+> native Pure Village `Roof_Bottom_OutCorner_5x5_1` and middle pieces instead
+> of duplicate caps. Whole connection must clear; blocked corners keep caps.
+> Source placement relation measured from StreetHouse_7. Six tests/85 asserts
+> pass; eight-town coverage unchanged,float/roof-air0; fixture and reported
+> town views inspected. INWARD corners are still open: House_10's native
+> inward piece consumes 1.5m on each run, unlike an additive outer quarter.
+> See `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-hood-corners/result.md`.
+
+> October 4 download-2 facade repairs: Pure Village stone-to-plaster gables
+> now receive native timber sills at the masonry face; no duplicate timber
+> heads/open-branch bands. Bay fitting checks the whole hood against finished
+> roof triangles, not only glass. Tunnel crowns and odd retaining courses now
+> share native Pure Village stone (`WallStone_Start_20x15_1` for half courses),
+> with existing relief/window fitting. Grey cubes under upper corners came
+> from Crossbar_1's Stone surface: `crossbar_1_timber` omits it while preserving
+> every timber vertex/index, with host wood finishes.17 tests/5778 assertions
+> pass; eight-town cover unchanged,float/roof-air0; production125/125,6708ms.
+> One existing 2/grand high-window fixture also fails with these changes off.
+> Canopy corners and broad overhang appearance remain OPEN. Source
+> StreetHouse_7 connects bottom-curved runs with dedicated outer corner pieces;
+> current pent-eave runs cap each face independently. See
+> `docs/qa/2026-10-01-town-redesign/prefab-grammar/october4-facade-repairs/result.md`.
+
 > October 3 terrain shape (owner review of the October 2 regimes; same branch, merged to main).
 > `TerrainField.height_m` = region `base` + `elevation_m` + `continental_m` + `LandformSetpieces`
 > + `LandformFeatures` (raise - cut) + per-regime `RegimeRelief`, blended over regimes, then a
@@ -671,6 +1071,791 @@
 > (set pieces linear). Harnesses: `tests/harness/terrain_preview.tscn` (fast kernel-height preview:
 > `--archetype NAME|all|world --center X,Z --size --step --yaw`, oblique/low/top/ground shots) and
 > `terrain_height_map.gd` (headless 24 km height map).
+
+> October 3 download-2 follow-up: roofs now fit tight eaves per SIDE via
+> `tight_eave_sides` mask; caps, barge trim and dormer fitting follow that
+> side. Explicit legacy tight_eave without a mask still means both sides.
+> Short houses no longer propose towers: require actual overlapping stacked
+> storeys, not two single-storey wings at different ground levels.5eave tests
+>120assertions and2tower-height tests6assertions pass; eight-town cover
+>unchanged,float/roof-air0. IMPORTANT: stepped_wing_review --context now
+>uses complete town_payload, including public decks/rails/bridges; the earlier
+>context view omitted them, making terraces hollow and connections absent.
+> Remaining photo issues (gable trim, hood/canopy joins, protruding block,
+>material hierarchy) remain open. Evidence:
+> `docs/qa/2026-10-01-town-redesign/prefab-grammar/side-eaves-result.md`.
+
+> October 3 screenshot roof repair: equal-width gable continuations now
+> take the host ridge axis before the existing collinear merge (previously
+> only narrower wings did). The disconnected high gable on7/standard's
+> landmark becomes a continuous roof. New2tests14assertions and existing
+>9roof-junction tests12002assertions pass; eight towns retain cover with
+>zero floating/roof-air. Missing side in isolated image abuts tunnel-ceiling
+>structure; review harness `--context` preserves it. Flush lower eave and
+>general hood/roof junctions still open. Evidence:
+> `docs/qa/2026-10-01-town-redesign/prefab-grammar/roof-continuation-result.md`.
+
+> October 3 owner correction: corner-wing Pure Village image rejected for
+> roof/hood overlap, disconnected junctions, missing side and absent eave
+> overhang. Earlier visual acceptance is superseded. New requirement: a
+> shared building grammar must reconstruct native Pure Village/Suntail houses
+> as derivations and generate novel valid samples. Inventory is NOT grammar
+> completion. See `docs/superpowers/plans/2026-10-03-prefab-building-grammar.md`.
+
+> October 3 bridge/stair bearing:4/large's null-town failure is fixed.
+> Direct endpoint admission now checks the lower room AND its bearing against
+> the same `WarrenVolumeTransition.clearance_air_cells` used downstream;
+> a source-solid band can still be stair headroom. Covers test now43/43;
+> new2tests6assertions, nine-town float/roof-air0, previous eight cover counts
+> unchanged; actual affected stair player2/2. Compiler support gate unchanged.
+> See `docs/qa/2026-10-01-town-redesign/october3-bridge-stair-bearing/result.md`.
+
+> October 3 inhabited tunnel floor alignment: the first real host storey may
+> lie one or two bands above a crown (`TUNNEL_OVER_MAX_LIFT = STOREY_BANDS`),
+> with existing house height/roof, jamb, public-air, edge and citadel checks.
+> One-band admission silently excluded the common same-phase two-band bore.
+> IMPORTANT: `_maze_flat_slab_cells` reserves the full crown-to-floor bearing
+> run, and `_over_passage_is_borne` checks every course. Planner-only admission
+> produced a partial crown on7/large; fixed by whole-run reservation, not by
+> relaxing the whole-or-absent test. Final16-town cover764->800 quarters,
+> no individual loss, floating0/roof-air0. Two tests44assertions pass;
+> legacy cover test42/43 (remaining4/large null-town failure also at baseline).
+> Final13 native views checked; repaired7large corner player2/2.
+> Quiet production1/1,125assertions,6170ms<8000.
+> `nested_gate_walk --covered-cell` can now follow adjacent published edges
+> through a real corner waypoint. Broader enclosure and full goal remainOPEN.
+> QA: docs/qa/2026-10-01-town-redesign/october3-tunnel-floor-alignment/result.md.
+
+> October 3 roofed corner wings: broad repeated stacks can retain connected
+> L-shaped upper rooms around a lower inhabited corner roof. Primary broad-house
+> shaping runs before loggias (their notches previously disqualified the stack);
+> loggias preserve shaped arms. Narrow houses retain prior order. Door, walk,
+> external-bearing and balcony-bearing exclusions stay. Sixteen-town final
+> survey: 16 corner-wing buildings in nine towns, floating0/roof-air0; inhabited
+> coverage unchanged town by town. Final wing suite5/5,127assertions;
+> earlier combined projection/wing suite12/12,192assertions; player10312/12;
+> production1/1,125assertions,6214ms<8000. Native Pure7 and Suntail103
+> opposite-side renders inspected. Long ranges/enclosure/Gothic remainOPEN.
+> QA: docs/qa/2026-10-01-town-redesign/october3-corner-wings/result.md.
+
+> October 3 ordinary house fronts: `KitRoomProjections` now admits inhabited
+> houses with at least three storeys, choosing at most one closed projecting
+> front per ordinary house. Native floor/ceiling/returns/brackets, a window per
+> bay, public clearance and supported-room checks remain; own lower-wing roofs
+> now block a proposal. Final eight-town corpus: 13 fronts (11 ordinary, two
+> embedded), zero floating/roof-air, covered quarters unchanged at 328.
+> Nine tests / 82 assertions; player43 skywalk/underpass10/10; production1/1,
+> 125 assertions,6799ms<8000. Native final43 reviewed; broad flat compounds,
+> enclosure and Gothic stone remain open. Probe formatter damage repaired with
+> explicit loops; multi-town output validated. QA:
+> docs/qa/2026-10-01-town-redesign/october3-upper-house-fronts/result.md.
+
+> October 3 stable building draws: `WarrenPlotPlanner._building_roll` uses seed
+> column/floor/door, not mutable admitted-seed index, for footprint and storey
+> budgets. Current towns change once; future seed removal no longer rerolls
+> surviving budget draws (growth, IDs/styles may still change). 7 tests / 158
+> assertions; eight towns build, floating0/roof-air0; native7/43 reviewed,
+> player101entry-to-gate2/2; production1/1,125assertions,6196ms<8000.
+> The five-cell crown test now matches geometry,
+> not room index13. Probe correction: enclosed `kit.skywalk.*` storeys were
+> omitted from house-only counts; corrected current total328 across8towns,
+> not comparable to historical280. Extra-ground candidate still loses cover
+> and is fully reverted; carver unchanged. Tall flat fronts/enclosure stayOPEN.
+> QA: docs/qa/2026-10-01-town-redesign/october3-stable-building-draws/result.md.
+
+> October 3 endpoint allocation follow-up: the rejected ground-link candidate
+> bypassed reserved-green checks as well as below-ground voxel checks. Its
+> 7/standard bridge failed on reserved ground (2,-3), not the suspected wall
+> room collision. Explicit green exclusion permits a narrower bridge but still
+> loses cover (40 -> 32; eight-town 280 -> 276), so ALL production changes again
+> reverted. Probe now saves source plots/proofs/plot outcomes. Mutable building
+> indices feed footprint/height rolls, so changing seed admission changes other
+> houses too. Isolate that entropy and upper-room ownership before re-admission.
+> Evidence: docs/qa/2026-10-01-town-redesign/october3-endpoint-allocation/result.md.
+
+> October 3 enclosure investigation: expanded `inhabited_enclosure_probe`
+> records finished room ceilings, adjacent inhabited cells and raised/ground
+> floors. Current eight-town survey: 280 covered quarters, all build, floating
+> and roof/public-air intrusions zero. Natural-ground direct-bearing helper
+> asks for a nonexistent underground massif voxel; an isolated correction
+> passes but repartitions later houses and loses other covers. Even deferring
+> new ground links until after streets passes five towns but fails holdout
+> 7/standard (40 -> 28), total 280 -> 272. ALL candidate carver changes reverted
+> exactly. Do not reapply the isolated support/ranking tweaks without coupled
+> endpoint/inhabited-cover preservation. Candidate patches, native/player
+> evidence and red fixture are saved under
+> `docs/qa/2026-10-01-town-redesign/october3-enclosure-audit/`; production's
+> restored climbing-support tests pass 2/2, 12 assertions. Full goal stays open.
+
+> October 3 frame finishes: native/oak/walnut is chosen per merged Pure
+> Village house (`TownFramePalette`); named wood materials vary while roof,
+> plaster, stone and glass remain separate. Lightweight finish descriptors
+> reuse native visuals/collision; `EnvironmentRenderCache` privately copies
+> material wrappers. Worker roof geometry uses `BuildingKit.geometry_aliases`.
+> Material suffix `.finish_` is reserved (never `.frame.`, which collides
+> with Suntail IDs). Facade/dormer opening checks canonicalize finish and roof
+> palette IDs; 13/large matches earlier fitting counts, 43/grand now omits
+> two actually obstructed dormers. Rebuild descriptors after source changes
+> with `tools/environment_bake/bake_town_frame_variants.gd`. Seven final tests,
+> 6,457 assertions; production 1/1, 125 assertions, 5584 ms < 8,000 ms.
+> QA: `docs/qa/2026-10-01-town-redesign/october3-frame-palettes/result.md`.
+
+> October 3 roof palettes: `TownRoofPalette` chooses one native Pure Village
+> roof family per merged house (blue, warm wood, weathered wood, sage), remaps
+> anchors/cap bounds and exports every variant to the worker roof geometry.
+> `KitTowerPalette` matches the corner/half-tower cap to that host family.
+> Both `RoofTiles` and `RoofTopTiles` receive the material (the latter is the
+> separate ridge tile surface); original framing remains contrasting.
+> `VillageProgram` includes variant IDs in the sealed streaming asset list.
+> Native 13/large and 43/grand reviewed; nine tests / 7,067 assertions pass;
+> real-terrain production 1/1, 125 assertions, 5,518 ms < 8,000 ms. Full facade
+> palettes and Gothic composition remain open. See
+> `docs/qa/2026-10-01-town-redesign/october3-roof-palettes/result.md`.
+
+> October 3 short corner turrets: lower wings/one-storey houses can now use
+> one complete native window course + cap on a grounded convex corner (30%
+> seeded proposal share for single-storey houses, all support/air checks kept).
+> Five-town corners1->12 across4/5towns, overhead coverage unchanged; three
+> holdouts build, floating0/air0.9/9tests5065asserts; native13/43 views judged;
+> actualplayer13coveredstreet2/2. Inset suspicion disproved (mostly corner
+> occupancy/doors); no inset/clearance relaxation. Tall compound towers,
+> full palettes/Gothic/enclosure remainOPEN. QA:
+> docs/qa/2026-10-01-town-redesign/october3-low-corners/result.md.
+
+> October 3 corner-support follow-up: `_tower_bearing` accepts the exposed
+> top of actual retained/podium stone as well as terrain; native footing relief
+> may embed below that proved datum. Every foot column still needs support.
+> Five-town counts unchanged (one corner + one half tower in43); this does NOT
+> solve frequency. Inward-L-corner experiment REJECTED: roof skins swallow its
+> cap, no corpus gain; rule and pose changes reverted. Next: reserve corner and
+> adjoining lower wing during planning. QA:
+> docs/qa/2026-10-01-town-redesign/october3-corner-support/result.md.
+
+> October 3 corner towers: production now attempts grounded native narrow
+> shafts at true convex corners (same corner through all bands), before existing
+> half-tower attachments. Roof-emergent fallback removed. Five towns: only
+> 43/grand gets a corner; early footprint reservation still needed. Cap inherits
+> adjoining roof family: original blue slate or Suntail warm/weathered wood
+> texture/normal/tint; four native cap material variants, geometry unchanged.
+> Controlled Pure/Suntail corners rendered; narrow Pure lip has a tiny fragment
+> still to clean. Broader compound palettes/Gothic/enclosure remain OPEN.
+> QA: docs/qa/2026-10-01-town-redesign/october3-corner-towers/result.md.
+
+> October3 palette/corner study: owner explicitly prefers corner/lower-wing
+> towers over the roof-emergent fallback, with coordinated roof/cap colours.
+> Five native House_16c studies (oak/walnut, walnut/oak, blue/birch, sage/oak,
+> limestone/charcoal) are in docs/qa/2026-10-01-town-redesign/october3-palette-study/.
+> These are AUTHORed prefab material comparisons, NOT procedural corner work.
+> Existing texture grain/normal detail; no source assets overwritten. Brown roofs
+> combine tile relief with native wood grain. Stone is a material direction,
+> not Gothic architecture acceptance. Production corner geometry and palette
+> matching still OPEN. All preview jobs terminal; active redesign continues.
+
+> October3 climbing support: `_bridge_foundation_is_direct` uses bearing_at,
+> so raised-platform rock cannot count as lower endpoint rooms. Narrow support
+> can fit where broad support crosses the plinth. Platform bridge veto protects
+> actual foundation columns instead of a two-column radius. Radius-only trial
+> REJECTED (101coverage8->4); corrected101coverage8->20, otherthreeunchanged,
+> floating0/air0.7/7tests107asserts; actualplayer101fullentrance-to-gate2/2.
+> Native climb views reviewed; upper exposure/overall architecture stayOPEN.
+> QA:docs/qa/2026-10-01-town-redesign/october3-climbing-support/result.md.
+> Owner now rejects roof-emergent turrets; wants corner towers/lower-wing
+> junctions and coordinated primary/accent palettes, wood tones, blue/green,
+> plus smooth-stone collegiate/Gothic possibilities. Study underway.
+
+> October 3 inhabited bore construction (supersedes the deferred experiment
+> below): excavation now uses WarrenVolumePlan's two-band clearance (6 world m).
+> Native corner gables close the final single-cell remainder of an odd private
+> crown, with two fitted native attic panels and unchanged clearance checks.
+> 58/large now builds both formerly untileable crowns; no town retries or seed
+> exceptions. A rejected four-quarter hip was removed from the catalog.
+> Cross-gabled long wings now receive an independent seeded dormer draw and
+> the existing measured fitter; this restores 60/standard's bare roof wings.
+> Five matched towns: inhabited street coverage104->148 quarters; nine-town
+> final survey:212 covered/652 public cells, floating0, roof-air intrusions0.
+> Final targeted19/19 tests,13761 assertions; previous missing dormer samples
+> in the selected roof suite now pass too. Actual player43/grand10/10 directions
+> and newly covered13/large street2/2 (before final roof-only dormer repair).
+> Quiet production:5103ms<8000;1/1 test,125 assertions. All jobs terminal.
+> QA: docs/qa/2026-10-01-town-redesign/october3-bore-construction/result.md.
+> Upper frontage repetition, exposed climbing walks and overall art acceptance
+> remain OPEN. The unbounded redesign goal stays ACTIVE.
+
+> October3 excavation clearance experiment DEFERRED: tested shared two-band
+> volume/transition contract instead of three-band excavation (6 vs9 world m).
+> Finished inhabited coverage five-town104->148 quarters; native lower streets
+> improve;13 actual player10/10 directions.58/large fails exact roofing on a
+> five-cell private L; existing private gable tiles have only2/4/6 cells.
+> Excavation/compiler restored EXACTLY. Candidate patch and odd-crown.json in
+> docs/qa/2026-10-01-town-redesign/october3-bore-headroom/; result.md details next
+> native odd-corner grammar work. Contract study lives under tests/harness/suntail,
+> not production discovery. Retained generic player --covered-cell mode.
+> Related9/10; carver12/13 (same five spine failures at baseline); production
+> verifier two failures also baseline. No acceptance or timing claim. All jobs
+> terminal; original architecture goal ACTIVE and open.
+
+> October 3 projecting wall rooms: KitRoomProjections extends eligible inhabited
+> upper timber fronts0.65 native m with complete floor/ceiling strips, plaster
+> returns, beams and native brackets. Long runs select two/three bays and retain
+> flush shoulders. All public air and grid reservations remain protected; only
+> the native wall attachment lap is excluded from neighbor-piece checks.
+> New town_room_fronts manifest uses original cropped Suntail/Pure Village stock.
+> Native58/large and67/large fronts judged;13 blocked front stays unchanged.
+> Final10/10 tests,182 assertions;58/67 local doorway approaches each8/8;
+> quiet production7362ms<8000,149 assertions. Initial58 skywalk probe selected
+> zero routes and is NOT a pass. No full-suite/world-streaming claim.
+> QA docs/qa/2026-10-01-town-redesign/october3-room-projections/result.md.
+> Inhabited bore co-design, enclosed climbs and overall art acceptance stay OPEN.
+
+> October 3 shallow wall roofs: wall-room hoods now use original Pure Village
+> Roof_Bottom_30x5_1 with complete Left/Right_20x5 end caps (centre stock cropped
+> to 2 m bays, no tile scaling). The old full gable module rose 3.119 m into
+> retained backing. Native hood seat +0.85 m keeps opening heads clear and fits
+> within the retained cap. Initial low placement rejected; controlled two/four-bay
+> and native town views reviewed. Final room/skywalk 9/9, 164 assertions; expanded
+> hood 4/4, 59; 13/large actual player 8/8. QA:
+> docs/qa/2026-10-01-town-redesign/october3-shallow-fronts/result.md.
+> This is roof grammar only: projecting wall rooms, inhabited bore co-design
+> and enclosed climbs remain OPEN. No fresh timing/full-suite/streaming claim.
+
+> October3 skywalk landing repair:43/grand now passes8/8 actual-player directions.
+> Its accepted far landing was compiler roof.flat.row, erased by a kit pitched
+> wing; its terrace rail also fenced across the late bridge connection.
+> KitVillageBuildings now preserves reachable construction crowns as native
+> decks and walked cells; crown headroom joins KitPublicClearance/verge fitting.
+> maze_terrace_edges opens accepted walking seams while retaining side guards.
+> No seed exceptions. The attempted transition-guard rebuild was irrelevant
+> and reverted exactly. Initial7/7,215 asserts; final8/8,3273; final native
+> landing/overhead views inspected. No fresh timing/full-suite/streaming claim.
+> QA docs/qa/2026-10-01-town-redesign/october3-skywalk-landings/result.md.
+> Overall massif/embedded-frontage/enclosed-climb architecture remains OPEN.
+
+> October3 inhabited-clearance review: interior-priority bridge selection and
+> three-body kit compound merging were tested and REJECTED. Priority moved
+> coverage from upper to lower streets (103/grand32->24 covered quarters);
+> the merge preserved coverage but lost an enclosing roof projection in matched
+> native street views. Carver and adapter merge changes reverted. Retained only
+> KitPublicClearance.inhabited_bridge_rooms: private bridge and actual endpoint
+> room air rejects optional tower shafts; never used to cut roofs/walls.
+> Retained tower counts13/large4,31/large1,43/grand5 (two route-occupying proposals
+> rejected). New2/2,143 assertions; roof-turret3/3,3091; retained13 player8/8.
+> 43/grand player baseline4/8 -> retained6/8: both shaft-blocked bridge directions
+> restored. Exterior skywalk0 still fails identically (missing landing/railing).
+> Enclosure, shallow
+> wall-room projections and overall architecture remain OPEN. Candidate renders
+> are labeled rejected; QA docs/qa/2026-10-01-town-redesign/october3-inhabited-selection/result.md.
+> No new full-suite/timing claim, commit or PR.
+
+> October3 roof turrets: inspected native House_11c's complete round shaft
+> emerging through a roof. Baked original Middle2_15x30, Window_15x30, Roof_Tower_2;
+> KitRoofTurrets is a seeded fallback behind existing larger tower fitting (its `propose` deleted October 7).
+> Shaft begins inside an occupied upper room; native window is above the roof,
+> cap laps0.25m. Whole public air/reservations and individual neighbor pieces
+> protected. Hidden source-measured shaft cutters only; no visible generated
+> stone. 13/large4 new roof turrets,31/large1,43/grand3 existing+4 new.
+> Final tower suites9/9,6364 asserts; quiet production7227ms<8000,149 asserts.
+> Native isolated finished buildings and three-town views inspected. No new
+> player/full-suite claim. QA: docs/qa/2026-10-01-town-redesign/october3-roof-turrets/result.md.
+> Embedded projecting fronts, bored inhabited massifs, enclosed climbs and
+> architectural acceptance remain OPEN. No commit/PR.
+
+> October3 stepped wings: KitSteppedWings lowers seeded ends of repeated
+> rectangular upper stacks into real roofed lower rooms; immutable doors,
+> bridge abutments, walked cells and external bearing. 13/large3 changed houses,
+>43/grand2. Also removed the older automatic bay.spire decorator (it survived
+> the full-tower fallback removal and still looked tacked on). Ordinary bays
+> and measured full towers remain. 13 loses its former full shaft;43 retains3;
+> tower distribution/co-designed lower-wing junctions remain OPEN. Initial10/10,
+>291 asserts; final stepped production4/4,116 across13/43/31/41; tower/oriel8/9
+> with only stale positive-cap fixture failing, corrected43 fixture1/1,3.
+> Matched native finished-payload renders inspected. Quiet7103ms<8000,149 asserts.
+> No new player/full-suite claim; all jobs terminal. QA:
+> docs/qa/2026-10-01-town-redesign/october3-stepped-wings/result.md.
+> Embedded projecting facades, bored inhabited massifs/enclosed climbs and
+> overall architectural acceptance still OPEN; no commit/PR.
+
+> October3 embedded-frontage parts: inspected native Pure Village bow-window
+> assemblies and returns. BowWindow_1..6 are ~6.6–7.2 native m tall, _7..9
+> ~10.2–10.5; not one-storey appliques. No production bay/recess enabled.
+> Retained only per-contiguous-run pent-eave admission: one blocked roof no
+> longer erases every other face; complete native panels/end boards still
+> rejected together against unchanged public air. Wall-room tests6/6,82 asserts;
+> final hood2/2,17. Native13/large platform/frontage views inspected; flush
+> facades/flat bands remain OPEN. No fresh player/performance/full-suite claim.
+> QA: docs/qa/2026-10-01-town-redesign/october3-frontage-parts/result.md.
+
+> October3 tunnel-bearing follow-up: REJECTED recovery/early-pier experiment.
+> It passed support/player tests but matched32/grand replaced a detailed house
+> frontage with a taller blank stone pier; an existing bridge already enclosed
+> the lane. Source cover counts were not new geometric enclosure. Late back-room
+> retry also gained nothing on five reviewed towns and was removed. Planner,
+> source and solver restored to pre-experiment files; prior work preserved.
+> Retained only native window panels on measured/backed two-module masonry faces:
+> final7/7,7354 assertions;41/large native views inspected. Quiet production
+> 7208ms<8000,149 assertions. These are decorative
+> panels, not embedded inhabited rooms. Actual bored support/room/roof co-design,
+> towers/stepped massing/embedded facades/enclosed climbs remain OPEN. QA:
+> docs/qa/2026-10-01-town-redesign/october3-tunnel-bearings/result.md.
+
+> October3 tower junction correction: actual House_16c cap begins0.5 native m
+> below the adjoining eave; production had it a full course too high. Proposals
+> now follow that datum, include eave-side candidates, and prefer native grounded
+> half bases where EVERY measured base column meets source terrain. New eave
+> attachments REQUIRE that base: a corbelled31/large eave cylinder passed geometry
+> but was REJECTED visually as still tacked onto an apartment wall. Existing
+> backed gable shafts remain, but full stepped-wing/narrow-tower grammar is OPEN.
+> Retained43/grand grounded eave tower foot and cap joins inspected. Final12/12,
+> 1506 assertions; earlier full native assemblies suite passed. Cap-removal audit
+> exposes roof cuts, never blanket-exempts hosts. Final quiet7511ms<8000,149 asserts.
+> Production16/16 valid, halo1 (before final suspended-eave rejection); world3
+> post full-floor-AABB flags unchanged; not new body-lane collision evidence.
+> QA: docs/qa/2026-10-01-town-redesign/october3-eave-towers/result.md.
+> Open: flat backing panels, stepped massing, embedded projecting facade rooms,
+> supported enclosed climbs, full current-corpus/player/art acceptance. Goal active.
+
+> October3 raised courtyard canopy: native tree crowns may cover adjacent
+> walks above measured headroom; roots/low branches remain inside supported
+> planting islands. TownCourtTrees uses baked triangle height bands and checks
+> finished native instances plus exact generated roof triangles (production
+> and review harness both supply them). Benches can sit under high crowns;
+> underplants avoid roots/trunk. Final7/7,6558 assertions;13/grand native views
+> inspected and court player route passed both directions (before native-roof
+> gate, final tree pose unchanged). Quiet production7545ms<8000,149 assertions.
+> This is local canopy progress only: integrated stepped-wing towers, embedded
+> projecting wall facades and enclosed climbs remain OPEN. QA:
+> docs/qa/2026-10-01-town-redesign/october3-court-canopy/result.md.
+
+> October3 latest owner correction: towers must join native prefab architecture,
+> wall housing means shallow embedded facades, and streets should be enclosed.
+> Studied/rendered actual Pure Village House_16c/11c (new prefab-junctions harness).
+> Removed production one-course attic turret fallback; full shafts >=2 courses,
+> but distribution drops and stepped-wing grammar is still OPEN. Natural bores
+> now allowed above platform bearing and in huddle; foundations still protected.
+> Review101/103/31/43 tunnel cells1/5/2/12; all validate. Focused7/7,885 assertions;
+> wall-room4/4,289;31 player6/6 (not both new bores). Wall rooms gain native pent
+> eaves under structural cap; full hood public-clearance admission. Final tower/bay clash veto
+> smoke passed122 assertions. Flight-bore experiment reverted: proposed
+> extra covers had no two bearing jambs. Exposed boardwalk, embedded projection,
+> canopy and integrated towers remain OPEN. Quiet pre-correction timing FAILED
+> 8621ms vs8000; previous6941 does not apply. Production16 refresh:16/16 valid,
+> all measured geometry within halo1; no live jobs at checkpoint. QA: docs/qa/2026-10-01-town-redesign/
+> october3-enclosed-streets/result.md. Goal active; no art completion claim.
+
+> October3 owner reopened architecture: tall flat apartment streets, rectangular
+> roofs, missing overhangs/turrets; wants bored inhabited massifs. KitLoggias
+> now permits recesses overlooking public air (inside own envelope), keeps
+> narrow top crowns whole over lower loggias. Range roofs include 4x2 cross
+> gables; native tower proposal share .65->.9, all fitting rules retained.
+> Architecture 26/26,4047 asserts and range/recess12/12,5112 before source change.
+> Upper-town bridges now protect platform by HEIGHT, not blanket radius at
+> all heights. Review101/103/31 spans0/0/0->2/3/3;43 keeps1. A market canopy
+> may share a GARDEN_FLOOR interface like PUBLIC_FLOOR (103 initially failed).
+> Current new/skywalk tests5/5,27 asserts;16/16 production records validate
+> with halo1;31 actual player6/6 above/below bidirectional. Old Sept29
+> platform suite retains obsolete asset/signature/no-wall-room failures; not
+> claimed green. Nativeviews inspected; apartment look and turret distribution
+> remain open (final31 full towers0,103 full towers1; intermediate103 had3).
+> QA `october3-upper-town-spans/result.md`, source manifest. Quiet production
+> timing running at checkpoint; other jobs done. Goal active.
+
+> October3 post-support quiet production38201 completed:6941ms<8000ms,149
+> assertions. QA market-supports/quiet-production.log. No live jobs.
+
+> October3 market support repair: whole post columns can turn within their
+> existing bearing cell, only if public/other-part/seam checks pass. World3
+> record now validates;16-seed source/record survey16/16 before kit fixes.
+> Native review found kit replacement dropped ground-frame children by
+> splitting unit IDs at first slash. Expanded placements now carry unit_id;
+> exact-owner replacement retains frames. Topmost native post course extends
+> to its replaced room's kit floor datum (old underside gap0.1611m); lower
+> courses and joins unchanged, visibility bounds enlarged. New production
+> native-contact regression48 asserts passes; kit suite8/8; old bearing and
+>13 roof construction tests pass. QA `october3-market-supports/result.md`.
+> Seated native side view inspected. Six-town roof-air passes before final
+> top-course seating change. Fresh post-clearance/full record corpus remains
+> to run. Quiet production job38201 live; other jobs terminal. Goal active.
+
+> October3 post-verge quiet production check20743 completed:6246ms<8000ms,
+>149 assertions pass (51.144s total includes world setup). QA
+> `october3-eave-corner/quiet-production.log`. No live jobs at this point.
+
+> October3 full isolated runner24812 is now TERMINAL:392 files,294 pass,98
+> fail/load-error. Classifier67 methods exact baseline failures,65 methods
+> unproved equivalence; parse/load failures are separate. Preserve original
+> logs and focused rerun evidence (five production edits happened during run).
+> Fresh quiet production solve running20743 at last update; do not duplicate.
+
+> October3 market follow-up: exact native butcher-canopy triangles intersect
+> the late support post:7 triangles,0.0483155m² inside its box inset1mm.
+> Not an empty-AABB false positive. QA discovery-contract/market-triangles.*.
+> Coordinate placement; do not relax validator or suppress structural canopy.
+
+> October3 native eave corner repaired: straight eave cap still wrapped into
+> perpendicular landing. KitRoofEaveFits now tries existing complete native
+> flush verge at minimum/maximum/both ends, including already-tight roofs.
+> No caps removed and no public clearance relaxed. Red10/12 -> eave plus
+> September27roof suites9/9,262 assertions. Real85830433957479026/compact
+> roof audit passes. Isolated native corner/underside inspected; this is local
+> cap evidence, not whole-town acceptance. QA `october3-eave-corner/result.md`.
+> Fifth production edit during fullrunner24812. Market canopy/ground-frame
+> collision for world3 remains open. Goal active.
+
+> October3 streaming refresh passed9/9 actual player walks, including eviction
+> and reentry, at reported world2697992464. Harness788.118s under concurrent
+> suite; static memory6.87->7.08GB. time utility exits1 only after successful
+> harness because sandbox sysctl denied; no peak RSS. QA
+> `october3-discovery-contract/streaming-followup.md`. Ownership survey16/16
+> fit halo1 but ONLY15/16 records validate: world3 covered market canopy
+> intersects late bridge-house support post (0.28x1.826x0.252m), open.
+> `record-three-pair.log` has exact pair. Neither structural part may simply
+> be suppressed. One tight Pure eave remains clipped on
+>85830433957479026/compact; native close views occluded, NOT accepted.
+> No production edit this diagnostic pass. Full suite24812 continues;
+> world11611 and all diagnostics finished. Goal remains active.
+
+> October3 discovery fix implemented: WarrenTownDiscovery derives outer bounds
+> from the shared source-field limits and caches tighter per-seed field spans
+> plus native/entry/road/grade margins. WorldFeaturePlan uses these before full
+> builds; VillageRecord validates the independently declared bound. Legacy192m
+> layout/site contract retained separately. No generated geometry/seed draw or
+> render ownership changed. Grade topology/new test10/10; extended cached/
+> uncached +128 field envelope tests2/2,169 asserts; canonical hamlet records
+>1/1,50 asserts (world1/16 now pass). QA `october3-discovery-contract/` fixed logs.
+> Cold32 bounds1407ms, warm32 .012ms under concurrent load. Broader search may
+> build additional towns: full streaming build-count/memory acceptance OPEN.
+> Fourth production edit during fullrunner24812; use focused hashes for earlier
+> files. New test outside captured392 list. Full runner live277/392 last poll;
+> focused jobs finished. Goal not complete.
+
+> October3 discovery regression now reproduces the real failure. New
+> test_october3_town_discovery: cached world1 town queried inside its far
+> control fringe returns[] (record validation also red);3/5 assertions.
+> Baseline same seed validates and ends208m; current bound ends264m. QA
+> `october3-discovery-contract/` includes both native runs and red test.
+> Current actual geometry ends200.06m, halo1; this alone is NOT a render
+> failure because24m site lattice max offset168m keeps it within384m.
+> Next fix shared discovery/grade extent using a proved source-derived bound,
+> including uncached queries; do not merely relax validator or expand arbitrary
+> constants. No production edit this turn. Full runner24812 live,262/392 at
+> last poll; new regression is outside its captured file list. All focused
+> probes/tests complete. Goal remains active.
+
+> October3 attachment asset-demand fix: VillageProgram omitted native retaining
+> corbels/windows and tower modules. Registers adapter constants and parts from
+> KitTowerAssembly.asset_ids (all forms). Tower suite11/11; canonical production
+> hamlet record failures reduce7 ->2 (world1,16). Real remaining extent/discovery
+> defect: world1 geometry/clearance reaches200m, grade216m +48m control margin
+> beyond permitted240m; old layout/discovery bound192m. Must reconcile with
+> SettlementPlan192m site inset, not just loosen validator. QA
+> `october3-asset-demand/result.md`. Third production edit during fullrunner24812;
+> earlier manifest predates it. Focused jobs complete. Full runner still active.
+
+> October3 direct wall tunnels: classify wall_tunnel with district lanes in
+> WarrenMazeSourcePlan; its bounded bore/bearing proof remains, and ordinary
+> alley cap remains4. New real11/large regression proves both classifications.
+> Wall-tunnel5/5,48-town skywalk corpus passes35 spans; combined6/7 because
+> the old photographed-seed span assertion also explicitly fails at baseline.
+> QA `october3-wall-tunnel-validation/`. Second production edit during full
+> runner24812; initial manifest predates it. No route geometry changed.
+
+> October3 courtyard traversal follow-up: actual player reaches/crosses/returns
+> from11/compact's12m court and13/grand's24m upper court (4/4). The harness now
+> selects a surviving adjacent landing after destination pruning and reads
+> authoritative walk_edges; an old reserved address may legitimately disappear.
+> Initial harness trials targeted the wrong call site, failed with no routes;
+> corrected final traces/native views in `october3-court-walks/`. All related
+> jobs finished. Legacy outer-frontage failure directly calls retired
+> `VillageOutskirtsConstruction.generate`; VillagePlan does not call it and
+> sets record.outskirts=null. Helper reuse is not that old generator. See full
+> regression result.md for evidence. Full runner24812 remains live; do not
+> duplicate. Current cottage occupation/access suite passed in that run.
+
+> October3 real roof regression repaired: rotating a compact roof also rotated
+> its chimney into its own bearing wall. `_turned_space_is_clear` now checks
+> complete extras against bearing-parent placements while retaining the roof
+> skin's contact policy. A refused turn keeps its original chimney intact;
+> the reported town still has one other admitted turn. Roof-construction13/13,
+> strengthened retention/positive-turn focus1/1; finished native roof-air1/1,
+>19 assertions, zero intrusions across6 cases. QA `october3-turned-roof/`.
+> This is the first production edit DURING full runner24812; initial manifest
+> predates it, so use the focused reruns for affected earlier files. Runner
+> remains live; do not duplicate. All turned-roof focused jobs are complete.
+
+> October3 plaza corpus: fresh same-script48-town baseline/current survey
+> yields27 ->29 plaza towns,23 ->22 raised plazas; total shaped courts46 ->34
+> and area192 ->142 (documented tradeoff, not blanket art approval). Plaza
+> oracle now covers all48 towns with baseline27 minimum and original geometry/
+> support checks; it proves a live final graph entrance after pruning rather
+> than demanding the old approach survive. Focused782 asserts; complete plots
+> suite42/42,3894 assertions,80.813s. No production changes. QA
+> `october3-plaza-corpus/result.md`; all its probe/test sessions finished.
+> Full runner24812 remains LIVE, do not duplicate. Remaining initial town
+> failures: spine/frontage and city-form outer frontage; full classification
+> continues. Classifier now recognizes exact baseline assertion signatures.
+
+> October3 regression follow-up: coverage now passes at the unchanged0.89
+> floor after excluding solid citadel foundations from ordinary house demand:
+>137/150=0.91333, formerly137/157. Focused1/1,16assertions; seven removed
+> columns all in3/standard. QA `october3-full-regression/` retains probe/logs.
+> Raw low-frontage seed6046713720826375059/compact remains numerically red;
+> final planning removes12 public cells and its long retained perimeter branch
+> serves five house doors. Native overview/street review in
+> `october3-frontage-review/result.md`; no production change or floor relaxation.
+> Full isolated runner session24812 is STILL LIVE; poll, do not duplicate.
+
+> October3 full regression is LIVE: session24812, `/tmp/october3-full-suite.py`,
+> `/tmp/october3-full-suite-driver.log`; state/logs `october3-full-regression/`.
+> Poll that exact session; do not duplicate. Initial manifest includes current
+> attic-window geometry code. Production unchanged this pass. Rim test now
+> protects planting cores (1/1,9171 asserts); plots accept only structurally
+> proved three-band terrace rooms, permit fewer floor gaps, and validate the
+> formerly refused step3/standard. Plot rerun40/42; remaining plaza2vs3 and
+> coverage0.87261vs0.89 NOT relaxed. Carver spine/frontage metrics and current
+> outer-frontage assertion unresolved. `result.md`/`classification.json` in
+> that QA directory record evidence; refresh with `/tmp/october3-classify.py`.
+> Baseline method failures caused by UID warnings do not prove matching defects.
+
+> October3 attic relief: Pure's full-height interior gable bays now use closed
+> native rectangular/arched window panels by house style, with existing
+> obstruction fallback to a full plain panel. Open-casement trial rejected
+> (real attic holes). Roof geometry bake gathers both styles; rebaked shared
+> `pure_village_roofs.bin` has31 assets. Roof/facade31 unique cases pass after
+> focused fixture correction; finished-air corpus1/1,19 assertions,zero
+> intrusions. Final native images `october3-gable-windows/closed/`; root and
+> `final/` are superseded trials. See its result.md. Newholdouts31/large and
+>43/grand inspected (0 and4 admitted full towers respectively). Streamed
+> production walk/reentry completed9/9,712.261s, confirmed eviction/replacement;
+> `october3-world-walk/walk.json`. It predates attic panels, which have native
+> closure/clearance evidence. All sessions from this pass finished; no live jobs.
+> Full baseline classification and broad art/performance acceptance stay open.
+
+> October3 integrated regression: all47 October1/2 files pass after test-only
+> expectation repairs (44 initially passed; original logs retained). Native
+> high-window fallback, exact chimney relocation, ordinary/terrace wall-room
+> bearing checked explicitly. Older excavation/floating/edge/architecture
+> suites also pass after documented support/positive-corpus/pavilion updates.
+> Quiet real production solve6.219s against8s ceiling,149 assertions;
+> build-order determinism2/2. See `october3-regression/repairs.md` and
+> `acceptance.md`. Live actual-world route/reentry run session96251,
+> `/tmp/october3-world-walk.log`; poll it, do not duplicate. Full baseline and
+> broad art acceptance still open; no production edits in this validation pass.
+
+> October 3 terminal regression: `test_october1_native_town_roofs` now keeps
+> the original native contact as a direct fallback-transaction fixture, recovered
+> from the old9/grand failure poses. Missing closure rejects atomically; proved
+> closure commits both real native strips and only the contacting prior seam.
+> Current9/grand remains a separate whole-town closure/bearing/public-air check.
+> No production change. See `terminal-contact-fixture/result.md`. Fresh47-file
+> isolated October run started in session94641; see `october3-regression/state.json`
+> and `/tmp/october3-regression-runner.log`, poll before restarting anything.
+
+> October 3 green activities: `TownGroundDressing` budgets up to four groups
+> by reserved area, seeded site order, 16 m anchor separation and <=12 m visible
+> street reach. Green seating uses complete native table assemblies. Finished
+> low asset bounds now protect facade details, including noncolliding flowers;
+> buried/high pieces are excluded. `kit_town_review --views dressing` supplies
+> actual payload entries like production. 17/large13 groups/15 props/0 trees;
+> 24/large5 groups/5 props/44 trees. Suite15/15 plus stronger actual-kit scene
+> test1/1,8,397 assertions. Final evidence `green-activities/native-clearance/`;
+> earlier folders in that QA directory are superseded trials. Goal still open.
+
+> October 3 high windows: a two-band facade backed only in its lower band
+> records `opening_min_y`; `KitFacadeRoofContacts` admits only actual glazing
+> above it and clear of finished roofs/floors. Fully backed walls stay plain.
+> Both kit families may use Pure's complete `window_open` panel as a high-sill
+> fallback; Suntail adds native timber joints missing from that source panel.
+> 2/grand: 13 fewer rejected windows, seven on maze.house.003. Facade/range
+> suites 24/24, 4,803 assertions, native close/overview inspected. See
+> `docs/qa/2026-10-01-town-redesign/high-windows/result.md`. Not final acceptance.
+
+> October 3 central-green routes: `WarrenTownField` reserves missing ground
+> inside the sampled lobe-centre convex hull as `open.central_ground`, adding
+> it only to height/routing domain, never building solid. Existing planting
+> core and sampled natural datums remain. Fixes17/large outer detour:64->48
+> district-access cells, longest31->20. Source60/60, cottages104/104;49 ordinary
+> fields identical;10 focused tests /5,945 assertions and10/10 player approach
+> traversals pass. Native17/24 reviewed. Carver ordering trial was reverted.
+> See town-redesign QA `central-ground-access/result.md`; overall goal active.
+
+> October 3 dense roof ranges: `_range_end_bay` tries a lower native cross
+> gable after taller pavilions. `_cross_gable_obstructed` permits a completely
+> backed party end, rejects partial coverage and requires a free end. New low
+> profiles also keep ridge trim off a walked deck's rim. 2/grand houses003/019
+> gain cross wings; native close-up caught and repaired a railing contact.
+> Final 19 tests / 8,022 assertions pass. Holdout17/large's empty centre,
+> long outer approach and bare masonry still need work; not art accepted.
+> Evidence: town-redesign QA `backed-cross-gables/result.md`.
+
+> October 3 wall-room integration: three-band rooms are allowed only beneath
+> an actual non-flight public terrace. Below a house, require four bands so a
+> stepped-back upper facade leaves enough clearance for the exposed native
+> roof. Fixes 2/grand construction rejection; 13 targeted tests / 1,588
+> assertions and 2/2 exterior player entrance routes pass. The joined-pair test
+> now pins its original two 4x2 footprints directly (16 seeds) plus live-town
+> bearing/headroom. Terminal-roof positive fixture remains unresolved; do not
+> delete its coverage requirement. See town-redesign QA `wall-room-roof-clearance/`.
+
+> October3 native arched retaining panels: WindowSolo_3 baked whole as
+> pure_village.stone.retaining_window. KitRetainingWindows requires emitted
+> plain-masonry backing over the whole ornament, correct orientation/depth,
+> retained ceiling, full public-air and neighboring-geometry clearance.
+> Panels claim space before corbels; corbels respect retaining.window claims.
+> Planned-wall-only placement floated a panel and was rejected. Final41large
+> has3panels+5corbels;67large1+0. Six tests1437assertions pass;41overview and two
+> actual-public-floor close views inspected. Solid backing remains: decorative
+> closed panels do not invent rooms or excavate rock. The front wall's room
+> obstruction is neighboring ground asset.00 floor0/top4, NOT a raised prefab;
+> interval-clearance trial removed. See
+> docs/qa/2026-10-01-town-redesign/native-retaining-panels/result.md.
+> Full redesign remains active; no commit/PR.
+
+> October 3 walked-terrace wall rooms: `WarrenWallRooms.place(plan,true)` runs
+> after destination pruning, bridges/tunnel covers and ground streets. Existing
+> room claims/IDs preserved. A final level street may be the ceiling; a complete
+> room needs2storey bands+1slab band, not pitched-house MIN_HOUSE_BANDS4. Natural
+> ground, assets, public air and overlap checks retained; flight ceilings excluded.
+> Early placement rejected (16/60 source invalid after optional street removal).
+> Final60/60source valid,8/8tests125assertions,41large5entrances10/10actualapproach
+> walks. Native frontage inspected; large front retaining wall still an art issue.
+> Evidence: docs/qa/2026-10-01-town-redesign/terrace-wall-rooms/result.md.
+
+> October 3 central cross-gables: elongated native-kit ranges (length >= 3*depth)
+> always seek a legal pavilion. The former 20% plain draw prefers a central
+> cross-gable with two >=2-module halls; end and central choices fall back to
+> each other. All roof-fit/gable-neighbor checks remain. Actual 6/large10x2 and
+> 13/large8x2 roofs improved in native overviews. Roof audit now recognizes
+> measured native cap interiors reconstructed from present tower parts; cap
+> removal negative control exposes holes. 19/19 tests,9931 assertions; six-town
+> finished roof/headroom audit0 intrusions. See
+> docs/qa/2026-10-01-town-redesign/central-cross-gables/result.md.
+> Broad walls, art and integrated regression/performance remain open.
+
+> October 3 native attic turrets
+>
+> KitTownTowers now tries bounded lateral gable attachments (one module on widths
+> >=4, half a module on width3) after the centred position. All support, doors,
+> public air, other buildings and own-wing clearance checks remain authoritative.
+> Unit fixtures prove this can fit beside protected central doors without changing
+> the host. Seven real holdouts7/9/17/24/41/58/67 nevertheless gain no offset
+> attachments; lateral choice alone was insufficient visual progress.
+>
+> Added a short CORBELLED_HALF form: one whole native round window course, its
+> native half-corbel and original conical spire. The corbel's full rear support
+> volume must bear on the flush host wall below the eave. This allows attachment
+> without flattening or removing lower-storey jetties. Taller forms are attempted
+> first; only the short form permits one course. Host roof fitting accepts shaft
+> intersection too, since a short turret's cap can sit above the gable. Existing
+> exact roof cutters, opening protection and collision emission remain in use.
+> No new texture, generated substitute masonry or scaled tower parts.
+>
+> Production12/large gains its first turret (0->1);13/large retains2;6/large still0.
+> Three overviews rendered,12 overview and both close sides inspected; the first
+> close framing clipped the finial, so final65deg views show the complete assembly.
+> Native course/corbel/cap and gable junction read closed from both sides. The
+> large plain retaining face visible behind it remains an art issue. Lateral-only
+> candidate does not claim measured town-wide turret growth.
+>
+> Final tower3 suites19/19,3151 assertions, now including real12 and13 emission,
+> collision and open-wall checks. Added short-form regression24 assertions verifies
+> existing inset lower floors stay unchanged and the attachment uses3 complete
+> native parts at the eave. Finished-roof/public-air and roof-detail suites4/4,113:
+> all6 finished payloads have0 walking-air intrusions; raw skin cuts and gable
+> contacts are separate diagnostics. The old chimney-count failure now passes
+> with the cottage-access layout; no chimney expectation was relaxed.
+>
+> No new character walk for this roof-only change. Broader density/performance,
+> native terminal-fallback and joined-range stale fixtures, broad wall relief and
+> roofline art remain open. Harness supports --views turrets for side inspection.
+> All jobs terminal; no commit/PR. Full redesign goal remains active.
+
+> October 3 bridge destination validation
+>
+> The cottage-access source comparison isolates one lost bridge at12/compact,
+> (1,-2),floor6/top8: destination pruning removes its unused underlying street.
+> Tried allocating bridge endpoint houses before pruning, so real doors could
+> preserve that address. REJECTED:60-town source test breaks39 (a lower endpoint
+> has a doorway on a removed stair cell); finished-towns test also returns null.
+> This repeats the historical flight-door hazard documented by September27.
+> Production order restored: ordinary destinations prune, released sites infill,
+> then bridges allocate only over surviving streets. No purposeless road retained.
+>
+> The corpus floor is explicitly revised12->11, documenting this deliberate
+> withdrawal rather than asserting a supported span must remain at an obsolete
+> location. Whole-cover/support and actual built-door requirements stay unchanged.
+> Final tests: tunnel hosts3/3, released bridge sites2/2, destination agreement3/3;
+> 8/8 total,188 assertions. Actual counted doors are built across the historical
+> 11-town destination corpus. The previously failing released-site regression is
+> now exercised naturally again at12/compact; no fixture change needed there.
+> This resolves the bridge classification and released-site failures, not the
+> whole redesign. Other outstanding October files: native roof fallback coverage,
+> chimney coverage, joined-range fixtures. Broad walls/rooflines and fuller turret
+> variety remain art work. All increment jobs terminal.
+
+> October 3 cottage-access candidate: reserved small-lobe sites lacked streets;
+> new shortest legal entrance per site restores104/104 cottages across60 valid
+> sources, preserving11 inhabited central-green districts. Native landmark/deck
+> reservations now respect earlier cottage footprints and measured eave halos.
+> Focused16/16,586 assertions; actual12large entrance2/2; native6/12 overviews
+> and12street inspected. Existing direct-access cadence exemption includes cottages.
+> Compact landmark fixture now1 instead of2 with documented frontage conflict;
+> exact held-site preservation strengthened to include that town.
+> Integration remains RED:24-town finished bridge count11<12 (unchanged floor).
+> Only12compact source bridge differs: destination pruning withdraws unused street
+> and its span at(1,-2),floor6. Moving access after bridge reservations still loses
+> that bridge AND strands7 cottages, so rejected; final code restores early access.
+> QA cottage-access/result.md. Other unresolved October failures: native fallback,
+> released-bridge fixture/infill, chimney coverage, joined ranges. Broad faces,
+> long roofs/tower admission and global performance still open. All jobs terminal;
+> no commit/PR, full goal active. Next diagnose12compact bridge/destination
+> co-planning without preserving purposeless road circuits or abandoning cottages.
+
+> October 3 landmark overhead reservation: seed9/standard's held3x4 asset was
+> shrunk because optional spine descent put a band5 street over its fixed top4;
+> partition later pruned the street, too late to recover the site. Fixed assets
+> now reserve above their legal roof-level headroom through the massif envelope.
+> Courts retain their previous rules. Exact held-site regression passes unchanged;
+> landmark6/6,39 assertions; bridge/court5/5,188; finished24-town bridge count12.
+> The combined attempt skipped the landmark script after an indentation error;
+> that error was corrected and the separate6/6 run is authoritative. Earlier
+> unqualified-constant compile error also corrected before final runs.
+> Source60/60 valid,11 central-green towns with no empty districts. Native9/6
+> overviews inspected; street images saved but not yet reviewed. No new actual
+> character walk for this increment. QA landmark-overhead-reservation/. All
+> increment jobs terminal. Full redesign remains active; small-house access is
+> under investigation and broader art/regression/performance acceptance remains.
+
+> October 3 October suite COMPLETE47 files:38 initially clean/9 failures;
+> three oracle corrections rerun green; six unresolved (see QA integrated-october-audit).
+> Landmark9 held3x4 lost due reservation-time hanging_street at(2,-1),datum0;
+> final public_cells lacks that column. Trace intermediate transition/pruning.
+> Small house sites6/9/12 uninhabited. Temporary production probe restored with cmp.
+> Session74175 TERMINAL; all other jobs terminal. Full goal active.
+
+> October 3 integrated audit: October47-file isolated suite RUNNING session74175,
+> output /tmp/october-current-suite.txt, logs .txt.logs/ (28 done at checkpoint).
+> Do not restart on quiet output. Production unchanged during run. Native asset
+> test bounds corrected; gate3/3, facade4/4,694, rings4/4,89 pass separately.
+> Landmark, roof-fallback coverage, chimney, released-bridge failures unresolved.
+> Public-floor retaining camera added;41close shows relief + remaining plain face.
+> QA integrated-october-audit/. All other jobs terminal; full goal active.
+
+> October 3 retaining floor-seat: shallow cap/deck conflicts seat below measured
+> underside, all collision/air checks rerun. Native41 relief7->17,67:16->17.
+> Tests8/8,73 plus extra cases1/1,16; actual41 wall-room walks2/2.41overview
+> improved; custom close camera inside adjacent structure, NOT art acceptance.
+> QA retaining-floor-seat/. All jobs terminal; full goal active.
+
+> October 3 retaining courses: native corbels also at intermediate storey tops;
+> retained panels now unframed Pure Village stone matching corbels (blue backing
+> rejected). Native41/67 and67close inspected; tests8/8,165; actual67courts4/4.
+> Broad41 path-facing blank wall still fails art. QA retaining-courses/.
+> All increment processes terminal; whole goal remains active.
+
+> October 3 range-pavilion fallback: a blocked seeded end now tries the opposite
+> end with identical fit checks. Real58/large house023 gains a cross pavilion.
+> Tests14/14,7874; six finished roofs clear walking air, gable contacts separate.
+> Native58/41 overviews inspected. Broad retained faces/plain ranges still open.
+> QA range-pavilion-fallback/. All increment jobs terminal; full goal active.
 
 > October 2 terrain regimes (branch `claude/terrain-generation-overhaul-adb98f`; spec
 > `docs/superpowers/specs/2026-10-02-terrain-regimes-local-relief-design.md`, plan
@@ -713,6 +1898,433 @@
 > red (cliff-sheet shoulder over a submerged wall exceeds the 0.05 m SHEET_COVER trough budget,
 > pre-existing water gap newly exposed). Review:
 > `docs/qa/2026-10-02-terrain-regimes/result.md`.
+
+> October 2 courtyard-height diagnosis supersedes prior suspected regression:
+>58large/grand have only band4 platforms/streets and court on that highest
+> tier; removing early gates changes nothing.13grand has band8 court. Tests
+> now require highest-generated-tier equality, plus explicit13 >=8;2/2,101.
+> Actual13grand plaza walks2/2 at worldY24. No production behavior changed;
+> probes restored byte-for-byte. QA courtyard-tier-validation/. Art/whole
+> goal active; all processes terminal.
+
+> October 2 integration recheck: 24-town bridge houses12 (floor12), actual
+> skywalk/bridge/underpass7standard8/8; quiet production6182ms,149assertions.
+> Combined12/14tests608/612: elevated-court58large/grand now band4 vs expected8;
+>13grand still8. Support/air pass. DO NOT repin: investigate upper-site
+> availability after early gates/district access. QA current-integration-check/.
+> All jobs terminal, full goal active.
+
+> October 2 retaining corbels: whole native PureVillage stone support pieces
+> cap exposed retained crowns; public/neighbor/tower measured bounds checked.
+> Ordinary retained backing uses native Suntail masonry (plaster rejected).
+> Tests4/4,55; actual67 courtyard walks4/4;41/67 renders inspected.
+> QA native-retaining-corbels/. Broad flat faces/art still open, full goal active.
+> All processes terminal.
+
+> October 2 ordinary wall rooms: real rooms may replace retained support below
+> an existing ordinary massif plot (top = its floor), preserving a structural
+> cap, terrain and passage air. Platform checks retained. Tests5/5,92 and
+> holdout2/2,18; actual41 doorway walks2/2; source60/60, no unbuilt districts.
+> Native41/67 checked;67 unchanged. Large flat retained faces STILL OPEN.
+> QA ordinary-wall-rooms/. All sessions terminal, whole goal active.
+
+> October 2 native turrets/direct streets: towers are NOW production-enabled
+> (`KitTownTowers`), whole measured public/neighbor/roof checks, backed half
+> courses/full upper course/conical cap, matched-gable host fitting. Custom
+> roof cutters bypass shared cache. `KitTownFacadeBays` admits native supported
+> projections against finished air/private volumes; idempotent, protects doors
+> and towers. Medium/broad roof ranges gain transverse pavilions; square crowns
+> use seeded town ridge weights. Suntail tight eaves use intact native slopes
+> and matching barge trim. Both reopened photo roof regressions fixed, unchanged
+> assertions: roof/variety12/12,7828; architecture22/22,1471. District access
+> skips alley turn cap (red12-cell detour -> straight10); garden perimeter
+> avoidance/early gate quota retained. Final source60/60, access6/6,171;
+> final six-town roof-air19 assertions zero intrusion; actual district walks
+>6/6 directions. Quiet production149 assertions,6533ms<8000ms. Native13/17/24,
+> turret and bay close views inspected. QA native-turrets-and-direct-streets/.
+> All sessions terminal, no commit/PR. Full redesign remains ACTIVE: holdout
+> art, remaining large masonry faces, broader streaming/memory acceptance and
+> full regression classification remain; do not claim the whole goal complete.
+
+> October 2 larger-green/roof/access continuation: central-green radius .6,
+> districts 1.25–1.45 radii away; classify lobes BEFORE relocation to retain
+> sampled massifs. Ordinary courts prioritize larger sites; planting cores
+> up to5x5. Forty-large corpus central open cells165->383, court cells368->414.
+> Long roof halls can have a seeded taller transverse end bay; checks
+> headroom and taller neighboring gables, uses independent RNG. Range/variety
+>10/10,5108; range neighbor test3/3,1661. Owner says this is still insufficient:
+> needs prefab-informed projecting rooms/depth/turrets, not minor trim alone.
+> Perimeter streets now avoid reserved gardens including detours; gates
+> reserved before optional envelopes, existing entrances count toward quota.
+>60/60 source survey before detour guard (fixes gate8 new +9 pre-existing);
+> final focused access/field11/11,8013. Prior six-corpus final-roof9/9,10054
+> and24/large actual district walks10/10 PREDATE access changes: rerun final.
+> Pure11c/16c/7b source prefab front/back study and transforms measured.
+> QA roomier-districts/. Towers still NOT production-enabled. Full redesign
+> stays active; newest owner asks no unnecessary path circuits, no flat large
+> faces, much richer randomized buildings, more turrets/spires.
+
+> October 2 tower host fitting: KitTowerHostFit prepares/applies only the
+> matching closed gable wing and facade panels, preserves tighter public
+> verges, rejects doors/open seams atomically, and handles all four directions.
+> Gable substitution preserves anchors; only intersecting optional ornaments
+> are removed, never structure. Changed windows also lose their own flower
+> boxes, including boxes below the corbel. Decorated --designed study now
+> uses the helper instead of clearing dressing. Final host tests 5/5,61
+> assertions; preceding host+assembly/core 14/14,1162. Six native hosts
+> rendered; QA tower-host-fit/. All sessions terminal. Still NOT production
+> tower placement: next town candidate/reservation stage must check whole
+> measured envelopes against public air, other roofs and neighbor pieces.
+> Full redesign remains active.
+
+> October 2 intact Pure roof end caps: shortened verges now move complete
+> native eave/slope/top closures inward instead of slicing off their finished
+> edges. BuildingKit.roof_cap_x_bounds is verified against catalog extents;
+> assembler handles both axes/ends/orientations. Ordinary overhangs and
+> Suntail unchanged. 17 tests / 445 assertions include intact union output,
+> public clearance and native/mixed roof coverage. Native tower before/after
+> and town 7/standard reviewed; QA intact-roof-caps/. All sessions terminal.
+> Full towers still study-only. Next: procedural matched-wing attachment,
+> opening/dressing arbitration and complete public/neighbor/roof reservations,
+> then real-town collision/art acceptance. Full redesign remains active.
+
+> October 2 compact tower cap: offline bake_tower_roof_core.gd creates 18
+> native-measured hidden sections (28 KiB; .3 m step, 32 sides, 15 mm inset).
+> Original visible cap unchanged. 441 ray-grid samples: no sampled overcut;
+> 263 main-taper samples within 15 cm inward. 15 tests / 1,257 assertions.
+> --designed now uses compact core; exact slow version requires
+> --exact-roof-union. Six houses / both kits render; union <~1.1 s each
+> (diagnostic concurrent timings). Attached gable verge seats on measured
+> native gable relief via KitTowerAssembly.gable_reach. Native close views
+> still show Pure wood-course joints / small eave fragments; art not final.
+> NOT enabled in town generation. Next: finish native edge joins, then
+> attached-wing-only seating/opening/dressing arbitration and whole-envelope
+> reservations in real towns. QA tower-compact-cap/. All sessions terminal.
+> Full redesign stays active; latest wall/path/green fixes unchanged.
+
+> October 2 tower native-cut reference: roof triangle-prism cuts match 45
+> independent vertical-ray samples (18 tests / 12,400 assertions with roof
+> junctions). NOT production accepted: corrected --designed study takes
+> minutes on first host; exact mesh prism count is unsuitable. Slow runs
+> 2402/22407 explicitly terminated (exit 143); no clipped final image.
+> Initial two renders skipped cuts because standalone roofs lacked
+> union_index; harness now assigns it and asserts surface emission. Do not
+> use /tmp/tower-exact-union or /tmp/tower-fitted-union as cut evidence.
+> No tower production placement. Next: cheaper native-surface cutter with
+> ray oracle, then real art review. QA tower-native-cut-reference/.
+> All current processes terminal. Full redesign stays active.
+
+> October 2 tower attachment admission: KitTowerAssembly.fit checks backing
+> volume/corbel support, explicit grounded-base bearing, doors/open seams,
+> inset hosts and full measured roof clearance. 7/7 tests, 257 assertions,
+> four facade directions. --designed tower study searches generated houses:
+> 6/7/34 are first eligible simple hosts in both kits. Short towers partly
+> covered gable windows (study substitutes complete plain panel); taller
+> three-course towers expose MAIN ROOF VERGE crossing cone. Not accepted,
+> not enabled in towns. Next: native conical/host roof junction, then seeded
+> production placement; do not limit to short towers to evade the defect.
+> QA tower-host-admission/. All sessions terminal, no active jobs.
+
+> October 2 tower runtime modules: pure_village_towers.json bakes seven native
+> pieces; KitTowerAssembly.gd composes 2–4-course round/grounded-half/corbelled
+> forms and publishes host height/complete bounds. NOT enabled in towns yet:
+> host/bearing reservations, roof junctions and clearance integration remain.
+> Native catalog study --baked uses full host walls and a bearing deck.
+> Baker v40 texture-policy namespace lets arches/masonry/oriels/towers share
+> pure_village_kit maps. 55 old maps verified image-identical then removed;
+> loaded payload 392,519,376 -> 247,116,144 bytes. 47 unique maps: original
+> 44 retain 230 MiB budget; 3 tower-window maps have explicit 16 MiB plus
+> smallest-mip block padding allowance. 4/4 assembly/texture tests, 618
+> assertions. Rampart/oriel/gate tests also pass on this bake. QA
+> tower-modular-runtime/. All sessions terminal; full redesign remains active.
+
+> October 2 streamed render measurement: reported town green camera, three
+> angles, 1920x1080, terrain/grass, nine chunks, idle worker/commit queue.
+> Median 17.240–17.847 ms, p95 17.701–18.433 ms; Godot static memory ~2.55 GB
+> decimal (not peak RSS/GPU). GPU timing unavailable. QA streamed-render-performance/.
+> Final roof/public-air corpus expanded to 17/large, 24/large and 58/large:
+> six finished triangle audits, zero intrusions, 19/19 assertions. Native
+> round/half-tower study in pure_village_tower_study.gd: full base y=0,
+> half base y=0.125; windows y=3/6, roof y=8.5. Roof 4.18 m wide exceeds
+> a two-module reservation; attached rear requires real host support.
+> Study is NOT production tower integration. QA full-tower-native-study/.
+> All current jobs terminal (62202,86242,70985,21237). Full redesign active.
+
+> October 2 streamed wooded central green COMPLETE for site (2,1): native
+> nine-chunk world view at (1752.11,32.08,971.804), grass/trees among houses
+> and rounded paths. Seven trees, 516 grass instances in planting spaces,
+> zero on paint. Close camera partly canopy-occluded; QA central-green-world/.
+> Previous probe 44062 and native render 75210 are TERMINAL.
+> Roof clipping now bulk-transforms tight bounds, reuses immutable indexed
+> corner records, and removes fully contained polygons after original EPS/
+> outside checks. Exact comparisons: 3,251 placements, zero mismatches.
+> 20 roof/facade tests pass (12,253 assertions). Quiet production-site test
+> passes all 153 assertions: 6,735 ms vs 8,000 ms limit, no repin; this
+> supersedes the previously open production solve-time failure. Broader
+> render/memory/per-town budgets remain open. QA roof-clipping-performance/.
+> All processes from this pass terminal (including 8773); no live handles.
+> Full redesign remains active: wider architectural/tower and final gates
+> are not accepted merely by this world/roof proof.
+
+> October 2 central-green world validation: real urban site (-1,1), world
+> seed 2697992464, town seed 85830433957479026, passes production ground/grass
+> probe: 938 grass instances in planting spaces, zero on painted paths.
+> TownGroundDressing interstitial spaces are included by the new diagnostic
+> --planting-spaces option; counts are not restricted to the central circle.
+> Wooded central-green site (2,1), cell (75,40), town seed
+> 5918244260080312451, found without changing production rolls. Its ground
+> probe is LIVE session 44062, /tmp/central-wooded-ground.log, expected JSON
+> /tmp/central-wooded-ground.json. Last handle poll confirmed running at
+> GROUND_FRAME. Poll exact handle, no restart on observation timeout. The
+> GROUND_TOWN line will provide green_world for native town_world_review
+> --at x,y,z (new arbitrary-coordinate review option, parse check passed).
+> All other processes this pass terminal. QA central-green-world/. No new
+> native world visual acceptance claimed; full objective stays open.
+
+> October 2 central-green district access RETAINED: existing mixtures with
+> >=4 lobes may roll an arrangement around an offset green (30% independent
+> roll; original crown and lobe count/size/height preserved). Field extent
+> follows lobes. Massif column district metadata feeds early legal ground
+> access before optional streets/asset reservations. Existing lane search and
+> owned transitions/headroom preserve planting cores and collision rules.
+> This supersedes the prior unconnected candidate rejection; no portal-origin
+> ranking change retained. 24/large satellites now all have streets/plots,
+> buildings 25→60; trees 51→29 as sites become inhabited. Native 17/large,
+> 24/large and pedestrian green views reviewed. Focused 23/23 tests, 26,516
+> assertions across two runs; source 60/60 production sizes, all lobes in
+> all 11 selected green towns inhabited/served; actual 24/large character
+> entry-to-district walks 10/10. QA `central-green-district-access/`.
+> All processes terminal. Streamed visual/terrain/grass acceptance for this
+> topology and wider redesign/performance gates remain open; earlier world
+> reentry walk predates this layout change.
+
+> October 2 central-green topology study: an occasional arrangement of the
+> existing satellite lobes around a green (original crown and lobe budget kept)
+> builds 18/18 sampled source towns but fails native art acceptance. 24/large
+> has no streets OR plots on all four non-crown lobes; 17/large has two lobes
+> with streets but no plots. Thus the extra green/trees still face outskirts.
+> Candidate NOT RETAINED: TownField and MazeCarver restored byte-for-byte to
+> pre-experiment content. Patch, builds, native images and per-lobe evidence
+> in redesign QA `central-green-topology-study/`. Next: co-plan district
+> access/frontage before optional streets and inspect satellite house-site
+> partition; do not treat enclosure of unbuilt masses as town enclosure.
+> All study processes are terminal; no live handles. Full goal stays open.
+
+> October 2 fresh streamed regression completed: production world seed
+> 2697992464/site (0,1), grass enabled, nine ground chunks; entrance, skywalk,
+> bridge and underpass both directions, plus rebuilt entrance after actual
+> eviction/reentry: 9/9 walks, 818.677 seconds. Garden suite final 5/5, 95
+> assertions. QA `streamed-world-current/`. This is traversal/lifecycle proof,
+> not new garden visual acceptance. Sessions 65984, 76355, 22107 are TERMINAL;
+> all older live notes are superseded. Cached native roof AABB experiment was
+> rejected (4/642 changed outputs and slower), never applied to production.
+> Central enclosed ground greens, full streamed visual grass review, wider
+> architecture gates and performance remain open.
+
+> October 2 elevated grass: `kit_town_review --garden-grass` now renders the
+> actual garden supports using production sampling/settings/assets/materials.
+> Tree grass exclusions use measured vertical root/branch bands, not the whole
+> canopy AABB. Native 13/grand and 58/large reviewed, QA
+> `elevated-grass-native/`; five focused tests pass, plus owner/non-owner
+> WorldFeaturePlan cache eviction proof. Full-world acceptance is still open.
+> General import 5449 COMPLETED (exit 0); all older "still live" notes are
+> superseded. Fresh world walk + grass + eviction/reentry is LIVE in session
+> 65984, `/tmp/town-integrated-current.log`, output `/tmp/town-integrated-current/`.
+> Poll that exact handle; do not restart because a wait times out.
+
+> October 2 protected green cores: broad explicit open.* clearings reserve a
+> contiguous 2×2/3×3 macro-cell planting island (<=60% area) before boring.
+> WarrenMassifBuilder sets `planting_core`; the common passage-slot predicate
+> excludes it. Narrow pockets/cottage gardens are unchanged. Final source and
+> compiled-ground tests, dressing: 21/21 (24,895 assertions); production-size
+> source survey 60/60; 32/large actual entry→plaza→entry walk 2/2. Native
+> 32/large and 15/large show more plantable lawn/trees, QA
+> `protected-green-cores/`. Still not acceptance of central/enclosed groves or
+> streamed grass. Original scope stays open. General import session 5449 is
+> still live (last overall 97%); do not restart it.
+
+> October 2 tree follow-up: town dressing's last two tree attempts now use
+> 6–10 m native specimens after 10–18 m attempts fail, with unchanged measured
+> crown/root/public clearance. Dressing suite 11/11 (17,361 assertions).
+> `kit_town_review --views greens --dressing` inspects each actual reservation.
+> 13/large has NO open.* clearing (only cottage gardens); 15's broad opening
+> faces the outskirts; 32/open.0 is mostly consumed by perimeter paving.
+> Next central-green work must preserve plantable cores through boring/public
+> circulation, not rely on pre-bore ring-depth metrics. QA `garden-tree-sizes/`.
+
+> October 2 owner reopening: the rampart finish, missing sides, town path
+> corners, and insufficient central wooded clearings are rejected. Prior art
+> acceptance does not cover these. Ramparts now use Pure Village's existing
+> `WallStone_Start_20x30_1` in native-height courses, with closed `Stone_Block_4`
+> for parapets, merlons, caps, footings and cornice; no stretched thin wall
+> panels for those pieces. Native both-side asset study and 13/large, 58/large
+> renders inspected. 8/8 focused tests (530 assertions), 58/large tunnel both
+> directions pass. Evidence: redesign QA `native-ramparts/`. Larger central
+> tree clearings remain an owner priority. Concave path corners now use the same
+> polygon fillets in terrain paint and retained street meshes; floor bands are
+> preserved. 36/36 focused tests (23,547 assertions), native 13/large and
+> 7/standard inspected; QA `path-inner-corners/`. Larger clearing candidates
+> increase area, but reviewed trees still mostly sit at the perimeter: this
+> is NOT acceptance of central green spaces. Enclosure ranking was rejected.
+>
+> Elevated grass work is also in progress: TownGardenGrass carries declared
+> planting supports/obstacle bounds through world transforms, feature contexts
+> (including non-render-owner chunks), and detached grass sampling. Only those
+> supports bypass the lower world's projected 2D clearance. Real 13/grand
+> grass generation test passes; native/world grass art acceptance is pending.
+> Grass regression 29/30: old Sept10 grade-array test indexes the now-empty
+> native-control grade list; no baseline repin performed. A broad import is
+> still running, exec session 5449, `/tmp/garden-grass-import-out.log` (94% last
+> observed); poll that handle, do not launch another import.
+
+> October 2 courtyard material review: the bright lawn-edge bands were a
+> standalone reviewer mismatch. `kit_town_review` now calls
+> `CliffDressing.prepare(cache)`, as the production streamer does, so native
+> lip meshes share the procedural lawn material. Matched renders remove the
+> bright seams. Central and surrounding lawn vertices were already coplanar
+> at 12.005 with upward normals; disabling shadows did not remove the bands.
+> No production terrain geometry was changed. `--no-shadows` is now available
+> for diagnostic review. Evidence: redesign QA `courtyard-material-parity/`.
+> Elevated streamed grass support and full world acceptance remain open.
+
+> October 2 courtyard underplanting: reserved tree islands now receive small
+> deterministic KayKit grass / LPFV flower placements beneath the canopy.
+> Complete measured bounds must stay on the garden, outside public surfaces,
+> seating and other construction. This is native island dressing, not streamed
+> grass integration; elevated town lawn meshes are not yet supplied to the
+> world grass support list. Reference/holdout renders inspected, seven tests
+> pass (2773 assertions across two runs). Evidence: redesign QA
+> `courtyard-underplanting/`. Bare turf/normal/material parity needs review.
+
+> October 2 courtyard bridge reservation: late skywalk selection now carries
+> the planted square's exact HEADROOM_BANDS reservation into its occluders.
+> The former pass mistook the centre for empty air and bridged across the tree
+> with a deck and railings. Reference red-first test failed on two island cells;
+> final source and native-payload checks pass. This supersedes the unresolved
+> deck/rail mismatch below. Native 13/grand and 58/large gardens inspected;
+> 13/grand courtyard traversed both directions after the final seat inset.
+> Evidence: `docs/qa/2026-10-01-town-redesign/courtyard-reservation/`.
+> Courtyard turf/planting art and wider redesign acceptance remain open.
+
+> October 2 courtyard seating (art review open): reserved planted squares can
+> add measured Interior Pack benches through `maze_plaza_seats`; complete
+> bounds stay on island support, outside the tree and public surfaces, with a
+> 0.25 m surface margin. First near-rail candidate was rejected; the reference
+> keeps one seat after the stronger inset. Tests pass, but native courtyard
+> views still show rails/deck edging across the visual planting centre. Resolve
+> that final-render/source-island mismatch before art acceptance. Evidence:
+> `docs/qa/2026-10-01-town-redesign/courtyard-seating/`.
+
+> October 2 upper inhabited walls: wall rooms may stand on solid retained
+> stone above natural ground when addressed by an existing level street.
+> Their cap still reaches the next district bearing datum; natural terrain,
+> passage air, extra overburden and upper courtyard support stay protected.
+> `plot_bearing_at` returns the proved wall-room floor. This supersedes the
+> ground-only restriction in the earlier inhabited-wall entry. Native views
+> found battlements covering the new room fronts: fortified rims now omit
+> parapets/turrets where a room closes either side of the edge. Red-first
+> regressions cover elevated plots and the facade overlap. Evidence:
+> `docs/qa/2026-10-01-town-redesign/upper-wall-rooms/`. Overall art acceptance
+> remains open, including longer exposed wall faces and porch details.
+
+> October 2 corner wall tunnels: district bores may turn once, prefer the
+> shortest supported route, and retain explicit `support_columns` for their
+> actual path. This supersedes the straight-only rule below. Reference 13/large
+> is three columns instead of seven; production sample 1–30 remains nine
+> platform towns, with three through-routes instead of one. Native holdout
+> walking caught an upper corner turret blocking 58/large's exit. Decorative
+> corner turrets now decline their complete envelope when it intersects public
+> air; no floating tower fragment is retained. Final focused tests 10/309 pass;
+> six reference/production/holdout walking directions pass. Evidence:
+> `docs/qa/2026-10-01-town-redesign/corner-tunnels/`. Wall art remains open.
+
+> October 2 supported oriel/spire bays: `pure_village.bay.spire` combines native
+> StoneTowerHalf_Window_15x30, StoneTowerHalf_Support_15x30 and Roof_Tower_2 at
+> 0.75 scale, cut back to the host face. `BuildingDesigner` chooses at most one
+> on a seeded eligible upper gable, centred on the entire face (including even
+> module widths). Complete measured bounds protect public air and neighbours;
+> doors remain intact and the ordinary host panels remain behind the projection.
+> `bay_roles` / `bay_offsets` are shared by assembly and roof/window-contact
+> fitting, with newly baked glazing bounds. The first off-centre spires crossed
+> sloped roofs and were rejected; a duplicate plaster backing was also removed.
+> Native 13/large and 7/standard checked with both kits. Focused regressions:
+> 16 tests / 4653 assertions pass; four actual skywalk walks pass. Full tower
+> architecture, more wall relief and final redesign acceptance remain open.
+
+> October 2 native gateway arch: actual fortified gates now use the baked Pure
+> Village `StoneArch_3` molded stone header (`pure_village.stone.gate_arch`),
+> replacing the plain tiled lintel. This does not restore the rejected repeated
+> blind arches. Kit-owned measured dimensions and crown overlap fit it between
+> the existing piers and below the overhead limit; a carried room suppresses
+> a gate that cannot fit. Native 13/large and 2/grand inspected; reference and
+> nested-tier character walks pass. Wall skins/material alternatives remain
+> unchosen, and wall/tunnel articulation is still unfinished. QA: redesign
+> `native-gate-arch/`.
+
+> October 2 wall tunnels (functional, art open): `WarrenPlatformStreets.carve_tunnel`
+> now chooses one seeded, fully validated straight through-route between existing
+> lower streets of an optional platform. It never excavates natural terrain,
+> preserves one ceiling band and both lateral bearing walls, obeys construction
+> reservations and existing passage separation, and seals the exit as a loop edge.
+> Only this stage opts into `slot_is_borable(..., platform_bore=true)`; ordinary
+> streets still cannot bore the plinth. `_natural_tunnel_caps` retains these
+> authored ceilings before daylight carving. This supersedes older blanket
+> statements that a plinth is never bored. Reference 13/large passes both actual
+> player directions. Focused regression: 9 tests / 161 assertions; inhabited-room
+> checks also pass. Production-size source sample 1–30: 30 build, 9 platforms,
+> one through-route. The long plain corridor needs further art and routing
+> iteration; this is not final acceptance. See redesign QA `wall-tunnels/`.
+
+> October 2 inhabited-wall follow-up: the owner rejected the repeated arch
+> approximation and the course/pilaster grid. Both are removed; a rim cornice
+> remains. `WarrenWallRooms` adds seeded, street-addressed houses inside eligible
+> artificial platform columns, at natural ground, with a complete structural
+> cap to the district datum. Ordinary houses still cannot begin below bearing.
+> Elevated plot/street support and measured prefab reservations take precedence.
+> The slab is reserved before composition and its whole native wall skin is
+> rendered (the first attempt lost its lower band and grew intersecting roofs).
+> Focused checks: 14 tests / 731 assertions, then final clearance guards 3 tests /
+> 297 assertions. Six sampled approach walks pass; two repeated after the skin
+> repair also pass. Alternate wall materials and native Pure Village arches are
+> review studies only. Upper-tier wall rooms, more wall tunnels, projecting bays
+> and final wall art acceptance remain open. See the October 1 redesign QA log.
+>
+> October 2 architecture/planting follow-up: broad prefab-landmark reservations
+> now compose seeded L/T kit footprints (`KitVillageBuildings._landmark_footprint`),
+> preserving doors and two-module wing widths. Small plans stay whole; broad
+> plain ranges remain a minority. The reservation still conservatively owns
+> roof air; notches are not newly claimed public courtyards. 22 tests / 4,695
+> assertions and close native wing/junction views pass. Upper courts now reserve
+> explicit `GARDEN_FLOOR` planting islands with a public walk ring; daylight alone
+> cannot retain a crown. Leafy centre trees use measured canopy/root bounds and
+> world-biome tint. Retaining frame heads fit their measured structural ceiling
+> so they cannot cross the garden above. Planting/material/support checks:
+> 38 tests / 4,617 assertions pass; player routes around islands pass. Architecture,
+> courtyard art and full-world/performance acceptance remain open. See
+> `docs/qa/2026-10-01-town-redesign/result.md`.
+
+> October 2 elevated courts (functionality proved, art open): early selected
+> courtyard floors now survive the lower streets' opening-to-sky pass.
+> `WarrenExcavation.construction_reservations` replaces its former
+> `landmark_reservations` field and protects courtyard bearing/headroom as
+> well as landmark body/footing. `preselected_plaza` records the early choice;
+> final siting keeps it only if current support/access checks still pass.
+> 13/grand, 58/large and 58/grand build with band-8 courts, complete public
+> floors, zero floating masses and zero roof/public-air intrusions. Actual
+> player entrance/court walks: 13/grand 8/8 pass. New review switches:
+> `kit_town_review --views courtyard`, `nested_gate_walk --courts`. Bare turf
+> terraces still need planting, furniture and wall integration; see
+> `docs/qa/2026-10-01-town-redesign/elevated-courtyards/`.
+
+> October 2 town follow-up (in progress): `TownStreetPaint` derives ground
+> paint from the public street-cell union, rounds convex exterior corners,
+> and preserves shared edges/full-width approaches. Production uses exact
+> circle/rectangle field shapes; native review skins use the same corner
+> classification. The public collision union and dual-grid kernel are unchanged.
+> Path/dressing tests: 14 / 17,939 assertions pass; matched 13/large views
+> under `docs/qa/2026-10-01-town-redesign/rounded-streets/`. Larger green
+> pockets, elevated courtyard planning and inhabited retaining walls remain
+> open; this edge treatment alone does not satisfy them.
 
 > October 1 terrain review (owner photos 1-5, seed 2697992464). (1) REJECTED and
 > reverted: confining the cliff dressing to cliff tiles (the "lips" on plain
@@ -3693,7 +5305,7 @@
 > September 7 entrance construction: each exterior portal keeps its own transverse
 > coordinate until it meets the shared perimeter. Secondary entrances must not snap
 > to the primary entrance's lattice phase, which creates diagonal paint notches.
-> Completed physical clearance is inspected by `perimeter_gate_corpus.gd` (four
+> Completed physical clearance is inspected by `perimeter_gate_corpus.gd` (deleted October 7) (four
 > seeds, four scales, four orientations; 64 completed cases). The matched `perimeter-straight-gates-after` views
 > confirm the reported junction and entrance edges. Roof gardens, as well as pitched
 > roofs, use the remaining space after fixed ground-frame columns are reserved.
@@ -3852,7 +5464,7 @@
 > not yet accepted as a complete removal of runtime checks or retries.
 
 > September 7 construction follow-up: production outskirts now use
-> `VillageOutskirtsConstruction` and `VillageFrontageDomain`. Measured house
+> `VillageOutskirtsConstruction` and `VillageFrontageDomain` (deleted October 7). Measured house
 > envelopes subtract occupied space from continuous frontage intervals before
 > a lot is selected; each selected lot emits one house and a flat grade pad.
 > Different pad datums reserve disjoint footprints. The substantial-house
@@ -4280,7 +5892,7 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
   bridge → village gate → biome gate → lamp. Stable feature
   IDs never include a streaming chunk or contributing route.
   The sectional warren system lives under `features/villages/fabric/`, with its diagnostic
-  review scene in `tests/harness/warren_phase0_review.tscn`. The default production
+  review scene in `tests/harness/warren_phase0_review.tscn` (deleted October 7). The default production
   `VillagePlan` invokes `VillageWarrenFabricSolver`, which converts one sealed sectional
   plan into the canonical `VillageUrbanFabricPlan` and `VillageRecord`; topology is never
   re-inferred from render placements. Its production adapter coalesces the same canonical
@@ -4428,7 +6040,7 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
   guards derive from that union and structural occupancy, so graph
   transitions stay open and arbitrary leftover gaps never become platforms. The proof first
   compiles a diagnostic seed, then `FabricSolidVoidPlan` turns every exposed route side into a
-  boundary obligation. `StaggeredFabricEmbedder` runs a deterministic bounded beam over complete
+  boundary obligation. `StaggeredFabricEmbedder` (deleted October 7) runs a deterministic bounded beam over complete
   roof-closed one/two-storey envelopes at route, half-level-lower, and full-level-lower bases.
   `StaggeredFabricCompiler` turns proposals into ordinary terrain-perched room/roof DAGs; low
   edges that cannot fit a room may receive a complete baked market-stall envelope. The common
@@ -5202,8 +6814,8 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
   signature; `VillageRecord` seals sorted semantic output; `VillageOccupancy` is a bucketed typed
   3D index (`SOLID`, `WALK_SURFACE`, `HEADROOM`, `GROUND_EXCLUSIVE`, `WALK_GUARD`). Public
   `WALK_GUARD` rails may meet only walk surfaces or sibling guards in their explicitly declared
-  walk network; generic solids never inherit that seam permission. `FoundationSolver` proves
-  enterable floors above natural terrain and tiles fixed perimeter modules; `SupportSolver`
+  walk network; generic solids never inherit that seam permission. `FoundationSolver` (deleted October 7) proves
+  enterable floors above natural terrain and tiles fixed perimeter modules; `SupportSolver` (deleted October 7)
   composes fixed-height stacks with bounded burial and atomic occupancy. `VillagePlan` solves one
   atomic `VillageUrbanFabricPlan`; its furnishing belongs to that same transaction and there is no
   legacy post-pass for standalone props. A rejected urban solve emits no village payload, so a tent or campfire can never
@@ -5212,12 +6824,12 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
   removed. Production rolls only
   village/town; the compiled hamlet vocabulary stays dormant until it can satisfy the same
   inhabited multi-level contract.
-  `VillageOutskirtsSolver` runs only after an accepted urban transaction. Every painted outskirts
+  HISTORICAL (this outskirts description predates the October 7 deletion; the code below no longer exists). `VillageOutskirtsSolver` (deleted October 7) runs only after an accepted urban transaction. Every painted outskirts
   lane, including the final spur to a prefab doorstep, is the ordinary `PathProgram.PATH_WIDTH`;
   only the spur's reserved headroom narrows to the measured doorway. The edge district is meant to
   RING the dense core (2026-09-04): each exit's neighbourhood reaches sixteen grid steps so the
   flanking runs of two or three gates wrap most of a silhouette, six roots per side are ranked,
-  and `VillageOutskirtsProgram.target_houses` asks for 6/9 houses or three per sealed exit. The
+  and `VillageOutskirtsProgram.target_houses` (deleted October 7) asked for 6/9 houses or three per sealed exit. The
   town's terrain-qualified perimeter stalls are published on `VillageUrbanFabricPlan.frontage_sites`;
   the perimeter grid blocks them like mass so the lane runs in FRONT of the stalls, and a root
   facing a stall row is a MARKET lot: its house stands one `MARKET_STALL_BAND` (three cells) back
@@ -5265,34 +6877,34 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
   no partial edge payload. This makes the settlement taper into an immediate inhabited ground-level
   entrance district without growing a disconnected radial camp or a gratuitous full-town ring.
   `VillageTerrainView` is the only cross-block terrain/water query adapter;
-  `VillageTerrainSurvey` discovers and spatially buckets guarded-source-dry buildable perches
+  `VillageTerrainSurvey` (deleted October 7) discovers and spatially buckets guarded-source-dry buildable perches
   without mutating the heightfield (exact water remains a final-transaction check); and
-  `VillageMassingSolver` uses a bounded, composition-diverse beam plus a ranked complete-plan
+  `VillageMassingSolver` (deleted October 7) used a bounded, composition-diverse beam plus a ranked complete-plan
   frontier to pack 7–15 inhabited buildings into a 42 m core (10/15 authored targets for
   village/town). It tries comparable ranks
   across building counts instead of exhausting near-duplicate dense failures first. The massing
   contract requires at least three irregular elevation bands, short neighbours, and real
   half-rises while preferring direct terrain contact over bounded retaining-terrace variants.
-  `VillageVerticalProfile` derives its 12 m full / 6 m half-level cadence from the tallest
+  `VillageVerticalProfile` (deleted October 7) derives its 12 m full / 6 m half-level cadence from the tallest
   stackable furnished house plus roof clearance; terrain storeys remain an unrelated landform
   unit. The route landing and already-solved ground market are hard reservations, each accepted
   footprint expands into both legitimate facade directions, and reviewed door/stair access is
   qualified before beam search. Larger furnished houses are ground-only accents, so adding asset
   variety cannot silently increase the vertical cadence or erase the compact-house vocabulary.
-  `VillageMarketSolver` runs first and selects one connected orthogonal alley topology before any
+  `VillageMarketSolver` (deleted October 7) ran first and selected one connected orthogonal alley topology before any
   building is admitted; reviewed stalls line both sides where terrain and exact 3D occupancy
   permit. The market's street/headroom volumes participate in the same massing transaction rather
   than being optional decoration added after the town exists.
-  `VillageCirculationSolver` owns topology only. It first builds all cheap direct right-angle
-  terrain edges, then asks `VillageGroundRouter` for bounded A* detours solely between remaining
+  `VillageCirculationSolver` (deleted October 7) owned topology only. It first builds all cheap direct right-angle
+  terrain edges, then asks `VillageGroundRouter` (deleted October 7) for bounded A* detours solely between remaining
   disconnected components. Ground routes may cross natural height bands only through frozen
-  fixed-module `VillageStairTransition`s. `VillageRouteStairFabricSolver` materializes each flight
+  fixed-module `VillageStairTransition`s (deleted October 7). `VillageRouteStairFabricSolver` (deleted October 7) materializes each flight
   on the exact requesting terrain edge, keeps the worn street continuous beneath it, derives two
   slope-aligned collision-bearing side rails per stair module, and treats intersecting ground
-  flights as one public-circulation compound. `VillageAerialRouter` derives a
+  flights as one public-circulation compound. `VillageAerialRouter` (deleted October 7) derives a
   bounded acyclic set of short rounded links and one-module-deep public forecourts that exist only
   at inhabited facade seams. There is no long-span or empty suspended-platform fallback.
-  `VillageRouteGeometry` owns the shared swept-headroom facts. The graph must connect every door to
+  `VillageRouteGeometry` (deleted October 7) owns the shared swept-headroom facts. The graph must connect every door to
   the route landing, contain a useful ground-street fabric, at least two local aerial links, and at
   least one inhabited shared platform; aerial links remain at most 24 m.
   The support compiler freezes each massed floor and chooses one typed atomic mode from terrain
@@ -5311,7 +6923,7 @@ settlement, biome-tint and grass-tile lattice (2 x 2 tiles). The spec is
   stairs, railings, and protected undercroft headroom beneath the lowest viable inhabited overhang
   all validate before the district materializes. Bound ground activity is optional and cannot
   veto a complete inhabited district; any required-structure failure omits the whole transaction.
-  `VillageOutskirtsSolver` may then place sparse houses immediately outside the exact occupied-volume
+  `VillageOutskirtsSolver` (deleted October 7) may then place sparse houses immediately outside the exact occupied-volume
   contour. Every sealed terrain exit feeds its bounded local entrance-neighbourhood street graph;
   no street is extended around unrelated sides of the settlement. Each complete prefab sits one
   shared 3 m lane outside the core, remains aligned to the town lattice, faces its doorstep connection, and is shown in

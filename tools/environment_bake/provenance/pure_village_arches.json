@@ -1,0 +1,65 @@
+{
+  "assets": [
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_stone_gate_arch.tres",
+      "id": "pure_village.stone.gate_arch",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 634,
+        "measured_aabb": {
+          "position": [
+            -1.58238041400909,
+            0.000000191386789083481,
+            -0.270780891180038
+          ],
+          "size": [
+            3.16476130485535,
+            2.00528883934021,
+            0.541562497615814
+          ]
+        },
+        "mesh_bytes": 26450,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 634
+      },
+      "pack": "pure_village_arches",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.stone.gate_arch",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0057435,
+          -0.005289,
+          -0.000723
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/StoneArch_3.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_arches",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/StoneArch_3.glb",
+      "source_sha256": "608793253bfccb4d6c95fe793e7a23b0cf72c0a2efdc9494a50777366e0ad011",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true,
+        "namespace": "pure_village_kit"
+      },
+      "tool_version": 40,
+      "visual": "res://terrain/environment/visuals/pure_village_arches/pure_village_stone_gate_arch.tres"
+    }
+  ],
+  "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+  "pack": "pure_village_arches",
+  "tool_version": 40
+}

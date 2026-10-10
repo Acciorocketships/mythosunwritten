@@ -1,0 +1,8 @@
+extends SceneTree
+const Candidate = preload("/tmp/oct6-joint-diagnostic.gd")
+func _init(): call_deferred("_run")
+func _run():
+ var program = SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
+ var spatial = Candidate.generate(53, {}, program, WarrenVillageScaleProfile.for_id(&"grand"))
+ print("GENERATED ",spatial!=null," ",Candidate.last_failure)
+ quit()

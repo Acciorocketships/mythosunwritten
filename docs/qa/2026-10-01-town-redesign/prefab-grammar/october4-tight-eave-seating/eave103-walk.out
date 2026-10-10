@@ -1,0 +1,10 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+STEPPED_HOUSES [{ "id": &"kit.spatial.parcel.maze.house.005", "at": (15.75, 3.0, 0.75), "reach": 8.0 }, { "id": &"kit.spatial.parcel.maze.house.007", "at": (32.25, 3.0, 20.25), "reach": 16.0 }, { "id": &"kit.spatial.parcel.maze.house.012", "at": (-5.25, 9.0, 6.75), "reach": 24.0 }]
+ROOF_AUDIT { "clipped": 343, "removed": 99, "chimneys": { "moved": 0, "omitted": 0, "checked": 5 }, "towers": { "corner_attempts": 51, "corner_bearing_rejected": 26, "corner_bearing_example": "kit.spatial.parcel.maze.house.012 / (-1, 3, 6) / base 4", "corner_no_bearing_or_space": 45, "attempts": 228, "corner_reservation_rejected": 19, "corner_reservation_example": "kit.spatial.parcel.maze.house.007 / (22, 0, 11) / base 0", "corner_join_quadrants": 6, "corner_no_host_join": 6, "accepted": 0 }, "facade_bays": 1, "room_projections": 0, "retaining_relief": 5, "retaining_windows": 3, "decor_clearance": { &"prop.doorstep": 25, &"window_box": 47 }, "joins": 4, "fitted_eaves": 4, "dormers": { "moved": 0, "omitted": 4, "checked": 8 }, "roof_blocked_windows": 61, "roof_fitted_windows": 28 }
+WALK_SURFACE flight.volume.lane01.01 expected=(10.0, 3.0, -14.0) floor=(10.0, 3.05, -14.0)
+WALK_SURFACE flight.volume.lane01.01 expected=(10.0, 6.0, -30.0) floor=(10.0, 6.05, -30.0)
+TOWN_ROUTE_WALK flight.volume.lane01.01 reverse=false passed=true end=(10.0, 6.050616, -29.75)
+TOWN_ROUTE_WALK flight.volume.lane01.01 reverse=true passed=true end=(10.0, 3.050373, -14.24984)

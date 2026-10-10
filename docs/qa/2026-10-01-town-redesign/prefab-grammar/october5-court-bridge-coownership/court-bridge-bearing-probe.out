@@ -1,0 +1,21 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+COLUMN_PLOT { "building_id": &"bridge.01.end.0", "cells": [(-2, -1)], "door_walk": (-2, 7, -2), "floor": 7, "id": &"bridge.01.end.0.lower", "kind": &"house", "top": 10 }
+PLOT { "building_id": &"bridge.01.end.0", "cells": [(-2, -1)], "door_walk": (-2, 7, -2), "floor": 7, "id": &"bridge.01.end.0.lower", "kind": &"house", "top": 10 }
+FRONTAGE true
+PUBLIC_CEILING false
+MASS (-2, -1) band=0 true source=true carved=false
+MASS (-2, -1) band=1 true source=true carved=false
+MASS (-2, -1) band=2 true source=true carved=false
+MASS (-2, -1) band=3 true source=true carved=false
+MASS (-2, -1) band=4 false source=false carved=true
+MASS (-2, -1) band=5 false source=false carved=true
+MASS (-2, -1) band=6 false source=false carved=false
+MASS (-2, -1) band=7 true source=true carved=false
+MASS (-2, -1) band=8 true source=true carved=false
+MASS (-2, -1) band=9 true source=true carved=false
+MASS (-2, -1) band=10 false source=false carved=false
+CANDIDATES [{ "footprint": [(-2, -1)], "threshold": (-2, -1), "frontage": (0, -1), "area": 1, "depth": 1, "minimum": (-2, -1) }]
+COLUMN_PLOT { "building_id": &"house.wall-room.004", "cells": [(-2, -1)], "door_walk": (-2, 1, -2), "floor": 1, "id": &"house.wall-room.004", "kind": &"house", "top": 4, "wall_room": true }
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)

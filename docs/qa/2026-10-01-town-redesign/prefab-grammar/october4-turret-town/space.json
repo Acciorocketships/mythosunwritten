@@ -1,0 +1,117 @@
+[
+  {
+    "carved": {
+      "clear_body": 0,
+      "failures": {
+
+      },
+      "fits": 0,
+      "fronted": 0,
+      "ground_bearing": 23,
+      "rectangles": 23
+    },
+    "field": {
+      "clear_body": 75,
+      "failures": {
+
+      },
+      "fits": 0,
+      "fronted": 0,
+      "ground_bearing": 75,
+      "rectangles": 75
+    },
+    "seed": 7
+  },
+  {
+    "carved": {
+      "clear_body": 0,
+      "failures": {
+
+      },
+      "fits": 0,
+      "fronted": 0,
+      "ground_bearing": 0,
+      "rectangles": 161
+    },
+    "field": {
+      "clear_body": 0,
+      "failures": {
+
+      },
+      "fits": 0,
+      "fronted": 0,
+      "ground_bearing": 0,
+      "rectangles": 161
+    },
+    "seed": 13
+  },
+  {
+    "carved": {
+      "clear_body": 0,
+      "failures": {
+
+      },
+      "fits": 0,
+      "fronted": 0,
+      "ground_bearing": 73,
+      "rectangles": 73
+    },
+    "field": {
+      "clear_body": 155,
+      "failures": {
+
+      },
+      "fits": 0,
+      "fronted": 0,
+      "ground_bearing": 155,
+      "rectangles": 155
+    },
+    "seed": 43
+  },
+  {
+    "carved": {
+      "clear_body": 0,
+      "failures": {
+
+      },
+      "fits": 0,
+      "fronted": 0,
+      "ground_bearing": 12,
+      "rectangles": 54
+    },
+    "field": {
+      "clear_body": 12,
+      "failures": {
+
+      },
+      "fits": 0,
+      "fronted": 0,
+      "ground_bearing": 12,
+      "rectangles": 86
+    },
+    "seed": 83
+  },
+  {
+    "carved": {
+      "clear_body": 0,
+      "failures": {
+
+      },
+      "fits": 0,
+      "fronted": 0,
+      "ground_bearing": 14,
+      "rectangles": 14
+    },
+    "field": {
+      "clear_body": 95,
+      "failures": {
+
+      },
+      "fits": 0,
+      "fronted": 0,
+      "ground_bearing": 95,
+      "rectangles": 95
+    },
+    "seed": 211
+  }
+]

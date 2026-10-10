@@ -46,9 +46,14 @@ static func plan(world_seed: int, ground_bands: Dictionary,
 
 	WarrenPlotPlanner.partition(source_plan, profile, false)
 	finish_public_destinations(source_plan)
+	WarrenPlotPlanner.fill_released_bridge_sites(source_plan)
 	WarrenPlotPlanner.allocate_bridges(source_plan)
-	WarrenPlotPlanner.cover_tunnels(source_plan)
+	var tunnel_covers: Array = WarrenPlotPlanner.cover_tunnels(source_plan)
+	source_plan.audit["tunnel_covers"] = tunnel_covers.size()
 	finish_ground_streets(source_plan)
+	# Only final streets may become a room's structural ceiling. Optional
+	# lanes removed by destination pruning must not leave roofless wall rooms.
+	preload("res://scripts/terrain/features/villages/fabric/WarrenWallRooms.gd").place(source_plan,true)
 	if stop_after == &"partition":
 		return source_plan
 
@@ -89,7 +94,7 @@ static func finish_ground_streets(source: WarrenMazeSourcePlan) -> void:
 		nodes[edge.to] = true
 	var additions: Array[Vector3i] = []
 	for column: Vector2i in source.massif.columns:
-		if occupied.has(column): continue
+		if occupied.has(column) or source.excavation.bridge_bearing_columns.has(column): continue
 		var cell := Vector3i(column.x,source.massif.base_at(column),column.y)
 		if source.passage_kinds.has(cell): continue
 		var enclosed := true
@@ -103,7 +108,8 @@ static func finish_ground_streets(source: WarrenMazeSourcePlan) -> void:
 	var old := source.excavation
 	var excavation := WarrenExcavation.new(old.world_seed)
 	for key: String in ["route","transitions","lanes","loop_edges","carved",
-			"covered","portals","bridge_spans","bridge_span_audit","frontage_reservations","tunnel_cells"]:
+			"covered","portals","bridge_spans","bridge_span_audit","bridge_bearing_columns","construction_reservations","bridge_directions",
+			"frontage_reservations","tunnel_cells","tunnel_attrition","court_clearings"]:
 		excavation.set(key,old.get(key).duplicate(true))
 	for cell: Vector3i in additions:
 		var lane: Array[Vector3i] = [cell]
@@ -141,6 +147,10 @@ static func finish_public_destinations(source: WarrenMazeSourcePlan) -> void:
 	var destinations: Dictionary = {}
 	for cell: Vector3i in old.portals + source.market_zone + source.market_square_cells:
 		destinations[cell] = true
+	# A courtyard clearing is a destination: its doorstep keeps its access lane.
+	for clearing: Dictionary in old.court_clearings:
+		for door: Vector3i in clearing.doors:
+			destinations[door] = true
 	var edges := old.walk_edges()
 	# A doorway on a flight's treads is closed by construction: only landings
 	# are destinations. Bridges are allocated after this pruning, so a bridge
@@ -269,25 +279,49 @@ static func finish_public_destinations(source: WarrenMazeSourcePlan) -> void:
 	excavation.covered = old.covered.duplicate()
 	excavation.portals.assign(old.portals)
 	excavation.tunnel_cells = old.tunnel_cells.duplicate()
+	excavation.tunnel_attrition = old.tunnel_attrition.duplicate()
+	var pruned_tunnel_cells := 0
+	# A clearing whose doorstep was withdrawn goes with it (its reservations
+	# are not carried into the rebuilt excavation).
+	for clearing: Dictionary in old.court_clearings:
+		if not removed.has(clearing.door_walk):
+			excavation.court_clearings.append(clearing.duplicate(true))
 	excavation.bridge_span_audit = old.bridge_span_audit.duplicate(true)
+	excavation.bridge_bearing_columns = old.bridge_bearing_columns.duplicate()
+	excavation.bridge_directions = old.bridge_directions.duplicate()
 	var seeded := old.bridge_span_audit.get("seeded", []) as Array
 	var kept_proofs: Array = []
+	var released_bridge_columns: Dictionary = {}
 	for index in old.bridge_spans.size():
 		var span := old.bridge_spans[index] as Array
 		if span.any(func(cell: Vector3i) -> bool: return removed.has(cell)):
+			if index < seeded.size():
+				released_bridge_columns.merge(WarrenMazeCarver._bridge_proof_columns(seeded[index]))
 			continue
 		excavation.bridge_spans.append(span)
 		if index < seeded.size():
 			kept_proofs.append(seeded[index])
 	if excavation.bridge_span_audit.has("seeded"):
 		excavation.bridge_span_audit["seeded"] = kept_proofs
+	for proof: Dictionary in kept_proofs:
+		for column: Vector2i in WarrenMazeCarver._bridge_proof_columns(proof):
+			released_bridge_columns.erase(column)
+	var released: Array[Vector2i] = []
+	released.assign(released_bridge_columns.keys())
+	released.sort_custom(WarrenPlotPlanner.column_less)
+	source.audit["withdrawn_bridge_columns"] = released
 	excavation.frontage_reservations = old.frontage_reservations.duplicate()
 	for cell: Vector3i in removed:
 		source.passage_kinds.erase(cell)
 		excavation.covered.erase(cell)
-		excavation.tunnel_cells.erase(cell)
+		if excavation.tunnel_cells.erase(cell):
+			pruned_tunnel_cells += 1
+		excavation.bridge_directions.erase(cell)
+	excavation.tunnel_attrition["pruned_cells"] = int(excavation.tunnel_attrition.get("pruned_cells", 0)) + pruned_tunnel_cells
 	excavation.finish_construction()
 	source.excavation = excavation
+	# A court plot placed for a clearing pruned above leaves with it.
+	WarrenPlotReservations.withdraw_orphan_clearings(source)
 	var stamps: Array[Dictionary] = []
 	for stamp: Dictionary in source.feature_stamps:
 		var cells: Array = stamp.get("cells", [])

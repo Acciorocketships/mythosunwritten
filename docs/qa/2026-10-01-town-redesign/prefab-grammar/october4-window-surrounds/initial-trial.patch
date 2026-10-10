@@ -1,0 +1,32 @@
+--- restored/KitFacadeRoofContacts.gd
++++ trial/KitFacadeRoofContacts.gd
+@@ -3,6 +3,7 @@
+ ## Opening bounds come from the baked catalog; door reservations never change.
+ const UNION := preload("res://scripts/terrain/features/villages/kit/KitRoofMeshUnion.gd")
+ const OPENINGS := "res://terrain/environment/geometry/window_openings.bin"
++const FRAMES := "res://terrain/environment/geometry/window_frames.bin"
+ 
+ static func prepare(roofs: Array[Dictionary], base: BuildingKit, roof_kits: Dictionary,
+ 		walls: Array[Dictionary] = []) -> Dictionary:
+@@ -31,7 +32,8 @@
+ 					for p in vertices: bounds = bounds.expand(p)
+ 					skins.append({"bounds":bounds,"vertices":vertices,"indices":surface.indices})
+ 	return {"volumes":volumes,"skins":skins,"roof_context":union_context,
+-		"openings":FileAccess.open(OPENINGS,FileAccess.READ).get_var()}
++		"openings":FileAccess.open(OPENINGS,FileAccess.READ).get_var(),
++		"frames":FileAccess.open(FRAMES,FileAccess.READ).get_var()}
+ 
+ static func add_inhabited_floors(context: Dictionary, mass: BuildingMass,
+ 		assembler: BuildingKitAssembler, catalog: EnvironmentCatalog) -> void:
+@@ -69,6 +71,11 @@
+ static func obstructed(asset: StringName, pose: Transform3D, context: Dictionary) -> bool:
+ 	asset = opening_asset(asset)
+ 	if not context.openings.has(asset): return false
++	# Native timber surrounds extend beyond the glazing. Keep each measured
++	# authored component clear rather than growing the pane by an arbitrary
++	# margin (which would also remove clear windows beside a roof).
++	for component: AABB in context.get("frames",{}).get(asset,[]):
++		if intersects_skins(pose * component, context.get("skins",[])): return true
+ 	var opening: AABB = context.openings[asset]
+ 	# Probe just outside the glass, where a meeting roof interrupts the view.
+ 	# The pane's actual width/height keep roof contacts below its sill legal.

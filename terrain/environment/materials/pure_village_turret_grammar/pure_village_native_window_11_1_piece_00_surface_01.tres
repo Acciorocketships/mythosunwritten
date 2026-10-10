@@ -1,0 +1,19 @@
+[gd_resource type="StandardMaterial3D" load_steps=4 format=3]
+
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/pure_village_kit/cab2255d7a8350398b28.res" id="1_k62fs"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/pure_village_kit/fd8923e97c766fd83762.res" id="2_flidm"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/pure_village_kit/d26111bc2023d73735de.res" id="3_l6n32"]
+
+[resource]
+resource_name = "Window_1"
+vertex_color_use_as_albedo = true
+albedo_texture = ExtResource("1_k62fs")
+metallic = 1.0
+metallic_texture = ExtResource("2_flidm")
+metallic_texture_channel = 2
+roughness_texture = ExtResource("2_flidm")
+roughness_texture_channel = 1
+normal_enabled = true
+normal_texture = ExtResource("3_l6n32")
+ao_enabled = true
+ao_texture = ExtResource("2_flidm")

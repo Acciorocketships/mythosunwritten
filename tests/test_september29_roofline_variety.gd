@@ -60,20 +60,42 @@ func test_square_crowns_mix_gable_and_eave_fronts() -> void:
 		"square houses face the street with both gables and eaves (%d/%d gable-fronted)" % [gable_front, count])
 
 
-## Three 4x2 lots side by side (the photo-11 row of gables) become one
-## building whose crown is one range: one roof, ridge along the row.
-func test_side_by_side_lots_become_one_range() -> void:
+## October owner refinement supersedes the always-one-large-range pin.
+## Small joins remain useful, but most broad clusters keep distinct houses.
+func test_large_plain_ranges_are_a_seeded_minority_and_preserve_every_lot() -> void:
 	var houses := {}
 	for k in 3:
 		houses[StringName("lot.%d" % k)] = _lot(Rect2i(0, 2 * k, 4, 2), [0], 0)
-	var merged := KitVillageBuildings.merge_houses(houses, 7)
-	assert_eq(merged.size(), 1, "the row is one building")
+	var ranges := 0
+	for seed_value in 64:
+		var merged := KitVillageBuildings.merge_houses(houses,seed_value)
+		assert_eq(merged,KitVillageBuildings.merge_houses(houses,seed_value))
+		ranges += int(merged.size()==1)
+		var cells := {}
+		var doors := 0
+		for house: Dictionary in merged.values():
+			doors += house.doors.size()
+			for cell: Vector3i in house.cells:
+				assert_false(cells.has(cell),"no duplicate ownership")
+				cells[cell] = true
+			var mass := _design(house,seed_value)
+			assert_gt(mass.roofs.size(),0,"every retained house still gets a complete roof")
+		assert_eq(cells.size(),48,"no building mass is discarded")
+		assert_eq(doors,3,"every original address survives")
+	assert_between(ranges,1,20,"large simple buildings remain possible but uncommon")
+
+func test_corner_cluster_can_keep_an_articulated_compound() -> void:
+	var houses := {&"lot.a":_lot(Rect2i(0,0,2,2),[0],0),
+		&"lot.b":_lot(Rect2i(2,0,2,2),[0],0),
+		&"lot.c":_lot(Rect2i(0,2,2,2),[0],0)}
+	var merged := KitVillageBuildings.merge_houses(houses,7)
+	assert_eq(merged.size(),1)
 	var house: Dictionary = merged.values()[0]
-	assert_eq((house.doors as Array).size(), 3, "every lot keeps its door")
-	var mass := _design(house, 3)
-	assert_eq(mass.roofs.size(), 1, "one roof over the range: %s" % [mass.roofs])
-	assert_eq(mass.roofs[0].rect, Rect2i(0, 0, 4, 6), "the roof covers the whole range")
-	assert_eq(int(mass.roofs[0].axis), 1, "its ridge runs along the row")
+	assert_eq(house.storeys[0].size(),12)
+	assert_eq(BuildingDesigner._bounds(house.storeys[0]).get_area(),16,
+		"the courtyard notch remains real occupied-footprint geometry")
+	var mass := _design(house,7)
+	assert_gt(mass.roofs.size(),1,"the L has distinct roof wings")
 
 
 ## A taller lot beside a lower one: one building, each part keeps its own

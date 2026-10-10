@@ -1,0 +1,370 @@
+{
+  "assets": [
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_wall_hood_inner_corner.tres",
+      "id": "pure_village.wall_hood.inner_corner",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 741,
+        "measured_aabb": {
+          "position": [
+            -1.5,
+            -1.24050605297089,
+            -0.00000488281239086064
+          ],
+          "size": [
+            1.5,
+            1.35230922698975,
+            1.50000488758087
+          ]
+        },
+        "mesh_bytes": 34956,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 741
+      },
+      "pack": "pure_village_wall_hoods",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "exclude_materials": [
+          "RoofTransition_1"
+        ],
+        "id": "pure_village.wall_hood.inner_corner",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 20000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 20000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/Roof_Bottom_InCorner_5x5_1.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_wall_hoods",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Bottom_InCorner_5x5_1.glb",
+      "source_sha256": "455c62ba0f28a02529bfcc8d933d7c50b4f9c4f17d08ccc728291293d5a35095",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true,
+        "namespace": "pure_village_kit"
+      },
+      "tool_version": 40,
+      "visual": "res://terrain/environment/visuals/pure_village_wall_hoods/pure_village_wall_hood_inner_corner.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_wall_hood_left.tres",
+      "id": "pure_village.wall_hood.left",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1310,
+        "measured_aabb": {
+          "position": [
+            -1.80185961723328,
+            -1.24810218811035,
+            0.0
+          ],
+          "size": [
+            2.80185961723328,
+            1.3599054813385,
+            0.9169921875
+          ]
+        },
+        "mesh_bytes": 51517,
+        "surface_count": 3,
+        "visual_piece_count": 1,
+        "visual_triangles": 1310
+      },
+      "pack": "pure_village_wall_hoods",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.wall_hood.left",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 20000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 20000.0,
+        "merge_pieces": true,
+        "pivot": [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/Roof_Bottom_Left_20x5_1.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_wall_hoods",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Bottom_Left_20x5_1.glb",
+      "source_sha256": "420ee435d52070ccdf69e0bb87a5fa3a948fbf7bca23dc03f15b6ae14c4b54c2",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true,
+        "namespace": "pure_village_kit"
+      },
+      "tool_version": 40,
+      "visual": "res://terrain/environment/visuals/pure_village_wall_hoods/pure_village_wall_hood_left.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_wall_hood_middle.tres",
+      "id": "pure_village.wall_hood.middle",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 937,
+        "measured_aabb": {
+          "position": [
+            -1.0,
+            -1.24810218811035,
+            -0.161196291446686
+          ],
+          "size": [
+            2.0,
+            1.3599054813385,
+            1.07818841934204
+          ]
+        },
+        "mesh_bytes": 35675,
+        "surface_count": 3,
+        "visual_piece_count": 1,
+        "visual_triangles": 937
+      },
+      "pack": "pure_village_wall_hoods",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -1.0,
+            1.0
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.wall_hood.middle",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 20000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 20000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/Roof_Bottom_30x5_1.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_wall_hoods",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Bottom_30x5_1.glb",
+      "source_sha256": "6816bdaa71bcfb8cbe1f8ef1a3f9549ec70f6d3f2c015fe3814f21010aa76599",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true,
+        "namespace": "pure_village_kit"
+      },
+      "tool_version": 40,
+      "visual": "res://terrain/environment/visuals/pure_village_wall_hoods/pure_village_wall_hood_middle.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_wall_hood_middle_half.tres",
+      "id": "pure_village.wall_hood.middle_half",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 525,
+        "measured_aabb": {
+          "position": [
+            -0.25,
+            -1.24627816677094,
+            -0.161196291446686
+          ],
+          "size": [
+            0.5,
+            1.35808134078979,
+            1.07706546783447
+          ]
+        },
+        "mesh_bytes": 20114,
+        "surface_count": 3,
+        "visual_piece_count": 1,
+        "visual_triangles": 525
+      },
+      "pack": "pure_village_wall_hoods",
+      "parameters": {
+        "clip_ranges": {
+          "x": [
+            -0.25,
+            0.25
+          ]
+        },
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.wall_hood.middle_half",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 20000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 20000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/Roof_Bottom_30x5_1.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_wall_hoods",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Bottom_30x5_1.glb",
+      "source_sha256": "6816bdaa71bcfb8cbe1f8ef1a3f9549ec70f6d3f2c015fe3814f21010aa76599",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true,
+        "namespace": "pure_village_kit"
+      },
+      "tool_version": 40,
+      "visual": "res://terrain/environment/visuals/pure_village_wall_hoods/pure_village_wall_hood_middle_half.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_wall_hood_outer_corner.tres",
+      "id": "pure_village.wall_hood.outer_corner",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 718,
+        "measured_aabb": {
+          "position": [
+            -1.22880983352661,
+            -1.42601084709167,
+            -0.00000488281239086064
+          ],
+          "size": [
+            1.22880983352661,
+            1.69864344596863,
+            1.26312005519867
+          ]
+        },
+        "mesh_bytes": 32934,
+        "surface_count": 4,
+        "visual_piece_count": 1,
+        "visual_triangles": 718
+      },
+      "pack": "pure_village_wall_hoods",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.wall_hood.outer_corner",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 20000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 20000.0,
+        "merge_pieces": true,
+        "pivot": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/Roof_Bottom_OutCorner_5x5_1.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_wall_hoods",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Bottom_OutCorner_5x5_1.glb",
+      "source_sha256": "07ebefab74f6ba348380cc9ee95025d18687050f03827aeef65f7d285fb5c9fe",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true,
+        "namespace": "pure_village_kit"
+      },
+      "tool_version": 40,
+      "visual": "res://terrain/environment/visuals/pure_village_wall_hoods/pure_village_wall_hood_outer_corner.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/pure_village_wall_hood_right.tres",
+      "id": "pure_village.wall_hood.right",
+      "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1269,
+        "measured_aabb": {
+          "position": [
+            -1.0,
+            -1.24810218811035,
+            0.0
+          ],
+          "size": [
+            2.85401368141174,
+            1.3599054813385,
+            0.9169921875
+          ]
+        },
+        "mesh_bytes": 48752,
+        "surface_count": 3,
+        "visual_piece_count": 1,
+        "visual_triangles": 1269
+      },
+      "pack": "pure_village_wall_hoods",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "pure_village.wall_hood.right",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 20000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 12.0,
+        "max_visual_triangles": 20000.0,
+        "merge_pieces": true,
+        "pivot": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "source": "res://assets/PureVillage/Models/Architecture/Roof_Bottom_Right_20x5_1.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "pure_village_wall_hoods",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/PureVillage/Models/Architecture/Roof_Bottom_Right_20x5_1.glb",
+      "source_sha256": "41ec51943ac422f538e9e68aed32c0e0c814d0efc2209aef11061a0c5e890915",
+      "texture_policy": {
+        "compression": "basis_universal",
+        "mipmaps": true,
+        "namespace": "pure_village_kit"
+      },
+      "tool_version": 40,
+      "visual": "res://terrain/environment/visuals/pure_village_wall_hoods/pure_village_wall_hood_right.tres"
+    }
+  ],
+  "license": "Unity Asset Store Standard EULA (BK Pure Village)",
+  "pack": "pure_village_wall_hoods",
+  "tool_version": 40
+}

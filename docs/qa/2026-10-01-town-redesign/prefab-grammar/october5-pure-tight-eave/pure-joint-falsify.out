@@ -1,0 +1,62 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_pure_tight_eave_seating.gd
+[0m* test_complete_tight_panel_stays_on_roof_plane_and_out_of_public_air
+* test_retracted_course_backing_stops_at_next_row_and_ridge
+[31m    [Failed]:  [0m[0.57619786262512] expected to be <= than [0.001]:  Backing must not poke through the adjoining roof slope
+      at line 62
+[31m    [Failed]:  [0m[0.57619786262512] expected to be <= than [0.001]:  Backing must not poke through the adjoining roof slope
+      at line 62
+[31m    [Failed]:  [0m[0.5761981010437] expected to be <= than [0.001]:  Backing must not poke through the adjoining roof slope
+      at line 62
+[31m    [Failed]:  [0m[0.5761981010437] expected to be <= than [0.001]:  Backing must not poke through the adjoining roof slope
+      at line 62
+[31m    [Failed]:  [0m[0.5761981010437] expected to be <= than [0.001]:  Backing must not poke through the adjoining roof slope
+      at line 62
+[31m    [Failed]:  [0m[0.5761981010437] expected to be <= than [0.001]:  Backing must not poke through the adjoining roof slope
+      at line 62
+* test_retracted_eave_has_native_fascia_closing_the_wall_head
+[1m2/3 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_pure_tight_eave_seating.gd
+[0m- test_retracted_course_backing_stops_at_next_row_and_ridge
+[31m    [Failed]:  [0m[0.57619786262512] expected to be <= than [0.001]:  Backing must not poke through the adjoining roof slope
+          at line 62
+[31m    [Failed]:  [0m[0.57619786262512] expected to be <= than [0.001]:  Backing must not poke through the adjoining roof slope
+          at line 62
+[31m    [Failed]:  [0m[0.5761981010437] expected to be <= than [0.001]:  Backing must not poke through the adjoining roof slope
+          at line 62
+[31m    [Failed]:  [0m[0.5761981010437] expected to be <= than [0.001]:  Backing must not poke through the adjoining roof slope
+          at line 62
+[31m    [Failed]:  [0m[0.5761981010437] expected to be <= than [0.001]:  Backing must not poke through the adjoining roof slope
+          at line 62
+[31m    [Failed]:  [0m[0.5761981010437] expected to be <= than [0.001]:  Backing must not poke through the adjoining roof slope
+          at line 62
+
+Totals
+------
+Scripts               1
+Tests                 3
+Passing Tests         2
+Failing Tests         1
+Asserts           27/33
+Time              1.707s
+
+
+[31m---- 1 failing tests ----
+[0m

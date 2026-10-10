@@ -1,0 +1,20 @@
+{
+	"enclosure": true,
+	"ends": [
+		{
+			"above": "spatial.fabric.spatial.parcel.maze.house.006.part02.room00",
+			"below": "spatial.fabric.spatial.parcel.maze.house.003.part01.room00",
+			"cell": "(-3, 4, 2)",
+			"floor": "spatial.fabric.spatial.parcel.maze.house.006.part02.room00"
+		},
+		{
+			"above": "spatial.fabric.spatial.maze_back.18.room00",
+			"below": null,
+			"cell": "(2, 4, 2)",
+			"floor": "spatial.fabric.spatial.maze_back.18.room00"
+		}
+	],
+	"gap": 4,
+	"occupied": [],
+	"site": true
+}

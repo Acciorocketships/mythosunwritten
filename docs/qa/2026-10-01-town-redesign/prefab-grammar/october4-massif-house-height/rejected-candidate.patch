@@ -1,0 +1,25 @@
+--- scripts/terrain/features/villages/fabric/WarrenPlotPlanner.gd
++++ scripts/terrain/features/villages/fabric/WarrenPlotPlanner.gd
+@@ -691,9 +691,20 @@
+ 	var budget: Vector2i = plan.scale_profile.scaled(STOREY_BUDGET)
+ 	if plan.massif.form_id == &"ridge":
+ 		budget = Vector2i(1, 2)
++	var storeys := _building_roll(plan, building, STOREY_SALT, budget)
++	# Optional rooms inhabit the mass that the street planner actually bored.
++	# A later free height roll must not add an uncarved apartment shaft above
++	# that silhouette. Required upper streets and carried rooms still override
++	# this optional roll in _building_top; never shorten their bearing here.
++	var planned_top := 2147483647
++	for column: Vector2i in building.get("cells", []):
++		if plan.massif.has_column(column):
++			planned_top = mini(planned_top, plan.massif.top_at(column))
++	if planned_top != 2147483647:
++		storeys = mini(storeys, maxi(1, floori(float(planned_top-floor_band)
++			/ WarrenBuildingParcel.STOREY_BANDS)))
+ 	return floor_band + WarrenBuildingParcel.ROOF_RESERVATION_BANDS \
+-		+ WarrenBuildingParcel.STOREY_BANDS * _building_roll(plan, building,
+-			STOREY_SALT, budget)
++		+ WarrenBuildingParcel.STOREY_BANDS * storeys
+ 
+ 
+ static func _skyline_peak_indices(plan: WarrenMazeSourcePlan,

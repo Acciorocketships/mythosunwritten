@@ -1,0 +1,53 @@
+{
+	"enclosure": false,
+	"ends": [
+		{
+			"above": "spatial.fabric.spatial.parcel.maze.house.006.part02.room00",
+			"below": "spatial.fabric.spatial.parcel.maze.house.003.part01.room00",
+			"cell": "(-3, 4, 2)",
+			"floor": "spatial.fabric.spatial.parcel.maze.house.006.part02.room00"
+		},
+		{
+			"above": "spatial.fabric.spatial.maze_back.18.room00",
+			"below": null,
+			"cell": "(2, 4, 2)",
+			"floor": "spatial.fabric.spatial.maze_back.18.room00"
+		}
+	],
+	"gap": -1,
+	"occupied": [
+		{
+			"cell": "(-2, 4, 2)",
+			"lateral": 0,
+			"occluder": "spatial.fabric.spatial.feature.facade-bay.02.component.00",
+			"offset": 1,
+			"rise": 0,
+			"solid": "spatial.fabric.spatial.feature.facade-bay.02.component.00"
+		},
+		{
+			"cell": "(-2, 5, 2)",
+			"lateral": 0,
+			"occluder": "spatial.fabric.spatial.feature.facade-bay.02.component.00",
+			"offset": 1,
+			"rise": 1,
+			"solid": "spatial.fabric.spatial.feature.facade-bay.02.component.00"
+		},
+		{
+			"cell": "(-2, 4, 3)",
+			"lateral": 1,
+			"occluder": "spatial.fabric.spatial.feature.facade-bay.02.component.00",
+			"offset": 1,
+			"rise": 0,
+			"solid": "spatial.fabric.spatial.feature.facade-bay.02.component.00"
+		},
+		{
+			"cell": "(-2, 5, 3)",
+			"lateral": 1,
+			"occluder": "spatial.fabric.spatial.feature.facade-bay.02.component.00",
+			"offset": 1,
+			"rise": 1,
+			"solid": "spatial.fabric.spatial.feature.facade-bay.02.component.00"
+		}
+	],
+	"site": false
+}

@@ -1,0 +1,20 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+PROFILE generate 1805
+PROFILE kit build 5336
+PROFILE public payload 94
+PROFILE frontage/support/substitution 28
+PROFILE world payload 169
+PROFILE materialize 5743
+PROFILE roads/dressing 270
+PROFILE total 7820 accepted true stages { &"parcels": 9, &"hero_beam": 18, &"room_composition": 122, &"bridge_stamping": 149, &"directed_back_rooms": 214, &"residual_rooms": 18, &"partition_rooms": 534, &"feature_solver": 84, &"room_gate": 66 }
+PROFILE generate 1846
+PROFILE kit build 5462
+PROFILE public payload 101
+PROFILE frontage/support/substitution 27
+PROFILE world payload 234
+PROFILE materialize 5938
+PROFILE roads/dressing 43
+PROFILE total 7855 accepted true stages { &"parcels": 9, &"hero_beam": 18, &"room_composition": 140, &"bridge_stamping": 138, &"directed_back_rooms": 228, &"residual_rooms": 18, &"partition_rooms": 552, &"feature_solver": 84, &"room_gate": 71 }

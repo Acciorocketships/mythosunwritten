@@ -1,0 +1,7 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+CAP_CHECK baseline {"cap_cells":["(8, 4)","(9, 4)","(10, 4)","(11, 4)"],"roofs":[{"axis":0,"chimney":true,"chimney_end":0,"colour":"red","dormers":{},"eave_band":8,"extend_max":0,"extend_min":0,"open_max":false,"open_min":false,"rect":"[P: (10, 3), S: (2, 1)]","ridge_peaks":true}]}
+CAP_CHECK candidate {"cap_cells":["(10, 3)","(11, 3)","(8, 4)","(9, 4)","(10, 4)","(11, 4)"],"roofs":[]}
+CAP_CHECK clearance_restored {"cap_cells":["(10, 3)","(11, 3)"],"roofs":[{"axis":1,"chimney":true,"chimney_end":0,"colour":"red","dormers":{},"eave_band":8,"extend_max":0,"extend_min":0,"open_max":false,"open_min":false,"rect":"[P: (10, 4), S: (2, 2)]","ridge_peaks":true},{"axis":0,"clip_max":11.0,"colour":"red","dormers":{},"eave_band":8,"extend_max":1,"extend_min":0,"open_max":true,"open_min":false,"rect":"[P: (8, 4), S: (2, 2)]","ridge_peaks":false}]}

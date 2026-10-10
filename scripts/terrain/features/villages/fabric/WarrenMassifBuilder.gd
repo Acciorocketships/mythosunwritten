@@ -45,12 +45,60 @@ static func build(world_seed: int, ground_bands: Dictionary = {},
 	var raw_at: Dictionary = field.solid
 	var open_court: Dictionary = field.air
 
-	var massif := _terraced_massif(world_seed, raw_at, ground_bands)
+	# Reserve walkable ground independently of construction. The outer
+	# footprint supplies the original crown and perimeter ring distances.
+	var massif := _terraced_massif(world_seed, field.height_domain, ground_bands)
+	massif.outer_ring_domain = field.height_domain.duplicate()
+	if bool(field.get("central_green",false)):
+		for column: Vector2i in massif.columns:
+			var nearest := 0
+			var distance := INF
+			for index in field.lobes.size():
+				var d := Vector2(column).distance_squared_to(field.lobes[index].centre)
+				if d < distance:
+					distance = d
+					nearest = index
+			massif.columns[column]["district_lobe"] = nearest
+			massif.columns[column]["district_centre"] = field.lobes[nearest].centre
+	for column: Vector2i in massif.columns.keys():
+		if not raw_at.has(column):
+			# Keep a route envelope over reserved ground; the source model
+			# subtracts its air before any construction reaches the renderer.
+			var record: Dictionary = massif.columns[column]
+			record["reserved_ground"] = true
+			record["top"] = int(record.base) + MIN_COLUMN_BANDS
+			record["terrace"] = MIN_COLUMN_BANDS
+	for space: Dictionary in field.open_spaces:
+		var core := preload("res://scripts/terrain/features/villages/fabric/WarrenTownOpenSpaces.gd").planting_core(space)
+		for column: Vector2i in core:
+			if massif.is_reserved_ground(column): massif.columns[column]["planting_core"] = true
+	# Descend locally towards each green, with the same riser budget as
+	# the outside edge. The sampler protects the high crown from this cut.
+	for column: Vector2i in massif.columns:
+		if massif.is_reserved_ground(column): continue
+		var record: Dictionary = massif.columns[column]
+		var layer := int(record.terrace)
+		for space: Dictionary in field.open_spaces:
+			for cell: Vector2i in space.cells:
+				var distance := absi(column.x - cell.x) + absi(column.y - cell.y)
+				layer = mini(layer, distance * MAX_NEIGHBOR_STEP_BANDS)
+		record["terrace"] = layer
+		record["top"] = int(record.base) + layer
+	for column: Vector2i in field.house_columns:
+		if not massif.columns.has(column) or massif.is_reserved_ground(column): continue
+		massif.columns[column]["house_lobe"] = field.house_columns[column].lobe
+		massif.columns[column]["house_storeys"] = field.house_columns[column].storeys
+	for site: Dictionary in field.house_sites:
+		for column: Vector2i in site.cells:
+			massif.columns[column]["house_site"] = site.lobe
+	for column: Vector2i in field.suburb_columns:
+		if massif.columns.has(column): massif.columns[column]["suburb"] = true
 	var platform := WarrenTownPlatform.clear_forecourt(
 		field.get("platform", {}) as Dictionary, massif, profile, world_seed)
 	_raise_platform(massif, platform)
 	massif.form_id = &"mixture"
 	massif.open_court = open_court
+	massif.open_spaces = field.open_spaces.duplicate(true)
 	var crown_centre: Vector2 = (field.lobes[0] as Dictionary).centre
 	massif.crown_column = Vector2i(roundi(crown_centre.x), roundi(crown_centre.y))
 	if not platform.is_empty():
@@ -83,8 +131,12 @@ static func _raise_platform(massif: WarrenMassif, platform: Dictionary) -> void:
 	## enough envelope above the plinth for an upper street and its houses.
 	if platform.is_empty():
 		return
-	var bands := int(platform.bands)
-	for column: Vector2i in platform.columns:
+	var heights := {}
+	for column: Vector2i in platform.columns: heights[column] = int(platform.bands)
+	for tier: Dictionary in platform.get("tiers",[]):
+		for column: Vector2i in tier.columns: heights[column] = int(tier.bands)
+	for column: Vector2i in heights:
+		var bands := int(heights[column])
 		if not massif.columns.has(column):
 			continue
 		var record: Dictionary = massif.columns[column]
@@ -93,7 +145,7 @@ static func _raise_platform(massif: WarrenMassif, platform: Dictionary) -> void:
 		record["top"] = maxi(int(record.top),
 			base + bands + WarrenTownPlatform.ABOVE_PLINTH_BANDS)
 		record["terrace"] = int(record.top) - base
-		massif.platform_bands = bands
+		massif.platform_bands = maxi(massif.platform_bands,bands)
 	# The lower town huddles at the plinth's foot: its envelope there stops
 	# at the plinth top (WarrenTownPlatform.huddle_top)...
 	var order: Array[Vector2i] = []

@@ -8,6 +8,10 @@ extends RefCounted
 ## envelopes. No method here may move, resize, or restamp the spatial topology.
 static var last_failure := ""
 static var last_audit: Dictionary = {}
+## The room whose own roof choice failed `compile_roof_units` (empty when the
+## failure is not one room's). WarrenVolumetricSolver withdraws that room's
+## storey and composes again rather than losing the town.
+static var last_failure_room_id: StringName = &""
 ## TASK F2. Per-stage wall clock for ONE compile, printed rather than stamped:
 ## the fabric compile is the second cost of a maze solve and `solve` is a
 ## fifteen-step pipeline, so "the compile is 1.9 s" needed a breakdown before
@@ -126,10 +130,11 @@ static func _trace_stage(stage: String, started_ms: int) -> int:
 
 static func _planned_plaza_support_cells(source: WarrenSpatialPlan) \
 		-> Dictionary:
-	## Translate only the source plot planner's typed plaza rectangle. Macro
+	## Translate only the source plot planner's green courts (the typed plaza
+	## rectangle and any clearing drawn as a green). Macro
 	## columns expand to the same exact 2 x 2 fine lattice used by the volumetric
 	## solver; subtracting one band names the structural cell whose top is the
-	## public walk plane. Ordinary deck/court plots are deliberately excluded.
+	## public walk plane. Paved/timber deck and court plots are excluded.
 	var out: Dictionary = {}
 	if source == null or source.source_volume == null:
 		return out
@@ -137,11 +142,16 @@ static func _planned_plaza_support_cells(source: WarrenSpatialPlan) \
 		as WarrenMazeSourcePlan
 	if maze == null:
 		return out
+	# The primary plaza is declared first: `maze_green_components` keeps
+	# declaration order, so the plaza's centre feature is always chosen first.
+	var greens: Array[Dictionary] = []
 	for plot_value: Variant in maze.plots:
 		var plot := plot_value as Dictionary
-		if StringName(plot.get("id", &"")) \
-				!= WarrenPlotReservations.PLAZA_PLOT_ID:
-			continue
+		if StringName(plot.get("id", &"")) == WarrenPlotReservations.PLAZA_PLOT_ID:
+			greens.push_front(plot)
+		elif WarrenPlotReservations.is_green_court(plot):
+			greens.append(plot)
+	for plot: Dictionary in greens:
 		var floor_band := int(plot["floor"])
 		for column: Vector2i in WarrenMazeSourcePlan.deck_flat_columns(plot):
 			var origin := Vector3i(column.x * 2, floor_band - 1,
@@ -149,7 +159,6 @@ static func _planned_plaza_support_cells(source: WarrenSpatialPlan) \
 			for offset: Vector3i in [Vector3i.ZERO, Vector3i.RIGHT,
 					Vector3i.BACK, Vector3i(1, 0, 1)]:
 				out[origin + offset] = true
-		break
 	return out
 
 
@@ -236,6 +245,7 @@ static func generate(source: WarrenSpatialPlan,
 	## Nothing in this adapter may infer a replacement footprint or route.
 	last_failure = ""
 	last_audit = {}
+	last_failure_room_id = &""
 	if source == null or not source.is_sealed() or program == null:
 		last_failure = "missing sealed spatial town or measured vocabulary"
 		return null
@@ -300,6 +310,7 @@ static func generate(source: WarrenSpatialPlan,
 		last_failure = "spatial terrain foundations failed: %s" % String(
 			foundation_result.get("rejection", "overlaps built mass"))
 		return null
+	result.passage_crown_cells = _passage_crown_cells(source, result.retained_terrace_cells)
 	var foundation_audit := _foundation_shell_audit(foundation_result, result) \
 		if collect_diagnostics else {}
 	stage_ms = _trace_stage("foundation", stage_ms)
@@ -308,14 +319,29 @@ static func generate(source: WarrenSpatialPlan,
 	# its exact mouths, so declaring it after the surface sealed made the topology
 	# and the later render audit observe different squares.
 	var planned_plaza := _planned_plaza_support_cells(source)
-	if not result.set_planned_plaza(planned_plaza):
+	var planting := {}
+	if source.source_volume != null:
+		for cell: Vector3i in WarrenVolumetricSolver._maze_court_planting_cells(source.source_volume):
+			if source.grid.use_at(cell) != WarrenSpatialGrid.Use.DAYLIGHT_AIR:
+				last_failure = "courtyard planting reservation lost before fabric compilation"
+				return null
+			planting[cell+Vector3i.DOWN] = true
+	var ringless := {}
+	if source.source_volume != null:
+		for cell: Vector3i in WarrenVolumetricSolver.maze_ringless_court_cells(source.source_volume):
+			ringless[cell+Vector3i.DOWN] = true
+	if not result.set_planned_plaza(planned_plaza,planting,ringless):
 		last_failure = "planned village green topology is invalid"
 		return null
+	if source.source_volume != null:
+		result.clearing_decor = WarrenVolumetricSolver.maze_clearing_decor(source.source_volume)
+		result.raised_green_cells = WarrenVolumetricSolver.maze_raised_green_cells(source.source_volume)
+		result.well_scale = WarrenVolumetricSolver.maze_well_scale(source.source_volume)
 	var surfaces := PublicRealmSurfaceSolver.solve(
 		StringName("%s.surfaces" % result.stable_id), realm, result,
 		source.source_volume)
 	if surfaces == null or not result.set_surface_plan(surfaces):
-		last_failure = "spatial public-surface closure failed"
+		last_failure = "spatial public-surface closure failed: %s" % result.last_rejection
 		return null
 	stage_ms = _trace_stage("surfaces", stage_ms)
 	# TASK I4 ROUND 7. The two withdrawals that need the WHOLE town: a dressing
@@ -623,8 +649,9 @@ static func _modular_box_use_audit(source: WarrenSpatialPlan,
 static func _construct_ground_bearing_frames(source: WarrenSpatialPlan,
 		plan: SettlementFabricPlan, program: SettlementFabricProgram) -> Dictionary:
 	## Derive load paths from the retained and inhabited mass, bottom-up. Each
-	## disconnected root component receives its fixed corner frame once. Exact
-	## frame/roof space is reserved before crown selection; overlap and public
+	## disconnected root component receives its corner frame once. A conflicting
+	## column can turn within its bearing cell, retaining the complete shaft.
+	## Frame/roof space is reserved before crown selection; overlap and public
 	## clearance are checked independently by validation_errors(), only in tests.
 	var solids := plan.transformed_cells(&"solid", &"", &"roof")
 	var solid_owners: Dictionary = {}
@@ -745,6 +772,7 @@ static func _construct_ground_bearing_frames(source: WarrenSpatialPlan,
 				if plan.retained_terrace_cells.has(support_cell):
 					ground_band = band + 1
 					break
+			var column: Array[FabricUnit] = []
 			var segment := 0
 			for top in range(top_band, ground_band, -2):
 				var bands := mini(2, top - ground_band)
@@ -767,9 +795,11 @@ static func _construct_ground_bearing_frames(source: WarrenSpatialPlan,
 								and _aabb_overlaps_volume(column_bounds,
 									roof.transform() * roof_recipe.local_bounds):
 							member.visual_seam_ids.append(roof.stable_id)
-				proposals.append(member)
+				column.append(member)
 				seams = [member.stable_id]
 				segment += 1
+			_fit_ground_column(column,plan,proposals)
+			proposals.append_array(column)
 		for member: FabricUnit in proposals:
 			plan.append_constructed_unit(member)
 		room_ids.append(room_unit.stable_id)
@@ -783,6 +813,40 @@ static func _construct_ground_bearing_frames(source: WarrenSpatialPlan,
 	return {"final_ground_frame_room_ids":room_ids,
 		"final_ground_frame_member_count":member_count,
 		"final_ground_masonry_room_ids":masonry_room_ids}
+
+
+static func _fit_ground_column(column: Array[FabricUnit], plan: SettlementFabricPlan,
+		pending: Array[FabricUnit]) -> void:
+	if column.is_empty(): return
+	var initial := column[0].yaw_quarters
+	# The native post occupies one corner of its bearing cell. Other corners
+	# stay under that same floor bay. A whole vertical column must use one
+	# choice, rather than offsetting individual courses around an obstacle.
+	for turn in [0,1,3,2]:
+		for member: FabricUnit in column: member.yaw_quarters = posmod(initial+turn,4)
+		if _ground_column_clear(column,plan,pending): return
+	for member: FabricUnit in column: member.yaw_quarters = initial
+
+
+static func _ground_column_clear(column: Array[FabricUnit], plan: SettlementFabricPlan,
+		pending: Array[FabricUnit]) -> bool:
+	var others := plan.units.duplicate()
+	others.append_array(pending)
+	var public_cells := plan.public_realm.surface_claims()
+	for member: FabricUnit in column:
+		var recipe := plan.recipe(member.recipe_id)
+		var bounds := member.transform()*recipe.local_bounds
+		for cell: Vector3i in public_cells:
+			if _aabb_overlaps_volume(bounds,TraversalEnvelope.clearance_prism(cell,FabricRecipe.CELL_SIZE)):
+				return false
+		for other: FabricUnit in others:
+			var other_recipe := plan.recipe(other.recipe_id)
+			if not _aabb_overlaps_volume(bounds,other.transform()*other_recipe.local_bounds): continue
+			if not SettlementFabricPlan._visual_placements_overlap(member,recipe,other,other_recipe): continue
+			if plan._units_declare_connection(member,other) \
+					and plan._connected_parts_have_measured_seams(member,recipe,other,other_recipe): continue
+			return false
+	return true
 
 
 static func _ground_connected_mass(source: WarrenSpatialPlan,
@@ -901,6 +965,8 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 						"terrain-bearing room %s leaves source ground at %s" % [
 							room.stable_id, fine_column]}
 				var bearing := volume.envelope.bearing_at(macro_column)
+				if maze_mode:
+					bearing = maze_source.plot_bearing_at(macro_column,room.lattice_origin.y)
 				bearing_by_column[fine_column] = bearing
 				var support := room.lattice_origin.y
 				if bearing > support:
@@ -1935,7 +2001,8 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	var planting := SettlementFabricAssembler.maze_garden_dressing(retained,
 		solids, paved, plinths, walked, shell, footprints,
 		plan.planned_plaza_cells, decor_skin,
-		ground_skin.capped_ground as Dictionary)
+		ground_skin.capped_ground as Dictionary, plan.world_seed,
+		plan.raised_green_cells, plan.well_scale)
 	# TASK I3. The square's own three facts, derived exactly as the dressing
 	# derives them: the run a street can actually reach, the mouths it reaches it
 	# by, and what stands in the clearing.
@@ -1943,8 +2010,10 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		walked)
 	var plaza_entries := SettlementFabricAssembler.maze_plaza_entries(plaza,
 		walked)
-	var plaza_feature := SettlementFabricAssembler.maze_plaza_centre_feature(
-		plaza, plaza_entries, footprints, decor_skin, walked)
+	var plaza_features := SettlementFabricAssembler.maze_plaza_centre_features(
+		plaza, plaza_entries, footprints, decor_skin, walked,not plan.planned_plaza_cells.is_empty(),
+		plan.world_seed, plan.raised_green_cells, plan.well_scale)
+	var plaza_feature: Dictionary = plaza_features[0] if not plaza_features.is_empty() else {}
 	# TASK I3. `maze_garden_planting_count` stays what it has always meant --
 	# what GROWS on the yards -- so it is counted off the `maze-garden/` ids
 	# rather than off the dressing payload's whole instance count, which now
@@ -1990,12 +2059,13 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 				== StringName(decor_by_cell[decor_cell + step]))
 	var planting_refused := 0
 	var planting_reserved: Dictionary = {}
-	for cell_value: Variant in (plaza_feature.get("cells", {}) \
-			as Dictionary).keys():
-		planting_reserved[cell_value as Vector3i] = true
+	for feature: Dictionary in plaza_features:
+		for cell_value: Variant in (feature.get("cells", {}) as Dictionary).keys():
+			planting_reserved[cell_value as Vector3i] = true
 	for site: Dictionary in SettlementFabricAssembler \
 			.maze_garden_planting_sites(garden, plaza, plaza_entries,
-				planting_reserved, treatments, footprints, decor_skin, walked):
+				planting_reserved, treatments, footprints, decor_skin, walked,
+				plan.world_seed):
 		planting_refused += int(bool(site.refused))
 	var paved_bench_caps := 0
 	for key_value: Variant in treatments.keys():
@@ -2072,8 +2142,10 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	# it: the square's own centre feature and the town's outward front. The goods
 	# under them are counted off the payloads themselves, so "every canopy is
 	# stocked" is a ratio a reader can check rather than a promise.
-	var stall_canopies := int(SettlementFabricAssembler.STALL_CANOPIES.has(
-		StringName(plaza_feature.get("asset", &""))))
+	var stall_canopies := 0
+	for feature: Dictionary in plaza_features:
+		stall_canopies += int(SettlementFabricAssembler.STALL_CANOPIES.has(
+			StringName(feature.get("asset", &""))))
 	for site: Dictionary in frontages:
 		frontages_wide += int((site.cells as Array).size() \
 			>= SettlementFabricAssembler.PERIMETER_WINDOW_CELLS)
@@ -2132,7 +2204,12 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		"maze_garden_cell_count": garden.size(),
 		"maze_village_green_cell_count": plaza.size(),
 		"maze_plaza_entry_count": plaza_entries.size(),
-		"maze_plaza_centre_feature_count": int(not plaza_feature.is_empty()),
+		"maze_plaza_centre_feature_count": plaza_features.size(),
+		"maze_green_component_count": SettlementFabricAssembler.maze_green_components(plaza).size(),
+		"maze_plaza_centre_features": plaza_features.map(func(f: Dictionary) -> Dictionary:
+			return {"asset": StringName(f.asset), "cell": f.cell as Vector3i,
+				"boxes": SettlementFabricAssembler.maze_plaza_feature_boxes(f,
+					footprints, plan.world_seed)}),
 		"maze_plaza_centre_feature_asset": StringName(
 			plaza_feature.get("asset", &"")),
 		"maze_garden_planting_count": planting_instances,
@@ -3981,6 +4058,7 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 	## that the resulting recipe layers reproduce the exact reserved cell union.
 	last_failure = ""
 	last_audit = {}
+	last_failure_room_id = &""
 	if source == null or not source.is_sealed() or program == null \
 			or (room_units.is_empty() and not source.buildings.is_empty()):
 		last_failure = "missing spatial plan, vocabulary, or compiled rooms"
@@ -5062,6 +5140,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		fixed_feature_units: Array[FabricUnit] = []) -> Array[FabricUnit]:
 	last_failure = ""
 	last_audit = {}
+	last_failure_room_id = &""
 	if source == null or not source.is_sealed() or program == null \
 			or (room_units.is_empty() and not source.buildings.is_empty()):
 		last_failure = "missing spatial plan, vocabulary, or compiled rooms"
@@ -5313,6 +5392,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 	var maze_construction_crown_units: Array[StringName] = []
 	roof_stage_ms = _trace_stage("roof.neighborhood", roof_stage_ms)
 	for room_id: StringName in room_ids:
+		last_failure_room_id = room_id
 		# From this point the current room owns the next choice. Every candidate is
 		# checked only against still-unbuilt closures; already-built roofs are
 		# checked by the authoritative transaction probe.
@@ -6184,6 +6264,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 				.contains(".terrace."))
 			garden_cap_count += int(String(cap_unit.recipe_id) \
 				.contains(".garden."))
+	last_failure_room_id = &""
 	out = _join_compact_roof_pairs(source, program, room_units, fixed_feature_units, out, room_by_id, roof_faces_by_room, room_id_by_cell)
 	probe=SettlementFabricPlan.new(&"spatial.joined-roof-selection")
 	for recipe: FabricRecipe in program.recipes(): probe.register_recipe(recipe)
@@ -6829,11 +6910,12 @@ static func _tile_flat_plate(source: WarrenSpatialPlan,
 	## has no module, exactly like `_terminal_macro_cap_fallback` beside it.
 	##
 	## The exposed cells are sorted once by (y, z, x). Private faces accept only
-	## exact 3 m x 1.5 m authored gable halves; cells carrying an explicit
+	## exact authored gable halves, with a complete half-module gable for a final
+	## odd corner; cells carrying an explicit
 	## PUBLIC_FLOOR accept only structural deck backing. A candidate may cover
 	## several cells only when every covered face has the same type. The first
-	## exact-footprint candidate is placed at yaw 0 before yaw 1, with no repair,
-	## scaling, or coordinate-specific exception. A mixed crown is therefore
+	## exact-footprint candidate is placed at yaw 0 before yaw 1, using its
+	## authored recipe without a coordinate-specific exception. A mixed crown is therefore
 	## partitioned by its own sealed face claims rather than by a crown-wide flag.
 	##
 	## Every tile is a REAL roof unit -- its own bearing bond onto the parent
@@ -6865,7 +6947,9 @@ static func _tile_flat_plate(source: WarrenSpatialPlan,
 	# A private one-cell-deep remainder is roofed with exact 3 m x 1.5 m halves
 	# of the authored compact gable. The source plate decides the exact cells;
 	# the district decides only its palette, and both outward gable ends remain
-	# finite measured alternatives. Public cells instead receive only the
+	# finite measured alternatives. A final single-cell remainder may use the
+	# complete smaller gable, including both native attic ends. Public cells
+	# instead receive only the
 	# structural plank backing required by their own already-sealed PUBLIC_FLOOR.
 	# The vocabularies coexist in one transaction so a mixed crown is partitioned
 	# by its typed faces; one public cell can never turn its private neighbours
@@ -6884,6 +6968,7 @@ static func _tile_flat_plate(source: WarrenSpatialPlan,
 			tile_recipes.append(StringName(
 				"roof.partial.gable.%s.%d.%s" % [family,
 					length_cells, side]))
+	tile_recipes.append(StringName("roof.partial.gable.%s.1" % family))
 	for length_cells in [6, 4, 2, 1]:
 		tile_recipes.append(StringName("roof.setback.cap.%d" % length_cells))
 	var context := {"source":source,"program":program,"probe":probe,
@@ -6927,6 +7012,11 @@ static func _tile_flat_plate_search(context: Dictionary, pending: Dictionary,
 			anchor = cell
 			break
 	for recipe_id: StringName in tile_recipes:
+		# The small complete roof closes a final odd private corner only. It
+		# cannot replace a whole crown with a field of miniature gables.
+		if String(recipe_id).begins_with("roof.partial.gable.") \
+				and String(recipe_id).ends_with(".1") and pending.size() != 1:
+			continue
 		var recipe := program.recipe(recipe_id)
 		if recipe == null:
 			continue
@@ -7101,6 +7191,8 @@ static func _terminal_macro_cap_fallback(source: WarrenSpatialPlan,
 				candidate_failure = ("terminal strip %d enters public air or " \
 					+ "lacks recipe %s") % [strip_index, unit.recipe_id]
 				break
+			_append_measured_required_roof_seams(unit, recipe, room_id,
+				required_closures, unit_by_room, program, prior_roofs)
 			var future_conflict := _roof_candidate_required_closure_conflict(unit,
 				recipe, room_id, required_closures, unbuilt_roof_room_ids, program)
 			if not future_conflict.is_empty():
@@ -8914,6 +9006,8 @@ static func _append_measured_required_roof_seams(candidate: FabricUnit,
 	# Room admission already proves these exact party contacts against the roof
 	# closure domain. Carry the same measured relationship into the final unit;
 	# otherwise an admitted occupied bridge becomes an unrelated roof obstacle.
+	if candidate == null or recipe == null:
+		return
 	var allowed: Dictionary = {}
 	for closure: Dictionary in closures:
 		if StringName(closure.owner_room_id) == room_id:
@@ -10266,3 +10360,24 @@ static func _ground_bearing_masonry_courses(source: WarrenSpatialPlan,
 			if eligible and not cells.is_empty():
 				out.append({"room":room,"recipe":recipe,"cells":cells,"bases":bases.keys()})
 	return out
+
+
+## A legacy flat-roof recipe can hide occupied tunnel crowns from its skin.
+## Keep the exact native stone run authoritative for both geometry consumers.
+static func _passage_crown_cells(source: WarrenSpatialPlan, retained: Dictionary) -> Dictionary:
+	var ceilings := {}
+	if source.source_volume == null or source.source_volume.mass_context.get(&"maze_source_plan") == null:
+		return ceilings
+	var grid := source.grid
+	for crown: Vector3i in grid.cells_with_use(WarrenSpatialGrid.Use.STRUCTURAL_VOLUME):
+		if retained.has(crown) \
+				or grid.owner_name_at(crown) != WarrenVolumetricSolver.MAZE_STONE_FEATURE_ID \
+				or grid.use_at(crown + Vector3i.DOWN) != WarrenSpatialGrid.Use.PUBLIC_AIR:
+			continue
+		var fine := crown
+		while grid.use_at(fine) == WarrenSpatialGrid.Use.STRUCTURAL_VOLUME \
+				and grid.owner_name_at(fine) == WarrenVolumetricSolver.MAZE_STONE_FEATURE_ID \
+				and not retained.has(fine):
+			ceilings[fine] = true
+			fine += Vector3i.UP
+	return ceilings

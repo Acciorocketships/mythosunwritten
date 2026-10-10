@@ -1,0 +1,85 @@
+{
+	"failures": 0,
+	"houses": [
+		{
+			"complete": true,
+			"meshes": 245,
+			"modules": 191,
+			"passed": true,
+			"source": "assets/Raygeas/Models/Buildings/House_1.glb",
+			"unmatched_generated": [],
+			"unmatched_source": 0,
+			"vertices": 69580
+		},
+		{
+			"complete": true,
+			"meshes": 435,
+			"modules": 352,
+			"passed": true,
+			"source": "assets/Raygeas/Models/Buildings/House_2.glb",
+			"unmatched_generated": [],
+			"unmatched_source": 0,
+			"vertices": 122593
+		},
+		{
+			"complete": true,
+			"meshes": 484,
+			"modules": 400,
+			"passed": true,
+			"source": "assets/Raygeas/Models/Buildings/House_3.glb",
+			"unmatched_generated": [],
+			"unmatched_source": 0,
+			"vertices": 154395
+		},
+		{
+			"complete": true,
+			"meshes": 335,
+			"modules": 258,
+			"passed": true,
+			"source": "assets/Raygeas/Models/Buildings/House_4.glb",
+			"unmatched_generated": [],
+			"unmatched_source": 0,
+			"vertices": 91109
+		},
+		{
+			"complete": true,
+			"meshes": 400,
+			"modules": 317,
+			"passed": true,
+			"source": "assets/Raygeas/Models/Buildings/House_5.glb",
+			"unmatched_generated": [],
+			"unmatched_source": 0,
+			"vertices": 120921
+		},
+		{
+			"complete": true,
+			"meshes": 259,
+			"modules": 202,
+			"passed": true,
+			"source": "assets/Raygeas/Models/Buildings/House_6.glb",
+			"unmatched_generated": [],
+			"unmatched_source": 0,
+			"vertices": 78030
+		},
+		{
+			"complete": true,
+			"meshes": 378,
+			"modules": 297,
+			"passed": true,
+			"source": "assets/Raygeas/Models/Buildings/House_7.glb",
+			"unmatched_generated": [],
+			"unmatched_source": 0,
+			"vertices": 119392
+		},
+		{
+			"complete": true,
+			"meshes": 467,
+			"modules": 372,
+			"passed": true,
+			"source": "assets/Raygeas/Models/Buildings/House_8.glb",
+			"unmatched_generated": [],
+			"unmatched_source": 0,
+			"vertices": 127286
+		}
+	]
+}

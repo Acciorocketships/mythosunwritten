@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_m3hn6"]
+
+[resource]
+script = ExtResource("1_m3hn6")
+id = &"suntail.prop.pot_3.finish_oak"
+visual_path = "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_pot_3.tres"
+tags = Array[StringName]([&"prop", &"suntail_kit", &"village"])
+measured_aabb = AABB(-0.22979437, 0, -0.22979431, 0.45958865, 0.7819248, 0.45958862)
+ground_contact_points = PackedVector2Array()
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"suntail_village_kit:suntail.prop.pot_3/frame/oak"
+material_tints = {
+"DoorShutter": Color(0.9, 0.74, 0.53, 1),
+"DoorShutters": Color(0.9, 0.74, 0.53, 1),
+"Planks": Color(0.9, 0.74, 0.53, 1),
+"Planks_Full": Color(0.9, 0.74, 0.53, 1),
+"Wood": Color(0.9, 0.74, 0.53, 1),
+"Wood_1": Color(0.9, 0.74, 0.53, 1),
+"Wood_2": Color(0.9, 0.74, 0.53, 1),
+"Wood_3": Color(0.9, 0.74, 0.53, 1),
+"Wooden_Planks": Color(0.9, 0.74, 0.53, 1)
+}

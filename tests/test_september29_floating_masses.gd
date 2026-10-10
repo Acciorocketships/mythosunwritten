@@ -13,7 +13,7 @@ const CORPUS := [[1, &"compact"], [3, &"standard"], [4, &"large"], [6, &"compact
 	[8, &"compact"], [9, &"standard"], [11, &"compact"], [12, &"grand"]]
 
 ## A town whose bore is covered whole (the positive case of the cover rule).
-const COVER_PIN := [[7, &"large"]]
+const COVER_PIN := [[7, &"large"], [7, &"compact"]]
 
 var _program: SettlementFabricProgram
 
@@ -59,9 +59,14 @@ func test_photographed_boxes_were_tunnel_ceilings_and_shoulders() -> void:
 	var spatial := audit.spatial as WarrenSpatialPlan
 	for cell: Vector3i in [Vector3i(-2, 4, 6), Vector3i(-1, 4, 9), Vector3i(0, 3, 1),
 			Vector3i(1, 3, 1)]:
-		assert_true(spatial.grid.use_at(cell) in [WarrenSpatialGrid.Use.OUTSIDE,
-			WarrenSpatialGrid.Use.PRIVATE_VOLUME],
-			"crown %s is released or inhabited" % cell)
+		var use := spatial.grid.use_at(cell)
+		if use == WarrenSpatialGrid.Use.STRUCTURAL_VOLUME:
+			assert_eq(spatial.grid.use_at(cell+Vector3i.DOWN),WarrenSpatialGrid.Use.PUBLIC_AIR)
+			var rooms := WarrenVolumetricSolver.building_private_cells(spatial.buildings)
+			assert_true(rooms.has(cell+Vector3i.UP),"A retained photographed crown must now bear an actual house room.")
+		else:
+			assert_true(use in [WarrenSpatialGrid.Use.OUTSIDE,WarrenSpatialGrid.Use.PRIVATE_VOLUME],
+				"crown %s is released or inhabited" % cell)
 	var houses: Dictionary = {}
 	for mass: BuildingMass in audit.masses:
 		if String(mass.stable_id).begins_with("kit.retained") \
@@ -169,5 +174,9 @@ func test_passage_covers_are_whole_or_absent() -> void:
 	# storey continues over it (re-measured Sep 29 after the edges stream's
 	# perimeter lane re-laid the corpus; the earlier pins 12/grand (0,-2) and
 	# 7/large (-1,1) moved with the citadel platform and the lane).
-	assert_has(realized, "1260018864828801968/compact:(2, -4)",
-		"a borne bore is covered: %s" % [realized])
+	# October 1's reserved greens and source bridge planning move that bore.
+	# Later direct-access/green planning moves Compact7's old (4,1) cover.
+	# Require a real whole cover in the unchanged corpus, independent of its
+	# coordinates. Every candidate above still proves its entire room, crown,
+	# and public headroom; an all-absent corpus fails.
+	assert_false(realized.is_empty(),"At least one borne bore must remain covered: %s" % [realized])

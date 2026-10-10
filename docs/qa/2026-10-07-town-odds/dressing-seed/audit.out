@@ -1,0 +1,8 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+RANGE_AUDIT {"floating":0,"joins":3,"ms":229852,"profile":"grand","roof":{"area":0.0,"gable_area":8.39626317747229,"gable_contacts":578,"intrusions":0,"triangles":1405142},"seed":53,"valid_payload":true}
+RANGE_AUDIT {"floating":0,"joins":0,"ms":90305,"profile":"large","roof":{"area":0.0,"gable_area":0.0,"gable_contacts":0,"intrusions":0,"triangles":417744},"seed":31,"valid_payload":true}
+RANGE_AUDIT {"floating":0,"joins":0,"ms":24933,"profile":"standard","roof":{"area":0.0,"gable_area":0.0,"gable_contacts":0,"intrusions":0,"triangles":541150},"seed":13,"valid_payload":true}
+RANGE_AUDIT {"floating":0,"joins":0,"ms":41782,"profile":"large","roof":{"area":0.0,"gable_area":1.11262538431674,"gable_contacts":31,"intrusions":0,"triangles":331555},"seed":43,"valid_payload":true}
+RANGE_AUDIT {"floating":0,"joins":0,"ms":88872,"profile":"grand","roof":{"area":0.0,"gable_area":1.99399204464862,"gable_contacts":9,"intrusions":0,"triangles":383592},"seed":83,"valid_payload":true}
+RANGE_AUDIT {"floating":0,"joins":0,"ms":11762,"profile":"standard","roof":{"area":0.0,"gable_area":0.0,"gable_contacts":0,"intrusions":0,"triangles":204491},"seed":103,"valid_payload":true}

@@ -1,0 +1,142 @@
+[
+	{
+		"hits": [
+			{
+				"distance": 14.5208129882812,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/kit_spatial_parcel_maze_house_034_k0303_union_0_0",
+				"point": "(-67.53485, 19.00464, -5.854382)"
+			},
+			{
+				"distance": 14.9132089614868,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/suntail_decor_cornice_cover_2_00/89",
+				"point": "(-67.87358, 18.89668, -5.688309)"
+			},
+			{
+				"distance": 15.0596580505371,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/kit_spatial_parcel_maze_house_034_k0303_union_0_1",
+				"point": "(-68.0, 18.85638, -5.626327)"
+			},
+			{
+				"distance": 23.1814727783203,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/suntail_frame_frame_wall_1_00/39",
+				"point": "(-75.01102, 16.62169, -2.18895)"
+			},
+			{
+				"distance": 39.0503959655762,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/suntail_floor_floor_2_00/413",
+				"point": "(-88.70961, 12.2554, 4.527229)"
+			},
+			{
+				"distance": 40.9070053100586,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/town_frontage_floor_00/9",
+				"point": "(-90.31229, 11.74456, 5.312996)"
+			}
+		],
+		"pixel": "(762.0, 362.0)"
+	},
+	{
+		"hits": [
+			{
+				"distance": 12.6760559082031,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/kit_spatial_feature_landmark_00_k0229_union_0_2",
+				"point": "(-65.95187, 19.46164, -6.687845)"
+			},
+			{
+				"distance": 14.5400648117065,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/kit_spatial_parcel_maze_house_034_k0303_union_0_0",
+				"point": "(-67.56233, 18.94132, -5.906693)"
+			},
+			{
+				"distance": 14.9001865386963,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/suntail_decor_cornice_cover_2_00/89",
+				"point": "(-67.87347, 18.8408, -5.755781)"
+			},
+			{
+				"distance": 15.0466346740723,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/kit_spatial_parcel_maze_house_034_k0303_union_0_1",
+				"point": "(-68.0, 18.79992, -5.694406)"
+			},
+			{
+				"distance": 23.4115142822266,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/suntail_frame_frame_wall_1_00/39",
+				"point": "(-75.2271, 16.46497, -2.188938)"
+			},
+			{
+				"distance": 38.4921340942383,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/suntail_floor_floor_2_00/413",
+				"point": "(-88.25646, 12.2554, 4.130898)"
+			}
+		],
+		"pixel": "(766.0, 366.0)"
+	},
+	{
+		"hits": [
+			{
+				"distance": 12.4327831268311,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/kit_spatial_feature_landmark_00_k0229_union_0_2",
+				"point": "(-65.7236, 19.38193, -6.853351)"
+			},
+			{
+				"distance": 14.435718536377,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/kit_spatial_parcel_maze_house_034_k0303_union_0_0",
+				"point": "(-67.45119, 18.79905, -6.024219)"
+			},
+			{
+				"distance": 14.9260425567627,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/suntail_decor_cornice_cover_2_00/89",
+				"point": "(-67.87411, 18.65637, -5.821249)"
+			},
+			{
+				"distance": 15.0720024108887,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/kit_spatial_parcel_maze_house_034_k0303_union_0_1",
+				"point": "(-68.0, 18.61389, -5.760826)"
+			},
+			{
+				"distance": 23.7006568908691,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/suntail_frame_frame_wall_1_00/39",
+				"point": "(-75.44244, 16.10286, -2.188929)"
+			},
+			{
+				"distance": 36.9217147827148,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/suntail_floor_floor_2_00/413",
+				"point": "(-86.84595, 12.2554, 3.284029)"
+			}
+		],
+		"pixel": "(770.0, 378.0)"
+	},
+	{
+		"hits": [
+			{
+				"distance": 12.3885850906372,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/kit_spatial_feature_landmark_00_k0229_union_0_2",
+				"point": "(-65.64964, 19.34648, -6.831434)"
+			},
+			{
+				"distance": 14.2944326400757,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/kit_spatial_parcel_maze_house_034_k0303_union_0_0",
+				"point": "(-67.28796, 18.78442, -6.036306)"
+			},
+			{
+				"distance": 14.9770641326904,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/suntail_decor_cornice_cover_2_00/89",
+				"point": "(-67.87478, 18.58311, -5.751513)"
+			},
+			{
+				"distance": 15.1227331161499,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/kit_spatial_parcel_maze_house_034_k0303_union_0_1",
+				"point": "(-68.0, 18.54015, -5.690737)"
+			},
+			{
+				"distance": 23.5162315368652,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/suntail_frame_frame_wall_1_00/39",
+				"point": "(-75.21533, 16.06482, -2.18894)"
+			},
+			{
+				"distance": 36.4334678649902,
+				"node": "/root/@Node3D@2/@Node3D@6/FeatureBlock_0_0/Visuals/suntail_floor_floor_2_00/413",
+				"point": "(-86.31941, 12.2554, 3.200177)"
+			}
+		],
+		"pixel": "(766.0, 382.0)"
+	}
+]

@@ -1,0 +1,110 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+TUNNELS 13 standard [(3, 0, 0), (2, 0, 0), (2, 0, -1), (0, 0, -2), (1, 0, -2), (3, 0, -2), (4, 0, -1), (4, 0, 2), (1, 4, 1)]
+STEPPED_HOUSES [{ "id": &"kit.spatial.parcel.maze.bridge.00.end.1.lower", "at": (5.25, 10.5, 6.75), "reach": 32.0 }, { "id": &"kit.spatial.parcel.maze.house.released.002", "at": (8.25, 9.0, -0.75), "reach": 16.0 }]
+ROOF_AUDIT { "clipped": 205, "removed": 61, "chimneys": { "moved": 0, "omitted": 0, "checked": 0 }, "towers": { "corner_attempts": 28, "corner_bearing_rejected": 15, "corner_bearing_example": "kit.spatial.parcel.maze.house.released.002 / (7, 3, 1) / base 4", "corner_no_bearing_or_space": 24, "corner_reservation_rejected": 7, "corner_reservation_example": "kit.spatial.parcel.maze.house.released.002 / (3, 4, -1) / base 4", "corner_supported": 2, "corbel_corner_accepted": 1, "corner_accepted": 1, "corner_join_door": 1, "corner_no_host_join": 2, "corner_public_blocked": 1, "corner_join_quadrants": 1, "corner_quadrant_counts": { 2: 1 }, "corner_quadrant_examples": [{ "host": &"kit.spatial.parcel.maze.house.008", "corner": (6, 10), "base": 0, "top": 2, "band": 0, "occupied": [(-1, -1), (0, -1)] }], "attempts": 40, "accepted": 1 }, "facade_bays": 0, "room_projections": 0, "retaining_relief": 0, "retaining_flight_joints": 4, "retaining_windows": 2, "fortified_windows": 34, "retaining_recesses": 35, "decor_clearance": { &"fort.block": 143, &"prop.doorstep": 16, &"window_box": 13 }, "fitted_window_boxes": 19, "joins": 3, "parallel_joins": 0, "fitted_eaves": 3, "dormers": { "moved": 0, "omitted": 0, "checked": 3 }, "seated_balcony_brackets": 0, "roof_blocked_windows": 59, "roof_fitted_windows": 17 }
+TOWN 13 standard buildings=40 instances=2142 ms=12913
+GARDEN_GRASS 13 standard instances=0 tiles=4
+BOUNDS cells=[P: (-8.0, 0.0, -48.0), S: (60.0, 27.0, 108.0)] payload=[P: (-42.34, -2.0, -50.34), S: (96.74001, 38.6, 112.68)]
+REVIEW_CAMERA {"eye":"(-55.944, 73.64, 90.50999)","fov":50.0,"target":"(6.029999, 17.3, 5.999996)","view":"13_standard_overview"}
+REVIEW_CAMERA {"eye":"(55.82799, 42.653, 55.79799)","fov":55.0,"target":"(6.029999, 21.3, 5.999996)","view":"13_standard_orbit0"}
+REVIEW_CAMERA {"eye":"(-43.76799, 42.653, 55.79799)","fov":55.0,"target":"(6.029999, 21.3, 5.999996)","view":"13_standard_orbit1"}
+REVIEW_CAMERA {"eye":"(-43.76799, 42.653, -43.798)","fov":55.0,"target":"(6.029999, 21.3, 5.999996)","view":"13_standard_orbit2"}
+REVIEW_CAMERA {"eye":"(55.82799, 42.653, -43.798)","fov":55.0,"target":"(6.029999, 21.3, 5.999996)","view":"13_standard_orbit3"}
+REVIEW_CAMERA {"eye":"(16.0, 13.7, 40.0)","fov":70.0,"target":"(-4.0, 13.7, 36.0)","view":"13_standard_street0"}
+REVIEW_CAMERA {"eye":"(-12.0, 7.7, 40.0)","fov":70.0,"target":"(-12.0, 7.7, 16.0)","view":"13_standard_street1"}
+SKYWALKS 13_standard 0
+TUNNELS 43 large [(1, 8, -1), (0, 8, -1), (-3, 0, 0), (-5, 0, 0), (-5, 0, -3), (-2, 0, -6), (1, 0, -7), (4, 0, -7), (-4, 0, 1)]
+STEPPED_HOUSES [{ "id": &"kit.spatial.parcel.maze.house.004", "at": (-3.75, 16.5, 6.75), "reach": 32.0 }, { "id": &"kit.spatial.parcel.maze.house.005", "at": (0.75, 16.5, 0.75), "reach": 24.0 }, { "id": &"kit.spatial.parcel.maze.house.009", "at": (5.25, 4.5, -2.25), "reach": 16.0 }, { "id": &"kit.spatial.parcel.maze.house.018", "at": (8.25, 15.0, -5.25), "reach": 40.0 }, { "id": &"kit.spatial.parcel.maze.house.023", "at": (-2.25, 4.5, 8.25), "reach": 16.0 }, { "id": &"kit.spatial.parcel.maze.house.029", "at": (-14.25, 3.0, -3.75), "reach": 16.0 }, { "id": &"kit.spatial.parcel.maze.house.036", "at": (-8.25, 4.5, -11.25), "reach": 24.0 }, { "id": &"kit.spatial.parcel.maze.house.046", "at": (8.25, 4.5, -23.25), "reach": 16.0 }, { "id": &"kit.spatial.parcel.maze.house.057", "at": (3.75, 12.0, -17.25), "reach": 8.0 }]
+ROOF_AUDIT { "clipped": 437, "removed": 22, "chimneys": { "moved": 0, "omitted": 0, "checked": 3 }, "towers": { "corner_attempts": 134, "corner_bearing_rejected": 63, "corner_bearing_example": "kit.spatial.parcel.maze.house.018 / (7, 7, -1) / base 8", "corner_no_bearing_or_space": 129, "corner_supported": 2, "corner_asset_blocked": 1, "corner_reservation_rejected": 39, "corner_reservation_example": "kit.spatial.parcel.maze.house.046 / (3, 4, -16) / base 2", "attempts": 312, "corner_join_quadrants": 1, "corner_quadrant_counts": { 4: 1 }, "corner_quadrant_examples": [{ "host": &"kit.spatial.parcel.maze.house.002", "corner": (0, -3), "base": 8, "top": 14, "band": 8, "occupied": [(-1, -1), (-1, 0), (0, -1), (0, 0)] }], "corner_no_host_join": 3, "corbel_corner_accepted": 1, "corner_accepted": 1, "corner_join_door": 2, "accepted": 1 }, "facade_bays": 2, "room_projections": 5, "retaining_relief": 7, "retaining_flight_joints": 12, "retaining_windows": 42, "fortified_windows": 0, "retaining_recesses": 4, "decor_clearance": { &"window_box": 49, &"prop.doorstep": 29 }, "fitted_window_boxes": 13, "joins": 4, "parallel_joins": 0, "fitted_eaves": 2, "dormers": { "moved": 0, "omitted": 0, "checked": 7 }, "seated_balcony_brackets": 0, "roof_blocked_windows": 72, "roof_fitted_windows": 40 }
+TOWN 43 large buildings=117 instances=4852 ms=27486
+GARDEN_GRASS 43 large instances=317 tiles=4
+BOUNDS cells=[P: (-56.0, 0.0, -80.0), S: (108.0, 39.0, 140.0)] payload=[P: (-58.40001, -6.0, -84.0), S: (114.4, 57.62, 146.34)]
+REVIEW_CAMERA {"eye":"(-81.687, 95.98, 98.925)","fov":50.0,"target":"(-1.200001, 22.81, -10.83)","view":"43_large_overview"}
+REVIEW_CAMERA {"eye":"(63.47375, 55.7365, 53.84375)","fov":55.0,"target":"(-1.200001, 26.81, -10.83)","view":"43_large_orbit0"}
+REVIEW_CAMERA {"eye":"(-65.87375, 55.7365, 53.84375)","fov":55.0,"target":"(-1.200001, 26.81, -10.83)","view":"43_large_orbit1"}
+REVIEW_CAMERA {"eye":"(-65.87375, 55.7365, -75.50375)","fov":55.0,"target":"(-1.200001, 26.81, -10.83)","view":"43_large_orbit2"}
+REVIEW_CAMERA {"eye":"(63.47375, 55.7365, -75.50375)","fov":55.0,"target":"(-1.200001, 26.81, -10.83)","view":"43_large_orbit3"}
+REVIEW_CAMERA {"eye":"(-32.0, 1.7, 20.0)","fov":70.0,"target":"(-16.0, 1.7, 20.0)","view":"43_large_street0"}
+REVIEW_CAMERA {"eye":"(-16.0, 1.7, -56.0)","fov":70.0,"target":"(12.0, 1.7, -56.0)","view":"43_large_street1"}
+REVIEW_CAMERA {"eye":"(26.0, 15.0, 30.0)","fov":60.0,"target":"(26.0, 15.0, 4.0)","view":"43_large_skywalk0_side"}
+REVIEW_CAMERA {"eye":"(26.0, 1.7, 16.0)","fov":70.0,"target":"(26.0, 14.5, 4.0)","view":"43_large_skywalk0_below"}
+REVIEW_CAMERA {"eye":"(26.01, 42.0, 4.0)","fov":50.0,"target":"(26.0, 12.0, 4.0)","view":"43_large_skywalk0_top"}
+REVIEW_CAMERA {"eye":"(48.0, 16.0, 10.0)","fov":70.0,"target":"(26.0, 14.5, 4.0)","view":"43_large_skywalk0_along-1"}
+REVIEW_CAMERA {"eye":"(4.0, 16.0, 10.0)","fov":70.0,"target":"(26.0, 14.5, 4.0)","view":"43_large_skywalk0_along1"}
+REVIEW_CAMERA {"eye":"(-10.0, 27.0, -18.0)","fov":60.0,"target":"(-10.0, 27.0, -44.0)","view":"43_large_skywalk1_side"}
+REVIEW_CAMERA {"eye":"(-10.0, 1.7, -32.0)","fov":70.0,"target":"(-10.0, 26.5, -44.0)","view":"43_large_skywalk1_below"}
+REVIEW_CAMERA {"eye":"(-9.99, 54.0, -44.0)","fov":50.0,"target":"(-10.0, 24.0, -44.0)","view":"43_large_skywalk1_top"}
+REVIEW_CAMERA {"eye":"(12.0, 28.0, -38.0)","fov":70.0,"target":"(-10.0, 26.5, -44.0)","view":"43_large_skywalk1_along-1"}
+REVIEW_CAMERA {"eye":"(-32.0, 28.0, -38.0)","fov":70.0,"target":"(-10.0, 26.5, -44.0)","view":"43_large_skywalk1_along1"}
+REVIEW_CAMERA {"eye":"(4.0, 27.0, -30.0)","fov":60.0,"target":"(-22.0, 27.0, -30.0)","view":"43_large_skywalk2_side"}
+REVIEW_CAMERA {"eye":"(-10.0, 1.7, -30.0)","fov":70.0,"target":"(-22.0, 26.5, -30.0)","view":"43_large_skywalk2_below"}
+REVIEW_CAMERA {"eye":"(-21.99, 54.0, -30.0)","fov":50.0,"target":"(-22.0, 24.0, -30.0)","view":"43_large_skywalk2_top"}
+REVIEW_CAMERA {"eye":"(-16.0, 28.0, -8.0)","fov":70.0,"target":"(-22.0, 26.5, -30.0)","view":"43_large_skywalk2_along-1"}
+REVIEW_CAMERA {"eye":"(-16.0, 28.0, -52.0)","fov":70.0,"target":"(-22.0, 26.5, -30.0)","view":"43_large_skywalk2_along1"}
+REVIEW_CAMERA {"eye":"(20.0, 33.0, -6.0)","fov":60.0,"target":"(-6.0, 33.0, -6.0)","view":"43_large_skywalk3_side"}
+REVIEW_CAMERA {"eye":"(6.0, 1.7, -6.0)","fov":70.0,"target":"(-6.0, 32.5, -6.0)","view":"43_large_skywalk3_below"}
+REVIEW_CAMERA {"eye":"(-5.99, 60.0, -6.0)","fov":50.0,"target":"(-6.0, 30.0, -6.0)","view":"43_large_skywalk3_top"}
+REVIEW_CAMERA {"eye":"(0.0, 34.0, 16.0)","fov":70.0,"target":"(-6.0, 32.5, -6.0)","view":"43_large_skywalk3_along-1"}
+REVIEW_CAMERA {"eye":"(0.0, 34.0, -28.0)","fov":70.0,"target":"(-6.0, 32.5, -6.0)","view":"43_large_skywalk3_along1"}
+REVIEW_CAMERA {"eye":"(10.0, 33.0, 14.0)","fov":60.0,"target":"(10.0, 33.0, -12.0)","view":"43_large_skywalk4_side"}
+REVIEW_CAMERA {"eye":"(10.0, 1.7, 0.0)","fov":70.0,"target":"(10.0, 32.5, -12.0)","view":"43_large_skywalk4_below"}
+REVIEW_CAMERA {"eye":"(10.01, 60.0, -12.0)","fov":50.0,"target":"(10.0, 30.0, -12.0)","view":"43_large_skywalk4_top"}
+REVIEW_CAMERA {"eye":"(32.0, 34.0, -6.0)","fov":70.0,"target":"(10.0, 32.5, -12.0)","view":"43_large_skywalk4_along-1"}
+REVIEW_CAMERA {"eye":"(-12.0, 34.0, -6.0)","fov":70.0,"target":"(10.0, 32.5, -12.0)","view":"43_large_skywalk4_along1"}
+REVIEW_CAMERA {"eye":"(12.0, 39.0, -6.0)","fov":60.0,"target":"(-14.0, 39.0, -6.0)","view":"43_large_skywalk5_side"}
+REVIEW_CAMERA {"eye":"(-2.0, 1.7, -6.0)","fov":70.0,"target":"(-14.0, 38.5, -6.0)","view":"43_large_skywalk5_below"}
+REVIEW_CAMERA {"eye":"(-13.99, 66.0, -6.0)","fov":50.0,"target":"(-14.0, 36.0, -6.0)","view":"43_large_skywalk5_top"}
+REVIEW_CAMERA {"eye":"(-8.0, 40.0, 16.0)","fov":70.0,"target":"(-14.0, 38.5, -6.0)","view":"43_large_skywalk5_along-1"}
+REVIEW_CAMERA {"eye":"(-8.0, 40.0, -28.0)","fov":70.0,"target":"(-14.0, 38.5, -6.0)","view":"43_large_skywalk5_along1"}
+SKYWALKS 43_large 6
+TUNNELS 83 grand [(0, 1, 1), (-3, 0, 1), (-2, 0, 1), (-2, 0, 0), (2, 0, 0), (2, 0, 1), (2, 0, 2), (2, 0, 4), (13, 0, 5), (16, 0, 4), (16, 0, 3), (-2, 4, 2), (-1, 4, 2), (-1, 4, 1), (-6, 0, 2)]
+STEPPED_HOUSES [{ "id": &"kit.spatial.feature.landmark.01", "at": (12.75, 3.0, 2.25), "reach": 24.0 }, { "id": &"kit.spatial.parcel.maze.house.001", "at": (-3.75, 10.5, -11.25), "reach": 32.0 }, { "id": &"kit.spatial.parcel.maze.house.017", "at": (-9.75, 3.0, 44.25), "reach": 16.0 }, { "id": &"kit.spatial.parcel.maze.house.021", "at": (-3.75, 12.0, 2.25), "reach": 32.0 }]
+ROOF_AUDIT { "clipped": 410, "removed": 27, "chimneys": { "moved": 0, "omitted": 0, "checked": 4 }, "towers": { "corner_attempts": 81, "corner_supported": 3, "corner_public_blocked": 2, "corner_join_quadrants": 11, "corner_quadrant_counts": { 2: 9, 4: 2 }, "corner_quadrant_examples": [{ "host": &"kit.spatial.feature.landmark.01", "corner": (6, 2), "base": 0, "top": 2, "band": 0, "occupied": [(0, -1), (0, 0)] }, { "host": &"kit.spatial.feature.landmark.01", "corner": (9, 2), "base": 0, "top": 2, "band": 0, "occupied": [(-1, -1), (-1, 0), (0, -1), (0, 0)] }, { "host": &"kit.spatial.feature.landmark.01", "corner": (9, 4), "base": 0, "top": 2, "band": 0, "occupied": [(-1, -1), (0, -1)] }, { "host": &"kit.spatial.feature.landmark.01", "corner": (9, 2), "base": 0, "top": 4, "band": 0, "occupied": [(-1, -1), (-1, 0), (0, -1), (0, 0)] }, { "host": &"kit.spatial.feature.landmark.01", "corner": (6, 2), "base": 0, "top": 4, "band": 0, "occupied": [(0, -1), (0, 0)] }, { "host": &"kit.spatial.feature.landmark.01", "corner": (12, 2), "base": 0, "top": 4, "band": 0, "occupied": [(-1, -1), (-1, 0)] }, { "host": &"kit.spatial.parcel.maze.bridge.00.end.1.lower", "corner": (-2, 6), "base": 4, "top": 8, "band": 4, "occupied": [(-1, 0), (0, 0)] }, { "host": &"kit.spatial.parcel.maze.house.001", "corner": (-3, -8), "base": 3, "top": 5, "band": 3, "occupied": [(-1, -1), (0, -1)] }, { "host": &"kit.spatial.parcel.maze.house.008", "corner": (6, -5), "base": 1, "top": 7, "band": 1, "occupied": [(0, -1), (0, 0)] }, { "host": &"kit.spatial.parcel.maze.house.021", "corner": (-1, 2), "base": 4, "top": 8, "band": 4, "occupied": [(-1, -1), (0, -1)] }, { "host": &"kit.spatial.parcel.maze.house.021", "corner": (-1, 2), "base": 4, "top": 12, "band": 4, "occupied": [(-1, -1), (0, -1)] }], "corner_no_host_join": 11, "corner_reservation_rejected": 18, "corner_reservation_example": "kit.spatial.parcel.maze.house.026 / (4, 10, 1) / base 8", "corner_no_bearing_or_space": 67, "corner_accepted": 1, "corner_bearing_rejected": 30, "corner_bearing_example": "kit.spatial.parcel.maze.house.026 / (4, 3, 1) / base 4", "attempts": 192, "supported": 6, "host_fit": 6, "public_clear": 5, "neighbor_clear": 2, "accepted": 1 }, "facade_bays": 3, "room_projections": 4, "retaining_relief": 1, "retaining_flight_joints": 6, "retaining_windows": 11, "fortified_windows": 32, "retaining_recesses": 37, "decor_clearance": { &"fort.block": 154, &"window_box": 42, &"prop.doorstep": 29 }, "fitted_window_boxes": 7, "joins": 4, "parallel_joins": 0, "fitted_eaves": 1, "dormers": { "moved": 0, "omitted": 0, "checked": 7 }, "seated_balcony_brackets": 0, "roof_blocked_windows": 48, "roof_fitted_windows": 14 }
+TOWN 83 grand buildings=75 instances=4448 ms=47926
+GARDEN_GRASS 83 grand instances=258 tiles=6
+BOUNDS cells=[P: (-64.0, 0.0, -48.0), S: (204.0, 33.0, 196.0)] payload=[P: (-68.0, -6.0, -50.34), S: (210.34, 51.62, 200.98)]
+REVIEW_CAMERA {"eye":"(-78.517, 124.98, 207.905)","fov":50.0,"target":"(37.17, 19.81, 50.15)","view":"83_grand_overview"}
+REVIEW_CAMERA {"eye":"(130.128, 67.13651, 143.108)","fov":55.0,"target":"(37.17, 23.81, 50.15)","view":"83_grand_orbit0"}
+REVIEW_CAMERA {"eye":"(-55.78802, 67.13651, 143.108)","fov":55.0,"target":"(37.17, 23.81, 50.15)","view":"83_grand_orbit1"}
+REVIEW_CAMERA {"eye":"(-55.78802, 67.13651, -42.80802)","fov":55.0,"target":"(37.17, 23.81, 50.15)","view":"83_grand_orbit2"}
+REVIEW_CAMERA {"eye":"(130.128, 67.13651, -42.80802)","fov":55.0,"target":"(37.17, 23.81, 50.15)","view":"83_grand_orbit3"}
+REVIEW_CAMERA {"eye":"(92.0, 1.7, 76.0)","fov":70.0,"target":"(88.0, 1.7, 100.0)","view":"83_grand_street0"}
+REVIEW_CAMERA {"eye":"(16.0, 1.7, 28.0)","fov":70.0,"target":"(20.0, 1.7, 60.0)","view":"83_grand_street1"}
+REVIEW_CAMERA {"eye":"(2.0, 12.0, 12.0)","fov":60.0,"target":"(2.0, 12.0, -14.0)","view":"83_grand_skywalk0_side"}
+REVIEW_CAMERA {"eye":"(2.0, 1.7, -2.0)","fov":70.0,"target":"(2.0, 11.5, -14.0)","view":"83_grand_skywalk0_below"}
+REVIEW_CAMERA {"eye":"(2.01, 39.0, -14.0)","fov":50.0,"target":"(2.0, 9.0, -14.0)","view":"83_grand_skywalk0_top"}
+REVIEW_CAMERA {"eye":"(24.0, 13.0, -8.0)","fov":70.0,"target":"(2.0, 11.5, -14.0)","view":"83_grand_skywalk0_along-1"}
+REVIEW_CAMERA {"eye":"(-20.0, 13.0, -8.0)","fov":70.0,"target":"(2.0, 11.5, -14.0)","view":"83_grand_skywalk0_along1"}
+REVIEW_CAMERA {"eye":"(10.0, 18.0, 6.0)","fov":60.0,"target":"(10.0, 18.0, -20.0)","view":"83_grand_skywalk1_side"}
+REVIEW_CAMERA {"eye":"(10.0, 1.7, -8.0)","fov":70.0,"target":"(10.0, 17.5, -20.0)","view":"83_grand_skywalk1_below"}
+REVIEW_CAMERA {"eye":"(10.01, 45.0, -20.0)","fov":50.0,"target":"(10.0, 15.0, -20.0)","view":"83_grand_skywalk1_top"}
+REVIEW_CAMERA {"eye":"(32.0, 19.0, -14.0)","fov":70.0,"target":"(10.0, 17.5, -20.0)","view":"83_grand_skywalk1_along-1"}
+REVIEW_CAMERA {"eye":"(-12.0, 19.0, -14.0)","fov":70.0,"target":"(10.0, 17.5, -20.0)","view":"83_grand_skywalk1_along1"}
+REVIEW_CAMERA {"eye":"(20.0, 21.0, 14.0)","fov":60.0,"target":"(-6.0, 21.0, 14.0)","view":"83_grand_skywalk2_side"}
+REVIEW_CAMERA {"eye":"(6.0, 1.7, 14.0)","fov":70.0,"target":"(-6.0, 20.5, 14.0)","view":"83_grand_skywalk2_below"}
+REVIEW_CAMERA {"eye":"(-5.99, 48.0, 14.0)","fov":50.0,"target":"(-6.0, 18.0, 14.0)","view":"83_grand_skywalk2_top"}
+REVIEW_CAMERA {"eye":"(0.0, 22.0, 36.0)","fov":70.0,"target":"(-6.0, 20.5, 14.0)","view":"83_grand_skywalk2_along-1"}
+REVIEW_CAMERA {"eye":"(0.0, 22.0, -8.0)","fov":70.0,"target":"(-6.0, 20.5, 14.0)","view":"83_grand_skywalk2_along1"}
+SKYWALKS 83_grand 3
+TUNNELS 103 standard [(-1, 1, -1), (1, 0, 1), (1, 0, 2), (1, 0, -2), (1, 0, -3), (-1, 0, -3), (-2, 0, -3), (-2, 4, -1)]
+STEPPED_HOUSES [{ "id": &"kit.spatial.feature.landmark.01", "at": (-2.25, 3.0, 9.75), "reach": 24.0 }]
+ROOF_AUDIT { "clipped": 125, "removed": 16, "chimneys": { "moved": 0, "omitted": 0, "checked": 1 }, "towers": { "corner_attempts": 4, "corner_bearing_rejected": 4, "corner_bearing_example": "kit.spatial.parcel.maze.house.007 / (-3, 3, -2) / base 4", "corner_no_bearing_or_space": 4, "attempts": 20, "accepted": 0 }, "facade_bays": 0, "room_projections": 1, "retaining_relief": 3, "retaining_flight_joints": 0, "retaining_windows": 12, "fortified_windows": 12, "retaining_recesses": 14, "decor_clearance": { &"fort.block": 84, &"window_box": 19, &"prop.doorstep": 10 }, "fitted_window_boxes": 14, "joins": 1, "parallel_joins": 0, "fitted_eaves": 0, "dormers": { "moved": 0, "omitted": 0, "checked": 2 }, "seated_balcony_brackets": 0, "roof_blocked_windows": 29, "roof_fitted_windows": 15 }
+TOWN 103 standard buildings=22 instances=1844 ms=6723
+GARDEN_GRASS 103 standard instances=72 tiles=4
+BOUNDS cells=[P: (-40.0, 0.0, -72.0), S: (108.0, 27.0, 124.0)] payload=[P: (-44.0, -2.0, -74.70598), S: (122.706, 38.6, 129.046)]
+REVIEW_CAMERA {"eye":"(-53.62231, 81.823, 86.60151)","fov":50.0,"target":"(17.35299, 17.3, -10.18298)","view":"103_standard_overview"}
+REVIEW_CAMERA {"eye":"(74.3838, 46.33535, 46.84782)","fov":55.0,"target":"(17.35299, 21.3, -10.18298)","view":"103_standard_orbit0"}
+REVIEW_CAMERA {"eye":"(-39.67782, 46.33535, 46.84782)","fov":55.0,"target":"(17.35299, 21.3, -10.18298)","view":"103_standard_orbit1"}
+REVIEW_CAMERA {"eye":"(-39.67782, 46.33535, -67.21379)","fov":55.0,"target":"(17.35299, 21.3, -10.18298)","view":"103_standard_orbit2"}
+REVIEW_CAMERA {"eye":"(74.3838, 46.33535, -67.21379)","fov":55.0,"target":"(17.35299, 21.3, -10.18298)","view":"103_standard_orbit3"}
+REVIEW_CAMERA {"eye":"(4.0, 1.7, -32.0)","fov":70.0,"target":"(8.0, 1.7, -16.0)","view":"103_standard_street0"}
+REVIEW_CAMERA {"eye":"(-4.0, 1.7, -24.0)","fov":70.0,"target":"(12.0, 1.7, -24.0)","view":"103_standard_street1"}
+REVIEW_CAMERA {"eye":"(12.0, 21.0, -6.0)","fov":60.0,"target":"(-14.0, 21.0, -6.0)","view":"103_standard_skywalk0_side"}
+REVIEW_CAMERA {"eye":"(-2.0, 1.7, -6.0)","fov":70.0,"target":"(-14.0, 20.5, -6.0)","view":"103_standard_skywalk0_below"}
+REVIEW_CAMERA {"eye":"(-13.99, 48.0, -6.0)","fov":50.0,"target":"(-14.0, 18.0, -6.0)","view":"103_standard_skywalk0_top"}
+REVIEW_CAMERA {"eye":"(-8.0, 22.0, 16.0)","fov":70.0,"target":"(-14.0, 20.5, -6.0)","view":"103_standard_skywalk0_along-1"}
+REVIEW_CAMERA {"eye":"(-8.0, 22.0, -28.0)","fov":70.0,"target":"(-14.0, 20.5, -6.0)","view":"103_standard_skywalk0_along1"}
+SKYWALKS 103_standard 1
+REVIEW_DONE /tmp/oct7/gallery

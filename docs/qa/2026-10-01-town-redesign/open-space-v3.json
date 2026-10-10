@@ -1,0 +1,221 @@
+[
+	{
+		"clearings": 1,
+		"core_cells": 4,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 93,
+		"plots": {
+			"asset": 2,
+			"house": 8
+		},
+		"profile": "compact",
+		"reserved_cells": 2,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 1,
+		"seed": 7,
+		"tunnel_cells": 0
+	},
+	{
+		"clearings": 2,
+		"core_cells": 5,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 86,
+		"plots": {
+			"asset": 1,
+			"house": 14,
+			"over": 1
+		},
+		"profile": "compact",
+		"reserved_cells": 0,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 0,
+		"seed": 10,
+		"tunnel_cells": 1
+	},
+	{
+		"clearings": 0,
+		"core_cells": 0,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 76,
+		"plots": {
+			"asset": 1,
+			"house": 11
+		},
+		"profile": "compact",
+		"reserved_cells": 5,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 2,
+		"seed": 38,
+		"tunnel_cells": 0
+	},
+	{
+		"clearings": 0,
+		"core_cells": 0,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 90,
+		"plots": {
+			"house": 28
+		},
+		"profile": "compact",
+		"reserved_cells": 2,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 1,
+		"seed": 1260018864828801968,
+		"tunnel_cells": 2
+	},
+	{
+		"clearings": 1,
+		"core_cells": 7,
+		"core_massif_cells": 1,
+		"core_plot_cells": 1,
+		"massif_columns": 123,
+		"plots": {
+			"asset": 1,
+			"deck": 1,
+			"house": 25,
+			"over": 1
+		},
+		"profile": "standard",
+		"reserved_cells": 2,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 1,
+		"seed": 7,
+		"tunnel_cells": 2
+	},
+	{
+		"clearings": 2,
+		"core_cells": 9,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 124,
+		"plots": {
+			"asset": 1,
+			"bridge": 3,
+			"deck": 1,
+			"house": 23,
+			"over": 1
+		},
+		"profile": "standard",
+		"reserved_cells": 8,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 2,
+		"seed": 10,
+		"tunnel_cells": 2
+	},
+	{
+		"clearings": 0,
+		"core_cells": 0,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 116,
+		"plots": {
+			"asset": 1,
+			"house": 25
+		},
+		"profile": "standard",
+		"reserved_cells": 8,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 2,
+		"seed": 38,
+		"tunnel_cells": 5
+	},
+	{
+		"clearings": 0,
+		"core_cells": 0,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 131,
+		"plots": {
+			"bridge": 1,
+			"deck": 1,
+			"house": 29
+		},
+		"profile": "standard",
+		"reserved_cells": 3,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 1,
+		"seed": 1260018864828801968,
+		"tunnel_cells": 2
+	},
+	{
+		"clearings": 1,
+		"core_cells": 8,
+		"core_massif_cells": 1,
+		"core_plot_cells": 0,
+		"massif_columns": 151,
+		"plots": {
+			"asset": 1,
+			"bridge": 1,
+			"deck": 1,
+			"house": 31,
+			"over": 1
+		},
+		"profile": "large",
+		"reserved_cells": 4,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 1,
+		"seed": 7,
+		"tunnel_cells": 4
+	},
+	{
+		"clearings": 2,
+		"core_cells": 12,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 174,
+		"plots": {
+			"asset": 1,
+			"house": 30,
+			"over": 1
+		},
+		"profile": "large",
+		"reserved_cells": 9,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 2,
+		"seed": 10,
+		"tunnel_cells": 4
+	},
+	{
+		"clearings": 0,
+		"core_cells": 0,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 163,
+		"plots": {
+			"asset": 1,
+			"deck": 2,
+			"house": 33,
+			"over": 1
+		},
+		"profile": "large",
+		"reserved_cells": 14,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 2,
+		"seed": 38,
+		"tunnel_cells": 5
+	},
+	{
+		"clearings": 0,
+		"core_cells": 0,
+		"core_massif_cells": 0,
+		"core_plot_cells": 0,
+		"massif_columns": 178,
+		"plots": {
+			"asset": 1,
+			"bridge": 3,
+			"deck": 2,
+			"house": 42,
+			"over": 1
+		},
+		"profile": "large",
+		"reserved_cells": 4,
+		"reserved_plot_cells": 0,
+		"reserved_spaces": 1,
+		"seed": 1260018864828801968,
+		"tunnel_cells": 7
+	}
+]

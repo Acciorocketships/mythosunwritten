@@ -1,0 +1,10 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+TOWN 83:grand roofs=56 tiny=0 beside=0 open=0/25 gables=0/87 air=0/0 eaves_cut=0
+TOWN 211:grand roofs=38 tiny=0 beside=0 open=0/12 gables=0/64 air=0/2 eaves_cut=0
+TOWN 127:large roofs=54 tiny=1 beside=0 open=0/23 gables=0/85 air=0/0 eaves_cut=0
+  tiny kit.spatial.parcel.maze.house.034 [P: (-16, -1), S: (4, 1)] axis=0 eave=6
+TOWN 31:large roofs=52 tiny=0 beside=0 open=0/28 gables=0/76 air=0/0 eaves_cut=0
+TOTAL { "towns": 4, "roofs": 200, "tiny": 1, "tiny_beside": 0, "open_ends": 88, "open_exposed": 0, "gable_ends": 312, "gable_holes": 0, "air_roofs": 2, "air_unsupported": 0, "eaves_cut": 0 }

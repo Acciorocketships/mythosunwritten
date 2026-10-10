@@ -1,0 +1,199 @@
+[
+  {
+    "ok": true,
+    "seed": 0,
+    "selected": []
+  },
+  {
+    "ok": true,
+    "seed": 1,
+    "selected": []
+  },
+  {
+    "ok": true,
+    "seed": 2,
+    "selected": []
+  },
+  {
+    "ok": true,
+    "seed": 3,
+    "selected": []
+  },
+  {
+    "ok": true,
+    "seed": 4,
+    "selected": []
+  },
+  {
+    "ok": true,
+    "seed": 5,
+    "selected": [
+      "anchor.z_native.street_jetties.02.02"
+    ]
+  },
+  {
+    "ok": true,
+    "seed": 6,
+    "selected": []
+  },
+  {
+    "ok": true,
+    "seed": 7,
+    "selected": [
+      "anchor.z_native.street_jetties.02.02",
+      "anchor.z_native.street_jetties.03.00"
+    ]
+  },
+  {
+    "ok": true,
+    "seed": 8,
+    "selected": [
+      "anchor.z_native.street_jetties.02.03"
+    ]
+  },
+  {
+    "ok": true,
+    "seed": 9,
+    "selected": []
+  },
+  {
+    "ok": true,
+    "seed": 10,
+    "selected": [
+      "anchor.z_native.street_jetties.03.01",
+      "anchor.z_native.street_jetties.02.00"
+    ]
+  },
+  {
+    "ok": true,
+    "seed": 11,
+    "selected": []
+  },
+  {
+    "ok": true,
+    "seed": 12,
+    "selected": [
+      "anchor.z_native.street_jetties.02.01"
+    ]
+  },
+  {
+    "ok": true,
+    "seed": 13,
+    "selected": [
+      "anchor.z_native.street_jetties.02.00"
+    ]
+  },
+  {
+    "ok": true,
+    "seed": 14,
+    "selected": []
+  },
+  {
+    "ok": true,
+    "seed": 15,
+    "selected": []
+  },
+  {
+    "ok": true,
+    "seed": 16,
+    "selected": [
+      "anchor.z_native.street_jetties.03.00",
+      "anchor.z_native.street_jetties.02.03"
+    ]
+  },
+  {
+    "ok": true,
+    "seed": 17,
+    "selected": [
+      "anchor.z_native.street_jetties.03.03",
+      "anchor.z_native.street_jetties.02.01",
+      "anchor.z_native.street_jetties.02.03"
+    ]
+  },
+  {
+    "ok": true,
+    "seed": 18,
+    "selected": [
+      "anchor.z_native.street_jetties.02.02"
+    ]
+  },
+  {
+    "ok": true,
+    "seed": 19,
+    "selected": [
+      "anchor.z_native.street_jetties.03.00"
+    ]
+  },
+  {
+    "ok": true,
+    "seed": 20,
+    "selected": []
+  },
+  {
+    "ok": true,
+    "seed": 21,
+    "selected": []
+  },
+  {
+    "ok": true,
+    "seed": 22,
+    "selected": []
+  },
+  {
+    "ok": true,
+    "seed": 23,
+    "selected": [
+      "anchor.z_native.street_jetties.02.01"
+    ]
+  },
+  {
+    "ok": true,
+    "seed": 24,
+    "selected": [
+      "anchor.z_native.street_jetties.03.03",
+      "anchor.z_native.street_jetties.02.01"
+    ]
+  },
+  {
+    "ok": true,
+    "seed": 25,
+    "selected": []
+  },
+  {
+    "ok": true,
+    "seed": 26,
+    "selected": [
+      "anchor.z_native.street_jetties.03.03"
+    ]
+  },
+  {
+    "ok": true,
+    "seed": 27,
+    "selected": []
+  },
+  {
+    "ok": true,
+    "seed": 28,
+    "selected": []
+  },
+  {
+    "ok": true,
+    "seed": 29,
+    "selected": []
+  },
+  {
+    "ok": true,
+    "seed": 30,
+    "selected": [
+      "anchor.z_native.street_jetties.03.00"
+    ]
+  },
+  {
+    "ok": true,
+    "seed": 31,
+    "selected": [
+      "anchor.z_native.street_jetties.02.00",
+      "anchor.z_native.street_jetties.03.03"
+    ]
+  }
+]

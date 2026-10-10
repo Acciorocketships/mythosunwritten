@@ -1,0 +1,5417 @@
+{
+  "complete": true,
+  "parts": [
+    {
+      "asset_id": "pure_village.native.stone_block_9",
+      "materials": [
+        [
+          "Stone_1"
+        ]
+      ],
+      "matrix": [
+        0.999999999999996,
+        0.000000000000474793114031572,
+        0.0000000842938087112058,
+        0.0,
+        0.000000000000972199234286438,
+        -0.99999999998259,
+        -0.00000590086187006483,
+        0.0,
+        0.0000000842938082030562,
+        0.00000590086187006489,
+        -0.999999999982586,
+        0.0,
+        2.0000040309189,
+        1.56999999284744,
+        0.750012315947862,
+        1.0
+      ],
+      "module": "Stone_Block_9",
+      "source_node": 2.0
+    },
+    {
+      "asset_id": "pure_village.native.stone_stair_2",
+      "materials": [
+        [
+          "Stone_2"
+        ]
+      ],
+      "matrix": [
+        0.00000269739812353009,
+        0.0,
+        0.999999999996362,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999996362,
+        0.0,
+        0.00000269739812353009,
+        0.0,
+        1.25000253625872,
+        0.0,
+        0.748328719646232,
+        1.0
+      ],
+      "module": "Stone_Stair_2",
+      "source_node": 4.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_end_15x10_1",
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        0.999999999999996,
+        0.0,
+        0.000000084293808822228,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.0000000842938088222284,
+        0.0,
+        0.999999999999996,
+        0.0,
+        1.25000744533144,
+        0.125,
+        1.37501481582668,
+        1.0
+      ],
+      "module": "WallStone_End_15x10_1",
+      "source_node": 6.0
+    },
+    {
+      "asset_id": "pure_village.native.stone_stair_2",
+      "materials": [
+        [
+          "Stone_2"
+        ]
+      ],
+      "matrix": [
+        0.999999999999872,
+        0.0,
+        0.000000505762148164077,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.000000505762148164077,
+        0.0,
+        0.999999999999872,
+        0.0,
+        2.12499984570164,
+        0.0,
+        1.37499970022984,
+        1.0
+      ],
+      "module": "Stone_Stair_2",
+      "source_node": 8.0
+    },
+    {
+      "asset_id": "pure_village.native.window_11_2",
+      "materials": [
+        [
+          "Wood_3",
+          "Window_1",
+          "Glass_Out",
+          "Glass_In",
+          "Wood_1",
+          "Wood_2",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        0.0000000842936951350737,
+        0.0,
+        0.999999999999996,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999999996,
+        0.0,
+        0.0000000842936951350737,
+        0.0,
+        -5.99999904632568,
+        4.5,
+        -2.49999904632568,
+        1.0
+      ],
+      "module": "Window_11_2",
+      "source_node": 10.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_base_start_10x30_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        0.00000295027932195602,
+        0.0,
+        -0.999999999995648,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999995648,
+        0.0,
+        0.00000295027932195602,
+        0.0,
+        -3.0,
+        7.57416725158691,
+        2.125,
+        1.0
+      ],
+      "module": "Roof_Base_Start_10x30_1",
+      "source_node": 12.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_top30_start_x10",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "RoofTopTiles"
+        ]
+      ],
+      "matrix": [
+        0.00000320316027169198,
+        0.0,
+        0.99999999999487,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.99999999999487,
+        0.0,
+        0.00000320316027169198,
+        0.0,
+        -4.50000190734863,
+        10.5741672515869,
+        -3.87500095367432,
+        1.0
+      ],
+      "module": "Roof_Top30_Start_x10",
+      "source_node": 14.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_base_end_5x30_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        0.00000295027932195602,
+        0.0,
+        -0.999999999995648,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999995648,
+        0.0,
+        0.00000295027932195602,
+        0.0,
+        -3.0,
+        7.57416725158691,
+        -3.875,
+        1.0
+      ],
+      "module": "Roof_Base_End_5x30_1",
+      "source_node": 16.0
+    },
+    {
+      "asset_id": "pure_village.native.window_roof_3_1",
+      "materials": [
+        [
+          "RoofTransition",
+          "Lit",
+          "Planks_Full",
+          "RoofTiles",
+          "RoofTopTiles",
+          "Glass_Out",
+          "Glass_In",
+          "Window_1",
+          "Wood_1",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        0.00000286598550636175,
+        0.0,
+        0.999999999995893,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999995893,
+        0.0,
+        0.00000286598550636175,
+        0.0,
+        -6.00000190734863,
+        7.57416725158691,
+        0.625,
+        1.0
+      ],
+      "module": "Window_Roof_3_1",
+      "source_node": 18.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_end_30x30_1",
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        -0.999999999999996,
+        0.0,
+        -0.0000000874227765734757,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0000000874227765734757,
+        0.0,
+        -0.999999999999996,
+        0.0,
+        -4.5,
+        1.5,
+        -4.0,
+        1.0
+      ],
+      "module": "Wall_End_30x30_1",
+      "source_node": 20.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_top30_start_x30_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "RoofTopTiles"
+        ]
+      ],
+      "matrix": [
+        0.00000295027932195602,
+        0.0,
+        0.999999999995648,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999995648,
+        0.0,
+        0.00000295027932195602,
+        0.0,
+        -4.5,
+        10.5741672515869,
+        -2.375,
+        1.0
+      ],
+      "module": "Roof_Top30_Start_x30_1",
+      "source_node": 22.0
+    },
+    {
+      "asset_id": "pure_village.native.stone_corner_start_x15",
+      "materials": [
+        [
+          "Stone_1"
+        ]
+      ],
+      "matrix": [
+        0.00000303457288908238,
+        0.0,
+        -0.999999999995396,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999995396,
+        0.0,
+        0.00000303457288908238,
+        0.0,
+        -3.0,
+        0.0,
+        2.0,
+        1.0
+      ],
+      "module": "Stone_Corner_Start_x15",
+      "source_node": 24.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_bottomcurved_end_10x5_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        0.00000295027932195602,
+        0.0,
+        0.999999999995648,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999995648,
+        0.0,
+        0.00000295027932195602,
+        0.0,
+        -6.0,
+        7.57416725158691,
+        2.125,
+        1.0
+      ],
+      "module": "Roof_BottomCurved_End_10x5_1",
+      "source_node": 26.0
+    },
+    {
+      "asset_id": "pure_village.native.stone_corner_start_x15",
+      "materials": [
+        [
+          "Stone_1"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -6.0,
+        0.0,
+        2.0,
+        1.0
+      ],
+      "module": "Stone_Corner_Start_x15",
+      "source_node": 28.0
+    },
+    {
+      "asset_id": "pure_village.native.window_11_1",
+      "materials": [
+        [
+          "Wood_3",
+          "Window_1",
+          "Glass_Out",
+          "Glass_In",
+          "Wood_1",
+          "Wood_2",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        0.0000000842936951350737,
+        0.0,
+        0.999999999999996,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999999996,
+        0.0,
+        0.0000000842936951350737,
+        0.0,
+        -6.00000047683716,
+        4.5,
+        0.500001430511475,
+        1.0
+      ],
+      "module": "Window_11_1",
+      "source_node": 30.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_end_30x30_1",
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        0.000000000000000222044604925031,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.000000000000000222044604925031,
+        0.0,
+        -6.0,
+        1.5,
+        0.5,
+        1.0
+      ],
+      "module": "Wall_End_30x30_1",
+      "source_node": 32.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_end_20x30_1",
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        0.000000000000000222044604925031,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.000000000000000222044604925031,
+        0.0,
+        -3.0,
+        1.5,
+        2.0,
+        1.0
+      ],
+      "module": "Wall_End_20x30_1",
+      "source_node": 34.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_top30_start_x30_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "RoofTopTiles"
+        ]
+      ],
+      "matrix": [
+        0.00000295027932195602,
+        0.0,
+        0.999999999995648,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999995648,
+        0.0,
+        0.00000295027932195602,
+        0.0,
+        -4.5,
+        10.5741672515869,
+        0.625,
+        1.0
+      ],
+      "module": "Roof_Top30_Start_x30_1",
+      "source_node": 36.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_base_end_10x30_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        0.00000295027932195602,
+        0.0,
+        0.999999999995648,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999995648,
+        0.0,
+        0.00000295027932195602,
+        0.0,
+        -6.0,
+        7.57416725158691,
+        2.125,
+        1.0
+      ],
+      "module": "Roof_Base_End_10x30_1",
+      "source_node": 38.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_bottom_middle_30x15",
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -4.5,
+        0.0,
+        2.0,
+        1.0
+      ],
+      "module": "WallStone_Bottom_Middle_30x15",
+      "source_node": 40.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_base_30x30_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        -0.00000893513128374934,
+        0.0,
+        -0.999999999960082,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999960082,
+        0.0,
+        -0.00000893513128374934,
+        0.0,
+        -3.0,
+        7.57416725158691,
+        0.625,
+        1.0
+      ],
+      "module": "Roof_Base_30x30_1",
+      "source_node": 42.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_middle1_30x30_1",
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        0.000000000000000222044604925031,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.000000000000000222044604925031,
+        0.0,
+        -6.0,
+        1.5,
+        -2.5,
+        1.0
+      ],
+      "module": "Wall_Middle1_30x30_1",
+      "source_node": 44.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_bottom_middle_30x15",
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        0.000000000000000222044604925031,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.000000000000000222044604925031,
+        0.0,
+        -3.0,
+        0.0,
+        0.5,
+        1.0
+      ],
+      "module": "WallStone_Bottom_Middle_30x15",
+      "source_node": 46.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_base_30x30_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        -0.00000893513128374934,
+        0.0,
+        -0.999999999960082,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999960082,
+        0.0,
+        -0.00000893513128374934,
+        0.0,
+        -3.0,
+        7.57416725158691,
+        -2.375,
+        1.0
+      ],
+      "module": "Roof_Base_30x30_1",
+      "source_node": 48.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_bottomcurved_start_10x5_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        0.00000269739812353009,
+        0.0,
+        0.999999999996362,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999996362,
+        0.0,
+        0.00000269739812353009,
+        0.0,
+        -6.00000619888306,
+        7.57416725158691,
+        -3.87500143051147,
+        1.0
+      ],
+      "module": "Roof_BottomCurved_Start_10x5_1",
+      "source_node": 50.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_bottom_middle_30x15",
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        0.000000000000000222044604925031,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.000000000000000222044604925031,
+        0.0,
+        -6.0,
+        0.0,
+        0.5,
+        1.0
+      ],
+      "module": "WallStone_Bottom_Middle_30x15",
+      "source_node": 52.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_bottom_middle_30x15",
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        0.000000000000000222044604925031,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.000000000000000222044604925031,
+        0.0,
+        -6.0,
+        0.0,
+        -2.5,
+        1.0
+      ],
+      "module": "WallStone_Bottom_Middle_30x15",
+      "source_node": 54.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_bottomcurved_30x5_1",
+      "materials": [
+        [
+          "Wood_1",
+          "RoofTiles",
+          "Planks_Full"
+        ]
+      ],
+      "matrix": [
+        0.00000295027932195602,
+        0.0,
+        0.999999999995648,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999995648,
+        0.0,
+        0.00000295027932195602,
+        0.0,
+        -6.0,
+        7.57416725158691,
+        0.625,
+        1.0
+      ],
+      "module": "Roof_BottomCurved_30x5_1",
+      "source_node": 56.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_bottomcurved_30x5_1",
+      "materials": [
+        [
+          "Wood_1",
+          "RoofTiles",
+          "Planks_Full"
+        ]
+      ],
+      "matrix": [
+        0.00000295027932195602,
+        0.0,
+        0.999999999995648,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999995648,
+        0.0,
+        0.00000295027932195602,
+        0.0,
+        -6.0,
+        7.57416725158691,
+        -2.375,
+        1.0
+      ],
+      "module": "Roof_BottomCurved_30x5_1",
+      "source_node": 58.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_peak_30x30_1.binding.b2b7325a513e",
+      "materials": [
+        [
+          "Wood_1",
+          "Wood_3",
+          "Planks"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -4.5,
+        7.5,
+        2.875,
+        1.0
+      ],
+      "module": "Wall_Peak_30x30_1",
+      "source_node": 60.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_peak_30x30_1.binding.b2b7325a513e.mirror_x",
+      "materials": [
+        [
+          "Wood_1",
+          "Wood_3",
+          "Planks"
+        ]
+      ],
+      "matrix": [
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        -4.5,
+        7.5,
+        -4.875,
+        1.0
+      ],
+      "module": "Wall_Peak_30x30_1",
+      "source_node": 62.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_top30_end_x10_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "RoofTopTiles"
+        ]
+      ],
+      "matrix": [
+        0.00000373238360552973,
+        0.0,
+        1.26509499549315,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999995648,
+        0.0,
+        0.00000295027932195602,
+        0.0,
+        -4.5,
+        10.5741672515869,
+        2.125,
+        1.0
+      ],
+      "module": "Roof_Top30_End_x10_1",
+      "source_node": 64.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_base_30x30_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        0.00000295027932195602,
+        0.0,
+        0.999999999995648,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999995648,
+        0.0,
+        0.00000295027932195602,
+        0.0,
+        -6.0,
+        7.57416725158691,
+        -2.375,
+        1.0
+      ],
+      "module": "Roof_Base_30x30_1",
+      "source_node": 66.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_bottom_middle_30x15",
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        0.000000000000000222044604925031,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.000000000000000222044604925031,
+        0.0,
+        -3.0,
+        0.0,
+        -2.5,
+        1.0
+      ],
+      "module": "WallStone_Bottom_Middle_30x15",
+      "source_node": 68.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_bottom_middle_30x15",
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        4.625,
+        0.0,
+        3.0,
+        1.0
+      ],
+      "module": "WallStone_Bottom_Middle_30x15",
+      "source_node": 70.0
+    },
+    {
+      "asset_id": "pure_village.native.stone_corner_start_x15",
+      "materials": [
+        [
+          "Stone_1"
+        ]
+      ],
+      "matrix": [
+        -0.999999999999996,
+        0.0,
+        -0.0000000874227765734757,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0000000874227765734757,
+        0.0,
+        -0.999999999999996,
+        0.0,
+        6.125,
+        0.0,
+        -3.0,
+        1.0
+      ],
+      "module": "Stone_Corner_Start_x15",
+      "source_node": 72.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_middle2_30x30_1.mirror_x",
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        0.999999999958959,
+        0.0,
+        -0.00000905990509617876,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.00000905990509617876,
+        0.0,
+        0.999999999958959,
+        0.0,
+        -1.37500011920929,
+        1.5,
+        -0.000000089406967163086,
+        1.0
+      ],
+      "module": "WallStone_Middle2_30x30_1",
+      "source_node": 74.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_bottom_middle_30x15",
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        0.000000000000000222044604925031,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.000000000000000222044604925031,
+        0.0,
+        6.125,
+        0.0,
+        -1.5,
+        1.0
+      ],
+      "module": "WallStone_Bottom_Middle_30x15",
+      "source_node": 76.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_middle1_30x30_1.mirror_x",
+      "materials": [
+        [
+          "Stone_2",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        -0.00000590055839522208,
+        0.0,
+        -0.999999999982592,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999982592,
+        0.0,
+        -0.00000590055839522208,
+        0.0,
+        6.12500095367432,
+        1.5,
+        1.50000095367432,
+        1.0
+      ],
+      "module": "WallStone_Middle1_30x30_1",
+      "source_node": 78.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_bottom_middle_30x15",
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        0.000000000000000222044604925031,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.000000000000000222044604925031,
+        0.0,
+        3.125,
+        0.0,
+        1.5,
+        1.0
+      ],
+      "module": "WallStone_Bottom_Middle_30x15",
+      "source_node": 80.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_bottom_middle_30x15",
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        0.000000000000000222044604925031,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.000000000000000222044604925031,
+        0.0,
+        6.125,
+        0.0,
+        1.5,
+        1.0
+      ],
+      "module": "WallStone_Bottom_Middle_30x15",
+      "source_node": 82.0
+    },
+    {
+      "asset_id": "pure_village.native.stone_corner_start_x15",
+      "materials": [
+        [
+          "Stone_1"
+        ]
+      ],
+      "matrix": [
+        0.00000303457288908238,
+        0.0,
+        -0.999999999995396,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999995396,
+        0.0,
+        0.00000303457288908238,
+        0.0,
+        6.125,
+        0.0,
+        3.0,
+        1.0
+      ],
+      "module": "Stone_Corner_Start_x15",
+      "source_node": 84.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_bottom_middle_30x15",
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        -0.999999999999996,
+        0.0,
+        -0.0000000874227765734757,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0000000874227765734757,
+        0.0,
+        -0.999999999999996,
+        0.0,
+        4.625,
+        0.0,
+        -3.0,
+        1.0
+      ],
+      "module": "WallStone_Bottom_Middle_30x15",
+      "source_node": 86.0
+    },
+    {
+      "asset_id": "pure_village.native.stone_corner_start_x15",
+      "materials": [
+        [
+          "Stone_1"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        3.125,
+        0.0,
+        3.0,
+        1.0
+      ],
+      "module": "Stone_Corner_Start_x15",
+      "source_node": 88.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_middle1_30x30_3.binding.f812e662c028.mirror_x",
+      "materials": [
+        [
+          "Wood_3",
+          "Planks"
+        ]
+      ],
+      "matrix": [
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.125,
+        13.5,
+        -4.875,
+        1.0
+      ],
+      "module": "Wall_Middle1_30x30_3",
+      "source_node": 90.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_bottom_middle_30x15",
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.375,
+        0.0,
+        -0.125,
+        1.0
+      ],
+      "module": "WallStone_Bottom_Middle_30x15",
+      "source_node": 92.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_base_30x30_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        -0.00000893513128374934,
+        0.0,
+        -0.999999999960082,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999960082,
+        0.0,
+        -0.00000893513128374934,
+        0.0,
+        1.625,
+        16.5,
+        1.375,
+        1.0
+      ],
+      "module": "Roof_Base_30x30_1",
+      "source_node": 94.0
+    },
+    {
+      "asset_id": "pure_village.native.floor_up_start_30x10_2",
+      "materials": [
+        [
+          "Planks",
+          "Wood_2",
+          "Wood_3",
+          "Wood_1"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.375,
+        7.5,
+        -4.0,
+        1.0
+      ],
+      "module": "Floor_Up_Start_30x10_2",
+      "source_node": 96.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_base_start_5x30_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        0.00000295027932195602,
+        0.0,
+        -0.999999999995648,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999995648,
+        0.0,
+        0.00000295027932195602,
+        0.0,
+        1.625,
+        16.5,
+        2.875,
+        1.0
+      ],
+      "module": "Roof_Base_Start_5x30_1",
+      "source_node": 98.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_start_30x30_1",
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        0.000000000000000222044604925031,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.000000000000000222044604925031,
+        0.0,
+        -2.875,
+        10.5,
+        -1.5,
+        1.0
+      ],
+      "module": "Wall_Start_30x30_1",
+      "source_node": 100.0
+    },
+    {
+      "asset_id": "pure_village.native.floor_up_end_30x10_2",
+      "materials": [
+        [
+          "Planks",
+          "Wood_2",
+          "Wood_3",
+          "Wood_1"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        1.625,
+        4.5,
+        -3.0,
+        1.0
+      ],
+      "module": "Floor_Up_End_30x10_2",
+      "source_node": 102.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_start_30x30_1",
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        0.000000000000000222044604925031,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.000000000000000222044604925031,
+        0.0,
+        3.125,
+        7.5,
+        1.5,
+        1.0
+      ],
+      "module": "Wall_Start_30x30_1",
+      "source_node": 104.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_base_end_15x30_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        0.000000927230644376387,
+        0.0,
+        -0.99999999999957,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.99999999999957,
+        0.0,
+        0.000000927230644376387,
+        0.0,
+        1.625,
+        16.5,
+        -3.125,
+        1.0
+      ],
+      "module": "Roof_Base_End_15x30_1",
+      "source_node": 106.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_bottomcurved_end_5x5_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        0.00000295027932195602,
+        0.0,
+        0.999999999995648,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999995648,
+        0.0,
+        0.00000295027932195602,
+        0.0,
+        -2.875,
+        13.5,
+        2.875,
+        1.0
+      ],
+      "module": "Roof_BottomCurved_End_5x5_1",
+      "source_node": 108.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_end_20x30_1",
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        0.000002781691932352,
+        0.0,
+        -0.999999999996131,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999996131,
+        0.0,
+        0.000002781691932352,
+        0.0,
+        3.125,
+        7.5,
+        -3.0,
+        1.0
+      ],
+      "module": "Wall_End_20x30_1",
+      "source_node": 110.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_base_30x30_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        -0.00000893513128374934,
+        0.0,
+        -0.999999999960082,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999960082,
+        0.0,
+        -0.00000893513128374934,
+        0.0,
+        1.625,
+        16.5,
+        -1.625,
+        1.0
+      ],
+      "module": "Roof_Base_30x30_1",
+      "source_node": 112.0
+    },
+    {
+      "asset_id": "pure_village.native.floor_up_end_30x10_2",
+      "materials": [
+        [
+          "Planks",
+          "Wood_2",
+          "Wood_3",
+          "Wood_1"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        1.625,
+        7.5,
+        -4.0,
+        1.0
+      ],
+      "module": "Floor_Up_End_30x10_2",
+      "source_node": 114.0
+    },
+    {
+      "asset_id": "pure_village.native.floor_up_start_30x10_2",
+      "materials": [
+        [
+          "Planks",
+          "Wood_2",
+          "Wood_3",
+          "Wood_1"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.375,
+        4.5,
+        -3.0,
+        1.0
+      ],
+      "module": "Floor_Up_Start_30x10_2",
+      "source_node": 116.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_bottomcurved_start_15x5_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        0.00000295027932195602,
+        0.0,
+        0.999999999995648,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999995648,
+        0.0,
+        0.00000295027932195602,
+        0.0,
+        -2.875,
+        13.5,
+        -3.125,
+        1.0
+      ],
+      "module": "Roof_BottomCurved_Start_15x5_1",
+      "source_node": 118.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_cut_start_15x30_2.binding.86c8449a2b08",
+      "materials": [
+        [
+          "Planks",
+          "Wood_3"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.125,
+        16.5,
+        3.0,
+        1.0
+      ],
+      "module": "Wall_Cut_Start_15x30_2",
+      "source_node": 120.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_end_15x30_4",
+      "materials": [
+        [
+          "Wood_1",
+          "Wood_3",
+          "Wood_2",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        1.625,
+        10.5,
+        3.0,
+        1.0
+      ],
+      "module": "Wall_End_15x30_4",
+      "source_node": 122.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_bottom_middle_30x15",
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        -0.999999999999996,
+        0.0,
+        -0.0000000874227765734757,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0000000874227765734757,
+        0.0,
+        -0.999999999999996,
+        0.0,
+        1.625,
+        0.0,
+        -3.0,
+        1.0
+      ],
+      "module": "WallStone_Bottom_Middle_30x15",
+      "source_node": 124.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_base_end_15x30_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        0.000000927230644376387,
+        0.0,
+        -0.99999999999957,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.99999999999957,
+        0.0,
+        0.000000927230644376387,
+        0.0,
+        3.125,
+        13.5,
+        -3.125,
+        1.0
+      ],
+      "module": "Roof_Base_End_15x30_1",
+      "source_node": 126.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_bottom_middle_30x15",
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        -0.999999999999996,
+        0.0,
+        -0.0000000874227765734757,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0000000874227765734757,
+        0.0,
+        -0.999999999999996,
+        0.0,
+        -1.375,
+        0.0,
+        -3.0,
+        1.0
+      ],
+      "module": "WallStone_Bottom_Middle_30x15",
+      "source_node": 128.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_end_20x30_5",
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        0.00000269739812353009,
+        0.0,
+        -0.999999999996362,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999996362,
+        0.0,
+        0.00000269739812353009,
+        0.0,
+        3.12500190734863,
+        10.5,
+        -3.0,
+        1.0
+      ],
+      "module": "Wall_End_20x30_5",
+      "source_node": 130.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_base_30x30_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        -0.00000893513128374934,
+        0.0,
+        -0.999999999960082,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999960082,
+        0.0,
+        -0.00000893513128374934,
+        0.0,
+        3.125,
+        13.5,
+        1.375,
+        1.0
+      ],
+      "module": "Roof_Base_30x30_1",
+      "source_node": 132.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_end_10x30_1",
+      "materials": [
+        [
+          "Wood_1",
+          "Wood_3",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        -0.00000581626494877696,
+        0.0,
+        -0.999999999983085,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999983085,
+        0.0,
+        -0.00000581626494877696,
+        0.0,
+        3.125,
+        4.5,
+        -3.0,
+        1.0
+      ],
+      "module": "Wall_End_10x30_1",
+      "source_node": 134.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_bottomcurved_30x5_1",
+      "materials": [
+        [
+          "Wood_1",
+          "RoofTiles",
+          "Planks_Full"
+        ]
+      ],
+      "matrix": [
+        0.00000303457288908238,
+        0.0,
+        -0.999999999995396,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999995396,
+        0.0,
+        0.00000303457288908238,
+        0.0,
+        3.125,
+        13.5,
+        -1.625,
+        1.0
+      ],
+      "module": "Roof_BottomCurved_30x5_1",
+      "source_node": 136.0
+    },
+    {
+      "asset_id": "pure_village.native.floor_down_end_30x30_2",
+      "materials": [
+        [
+          "Planks",
+          "Wood_2",
+          "Wood_3"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        1.625,
+        7.5,
+        1.5,
+        1.0
+      ],
+      "module": "Floor_Down_End_30x30_2",
+      "source_node": 138.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_bottomcurved_end_15x5_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        0.00000295027932195602,
+        0.0,
+        -0.999999999995648,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999995648,
+        0.0,
+        0.00000295027932195602,
+        0.0,
+        3.125,
+        13.5,
+        -3.125,
+        1.0
+      ],
+      "module": "Roof_BottomCurved_End_15x5_1",
+      "source_node": 140.0
+    },
+    {
+      "asset_id": "pure_village.native.door_7_1",
+      "materials": [
+        [
+          "Wood_3",
+          "Wood_1",
+          "Plaster"
+        ],
+        [
+          "DoorShutter_1",
+          "Metal_1",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        0.000000000000000222044604925031,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.000000000000000222044604925031,
+        0.0,
+        3.12500929832458,
+        7.5,
+        -1.49999952316284,
+        1.0
+      ],
+      "module": "Door_7_1",
+      "source_node": 142.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_end_10x30_1.mirror_x",
+      "materials": [
+        [
+          "Wood_1",
+          "Wood_3",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        -0.00000581626494877696,
+        0.0,
+        -0.999999999983085,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999983085,
+        0.0,
+        -0.00000581626494877696,
+        0.0,
+        -2.875,
+        4.5,
+        -4.125,
+        1.0
+      ],
+      "module": "Wall_End_10x30_1",
+      "source_node": 146.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_base_30x30_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        0.00000295027932195602,
+        0.0,
+        0.999999999995648,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999995648,
+        0.0,
+        0.00000295027932195602,
+        0.0,
+        -1.375,
+        16.5,
+        -1.625,
+        1.0
+      ],
+      "module": "Roof_Base_30x30_1",
+      "source_node": 148.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_bottomentrance_middle_15x30",
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        1.625,
+        0.0,
+        -0.125,
+        1.0
+      ],
+      "module": "WallStone_BottomEntrance_Middle_15x30",
+      "source_node": 150.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_base_end_5x30_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        0.00000303457288908238,
+        0.0,
+        0.999999999995396,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999995396,
+        0.0,
+        0.00000303457288908238,
+        0.0,
+        -1.375,
+        16.5,
+        2.875,
+        1.0
+      ],
+      "module": "Roof_Base_End_5x30_1",
+      "source_node": 152.0
+    },
+    {
+      "asset_id": "pure_village.native.window_roof_5_1",
+      "materials": [
+        [
+          "RoofTransition_1",
+          "Planks_Full",
+          "RoofTiles",
+          "RoofTopTiles",
+          "Window_1",
+          "Glass_Out",
+          "Glass_In",
+          "Wood_2",
+          "Wood_1",
+          "Plaster",
+          "Default"
+        ]
+      ],
+      "matrix": [
+        0.00000286598550636175,
+        0.0,
+        0.999999999995893,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999995893,
+        0.0,
+        0.00000286598550636175,
+        0.0,
+        -2.87500023841858,
+        13.5,
+        -3.12499618530273,
+        1.0
+      ],
+      "module": "Window_Roof_5_1",
+      "source_node": 154.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_base_start_5x30_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        0.00000134869906176505,
+        0.0,
+        -0.99999999999909,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.99999999999909,
+        0.0,
+        0.00000134869906176505,
+        0.0,
+        3.125,
+        13.5,
+        2.875,
+        1.0
+      ],
+      "module": "Roof_Base_Start_5x30_1",
+      "source_node": 156.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_start_30x30_1",
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        0.000000000000000222044604925031,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.000000000000000222044604925031,
+        0.0,
+        3.125,
+        10.5,
+        1.5,
+        1.0
+      ],
+      "module": "Wall_Start_30x30_1",
+      "source_node": 158.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_cut_end_15x30_2.binding.300e6386d5e6",
+      "materials": [
+        [
+          "Planks",
+          "Wood_3"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.125,
+        16.5,
+        3.0,
+        1.0
+      ],
+      "module": "Wall_Cut_End_15x30_2",
+      "source_node": 160.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_top30_start_x15_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "RoofTopTiles"
+        ]
+      ],
+      "matrix": [
+        0.00000227592976265178,
+        0.0,
+        0.99999999999741,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.99999999999741,
+        0.0,
+        0.00000227592976265178,
+        0.0,
+        0.125,
+        19.5,
+        -3.125,
+        1.0
+      ],
+      "module": "Roof_Top30_Start_x15_1",
+      "source_node": 162.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_end_20x30_1.mirror_x",
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        -0.000002781691932352,
+        0.0,
+        0.999999999996131,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999996131,
+        0.0,
+        -0.000002781691932352,
+        0.0,
+        -2.875,
+        10.5,
+        -3.0,
+        1.0
+      ],
+      "module": "Wall_End_20x30_1",
+      "source_node": 164.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_end_30x30_1",
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        0.000000000000000222044604925031,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.000000000000000222044604925031,
+        0.0,
+        3.125,
+        10.5,
+        -1.5,
+        1.0
+      ],
+      "module": "Wall_End_30x30_1",
+      "source_node": 166.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_end_20x30_1.mirror_x",
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        -0.000002781691932352,
+        0.0,
+        0.999999999996131,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999996131,
+        0.0,
+        -0.000002781691932352,
+        0.0,
+        -2.875,
+        7.5,
+        -3.0,
+        1.0
+      ],
+      "module": "Wall_End_20x30_1",
+      "source_node": 168.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_top30_start_x30_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "RoofTopTiles"
+        ]
+      ],
+      "matrix": [
+        0.00000295027932195602,
+        0.0,
+        0.999999999995648,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999995648,
+        0.0,
+        0.00000295027932195602,
+        0.0,
+        0.125,
+        19.5,
+        1.375,
+        1.0
+      ],
+      "module": "Roof_Top30_Start_x30_1",
+      "source_node": 170.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_base_start_15x30_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        0.000002781691932352,
+        0.0,
+        0.999999999996131,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999996131,
+        0.0,
+        0.000002781691932352,
+        0.0,
+        -1.375,
+        16.5,
+        -3.125,
+        1.0
+      ],
+      "module": "Roof_Base_Start_15x30_1",
+      "source_node": 172.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_base_start_15x30_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        0.000002781691932352,
+        0.0,
+        0.999999999996131,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999996131,
+        0.0,
+        0.000002781691932352,
+        0.0,
+        -2.875,
+        13.5,
+        -3.125,
+        1.0
+      ],
+      "module": "Roof_Base_Start_15x30_1",
+      "source_node": 174.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_base_30x30_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        0.00000295027932195602,
+        0.0,
+        0.999999999995648,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999995648,
+        0.0,
+        0.00000295027932195602,
+        0.0,
+        -1.375,
+        16.5,
+        1.375,
+        1.0
+      ],
+      "module": "Roof_Base_30x30_1",
+      "source_node": 176.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_cut_end_15x30_2.binding.300e6386d5e6.mirror_x",
+      "materials": [
+        [
+          "Planks",
+          "Wood_3"
+        ]
+      ],
+      "matrix": [
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        1.625,
+        13.5,
+        -4.875,
+        1.0
+      ],
+      "module": "Wall_Cut_End_15x30_2",
+      "source_node": 178.0
+    },
+    {
+      "asset_id": "pure_village.native.window_roof_3_1",
+      "materials": [
+        [
+          "RoofTransition",
+          "Lit",
+          "Planks_Full",
+          "RoofTiles",
+          "RoofTopTiles",
+          "Glass_Out",
+          "Glass_In",
+          "Window_1",
+          "Wood_1",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        -0.00000893513128374934,
+        0.0,
+        -0.999999999960082,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999960082,
+        0.0,
+        -0.00000893513128374934,
+        0.0,
+        3.12500095367432,
+        13.5,
+        -1.62500071525574,
+        1.0
+      ],
+      "module": "Window_Roof_3_1",
+      "source_node": 180.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_base_30x30_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        0.00000295027932195602,
+        0.0,
+        0.999999999995648,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999995648,
+        0.0,
+        0.00000295027932195602,
+        0.0,
+        -2.875,
+        13.5,
+        1.375,
+        1.0
+      ],
+      "module": "Roof_Base_30x30_1",
+      "source_node": 182.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_base_end_5x30_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        0.00000303457288908238,
+        0.0,
+        0.999999999995396,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999995396,
+        0.0,
+        0.00000303457288908238,
+        0.0,
+        -2.875,
+        13.5,
+        2.875,
+        1.0
+      ],
+      "module": "Roof_Base_End_5x30_1",
+      "source_node": 184.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_cut_start_15x30_2.binding.86c8449a2b08.mirror_x",
+      "materials": [
+        [
+          "Planks",
+          "Wood_3"
+        ]
+      ],
+      "matrix": [
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        -1.375,
+        13.5,
+        -4.875,
+        1.0
+      ],
+      "module": "Wall_Cut_Start_15x30_2",
+      "source_node": 186.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_bottomcurved_30x5_1",
+      "materials": [
+        [
+          "Wood_1",
+          "RoofTiles",
+          "Planks_Full"
+        ]
+      ],
+      "matrix": [
+        0.00000303457288908238,
+        0.0,
+        -0.999999999995396,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999995396,
+        0.0,
+        0.00000303457288908238,
+        0.0,
+        3.125,
+        13.5,
+        1.375,
+        1.0
+      ],
+      "module": "Roof_BottomCurved_30x5_1",
+      "source_node": 188.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_bottomcurved_start_5x5_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        0.00000303457288908238,
+        0.0,
+        -0.999999999995396,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999995396,
+        0.0,
+        0.00000303457288908238,
+        0.0,
+        3.125,
+        13.5,
+        2.875,
+        1.0
+      ],
+      "module": "Roof_BottomCurved_Start_5x5_1",
+      "source_node": 190.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_top30_start_x30_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "RoofTopTiles"
+        ]
+      ],
+      "matrix": [
+        0.00000295027932195602,
+        0.0,
+        0.999999999995648,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999995648,
+        0.0,
+        0.00000295027932195602,
+        0.0,
+        0.125,
+        19.5,
+        -1.625,
+        1.0
+      ],
+      "module": "Roof_Top30_Start_x30_1",
+      "source_node": 192.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_start_30x30_1",
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        0.000000000000000222044604925031,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.000000000000000222044604925031,
+        0.0,
+        -2.875,
+        7.5,
+        -1.5,
+        1.0
+      ],
+      "module": "Wall_Start_30x30_1",
+      "source_node": 194.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_cut_end_15x30_2.binding.300e6386d5e6",
+      "materials": [
+        [
+          "Planks",
+          "Wood_3"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        1.625,
+        13.5,
+        3.0,
+        1.0
+      ],
+      "module": "Wall_Cut_End_15x30_2",
+      "source_node": 196.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_end_30x30_1",
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        0.000000000000000222044604925031,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.000000000000000222044604925031,
+        0.0,
+        -2.875,
+        7.5,
+        1.5,
+        1.0
+      ],
+      "module": "Wall_End_30x30_1",
+      "source_node": 198.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_bottomcurved_30x5_1",
+      "materials": [
+        [
+          "Wood_1",
+          "RoofTiles",
+          "Planks_Full"
+        ]
+      ],
+      "matrix": [
+        0.00000295027932195602,
+        0.0,
+        0.999999999995648,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999995648,
+        0.0,
+        0.00000295027932195602,
+        0.0,
+        -2.875,
+        13.5,
+        1.375,
+        1.0
+      ],
+      "module": "Roof_BottomCurved_30x5_1",
+      "source_node": 200.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_end_30x30_1",
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        0.000000000000000222044604925031,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.000000000000000222044604925031,
+        0.0,
+        -2.875,
+        10.5,
+        1.5,
+        1.0
+      ],
+      "module": "Wall_End_30x30_1",
+      "source_node": 202.0
+    },
+    {
+      "asset_id": "pure_village.native.floor_down_start_30x30_2",
+      "materials": [
+        [
+          "Planks",
+          "Wood_2",
+          "Wood_3"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.375,
+        7.5,
+        1.5,
+        1.0
+      ],
+      "module": "Floor_Down_Start_30x30_2",
+      "source_node": 204.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_cut_start_15x30_2.binding.86c8449a2b08",
+      "materials": [
+        [
+          "Planks",
+          "Wood_3"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.375,
+        13.5,
+        3.0,
+        1.0
+      ],
+      "module": "Wall_Cut_Start_15x30_2",
+      "source_node": 206.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_start_15x30_4",
+      "materials": [
+        [
+          "Wood_1",
+          "Wood_2",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.375,
+        10.5,
+        3.0,
+        1.0
+      ],
+      "module": "Wall_Start_15x30_4",
+      "source_node": 208.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_end_10x30_1",
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        -0.0000057319710122794,
+        0.0,
+        -0.999999999983572,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999983572,
+        0.0,
+        -0.0000057319710122794,
+        0.0,
+        -2.9999988079071,
+        1.5,
+        -3.00000071525574,
+        1.0
+      ],
+      "module": "WallStone_End_10x30_1",
+      "source_node": 210.0
+    },
+    {
+      "asset_id": "pure_village.native.wood_beam_3x30_3",
+      "materials": [
+        [
+          "Wood_3"
+        ]
+      ],
+      "matrix": [
+        0.000002781691932352,
+        0.0,
+        0.999999999996131,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999996131,
+        0.0,
+        0.000002781691932352,
+        0.0,
+        -2.87499451637268,
+        3.0,
+        2.0,
+        1.0
+      ],
+      "module": "Wood_Beam_3x30_3",
+      "source_node": 212.0
+    },
+    {
+      "asset_id": "pure_village.native.wood_beam_3x30_1",
+      "materials": [
+        [
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        0.000002781691932352,
+        0.0,
+        0.999999999996131,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999996131,
+        0.0,
+        0.000002781691932352,
+        0.0,
+        3.21500849723816,
+        8.96599960327148,
+        3.04997897148132,
+        1.0
+      ],
+      "module": "Wood_Beam_3x30_1",
+      "source_node": 214.0
+    },
+    {
+      "asset_id": "pure_village.native.wood_beam_3x30_2",
+      "materials": [
+        [
+          "Wood_3"
+        ]
+      ],
+      "matrix": [
+        0.00000352190029190624,
+        0.0,
+        1.26610004901396,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -1.15629994868785,
+        0.0,
+        0.00000321647023865647,
+        0.0,
+        -6.00001096725464,
+        6.0,
+        -3.99998378753662,
+        1.0
+      ],
+      "module": "Wood_Beam_3x30_2",
+      "source_node": 216.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_tower_1",
+      "materials": [
+        [
+          "Metal_1",
+          "RoofTiles",
+          "Planks_Full"
+        ]
+      ],
+      "matrix": [
+        0.455699965518163,
+        0.0,
+        0.890133440236207,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.890133440236207,
+        0.0,
+        0.455699965518163,
+        0.0,
+        4.625,
+        13.0,
+        3.00000095367432,
+        1.0
+      ],
+      "module": "Roof_Tower_1",
+      "source_node": 218.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_middle2_30x30_1",
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        4.625,
+        1.5,
+        3.00000095367432,
+        1.0
+      ],
+      "module": "WallStone_Middle2_30x30_1",
+      "source_node": 220.0
+    },
+    {
+      "asset_id": "pure_village.native.woodhalftower_window_30x30",
+      "materials": [
+        [
+          "Planks",
+          "Metal_1",
+          "Plaster",
+          "Window_1",
+          "Glass_Out",
+          "Glass_In",
+          "Wood_1",
+          "Wood_2",
+          "Wood_3"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -4.50000095367432,
+        4.5,
+        1.99999988079071,
+        1.0
+      ],
+      "module": "WoodHalfTower_Window_30x30",
+      "source_node": 222.0
+    },
+    {
+      "asset_id": "pure_village.native.stonehalftower_support_30x30",
+      "materials": [
+        [
+          "Stones",
+          "Stone_1"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        4.625,
+        4.5,
+        3.00000095367432,
+        1.0
+      ],
+      "module": "StoneHalfTower_Support_30x30",
+      "source_node": 224.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_start_30x30_1",
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -4.50000095367432,
+        1.5,
+        1.99999952316284,
+        1.0
+      ],
+      "module": "Wall_Start_30x30_1",
+      "source_node": 226.0
+    },
+    {
+      "asset_id": "pure_village.native.woodhalftower_support_30x30",
+      "materials": [
+        [
+          "Planks",
+          "Metal_1",
+          "Wood_1",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -4.50000286102295,
+        4.5,
+        1.99999988079071,
+        1.0
+      ],
+      "module": "WoodHalfTower_Support_30x30",
+      "source_node": 228.0
+    },
+    {
+      "asset_id": "pure_village.native.stonehalftower_middle2_30x30",
+      "materials": [
+        [
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        4.625,
+        7.5,
+        3.00000095367432,
+        1.0
+      ],
+      "module": "StoneHalfTower_Middle2_30x30",
+      "source_node": 230.0
+    },
+    {
+      "asset_id": "pure_village.native.stonetower_window_30x30",
+      "materials": [
+        [
+          "Stones",
+          "Stone_1",
+          "Window_1",
+          "Glass_Out",
+          "Glass_In"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        4.625,
+        10.5,
+        3.00000095367432,
+        1.0
+      ],
+      "module": "StoneTower_Window_30x30",
+      "source_node": 232.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_end_20x30_1",
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        0.000000000000000222044604925031,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.000000000000000222044604925031,
+        0.0,
+        -3.0,
+        4.5,
+        2.0,
+        1.0
+      ],
+      "module": "Wall_End_20x30_1",
+      "source_node": 234.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_middle2_30x30_1",
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        0.00000590055839522208,
+        0.0,
+        0.999999999982592,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999982592,
+        0.0,
+        0.00000590055839522208,
+        0.0,
+        3.125,
+        1.5,
+        1.50000047683716,
+        1.0
+      ],
+      "module": "WallStone_Middle2_30x30_1",
+      "source_node": 236.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_middle2_30x30_1",
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        0.00000590055839522208,
+        0.0,
+        0.999999999982592,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999982592,
+        0.0,
+        0.00000590055839522208,
+        0.0,
+        3.125,
+        4.5,
+        1.50000047683716,
+        1.0
+      ],
+      "module": "WallStone_Middle2_30x30_1",
+      "source_node": 238.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_middle2_30x30_1.mirror_x",
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        -0.00000590055839522208,
+        0.0,
+        -0.999999999982592,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999982592,
+        0.0,
+        -0.00000590055839522208,
+        0.0,
+        6.12500095367432,
+        4.5,
+        -1.49999904632568,
+        1.0
+      ],
+      "module": "WallStone_Middle2_30x30_1",
+      "source_node": 240.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_middle1_30x30_1.mirror_x",
+      "materials": [
+        [
+          "Stone_2",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        -0.00000590055839522208,
+        0.0,
+        -0.999999999982592,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999982592,
+        0.0,
+        -0.00000590055839522208,
+        0.0,
+        6.12500095367432,
+        4.5,
+        1.50000095367432,
+        1.0
+      ],
+      "module": "WallStone_Middle1_30x30_1",
+      "source_node": 242.0
+    },
+    {
+      "asset_id": "pure_village.native.woodhalftower_window_30x30",
+      "materials": [
+        [
+          "Planks",
+          "Metal_1",
+          "Plaster",
+          "Window_1",
+          "Glass_Out",
+          "Glass_In",
+          "Wood_1",
+          "Wood_2",
+          "Wood_3"
+        ]
+      ],
+      "matrix": [
+        -0.99999999998259,
+        0.0,
+        0.0000059008589232176,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.0000059008589232176,
+        0.0,
+        -0.99999999998259,
+        0.0,
+        -4.45680856704712,
+        4.5,
+        -4.00000095367432,
+        1.0
+      ],
+      "module": "WoodHalfTower_Window_30x30",
+      "source_node": 244.0
+    },
+    {
+      "asset_id": "pure_village.native.stone_corner_start_x30",
+      "materials": [
+        [
+          "Stone_1"
+        ]
+      ],
+      "matrix": [
+        -0.000000337174765441262,
+        0.0,
+        -0.999999999999943,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999999943,
+        0.0,
+        -0.000000337174765441262,
+        0.0,
+        6.125,
+        1.5,
+        3.0000011920929,
+        1.0
+      ],
+      "module": "Stone_Corner_Start_x30",
+      "source_node": 246.0
+    },
+    {
+      "asset_id": "pure_village.native.stonearch_2",
+      "materials": [
+        [
+          "Stone_3",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.50885438919067,
+        2.75,
+        1.5,
+        1.0
+      ],
+      "module": "StoneArch_2",
+      "source_node": 248.0
+    },
+    {
+      "asset_id": "pure_village.native.stonearch_2",
+      "materials": [
+        [
+          "Stone_3",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        1.49114584922791,
+        2.75,
+        1.50000047683716,
+        1.0
+      ],
+      "module": "StoneArch_2",
+      "source_node": 250.0
+    },
+    {
+      "asset_id": "pure_village.native.stone_buttress_x30_2",
+      "materials": [
+        [
+          "Stone_2"
+        ]
+      ],
+      "matrix": [
+        -0.999999999978281,
+        -0.00000584787347509363,
+        -0.00000303983750706868,
+        0.0,
+        0.00000584787459613983,
+        -0.999999999982833,
+        -0.000000368776149768645,
+        0.0,
+        -0.00000541668275767514,
+        -0.000000657153915158075,
+        1.78190004824757,
+        0.0,
+        4.55600070953369,
+        3.75,
+        3.09260559082031,
+        1.0
+      ],
+      "module": "Stone_Buttress_x30_2",
+      "source_node": 252.0
+    },
+    {
+      "asset_id": "pure_village.native.stone_pillar_1",
+      "materials": [
+        [
+          "Stone_1"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        2.875,
+        -0.125,
+        1.62500047683716,
+        1.0
+      ],
+      "module": "Stone_Pillar_1",
+      "source_node": 254.0
+    },
+    {
+      "asset_id": "pure_village.native.stone_corner_start_x30",
+      "materials": [
+        [
+          "Stone_1"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        3.125,
+        1.5,
+        3.00000095367432,
+        1.0
+      ],
+      "module": "Stone_Corner_Start_x30",
+      "source_node": 256.0
+    },
+    {
+      "asset_id": "pure_village.native.door_9_1",
+      "materials": [
+        [
+          "Wood_1",
+          "Stone_1",
+          "Stone_2",
+          "Stones"
+        ],
+        [
+          "DoorShutter_1",
+          "Metal_1"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        1.50000023841858,
+        1.5,
+        0.000000238418579101562,
+        1.0
+      ],
+      "module": "Door_9_1",
+      "source_node": 258.0
+    },
+    {
+      "asset_id": "pure_village.native.stone_pillar_1",
+      "materials": [
+        [
+          "Stone_1"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -0.000000223517417907715,
+        -0.125,
+        1.50000023841858,
+        1.0
+      ],
+      "module": "Stone_Pillar_1",
+      "source_node": 262.0
+    },
+    {
+      "asset_id": "pure_village.native.supportstone_middle_30x15",
+      "materials": [
+        [
+          "Stones",
+          "Stone_2",
+          "Stone_1"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.50885438919067,
+        5.75,
+        1.5,
+        1.0
+      ],
+      "module": "SupportStone_Middle_30x15",
+      "source_node": 264.0
+    },
+    {
+      "asset_id": "pure_village.native.supportstone_end_30x15",
+      "materials": [
+        [
+          "Stones",
+          "Stone_2",
+          "Stone_1"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        1.625,
+        5.75,
+        1.50000047683716,
+        1.0
+      ],
+      "module": "SupportStone_End_30x15",
+      "source_node": 266.0
+    },
+    {
+      "asset_id": "pure_village.native.stone_pillar_1",
+      "materials": [
+        [
+          "Stone_1"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -2.87500047683716,
+        -0.125,
+        1.62499976158142,
+        1.0
+      ],
+      "module": "Stone_Pillar_1",
+      "source_node": 268.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_middle1_30x30_1.mirror_x",
+      "materials": [
+        [
+          "Stone_2",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        -0.00000590055839522208,
+        0.0,
+        -0.999999999982592,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999982592,
+        0.0,
+        -0.00000590055839522208,
+        0.0,
+        6.12500143051147,
+        1.5,
+        -1.49999952316284,
+        1.0
+      ],
+      "module": "WallStone_Middle1_30x30_1",
+      "source_node": 270.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_bottom_middle_30x10",
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        -0.0000112110614227667,
+        0.0,
+        -0.999999999937156,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999937156,
+        0.0,
+        -0.0000112110614227667,
+        0.0,
+        6.12500095367432,
+        7.5,
+        1.50000095367432,
+        1.0
+      ],
+      "module": "WallStone_Bottom_Middle_30x10",
+      "source_node": 272.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_bottom_middle_30x10",
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        -0.0000116325294070574,
+        0.0,
+        -0.999999999932342,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999932342,
+        0.0,
+        -0.0000116325294070574,
+        0.0,
+        6.12500143051147,
+        7.5,
+        -1.49999952316284,
+        1.0
+      ],
+      "module": "WallStone_Bottom_Middle_30x10",
+      "source_node": 274.0
+    },
+    {
+      "asset_id": "pure_village.native.stonehalftower_window_30x30",
+      "materials": [
+        [
+          "Stones",
+          "Stone_1",
+          "Glass_Out",
+          "Glass_In",
+          "Window_1"
+        ]
+      ],
+      "matrix": [
+        -0.999999999981155,
+        0.0,
+        -0.00000613927750231268,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.00000613927750231268,
+        0.0,
+        -0.999999999981155,
+        0.0,
+        4.625,
+        7.5,
+        3.00000095367432,
+        1.0
+      ],
+      "module": "StoneHalfTower_Window_30x30",
+      "source_node": 276.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_bottom_middle_30x10",
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        -0.999999999962394,
+        0.0,
+        0.00000867247490516157,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.00000867247490516157,
+        0.0,
+        -0.999999999962394,
+        0.0,
+        4.62499761581421,
+        7.5,
+        -3.0,
+        1.0
+      ],
+      "module": "WallStone_Bottom_Middle_30x10",
+      "source_node": 278.0
+    },
+    {
+      "asset_id": "pure_village.native.stone_corner_end_x10",
+      "materials": [
+        [
+          "Stone_1"
+        ]
+      ],
+      "matrix": [
+        -0.000000337174765441262,
+        0.0,
+        -0.999999999999943,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999999943,
+        0.0,
+        -0.000000337174765441262,
+        0.0,
+        6.12500143051147,
+        7.375,
+        -2.99999904632568,
+        1.0
+      ],
+      "module": "Stone_Corner_End_x10",
+      "source_node": 280.0
+    },
+    {
+      "asset_id": "pure_village.native.stone_corner_start_x30",
+      "materials": [
+        [
+          "Stone_1"
+        ]
+      ],
+      "matrix": [
+        -0.999999999996716,
+        0.0,
+        -0.00000256299949796391,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.00000256299949796391,
+        0.0,
+        -0.999999999996716,
+        0.0,
+        6.12500095367432,
+        1.5,
+        -3.12499928474426,
+        1.0
+      ],
+      "module": "Stone_Corner_Start_x30",
+      "source_node": 282.0
+    },
+    {
+      "asset_id": "pure_village.native.stone_corner_start_x30",
+      "materials": [
+        [
+          "Stone_1"
+        ]
+      ],
+      "matrix": [
+        -0.999999999996716,
+        0.0,
+        -0.00000256299949796391,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.00000256299949796391,
+        0.0,
+        -0.999999999996716,
+        0.0,
+        6.12500095367432,
+        4.375,
+        -3.12499928474426,
+        1.0
+      ],
+      "module": "Stone_Corner_Start_x30",
+      "source_node": 284.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_start_30x30_1",
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        -0.999999999999996,
+        0.0,
+        -0.0000000874227765734757,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0000000874227765734757,
+        0.0,
+        -0.999999999999996,
+        0.0,
+        1.62500011920929,
+        4.5,
+        -4.0,
+        1.0
+      ],
+      "module": "Wall_Start_30x30_1",
+      "source_node": 286.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_end_30x30_1",
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        -0.999999999999996,
+        0.0,
+        -0.0000000874227765734757,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0000000874227765734757,
+        0.0,
+        -0.999999999999996,
+        0.0,
+        -1.37499988079071,
+        4.5,
+        -4.0,
+        1.0
+      ],
+      "module": "Wall_End_30x30_1",
+      "source_node": 288.0
+    },
+    {
+      "asset_id": "pure_village.native.support_middle_30x10",
+      "materials": [
+        [
+          "Wood_2",
+          "Wood_1"
+        ]
+      ],
+      "matrix": [
+        -0.999999999999972,
+        0.0,
+        -0.00000023841855067985,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.00000023841855067985,
+        0.0,
+        -0.999999999999972,
+        0.0,
+        1.62500071525574,
+        7.5,
+        -4.0,
+        1.0
+      ],
+      "module": "Support_Middle_30x10",
+      "source_node": 290.0
+    },
+    {
+      "asset_id": "pure_village.native.support_end_30x10",
+      "materials": [
+        [
+          "Wood_2",
+          "Wood_1"
+        ]
+      ],
+      "matrix": [
+        -0.999999999999972,
+        0.0,
+        -0.00000023841855067985,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.00000023841855067985,
+        0.0,
+        -0.999999999999972,
+        0.0,
+        -1.37499964237213,
+        7.5,
+        -4.00000047683716,
+        1.0
+      ],
+      "module": "Support_End_30x10",
+      "source_node": 292.0
+    },
+    {
+      "asset_id": "pure_village.native.support_middle_30x10",
+      "materials": [
+        [
+          "Wood_2",
+          "Wood_1"
+        ]
+      ],
+      "matrix": [
+        -0.999999999999972,
+        0.0,
+        -0.00000023841855067985,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.00000023841855067985,
+        0.0,
+        -0.999999999999972,
+        0.0,
+        1.62500059604645,
+        4.375,
+        -3.125,
+        1.0
+      ],
+      "module": "Support_Middle_30x10",
+      "source_node": 294.0
+    },
+    {
+      "asset_id": "pure_village.native.support_end_30x10",
+      "materials": [
+        [
+          "Wood_2",
+          "Wood_1"
+        ]
+      ],
+      "matrix": [
+        -0.999999999999972,
+        0.0,
+        -0.00000023841855067985,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.00000023841855067985,
+        0.0,
+        -0.999999999999972,
+        0.0,
+        -1.37499976158142,
+        4.375,
+        -3.12500047683716,
+        1.0
+      ],
+      "module": "Support_End_30x10",
+      "source_node": 296.0
+    },
+    {
+      "asset_id": "pure_village.native.window_17_2.binding.40221e947c2e",
+      "materials": [
+        [
+          "Wood_3",
+          "RoofStreet_1",
+          "Window_1",
+          "Glass_Out",
+          "Glass_In",
+          "Wood_1",
+          "Planks",
+          "Planks"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.125001430511475,
+        13.5,
+        3.00000047683716,
+        1.0
+      ],
+      "module": "Window_17_2",
+      "source_node": 298.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_start_30x30_3",
+      "materials": [
+        [
+          "Wood_3",
+          "Wood_2",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.37500059604645,
+        7.5,
+        3.00000047683716,
+        1.0
+      ],
+      "module": "Wall_Start_30x30_3",
+      "source_node": 300.0
+    },
+    {
+      "asset_id": "pure_village.native.floor_middle_30x30_1",
+      "materials": [
+        [
+          "Planks",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        4.62500047683716,
+        7.5,
+        -1.49999952316284,
+        1.0
+      ],
+      "module": "Floor_Middle_30x30_1",
+      "source_node": 302.0
+    },
+    {
+      "asset_id": "pure_village.native.floor_middle_30x30_1",
+      "materials": [
+        [
+          "Planks",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        4.625,
+        7.5,
+        1.50000095367432,
+        1.0
+      ],
+      "module": "Floor_Middle_30x30_1",
+      "source_node": 304.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_end_30x30_3",
+      "materials": [
+        [
+          "Wood_3",
+          "Wood_2",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        1.62500643730164,
+        7.5,
+        3.00000071525574,
+        1.0
+      ],
+      "module": "Wall_End_30x30_3",
+      "source_node": 306.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_middle1_30x30_1.mirror_x",
+      "materials": [
+        [
+          "Stone_2",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        4.62500095367432,
+        1.5,
+        -3.0,
+        1.0
+      ],
+      "module": "WallStone_Middle1_30x30_1",
+      "source_node": 308.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_middle1_30x30_1.mirror_x",
+      "materials": [
+        [
+          "Stone_2",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        4.62500095367432,
+        4.5,
+        -3.0,
+        1.0
+      ],
+      "module": "WallStone_Middle1_30x30_1",
+      "source_node": 310.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_middle1_30x30_1.mirror_x",
+      "materials": [
+        [
+          "Stone_2",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        1.62500047683716,
+        1.5,
+        -3.00000047683716,
+        1.0
+      ],
+      "module": "WallStone_Middle1_30x30_1",
+      "source_node": 312.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_middle1_30x30_1.mirror_x",
+      "materials": [
+        [
+          "Stone_2",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        -1.375,
+        1.5,
+        -3.00000095367432,
+        1.0
+      ],
+      "module": "WallStone_Middle1_30x30_1",
+      "source_node": 314.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_cut_start_15x30_2.binding.86c8449a2b08.mirror_x",
+      "materials": [
+        [
+          "Planks",
+          "Wood_3"
+        ]
+      ],
+      "matrix": [
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.125000730156898,
+        16.5,
+        -4.87500095367432,
+        1.0
+      ],
+      "module": "Wall_Cut_Start_15x30_2",
+      "source_node": 316.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_cut_end_15x30_2.binding.300e6386d5e6.mirror_x",
+      "materials": [
+        [
+          "Planks",
+          "Wood_3"
+        ]
+      ],
+      "matrix": [
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.125000730156898,
+        16.5,
+        -4.87500095367432,
+        1.0
+      ],
+      "module": "Wall_Cut_End_15x30_2",
+      "source_node": 318.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_base_start_10x30_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        0.00000219163597547922,
+        0.0,
+        0.999999999997598,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999997598,
+        0.0,
+        0.00000219163597547922,
+        0.0,
+        -6.00000238418579,
+        7.57416725158691,
+        -3.87500143051147,
+        1.0
+      ],
+      "module": "Roof_Base_Start_10x30_1",
+      "source_node": 320.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_base_end_10x30_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        -0.00000910371866646997,
+        0.0,
+        -0.999999999958561,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999958561,
+        0.0,
+        -0.00000910371866646997,
+        0.0,
+        -3.00000095367432,
+        7.57416725158691,
+        -3.87500095367432,
+        1.0
+      ],
+      "module": "Roof_Base_End_10x30_1",
+      "source_node": 322.0
+    },
+    {
+      "asset_id": "pure_village.native.stonehalftower_middle1_30x30",
+      "materials": [
+        [
+          "Stones",
+          "Stone_3"
+        ]
+      ],
+      "matrix": [
+        -0.999999999981155,
+        0.0,
+        -0.00000613927750231268,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.00000613927750231268,
+        0.0,
+        -0.999999999981155,
+        0.0,
+        -4.5,
+        1.5,
+        -4.00000095367432,
+        1.0
+      ],
+      "module": "StoneHalfTower_Middle1_30x30",
+      "source_node": 324.0
+    },
+    {
+      "asset_id": "pure_village.native.stonehalftower_middle1_30x30",
+      "materials": [
+        [
+          "Stones",
+          "Stone_3"
+        ]
+      ],
+      "matrix": [
+        -0.999999999981155,
+        0.0,
+        -0.00000613927750231268,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.00000613927750231268,
+        0.0,
+        -0.999999999981155,
+        0.0,
+        -4.5,
+        -1.75,
+        -4.00000095367432,
+        1.0
+      ],
+      "module": "StoneHalfTower_Middle1_30x30",
+      "source_node": 326.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_start_30x30_1",
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        -0.999999999999996,
+        0.0,
+        -0.0000000874227765734757,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0000000874227765734757,
+        0.0,
+        -0.999999999999996,
+        0.0,
+        1.62500262260437,
+        10.5,
+        -4.87499618530273,
+        1.0
+      ],
+      "module": "Wall_Start_30x30_1",
+      "source_node": 328.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_start_30x30_1",
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        -0.999999999999996,
+        0.0,
+        -0.0000000874227765734757,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0000000874227765734757,
+        0.0,
+        -0.999999999999996,
+        0.0,
+        -1.37499964237213,
+        10.5,
+        -4.87499666213989,
+        1.0
+      ],
+      "module": "Wall_Start_30x30_1",
+      "source_node": 330.0
+    },
+    {
+      "asset_id": "pure_village.native.window_2_1",
+      "materials": [
+        [
+          "Wood_3",
+          "Window_1",
+          "Glass_Out",
+          "Glass_In",
+          "Wood_2",
+          "Wood_1",
+          "Plaster"
+        ],
+        [
+          "DoorShutter_1",
+          "Metal_1",
+          "Wood_2"
+        ],
+        [
+          "DoorShutter_1",
+          "Metal_1",
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        -0.999999999999972,
+        0.0,
+        -0.00000023841855067985,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.00000023841855067985,
+        0.0,
+        -0.999999999999972,
+        0.0,
+        -1.37500131130219,
+        7.5,
+        -4.87500333786011,
+        1.0
+      ],
+      "module": "Window_2_1",
+      "source_node": 332.0
+    },
+    {
+      "asset_id": "pure_village.native.window_18_1",
+      "materials": [
+        [
+          "Wood_3",
+          "Window_1",
+          "Glass_Out",
+          "Glass_In",
+          "Wood_1",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.124999538064003,
+        10.5,
+        3.00000047683716,
+        1.0
+      ],
+      "module": "Window_18_1",
+      "source_node": 338.0
+    },
+    {
+      "asset_id": "pure_village.native.support_1",
+      "materials": [
+        [
+          "Wood_1"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -2.87500095367432,
+        8.75,
+        3.00000023841858,
+        1.0
+      ],
+      "module": "Support_1",
+      "source_node": 340.0
+    },
+    {
+      "asset_id": "pure_village.native.support_1",
+      "materials": [
+        [
+          "Wood_1"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.124999165534973,
+        19.5,
+        3.00000047683716,
+        1.0
+      ],
+      "module": "Support_1",
+      "source_node": 342.0
+    },
+    {
+      "asset_id": "pure_village.native.roof_top30_end_x5_1",
+      "materials": [
+        [
+          "RoofTiles",
+          "Planks_Full",
+          "RoofTopTiles"
+        ]
+      ],
+      "matrix": [
+        0.00000219163597547922,
+        0.0,
+        0.999999999997598,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999997598,
+        0.0,
+        0.00000219163597547922,
+        0.0,
+        0.124999299645424,
+        19.5,
+        2.87500023841858,
+        1.0
+      ],
+      "module": "Roof_Top30_End_x5_1",
+      "source_node": 344.0
+    },
+    {
+      "asset_id": "pure_village.native.support_1",
+      "materials": [
+        [
+          "Wood_1"
+        ]
+      ],
+      "matrix": [
+        -0.99999999999929,
+        0.0,
+        0.00000119209278182055,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.00000119209278182055,
+        0.0,
+        -0.99999999999929,
+        0.0,
+        0.125000149011612,
+        19.5,
+        -4.87500047683716,
+        1.0
+      ],
+      "module": "Support_1",
+      "source_node": 346.0
+    },
+    {
+      "asset_id": "pure_village.native.archwood_middle_60x60",
+      "materials": [
+        [
+          "Wood_1",
+          "Wood_3"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.125002399086952,
+        7.5,
+        -5.00000047683716,
+        1.0
+      ],
+      "module": "ArchWood_Middle_60x60",
+      "source_node": 348.0
+    },
+    {
+      "asset_id": "pure_village.native.wall_start_30x30_1",
+      "materials": [
+        [
+          "Wood_3",
+          "Plaster"
+        ]
+      ],
+      "matrix": [
+        -0.999999999999996,
+        0.0,
+        -0.0000000874227765734757,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0000000874227765734757,
+        0.0,
+        -0.999999999999996,
+        0.0,
+        1.62500691413879,
+        7.5,
+        -4.87499618530273,
+        1.0
+      ],
+      "module": "Wall_Start_30x30_1",
+      "source_node": 350.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_middle2_30x30_1.mirror_x",
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        0.999999999958959,
+        0.0,
+        -0.00000905990509617876,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.00000905990509617876,
+        0.0,
+        0.999999999958959,
+        0.0,
+        -1.37500011920929,
+        4.5,
+        -0.000000089406967163086,
+        1.0
+      ],
+      "module": "WallStone_Middle2_30x30_1",
+      "source_node": 352.0
+    },
+    {
+      "asset_id": "pure_village.native.wallstone_middle2_30x30_1.mirror_x",
+      "materials": [
+        [
+          "Stone_1",
+          "Stones"
+        ]
+      ],
+      "matrix": [
+        0.999999999958959,
+        0.0,
+        -0.00000905990509617876,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.00000905990509617876,
+        0.0,
+        0.999999999958959,
+        0.0,
+        1.62500035762787,
+        4.5,
+        0.000000387430191040039,
+        1.0
+      ],
+      "module": "WallStone_Middle2_30x30_1",
+      "source_node": 354.0
+    },
+    {
+      "asset_id": "pure_village.native.chimney_plaster_side_2",
+      "materials": [
+        [
+          "Chimney_1"
+        ]
+      ],
+      "matrix": [
+        0.00000367648609057917,
+        0.0,
+        1.28279995917747,
+        0.0,
+        0.0,
+        1.28279995918274,
+        0.0,
+        0.0,
+        -1.28279995917747,
+        0.0,
+        0.00000367648609057917,
+        0.0,
+        -1.3750011920929,
+        16.1494750976562,
+        1.00000083446503,
+        1.0
+      ],
+      "module": "Chimney_Plaster_Side_2",
+      "source_node": 356.0
+    },
+    {
+      "asset_id": "pure_village.native.support_3",
+      "materials": [
+        [
+          "Wood_1"
+        ]
+      ],
+      "matrix": [
+        -0.0000130919576810275,
+        0.0,
+        1.18560004227086,
+        0.0,
+        0.0,
+        1.18560004234314,
+        0.0,
+        0.0,
+        -1.18560004227086,
+        0.0,
+        -0.0000130919576810275,
+        0.0,
+        -2.86100006103516,
+        13.4020004272461,
+        -3.19510006904602,
+        1.0
+      ],
+      "module": "Support_3",
+      "source_node": 358.0
+    },
+    {
+      "asset_id": "pure_village.native.support_end_30x10",
+      "materials": [
+        [
+          "Wood_2",
+          "Wood_1"
+        ]
+      ],
+      "matrix": [
+        -0.0000110424740329407,
+        0.0,
+        0.999999999939032,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999939032,
+        0.0,
+        -0.0000110424740329407,
+        0.0,
+        -2.96002697944641,
+        12.875,
+        1.38878130912781,
+        1.0
+      ],
+      "module": "Support_End_30x10",
+      "source_node": 360.0
+    },
+    {
+      "asset_id": "pure_village.native.support_start_15x10",
+      "materials": [
+        [
+          "Wood_2",
+          "Wood_1"
+        ]
+      ],
+      "matrix": [
+        -0.0000110424740329407,
+        0.0,
+        0.999999999939032,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.999999999939032,
+        0.0,
+        -0.0000110424740329407,
+        0.0,
+        -2.95994544029236,
+        12.875,
+        -4.2011079788208,
+        1.0
+      ],
+      "module": "Support_Start_15x10",
+      "source_node": 362.0
+    },
+    {
+      "asset_id": "pure_village.native.support_end_20x10",
+      "materials": [
+        [
+          "Wood_2"
+        ]
+      ],
+      "matrix": [
+        0.00000531050277963185,
+        0.0,
+        -0.999999999985899,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999985899,
+        0.0,
+        0.00000531050277963185,
+        0.0,
+        3.14783835411072,
+        12.875,
+        -3.90309119224548,
+        1.0
+      ],
+      "module": "Support_End_20x10",
+      "source_node": 364.0
+    },
+    {
+      "asset_id": "pure_village.native.support_end_30x10",
+      "materials": [
+        [
+          "Wood_2",
+          "Wood_1"
+        ]
+      ],
+      "matrix": [
+        0.00000531050277963185,
+        0.0,
+        -0.999999999985899,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999985899,
+        0.0,
+        0.00000531050277963185,
+        0.0,
+        3.14781785011292,
+        12.875,
+        -1.45368933677673,
+        1.0
+      ],
+      "module": "Support_End_30x10",
+      "source_node": 366.0
+    },
+    {
+      "asset_id": "pure_village.native.support_middle_30x10",
+      "materials": [
+        [
+          "Wood_2",
+          "Wood_1"
+        ]
+      ],
+      "matrix": [
+        0.00000531050277963185,
+        0.0,
+        -0.999999999985899,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.999999999985899,
+        0.0,
+        0.00000531050277963185,
+        0.0,
+        3.14780569076538,
+        12.875,
+        1.46302819252014,
+        1.0
+      ],
+      "module": "Support_Middle_30x10",
+      "source_node": 368.0
+    },
+    {
+      "asset_id": "pure_village.native.support_3",
+      "materials": [
+        [
+          "Wood_1"
+        ]
+      ],
+      "matrix": [
+        -0.0000130919576810275,
+        0.0,
+        1.18560004227086,
+        0.0,
+        0.0,
+        1.18560004234314,
+        0.0,
+        0.0,
+        -1.18560004227086,
+        0.0,
+        -0.0000130919576810275,
+        0.0,
+        -2.86100006103516,
+        13.4020004272461,
+        -0.0829999968409538,
+        1.0
+      ],
+      "module": "Support_3",
+      "source_node": 370.0
+    },
+    {
+      "asset_id": "pure_village.native.stonetower_window_30x30",
+      "materials": [
+        [
+          "Stones",
+          "Stone_1",
+          "Window_1",
+          "Glass_Out",
+          "Glass_In"
+        ]
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        4.625,
+        4.5,
+        3.00000095367432,
+        1.0
+      ],
+      "module": "StoneTower_Window_30x30",
+      "source_node": 372.0
+    }
+  ],
+  "source": "assets/PureVillage/Models/Houses/House_16c.glb",
+  "unmatched": []
+}

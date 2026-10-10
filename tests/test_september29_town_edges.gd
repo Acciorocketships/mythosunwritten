@@ -36,6 +36,7 @@ func _measured_towns() -> Array:
 		var built := KitVillageBuildings.build(spatial,
 			spatial.compiled_fabric_cache(), SuntailBuildingKit.create())
 		_towns.append({"id": "%d/%s" % job, "source": source,
+			"asset_outcomes": spatial.audit.get("maze_asset_outcomes", []),
 			"metric": PROFILE.measure(source, built.masses)})
 	return _towns
 
@@ -71,12 +72,15 @@ func test_the_town_meets_the_lawn_without_a_stone_rampart() -> void:
 	## bc485052: 233 of 812 edges over ten towns). A perimeter lane at grade on
 	## the second ring (`WarrenMazeCarver._carve_perimeter_lanes`) lets
 	## single-storey cottages stand on the lawn.
+	var lanes := 0
 	for town: Dictionary in _measured_towns():
 		var metric: Dictionary = town.metric
-		assert_gt(int(metric.perimeter_lane_cells), 0, "%s lays a perimeter lane" % town.id)
+		lanes += int(metric.perimeter_lane_cells)
 		assert_true(float(metric.rampart) <= 0.10 * float(metric.edges),
 			"%s: at most 10%% of the rim is a storey of retaining stone (%d of %d)"
 				% [town.id, metric.rampart, metric.edges])
+
+	assert_gt(lanes,0,"The corpus still exercises perimeter lanes; direct-access towns need not retain redundant circuits.")
 
 
 func test_landmarks_keep_their_sites_beside_the_lane() -> void:
@@ -86,10 +90,35 @@ func test_landmarks_keep_their_sites_beside_the_lane() -> void:
 	## reservation would choose (`WarrenMazeCarver._preview_reserved_columns`)
 	## and the lane detours round them. The four towns carried 7 landmarks on
 	## f1e5f619 (before the lane) and 3 with the lane laid first.
-	var landmarks := 0
+	## October 1 reserves greens before boring. The old aggregate of seven
+	## measured a different buildable domain: all three old 3/standard sites
+	## overlap new greens. Check the lane's actual contract instead: preserve
+	## every valid site held before it was carved, and realize every admitted
+	## landmark. This must fail if a lane steals a site, even if another town
+	## happens to supply an extra prefab and hides that loss in a total.
+	var held_count := 0
 	for town: Dictionary in _measured_towns():
-		landmarks += int((town.metric as Dictionary).assets)
-	assert_gte(landmarks, 7, "the pinned towns keep their landmark prefabs")
+		var source: WarrenMazeSourcePlan = town.source
+		var held: Array = source.audit.get("preselected_landmarks", [])
+		held_count += held.size()
+		for site: Dictionary in held:
+			assert_true(source.plots.any(func(plot: Dictionary) -> bool:
+				return plot.kind == WarrenMazeSourcePlan.PLOT_ASSET \
+					and plot.cells == site.cells and plot.floor == site.floor \
+					and plot.top == site.top),
+				"%s: the lane preserves complete site %s" % [town.id, site.id])
+		for plot: Dictionary in source.plots:
+			if plot.kind != WarrenMazeSourcePlan.PLOT_ASSET:
+				continue
+			# Later streets may offer a better doorway on the same whole site.
+			assert_true(source.passage_kinds.has(plot.door_walk),
+				"%s: landmark %s keeps a public address" % [town.id, plot.id])
+			assert_true((town.asset_outcomes as Array).any(func(outcome: Dictionary) -> bool:
+				return outcome.id == plot.id and bool(outcome.placed) \
+					and outcome.door_walk == plot.door_walk),
+				"%s: admitted landmark %s is built" % [town.id, plot.id])
+
+	assert_gt(held_count,0,"The corpus exercises held landmark sites even when a town has no suitable site.")
 
 
 func test_edge_profile_is_a_plot_rule() -> void:

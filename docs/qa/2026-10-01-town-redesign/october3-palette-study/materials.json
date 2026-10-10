@@ -1,0 +1,32 @@
+{
+	"05-limestone-charcoal": {
+		"materials": {
+			"DoorShutter_1": "wood",
+			"Planks": "wood",
+			"Planks_Full": "wood",
+			"Plaster": "plaster",
+			"RoofStreet_1": "roof",
+			"RoofTiles": "roof",
+			"RoofTopTiles": "roof",
+			"RoofTransition": "roof",
+			"RoofTransition_1": "roof",
+			"Stone_1": "stone",
+			"Stone_2": "stone",
+			"Stone_3": "stone",
+			"Stones": "stone",
+			"Wood_1": "wood",
+			"Wood_2": "wood",
+			"Wood_3": "wood"
+		},
+		"palette": {
+			"grain": false,
+			"id": "05-limestone-charcoal",
+			"plaster": "c9b995",
+			"roof": "555e62",
+			"smooth": true,
+			"stone": "c9b995",
+			"title": "Warm limestone / charcoal roof",
+			"wood": "60574a"
+		}
+	}
+}

@@ -45,7 +45,6 @@ func _init() -> void:
 		"centre": [record.centre.x, record.centre.y],
 		"world_transform": str(record.urban_fabric.world_transform),
 		"terrain_relief_m": record.urban_fabric.terrain_relief_m,
-		"outskirts_audit": record.outskirts.audit if record.outskirts != null else {},
 		"points": {},
 	}
 	var fabric := record.urban_fabric.fabric_plan

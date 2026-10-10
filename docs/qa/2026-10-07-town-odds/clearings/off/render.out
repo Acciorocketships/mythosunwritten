@@ -1,0 +1,192 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+TOWN_CHARACTER 53:grand {"clearing_area":15.0,"clearing_block_bias":1.72826996952019,"clearing_count":0.0,"clearing_cover":{"open":1.0},"clearing_extra_link_chance":0.466675942103142,"clearing_ground_weight":2.0,"clearing_purpose":{"green":0.456123141733603,"market":0.173017020146405,"paved":0.197650485412452,"workyard":0.17320935270754},"clearing_shape":{"blob":0.148308769544017,"rect":0.311453203655171,"three_rect":0.190183114435788,"two_rect":0.350054912365024}}
+TUNNELS 53 grand [(0, 6, 3), (2, 9, 0), (2, 9, 1), (2, 0, -1), (1, 0, -1), (0, 0, 0), (-1, 0, 0), (-2, 0, 0), (-3, 0, -1), (-4, 0, -1), (4, 0, -3), (1, 0, -5), (-1, 0, -10), (-3, 0, -11), (-5, 0, -11), (4, 4, 1), (5, 1, 3)]
+STEPPED_HOUSES [{ "id": &"kit.spatial.feature.landmark.01", "at": (15.75, 3.0, -2.25), "reach": 24.0 }, { "id": &"kit.spatial.parcel.maze.house.000", "at": (0.75, 19.5, 12.75), "reach": 24.0 }, { "id": &"kit.spatial.parcel.maze.house.002", "at": (11.25, 18.0, 6.75), "reach": 40.0 }, { "id": &"kit.spatial.parcel.maze.house.003", "at": (9.75, 21.0, 5.25), "reach": 16.0 }, { "id": &"kit.spatial.parcel.maze.house.008", "at": (6.75, 3.0, -5.25), "reach": 8.0 }, { "id": &"kit.spatial.parcel.maze.house.014", "at": (-3.75, 18.0, 2.25), "reach": 16.0 }, { "id": &"kit.spatial.parcel.maze.house.015", "at": (-5.25, 16.5, -3.75), "reach": 24.0 }, { "id": &"kit.spatial.parcel.maze.house.035", "at": (-3.75, 3.0, -27.75), "reach": 32.0 }, { "id": &"kit.spatial.parcel.maze.house.057", "at": (12.75, 9.0, -3.75), "reach": 32.0 }, { "id": &"kit.spatial.parcel.maze.house.067", "at": (-5.25, 3.0, 15.75), "reach": 8.0 }]
+ROOF_AUDIT { "clipped": 790, "removed": 249, "chimneys": { "moved": 0, "omitted": 0, "checked": 6 }, "towers": { "corner_attempts": 149, "corner_supported": 6, "corner_accepted": 4, "corner_bearing_rejected": 58, "corner_bearing_example": "kit.spatial.parcel.maze.house.064 / (5, 0, 14) / base 1", "corner_no_bearing_or_space": 135, "attempts": 292, "corner_reservation_rejected": 39, "corner_reservation_example": "kit.spatial.parcel.maze.house.064 / (5, 7, 14) / base 5", "corbel_corner_accepted": 3, "corner_join_quadrants": 8, "corner_quadrant_counts": { 4: 4, 2: 4 }, "corner_quadrant_examples": [{ "host": &"kit.spatial.parcel.maze.house.015", "corner": (-2, -2), "base": 8, "top": 14, "band": 8, "occupied": [(-1, -1), (-1, 0), (0, -1), (0, 0)] }, { "host": &"kit.spatial.parcel.maze.house.035", "corner": (-2, -16), "base": 0, "top": 2, "band": 0, "occupied": [(-1, -1), (0, -1)] }, { "host": &"kit.spatial.parcel.maze.house.035", "corner": (0, -17), "base": 0, "top": 4, "band": 0, "occupied": [(-1, -1), (-1, 0), (0, -1), (0, 0)] }, { "host": &"kit.spatial.parcel.maze.house.035", "corner": (-2, -17), "base": 0, "top": 4, "band": 0, "occupied": [(-1, -1), (-1, 0), (0, -1), (0, 0)] }, { "host": &"kit.spatial.parcel.maze.house.035", "corner": (2, -17), "base": 0, "top": 4, "band": 0, "occupied": [(-1, -1), (-1, 0)] }, { "host": &"kit.spatial.parcel.maze.house.049", "corner": (-11, -10), "base": 0, "top": 8, "band": 0, "occupied": [(-1, -1), (-1, 0), (0, -1), (0, 0)] }, { "host": &"kit.spatial.parcel.maze.house.049", "corner": (-11, -12), "base": 0, "top": 8, "band": 0, "occupied": [(-1, 0), (0, 0)] }, { "host": &"kit.spatial.parcel.maze.house.058", "corner": (14, 6), "base": 5, "top": 11, "band": 5, "occupied": [(-1, -1), (-1, 0)] }], "corner_no_host_join": 8, "corner_asset_blocked": 1, "corner_public_blocked": 1, "accepted": 4 }, "facade_bays": 3, "room_projections": 4, "retaining_relief": 16, "retaining_flight_joints": 29, "retaining_windows": 44, "fortified_windows": 0, "retaining_recesses": 6, "decor_clearance": { &"window_box": 54, &"prop.doorstep": 31 }, "fitted_window_boxes": 69, "joins": 12, "parallel_joins": 3, "fitted_eaves": 3, "dormers": { "moved": 0, "omitted": 2, "checked": 7 }, "seated_balcony_brackets": 10, "roof_blocked_windows": 207, "roof_fitted_windows": 61 }
+TOWN 53 grand buildings=158 instances=7588 ms=101304
+GARDEN_GRASS 53 grand instances=297 tiles=6
+BOUNDS cells=[P: (-64.0, 0.0, -104.0), S: (124.0, 54.0, 180.0)] payload=[P: (-66.34, -6.0, -108.0), S: (129.046, 69.6, 186.34)]
+REVIEW_CAMERA {"eye":"(-104.304, 121.97, 124.925)","fov":50.0,"target":"(-1.817009, 28.8, -14.83)","view":"53_grand_overview"}
+REVIEW_CAMERA {"eye":"(80.53441, 70.7265, 67.52142)","fov":55.0,"target":"(-1.817009, 32.8, -14.83)","view":"53_grand_orbit0"}
+REVIEW_CAMERA {"eye":"(-84.16843, 70.7265, 67.52142)","fov":55.0,"target":"(-1.817009, 32.8, -14.83)","view":"53_grand_orbit1"}
+REVIEW_CAMERA {"eye":"(-84.16843, 70.7265, -97.18142)","fov":55.0,"target":"(-1.817009, 32.8, -14.83)","view":"53_grand_orbit2"}
+REVIEW_CAMERA {"eye":"(80.53441, 70.7265, -97.18142)","fov":55.0,"target":"(-1.817009, 32.8, -14.83)","view":"53_grand_orbit3"}
+REVIEW_CAMERA {"eye":"(40.0, 7.7, 48.0)","fov":70.0,"target":"(24.0, 7.7, 36.0)","view":"53_grand_street0"}
+REVIEW_CAMERA {"eye":"(52.0, 7.7, 44.0)","fov":70.0,"target":"(24.0, 7.7, 44.0)","view":"53_grand_street1"}
+REVIEW_CAMERA {"eye":"(20.0, 1.7, 8.0)","fov":70.0,"target":"(32.0, 1.7, 20.0)","view":"53_grand_street2"}
+REVIEW_CAMERA {"eye":"(-16.0, 1.7, 0.0)","fov":70.0,"target":"(12.0, 1.7, 4.0)","view":"53_grand_street3"}
+REVIEW_CAMERA {"eye":"(24.0, 1.7, 8.0)","fov":70.0,"target":"(28.0, 1.7, -12.0)","view":"53_grand_street4"}
+REVIEW_CAMERA {"eye":"(28.0, 28.7, 44.0)","fov":70.0,"target":"(16.0, 28.7, 20.0)","view":"53_grand_street5"}
+REVIEW_CAMERA {"eye":"(28.0, 28.7, 32.0)","fov":80.0,"target":"(13.0, 29.5, 34.0)","view":"53_grand_court_plaza.00_0"}
+REVIEW_CAMERA {"eye":"(20.0, 28.7, 44.0)","fov":80.0,"target":"(18.0, 29.5, 29.0)","view":"53_grand_court_plaza.00_1"}
+REVIEW_CAMERA {"eye":"(8.0, 28.7, 32.0)","fov":80.0,"target":"(23.0, 29.5, 34.0)","view":"53_grand_court_plaza.00_2"}
+REVIEW_CAMERA {"eye":"(16.0, 28.7, 24.0)","fov":80.0,"target":"(18.0, 29.5, 39.0)","view":"53_grand_court_plaza.00_3"}
+REVIEW_CAMERA {"eye":"(44.0, 7.7, 52.0)","fov":80.0,"target":"(33.0, 8.5, 54.0)","view":"53_grand_court_deck.00_0"}
+REVIEW_CAMERA {"eye":"(40.0, 7.7, 60.0)","fov":80.0,"target":"(38.0, 8.5, 49.0)","view":"53_grand_court_deck.00_1"}
+REVIEW_CAMERA {"eye":"(32.0, 7.7, 56.0)","fov":80.0,"target":"(43.0, 8.5, 54.0)","view":"53_grand_court_deck.00_2"}
+REVIEW_CAMERA {"eye":"(36.0, 7.7, 48.0)","fov":80.0,"target":"(38.0, 8.5, 59.0)","view":"53_grand_court_deck.00_3"}
+REVIEW_CAMERA {"eye":"(52.0, 7.7, 36.0)","fov":80.0,"target":"(41.0, 8.5, 38.0)","view":"53_grand_court_deck.01_0"}
+REVIEW_CAMERA {"eye":"(48.0, 7.7, 44.0)","fov":80.0,"target":"(46.0, 8.5, 33.0)","view":"53_grand_court_deck.01_1"}
+REVIEW_CAMERA {"eye":"(40.0, 7.7, 40.0)","fov":80.0,"target":"(51.0, 8.5, 38.0)","view":"53_grand_court_deck.01_2"}
+REVIEW_CAMERA {"eye":"(44.0, 7.7, 32.0)","fov":80.0,"target":"(46.0, 8.5, 43.0)","view":"53_grand_court_deck.01_3"}
+TOWN_CHARACTER 31:large {"clearing_area":13.0,"clearing_block_bias":1.72492988638082,"clearing_count":0.0,"clearing_cover":{"open":1.0},"clearing_extra_link_chance":0.447181588526406,"clearing_ground_weight":2.0,"clearing_purpose":{"green":0.390460497040364,"market":0.0786873410575836,"paved":0.371306003676744,"workyard":0.159546158225308},"clearing_shape":{"blob":0.195513208104443,"rect":0.267226125056562,"three_rect":0.12054643175657,"two_rect":0.416714235082425}}
+TUNNELS 31 large [(-1, 0, 1), (-1, 0, 2), (0, 0, 2), (0, 0, 5), (-3, 0, 1), (2, 4, 0), (2, 4, 1)]
+STEPPED_HOUSES [{ "id": &"kit.spatial.parcel.maze.house.011", "at": (3.75, 12.0, 0.75), "reach": 24.0 }]
+ROOF_AUDIT { "clipped": 617, "removed": 65, "chimneys": { "moved": 0, "omitted": 0, "checked": 4 }, "towers": { "corner_attempts": 52, "corner_join_quadrants": 4, "corner_quadrant_counts": { 2: 3, 4: 1 }, "corner_quadrant_examples": [{ "host": &"kit.spatial.parcel.maze.bridge.00.end.1.lower", "corner": (6, -2), "base": 4, "top": 12, "band": 4, "occupied": [(-1, -1), (0, -1)] }, { "host": &"kit.spatial.parcel.maze.house.003", "corner": (-4, 5), "base": 0, "top": 6, "band": 0, "occupied": [(0, -1), (0, 0)] }, { "host": &"kit.spatial.parcel.maze.house.021", "corner": (2, -9), "base": 2, "top": 6, "band": 2, "occupied": [(-1, -1), (-1, 0), (0, -1), (0, 0)] }, { "host": &"kit.spatial.parcel.maze.house.021", "corner": (4, -9), "base": 2, "top": 6, "band": 2, "occupied": [(-1, -1), (-1, 0)] }], "corner_no_host_join": 7, "corner_bearing_rejected": 17, "corner_bearing_example": "kit.spatial.parcel.maze.house.021 / (3, 1, -8) / base 2", "corner_no_bearing_or_space": 42, "corner_supported": 3, "corner_asset_blocked": 1, "corner_reservation_rejected": 15, "corner_reservation_example": "kit.spatial.parcel.maze.house.011 / (3, 10, -3) / base 8", "attempts": 104, "corner_join_door": 3, "corner_public_blocked": 1, "corbel_corner_accepted": 1, "corner_accepted": 1, "accepted": 1 }, "facade_bays": 0, "room_projections": 2, "retaining_relief": 5, "retaining_flight_joints": 8, "retaining_windows": 25, "fortified_windows": 30, "retaining_recesses": 31, "decor_clearance": { &"fort.block": 49, &"prop.doorstep": 20, &"window_box": 29 }, "fitted_window_boxes": 9, "joins": 8, "parallel_joins": 0, "fitted_eaves": 1, "dormers": { "moved": 0, "omitted": 0, "checked": 8 }, "seated_balcony_brackets": 0, "roof_blocked_windows": 53, "roof_fitted_windows": 21 }
+TOWN 31 large buildings=64 instances=3382 ms=40147
+GARDEN_GRASS 31 large instances=210 tiles=6
+BOUNDS cells=[P: (-24.0, 0.0, -96.0), S: (76.0, 33.0, 148.0)] payload=[P: (-56.0, -6.0, -100.0), S: (112.0, 48.6, 158.34)]
+REVIEW_CAMERA {"eye":"(-87.087, 97.47, 97.925)","fov":50.0,"target":"(0.0, 18.3, -20.83)","view":"31_large_overview"}
+REVIEW_CAMERA {"eye":"(69.97705, 53.9265, 49.14705)","fov":55.0,"target":"(0.0, 22.3, -20.83)","view":"31_large_orbit0"}
+REVIEW_CAMERA {"eye":"(-69.97705, 53.9265, 49.14705)","fov":55.0,"target":"(0.0, 22.3, -20.83)","view":"31_large_orbit1"}
+REVIEW_CAMERA {"eye":"(-69.97705, 53.9265, -90.80705)","fov":55.0,"target":"(0.0, 22.3, -20.83)","view":"31_large_orbit2"}
+REVIEW_CAMERA {"eye":"(69.97705, 53.9265, -90.80705)","fov":55.0,"target":"(0.0, 22.3, -20.83)","view":"31_large_orbit3"}
+REVIEW_CAMERA {"eye":"(32.0, 7.7, -44.0)","fov":70.0,"target":"(32.0, 7.7, -28.0)","view":"31_large_street0"}
+REVIEW_CAMERA {"eye":"(-4.0, 1.7, -16.0)","fov":70.0,"target":"(4.0, 1.7, 4.0)","view":"31_large_street1"}
+REVIEW_CAMERA {"eye":"(28.0, 13.7, 32.0)","fov":70.0,"target":"(20.0, 13.7, 0.0)","view":"31_large_street2"}
+REVIEW_CAMERA {"eye":"(-8.0, 1.7, -16.0)","fov":70.0,"target":"(-24.0, 1.7, 8.0)","view":"31_large_street3"}
+REVIEW_CAMERA {"eye":"(16.0, 7.7, -20.0)","fov":70.0,"target":"(28.0, 7.7, -48.0)","view":"31_large_street4"}
+REVIEW_CAMERA {"eye":"(-16.0, 1.7, 44.0)","fov":70.0,"target":"(-24.0, 1.7, 12.0)","view":"31_large_street5"}
+REVIEW_CAMERA {"eye":"(36.0, 7.7, -36.0)","fov":80.0,"target":"(21.0, 8.5, -38.0)","view":"31_large_court_plaza.00_0"}
+REVIEW_CAMERA {"eye":"(24.0, 7.7, -28.0)","fov":80.0,"target":"(26.0, 8.5, -43.0)","view":"31_large_court_plaza.00_1"}
+REVIEW_CAMERA {"eye":"(20.0, 7.7, -36.0)","fov":80.0,"target":"(31.0, 8.5, -38.0)","view":"31_large_court_plaza.00_2"}
+REVIEW_CAMERA {"eye":"(24.0, 7.7, -48.0)","fov":80.0,"target":"(26.0, 8.5, -33.0)","view":"31_large_court_plaza.00_3"}
+TOWN_CHARACTER 43:large {"clearing_area":9.0,"clearing_block_bias":1.22547880757319,"clearing_count":0.0,"clearing_cover":{"open":1.0},"clearing_extra_link_chance":0.272182445730581,"clearing_ground_weight":2.0,"clearing_purpose":{"green":0.369530641867335,"market":0.160494104703213,"paved":0.312848452296813,"workyard":0.15712680113264},"clearing_shape":{"blob":0.160461781118354,"rect":0.347060890753372,"three_rect":0.143169462267634,"two_rect":0.349307865860639}}
+TUNNELS 43 large [(1, 8, -1), (0, 8, -1), (-3, 0, 0), (-5, 0, 0), (-5, 0, -3), (-2, 0, -6), (1, 0, -7), (4, 0, -7), (-4, 0, 1)]
+STEPPED_HOUSES [{ "id": &"kit.spatial.parcel.maze.house.004", "at": (-3.75, 16.5, 6.75), "reach": 32.0 }, { "id": &"kit.spatial.parcel.maze.house.005", "at": (0.75, 16.5, 0.75), "reach": 24.0 }, { "id": &"kit.spatial.parcel.maze.house.009", "at": (5.25, 4.5, -2.25), "reach": 16.0 }, { "id": &"kit.spatial.parcel.maze.house.018", "at": (8.25, 15.0, -5.25), "reach": 40.0 }, { "id": &"kit.spatial.parcel.maze.house.023", "at": (-2.25, 4.5, 8.25), "reach": 16.0 }, { "id": &"kit.spatial.parcel.maze.house.029", "at": (-14.25, 3.0, -3.75), "reach": 16.0 }, { "id": &"kit.spatial.parcel.maze.house.036", "at": (-8.25, 4.5, -11.25), "reach": 24.0 }, { "id": &"kit.spatial.parcel.maze.house.046", "at": (8.25, 4.5, -23.25), "reach": 16.0 }, { "id": &"kit.spatial.parcel.maze.house.057", "at": (3.75, 12.0, -17.25), "reach": 8.0 }]
+ROOF_AUDIT { "clipped": 437, "removed": 22, "chimneys": { "moved": 0, "omitted": 0, "checked": 3 }, "towers": { "corner_attempts": 134, "corner_bearing_rejected": 63, "corner_bearing_example": "kit.spatial.parcel.maze.house.018 / (7, 7, -1) / base 8", "corner_no_bearing_or_space": 129, "corner_supported": 2, "corner_asset_blocked": 1, "corner_reservation_rejected": 39, "corner_reservation_example": "kit.spatial.parcel.maze.house.046 / (3, 4, -16) / base 2", "attempts": 312, "corner_join_quadrants": 1, "corner_quadrant_counts": { 4: 1 }, "corner_quadrant_examples": [{ "host": &"kit.spatial.parcel.maze.house.002", "corner": (0, -3), "base": 8, "top": 14, "band": 8, "occupied": [(-1, -1), (-1, 0), (0, -1), (0, 0)] }], "corner_no_host_join": 3, "corbel_corner_accepted": 1, "corner_accepted": 1, "corner_join_door": 2, "accepted": 1 }, "facade_bays": 2, "room_projections": 5, "retaining_relief": 7, "retaining_flight_joints": 12, "retaining_windows": 42, "fortified_windows": 0, "retaining_recesses": 4, "decor_clearance": { &"window_box": 49, &"prop.doorstep": 29 }, "fitted_window_boxes": 13, "joins": 4, "parallel_joins": 0, "fitted_eaves": 2, "dormers": { "moved": 0, "omitted": 0, "checked": 7 }, "seated_balcony_brackets": 0, "roof_blocked_windows": 72, "roof_fitted_windows": 40 }
+TOWN 43 large buildings=117 instances=4852 ms=24445
+GARDEN_GRASS 43 large instances=311 tiles=4
+BOUNDS cells=[P: (-56.0, 0.0, -80.0), S: (108.0, 39.0, 140.0)] payload=[P: (-58.40001, -6.0, -84.0), S: (114.4, 57.62, 146.34)]
+REVIEW_CAMERA {"eye":"(-81.687, 95.98, 98.925)","fov":50.0,"target":"(-1.200001, 22.81, -10.83)","view":"43_large_overview"}
+REVIEW_CAMERA {"eye":"(63.47375, 55.7365, 53.84375)","fov":55.0,"target":"(-1.200001, 26.81, -10.83)","view":"43_large_orbit0"}
+REVIEW_CAMERA {"eye":"(-65.87375, 55.7365, 53.84375)","fov":55.0,"target":"(-1.200001, 26.81, -10.83)","view":"43_large_orbit1"}
+REVIEW_CAMERA {"eye":"(-65.87375, 55.7365, -75.50375)","fov":55.0,"target":"(-1.200001, 26.81, -10.83)","view":"43_large_orbit2"}
+REVIEW_CAMERA {"eye":"(63.47375, 55.7365, -75.50375)","fov":55.0,"target":"(-1.200001, 26.81, -10.83)","view":"43_large_orbit3"}
+REVIEW_CAMERA {"eye":"(-32.0, 1.7, 20.0)","fov":70.0,"target":"(-16.0, 1.7, 20.0)","view":"43_large_street0"}
+REVIEW_CAMERA {"eye":"(-16.0, 1.7, -56.0)","fov":70.0,"target":"(12.0, 1.7, -56.0)","view":"43_large_street1"}
+REVIEW_CAMERA {"eye":"(-4.0, 10.7, -32.0)","fov":70.0,"target":"(-12.0, 10.7, -4.0)","view":"43_large_street2"}
+REVIEW_CAMERA {"eye":"(-12.0, 10.7, 4.0)","fov":70.0,"target":"(-8.0, 10.7, -28.0)","view":"43_large_street3"}
+REVIEW_CAMERA {"eye":"(-24.0, 25.7, 0.0)","fov":70.0,"target":"(-16.0, 25.7, -16.0)","view":"43_large_street4"}
+REVIEW_CAMERA {"eye":"(4.0, 1.7, 36.0)","fov":70.0,"target":"(-12.0, 1.7, 36.0)","view":"43_large_street5"}
+REVIEW_CAMERA {"eye":"(-12.0, 25.7, -4.0)","fov":80.0,"target":"(-27.0, 26.5, -6.0)","view":"43_large_court_plaza.00_0"}
+REVIEW_CAMERA {"eye":"(-20.0, 25.7, 0.0)","fov":80.0,"target":"(-22.0, 26.5, -11.0)","view":"43_large_court_plaza.00_1"}
+REVIEW_CAMERA {"eye":"(-32.0, 25.7, -8.0)","fov":80.0,"target":"(-17.0, 26.5, -6.0)","view":"43_large_court_plaza.00_2"}
+REVIEW_CAMERA {"eye":"(-20.0, 25.7, -16.0)","fov":80.0,"target":"(-22.0, 26.5, -1.0)","view":"43_large_court_plaza.00_3"}
+REVIEW_CAMERA {"eye":"(4.0, 19.7, -44.0)","fov":80.0,"target":"(-7.0, 20.5, -42.0)","view":"43_large_court_deck.00_0"}
+REVIEW_CAMERA {"eye":"(0.0, 19.7, -36.0)","fov":80.0,"target":"(-2.0, 20.5, -47.0)","view":"43_large_court_deck.00_1"}
+REVIEW_CAMERA {"eye":"(-8.0, 19.7, -40.0)","fov":80.0,"target":"(3.0, 20.5, -42.0)","view":"43_large_court_deck.00_2"}
+REVIEW_CAMERA {"eye":"(-4.0, 19.7, -48.0)","fov":80.0,"target":"(-2.0, 20.5, -37.0)","view":"43_large_court_deck.00_3"}
+REVIEW_CAMERA {"eye":"(-12.0, 19.7, -36.0)","fov":80.0,"target":"(-23.0, 20.5, -34.0)","view":"43_large_court_deck.01_0"}
+REVIEW_CAMERA {"eye":"(-16.0, 19.7, -28.0)","fov":80.0,"target":"(-18.0, 20.5, -39.0)","view":"43_large_court_deck.01_1"}
+REVIEW_CAMERA {"eye":"(-24.0, 19.7, -32.0)","fov":80.0,"target":"(-13.0, 20.5, -34.0)","view":"43_large_court_deck.01_2"}
+REVIEW_CAMERA {"eye":"(-20.0, 19.7, -40.0)","fov":80.0,"target":"(-18.0, 20.5, -29.0)","view":"43_large_court_deck.01_3"}
+TOWN_CHARACTER 83:grand {"clearing_area":17.0,"clearing_block_bias":1.67882299748139,"clearing_count":0.0,"clearing_cover":{"open":1.0},"clearing_extra_link_chance":0.547153991359097,"clearing_ground_weight":2.0,"clearing_purpose":{"green":0.278404731857377,"market":0.11975764395964,"paved":0.417788585785194,"workyard":0.184049038397789},"clearing_shape":{"blob":0.213807434769664,"rect":0.384852662829366,"three_rect":0.137778024197826,"two_rect":0.263561878203144}}
+TUNNELS 83 grand [(0, 1, 1), (-3, 0, 1), (-2, 0, 1), (-2, 0, 0), (2, 0, 0), (2, 0, 1), (2, 0, 2), (2, 0, 4), (13, 0, 5), (16, 0, 4), (16, 0, 3), (-2, 4, 2), (-1, 4, 2), (-1, 4, 1), (-6, 0, 2)]
+STEPPED_HOUSES [{ "id": &"kit.spatial.feature.landmark.01", "at": (12.75, 3.0, 2.25), "reach": 24.0 }, { "id": &"kit.spatial.parcel.maze.house.001", "at": (-3.75, 10.5, -11.25), "reach": 32.0 }, { "id": &"kit.spatial.parcel.maze.house.017", "at": (-9.75, 3.0, 44.25), "reach": 16.0 }, { "id": &"kit.spatial.parcel.maze.house.021", "at": (-3.75, 12.0, 2.25), "reach": 32.0 }]
+ROOF_AUDIT { "clipped": 410, "removed": 27, "chimneys": { "moved": 0, "omitted": 0, "checked": 4 }, "towers": { "corner_attempts": 81, "corner_supported": 3, "corner_public_blocked": 2, "corner_join_quadrants": 11, "corner_quadrant_counts": { 2: 9, 4: 2 }, "corner_quadrant_examples": [{ "host": &"kit.spatial.feature.landmark.01", "corner": (6, 2), "base": 0, "top": 2, "band": 0, "occupied": [(0, -1), (0, 0)] }, { "host": &"kit.spatial.feature.landmark.01", "corner": (9, 2), "base": 0, "top": 2, "band": 0, "occupied": [(-1, -1), (-1, 0), (0, -1), (0, 0)] }, { "host": &"kit.spatial.feature.landmark.01", "corner": (9, 4), "base": 0, "top": 2, "band": 0, "occupied": [(-1, -1), (0, -1)] }, { "host": &"kit.spatial.feature.landmark.01", "corner": (9, 2), "base": 0, "top": 4, "band": 0, "occupied": [(-1, -1), (-1, 0), (0, -1), (0, 0)] }, { "host": &"kit.spatial.feature.landmark.01", "corner": (6, 2), "base": 0, "top": 4, "band": 0, "occupied": [(0, -1), (0, 0)] }, { "host": &"kit.spatial.feature.landmark.01", "corner": (12, 2), "base": 0, "top": 4, "band": 0, "occupied": [(-1, -1), (-1, 0)] }, { "host": &"kit.spatial.parcel.maze.bridge.00.end.1.lower", "corner": (-2, 6), "base": 4, "top": 8, "band": 4, "occupied": [(-1, 0), (0, 0)] }, { "host": &"kit.spatial.parcel.maze.house.001", "corner": (-3, -8), "base": 3, "top": 5, "band": 3, "occupied": [(-1, -1), (0, -1)] }, { "host": &"kit.spatial.parcel.maze.house.008", "corner": (6, -5), "base": 1, "top": 7, "band": 1, "occupied": [(0, -1), (0, 0)] }, { "host": &"kit.spatial.parcel.maze.house.021", "corner": (-1, 2), "base": 4, "top": 8, "band": 4, "occupied": [(-1, -1), (0, -1)] }, { "host": &"kit.spatial.parcel.maze.house.021", "corner": (-1, 2), "base": 4, "top": 12, "band": 4, "occupied": [(-1, -1), (0, -1)] }], "corner_no_host_join": 11, "corner_reservation_rejected": 18, "corner_reservation_example": "kit.spatial.parcel.maze.house.026 / (4, 10, 1) / base 8", "corner_no_bearing_or_space": 67, "corner_accepted": 1, "corner_bearing_rejected": 30, "corner_bearing_example": "kit.spatial.parcel.maze.house.026 / (4, 3, 1) / base 4", "attempts": 192, "supported": 6, "host_fit": 6, "public_clear": 5, "neighbor_clear": 2, "accepted": 1 }, "facade_bays": 3, "room_projections": 4, "retaining_relief": 1, "retaining_flight_joints": 6, "retaining_windows": 11, "fortified_windows": 32, "retaining_recesses": 37, "decor_clearance": { &"fort.block": 154, &"window_box": 42, &"prop.doorstep": 29 }, "fitted_window_boxes": 7, "joins": 4, "parallel_joins": 0, "fitted_eaves": 1, "dormers": { "moved": 0, "omitted": 0, "checked": 7 }, "seated_balcony_brackets": 0, "roof_blocked_windows": 48, "roof_fitted_windows": 14 }
+TOWN 83 grand buildings=75 instances=4449 ms=42280
+GARDEN_GRASS 83 grand instances=253 tiles=6
+BOUNDS cells=[P: (-64.0, 0.0, -48.0), S: (204.0, 33.0, 196.0)] payload=[P: (-68.0, -6.0, -50.34), S: (210.34, 51.62, 200.98)]
+REVIEW_CAMERA {"eye":"(-78.517, 124.98, 207.905)","fov":50.0,"target":"(37.17, 19.81, 50.15)","view":"83_grand_overview"}
+REVIEW_CAMERA {"eye":"(130.128, 67.13651, 143.108)","fov":55.0,"target":"(37.17, 23.81, 50.15)","view":"83_grand_orbit0"}
+REVIEW_CAMERA {"eye":"(-55.78802, 67.13651, 143.108)","fov":55.0,"target":"(37.17, 23.81, 50.15)","view":"83_grand_orbit1"}
+REVIEW_CAMERA {"eye":"(-55.78802, 67.13651, -42.80802)","fov":55.0,"target":"(37.17, 23.81, 50.15)","view":"83_grand_orbit2"}
+REVIEW_CAMERA {"eye":"(130.128, 67.13651, -42.80802)","fov":55.0,"target":"(37.17, 23.81, 50.15)","view":"83_grand_orbit3"}
+REVIEW_CAMERA {"eye":"(92.0, 1.7, 76.0)","fov":70.0,"target":"(88.0, 1.7, 100.0)","view":"83_grand_street0"}
+REVIEW_CAMERA {"eye":"(16.0, 1.7, 28.0)","fov":70.0,"target":"(20.0, 1.7, 60.0)","view":"83_grand_street1"}
+REVIEW_CAMERA {"eye":"(108.0, 1.7, 40.0)","fov":70.0,"target":"(132.0, 1.7, 44.0)","view":"83_grand_street2"}
+REVIEW_CAMERA {"eye":"(132.0, 1.7, 44.0)","fov":70.0,"target":"(128.0, 1.7, 24.0)","view":"83_grand_street3"}
+REVIEW_CAMERA {"eye":"(4.0, 7.7, 28.0)","fov":70.0,"target":"(4.0, 7.7, 4.0)","view":"83_grand_street4"}
+REVIEW_CAMERA {"eye":"(4.0, 4.7, 16.0)","fov":70.0,"target":"(4.0, 4.7, -8.0)","view":"83_grand_street5"}
+REVIEW_CAMERA {"eye":"(-4.0, 10.7, -24.0)","fov":80.0,"target":"(-19.0, 11.5, -22.0)","view":"83_grand_court_plaza.00_0"}
+REVIEW_CAMERA {"eye":"(-12.0, 10.7, -12.0)","fov":80.0,"target":"(-14.0, 11.5, -27.0)","view":"83_grand_court_plaza.00_1"}
+REVIEW_CAMERA {"eye":"(-24.0, 10.7, -24.0)","fov":80.0,"target":"(-9.0, 11.5, -22.0)","view":"83_grand_court_plaza.00_2"}
+REVIEW_CAMERA {"eye":"(-16.0, 10.7, -32.0)","fov":80.0,"target":"(-14.0, 11.5, -17.0)","view":"83_grand_court_plaza.00_3"}
+TOWN_CHARACTER 13:standard {"clearing_area":10.0,"clearing_block_bias":1.56973323412831,"clearing_count":0.0,"clearing_cover":{"open":1.0},"clearing_extra_link_chance":0.412428858040751,"clearing_ground_weight":2.0,"clearing_purpose":{"green":0.589427226258674,"market":0.101801922867549,"paved":0.203320863167057,"workyard":0.10544998770672},"clearing_shape":{"blob":0.21992014286081,"rect":0.394037263483026,"three_rect":0.131509628887637,"two_rect":0.254532964768528}}
+TUNNELS 13 standard [(3, 0, 0), (2, 0, 0), (2, 0, -1), (0, 0, -2), (1, 0, -2), (3, 0, -2), (4, 0, -1), (4, 0, 2), (1, 4, 1)]
+STEPPED_HOUSES [{ "id": &"kit.spatial.parcel.maze.bridge.00.end.1.lower", "at": (5.25, 10.5, 6.75), "reach": 32.0 }, { "id": &"kit.spatial.parcel.maze.house.released.002", "at": (8.25, 9.0, -0.75), "reach": 16.0 }]
+ROOF_AUDIT { "clipped": 205, "removed": 61, "chimneys": { "moved": 0, "omitted": 0, "checked": 0 }, "towers": { "corner_attempts": 28, "corner_bearing_rejected": 15, "corner_bearing_example": "kit.spatial.parcel.maze.house.released.002 / (7, 3, 1) / base 4", "corner_no_bearing_or_space": 24, "corner_reservation_rejected": 7, "corner_reservation_example": "kit.spatial.parcel.maze.house.released.002 / (3, 4, -1) / base 4", "corner_supported": 2, "corbel_corner_accepted": 1, "corner_accepted": 1, "corner_join_door": 1, "corner_no_host_join": 2, "corner_public_blocked": 1, "corner_join_quadrants": 1, "corner_quadrant_counts": { 2: 1 }, "corner_quadrant_examples": [{ "host": &"kit.spatial.parcel.maze.house.008", "corner": (6, 10), "base": 0, "top": 2, "band": 0, "occupied": [(-1, -1), (0, -1)] }], "attempts": 40, "accepted": 1 }, "facade_bays": 0, "room_projections": 0, "retaining_relief": 0, "retaining_flight_joints": 4, "retaining_windows": 2, "fortified_windows": 34, "retaining_recesses": 35, "decor_clearance": { &"fort.block": 143, &"prop.doorstep": 16, &"window_box": 13 }, "fitted_window_boxes": 19, "joins": 3, "parallel_joins": 0, "fitted_eaves": 3, "dormers": { "moved": 0, "omitted": 0, "checked": 3 }, "seated_balcony_brackets": 0, "roof_blocked_windows": 59, "roof_fitted_windows": 17 }
+TOWN 13 standard buildings=40 instances=2142 ms=11619
+GARDEN_GRASS 13 standard instances=0 tiles=4
+BOUNDS cells=[P: (-8.0, 0.0, -48.0), S: (60.0, 27.0, 108.0)] payload=[P: (-42.34, -2.0, -50.34), S: (96.74001, 38.6, 112.68)]
+REVIEW_CAMERA {"eye":"(-55.944, 73.64, 90.50999)","fov":50.0,"target":"(6.029999, 17.3, 5.999996)","view":"13_standard_overview"}
+REVIEW_CAMERA {"eye":"(55.82799, 42.653, 55.79799)","fov":55.0,"target":"(6.029999, 21.3, 5.999996)","view":"13_standard_orbit0"}
+REVIEW_CAMERA {"eye":"(-43.76799, 42.653, 55.79799)","fov":55.0,"target":"(6.029999, 21.3, 5.999996)","view":"13_standard_orbit1"}
+REVIEW_CAMERA {"eye":"(-43.76799, 42.653, -43.798)","fov":55.0,"target":"(6.029999, 21.3, 5.999996)","view":"13_standard_orbit2"}
+REVIEW_CAMERA {"eye":"(55.82799, 42.653, -43.798)","fov":55.0,"target":"(6.029999, 21.3, 5.999996)","view":"13_standard_orbit3"}
+REVIEW_CAMERA {"eye":"(16.0, 13.7, 40.0)","fov":70.0,"target":"(-4.0, 13.7, 36.0)","view":"13_standard_street0"}
+REVIEW_CAMERA {"eye":"(-12.0, 7.7, 40.0)","fov":70.0,"target":"(-12.0, 7.7, 16.0)","view":"13_standard_street1"}
+REVIEW_CAMERA {"eye":"(4.0, 13.7, 32.0)","fov":70.0,"target":"(16.0, 13.7, 44.0)","view":"13_standard_street2"}
+REVIEW_CAMERA {"eye":"(-12.0, 1.7, -20.0)","fov":70.0,"target":"(12.0, 1.7, -16.0)","view":"13_standard_street3"}
+REVIEW_CAMERA {"eye":"(28.0, 1.7, -12.0)","fov":70.0,"target":"(44.0, 1.7, -12.0)","view":"13_standard_street4"}
+REVIEW_CAMERA {"eye":"(4.0, 13.7, 36.0)","fov":70.0,"target":"(20.0, 13.7, 32.0)","view":"13_standard_street5"}
+REVIEW_CAMERA {"eye":"(4.0, 1.7, -36.0)","fov":80.0,"target":"(-7.0, 2.5, -34.0)","view":"13_standard_court_plaza.00_0"}
+REVIEW_CAMERA {"eye":"(0.0, 1.7, -28.0)","fov":80.0,"target":"(-2.0, 2.5, -39.0)","view":"13_standard_court_plaza.00_1"}
+REVIEW_CAMERA {"eye":"(-8.0, 1.7, -32.0)","fov":80.0,"target":"(3.0, 2.5, -34.0)","view":"13_standard_court_plaza.00_2"}
+REVIEW_CAMERA {"eye":"(-4.0, 1.7, -40.0)","fov":80.0,"target":"(-2.0, 2.5, -29.0)","view":"13_standard_court_plaza.00_3"}
+REVIEW_CAMERA {"eye":"(52.0, 1.7, -12.0)","fov":80.0,"target":"(41.0, 2.5, -10.0)","view":"13_standard_court_deck.00_0"}
+REVIEW_CAMERA {"eye":"(48.0, 1.7, -4.0)","fov":80.0,"target":"(46.0, 2.5, -15.0)","view":"13_standard_court_deck.00_1"}
+REVIEW_CAMERA {"eye":"(40.0, 1.7, -8.0)","fov":80.0,"target":"(51.0, 2.5, -10.0)","view":"13_standard_court_deck.00_2"}
+REVIEW_CAMERA {"eye":"(44.0, 1.7, -16.0)","fov":80.0,"target":"(46.0, 2.5, -5.0)","view":"13_standard_court_deck.00_3"}
+TOWN_CHARACTER 103:standard {"clearing_area":9.0,"clearing_block_bias":1.51694259295851,"clearing_count":0.0,"clearing_cover":{"open":1.0},"clearing_extra_link_chance":0.407997492987089,"clearing_ground_weight":2.0,"clearing_purpose":{"green":0.527840899626237,"market":0.0969699137091398,"paved":0.194381181615014,"workyard":0.18080800504961},"clearing_shape":{"blob":0.22003793941209,"rect":0.37132786408775,"three_rect":0.0784806140820923,"two_rect":0.330153582418068}}
+TUNNELS 103 standard [(-1, 1, -1), (1, 0, 1), (1, 0, 2), (1, 0, -2), (1, 0, -3), (-1, 0, -3), (-2, 0, -3), (-2, 4, -1)]
+STEPPED_HOUSES [{ "id": &"kit.spatial.feature.landmark.01", "at": (-2.25, 3.0, 9.75), "reach": 24.0 }]
+ROOF_AUDIT { "clipped": 125, "removed": 16, "chimneys": { "moved": 0, "omitted": 0, "checked": 1 }, "towers": { "corner_attempts": 4, "corner_bearing_rejected": 4, "corner_bearing_example": "kit.spatial.parcel.maze.house.007 / (-3, 3, -2) / base 4", "corner_no_bearing_or_space": 4, "attempts": 20, "accepted": 0 }, "facade_bays": 0, "room_projections": 1, "retaining_relief": 3, "retaining_flight_joints": 0, "retaining_windows": 12, "fortified_windows": 12, "retaining_recesses": 14, "decor_clearance": { &"fort.block": 84, &"window_box": 19, &"prop.doorstep": 10 }, "fitted_window_boxes": 14, "joins": 1, "parallel_joins": 0, "fitted_eaves": 0, "dormers": { "moved": 0, "omitted": 0, "checked": 2 }, "seated_balcony_brackets": 0, "roof_blocked_windows": 29, "roof_fitted_windows": 15 }
+TOWN 103 standard buildings=22 instances=1843 ms=5786
+GARDEN_GRASS 103 standard instances=72 tiles=4
+BOUNDS cells=[P: (-40.0, 0.0, -72.0), S: (108.0, 27.0, 124.0)] payload=[P: (-44.0, -2.0, -74.70598), S: (122.706, 38.6, 129.046)]
+REVIEW_CAMERA {"eye":"(-53.62231, 81.823, 86.60151)","fov":50.0,"target":"(17.35299, 17.3, -10.18298)","view":"103_standard_overview"}
+REVIEW_CAMERA {"eye":"(74.3838, 46.33535, 46.84782)","fov":55.0,"target":"(17.35299, 21.3, -10.18298)","view":"103_standard_orbit0"}
+REVIEW_CAMERA {"eye":"(-39.67782, 46.33535, 46.84782)","fov":55.0,"target":"(17.35299, 21.3, -10.18298)","view":"103_standard_orbit1"}
+REVIEW_CAMERA {"eye":"(-39.67782, 46.33535, -67.21379)","fov":55.0,"target":"(17.35299, 21.3, -10.18298)","view":"103_standard_orbit2"}
+REVIEW_CAMERA {"eye":"(74.3838, 46.33535, -67.21379)","fov":55.0,"target":"(17.35299, 21.3, -10.18298)","view":"103_standard_orbit3"}
+REVIEW_CAMERA {"eye":"(4.0, 1.7, -32.0)","fov":70.0,"target":"(8.0, 1.7, -16.0)","view":"103_standard_street0"}
+REVIEW_CAMERA {"eye":"(-4.0, 1.7, -24.0)","fov":70.0,"target":"(12.0, 1.7, -24.0)","view":"103_standard_street1"}
+REVIEW_CAMERA {"eye":"(20.0, 1.7, 4.0)","fov":70.0,"target":"(8.0, 1.7, -16.0)","view":"103_standard_street2"}
+REVIEW_CAMERA {"eye":"(32.0, 1.7, 28.0)","fov":70.0,"target":"(32.0, 1.7, 4.0)","view":"103_standard_street3"}
+REVIEW_CAMERA {"eye":"(16.0, 1.7, 4.0)","fov":70.0,"target":"(36.0, 1.7, 4.0)","view":"103_standard_street4"}
+REVIEW_CAMERA {"eye":"(-24.0, 1.7, -36.0)","fov":70.0,"target":"(-32.0, 1.7, -16.0)","view":"103_standard_street5"}
+REVIEW_CAMERA {"eye":"(20.0, 13.7, 4.0)","fov":80.0,"target":"(9.0, 14.5, 6.0)","view":"103_standard_court_plaza.00_0"}
+REVIEW_CAMERA {"eye":"(16.0, 13.7, 12.0)","fov":80.0,"target":"(14.0, 14.5, 1.0)","view":"103_standard_court_plaza.00_1"}
+REVIEW_CAMERA {"eye":"(8.0, 13.7, 8.0)","fov":80.0,"target":"(19.0, 14.5, 6.0)","view":"103_standard_court_plaza.00_2"}
+REVIEW_CAMERA {"eye":"(12.0, 13.7, 0.0)","fov":80.0,"target":"(14.0, 14.5, 11.0)","view":"103_standard_court_plaza.00_3"}
+TOWN_CHARACTER 7:compact {"clearing_area":8.0,"clearing_block_bias":1.18291007959391,"clearing_count":0.0,"clearing_cover":{"open":1.0},"clearing_extra_link_chance":0.408600950737795,"clearing_ground_weight":2.0,"clearing_purpose":{"green":0.376393344194554,"market":0.094527138057479,"paved":0.262677067501603,"workyard":0.266402450246364},"clearing_shape":{"blob":0.221970462962084,"rect":0.398752441928642,"three_rect":0.122472533287125,"two_rect":0.25680456182215}}
+TUNNELS 7 compact [(0, 0, -1), (0, 0, -2)]
+STEPPED_HOUSES [{ "id": &"kit.spatial.parcel.maze.house.000", "at": (-2.25, 3.0, 6.75), "reach": 8.0 }]
+ROOF_AUDIT { "clipped": 192, "removed": 86, "chimneys": { "moved": 0, "omitted": 0, "checked": 1 }, "towers": { "corner_attempts": 4, "corner_bearing_rejected": 4, "corner_bearing_example": "kit.spatial.parcel.maze.house.007 / (-1, 2, 4) / base 3", "corner_no_bearing_or_space": 4, "attempts": 12, "accepted": 0 }, "facade_bays": 0, "room_projections": 0, "retaining_relief": 0, "retaining_flight_joints": 4, "retaining_windows": 11, "fortified_windows": 0, "retaining_recesses": 1, "decor_clearance": { &"prop.doorstep": 6, &"window_box": 5 }, "fitted_window_boxes": 9, "joins": 2, "parallel_joins": 0, "fitted_eaves": 2, "dormers": { "moved": 0, "omitted": 0, "checked": 3 }, "seated_balcony_brackets": 0, "roof_blocked_windows": 41, "roof_fitted_windows": 9 }
+TOWN 7 compact buildings=15 instances=1121 ms=8480
+GARDEN_GRASS 7 compact instances=0 tiles=0
+BOUNDS cells=[P: (-40.0, 0.0, -24.0), S: (76.0, 18.0, 68.0)] payload=[P: (-42.70597, -2.92, -42.34), S: (82.70598, 39.0, 88.68001)]
+REVIEW_CAMERA {"eye":"(-50.12699, 60.92001, 68.51001)","fov":50.0,"target":"(-1.352985, 16.58, 2.0)","view":"7_compact_overview"}
+REVIEW_CAMERA {"eye":"(37.83841, 36.533, 41.19139)","fov":55.0,"target":"(-1.352985, 20.58, 2.0)","view":"7_compact_orbit0"}
+REVIEW_CAMERA {"eye":"(-40.54438, 36.533, 41.19139)","fov":55.0,"target":"(-1.352985, 20.58, 2.0)","view":"7_compact_orbit1"}
+REVIEW_CAMERA {"eye":"(-40.54438, 36.533, -37.19139)","fov":55.0,"target":"(-1.352985, 20.58, 2.0)","view":"7_compact_orbit2"}
+REVIEW_CAMERA {"eye":"(37.83841, 36.533, -37.19139)","fov":55.0,"target":"(-1.352985, 20.58, 2.0)","view":"7_compact_orbit3"}
+REVIEW_CAMERA {"eye":"(-28.0, 1.7, 12.0)","fov":70.0,"target":"(0.0, 1.7, 8.0)","view":"7_compact_street0"}
+REVIEW_CAMERA {"eye":"(-4.0, 1.7, 24.0)","fov":70.0,"target":"(12.0, 1.7, 24.0)","view":"7_compact_street1"}
+REVIEW_CAMERA {"eye":"(-12.0, 1.7, 8.0)","fov":70.0,"target":"(-32.0, 1.7, 12.0)","view":"7_compact_street2"}
+REVIEW_CAMERA {"eye":"(-16.0, 1.7, 8.0)","fov":70.0,"target":"(12.0, 1.7, 16.0)","view":"7_compact_street3"}
+REVIEW_CAMERA {"eye":"(0.0, 1.7, 28.0)","fov":70.0,"target":"(0.0, 1.7, -4.0)","view":"7_compact_street4"}
+REVIEW_CAMERA {"eye":"(-32.0, 7.7, -16.0)","fov":70.0,"target":"(-20.0, 7.7, 0.0)","view":"7_compact_street5"}
+TOWN_CHARACTER 61:standard {"clearing_area":7.0,"clearing_block_bias":1.46233608223491,"clearing_count":0.0,"clearing_cover":{"open":1.0},"clearing_extra_link_chance":0.399028585896944,"clearing_ground_weight":2.0,"clearing_purpose":{"green":0.573537470450379,"market":0.0897363118995522,"paved":0.215427509443325,"workyard":0.121298708206743},"clearing_shape":{"blob":0.186831786653083,"rect":0.320279012384537,"three_rect":0.146813398073233,"two_rect":0.346075802889147}}
+TUNNELS 61 standard [(1, 4, 1), (1, 0, -2), (2, 0, -3), (-1, 0, 4)]
+STEPPED_HOUSES [{ "id": &"kit.spatial.parcel.maze.house.003", "at": (0.75, 4.5, 12.75), "reach": 8.0 }, { "id": &"kit.spatial.parcel.maze.house.005", "at": (0.75, 10.5, 5.25), "reach": 24.0 }]
+ROOF_AUDIT { "clipped": 239, "removed": 75, "chimneys": { "moved": 0, "omitted": 0, "checked": 2 }, "towers": { "corner_attempts": 18, "corner_bearing_rejected": 14, "corner_bearing_example": "kit.spatial.parcel.maze.house.007 / (-1, 4, -1) / base 5", "corner_no_bearing_or_space": 18, "corner_reservation_rejected": 2, "corner_reservation_example": "kit.spatial.parcel.maze.house.005 / (-1, 5, 1) / base 6", "attempts": 44, "accepted": 0 }, "facade_bays": 0, "room_projections": 0, "retaining_relief": 1, "retaining_flight_joints": 6, "retaining_windows": 7, "fortified_windows": 0, "retaining_recesses": 9, "decor_clearance": { &"window_box": 13, &"prop.doorstep": 8 }, "fitted_window_boxes": 30, "joins": 6, "parallel_joins": 0, "fitted_eaves": 2, "dormers": { "moved": 1, "omitted": 0, "checked": 6 }, "seated_balcony_brackets": 0, "roof_blocked_windows": 68, "roof_fitted_windows": 18 }
+TOWN 61 standard buildings=41 instances=1968 ms=11309
+GARDEN_GRASS 61 standard instances=0 tiles=0
+BOUNDS cells=[P: (-40.0, 0.0, -48.0), S: (92.0, 27.0, 100.0)] payload=[P: (-42.34, -2.0, -52.0), S: (96.68001, 38.6, 106.34)]
+REVIEW_CAMERA {"eye":"(-52.48701, 70.47, 80.92501)","fov":50.0,"target":"(6.0, 17.3, 1.170006)","view":"61_standard_overview"}
+REVIEW_CAMERA {"eye":"(52.99609, 41.2265, 48.16609)","fov":55.0,"target":"(6.0, 21.3, 1.170006)","view":"61_standard_orbit0"}
+REVIEW_CAMERA {"eye":"(-40.99609, 41.2265, 48.16609)","fov":55.0,"target":"(6.0, 21.3, 1.170006)","view":"61_standard_orbit1"}
+REVIEW_CAMERA {"eye":"(-40.99609, 41.2265, -45.82608)","fov":55.0,"target":"(6.0, 21.3, 1.170006)","view":"61_standard_orbit2"}
+REVIEW_CAMERA {"eye":"(52.99609, 41.2265, -45.82608)","fov":55.0,"target":"(6.0, 21.3, 1.170006)","view":"61_standard_orbit3"}
+REVIEW_CAMERA {"eye":"(24.0, 1.7, -28.0)","fov":70.0,"target":"(-4.0, 1.7, -16.0)","view":"61_standard_street0"}
+REVIEW_CAMERA {"eye":"(-8.0, 1.7, 32.0)","fov":70.0,"target":"(-24.0, 1.7, 20.0)","view":"61_standard_street1"}
+REVIEW_CAMERA {"eye":"(16.0, 4.7, 32.0)","fov":70.0,"target":"(6.133938, 4.7, 32.0)","view":"61_standard_street2"}
+REVIEW_CAMERA {"eye":"(-12.0, 1.7, 36.0)","fov":70.0,"target":"(-12.0, 1.7, 0.0)","view":"61_standard_street3"}
+REVIEW_CAMERA {"eye":"(0.0, 1.7, -12.0)","fov":70.0,"target":"(24.0, 1.7, -28.0)","view":"61_standard_street4"}
+REVIEW_CAMERA {"eye":"(-12.0, 1.7, 36.0)","fov":70.0,"target":"(-16.0, 1.7, 20.0)","view":"61_standard_street5"}
+REVIEW_DONE docs/qa/2026-10-07-town-odds/clearings/off

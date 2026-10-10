@@ -1,0 +1,106 @@
+{
+  "103:grand": {
+    "before": 2,
+    "after": 3,
+    "removed": [],
+    "added": [
+      "[('band', 8), ('bounds', '[P: (-0.0, 12.0, -0.65), S: (4.0, 3.0, 0.65)]'), ('dir', 3), ('envelope', '[P: (-0.2, 11.0, -1.05), S: (4.4, 4.0, 1.05)]'), ('host', 'kit.spatial.parcel.maze.bridge.00.end.1.lower')]"
+    ],
+    "same_walk_ceilings": true,
+    "same_towers": true,
+    "floating": 0,
+    "air_intrusions": 0
+  },
+  "13:grand": {
+    "before": 0,
+    "after": 0,
+    "removed": [],
+    "added": [],
+    "same_walk_ceilings": true,
+    "same_towers": true,
+    "floating": 0,
+    "air_intrusions": 0
+  },
+  "301:grand": {
+    "before": 3,
+    "after": 3,
+    "removed": [],
+    "added": [],
+    "same_walk_ceilings": true,
+    "same_towers": true,
+    "floating": 0,
+    "air_intrusions": 0
+  },
+  "31:large": {
+    "before": 2,
+    "after": 2,
+    "removed": [],
+    "added": [],
+    "same_walk_ceilings": true,
+    "same_towers": true,
+    "floating": 0,
+    "air_intrusions": 0
+  },
+  "43:grand": {
+    "before": 3,
+    "after": 3,
+    "removed": [],
+    "added": [],
+    "same_walk_ceilings": true,
+    "same_towers": true,
+    "floating": 0,
+    "air_intrusions": 0
+  },
+  "53:grand": {
+    "before": 6,
+    "after": 6,
+    "removed": [],
+    "added": [],
+    "same_walk_ceilings": true,
+    "same_towers": true,
+    "floating": 0,
+    "air_intrusions": 0
+  },
+  "63:grand": {
+    "before": 3,
+    "after": 4,
+    "removed": [],
+    "added": [
+      "[('band', 6), ('bounds', '[P: (8.0, 9.0, -12.0), S: (0.65, 3.0, 4.0)]'), ('dir', 0), ('envelope', '[P: (8.0, 8.0, -12.2), S: (1.05, 4.0, 4.4)]'), ('host', 'kit.spatial.parcel.maze.house.010')]"
+    ],
+    "same_walk_ceilings": true,
+    "same_towers": true,
+    "floating": 0,
+    "air_intrusions": 0
+  },
+  "83:grand": {
+    "before": 2,
+    "after": 2,
+    "removed": [],
+    "added": [],
+    "same_walk_ceilings": true,
+    "same_towers": true,
+    "floating": 0,
+    "air_intrusions": 0
+  },
+  "8:grand": {
+    "before": 5,
+    "after": 5,
+    "removed": [],
+    "added": [],
+    "same_walk_ceilings": true,
+    "same_towers": true,
+    "floating": 0,
+    "air_intrusions": 0
+  },
+  "9:grand": {
+    "before": 5,
+    "after": 5,
+    "removed": [],
+    "added": [],
+    "same_walk_ceilings": true,
+    "same_towers": true,
+    "floating": 0,
+    "air_intrusions": 0
+  }
+}

@@ -21,3 +21,7 @@ extends Resource
 @export var tint_group: StringName
 @export var supports_instance_color: bool = false
 @export var provenance_id: StringName
+
+## Optional named-surface colour multipliers. Variants share native geometry,
+## collision and textures; the render cache owns private material copies.
+@export var material_tints: Dictionary = {}

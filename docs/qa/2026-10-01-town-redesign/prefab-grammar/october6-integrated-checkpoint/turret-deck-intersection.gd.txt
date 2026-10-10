@@ -1,0 +1,28 @@
+extends SceneTree
+const Corner = preload("res://scripts/terrain/features/villages/kit/KitCornerTowers.gd")
+const Clip = preload("res://tests/fixtures/kit_roof_public_air_audit.gd")
+func _init():call_deferred("_run")
+func _run():
+ var catalog:=EnvironmentCatalog.load_default()
+ var cache:=EnvironmentRenderCache.new(catalog)
+ var parts:=Corner.narrow_parts(2)
+ parts.push_front({"asset_id":&"pure_village.roof_turret.support","role":&"tower.support","transform":Transform3D.IDENTITY})
+ var pose:=Transform3D(Basis(Vector3.UP,PI/4),Vector3(12,12,-4))
+ var box:=AABB(Vector3(10,11.94831,-4),Vector3(2,0.179408,2)).grow(-0.0001)
+ var planes:Array[Plane]=[Plane(Vector3.RIGHT,box.end.x),Plane(Vector3.LEFT,-box.position.x),Plane(Vector3.UP,box.end.y),Plane(Vector3.DOWN,-box.position.y),Plane(Vector3.BACK,box.end.z),Plane(Vector3.FORWARD,-box.position.z)]
+ var total:=0.0
+ for part:Dictionary in parts:
+  var area:=0.0
+  for piece:EnvironmentVisualPiece in cache.visual(part.asset_id).pieces:
+   var transform:Transform3D=pose*part.transform*piece.local_transform
+   var faces:=piece.mesh.get_faces()
+   for i in range(0,faces.size(),3):
+    var polygon:=PackedVector3Array([transform*faces[i],transform*faces[i+1],transform*faces[i+2]])
+    for plane:Plane in planes:
+     polygon=Clip._clip(polygon,plane)
+     if polygon.size()<3:break
+    for j in range(1,polygon.size()-1):area+=(polygon[j]-polygon[0]).cross(polygon[j+1]-polygon[0]).length()*0.5
+  print("DECK_INTERSECTION ",part.asset_id," surface_area=",area)
+  total+=area
+ print("TOTAL_INTERSECTION ",total)
+ quit()

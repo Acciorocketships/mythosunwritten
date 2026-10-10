@@ -1,0 +1,82 @@
+[
+  {
+    "end": "(39.43277, 4.569588, -31.63765)",
+    "passed": true,
+    "recipe": false,
+    "reverse": false,
+    "scale": 1.0,
+    "seed": 31,
+    "target": "(39.375, 4.5, -31.78346)",
+    "yaw": 0.0
+  },
+  {
+    "end": "(39.98724, 3.000182, -28.19061)",
+    "passed": true,
+    "recipe": false,
+    "reverse": true,
+    "scale": 1.0,
+    "seed": 31,
+    "target": "(40.0, 3.0, -28.0)",
+    "yaw": 0.0
+  },
+  {
+    "end": "(38.24379, 4.224298, -28.00002)",
+    "passed": false,
+    "recipe": false,
+    "reverse": false,
+    "scale": 2.0,
+    "seed": 31,
+    "target": "(35.33309, 6.0, -28.0)",
+    "yaw": 1.5707963267949
+  },
+  {
+    "end": "(39.85617, 3.000249, -27.99928)",
+    "passed": true,
+    "recipe": false,
+    "reverse": true,
+    "scale": 2.0,
+    "seed": 31,
+    "target": "(40.0, 3.0, -28.0)",
+    "yaw": 1.5707963267949
+  },
+  {
+    "end": "(39.99998, 4.224298, -26.24376)",
+    "passed": false,
+    "recipe": false,
+    "reverse": false,
+    "scale": 2.0,
+    "seed": 8,
+    "target": "(40.0, 6.0, -23.33309)",
+    "yaw": 3.14159265358979
+  },
+  {
+    "end": "(40.00072, 3.000025, -27.85618)",
+    "passed": true,
+    "recipe": false,
+    "reverse": true,
+    "scale": 2.0,
+    "seed": 8,
+    "target": "(40.0, 3.0, -28.0)",
+    "yaw": 3.14159265358979
+  },
+  {
+    "end": "(41.75621, 4.224298, -27.99998)",
+    "passed": false,
+    "recipe": false,
+    "reverse": false,
+    "scale": 2.0,
+    "seed": 11,
+    "target": "(44.66691, 6.0, -28.0)",
+    "yaw": 4.71238898038469
+  },
+  {
+    "end": "(40.14336, 2.999111, -28.00072)",
+    "passed": true,
+    "recipe": false,
+    "reverse": true,
+    "scale": 2.0,
+    "seed": 11,
+    "target": "(40.0, 3.0, -28.0)",
+    "yaw": 4.71238898038469
+  }
+]

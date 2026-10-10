@@ -1,0 +1,99 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_public_masonry_family.gd
+* test_public_retaining_courses_use_the_same_native_stone_as_citadel_walls
+1/1 passed.
+
+
+res://tests/test_september29_town_materials.gd
+* test_public_walking_surfaces_are_drawn_in_kit_timber
+STEPPED_HOUSES []
+ROOF_AUDIT { "clipped": 193, "removed": 17, "chimneys": { "moved": 0, "omitted": 0, "checked": 4 }, "towers": { "corner_attempts": 7, "corner_reservation_rejected": 5, "corner_reservation_example": "kit.spatial.parcel.maze.house.000 / (2, 0, -5) / base 0", "corner_no_bearing_or_space": 5, "corner_join_quadrants": 2, "corner_no_host_join": 2, "attempts": 28, "accepted": 0 }, "facade_bays": 0, "room_projections": 0, "retaining_relief": 0, "retaining_flight_joints": 4, "retaining_windows": 8, "fortified_windows": 0, "retaining_recesses": 4, "decor_clearance": { &"prop.doorstep": 7, &"window_box": 8 }, "joins": 4, "fitted_eaves": 3, "dormers": { "moved": 1, "omitted": 0, "checked": 4 }, "roof_blocked_windows": 18, "roof_fitted_windows": 12 }
+STEPPED_HOUSES [{ "id": &"kit.spatial.parcel.maze.house.010", "at": (6.75, 4.5, -14.25), "reach": 8.0 }]
+ROOF_AUDIT { "clipped": 255, "removed": 31, "chimneys": { "moved": 0, "omitted": 0, "checked": 3 }, "towers": { "corner_attempts": 23, "corner_join_quadrants": 5, "corner_no_host_join": 5, "corner_reservation_rejected": 10, "corner_reservation_example": "kit.spatial.parcel.maze.house.010 / (3, 0, -11) / base 0", "corner_no_bearing_or_space": 18, "attempts": 92, "supported": 1, "host_fit": 1, "corner_bearing_rejected": 8, "corner_bearing_example": "kit.spatial.parcel.maze.house.014 / (-1, 3, 3) / base 4", "accepted": 0 }, "facade_bays": 0, "room_projections": 0, "retaining_relief": 2, "retaining_flight_joints": 4, "retaining_windows": 5, "fortified_windows": 11, "retaining_recesses": 17, "decor_clearance": { &"fort.block": 71, &"window_box": 31, &"prop.doorstep": 15 }, "joins": 4, "fitted_eaves": 5, "dormers": { "moved": 0, "omitted": 0, "checked": 3 }, "roof_blocked_windows": 35, "roof_fitted_windows": 23 }
+STEPPED_HOUSES []
+ROOF_AUDIT { "clipped": 198, "removed": 10, "chimneys": { "moved": 0, "omitted": 0, "checked": 4 }, "towers": { "corner_attempts": 11, "corner_bearing_rejected": 6, "corner_bearing_example": "kit.spatial.parcel.maze.bridge.00.end.1.lower / (-4, 3, 3) / base 4", "corner_no_bearing_or_space": 9, "attempts": 56, "corner_supported": 2, "corner_public_blocked": 1, "corner_reservation_rejected": 3, "corner_reservation_example": "kit.spatial.parcel.maze.house.001 / (4, 2, -5) / base 0", "corner_accepted": 1, "accepted": 1 }, "facade_bays": 0, "room_projections": 0, "retaining_relief": 0, "retaining_flight_joints": 0, "retaining_windows": 3, "fortified_windows": 20, "retaining_recesses": 20, "decor_clearance": { &"fort.block": 76, &"window_box": 25, &"prop.doorstep": 25 }, "joins": 2, "fitted_eaves": 5, "dormers": { "moved": 0, "omitted": 1, "checked": 5 }, "roof_blocked_windows": 27, "roof_fitted_windows": 12 }
+STEPPED_HOUSES [{ "id": &"kit.spatial.parcel.maze.house.000", "at": (0.75, 6.0, -5.25), "reach": 8.0 }, { "id": &"kit.spatial.parcel.maze.house.001", "at": (2.25, 3.0, 0.75), "reach": 16.0 }]
+ROOF_AUDIT { "clipped": 113, "removed": 35, "chimneys": { "moved": 0, "omitted": 0, "checked": 2 }, "towers": { "corner_attempts": 26, "corner_reservation_rejected": 16, "corner_reservation_example": "kit.spatial.parcel.maze.house.013 / (8, 0, -1) / base 0", "corner_no_bearing_or_space": 26, "attempts": 80, "corner_bearing_rejected": 10, "corner_bearing_example": "kit.spatial.parcel.maze.house.005 / (3, 4, 1) / base 5", "accepted": 0 }, "facade_bays": 0, "room_projections": 0, "retaining_relief": 1, "retaining_flight_joints": 5, "retaining_windows": 5, "fortified_windows": 0, "retaining_recesses": 4, "decor_clearance": { &"window_box": 19, &"prop.doorstep": 9 }, "joins": 2, "fitted_eaves": 1, "dormers": { "moved": 0, "omitted": 0, "checked": 0 }, "roof_blocked_windows": 52, "roof_fitted_windows": 9 }
+STEPPED_HOUSES []
+ROOF_AUDIT { "clipped": 149, "removed": 52, "chimneys": { "moved": 0, "omitted": 0, "checked": 6 }, "towers": { "corner_attempts": 26, "corner_bearing_rejected": 22, "corner_bearing_example": "kit.spatial.parcel.maze.house.008 / (3, 5, -9) / base 6", "corner_no_bearing_or_space": 24, "attempts": 92, "corner_join_door": 1, "corner_no_host_join": 1, "corner_supported": 1, "corner_public_blocked": 1, "corner_reservation_rejected": 2, "corner_reservation_example": "kit.spatial.parcel.maze.house.012 / (-5, 2, -9) / base 0", "accepted": 0 }, "facade_bays": 0, "room_projections": 0, "retaining_relief": 4, "retaining_flight_joints": 7, "retaining_windows": 19, "fortified_windows": 0, "retaining_recesses": 7, "decor_clearance": { &"prop.doorstep": 16, &"window_box": 24 }, "joins": 3, "fitted_eaves": 1, "dormers": { "moved": 0, "omitted": 0, "checked": 10 }, "roof_blocked_windows": 72, "roof_fitted_windows": 16 }
+    [Failed]:  1260018864828801968/compact: KayKit kaykit.grass.01 is only terrain skin
+      at line 66
+    [Failed]:  1260018864828801968/compact: KayKit kaykit.grass.02 is only terrain skin
+      at line 66
+    [Failed]:  1260018864828801968/compact: legacy pack piece sfv.fabric.wall.rock.plain.002.miter3 survives in a kit town
+      at line 63
+    [Failed]:  1998423929946073270/compact: KayKit kaykit.grass.01 is only terrain skin
+      at line 66
+    [Failed]:  1998423929946073270/compact: KayKit kaykit.grass.02 is only terrain skin
+      at line 66
+    [Failed]:  1998423929946073270/compact: legacy pack piece sfv.fabric.wall.rock.plain.002.miter3 survives in a kit town
+      at line 63
+    [Failed]:  3/standard: KayKit kaykit.grass.01 is only terrain skin
+      at line 66
+    [Failed]:  3/standard: KayKit kaykit.grass.02 is only terrain skin
+      at line 66
+    [Failed]:  3/standard: legacy pack piece sfv.fabric.wall.rock.plain.002.miter3 survives in a kit town
+      at line 63
+    [Failed]:  7/standard: legacy pack piece sfv.fabric.wall.rock.plain.002.miter3 survives in a kit town
+      at line 63
+    [Failed]:  4/large: legacy pack piece sfv.fabric.wall.rock.plain.002.miter3 survives in a kit town
+      at line 63
+* test_flight_guards_keep_collision_and_draw_kit_railings
+* test_no_arch_frame_is_embedded_in_a_town
+* test_no_stone_storey_stands_on_a_flush_course
+* test_gate_approach_flight_is_drawn_in_kit_timber
+4/5 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_september29_town_materials.gd
+- test_public_walking_surfaces_are_drawn_in_kit_timber
+    [Failed]:  1260018864828801968/compact: KayKit kaykit.grass.01 is only terrain skin
+          at line 66
+    [Failed]:  1260018864828801968/compact: KayKit kaykit.grass.02 is only terrain skin
+          at line 66
+    [Failed]:  1260018864828801968/compact: legacy pack piece sfv.fabric.wall.rock.plain.002.miter3 survives in a kit town
+          at line 63
+    [Failed]:  1998423929946073270/compact: KayKit kaykit.grass.01 is only terrain skin
+          at line 66
+    [Failed]:  1998423929946073270/compact: KayKit kaykit.grass.02 is only terrain skin
+          at line 66
+    [Failed]:  1998423929946073270/compact: legacy pack piece sfv.fabric.wall.rock.plain.002.miter3 survives in a kit town
+          at line 63
+    [Failed]:  3/standard: KayKit kaykit.grass.01 is only terrain skin
+          at line 66
+    [Failed]:  3/standard: KayKit kaykit.grass.02 is only terrain skin
+          at line 66
+    [Failed]:  3/standard: legacy pack piece sfv.fabric.wall.rock.plain.002.miter3 survives in a kit town
+          at line 63
+    [Failed]:  7/standard: legacy pack piece sfv.fabric.wall.rock.plain.002.miter3 survives in a kit town
+          at line 63
+    [Failed]:  4/large: legacy pack piece sfv.fabric.wall.rock.plain.002.miter3 survives in a kit town
+          at line 63
+
+Totals
+------
+Scripts               2
+Tests                 6
+Passing Tests         5
+Failing Tests         1
+Asserts           4512/4523
+Time              46.772s
+
+
+---- 1 failing tests ----
+

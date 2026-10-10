@@ -1,0 +1,499 @@
+{
+  "failures": 0,
+  "houses": [
+    {
+      "complete": true,
+      "meshes": 320,
+      "modules": 309,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/BigHouse_1.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 434686
+    },
+    {
+      "complete": true,
+      "meshes": 70,
+      "modules": 63,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_1.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 71418
+    },
+    {
+      "complete": true,
+      "meshes": 158,
+      "modules": 149,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_10.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 253402
+    },
+    {
+      "complete": true,
+      "meshes": 168,
+      "modules": 159,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_10b.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 271586
+    },
+    {
+      "complete": true,
+      "meshes": 137,
+      "modules": 137,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_11.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 121227
+    },
+    {
+      "complete": true,
+      "meshes": 231,
+      "modules": 222,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_11c.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 349752
+    },
+    {
+      "complete": true,
+      "meshes": 174,
+      "modules": 166,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_12.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 254822
+    },
+    {
+      "complete": true,
+      "meshes": 194,
+      "modules": 193,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_12b.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 271002
+    },
+    {
+      "complete": true,
+      "meshes": 239,
+      "modules": 235,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_13.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 286837
+    },
+    {
+      "complete": true,
+      "meshes": 207,
+      "modules": 202,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_13b.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 234536
+    },
+    {
+      "complete": true,
+      "meshes": 230,
+      "modules": 226,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_13c.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 277400
+    },
+    {
+      "complete": true,
+      "meshes": 163,
+      "modules": 163,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_14.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 164919
+    },
+    {
+      "complete": true,
+      "meshes": 210,
+      "modules": 210,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_15.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 194956
+    },
+    {
+      "complete": true,
+      "meshes": 191,
+      "modules": 177,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_16.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 293660
+    },
+    {
+      "complete": true,
+      "meshes": 219,
+      "modules": 217,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_16b.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 335836
+    },
+    {
+      "complete": true,
+      "meshes": 186,
+      "modules": 182,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_16c.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 265731
+    },
+    {
+      "complete": true,
+      "meshes": 67,
+      "modules": 67,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_1_view.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 88677
+    },
+    {
+      "complete": true,
+      "meshes": 68,
+      "modules": 67,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_1b.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 92195
+    },
+    {
+      "complete": true,
+      "meshes": 63,
+      "modules": 62,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_1c.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 72878
+    },
+    {
+      "complete": true,
+      "meshes": 54,
+      "modules": 53,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_2.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 104410
+    },
+    {
+      "complete": true,
+      "meshes": 76,
+      "modules": 75,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_2b.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 102305
+    },
+    {
+      "complete": true,
+      "meshes": 68,
+      "modules": 67,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_3.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 86947
+    },
+    {
+      "complete": true,
+      "meshes": 67,
+      "modules": 66,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_3b.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 84961
+    },
+    {
+      "complete": true,
+      "meshes": 71,
+      "modules": 71,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_4.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 61722
+    },
+    {
+      "complete": true,
+      "meshes": 106,
+      "modules": 106,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_5.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 111162
+    },
+    {
+      "complete": true,
+      "meshes": 90,
+      "modules": 90,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_6.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 133085
+    },
+    {
+      "complete": true,
+      "meshes": 132,
+      "modules": 88,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_6b.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 145439
+    },
+    {
+      "complete": true,
+      "meshes": 89,
+      "modules": 89,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_7.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 94870
+    },
+    {
+      "complete": true,
+      "meshes": 125,
+      "modules": 120,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_7b.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 170107
+    },
+    {
+      "complete": true,
+      "meshes": 118,
+      "modules": 109,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_8.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 127341
+    },
+    {
+      "complete": true,
+      "meshes": 121,
+      "modules": 112,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_8b.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 177472
+    },
+    {
+      "complete": true,
+      "meshes": 177,
+      "modules": 177,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/House_9.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 229817
+    },
+    {
+      "complete": true,
+      "meshes": 58,
+      "modules": 51,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_1.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 70384
+    },
+    {
+      "complete": true,
+      "meshes": 67,
+      "modules": 67,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_10.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 79583
+    },
+    {
+      "complete": true,
+      "meshes": 97,
+      "modules": 97,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_11.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 87335
+    },
+    {
+      "complete": true,
+      "meshes": 60,
+      "modules": 53,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_1b.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 72445
+    },
+    {
+      "complete": true,
+      "meshes": 70,
+      "modules": 67,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_1c.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 92953
+    },
+    {
+      "complete": true,
+      "meshes": 75,
+      "modules": 68,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_1d.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 96912
+    },
+    {
+      "complete": true,
+      "meshes": 76,
+      "modules": 75,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_3.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 129502
+    },
+    {
+      "complete": true,
+      "meshes": 52,
+      "modules": 52,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_4.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 61462
+    },
+    {
+      "complete": true,
+      "meshes": 96,
+      "modules": 91,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_5.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 116260
+    },
+    {
+      "complete": true,
+      "meshes": 43,
+      "modules": 43,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_6.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 45590
+    },
+    {
+      "complete": true,
+      "meshes": 51,
+      "modules": 51,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_7.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 42189
+    },
+    {
+      "complete": true,
+      "meshes": 116,
+      "modules": 115,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_8.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 183352
+    },
+    {
+      "complete": true,
+      "meshes": 103,
+      "modules": 100,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_8b.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 175675
+    },
+    {
+      "complete": true,
+      "meshes": 136,
+      "modules": 113,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_8c.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 181305
+    },
+    {
+      "complete": true,
+      "meshes": 71,
+      "modules": 71,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_9.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 76376
+    },
+    {
+      "complete": true,
+      "meshes": 96,
+      "modules": 95,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_9b.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 160240
+    },
+    {
+      "complete": true,
+      "meshes": 49,
+      "modules": 48,
+      "passed": true,
+      "source": "assets/PureVillage/Models/Houses/Streethouse_2.glb",
+      "unmatched_generated": [],
+      "unmatched_source": 0,
+      "vertices": 67978
+    }
+  ],
+  "verification_runs": [
+    "corpus-initial.json",
+    "modified-structure.json"
+  ]
+}

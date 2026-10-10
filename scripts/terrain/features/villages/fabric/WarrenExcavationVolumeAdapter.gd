@@ -80,7 +80,8 @@ static func to_volume_plan(massif: WarrenMassif,
 		typed_market_cells: Array[Vector3i] = [],
 		validate_result: bool = true,
 		additional_transitions: Array[WarrenVolumeTransition] = [],
-		derived_voids: Array[Vector3i] = []) -> WarrenVolumePlan:
+		derived_voids: Array[Vector3i] = [],
+		additional_frontages: Array[Vector3i] = []) -> WarrenVolumePlan:
 	last_failure = ""
 	if massif == null or not massif.is_sealed():
 		last_failure = "massif missing or unsealed"
@@ -146,6 +147,10 @@ static func to_volume_plan(massif: WarrenMassif,
 	# WarrenBuildingParcel.seal()/WarrenParcelPlan's detached-parcel audit
 	# satisfied without giving any of them a colliding public-realm surface.
 	for cell: Vector3i in excavation.public_cells():
+		plan.add_frontage(cell)
+	# Connected deck surfaces are paved later by the maze deck compiler.
+	# Their addresses must exist before parcel sealing, without duplicate walks.
+	for cell: Vector3i in additional_frontages:
 		plan.add_frontage(cell)
 	for cell: Vector3i in typed_market_cells:
 		if not plan.mark_market_square_cell(cell):

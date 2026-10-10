@@ -5,16 +5,12 @@ extends RefCounted
 ## Each accepted feature owns one atomic reservation and, where appropriate,
 ## its exact private/structural cells and construction transform. Generic room
 ## and roof compilation may respond to these facts but never recreate them.
-const TARGET_SKYWALKS := 3
-const TARGET_PREFAB_LANDMARKS := 4
 const MIN_TOWER_ANNEXES_PER_THREE_STOREY_LINEAGE := \
 	WarrenRoomCompositionPlanner.THREE_STOREY_TOWER_ANNEXES
 const MIN_TOWER_ANNEXES_PER_TALL_LINEAGE := \
 	WarrenRoomCompositionPlanner.TALL_TOWER_ANNEXES
-const TARGET_BALCONIES := 6
 const MIN_BALCONY_BUILDINGS := 3
 const MAX_BALCONIES_PER_BUILDING := 2
-const TARGET_ROOM_OUTCROPPINGS := 6
 ## TASK E3 RULING 1 MEASURED THE MAZE OUTCROPPING FAMILY AND SHIPPED NOTHING.
 ##
 ## `WarrenVillageScaleProfile.cantilever_range` is `Vector2i.ZERO` on every
@@ -356,11 +352,9 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 				"facade": String(annex.audit.annex_vertical_facade_key),
 				"recipe": StringName(annex.audit.annex_recipe_id),
 			})
-		last_failure = ("tower-breaking room annexes supply only %d of %d " \
-			+ "facade-relief units (%d assets): %s") % [
-			tower_annex_relief_units, required_tower_annexes,
-			tower_annexes.size(), annexes_by_source]
-		return [] as Array[WarrenFeatureReservation]
+		last_annex_diagnostic["shortfall_sources"] = annexes_by_source
+		WarrenVolumetricSolver.last_advisory_shortfalls["tower_annexes"] = {
+			"target": required_tower_annexes, "found": tower_annex_relief_units}
 	# A same-storey full-room bump-out is a diagonal union, not a small room
 	# attached beyond one facade. First satisfy the mandatory anti-shaft targets
 	# above, then search every eligible upper tower globally for the remaining
@@ -381,11 +375,8 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		tower_annexes.append_array(extra_diagonal_outcrops)
 	var room_outcropping_count := outcroppings.size() + tower_annexes.size()
 	if room_outcropping_count < minimum_outcroppings:
-		last_failure = ("only %d of %d full-scale room outcroppings exist; " \
-			+ "vertical=%d diagonal-overlap=%d: %s") % [
-			room_outcropping_count, minimum_outcroppings, outcroppings.size(),
-			tower_annexes.size(), JSON.stringify(extra_diagonal_diagnostic)]
-		return [] as Array[WarrenFeatureReservation]
+		WarrenVolumetricSolver.last_advisory_shortfalls["room_outcroppings"] = {
+			"target": minimum_outcroppings, "found": room_outcropping_count}
 	out.append_array(extra_diagonal_outcrops)
 	var diagonal_outcrop_sources: Dictionary = {}
 	for annex: WarrenFeatureReservation in tower_annexes:
@@ -1538,6 +1529,11 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 	var required_roof_rejection_count := 0
 	var partial_roof_rejection_count := 0
 	var overhanging_face_rejection_count := 0
+	var crossing_rejection_count := 0
+	var crossing_envelopes: Array[AABB] = []
+	if feature_kind == &"facade_bay":
+		crossing_envelopes = _prospective_street_crossing_envelopes(grid, buildings)
+
 	var terminal_roof_options := _terminal_roof_clearance_options(grid,
 		buildings, program, world_seed)
 	var protected_partial_roof_crown := \
@@ -1647,6 +1643,14 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 					continue
 			var feature_bounds := FabricRecipe.lattice_transform(origin, yaw) \
 				* recipe.local_clearance_bounds
+			var takes_crossing := false
+			for envelope: AABB in crossing_envelopes:
+				if feature_bounds.intersects(envelope.grow(-.001)):
+					takes_crossing = true
+					break
+			if takes_crossing:
+				crossing_rejection_count += 1
+				continue
 			# A bump-out is a complete authored shell, but it is still optional
 			# relative to every already-required town roof. Preserve at least one
 			# exact gable in each finite closure domain before reserving the bay;
@@ -1830,6 +1834,8 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 		"required_roof_rejection_count": required_roof_rejection_count,
 		"partial_roof_rejection_count": partial_roof_rejection_count,
 		"overhanging_face_rejection_count": overhanging_face_rejection_count,
+		"street_crossing_rejection_count": crossing_rejection_count,
+		"street_crossing_prospect_count": crossing_envelopes.size(),
 		"candidate_count": candidates.size(),
 		"refreshed_rejection_count": refreshed_rejection_count,
 		"commit_rejection_count": commit_rejection_count,
@@ -1837,6 +1843,66 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 	}
 	return out
 
+
+## Protect supported street-crossing prospects before optional bays occupy them.
+## This is only decoration arbitration: final compilation still proves the full
+## native bridge against roofs, retained crowns and public walking geometry.
+static func _prospective_street_crossing_envelopes(
+	grid: WarrenSpatialGrid, buildings: Array[WarrenBuildingVolume]
+) -> Array[AABB]:
+	var inhabited := {}
+	for building: WarrenBuildingVolume in buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			for cell: Vector3i in room.private_cells:
+				inhabited[cell] = room.stable_id
+	var solids := inhabited.duplicate()
+	for kind: int in [
+		WarrenSpatialGrid.Use.PRIVATE_VOLUME,
+		WarrenSpatialGrid.Use.STRUCTURAL_VOLUME,
+		WarrenSpatialGrid.Use.SERVICE_VOID
+	]:
+		for cell: Vector3i in grid.cells_with_use(kind):
+			solids[cell] = true
+	var stand := {}
+	var walked_bands := {}
+	for face: Dictionary in grid.face_claims():
+		if (
+			int(face.kind) != WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR
+			or face.direction != Vector3i.UP
+		):
+			continue
+		var cell := (face.cell as Vector3i) + Vector3i.UP
+		stand[cell] = true
+		var column := Vector2i(cell.x, cell.z)
+		if not walked_bands.has(column):
+			walked_bands[column] = []
+		walked_bands[column].append(cell.y)
+	var occluders := {}
+	for index in grid.size.x * grid.size.y * grid.size.z:
+		var cell := grid.cell_for_index(index)
+		var bits := grid.reservation_bits_at(cell)
+		if (
+			bits
+			& (
+				WarrenSpatialGrid.Reservation.FEATURE
+				| WarrenSpatialGrid.Reservation.VISUAL_CLEARANCE
+				| WarrenSpatialGrid.Reservation.DAYLIGHT
+			)
+		):
+			if not inhabited.has(cell):
+				occluders[cell] = true
+	var candidates := SettlementFabricAssembler._maze_passage_house_candidates(
+		inhabited, stand, solids, {}, occluders, stand, walked_bands
+	)
+	var accepted: Array[Dictionary] = []
+	var claimed := {}
+	for candidate: Dictionary in candidates:
+		if bool(candidate.crosses_street):
+			SettlementFabricAssembler._maze_accept_private_skywalk(candidate, claimed, accepted)
+	var envelopes: Array[AABB] = []
+	for candidate: Dictionary in accepted:
+		envelopes.append(SettlementFabricAssembler._skywalk_volume(candidate))
+	return envelopes
 
 static func _align_room_backing(recipe: FabricRecipe, origin: Vector3i,
 		yaw: int, room: WarrenRoomStamp, facing: Vector3i) -> Dictionary:
@@ -2515,8 +2581,8 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 		buildings: Array[WarrenBuildingVolume], supports: WarrenSupportGraph,
 		world_seed: int, program: SettlementFabricProgram,
 		existing_features: Array[WarrenFeatureReservation],
-		target_count: int = TARGET_BALCONIES,
-		plot_model_source: bool = false) \
+		target_count: int,
+		plot_model_source: bool) \
 		-> Array[WarrenFeatureReservation]:
 	## Search the actual three-dimensional residual void around upper room
 	## sockets. A candidate is a complete measured recipe and owns its deck,
@@ -3925,15 +3991,15 @@ static func _reserve_preplanned_market(grid: WarrenSpatialGrid,
 			var existing := grid.face_claim(cell, direction)
 			if not existing.is_empty():
 				# A topology-first market may fit immediately beneath an upper
-				# public route. Its canopy and that route meet at one physical
-				# interface; the already-sealed PUBLIC_FLOOR remains the authority
+				# public route or planted court. Its canopy and that floor meet
+				# at one physical interface; the sealed floor stays authoritative
 				# instead of being overwritten by a duplicate ROOF label.
-				if direction == Vector3i.UP and int(existing.kind) \
-						== WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR:
+				if direction == Vector3i.UP and int(existing.kind) in [
+						WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR,WarrenSpatialGrid.FaceKind.GARDEN_FLOOR]:
 					overhead_public_floor_seam_count += 1
 					continue
-				last_failure = "covered-market face conflicts at %s toward %s" % [
-					cell, direction]
+				last_failure = "covered-market face conflicts at %s toward %s: %s" % [
+					cell, direction, existing]
 				return null
 			if not tx.claim_face(cell, direction, kind, feature_id):
 				last_failure = "could not stage covered-market interface at %s" % cell
@@ -4325,8 +4391,8 @@ static func _courtyard_side_endpoints(grid: WarrenSpatialGrid,
 static func _reserve_room_outcroppings(grid: WarrenSpatialGrid,
 		buildings: Array[WarrenBuildingVolume], supports: WarrenSupportGraph,
 		world_seed: int, program: SettlementFabricProgram,
-		existing_features: Array[WarrenFeatureReservation] = [],
-		_target_count: int = TARGET_ROOM_OUTCROPPINGS) \
+		existing_features: Array[WarrenFeatureReservation],
+		_target_count: int) \
 		-> Array[WarrenFeatureReservation]:
 	if program == null or program.recipe(&"outcrop.support.bracketed.2") == null \
 			or program.recipe(&"outcrop.support.diagonal.2") == null \

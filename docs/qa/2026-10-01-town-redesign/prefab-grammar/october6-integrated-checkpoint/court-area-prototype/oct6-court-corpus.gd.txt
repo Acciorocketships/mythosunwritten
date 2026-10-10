@@ -1,0 +1,45 @@
+extends SceneTree
+const Site=preload("/tmp/oct6-block-site.gd")
+const Adapter=preload("/tmp/oct6-court-maze-adapter.gd")
+const Solver=preload("/tmp/oct6-court-solver.gd")
+const Compiler=preload("/tmp/oct6-court-compiler.gd")
+func _init():call_deferred("_run")
+func _run():
+ var program:=SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
+ var rows:=[]
+ for pair:Array in [[13,&"grand"],[31,&"large"],[43,&"standard"],[53,&"grand"],[83,&"grand"],[103,&"grand"]]:
+  var profile:=WarrenVillageScaleProfile.for_id(pair[1])
+  var base:=WarrenMazeSitePlanner.plan(pair[0],{},profile,&"",false)
+  var candidate:=Site.plan(pair[0],{},profile,&"",false)
+  var row:={"seed":pair[0],"profile":pair[1],"base":_metrics(base),"candidate":_metrics(candidate)}
+  for variant in ["base","candidate"]:
+   var source:WarrenMazeSourcePlan=base if variant=="base" else candidate
+   var volume:WarrenVolumePlan=WarrenMazeVolumeAdapter.to_volume_plan(source) if variant=="base" else Adapter.to_volume_plan(source)
+   if volume==null:
+    row[variant]["error"]="volume: "+(WarrenMazeVolumeAdapter.last_failure if variant=="base" else Adapter.last_failure)
+    continue
+   var spatial:WarrenSpatialPlan=WarrenVolumetricSolver.from_volume(volume,-1,program,false,true) if variant=="base" else Solver.from_volume(volume,-1,program,false,true)
+   if spatial==null:
+    row[variant]["error"]="solver: "+(WarrenVolumetricSolver.last_failure if variant=="base" else Solver.last_failure)
+    continue
+   var fabric:SettlementFabricPlan=WarrenSpatialFabricCompiler.generate(spatial,program,true) if variant=="base" else Compiler.generate(spatial,program,true)
+   if fabric==null:
+    row[variant]["error"]="compiler: "+(WarrenSpatialFabricCompiler.last_failure if variant=="base" else Compiler.last_failure)
+    continue
+   row[variant]["buildings"]=spatial.buildings.size()
+   row[variant]["spatial_audit"]=spatial.audit
+   row[variant]["route_floors"]=spatial.route_floor_cells.size()
+   row[variant]["units"]=fabric.units.size()
+  rows.append(row)
+  print("CORPUS ",JSON.stringify(row))
+  FileAccess.open("/tmp/oct6-court-corpus.json",FileAccess.WRITE).store_string(JSON.stringify(rows,"  "))
+ quit()
+func _metrics(source:WarrenMazeSourcePlan)->Dictionary:
+ if source==null:return {"error":"source null"}
+ var sizes:=[]
+ var decks:=[]
+ for plot:Dictionary in source.plots:
+  if plot.kind==WarrenMazeSourcePlan.PLOT_HOUSE:sizes.append(plot.cells.size())
+  if plot.kind==WarrenMazeSourcePlan.PLOT_DECK:decks.append({"floor":plot.floor,"size":plot.cells.size()})
+ sizes.sort()
+ return {"source_sealed":source.is_sealed(),"plot_sizes":sizes,"decks":decks,"bridges":source.excavation.bridge_spans.size(),"public":source.excavation.public_cells().size(),"covered_ratio":source.excavation.covered_ratio()}

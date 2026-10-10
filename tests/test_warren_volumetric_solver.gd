@@ -1028,11 +1028,11 @@ func test_paired_registration_relief_repartitions_two_locked_upper_rooms() \
 	assert_true(bool(new_right.get("paired_registration_relief", false)))
 	assert_lte(int(WarrenRoomCompositionPlanner.last_pair_diagnostic \
 		.get("peak_frontier_count", -1)),
-		WarrenRoomCompositionPlanner.MAX_PAIRED_RELIEF_FRONTIER,
+		LegacyRoomRepair.MAX_PAIRED_RELIEF_FRONTIER,
 		"the exact pair exchange must retain a hard bounded frontier")
 	assert_lte(int(WarrenRoomCompositionPlanner.last_pair_diagnostic \
 		.get("examined_pair_count", -1)),
-		WarrenRoomCompositionPlanner.MAX_PAIRED_RELIEF_PAIR_CHECKS,
+		LegacyRoomRepair.MAX_PAIRED_RELIEF_PAIR_CHECKS,
 		"nested exact candidate solves must have a fixed work budget")
 
 
@@ -1063,7 +1063,7 @@ func test_paired_registration_relief_sees_half_storey_phase_overlap() -> void:
 		lineages).overlap_cell_count), 0)
 	assert_lte(int(WarrenRoomCompositionPlanner.last_pair_diagnostic.get(
 		"examined_pair_count", -1)),
-		WarrenRoomCompositionPlanner.MAX_PAIRED_RELIEF_PAIR_CHECKS)
+		LegacyRoomRepair.MAX_PAIRED_RELIEF_PAIR_CHECKS)
 
 
 func test_addressed_room_recomposition_accepts_second_measured_door_phase() \

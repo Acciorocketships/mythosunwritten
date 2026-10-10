@@ -1,0 +1,66 @@
+{
+  "towns": {
+    "103:grand": {
+      "air_intrusions": 0,
+      "covered_quarters": 40,
+      "floating": 0,
+      "fully_covered": 9,
+      "native_facade_flanks": 0,
+      "public_cells": 73,
+      "source_bridge_cells": 2,
+      "source_tunnels": 10
+    },
+    "13:grand": {
+      "air_intrusions": 0,
+      "covered_quarters": 36,
+      "floating": 0,
+      "fully_covered": 7,
+      "native_facade_flanks": 0,
+      "public_cells": 104,
+      "source_bridge_cells": 2,
+      "source_tunnels": 13
+    },
+    "43:grand": {
+      "air_intrusions": 0,
+      "covered_quarters": 100,
+      "floating": 0,
+      "fully_covered": 23,
+      "native_facade_flanks": 0,
+      "public_cells": 93,
+      "source_bridge_cells": 2,
+      "source_tunnels": 17
+    },
+    "8:grand": {
+      "air_intrusions": 0,
+      "covered_quarters": 112,
+      "floating": 0,
+      "fully_covered": 25,
+      "native_facade_flanks": 0,
+      "public_cells": 118,
+      "source_bridge_cells": 1,
+      "source_tunnels": 23
+    }
+  },
+  "walks": [
+    {
+      "gate": "court.plaza.00",
+      "passed": true,
+      "reverse": false
+    },
+    {
+      "gate": "court.plaza.00",
+      "passed": true,
+      "reverse": true
+    },
+    {
+      "gate": "court.deck.00",
+      "passed": true,
+      "reverse": false
+    },
+    {
+      "gate": "court.deck.00",
+      "passed": true,
+      "reverse": true
+    }
+  ]
+}

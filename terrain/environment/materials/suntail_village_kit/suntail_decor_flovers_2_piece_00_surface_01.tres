@@ -1,6 +1,6 @@
 [gd_resource type="StandardMaterial3D" load_steps=2 format=3]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/a439edf363d05763b92a.res" id="1_tii5g"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/96d50c61f0c7dfbbc150.res" id="1_tii5g"]
 
 [resource]
 resource_name = "FlowerPot_Leaves"

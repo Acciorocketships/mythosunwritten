@@ -1,0 +1,261 @@
+{
+  "schema": 1,
+  "comparison": "exact vertex attributes and topology; materials not yet compared",
+  "module_geometry_count": 1280,
+  "unmatched_meshes": {
+    "Quad": 6
+  },
+  "summary": {
+    "houses": 49,
+    "parts": 5905,
+    "matched": 5899,
+    "fully_matched_houses": 47
+  },
+  "houses": [
+    {
+      "source": "assets/PureVillage/Models/Houses/BigHouse_1.glb",
+      "matched": 320,
+      "total": 320
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_1.glb",
+      "matched": 70,
+      "total": 70
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_10.glb",
+      "matched": 158,
+      "total": 158
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_10b.glb",
+      "matched": 168,
+      "total": 168
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_11.glb",
+      "matched": 137,
+      "total": 137
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_11c.glb",
+      "matched": 231,
+      "total": 231
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_12.glb",
+      "matched": 174,
+      "total": 174
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_12b.glb",
+      "matched": 194,
+      "total": 194
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_13.glb",
+      "matched": 239,
+      "total": 239
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_13b.glb",
+      "matched": 207,
+      "total": 207
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_13c.glb",
+      "matched": 230,
+      "total": 230
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_14.glb",
+      "matched": 163,
+      "total": 163
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_15.glb",
+      "matched": 210,
+      "total": 210
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_16.glb",
+      "matched": 191,
+      "total": 191
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_16b.glb",
+      "matched": 219,
+      "total": 219
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_16c.glb",
+      "matched": 186,
+      "total": 186
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_1_view.glb",
+      "matched": 67,
+      "total": 67
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_1b.glb",
+      "matched": 68,
+      "total": 68
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_1c.glb",
+      "matched": 63,
+      "total": 63
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_2.glb",
+      "matched": 54,
+      "total": 54
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_2b.glb",
+      "matched": 76,
+      "total": 76
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_3.glb",
+      "matched": 68,
+      "total": 68
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_3b.glb",
+      "matched": 67,
+      "total": 67
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_4.glb",
+      "matched": 71,
+      "total": 71
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_5.glb",
+      "matched": 106,
+      "total": 106
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_6.glb",
+      "matched": 90,
+      "total": 90
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_6b.glb",
+      "matched": 128,
+      "total": 132
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_7.glb",
+      "matched": 89,
+      "total": 89
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_7b.glb",
+      "matched": 125,
+      "total": 125
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_8.glb",
+      "matched": 118,
+      "total": 118
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_8b.glb",
+      "matched": 121,
+      "total": 121
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/House_9.glb",
+      "matched": 177,
+      "total": 177
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_1.glb",
+      "matched": 58,
+      "total": 58
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_10.glb",
+      "matched": 67,
+      "total": 67
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_11.glb",
+      "matched": 97,
+      "total": 97
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_1b.glb",
+      "matched": 60,
+      "total": 60
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_1c.glb",
+      "matched": 70,
+      "total": 70
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_1d.glb",
+      "matched": 75,
+      "total": 75
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_3.glb",
+      "matched": 76,
+      "total": 76
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_4.glb",
+      "matched": 52,
+      "total": 52
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_5.glb",
+      "matched": 96,
+      "total": 96
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_6.glb",
+      "matched": 43,
+      "total": 43
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_7.glb",
+      "matched": 51,
+      "total": 51
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_8.glb",
+      "matched": 116,
+      "total": 116
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_8b.glb",
+      "matched": 103,
+      "total": 103
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_8c.glb",
+      "matched": 134,
+      "total": 136
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_9.glb",
+      "matched": 71,
+      "total": 71
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/StreetHouse_9b.glb",
+      "matched": 96,
+      "total": 96
+    },
+    {
+      "source": "assets/PureVillage/Models/Houses/Streethouse_2.glb",
+      "matched": 49,
+      "total": 49
+    }
+  ]
+}

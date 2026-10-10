@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_jbmi4"]
+
+[resource]
+script = ExtResource("1_jbmi4")
+id = &"suntail.chimney.fireplace_3.finish_oak"
+visual_path = "res://terrain/environment/visuals/suntail_village_kit/suntail_chimney_fireplace_3.tres"
+tags = Array[StringName]([&"chimney", &"suntail_kit", &"village"])
+measured_aabb = AABB(-0.49829182, 0, -0.17618866, 0.99663746, 1.0126019, 0.63316643)
+ground_contact_points = PackedVector2Array()
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"suntail_village_kit:suntail.chimney.fireplace_3/frame/oak"
+material_tints = {
+"DoorShutter": Color(0.9, 0.74, 0.53, 1),
+"DoorShutters": Color(0.9, 0.74, 0.53, 1),
+"Planks": Color(0.9, 0.74, 0.53, 1),
+"Planks_Full": Color(0.9, 0.74, 0.53, 1),
+"Wood": Color(0.9, 0.74, 0.53, 1),
+"Wood_1": Color(0.9, 0.74, 0.53, 1),
+"Wood_2": Color(0.9, 0.74, 0.53, 1),
+"Wood_3": Color(0.9, 0.74, 0.53, 1),
+"Wooden_Planks": Color(0.9, 0.74, 0.53, 1)
+}

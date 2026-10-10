@@ -1,0 +1,109 @@
+{
+  "schema": 1,
+  "comparison": "exact vertex attributes and topology; materials not yet compared",
+  "module_geometry_count": 108,
+  "unmatched_meshes": {
+    "Chair_1": 28,
+    "Carpet_2": 18,
+    "Books_3": 17,
+    "Books_2": 15,
+    "Chair_2": 15,
+    "Barrel": 15,
+    "Carpet_3": 14,
+    "Candles_3": 13,
+    "Candles_4": 12,
+    "Carpet_1": 12,
+    "Commode_1_Box": 12,
+    "Candles_1": 10,
+    "Bed_2": 10,
+    "Bag_4": 10,
+    "Box_1": 10,
+    "Chest": 9,
+    "Washtub": 9,
+    "Bed_1": 8,
+    "Table_1": 8,
+    "Log_3": 7,
+    "Chest_2": 7,
+    "Case_and_food_1": 6,
+    "Cupboard_2": 6,
+    "Chandelier_1": 6,
+    "Lantern_2": 6,
+    "Log_2": 6,
+    "Horns": 6,
+    "Cupboard_1": 6,
+    "Cupboard_1_Box": 6,
+    "Commode_1": 6,
+    "Case_and_food_2": 6,
+    "Commode_3_Box": 6,
+    "Table_2": 5,
+    "Lantern_1": 5,
+    "Bag_3": 5,
+    "Bag_1": 5,
+    "Bag_2": 5,
+    "Commode_2": 5,
+    "Candles_2": 5,
+    "Chandelier_2": 5,
+    "Commode_4": 5,
+    "Picture_4": 4,
+    "Picture_2": 4,
+    "Case_and_food_3": 4,
+    "Picture_1": 3,
+    "Shelf_2": 3,
+    "Picture_3": 3,
+    "Commode_3": 3,
+    "Shelf_1": 2,
+    "Chest_3": 2,
+    "Rack_1": 2,
+    "Box_2": 1,
+    "Rack_3": 1,
+    "Tomato_2": 1
+  },
+  "summary": {
+    "houses": 8,
+    "parts": 3003,
+    "matched": 2600,
+    "fully_matched_houses": 0
+  },
+  "houses": [
+    {
+      "source": "/Users/ryko/story/assets/Raygeas/Models/Buildings/House_1.glb",
+      "matched": 218,
+      "total": 245
+    },
+    {
+      "source": "/Users/ryko/story/assets/Raygeas/Models/Buildings/House_2.glb",
+      "matched": 363,
+      "total": 435
+    },
+    {
+      "source": "/Users/ryko/story/assets/Raygeas/Models/Buildings/House_3.glb",
+      "matched": 407,
+      "total": 484
+    },
+    {
+      "source": "/Users/ryko/story/assets/Raygeas/Models/Buildings/House_4.glb",
+      "matched": 296,
+      "total": 335
+    },
+    {
+      "source": "/Users/ryko/story/assets/Raygeas/Models/Buildings/House_5.glb",
+      "matched": 341,
+      "total": 400
+    },
+    {
+      "source": "/Users/ryko/story/assets/Raygeas/Models/Buildings/House_6.glb",
+      "matched": 233,
+      "total": 259
+    },
+    {
+      "source": "/Users/ryko/story/assets/Raygeas/Models/Buildings/House_7.glb",
+      "matched": 333,
+      "total": 378
+    },
+    {
+      "source": "/Users/ryko/story/assets/Raygeas/Models/Buildings/House_8.glb",
+      "matched": 409,
+      "total": 467
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+[gd_resource type="StandardMaterial3D" load_steps=4 format=3]
+
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/pure_village_kit/a1149a4fd6005c6ecb74.res" id="1_v7rru"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/pure_village_kit/c180d32000c7917452b2.res" id="2_pwbbb"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/pure_village_kit/a28875fddafe7ca7566f.res" id="3_ryndf"]
+
+[resource]
+resource_name = "RoofTiles"
+vertex_color_use_as_albedo = true
+albedo_texture = ExtResource("1_v7rru")
+metallic_texture = ExtResource("2_pwbbb")
+metallic_texture_channel = 2
+roughness_texture = ExtResource("2_pwbbb")
+roughness_texture_channel = 1
+normal_enabled = true
+normal_texture = ExtResource("3_ryndf")
+ao_enabled = true
+ao_texture = ExtResource("2_pwbbb")

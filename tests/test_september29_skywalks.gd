@@ -188,10 +188,6 @@ func test_roof_over_free_air_closes_the_attic() -> void:
 	for job: Array in CITIES:
 		var spatial := _town(job[0], job[1])
 		var houses := KitVillageBuildings._houses(spatial)
-		var owner: Dictionary = {}
-		for house_id: StringName in houses:
-			for cell: Vector3i in (houses[house_id] as Dictionary).cells:
-				owner[cell] = house_id
 		var built := _built(spatial)
 		var by_mass := _placements_by_mass(built)
 		for mass: BuildingMass in built.masses:
@@ -205,14 +201,40 @@ func test_roof_over_free_air_closes_the_attic() -> void:
 				for cell: Vector2i in BuildingMass.rect_cells(roof.rect as Rect2i):
 					if below.has(cell) or level.has(cell):
 						continue
-					var other: Variant = owner.get(Vector3i(cell.x, eave - 1, cell.y))
-					if other != null and other != house_id:
-						continue
 					checked += 1
+					# Finished skywalk rooms and retained structure are not house
+					# parcels. They also occupy the air below this roof.
+					var occupied := false
+					for other: BuildingMass in built.masses:
+						if other != mass and other.cells_at_band(eave - 1).has(cell):
+							occupied = true
+							break
+					if occupied:
+						continue
 					if not _has_placement(by_mass.get(String(mass.stable_id), []),
 							[&"deck.board"], Vector3((cell.x + 0.5) * kit.module_width,
 								eave * kit.band_height(), (cell.y + 0.5) * kit.module_width), kit):
 						failures.append("%s: %s roof %s cell %s" % [job, mass.stable_id, roof.rect, cell])
-	assert_gt(checked, 0, "the corpus has roof over free air (loggias, porches)")
+	assert_gt(checked, 0, "the corpus exercises roof outside its own rooms")
 	assert_eq(failures, [] as Array[String],
 		"Roof over free air closes the attic at the eave")
+
+
+## Keep an explicit free-air case: the town corpus may fill every such cell
+## with a neighbour or skywalk. No neighbour occupies this posted porch.
+func test_unoccupied_porch_attic_requires_real_ceiling_boards() -> void:
+	var kit := SuntailBuildingKit.create()
+	var mass := BuildingMass.new()
+	mass.stable_id = &"porch.attic.control"
+	mass.add_storey(0, BuildingMass.rect_cells(Rect2i(0, 0, 2, 1)), &"timber")
+	mass.add_roof(Rect2i(0, 0, 2, 2), 1, 2, &"blue")
+	var parts := BuildingKitAssembler.new(kit).assemble(mass)
+	var without_ceiling: Array[Dictionary] = []
+	for part: Dictionary in parts:
+		if part.role == &"deck.board" and is_equal_approx(part.transform.origin.y, 2 * kit.band_height()):
+			continue
+		without_ceiling.append(part)
+	for x in 2:
+		var at := Vector3((x + 0.5) * kit.module_width, 2 * kit.band_height(), 1.5 * kit.module_width)
+		assert_true(_has_placement(parts, [&"deck.board"], at, kit), "Open porch attic is boarded")
+		assert_false(_has_placement(without_ceiling, [&"deck.board"], at, kit), "Removing ceiling boards is detected")
